@@ -10,7 +10,7 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     
     # Your application UI logic 
-    shinydashboardPlus::dashboardPage(
+    shinydashboard::dashboardPage(
       header = shinydashboard::dashboardHeader(
         title = "Glyco data processing dashboard"
       ),
@@ -34,6 +34,7 @@ app_ui <- function(request) {
         ),
       
       body = shinydashboard::dashboardBody(
+        shinyjs::useShinyjs(),
         shinydashboard::tabItems(
           shinydashboard::tabItem(
             "data_import",
