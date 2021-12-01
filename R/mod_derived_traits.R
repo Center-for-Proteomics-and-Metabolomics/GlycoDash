@@ -10,8 +10,27 @@
 mod_derived_traits_ui <- function(id){
   ns <- NS(id)
   tagList(
-    h1("Welcome to derived traits!")
- 
+    fluidPage(
+      fluidRow(
+        h1("Derived traits")
+      ),
+      fluidRow(
+        shinydashboard::box(
+          title = "Calculate derived traits",
+          width = 3,
+          solidHeader = TRUE,
+          status = "primary",
+          checkboxGroupInput(ns("traits_menu"),
+                             "Choose which derived traits should be calculated",
+                             choices = c("Fucosylation",
+                                         "Bisection",
+                                         "Galactosylation",
+                                         "Sialylation")),
+          actionButton(ns("do_calculation"),
+                       "Calculate derived traits")
+        )
+      )
+    )
   )
 }
     
@@ -21,6 +40,11 @@ mod_derived_traits_ui <- function(id){
 mod_derived_traits_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    observe({
+      shinyjs::toggleState("do_calculation", 
+                           condition = !is.null(input$traits_menu))
+    })
  
   })
 }

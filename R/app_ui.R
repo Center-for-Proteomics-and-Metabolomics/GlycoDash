@@ -29,7 +29,9 @@ app_ui <- function(request) {
           shinydashboard::menuItem("Derived Traits", 
                                    tabName = "derived_traits"),
           shinydashboard::menuItem("Repeatability", 
-                                   tabName = "repeatability")
+                                   tabName = "repeatability"),
+          shinydashboard::menuItem("Data Exploration", 
+                                   tabName = "data_exploration")
           )
         ),
       
@@ -59,6 +61,10 @@ app_ui <- function(request) {
           shinydashboard::tabItem(
             "repeatability",
             mod_repeatability_ui("repeatability_ui_1")
+          ),
+          shinydashboard::tabItem(
+            "data_exploration",
+            mod_data_exploration_ui("data_exploration_ui_1")
           )
         )
       ),

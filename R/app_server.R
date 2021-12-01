@@ -10,4 +10,5 @@ app_server <- function( input, output, session ) {
   mod_spectra_curation_server("spectra_curation_ui_1")
   mod_analyte_curation_server("analyte_curation_ui_1")
   mod_normalization_server("normalization_ui_1")
+  mod_derived_traits_server("derived_traits_ui_1")
 }

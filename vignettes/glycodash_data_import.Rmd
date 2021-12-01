@@ -1,0 +1,39 @@
+---
+title: "Glycodash data import"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{glycodash_data_import}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include=FALSE}
+# package is not installed yet so instead of:
+#library(glycodash)
+
+# I'm using:
+devtools::load_all()
+# to make the package functions available in this .Rmd file
+```
+
+## Introduction
+
+The data-import functions can be used to convert a LacyTools summary file to a format suitable for R. 
+
+```{r load-data}
+
+data <- read_non_rectangular(system.file("extdata", 
+                                         "2021-10-22-0334Z_Summary.txt", 
+                                         package = "glycodash"),
+                             delim = "\t")
+
+
+```
+
