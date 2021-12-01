@@ -18,6 +18,8 @@
 usethis::use_package( "shinipsum" )
 usethis::use_package( "shinydashboard" )
 usethis::use_package( "shinyjs" )
+usethis::use_package( "stringr" )
+usethis::use_package( "purrr" )
 
 ## Add modules ----
 ## Create a module infrastructure in R/
@@ -27,10 +29,11 @@ golem::add_module( name = "analyte_curation" ) # Name of the module
 golem::add_module( name = "normalization" ) # Name of the module
 golem::add_module( name = "derived_traits" ) # Name of the module
 golem::add_module( name = "repeatability" ) # Name of the module
+golem::add_module( name = "data_exploration" ) # Name of the module
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
-golem::add_fct( "helpers" ) 
+golem::add_fct( "data_import" ) 
 golem::add_utils( "helpers" )
 
 ## External resources
@@ -50,7 +53,7 @@ usethis::use_test( "app" )
 # Documentation
 
 ## Vignette ----
-usethis::use_vignette("glycodash")
+usethis::use_vignette("glycodash_data_import")
 devtools::build_vignettes()
 
 ## Code Coverage----
