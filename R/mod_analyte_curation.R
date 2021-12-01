@@ -34,7 +34,9 @@ mod_analyte_curation_ui <- function(id){
                           choices = c("Total", "Blanks", "Negative controls"),
                           multiple = TRUE),
               numericInput(ns("cut_off"), "Cut-off (%)", value = 25)
-              )
+              ),
+            actionButton(ns("curate_analytes"), 
+                         "Perform analyte curation")
             )
           )
         )
@@ -50,8 +52,16 @@ mod_analyte_curation_server <- function(id){
     ns <- session$ns
     
     observe({
-      shinyjs::toggle("analyte_list", condition = input$method == "Supply an analyte list")
-      shinyjs::toggle("curation_based_on_data", condition = input$method == "Curate analytes based on data")
+      shinyjs::toggle("analyte_list", 
+                      condition = input$method == "Supply an analyte list")
+      shinyjs::toggle("curation_based_on_data", 
+                      condition = input$method == "Curate analytes based on data")
+      shinyjs::toggleState("curate_analytes", 
+                           condition = 
+                             (input$method == "Supply an analyte list" & 
+                             !is.null(input$analyte_list)) | 
+                             (input$method == "Curate analytes based on data") &
+                             !is.null(input$ignore_samples))
     })
  
   })
