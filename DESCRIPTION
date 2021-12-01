@@ -1,0 +1,26 @@
+Package: glycodash
+Title: glycodash
+Version: 0.0.0.9000
+Authors@R: person('Sterre', 'Siekman', email = 's.l.siekman@lumc.nl', role = c('cre', 'aut'))
+Description: Package for processing IgG/IgA glycosylation data.
+License: MIT + file LICENSE
+Imports: 
+    attempt,
+    config (>= 0.3.1),
+    DT,
+    glue,
+    golem (>= 0.3.1),
+    htmltools,
+    processx,
+    shinipsum,
+    shiny (>= 1.7.1),
+    shinydashboard,
+    shinydashboardPlus
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.2
+Suggests: 
+    spelling,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Language: en-US
