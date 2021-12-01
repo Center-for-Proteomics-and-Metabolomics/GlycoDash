@@ -37,11 +37,22 @@ mod_analyte_curation_ui <- function(id){
               ),
             actionButton(ns("curate_analytes"), 
                          "Perform analyte curation")
-            )
+          ),
+          shinydashboard::box(
+            title = "Export results",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            radioButtons(ns("output_format"),
+                         "Choose a file format:",
+                         choices = c("Excel file", "R object")),
+            downloadButton(ns("download"), 
+                           "Download analyte-curated data")
           )
         )
       )
     )
+  )
 }
     
 #' analyte_curation Server Functions
