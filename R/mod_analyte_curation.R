@@ -49,6 +49,16 @@ mod_analyte_curation_ui <- function(id){
             downloadButton(ns("download"), 
                            "Download analyte-curated data")
           )
+        ),
+        column(
+          width = 6,
+          shinydashboard::box(
+            title = "Information on analyte curation",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            tableOutput(ns("info_table"))
+          )
         )
       )
     )
@@ -74,6 +84,8 @@ mod_analyte_curation_server <- function(id){
                              (input$method == "Curate analytes based on data") &
                              !is.null(input$ignore_samples))
     })
+    
+    output$info_table <- renderTable({shinipsum::random_table(3, 3)})
  
   })
 }
