@@ -25,14 +25,112 @@ devtools::load_all()
 
 ## Introduction
 
-The data-import functions can be used to convert a LacyTools summary file to a format suitable for R. 
+The data-import functions can be used to convert a LacyTools summary file to a format suitable for R. In addition, metadata ca be added if a metadata file and a platedesign file are available.
 
 ```{r load-data}
 
 data <- read_non_rectangular(system.file("extdata", 
-                                         "2021-10-22-0334Z_Summary.txt", 
+                                         "LacyTools_summary.txt", 
                                          package = "glycodash"),
                              delim = "\t")
+
+# Reading in the platedesign from an Excel file, writing the platedesign 
+# into a .csv file (because this is required for the read_plate() function from plater) 
+# and reading the plates using the read_plate() function from the plater package.
+# I want users to upload an Excel file and not a .csv file, because if the csv file
+# is delimited with ";" instead of "," the read_plate() function no longer works.
+# If a user would have to save an Excel file as a .csv file manually, it cannot be 
+# guaranteed that the right delimiter would be used.
+
+# make this into a read_plate_design() function?
+
+plate_design <- readxl::read_excel(system.file("extdata",
+                                               "Plate_design.xlsx",
+                                               package = "glycodash"))
+path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
+readr::write_csv(plate_design, file = path_to_platedesign_csv)
+plate_design <- plater::read_plate(file = path_to_platedesign_csv, 
+                                   well_ids_column = "well")
+
+# Processing the plate_design dataframe (pivoting to a long format and adding
+# a plate_well column)
+# Exclude the sample_type part since this could be different for different data?
+
+# Make this into a process plate_design function
+plate_design <- plate_design %>%
+  tidyr::pivot_longer(cols = -well,
+               names_to = "plate",
+               values_to = "sample_id") %>%
+  dplyr::mutate(plate = stringr::str_extract(plate, "\\d+"),
+         well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
+         plate_well = paste(plate, well, sep = "_")) %>% 
+  dplyr::arrange(plate_well) %>% 
+  dplyr::select(-c(plate, well)) #%>% 
+  # tidyr::extract(col = sample_id, into = c("sample_type"), regex = "(.+_|[[:alpha:]]+)", 
+  #        remove = FALSE) %>% 
+  # dplyr::mutate(sample_type = stringr::str_remove(sample_type, "_"))
+
+# Ask Tamas whether plate_design files always look like this and whether duplicates
+# are always handled in this way.
+handle_duplicates <- function(plate_design) {
+  new_sample_ids <- vector()
+  duplicate <- vector()
+  for (i in 1:length(plate_design$sample_id)) {
+    if (i == 1 & plate_design$sample_id[i] == "duplicate") {
+      stop(print("Error: first sample is a duplicate."))
+      }
+    if (plate_design$sample_id[i] == "duplicate") {
+      new_sample_ids[i] <- plate_design$sample_id[i-1]
+      duplicate[i] <- TRUE
+      } else {
+        new_sample_ids[i] <- plate_design$sample_id[i]
+        duplicate[i] <- FALSE
+    }
+  }
+  new_plate_design <- plate_design %>% 
+    dplyr::mutate(sample_id = new_sample_ids,
+                  duplicate = duplicate)
+  return(new_plate_design)
+}
+
+plate_design <- handle_duplicates(plate_design)
+
+# make a read metadata function, choose date columns?
+
+metadata <- readxl::read_excel(system.file("extdata",
+                                           "Metadata.xlsx",
+                                           package = "glycodash"),
+                               col_types = "text", 
+                               na = c("", "NA"))
+
+metadata <- metadata %>% 
+  dplyr::rename_with(.cols = tidyselect::everything(), 
+                     .fn = snakecase::to_snake_case) %>% 
+  dplyr::rename(sample_id = id_on_sample_tube)
+
+# Need to make user select the column that contains the sample_ids
+# What to do about reading in dates?
+
+metadata_left <- dplyr::left_join(plate_design, metadata, by = "sample_id")
+
+link_metadata_to_platedesign <- function(plate_design, metadata) {
+  no_match <- check_matches(plate_design, metadata)
+  metadata_left <- dplyr::left_join(plate_design, metadata, by = "sample_id")
+  return(list(metadata_left, no_match))
+}
+
+check_matches <- function (plate_design, metadata) {
+  no_match <- setdiff(plate_design$sample_id, metadata$sample_id)
+  if (!rlang::is_empty(no_match)) {
+    warning(paste("Some of the sample_ids in platedesign don't have a match in the metadata.",
+                   "The unmatched sample_ids can be found in the vector \"no_match\"."))
+    return(no_match)
+  } else {
+    message("All sample_ids in platedesign have a match in the metadata.")
+  }
+}
+
+
 
 
 ```
