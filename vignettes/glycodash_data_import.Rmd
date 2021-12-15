@@ -29,10 +29,9 @@ The data-import functions can be used to convert a LacyTools summary file to a f
 
 ```{r load-data}
 
-data <- read_non_rectangular(system.file("extdata", 
-                                         "LacyTools_summary.txt", 
-                                         package = "glycodash"),
-                             delim = "\t")
+lacytools_file <- system.file("extdata", "LacyTools_summary.txt", package = "glycodash")
+
+data <- read_lacytools_summary(lacytools_file)
 
 # Reading in the platedesign from an Excel file, writing the platedesign 
 # into a .csv file (because this is required for the read_plate() function from plater) 
@@ -95,7 +94,7 @@ handle_duplicates <- function(plate_design) {
 
 plate_design <- handle_duplicates(plate_design)
 
-# make a read metadata function, choose date columns?
+# make a read metadata function, choose date columns and sample_id column?
 
 metadata <- readxl::read_excel(system.file("extdata",
                                            "Metadata.xlsx",
@@ -107,9 +106,6 @@ metadata <- metadata %>%
   dplyr::rename_with(.cols = tidyselect::everything(), 
                      .fn = snakecase::to_snake_case) %>% 
   dplyr::rename(sample_id = id_on_sample_tube)
-
-# Need to make user select the column that contains the sample_ids
-# What to do about reading in dates?
 
 metadata_left <- dplyr::left_join(plate_design, metadata, by = "sample_id")
 
@@ -129,8 +125,6 @@ check_matches <- function (plate_design, metadata) {
     message("All sample_ids in platedesign have a match in the metadata.")
   }
 }
-
-
 
 
 ```

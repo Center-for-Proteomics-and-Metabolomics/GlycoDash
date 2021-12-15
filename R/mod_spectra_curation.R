@@ -25,7 +25,7 @@ mod_spectra_curation_ui <- function(id){
             shinydashboard::box(
               title = "Quality criteria",
               width = NULL,
-              background = "navy",
+              status = "primary",
               solidHeader = TRUE,
               sliderInput(ns("mass_accuracy"), 
                           "Acceptable mass accuracy range:",

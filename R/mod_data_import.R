@@ -94,23 +94,7 @@ mod_data_import_server <- function(id, r){
     })
     
     data <- eventReactive(input$read_summary, {
-      
-      data <- read_non_rectangular(input$lacytools_summary$datapath)
-      
-      all_blocks <- purrr::map(outputs,
-                              function(x) get_block(data, x))
-      
-      all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
-
-      long_data_list <- purrr::map(all_blocks, create_long_data)
-      charges <- as.factor(purrr::map_chr(long_data_list, function(x) unique(x$charge)))
-      charge_sep_list <- split(long_data_list, charges)
-
-      long_data <- purrr::map(charge_sep_list, function(x) purrr::reduce(x, dplyr::left_join)) %>%
-        purrr::reduce(dplyr::full_join)
-
-      return(long_data)
-        
+      read_lacytools_summary(input$lacytools_summary$datapath)
     })
     
     output$data_table <- DT::renderDT({
