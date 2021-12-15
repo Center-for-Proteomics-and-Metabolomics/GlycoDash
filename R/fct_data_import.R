@@ -169,7 +169,7 @@ add_metadata <- function(data, metadata){
 
 get_analytes_info <- function(data, variable) {
   analyte_names <- which(data[ , 1] == variable)
-  if (is_empty(analyte_names)){
+  if (rlang::is_empty(analyte_names)){
     stop(paste("The LacyTools output format", variable,
                "is not present in the input summary file"))
   }
@@ -177,16 +177,17 @@ get_analytes_info <- function(data, variable) {
   colnames(analytes_info) <- unlist(analytes_info[1, ])
   colnames(analytes_info)[1] <- "info_variables"
   analytes_info <- analytes_info %>%
-    slice(n = -1) %>% 
-    pivot_longer(cols = -info_variables, 
-                 names_to = "analyte", 
-                 values_to = "value") %>%
-    pivot_wider(names_from = info_variables) %>% 
-    rename(exact_mass = `Exact mass of most abundant isotopologue`,
-           fraction = Fraction) %>% 
-    mutate(exact_mass = map_chr(exact_mass, 
-                                function(x) str_remove_all(x, "[\\[\\]]"))) %>% 
-    mutate(across(-analyte, as.numeric))
+    dplyr::slice(n = -1) %>% 
+    tidyr::pivot_longer(cols = -info_variables,
+                        names_to = "analyte", 
+                        values_to = "value") %>%
+    tidyr::pivot_wider(names_from = info_variables) %>% 
+    dplyr::rename(exact_mass = `Exact mass of most abundant isotopologue`,
+                  fraction = Fraction) %>% 
+    dplyr::mutate(exact_mass = purrr::map_chr(exact_mass,
+                                              function(x) stringr::str_remove_all(x, 
+                                                                                  "[\\[\\]]"))) %>% 
+    dplyr::mutate(dplyr::across(-analyte, as.numeric))
   return(analytes_info)
 }
 
@@ -217,5 +218,27 @@ create_long_data <- function(block, metadata = NULL) {
     dplyr::relocate(charge, .before = all_of(new_output_name))
   
   return(block)
+}
+
+read_lacytools_summary <- function(summary_file) {
+  
+  data <- read_non_rectangular(summary_file)
+  
+  all_blocks <- purrr::map(outputs,
+                           function(x) get_block(data, x))
+  
+  all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
+  
+  long_data_list <- purrr::map(all_blocks, create_long_data)
+  charges <- as.factor(purrr::map_chr(long_data_list, function(x) unique(x$charge)))
+  charge_sep_list <- split(long_data_list, charges)
+  
+  analytes_info <- get_analytes_info_from_list(data, outputs)
+  
+  long_data <- purrr::map(charge_sep_list, function(x) purrr::reduce(x, dplyr::left_join)) %>%
+    purrr::reduce(dplyr::full_join) %>% 
+    dplyr::left_join(analytes_info, by = "analyte")
+  
+  return(long_data)
 }
 
