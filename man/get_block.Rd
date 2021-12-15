@@ -2,26 +2,26 @@
 % Please edit documentation in R/fct_data_import.R
 \name{get_block}
 \alias{get_block}
-\title{Get block}
+\title{Create a subset containing one block from a LacyTools summary.}
 \usage{
 get_block(data, variable, name_specific = "Spike", name_total = "Total")
 }
 \arguments{
-\item{data}{}
+\item{data}{A dataframe with the LacyTools summary.}
 
-\item{variable}{}
+\item{variable}{The name of a LacyTools output format.}
 
-\item{name_specific}{}
+\item{name_specific}{The word(s) within the sample name used to refer to Specific samples.}
 
-\item{name_total}{}
+\item{name_total}{The word(s) within the sample name used to refer to Total samples.}
 }
 \value{
-
+A dataframe that is a subset of the input dataframe.
 }
 \description{
-Get block
+Create a subset containing one block from a LacyTools summary.
 }
 \examples{
+data(LacyTools_summary)
 get_block(LacyTools_summary, variable = "Absolute Intensity (Background Subtracted, 2+)")
-
 }

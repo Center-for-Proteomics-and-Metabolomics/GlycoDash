@@ -10,7 +10,8 @@ detect_plate_and_well(data)
 \item{data}{A dataframe. Should include a column named "sample_name".}
 }
 \value{
-
+The input dataframe with an added column named "plate_well" that says on which plate
+and in which well a sample was analysed.
 }
 \description{
 Detect plate and well

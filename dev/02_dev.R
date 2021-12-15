@@ -20,6 +20,16 @@ usethis::use_package( "shinydashboard" )
 usethis::use_package( "shinyjs" )
 usethis::use_package( "stringr" )
 usethis::use_package( "purrr" )
+usethis::use_package( "plater" )
+usethis::use_package( "tidyr" )
+usethis::use_package( "dplyr" )
+usethis::use_package( "snakecase" )
+usethis::use_package( "shinyFeedback" )
+usethis::use_package( "tools" )
+usethis::use_package( "rlang" )
+usethis::use_package( "tidyselect" )
+
+usethis::use_pipe()
 
 ## Add modules ----
 ## Create a module infrastructure in R/

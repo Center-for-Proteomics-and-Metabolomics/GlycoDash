@@ -10,6 +10,7 @@
 mod_data_import_ui <- function(id){
   ns <- NS(id)
   tagList(
+    shinyFeedback::useShinyFeedback(),
     fluidPage(
       fluidRow(
         h1("Data Import")
@@ -27,10 +28,10 @@ mod_data_import_ui <- function(id){
           shinydashboard::box(
             title = "Read and convert data",
             width = NULL,
-            "If both a metadata file and a plate design file have been supplied, the metadata will be added automatically.",
+            actionButton(ns("read_summary"), "Convert the LacyTools summary file to an R-suitable format"),
             br(),
             br(),
-            actionButton(ns("read_summary"), "Convert the LacyTools summary file to an R-suitable format")
+            actionButton(ns("add_metadata"), "Add the metadata")
           )
         ),
         column(
@@ -49,11 +50,73 @@ mod_data_import_ui <- function(id){
 #' data_import Server Functions
 #'
 #' @noRd 
-mod_data_import_server <- function(id){
+mod_data_import_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    output$data_table <- DT::renderDT(shinipsum::random_DT(nrow = 100, ncol = 50,
-                                                              options = list(scrollX = TRUE)))
+    
+    r$mod_01 <- reactiveValues()
+    
+    ext_lacytools_summary <- reactive({
+      req(input$lacytools_summary)
+      ext <- tools::file_ext(input$lacytools_summary$name)
+      return(ext)
+    })
+    
+    observe({
+      req(input$lacytools_summary)
+      shinyFeedback::feedbackWarning("lacytools_summary",
+                                     ext_lacytools_summary() != "txt",
+                                     text = "Please upload a .txt file.")
+    })
+    
+    observe({
+      req(input$metadata)
+      shinyFeedback::feedbackWarning("metadata",
+                                     !(tools::file_ext(input$metadata$name) %in% c("xlsx", "xls")),
+                                     text = "Please upload a .xlsx or .xls file.")
+    })
+    
+    observe({
+      req(input$plate_design)
+      shinyFeedback::feedbackWarning("plate_design",
+                                     !(tools::file_ext(input$plate_design$name) %in% c("xlsx", "xls")),
+                                     text = "Please upload a .xlsx or .xls file.")
+    })
+    
+    observe({
+      shinyjs::toggleState(id = "read_summary", 
+                           !is.null(input$lacytools_summary))
+    })
+    
+    observe({
+      shinyjs::toggleState(id = "read_summary",
+                           ext_lacytools_summary() == "txt")
+    })
+    
+    data <- eventReactive(input$read_summary, {
+      
+      data <- read_non_rectangular(input$lacytools_summary$datapath)
+      
+      all_blocks <- purrr::map(outputs,
+                              function(x) get_block(data, x))
+      
+      all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
+
+      long_data_list <- purrr::map(all_blocks, create_long_data)
+      charges <- as.factor(purrr::map_chr(long_data_list, function(x) unique(x$charge)))
+      charge_sep_list <- split(long_data_list, charges)
+
+      long_data <- purrr::map(charge_sep_list, function(x) purrr::reduce(x, dplyr::left_join)) %>%
+        purrr::reduce(dplyr::full_join)
+
+      return(long_data)
+        
+    })
+    
+    output$data_table <- DT::renderDT({
+      req(data())
+      DT::datatable(data(), options = list(scrollX = TRUE))
+    })
   })
 }
     
