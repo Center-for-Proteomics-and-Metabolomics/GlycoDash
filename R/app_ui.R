@@ -36,6 +36,7 @@ app_ui <- function(request) {
         ),
       
       body = shinydashboard::dashboardBody(
+        shinyalert::useShinyalert(),
         shinyjs::useShinyjs(),
         shinydashboard::tabItems(
           shinydashboard::tabItem(

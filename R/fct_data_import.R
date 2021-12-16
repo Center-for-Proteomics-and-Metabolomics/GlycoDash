@@ -242,3 +242,63 @@ read_lacytools_summary <- function(summary_file) {
   return(long_data)
 }
 
+read_plate_design <- function(plate_design_file) {
+  
+  plate_design <- readxl::read_excel(plate_design_file)
+  path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
+  readr::write_csv(plate_design, file = path_to_platedesign_csv)
+  plate_design <- plater::read_plate(file = path_to_platedesign_csv, 
+                                     well_ids_column = "well")
+  return(plate_design)
+}
+
+process_plate_design <- function (plate_design) {
+  plate_design <- plate_design %>%
+    tidyr::pivot_longer(cols = -well,
+                        names_to = "plate",
+                        values_to = "sample_id") %>%
+    dplyr::mutate(plate = stringr::str_extract(plate, "\\d+"),
+                  well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
+                  plate_well = paste(plate, well, sep = "_")) %>% 
+    dplyr::arrange(plate_well) %>% 
+    dplyr::select(-c(plate, well)) %>% 
+    tidyr::extract(col = sample_id, 
+                   into = c("sample_type"), 
+                   regex = "([[:alpha:]]+)",
+                   remove = FALSE)
+  
+  plate_design <- handle_duplicates(plate_design)
+  
+  return(plate_design)
+}
+
+handle_duplicates <- function(plate_design) {
+  new_sample_ids <- vector()
+  new_sample_types <- vector()
+  duplicate <- vector()
+  for (i in 1:length(plate_design$sample_id)) {
+    if (i == 1 & plate_design$sample_id[i] == "duplicate") {
+      stop(print("Error: first sample is a duplicate."))
+    }
+    if (plate_design$sample_id[i] == "duplicate") {
+      new_sample_ids[i] <- plate_design$sample_id[i-1]
+      new_sample_types[i] <- plate_design$sample_type[i-1]
+      duplicate[i] <- TRUE
+    } else {
+      new_sample_ids[i] <- plate_design$sample_id[i]
+      new_sample_types[i] <- plate_design$sample_type[i]
+      duplicate[i] <- FALSE
+    }
+  }
+  new_plate_design <- plate_design %>% 
+    dplyr::mutate(sample_id = new_sample_ids,
+                  sample_type = new_sample_types,
+                  duplicate = duplicate)
+  return(new_plate_design)
+}
+
+read_and_process_plate_design <- function(plate_design_file) {
+  plate_design <- read_plate_design(plate_design_file)
+  plate_design <- process_plate_design(plate_design)
+  return(plate_design)
+}

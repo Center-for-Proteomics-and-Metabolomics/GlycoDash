@@ -41,38 +41,53 @@ data <- read_lacytools_summary(lacytools_file)
 # If a user would have to save an Excel file as a .csv file manually, it cannot be 
 # guaranteed that the right delimiter would be used.
 
-# make this into a read_plate_design() function?
-
-plate_design <- readxl::read_excel(system.file("extdata",
-                                               "Plate_design.xlsx",
-                                               package = "glycodash"))
-path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
-readr::write_csv(plate_design, file = path_to_platedesign_csv)
-plate_design <- plater::read_plate(file = path_to_platedesign_csv, 
-                                   well_ids_column = "well")
+read_plate_design <- function(plate_design_file) {
+  
+  plate_design <- readxl::read_excel(plate_design_file)
+  path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
+  readr::write_csv(plate_design, file = path_to_platedesign_csv)
+  plate_design <- plater::read_plate(file = path_to_platedesign_csv, 
+                                     well_ids_column = "well")
+  return(plate_design)
+}
 
 # Processing the plate_design dataframe (pivoting to a long format and adding
 # a plate_well column)
 # Exclude the sample_type part since this could be different for different data?
 
 # Make this into a process plate_design function
-plate_design <- plate_design %>%
+
+plate_design_file <- system.file("extdata",
+                                 "plate_design.xlsx",
+                                 package = "glycodash")
+
+process_plate_design <- function (plate_design) {
+  plate_design <- plate_design %>%
   tidyr::pivot_longer(cols = -well,
-               names_to = "plate",
-               values_to = "sample_id") %>%
-  dplyr::mutate(plate = stringr::str_extract(plate, "\\d+"),
-         well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
-         plate_well = paste(plate, well, sep = "_")) %>% 
-  dplyr::arrange(plate_well) %>% 
-  dplyr::select(-c(plate, well)) #%>% 
-  # tidyr::extract(col = sample_id, into = c("sample_type"), regex = "(.+_|[[:alpha:]]+)", 
-  #        remove = FALSE) %>% 
-  # dplyr::mutate(sample_type = stringr::str_remove(sample_type, "_"))
+                      names_to = "plate",
+                      values_to = "sample_id") %>%
+    dplyr::mutate(plate = stringr::str_extract(plate, "\\d+"),
+                  well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
+                  plate_well = paste(plate, well, sep = "_")) %>% 
+    dplyr::arrange(plate_well) %>% 
+    dplyr::select(-c(plate, well)) %>% 
+    tidyr::extract(col = sample_id, 
+                   into = c("sample_type"), 
+                   regex = "([[:alpha:]]+)",
+                   remove = FALSE)
+  
+  plate_design <- handle_duplicates(plate_design)
+  
+  return(plate_design)
+}
+
+# Show automatically determined groups and ask user if they want to edit them
 
 # Ask Tamas whether plate_design files always look like this and whether duplicates
 # are always handled in this way.
 handle_duplicates <- function(plate_design) {
   new_sample_ids <- vector()
+  new_sample_types
   duplicate <- vector()
   for (i in 1:length(plate_design$sample_id)) {
     if (i == 1 & plate_design$sample_id[i] == "duplicate") {
@@ -80,19 +95,28 @@ handle_duplicates <- function(plate_design) {
       }
     if (plate_design$sample_id[i] == "duplicate") {
       new_sample_ids[i] <- plate_design$sample_id[i-1]
+      new_sample_types[i] <- plate_design$sample_type[i-1]
       duplicate[i] <- TRUE
       } else {
         new_sample_ids[i] <- plate_design$sample_id[i]
+        new_sample_types[i] <- plate_design$sample_type[i]
         duplicate[i] <- FALSE
     }
   }
   new_plate_design <- plate_design %>% 
     dplyr::mutate(sample_id = new_sample_ids,
+                  sample_type = new_sample_types,
                   duplicate = duplicate)
   return(new_plate_design)
 }
 
-plate_design <- handle_duplicates(plate_design)
+read_and_process_plate_design <- function(plate_design_file) {
+  plate_design <- read_plate_design(plate_design_file)
+  plate_design <- process_plate_design(plate_design)
+  return(plate_design)
+}
+
+plate_design <- read_and_process_plate_design(plate_design_file)
 
 # make a read metadata function, choose date columns and sample_id column?
 

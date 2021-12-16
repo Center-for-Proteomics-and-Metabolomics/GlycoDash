@@ -28,6 +28,7 @@ usethis::use_package( "shinyFeedback" )
 usethis::use_package( "tools" )
 usethis::use_package( "rlang" )
 usethis::use_package( "tidyselect" )
+usethis::use_package( "shinyalert" )
 
 usethis::use_pipe()
 
