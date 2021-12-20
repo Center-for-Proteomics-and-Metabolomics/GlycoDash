@@ -58,6 +58,7 @@ mod_data_import_server <- function(id, r){
     ns <- session$ns
     
     r$mod_01 <- reactiveValues()
+    x <- reactiveValues()
     
     ext_lacytools_summary <- reactive({
       req(input$lacytools_summary)
@@ -106,9 +107,14 @@ mod_data_import_server <- function(id, r){
       read_lacytools_summary(input$lacytools_summary$datapath)
     })
     
+    observe({
+      x$data <- data()
+      })
+    
+    
     output$data_table <- DT::renderDT({
-      req(data())
-      DT::datatable(data(), options = list(scrollX = TRUE))
+      req(x$data)
+      DT::datatable(x$data, options = list(scrollX = TRUE))
     })
     
     observe({
@@ -126,8 +132,21 @@ mod_data_import_server <- function(id, r){
       return(plate_design)
     })
     
-    output$groups <- renderText({
-      unique(plate_design()$sample_type)
+    output$group <- DT::renderDataTable({
+      groups <- data.frame(unique(plate_design()$sample_type))
+      groups_tbl <- DT::datatable(groups,
+                                  options = list(
+                                    scrollY = "150px",
+                                    paging = FALSE,
+                                    searching = FALSE,
+                                    columnDefs = list(
+                                      list(
+                                        className = 'dt-center', 
+                                        targets = "_all"))),
+                                  colnames = "Sample type",
+                                  rownames = FALSE
+                                  )
+      return(groups_tbl)
     })
     
     observeEvent(plate_design(), {
@@ -135,14 +154,75 @@ mod_data_import_server <- function(id, r){
         html = TRUE,
         text = tagList(
           "Based on the sample IDs the following groups were defined:",
-          textOutput(ns("groups"), inline = TRUE)
+          DT::dataTableOutput(ns("group"))
         ),
         size = "m",
         confirmButtonText = "Accept these groups",
         showCancelButton = TRUE,
-        cancelButtonText = "Manually enter groups"
+        cancelButtonText = "Manually enter groups",
+        callbackR = function(y) {
+          x$response <- y
+          }
       )
     })
+    
+    empty_data <- data.frame("group" = c("test", "test2", "test3"),
+                               "pattern" = c("bla", "", ""))
+    
+    x$manual_groups <- empty_data
+    
+    
+    output$test <- DT::renderDataTable({
+      
+      table <- DT::datatable(empty_data,
+                    options = list(
+                      scrollY = "150px",
+                      paging = FALSE,
+                      searching = FALSE),
+                    rownames = FALSE,
+                    editable = "cell")
+      return(table)
+      
+    })
+    
+    proxy <- DT::dataTableProxy("test")
+    
+    observeEvent(input$test_cell_edit, {
+      info <- input$test_cell_edit
+      str(info)
+      empty_data <<- DT::editData(empty_data, info, "proxy")
+      x$manual_groups <- empty_data
+      
+    })
+    
+    observeEvent(x$empty_data, {
+      print(x$empty_data)
+    })
+    
+    observeEvent(x$response, {
+      if (x$response) {
+         x$data <- dplyr::left_join(x$data, plate_design())
+         print("Data has been updated")
+      } else {
+        shinyjs::delay(381,
+                       shinyalert::shinyalert(
+                         html = TRUE,
+                         text = tagList(
+                           DT::dataTableOutput(ns("test"))
+                         ),
+                         size = "m",
+                         confirmButtonText = "Enter groups",
+                         showCancelButton = TRUE,
+                         cancelButtonText = "Cancel adding sample ID's"
+                         )
+                       )
+        
+      }
+    })
+    
+    
+    
+    
     
   })
 }
