@@ -16,6 +16,7 @@ Imports:
     plater,
     processx,
     purrr,
+    rhandsontable,
     rlang,
     shinipsum,
     shiny (>= 1.7.1),

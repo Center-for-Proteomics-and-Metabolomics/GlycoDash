@@ -150,6 +150,10 @@ check_matches <- function (plate_design, metadata) {
   }
 }
 
+empty_data <- data.frame("group" = c("", "", ""),
+                         "pattern" = c("", "", ""))
+
+DT::datatable(empty_data)
 
 ```
 

@@ -127,6 +127,7 @@ get_block <- function(data, variable, name_specific = "Spike", name_total = "Tot
     dplyr::mutate(dplyr::across(-c(sample_name, lacytools_output), as.numeric)) %>% 
     dplyr::select(-tidyselect::vars_select_helpers$where(function(x) all(is.na(x))))
   block <- detect_group(block, name_specific, name_total)
+  block <- detect_plate_and_well(block)
   return(block)
 }
 
@@ -162,7 +163,6 @@ detect_plate_and_well <- function(data) {
 #'
 #' @examples
 add_metadata <- function(data, metadata){
-  data <- detect_plate_and_well(data)
   data <- dplyr::left_join(data, metadata, by = "plate_well")
   return (data)
 }
@@ -207,7 +207,7 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
 create_long_data <- function(block, metadata = NULL) {
   charge_value <- stringr::str_extract(block$lacytools_output[1], "\\d\\+")
   new_output_name <- stringr::str_remove(block$lacytools_output[1], "_\\d\\+")
-  cols_not_to_pivot <- c("sample_name", "group", colnames(metadata))
+  cols_not_to_pivot <- c("sample_name", "group", "plate_well", colnames(metadata))
   
   block <- block %>% 
     dplyr::select(-lacytools_output) %>%
