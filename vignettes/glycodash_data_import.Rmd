@@ -31,6 +31,31 @@ The data-import functions can be used to convert a LacyTools summary file to a f
 
 lacytools_file <- system.file("extdata", "LacyTools_summary.txt", package = "glycodash")
 
+groups_file <- system.file("extdata", "groups.rds", package = "glycodash")
+load(groups_file)
+
+plate_well <- vector()
+i <- 1
+for (plate in 1:7) {
+  for (row in 1:8) {
+    letters <- c("A", "B", "C", "D", "E", "F", "G", "H")
+    for (well in 1:12) {
+      plate_well[i] <- paste0(plate, 
+                              "_", 
+                              letters[row], 
+                              stringr::str_replace(well, 
+                                                   pattern = "(^.{1}$)",
+                                                   replace = "0\\1"))
+      i <- i + 1
+    }
+  }
+}
+
+groups <- groups %>% 
+  dplyr::mutate(plate_well = plate_well)
+
+save(groups, file = "groups.rds")
+
 data <- read_lacytools_summary(lacytools_file)
 
 # Reading in the platedesign from an Excel file, writing the platedesign 
