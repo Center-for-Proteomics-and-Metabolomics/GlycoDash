@@ -34,7 +34,18 @@ mod_data_import_ui <- function(id){
             actionButton(ns("add_plate_design"), "Add sample ID's from the plate design to the data"),
             br(),
             br(),
-            actionButton(ns("add_metadata"), "Add the metadata")
+            div(
+              id = ns("metadata_menu"),
+              selectizeInput(ns("sample_id_column"),
+                          "Which column in the metadata contains the sample ID's?",
+                          choices = NULL,
+                          options = list(placeholder = "select a column")),
+              selectInput(ns("date_columns"),
+                          "Which columns in the metadata contain dates?",
+                          choices = c(""),
+                          multiple = TRUE)
+            ),
+            actionButton(ns("add_metadata"), "Add the metadata"),
           )
         ),
         column(
@@ -58,6 +69,10 @@ mod_data_import_server <- function(id, r){
     ns <- session$ns
     
     x <- reactiveValues()
+    
+    observe({
+      shinyjs::toggle("metadata_menu", condition = !is.null(x$metadata))
+    })
     
     ext_lacytools_summary <- reactive({
       req(input$lacytools_summary)
@@ -85,10 +100,14 @@ mod_data_import_server <- function(id, r){
     })
     
     observe({
-      req(input$metadata)
-      shinyFeedback::feedbackWarning("metadata",
-                                     !(ext_metadata() %in% c("xlsx", "xls")),
+      req(ext_metadata())
+      if (ext_metadata() %in% c("xlsx", "xls")) {
+        x$metadata <- read_metadata(input$metadata$datapath)
+      } else {
+        shinyFeedback::feedbackWarning("metadata",
+                                     show = TRUE,
                                      text = "Please upload a .xlsx or .xls file.")
+      }
     })
     
     observe({
@@ -252,11 +271,29 @@ mod_data_import_server <- function(id, r){
     })
     
     observe({
-      shinyjs::toggleState(id = "add_metadata", 
+      shinyjs::toggleState(id = "add_metadata",
                            !is.null(input$metadata))
       shinyjs::toggleState(id = "add_metadata",
                            ext_metadata() %in% c("xlsx", "xls"))
+      shinyjs::toggleState(id = "add_metadata",
+                           input$sample_id_column != "")
     })
+    
+    observeEvent(x$metadata, {
+      updateSelectizeInput(inputId = "sample_id_column",
+                           choices = unique(colnames(x$metadata)),
+                           selected = "",
+                           server = TRUE)
+      updateSelectInput(inputId = "date_columns",
+                        choices = unique(colnames(x$metadata)),
+                        selected = stringr::str_subset(colnames(x$metadata),
+                                                       pattern = stringr::regex("date",
+                                                                                ignore_case = TRUE)))
+    })
+    
+    observe({print(x$metadata)})
+    observeEvent(x$metadata, {
+      print(input$sample_id_column)})
     
   })
 }
