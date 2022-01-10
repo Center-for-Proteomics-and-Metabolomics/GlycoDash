@@ -22,8 +22,8 @@ mod_data_import_ui <- function(id){
             title = "Upload your files",
             width = NULL,
             fileInput(ns("lacytools_summary"), "Upload LacyTools summary.txt file:"),
-            fileInput(ns("metadata"), "Upload a metadata Excel file:"),
-            fileInput(ns("plate_design"), "Upload a plate design Excel file:")
+            fileInput(ns("plate_design"), "Upload a plate design Excel file:"),
+            fileInput(ns("metadata"), "Upload a metadata Excel file:")
           ),
           shinydashboard::box(
             title = "Read and convert data",
@@ -57,7 +57,6 @@ mod_data_import_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    r$mod_01 <- reactiveValues()
     x <- reactiveValues()
     
     ext_lacytools_summary <- reactive({
@@ -72,6 +71,12 @@ mod_data_import_server <- function(id, r){
       return(ext)
     })
     
+    ext_metadata <- reactive({
+      req(input$metadata)
+      ext <- tools::file_ext(input$metadata$name)
+      return(ext)
+    })
+    
     observe({
       req(input$lacytools_summary)
       shinyFeedback::feedbackWarning("lacytools_summary",
@@ -82,23 +87,20 @@ mod_data_import_server <- function(id, r){
     observe({
       req(input$metadata)
       shinyFeedback::feedbackWarning("metadata",
-                                     !(tools::file_ext(input$metadata$name) %in% c("xlsx", "xls")),
+                                     !(ext_metadata() %in% c("xlsx", "xls")),
                                      text = "Please upload a .xlsx or .xls file.")
     })
     
     observe({
       req(input$plate_design)
       shinyFeedback::feedbackWarning("plate_design",
-                                     !(tools::file_ext(input$plate_design$name) %in% c("xlsx", "xls")),
+                                     !(ext_plate_design() %in% c("xlsx", "xls")),
                                      text = "Please upload a .xlsx or .xls file.")
     })
     
     observe({
       shinyjs::toggleState(id = "read_summary", 
                            !is.null(input$lacytools_summary))
-    })
-    
-    observe({
       shinyjs::toggleState(id = "read_summary",
                            ext_lacytools_summary() == "txt")
     })
@@ -111,7 +113,6 @@ mod_data_import_server <- function(id, r){
       x$data <- data()
       })
     
-    
     output$data_table <- DT::renderDT({
       req(x$data)
       DT::datatable(x$data, options = list(scrollX = TRUE))
@@ -120,9 +121,6 @@ mod_data_import_server <- function(id, r){
     observe({
       shinyjs::toggleState(id = "add_plate_design", 
                            !is.null(input$plate_design))
-    })
-    
-    observe({
       shinyjs::toggleState(id = "add_plate_design",
                            ext_plate_design() %in% c("xlsx", "xls"))
     })
@@ -166,63 +164,99 @@ mod_data_import_server <- function(id, r){
       )
     })
     
-    empty_data <- data.frame("group" = c("test", "test2", "test3"),
-                               "pattern" = c("bla", "", ""))
+    # empty_data <- data.frame("group" = c("test", "test2", "test3"),
+    #                            "pattern" = c("bla", "", ""))
+    # 
+    # x$manual_groups <- empty_data
     
-    x$manual_groups <- empty_data
     
-    
-    output$test <- DT::renderDataTable({
-      
-      table <- DT::datatable(empty_data,
-                    options = list(
-                      scrollY = "150px",
-                      paging = FALSE,
-                      searching = FALSE),
-                    rownames = FALSE,
-                    editable = "cell")
-      return(table)
-      
-    })
-    
-    proxy <- DT::dataTableProxy("test")
-    
-    observeEvent(input$test_cell_edit, {
-      info <- input$test_cell_edit
-      str(info)
-      empty_data <<- DT::editData(empty_data, info, "proxy")
-      x$manual_groups <- empty_data
-      
-    })
-    
-    observeEvent(x$empty_data, {
-      print(x$empty_data)
-    })
+    # output$test <- DT::renderDataTable({
+    #   
+    #   table <- DT::datatable(empty_data,
+    #                 options = list(
+    #                   scrollY = "150px",
+    #                   paging = FALSE,
+    #                   searching = FALSE),
+    #                 rownames = FALSE,
+    #                 editable = "cell")
+    #   return(table)
+    #   
+    # })
+    # 
+    # proxy <- DT::dataTableProxy("test")
+    # 
+    # observeEvent(input$test_cell_edit, {
+    #   info <- input$test_cell_edit
+    #   str(info)
+    #   empty_data <<- DT::editData(empty_data, info, "proxy")
+    #   x$manual_groups <- empty_data
+    #   
+    # })
     
     observeEvent(x$response, {
       if (x$response) {
          x$data <- dplyr::left_join(x$data, plate_design())
          print("Data has been updated")
       } else {
+        
         shinyjs::delay(381,
                        shinyalert::shinyalert(
                          html = TRUE,
                          text = tagList(
-                           DT::dataTableOutput(ns("test"))
+                           tags$b("Upload an Excel file or an R object (.rds) that contains:"),
+                           tags$ul(
+                             tags$li(tags$span("a column named \"sample_id\" with all sample ID's for the data")),
+                             tags$li(tags$span("a column named \"group\" with the corresponding group that the sample belongs to"))
+                           ),
+                           fileInput(ns("groups"), label = "Upload file:")
                          ),
-                         size = "m",
+                         size = "s",
                          confirmButtonText = "Enter groups",
+                         # type = "input",
+                         # inputType = "file",
                          showCancelButton = TRUE,
-                         cancelButtonText = "Cancel adding sample ID's"
+                         cancelButtonText = "Cancel adding sample ID's",
+                         callbackR = function(y) {
+                           x$response_2 <- y
+                         }
                          )
                        )
-        
       }
     })
     
+    ext_groups <- reactive({
+      req(input$groups)
+      ext <- tools::file_ext(input$groups$name)
+      return(ext)
+    })
     
+    observe({
+      req(ext_groups())
+      if (ext_groups() == "rds") {
+        load(file = input$groups$datapath)
+        x$groups <- groups
+      } else { if (ext_groups() %in% c("xlsx", "xls")) {
+        x$groups <- readxl::read_excel(input$groups$datapath)
+        } else {
+          shinyFeedback::feedbackWarning("groups", 
+                                         show = TRUE,
+                                         text = "Please upload a .xlsx, .xls or .rds file.")
+          }
+        }
+    })
     
+    observe({
+      req(x$groups)
+      x$data <- dplyr::left_join(x$data, x$groups)
+      print("Data has been updated")
+    })
     
+    observe({
+      shinyjs::toggleState(id = "add_metadata", 
+                           !is.null(input$metadata))
+      shinyjs::toggleState(id = "add_metadata",
+                           ext_metadata() %in% c("xlsx", "xls"))
+    })
     
   })
 }
