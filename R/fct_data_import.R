@@ -302,3 +302,13 @@ read_and_process_plate_design <- function(plate_design_file) {
   plate_design <- process_plate_design(plate_design)
   return(plate_design)
 }
+
+read_metadata <- function (metadata_file) {
+  metadata <- readxl::read_excel(metadata_file,
+                                 col_types = "text", 
+                                 na = c("", "NA"))
+  metadata <- metadata %>% 
+    dplyr::rename_with(.cols = tidyselect::everything(), 
+                       .fn = snakecase::to_snake_case)
+  return(metadata)
+}
