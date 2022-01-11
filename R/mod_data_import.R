@@ -137,12 +137,25 @@ mod_data_import_server <- function(id, r){
       DT::datatable(x$data, options = list(scrollX = TRUE))
     })
     
+    # This toggleState call ensures that the add_plate_design actionButton is
+    # disabled when the app is initialized
     observe({
-      shinyjs::toggleState(id = "add_plate_design", 
-                           !is.null(input$plate_design))
-      shinyjs::toggleState(id = "add_plate_design",
-                           ext_plate_design() %in% c("xlsx", "xls"))
+      shinyjs::disable(id = "add_plate_design")
+      if (all(!is.null(x$data), !is.null(input$plate_design))) {
+        if (ext_plate_design() %in% c("xlsx", "xls")) {
+          shinyjs::enable(id = "add_plate_design")
+        }
+      }
     })
+    
+    # This toggleState call enables the add_plate_design actionButton when the
+    # correct plate_design file type is uploaded and when the data has been converted 
+    # observe({
+    #   shinyjs::toggleState(id = "add_plate_design", 
+    #                        all(!is.null(input$plate_design), 
+    #                            !is.null(x$data), 
+    #                            ext_plate_design() %in% c("xlsx", "xls")))
+    # })
     
     plate_design <- eventReactive(input$add_plate_design, {
       plate_design <- read_and_process_plate_design(input$plate_design$datapath)
