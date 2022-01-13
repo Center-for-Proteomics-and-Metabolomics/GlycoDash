@@ -33,27 +33,6 @@ lacytools_file <- system.file("extdata", "LacyTools_summary.txt", package = "gly
 
 groups_file <- system.file("extdata", "groups.rds", package = "glycodash")
 load(groups_file)
-# groups <- groups %>% dplyr::select(-plate_well)
-# 
-# plate_well <- vector()
-# i <- 1
-# for (plate in 1:7) {
-#   for (row in 1:8) {
-#     letters <- c("A", "B", "C", "D", "E", "F", "G", "H")
-#     for (well in 1:12) {
-#       plate_well[i] <- paste0(plate, 
-#                               "_", 
-#                               letters[row], 
-#                               stringr::str_replace(well, 
-#                                                    pattern = "(^.{1}$)",
-#                                                    replace = "0\\1"))
-#       i <- i + 1
-#     }
-#   }
-# }
-# 
-# groups <- groups %>% 
-#   dplyr::mutate(plate_well = plate_well)
 
 plate_design <- dplyr::left_join(plate_design, groups, by = "sample_id")
 
@@ -152,28 +131,46 @@ b <- unique(b)
 
 # make a read metadata function, choose date columns and sample_id column?
 
-read_metadata <- function (metadata_file, date_columns, sample_id_column) {
+date_with_text <- function(date_text_values, origin = "1899-12-30"){
+  no_nas <- date_text_values[!is.na(date_text_values)]
+  test <- suppressWarnings(as.numeric(no_nas))
+  num <- suppressWarnings(as.numeric(date_text_values))
+  dates <- as.Date(num, origin = origin)
+  if(anyNA(test)){
+    dates <- as.character(dates)
+    dates[is.na(num)] <- as.character(date_text_values[is.na(num)])
+    message(paste("Some date entries in", 
+                  dplyr::cur_column(), 
+                  "contain text. Output will have class character."))
+  }
+  return(dates)
+}
+
+read_metadata <- function (metadata_file, sample_id_column) {
   metadata <- readxl::read_excel(metadata_file,
                                col_types = "text", 
                                na = c("", "NA"))
   metadata <- metadata %>% 
     dplyr::rename_with(.cols = tidyselect::everything(), 
                        .fn = snakecase::to_snake_case) %>% 
-    dplyr::rename(sample_id = sample_id_column)
+    dplyr::rename(sample_id = sample_id_column) 
 }
 
-metadata <- readxl::read_excel(system.file("extdata",
-                                           "Metadata.xlsx",
-                                           package = "glycodash"),
-                               col_types = "text", 
-                               na = c("", "NA"))
+metadata_file <- system.file("extdata",
+                             "Metadata.xlsx",
+                             package = "glycodash")
+
+date_cols <- c("start_of_symptoms", "collection_date")
+metadata <- read_metadata(metadata_file, "id_on_sample_tube")
+metadata <- metadata %>% 
+  dplyr::mutate(across(date_cols, date_with_text))
 
 metadata <- metadata %>% 
   dplyr::rename_with(.cols = tidyselect::everything(), 
                      .fn = snakecase::to_snake_case) %>% 
   dplyr::rename(sample_id = id_on_sample_tube)
 
-metadata_left <- dplyr::left_join(plate_design, metadata, by = "sample_id")
+metadata_left <- dplyr::left_join(data, metadata)
 
 link_metadata_to_platedesign <- function(plate_design, metadata) {
   no_match <- check_matches(plate_design, metadata)

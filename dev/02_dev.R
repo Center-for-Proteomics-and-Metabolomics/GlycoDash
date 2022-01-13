@@ -30,6 +30,7 @@ usethis::use_package( "rlang" )
 usethis::use_package( "tidyselect" )
 usethis::use_package( "shinyalert" )
 usethis::use_package( "rhandsontable" )
+usethis::use_package( "glue" )
 
 usethis::use_pipe()
 
