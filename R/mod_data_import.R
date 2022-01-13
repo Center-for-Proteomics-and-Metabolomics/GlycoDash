@@ -268,12 +268,66 @@ mod_data_import_server <- function(id, r){
     })
     
     observeEvent(input$add_metadata, {
+      # Convert all date columns to date format (or if it's a mixed date and text format,
+      # to character) and rename the column with sample_ids
       x$metadata <- x$metadata %>% 
         dplyr::mutate(dplyr::across(tidyselect::any_of(input$date_columns), 
                                     date_with_text)) %>% 
         dplyr::rename(sample_id = input$sample_id_column)
-      x$data <- dplyr::left_join(x$data, x$metadata)
-      })
+      # check for unmatched sample ids in the data
+      tryCatch(expr = {
+        check_sample_id_matches(plate_design_ids = x$data$sample_id, 
+                                metadata_ids = x$metadata$sample_id)
+        x$data <- dplyr::left_join(x$data, 
+                                   x$metadata)
+        },
+        warning = function(w) {
+          unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data$sample_id, 
+                                                                    metadata = x$metadata$sample_id))
+          shinyalert::shinyalert(
+            html = TRUE,
+            text = tagList(
+              paste(length(unmatched_ids),
+                    "sample ID's in the data had no match in the metadata:"),
+              DT::dataTableOutput(ns("unmatched_ids")),
+              "Please check if the spelling of sample IDs in your metadata corresponds to the spelling in your plate design."
+            ),
+            #type = "warning",
+            size = "m",
+            confirmButtonText = "Continue with adding metadata despite unmatched sample ID's",
+            showCancelButton = TRUE,
+            cancelButtonText = "Cancel adding the metadata",
+            callbackR = function(y) {
+              x$response_3 <- y
+            }
+            )
+          }
+        )
+    })
+    
+    output$unmatched_ids <- DT::renderDataTable({
+      unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data$sample_id, 
+                                                                metadata = x$metadata$sample_id))
+      unmatched_ids <- as.data.frame(unmatched_ids)
+      table <- DT::datatable(unmatched_ids,
+                              options = list(
+                              scrollY = "150px",
+                              paging = FALSE,
+                              searching = FALSE,
+                              columnDefs = list(
+                                list(
+                                  className = 'dt-center', 
+                                  targets = "_all"))),
+                              colnames = "Sample ID",
+                              rownames = FALSE)
+      return(table)
+    })
+    
+    observeEvent(x$response_3, {
+      if (x$response_3) {
+        x$data <- dplyr::left_join(x$data, x$metadata)
+      }
+    })
     
   })
 }

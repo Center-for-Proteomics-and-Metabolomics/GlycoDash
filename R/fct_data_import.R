@@ -327,3 +327,17 @@ date_with_text <- function(date_text_values, origin = "1899-12-30"){
   }
   return(dates)
 }
+
+check_sample_id_matches <- function (plate_design_ids, metadata_ids) {
+  # no_match are the sample_ids that are present in the plate_design,
+  # but missing in the metadata
+  no_match <- setdiff(plate_design_ids, metadata_ids)
+  if (!rlang::is_empty(no_match)) {
+    warning(paste(length(no_match),
+                  "sample_ids in platedesign don't have a match in the metadata.",
+                  "The unmatched sample_ids can be found in the vector \"no_match\"."))
+    return(no_match)
+  } else {
+    message("All sample_ids in platedesign have a match in the metadata.")
+  }
+}
