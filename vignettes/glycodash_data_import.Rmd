@@ -152,8 +152,7 @@ read_metadata <- function (metadata_file, sample_id_column) {
                                na = c("", "NA"))
   metadata <- metadata %>% 
     dplyr::rename_with(.cols = tidyselect::everything(), 
-                       .fn = snakecase::to_snake_case) %>% 
-    dplyr::rename(sample_id = sample_id_column) 
+                       .fn = snakecase::to_snake_case) 
 }
 
 metadata_file <- system.file("extdata",
@@ -161,16 +160,10 @@ metadata_file <- system.file("extdata",
                              package = "glycodash")
 
 date_cols <- c("start_of_symptoms", "collection_date")
-metadata <- read_metadata(metadata_file, "id_on_sample_tube")
+metadata <- read_metadata(metadata_file)
 metadata <- metadata %>% 
-  dplyr::mutate(across(date_cols, date_with_text))
-
-metadata <- metadata %>% 
-  dplyr::rename_with(.cols = tidyselect::everything(), 
-                     .fn = snakecase::to_snake_case) %>% 
+  dplyr::mutate(across(date_cols, date_with_text)) %>% 
   dplyr::rename(sample_id = id_on_sample_tube)
-
-metadata_left <- dplyr::left_join(data, metadata)
 
 link_metadata_to_platedesign <- function(plate_design, metadata) {
   no_match <- check_matches(plate_design, metadata)
@@ -178,16 +171,23 @@ link_metadata_to_platedesign <- function(plate_design, metadata) {
   return(list(metadata_left, no_match))
 }
 
-check_matches <- function (plate_design, metadata) {
+check_sample_id_matches <- function (plate_design, metadata) {
+  # no_match are the sample_ids that are present in the plate_design,
+  # but missing in the metadata
   no_match <- setdiff(plate_design$sample_id, metadata$sample_id)
   if (!rlang::is_empty(no_match)) {
-    warning(paste("Some of the sample_ids in platedesign don't have a match in the metadata.",
-                   "The unmatched sample_ids can be found in the vector \"no_match\"."))
+    warning(paste(length(no_match),
+                  "sample_ids in platedesign don't have a match in the metadata.",
+                  "The unmatched sample_ids can be found in the vector \"no_match\"."))
     return(no_match)
   } else {
     message("All sample_ids in platedesign have a match in the metadata.")
   }
 }
+
+data <- dplyr::left_join(data, b)
+
+a <- suppressWarnings(check_sample_id_matches(data, metadata))
 
 empty_data <- data.frame("group" = c("", "", ""),
                          "pattern" = c("", "", ""))
