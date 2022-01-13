@@ -134,7 +134,7 @@ mod_data_import_server <- function(id, r){
     
     output$data_table <- DT::renderDT({
       req(x$data)
-      DT::datatable(x$data, options = list(scrollX = TRUE))
+        DT::datatable(x$data, options = list(scrollX = TRUE))
     })
     
     # This observe call ensures that the add_plate_design actionButton is only
@@ -148,8 +148,41 @@ mod_data_import_server <- function(id, r){
       }
     })
     
+    # This observe call ensures that the add_metadata actionButton is only
+    # enabled under the right circumstances
+    observe({
+      shinyjs::toggleState(id = "add_metadata",
+                           condition = all(isTruthy(x$data), 
+                                           "sample_id" %in% colnames(x$data),
+                                           isTruthy(x$metadata),
+                                           isTruthy(input$sample_id_column)))
+    })
+    
+    # observe({
+    #   shinyjs::toggleState(id = "add_metadata",
+    #                        !is.null(input$metadata))
+    #   shinyjs::toggleState(id = "add_metadata",
+    #                        ext_metadata() %in% c("xlsx", "xls"))
+    #   shinyjs::toggleState(id = "add_metadata",
+    #                        input$sample_id_column != "")
+    # })
+    
     observeEvent(input$add_plate_design, {
       x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
+      shinyalert::shinyalert(
+        html = TRUE,
+        text = tagList(
+          "Based on the sample IDs the following groups were defined:",
+          DT::dataTableOutput(ns("group"))
+        ),
+        size = "m",
+        confirmButtonText = "Accept these groups",
+        showCancelButton = TRUE,
+        cancelButtonText = "Manually enter groups",
+        callbackR = function(y) {
+          x$response <- y
+        }
+      )
     })
     
     output$group <- DT::renderDataTable({
@@ -168,52 +201,6 @@ mod_data_import_server <- function(id, r){
                                   )
       return(groups_tbl)
     })
-    
-    observeEvent(x$plate_design, {
-      shinyalert::shinyalert(
-        html = TRUE,
-        text = tagList(
-          "Based on the sample IDs the following groups were defined:",
-          DT::dataTableOutput(ns("group"))
-        ),
-        size = "m",
-        confirmButtonText = "Accept these groups",
-        showCancelButton = TRUE,
-        cancelButtonText = "Manually enter groups",
-        callbackR = function(y) {
-          x$response <- y
-          }
-      )
-    })
-    
-    # empty_data <- data.frame("group" = c("test", "test2", "test3"),
-    #                            "pattern" = c("bla", "", ""))
-    # 
-    # x$manual_groups <- empty_data
-    
-    
-    # output$test <- DT::renderDataTable({
-    #   
-    #   table <- DT::datatable(empty_data,
-    #                 options = list(
-    #                   scrollY = "150px",
-    #                   paging = FALSE,
-    #                   searching = FALSE),
-    #                 rownames = FALSE,
-    #                 editable = "cell")
-    #   return(table)
-    #   
-    # })
-    # 
-    # proxy <- DT::dataTableProxy("test")
-    # 
-    # observeEvent(input$test_cell_edit, {
-    #   info <- input$test_cell_edit
-    #   str(info)
-    #   empty_data <<- DT::editData(empty_data, info, "proxy")
-    #   x$manual_groups <- empty_data
-    #   
-    # })
     
     observeEvent(x$response, {
       if (x$response) {
@@ -265,21 +252,19 @@ mod_data_import_server <- function(id, r){
         }
     })
     
-    observe({
+    observeEvent(x$response_2, {
       req(x$groups)
-      x$plate_design <- dplyr::left_join(x$plate_design, x$groups)
-      x$data <- dplyr::left_join(x$data, x$plate_design)
-      print("Data has been updated")
+      if (x$response_2) {
+        x$plate_design <- x$plate_design %>% 
+          dplyr::select(-sample_type)
+        x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups)
+        x$groups_and_plate_design <- unique(x$groups_and_plate_design)
+        x$data <- dplyr::left_join(data(), x$groups_and_plate_design)
+        print("Data has been updated")
+      }
     })
     
-    observe({
-      shinyjs::toggleState(id = "add_metadata",
-                           !is.null(input$metadata))
-      shinyjs::toggleState(id = "add_metadata",
-                           ext_metadata() %in% c("xlsx", "xls"))
-      shinyjs::toggleState(id = "add_metadata",
-                           input$sample_id_column != "")
-    })
+    
     
     observeEvent(x$metadata, {
       updateSelectizeInput(inputId = "sample_id_column",
