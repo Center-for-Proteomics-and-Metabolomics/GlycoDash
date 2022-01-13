@@ -309,6 +309,21 @@ read_metadata <- function (metadata_file) {
                                  na = c("", "NA"))
   metadata <- metadata %>% 
     dplyr::rename_with(.cols = tidyselect::everything(), 
-                       .fn = snakecase::to_snake_case)
+                       .fn = snakecase::to_snake_case) 
   return(metadata)
+}
+
+date_with_text <- function(date_text_values, origin = "1899-12-30"){
+  no_nas <- date_text_values[!is.na(date_text_values)]
+  test <- suppressWarnings(as.numeric(no_nas))
+  num <- suppressWarnings(as.numeric(date_text_values))
+  dates <- as.Date(num, origin = origin)
+  if(anyNA(test)){
+    dates <- as.character(dates)
+    dates[is.na(num)] <- as.character(date_text_values[is.na(num)])
+    message(paste("Some date entries in", 
+                  dplyr::cur_column(), 
+                  "contain text. Output will have class character."))
+  }
+  return(dates)
 }
