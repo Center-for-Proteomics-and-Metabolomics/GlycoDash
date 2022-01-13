@@ -33,6 +33,7 @@ lacytools_file <- system.file("extdata", "LacyTools_summary.txt", package = "gly
 
 groups_file <- system.file("extdata", "groups.rds", package = "glycodash")
 load(groups_file)
+groups <- groups %>% dplyr::select(-plate_well)
 
 plate_well <- vector()
 i <- 1
@@ -53,6 +54,8 @@ for (plate in 1:7) {
 
 groups <- groups %>% 
   dplyr::mutate(plate_well = plate_well)
+
+plate_design <- dplyr::left_join(plate_design, groups, by = "sample_id")
 
 save(groups, file = "groups.rds")
 
@@ -112,7 +115,7 @@ process_plate_design <- function (plate_design) {
 # are always handled in this way.
 handle_duplicates <- function(plate_design) {
   new_sample_ids <- vector()
-  new_sample_types
+  new_sample_types <- vector()
   duplicate <- vector()
   for (i in 1:length(plate_design$sample_id)) {
     if (i == 1 & plate_design$sample_id[i] == "duplicate") {
@@ -144,6 +147,16 @@ read_and_process_plate_design <- function(plate_design_file) {
 plate_design <- read_and_process_plate_design(plate_design_file)
 
 # make a read metadata function, choose date columns and sample_id column?
+
+read_metadata <- function (metadata_file, date_columns, sample_id_column) {
+  metadata <- readxl::read_excel(metadata_file,
+                               col_types = "text", 
+                               na = c("", "NA"))
+  metadata <- metadata %>% 
+    dplyr::rename_with(.cols = tidyselect::everything(), 
+                       .fn = snakecase::to_snake_case) %>% 
+    dplyr::rename(sample_id = sample_id_column)
+}
 
 metadata <- readxl::read_excel(system.file("extdata",
                                            "Metadata.xlsx",
