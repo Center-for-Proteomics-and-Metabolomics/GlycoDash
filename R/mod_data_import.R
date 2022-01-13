@@ -158,15 +158,6 @@ mod_data_import_server <- function(id, r){
                                            isTruthy(input$sample_id_column)))
     })
     
-    # observe({
-    #   shinyjs::toggleState(id = "add_metadata",
-    #                        !is.null(input$metadata))
-    #   shinyjs::toggleState(id = "add_metadata",
-    #                        ext_metadata() %in% c("xlsx", "xls"))
-    #   shinyjs::toggleState(id = "add_metadata",
-    #                        input$sample_id_column != "")
-    # })
-    
     observeEvent(input$add_plate_design, {
       x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
       shinyalert::shinyalert(
@@ -264,8 +255,6 @@ mod_data_import_server <- function(id, r){
       }
     })
     
-    
-    
     observeEvent(x$metadata, {
       updateSelectizeInput(inputId = "sample_id_column",
                            choices = unique(colnames(x$metadata)),
@@ -278,9 +267,13 @@ mod_data_import_server <- function(id, r){
                                                                                 ignore_case = TRUE)))
     })
     
-    observe({print(x$metadata)})
-    observeEvent(x$metadata, {
-      print(input$sample_id_column)})
+    observeEvent(input$add_metadata, {
+      x$metadata <- x$metadata %>% 
+        dplyr::mutate(dplyr::across(tidyselect::any_of(input$date_columns), 
+                                    date_with_text)) %>% 
+        dplyr::rename(sample_id = input$sample_id_column)
+      x$data <- dplyr::left_join(x$data, x$metadata)
+      })
     
   })
 }
