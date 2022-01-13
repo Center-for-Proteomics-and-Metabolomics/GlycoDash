@@ -137,33 +137,23 @@ mod_data_import_server <- function(id, r){
       DT::datatable(x$data, options = list(scrollX = TRUE))
     })
     
-    # This toggleState call ensures that the add_plate_design actionButton is
-    # disabled when the app is initialized
+    # This observe call ensures that the add_plate_design actionButton is only
+    # enabled under the right circumstances
     observe({
       shinyjs::disable(id = "add_plate_design")
-      if (all(!is.null(x$data), !is.null(input$plate_design))) {
+      if (all(isTruthy(x$data), isTruthy(input$plate_design))) {
         if (ext_plate_design() %in% c("xlsx", "xls")) {
           shinyjs::enable(id = "add_plate_design")
         }
       }
     })
     
-    # This toggleState call enables the add_plate_design actionButton when the
-    # correct plate_design file type is uploaded and when the data has been converted 
-    # observe({
-    #   shinyjs::toggleState(id = "add_plate_design", 
-    #                        all(!is.null(input$plate_design), 
-    #                            !is.null(x$data), 
-    #                            ext_plate_design() %in% c("xlsx", "xls")))
-    # })
-    
-    plate_design <- eventReactive(input$add_plate_design, {
-      plate_design <- read_and_process_plate_design(input$plate_design$datapath)
-      return(plate_design)
+    observeEvent(input$add_plate_design, {
+      x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
     })
     
     output$group <- DT::renderDataTable({
-      groups <- data.frame(unique(plate_design()$sample_type))
+      groups <- data.frame(unique(x$plate_design$sample_type))
       groups_tbl <- DT::datatable(groups,
                                   options = list(
                                     scrollY = "150px",
@@ -179,7 +169,7 @@ mod_data_import_server <- function(id, r){
       return(groups_tbl)
     })
     
-    observeEvent(plate_design(), {
+    observeEvent(x$plate_design, {
       shinyalert::shinyalert(
         html = TRUE,
         text = tagList(
@@ -227,7 +217,7 @@ mod_data_import_server <- function(id, r){
     
     observeEvent(x$response, {
       if (x$response) {
-         x$data <- dplyr::left_join(x$data, plate_design())
+         x$data <- dplyr::left_join(x$data, x$plate_design)
          print("Data has been updated")
       } else {
         
@@ -244,8 +234,6 @@ mod_data_import_server <- function(id, r){
                          ),
                          size = "s",
                          confirmButtonText = "Enter groups",
-                         # type = "input",
-                         # inputType = "file",
                          showCancelButton = TRUE,
                          cancelButtonText = "Cancel adding sample ID's",
                          callbackR = function(y) {
@@ -279,7 +267,8 @@ mod_data_import_server <- function(id, r){
     
     observe({
       req(x$groups)
-      x$data <- dplyr::left_join(x$data, x$groups)
+      x$plate_design <- dplyr::left_join(x$plate_design, x$groups)
+      x$data <- dplyr::left_join(x$data, x$plate_design)
       print("Data has been updated")
     })
     
