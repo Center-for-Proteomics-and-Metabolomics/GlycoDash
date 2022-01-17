@@ -23,7 +23,16 @@ mod_data_import_ui <- function(id){
             width = NULL,
             fileInput(ns("lacytools_summary"), "Upload LacyTools summary.txt file:"),
             fileInput(ns("plate_design"), "Upload a plate design Excel file:"),
-            fileInput(ns("metadata"), "Upload a metadata Excel file:")
+            fileInput(ns("metadata"), 
+                      "Upload one or more metadata Excel file(s) or R object(s):",
+                      multiple = TRUE),
+            # numericInput(ns("n_metadata"), 
+            #              "How many metadata files do you want to upload?", 
+            #              value = 1,
+            #              min = 1,
+            #              max = 5,
+            #              step = 1),
+            # uiOutput(ns("metadata_inputs"))
           ),
           shinydashboard::box(
             title = "Read and convert data",
@@ -70,6 +79,27 @@ mod_data_import_server <- function(id, r){
     
     x <- reactiveValues()
     
+    # metadata_inputIds <- reactive({
+    #   req(input$n_metadata)
+    #   paste0("metadata_", 
+    #          seq_len(input$n_metadata))})
+    
+    # output$metadata_inputs <- renderUI({
+    #   purrr::map(metadata_inputIds(), 
+    #              # or put ns() above in metadata_inputIds? 
+    #              ~ fileInput(ns(.x), 
+    #                          "Upload a metadata Excel file or R object:"))
+    # })
+    
+    # observe({
+    #   req(metadata_inputIds())
+    #   ext_list <- purrr::map(metadata_inputIds(),
+    #                          ~ tools::file_ext(input[[.x]]$name))
+    #   names(ext_list) <- metadata_inputIds()
+    #   
+    #   print(ext_list)
+    # })
+    
     observe({
       shinyjs::toggle("metadata_menu", condition = !is.null(x$metadata))
     })
@@ -100,14 +130,40 @@ mod_data_import_server <- function(id, r){
     })
     
     observe({
-      req(ext_metadata())
-      if (ext_metadata() %in% c("xlsx", "xls")) {
-        x$metadata <- read_metadata(input$metadata$datapath)
-      } else {
-        shinyFeedback::feedbackWarning("metadata",
-                                     show = TRUE,
-                                     text = "Please upload a .xlsx or .xls file.")
+      req(input$metadata)
+      metadata_list <- list()
+      i <- 1
+      for (ext in ext_metadata()) {
+        if (ext %in% c("xlsx", "xls")) {
+          metadata_list[[i]] <- read_metadata(input$metadata$datapath[i])
+        } else { if (ext %in% c("rds")) {
+          metadata_list[[i]] <- load_and_assign(input$metadata$datapath[i]) %>%
+            dplyr::rename_with(.cols = tidyselect::everything(),
+                               .fn = snakecase::to_snake_case)
+        } else {
+          shinyFeedback::feedbackWarning("metadata",
+                                         show = TRUE,
+                                         text = "Please upload only .xlsx, .xls or .rds files.")
+          break
+          }
+        }
+        i <- i + 1
       }
+      
+      print(str(metadata_list))
+      
+      # if (ext_metadata() %in% c("xlsx", "xls")) {
+      #   x$metadata <- read_metadata(input$metadata$datapath)
+      # } else { if (ext_metadata() %in% c("rds")) {
+      #   x$metadata <- load_and_assign(input$metadata$datapath) %>%
+      #     dplyr::rename_with(.cols = tidyselect::everything(),
+      #                        .fn = snakecase::to_snake_case)
+      # } else {
+      #   shinyFeedback::feedbackWarning("metadata",
+      #                                  show = TRUE,
+      #                                  text = "Please upload a .xlsx, .xls or .rds file.")
+      # }
+      # }
     })
     
     observe({
@@ -231,10 +287,11 @@ mod_data_import_server <- function(id, r){
     observe({
       req(ext_groups())
       if (ext_groups() == "rds") {
-        load(file = input$groups$datapath)
-        x$groups <- groups
+        x$groups <- load_and_assign(input$groups$datapath)
+        # write a check that column names are named correctly
       } else { if (ext_groups() %in% c("xlsx", "xls")) {
         x$groups <- readxl::read_excel(input$groups$datapath)
+        # write a check that column names are named correctly
         } else {
           shinyFeedback::feedbackWarning("groups", 
                                          show = TRUE,
