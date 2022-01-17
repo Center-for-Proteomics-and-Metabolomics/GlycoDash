@@ -341,3 +341,17 @@ check_sample_id_matches <- function (plate_design_ids, metadata_ids) {
     message("All sample_ids in platedesign have a match in the metadata.")
   }
 }
+
+check_unmatched_ids <- function(ids1, ids2) {
+  test <- setdiff(ids1, ids2)
+  if (rlang::is_empty(test)) {
+    
+  }
+}
+
+# with this function you can load() a .rds file and assign a new name to it using:
+# name <- load_and_assign()
+load_and_assign <- function(file_path){
+  load(file_path)
+  get(ls()[ls() != "file_path"])
+}
