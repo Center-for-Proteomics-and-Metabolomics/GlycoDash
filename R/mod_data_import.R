@@ -36,6 +36,13 @@ mod_data_import_ui <- function(id){
             actionButton(ns("add_plate_design"), "Add sample ID's from the plate design to the data"),
             br(),
             br(),
+            div(id = ns("manual_sample_types"),
+                tags$b("Upload an Excel file or an R object (.rds) that contains:"),
+                tags$ul(
+                  tags$li(tags$span("a column named \"sample_id\" with the sample ID's for all samples in the data")),
+                  tags$li(tags$span("a column named \"group\" with the corresponding group that the sample belongs to"))
+                ),
+                fileInput(ns("groups_file"), label = NULL)),
             div(
               id = ns("metadata_menu"),
               uiOutput(ns("sample_id")),
@@ -70,6 +77,17 @@ mod_data_import_server <- function(id, r){
     # Hide the metadata menu until metadata is uploaded:
     observe({
       shinyjs::toggle("metadata_menu", condition = !is.null(x$metadata))
+    })
+    
+    # Hide the fileInput for the manual sample_type addition until the manual option
+    # is chosen in the pop-up (x$response = FALSE)
+    observe({
+      shinyjs::hide("manual_sample_types")
+      if (!is.null(x$response)) {
+        if (x$response == FALSE) {
+          shinyjs::show("manual_sample_types")
+        }
+      }
     })
     
     # Make reactives containing the file extensions for each file that can be uploaded:
@@ -230,30 +248,30 @@ mod_data_import_server <- function(id, r){
       if (x$response) {
          x$data <- dplyr::left_join(x$data, x$plate_design)
          print("Data has been updated")
-      } else {
+      } #else {
         
-        shinyjs::delay(381,
-                       shinyalert::shinyalert(
-                         html = TRUE,
-                         text = tagList(
-                           fileInput(ns("groups"), label = NULL,
-                                         buttonLabel = div("Browse...", style = "font-size:20px;")),
-                           tags$b("Upload an Excel file or an R object (.rds) that contains:"),
-                           tags$ul(
-                             tags$li(tags$span("a column named \"sample_id\" with the sample ID's for all samples in the data")),
-                             tags$li(tags$span("a column named \"group\" with the corresponding group that the sample belongs to"))
-                           )
-                         ),
-                         size = "m",
-                         confirmButtonText = "Enter groups",
-                         showCancelButton = TRUE,
-                         cancelButtonText = "Cancel adding sample ID's",
-                         callbackR = function(y) {
-                           x$response_2 <- y
-                         }
-                         )
-                       )
-      }
+        # shinyjs::delay(381,
+        #                shinyalert::shinyalert(
+        #                  html = TRUE,
+        #                  text = tagList(
+        #                    fileInput(ns("groups"), label = NULL,
+        #                                  buttonLabel = div("Browse...", style = "font-size:20px;")),
+        #                    tags$b("Upload an Excel file or an R object (.rds) that contains:"),
+        #                    tags$ul(
+        #                      tags$li(tags$span("a column named \"sample_id\" with the sample ID's for all samples in the data")),
+        #                      tags$li(tags$span("a column named \"group\" with the corresponding group that the sample belongs to"))
+        #                    )
+        #                  ),
+        #                  size = "m",
+        #                  confirmButtonText = "Enter groups",
+        #                  showCancelButton = TRUE,
+        #                  cancelButtonText = "Cancel adding sample ID's",
+        #                  callbackR = function(y) {
+        #                    x$response_2 <- y
+        #                  }
+        #                  )
+        #                )
+      #}
     })
     
     ext_groups <- reactive({
