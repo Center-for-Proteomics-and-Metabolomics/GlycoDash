@@ -228,7 +228,7 @@ mod_data_import_server <- function(id, r){
     })
     
     output$group <- DT::renderDataTable({
-      groups <- data.frame(unique(x$plate_design$sample_type))
+      groups <- data.frame(unique(isolate(x$plate_design$sample_type)))
       groups_tbl <- DT::datatable(groups,
                                   options = list(
                                     scrollY = "150px",
@@ -245,7 +245,7 @@ mod_data_import_server <- function(id, r){
     })
     
     observeEvent(x$response, {
-      if (x$response) {
+      if (x$response == TRUE) {
          x$data <- dplyr::left_join(x$data, x$plate_design)
          print("Data has been updated")
       } #else {
@@ -275,38 +275,50 @@ mod_data_import_server <- function(id, r){
     })
     
     ext_groups <- reactive({
-      req(input$groups)
-      ext <- tools::file_ext(input$groups$name)
+      req(input$groups_file)
+      ext <- tools::file_ext(input$groups_file$name)
       return(ext)
     })
     
     observe({
       req(ext_groups())
       if (ext_groups() == "rds") {
-        x$groups <- load_and_assign(input$groups$datapath)
+        x$groups <- load_and_assign(input$groups_file$datapath)
+        print("groups_file was loaded")
         # write a check that column names are named correctly
       } else { if (ext_groups() %in% c("xlsx", "xls")) {
-        x$groups <- readxl::read_excel(input$groups$datapath)
+        x$groups <- readxl::read_excel(input$groups_file$datapath)
         # write a check that column names are named correctly
         } else {
-          shinyFeedback::feedbackWarning("groups", 
+          shinyFeedback::feedbackWarning("groups_file", 
                                          show = TRUE,
                                          text = "Please upload a .xlsx, .xls or .rds file.")
           }
-        }
+      }
+      
     })
     
-    observeEvent(x$response_2, {
-      req(x$groups)
-      if (x$response_2) {
-        x$plate_design <- x$plate_design %>% 
-          dplyr::select(-sample_type)
-        x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups) %>% 
-          dplyr::distinct()
-        x$data <- dplyr::left_join(data(), x$groups_and_plate_design)
-        print("Data has been updated")
-      }
+    observeEvent(x$groups, {
+      print(x$plate_design)
+      x$plate_design <- x$plate_design %>% 
+        dplyr::select(-sample_type)
+      x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups) %>% 
+        dplyr::distinct()
+      x$data <- dplyr::left_join(data(), x$groups_and_plate_design)
+      print("Data has been updated")
     })
+    
+    # observe({
+    #   req(x$groups)
+    #   if (x$response_2) {
+    #     x$plate_design <- x$plate_design %>% 
+    #       dplyr::select(-sample_type)
+    #     x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups) %>% 
+    #       dplyr::distinct()
+    #     x$data <- dplyr::left_join(data(), x$groups_and_plate_design)
+    #     print("Data has been updated")
+    #   }
+    # })
     
     sample_id_inputIds <- reactive({
       req(x$metadata)
