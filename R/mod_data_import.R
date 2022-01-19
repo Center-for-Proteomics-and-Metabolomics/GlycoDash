@@ -25,14 +25,7 @@ mod_data_import_ui <- function(id){
             fileInput(ns("plate_design"), "Upload a plate design Excel file:"),
             fileInput(ns("metadata"), 
                       "Upload one or more metadata Excel file(s) or R object(s):",
-                      multiple = TRUE),
-            # numericInput(ns("n_metadata"), 
-            #              "How many metadata files do you want to upload?", 
-            #              value = 1,
-            #              min = 1,
-            #              max = 5,
-            #              step = 1),
-            # uiOutput(ns("metadata_inputs"))
+                      multiple = TRUE)
           ),
           shinydashboard::box(
             title = "Read and convert data",
@@ -45,14 +38,8 @@ mod_data_import_ui <- function(id){
             br(),
             div(
               id = ns("metadata_menu"),
-              selectizeInput(ns("sample_id_column"),
-                          "Which column in the metadata contains the sample ID's?",
-                          choices = NULL,
-                          options = list(placeholder = "select a column")),
-              selectInput(ns("date_columns"),
-                          "Which columns in the metadata contain dates?",
-                          choices = c(""),
-                          multiple = TRUE)
+              uiOutput(ns("sample_id")),
+              uiOutput(ns("date"))
             ),
             actionButton(ns("add_metadata"), "Add the metadata"),
           )
@@ -77,33 +64,15 @@ mod_data_import_server <- function(id, r){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    # Creating a reactiveValues object in which reactiveVals from this module can be saved:
     x <- reactiveValues()
     
-    # metadata_inputIds <- reactive({
-    #   req(input$n_metadata)
-    #   paste0("metadata_", 
-    #          seq_len(input$n_metadata))})
-    
-    # output$metadata_inputs <- renderUI({
-    #   purrr::map(metadata_inputIds(), 
-    #              # or put ns() above in metadata_inputIds? 
-    #              ~ fileInput(ns(.x), 
-    #                          "Upload a metadata Excel file or R object:"))
-    # })
-    
-    # observe({
-    #   req(metadata_inputIds())
-    #   ext_list <- purrr::map(metadata_inputIds(),
-    #                          ~ tools::file_ext(input[[.x]]$name))
-    #   names(ext_list) <- metadata_inputIds()
-    #   
-    #   print(ext_list)
-    # })
-    
+    # Hide the metadata menu until metadata is uploaded:
     observe({
       shinyjs::toggle("metadata_menu", condition = !is.null(x$metadata))
     })
     
+    # Make reactives containing the file extensions for each file that can be uploaded:
     ext_lacytools_summary <- reactive({
       req(input$lacytools_summary)
       ext <- tools::file_ext(input$lacytools_summary$name)
@@ -122,6 +91,7 @@ mod_data_import_server <- function(id, r){
       return(ext)
     })
     
+    # Show a warning when the wrong type of file is uploaded as lacytools summary:
     observe({
       req(input$lacytools_summary)
       shinyFeedback::feedbackWarning("lacytools_summary",
@@ -129,8 +99,11 @@ mod_data_import_server <- function(id, r){
                                      text = "Please upload a .txt file.")
     })
     
+    # Read in the metadata files when they are uploaded, or show a warning when
+    # any of the uploaded files are of the wrong type:
     observe({
       req(input$metadata)
+      # --> change this for loop to a map call? (if possible)
       metadata_list <- list()
       i <- 1
       for (ext in ext_metadata()) {
@@ -144,28 +117,16 @@ mod_data_import_server <- function(id, r){
           shinyFeedback::feedbackWarning("metadata",
                                          show = TRUE,
                                          text = "Please upload only .xlsx, .xls or .rds files.")
-          break
           }
         }
         i <- i + 1
       }
       
-      print(str(metadata_list))
-      
-      # if (ext_metadata() %in% c("xlsx", "xls")) {
-      #   x$metadata <- read_metadata(input$metadata$datapath)
-      # } else { if (ext_metadata() %in% c("rds")) {
-      #   x$metadata <- load_and_assign(input$metadata$datapath) %>%
-      #     dplyr::rename_with(.cols = tidyselect::everything(),
-      #                        .fn = snakecase::to_snake_case)
-      # } else {
-      #   shinyFeedback::feedbackWarning("metadata",
-      #                                  show = TRUE,
-      #                                  text = "Please upload a .xlsx, .xls or .rds file.")
-      # }
-      # }
+      names(metadata_list) <- input$metadata$name
+      x$metadata <- metadata_list
     })
     
+    # Show a warning when the wrong type of file is uploaded as plate design:
     observe({
       req(input$plate_design)
       shinyFeedback::feedbackWarning("plate_design",
@@ -173,6 +134,8 @@ mod_data_import_server <- function(id, r){
                                      text = "Please upload a .xlsx or .xls file.")
     })
     
+    # Make sure that the read_summary actionButton is only available once the
+    # right type of file is uploaded as lacytools summary
     observe({
       shinyjs::toggleState(id = "read_summary", 
                            !is.null(input$lacytools_summary))
@@ -180,14 +143,19 @@ mod_data_import_server <- function(id, r){
                            ext_lacytools_summary() == "txt")
     })
     
+    # When the read_summary actionButton is clicked, the lacytools summary is read
+    # and saved as a reactive expression data()
     data <- eventReactive(input$read_summary, {
       read_lacytools_summary(input$lacytools_summary$datapath)
     })
     
+    # --> combine this with eventReactive call above?
     observe({
       x$data <- data()
       })
     
+    # When the lacytools summary has been read in, the converted data is shown
+    # in the data table
     output$data_table <- DT::renderDT({
       req(x$data)
         DT::datatable(x$data, options = list(scrollX = TRUE))
@@ -207,27 +175,36 @@ mod_data_import_server <- function(id, r){
     # This observe call ensures that the add_metadata actionButton is only
     # enabled under the right circumstances
     observe({
-      shinyjs::toggleState(id = "add_metadata",
-                           condition = all(isTruthy(x$data), 
-                                           "sample_id" %in% colnames(x$data),
-                                           isTruthy(x$metadata),
-                                           isTruthy(input$sample_id_column)))
+      shinyjs::disable(id = "add_metadata")
+      if (all(isTruthy(x$data), 
+              isTruthy(x$metadata), 
+              # --> make sure sample_id is always called sample_id in plate_design!
+              "sample_id" %in% colnames(x$data))) {
+        # Check if all sample_id_column inputs in the metadata menu are filled in: 
+        if (all(purrr::map_lgl(sample_id_inputIds(),
+                               ~ isTruthy(input[[.x]])))) {
+          shinyjs::enable(id = "add_metadata")
+        }
+      }
     })
     
+    # When the add_plate_design actionButton is clicked, the plate_design file is
+    # read in and a pop-up is shown with the automatically determined sample types.
     observeEvent(input$add_plate_design, {
       x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
       shinyalert::shinyalert(
         html = TRUE,
         text = tagList(
-          "Based on the sample IDs the following groups were defined:",
+          "Based on the sample IDs the following sample types were defined:",
           DT::dataTableOutput(ns("group"))
         ),
         size = "m",
-        confirmButtonText = "Accept these groups",
+        confirmButtonText = "Accept these sample types",
         showCancelButton = TRUE,
-        cancelButtonText = "Manually enter groups",
-        callbackR = function(y) {
-          x$response <- y
+        # --> Explain further what the user can expect when choosing cancel
+        cancelButtonText = "Manually enter sample types",
+        callbackR = function(response) {
+          x$response <- response
         }
       )
     })
@@ -259,14 +236,15 @@ mod_data_import_server <- function(id, r){
                        shinyalert::shinyalert(
                          html = TRUE,
                          text = tagList(
+                           fileInput(ns("groups"), label = NULL,
+                                         buttonLabel = div("Browse...", style = "font-size:20px;")),
                            tags$b("Upload an Excel file or an R object (.rds) that contains:"),
                            tags$ul(
-                             tags$li(tags$span("a column named \"sample_id\" with all sample ID's for the data")),
+                             tags$li(tags$span("a column named \"sample_id\" with the sample ID's for all samples in the data")),
                              tags$li(tags$span("a column named \"group\" with the corresponding group that the sample belongs to"))
-                           ),
-                           fileInput(ns("groups"), label = "Upload file:")
+                           )
                          ),
-                         size = "s",
+                         size = "m",
                          confirmButtonText = "Enter groups",
                          showCancelButton = TRUE,
                          cancelButtonText = "Cancel adding sample ID's",
@@ -305,42 +283,90 @@ mod_data_import_server <- function(id, r){
       if (x$response_2) {
         x$plate_design <- x$plate_design %>% 
           dplyr::select(-sample_type)
-        x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups)
-        x$groups_and_plate_design <- unique(x$groups_and_plate_design)
+        x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups) %>% 
+          dplyr::distinct()
         x$data <- dplyr::left_join(data(), x$groups_and_plate_design)
         print("Data has been updated")
       }
     })
     
-    observeEvent(x$metadata, {
-      updateSelectizeInput(inputId = "sample_id_column",
-                           choices = unique(colnames(x$metadata)),
-                           selected = "",
-                           server = TRUE)
-      updateSelectInput(inputId = "date_columns",
-                        choices = unique(colnames(x$metadata)),
-                        selected = stringr::str_subset(colnames(x$metadata),
-                                                       pattern = stringr::regex("date",
-                                                                                ignore_case = TRUE)))
+    sample_id_inputIds <- reactive({
+      req(x$metadata)
+      sample_id_inputIds <- purrr::map(seq_len(length(x$metadata)),
+                                       ~ paste0("sample_id_column", .x))
+      return(sample_id_inputIds)
+    })
+    
+    output$sample_id <- renderUI({
+      req(sample_id_inputIds())
+      purrr::pmap(list(sample_id_inputIds(),
+                       x$metadata,
+                       names(x$metadata)),
+                  function(inputId, metadata, metadata_name) selectizeInput(
+                   ns(inputId),
+                   label = paste("Which column in", 
+                                 metadata_name, 
+                                 "contains the sample ID's?"),
+                   choices = c("", unique(colnames(metadata))),
+                   selected = NULL,
+                   multiple = FALSE,
+                   options = list(placeholder = "select a column")))
+    })
+    
+    date_column_inputIds <- reactive({
+      req(x$metadata)
+      date_column_inputIds <- purrr::map(seq_len(length(x$metadata)),
+                                       ~ paste0("date_column", .x))
+      return(date_column_inputIds)
+    })
+    
+    output$date <- renderUI({
+      req(date_column_inputIds())
+      purrr::pmap(list(date_column_inputIds(),
+                       x$metadata,
+                       names(x$metadata)),
+                  function(inputIds, metadata, metadata_name) selectizeInput(
+                    ns(inputIds),
+                    label = paste("Which columns in", 
+                                  metadata_name, 
+                                  "contain dates?"),
+                    choices = unique(colnames(metadata)),
+                    selected = stringr::str_subset(
+                      colnames(metadata),
+                      pattern = stringr::regex("date", ignore_case = TRUE)),
+                    multiple = TRUE))
     })
     
     observeEvent(input$add_metadata, {
       # Convert all date columns to date format (or if it's a mixed date and text format,
       # to character) and rename the column with sample_ids
-      x$metadata <- x$metadata %>% 
-        dplyr::mutate(dplyr::across(tidyselect::any_of(input$date_columns), 
-                                    date_with_text)) %>% 
-        dplyr::rename(sample_id = input$sample_id_column)
+      # --> make this map for all metadata's in x$metadata
+      metadata_list <- purrr::pmap(
+        list(x$metadata,
+             sample_id_inputIds(),
+             date_column_inputIds()),
+        function(metadata, 
+                 sample_id_inputId,
+                 date_column_inputId) {
+          metadata <- metadata %>% 
+            dplyr::mutate(dplyr::across(tidyselect::any_of(input[[date_column_inputId]]), 
+                                        date_with_text)) %>% 
+            dplyr::rename(sample_id = input[[sample_id_inputId]])
+          return(metadata)
+          })
+      # --> merge the metadata's together (key = sample_id)
+      x$merged_metadata <- purrr::reduce(metadata_list, dplyr::full_join, by = "sample_id")
+      print(x$merged_metadata)
       # check for unmatched sample ids in the data
       tryCatch(expr = {
-        check_sample_id_matches(plate_design_ids = x$data$sample_id, 
-                                metadata_ids = x$metadata$sample_id)
-        x$data <- dplyr::left_join(x$data, 
-                                   x$metadata)
+        check_sample_id_matches(plate_design_ids = x$data$sample_id,
+                                metadata_ids = x$merged_metadata$sample_id)
+        x$data <- dplyr::left_join(x$data,
+                                   x$merged_metadata)
         },
         warning = function(w) {
-          unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data$sample_id, 
-                                                                    metadata = x$metadata$sample_id))
+          unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data$sample_id,
+                                                                    metadata = x$merged_metadata$sample_id))
           shinyalert::shinyalert(
             html = TRUE,
             text = tagList(
@@ -363,12 +389,13 @@ mod_data_import_server <- function(id, r){
     })
     
     output$unmatched_ids <- DT::renderDataTable({
-      unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data$sample_id, 
-                                                                metadata = x$metadata$sample_id))
+      unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data$sample_id,
+                                                                # CREATE MERGED metadata reactiveVal
+                                                                metadata = x$merged_metadata$sample_id))
       unmatched_ids <- as.data.frame(unmatched_ids)
       table <- DT::datatable(unmatched_ids,
                               options = list(
-                              scrollY = "150px",
+                              scrollY = "100px",
                               paging = FALSE,
                               searching = FALSE,
                               columnDefs = list(
@@ -382,15 +409,10 @@ mod_data_import_server <- function(id, r){
     
     observeEvent(x$response_3, {
       if (x$response_3) {
-        x$data <- dplyr::left_join(x$data, x$metadata)
+        x$data <- dplyr::left_join(x$data, x$merged_metadata)
+        print(x$merged_metadata)
       }
     })
     
   })
 }
-    
-## To be copied in the UI
-# mod_data_import_ui("data_import_ui_1")
-    
-## To be copied in the server
-# mod_data_import_server("data_import_ui_1")
