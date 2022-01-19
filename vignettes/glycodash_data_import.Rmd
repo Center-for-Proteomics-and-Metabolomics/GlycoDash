@@ -31,11 +31,6 @@ The data-import functions can be used to convert a LacyTools summary file to a f
 
 lacytools_file <- system.file("extdata", "LacyTools_summary.txt", package = "glycodash")
 
-groups_file <- system.file("extdata", "groups.rds", package = "glycodash")
-load(groups_file)
-
-plate_design <- dplyr::left_join(plate_design, groups, by = "sample_id")
-
 # save(groups, file = "groups.rds")
 
 data <- read_lacytools_summary(lacytools_file)
@@ -123,11 +118,15 @@ read_and_process_plate_design <- function(plate_design_file) {
   return(plate_design)
 }
 
-plate_design2 <- read_and_process_plate_design(plate_design_file)
-plate_design2 <- plate_design2 %>% 
+groups_file <- system.file("extdata", "groups.rds", package = "glycodash")
+load(groups_file)
+
+
+plate_design <- read_and_process_plate_design(plate_design_file)
+plate_design <- plate_design %>% 
   dplyr::select(-sample_type)
-b <- dplyr::full_join(groups, plate_design2)
-b <- unique(b)
+plate_design <- dplyr::left_join(plate_design, groups, by = "sample_id") %>% 
+  dplyr::distinct()
 
 # make a read metadata function, choose date columns and sample_id column?
 
@@ -185,7 +184,8 @@ check_sample_id_matches <- function (plate_design, metadata) {
   }
 }
 
-data <- dplyr::left_join(data, b)
+data <- dplyr::left_join(data, plate_design, by = "plate_well") %>% 
+  distinct()
 
 a <- suppressWarnings(check_sample_id_matches(data, metadata))
 
@@ -194,5 +194,23 @@ empty_data <- data.frame("group" = c("", "", ""),
 
 DT::datatable(empty_data)
 
+
+data("metadata_cleaned")
+metadata_recovida_file <- system.file("inst",
+                                      "extdata",
+                                      "recovida_metadata.rds",
+                                      package = "glycodash")
+metadata_recovida <- load_and_assign(metadata_recovida_file)
+
+metadata_cleaned <- metadata_cleaned %>% 
+  dplyr::rename(sample_id = `ID on Sample tube`)
+
+a <- dplyr::full_join(metadata_recovida, metadata_cleaned) %>% 
+  distinct()
+
+test <- dplyr::left_join(data, a, by = "sample_id", suffix = c("_data", "_meta")) %>% 
+  distinct()
+
+a <- test %>% dplyr::select(duplicate, duplicate_data, duplicate_meta)
 ```
 
