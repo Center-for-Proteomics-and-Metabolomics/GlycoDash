@@ -9,8 +9,7 @@ app_server <- function( input, output, session ) {
   
   # Using the "stratégie du petit r" for communication between modules:
   r <- reactiveValues()
-  mod_data_import_server("data_import_ui_1", r)
-  mod_data_import_v2_server("data_import_v2_ui_1")
+  mod_data_import_server("data_import_ui_1")
   mod_spectra_curation_server("spectra_curation_ui_1")
   mod_analyte_curation_server("analyte_curation_ui_1")
   mod_normalization_server("normalization_ui_1")

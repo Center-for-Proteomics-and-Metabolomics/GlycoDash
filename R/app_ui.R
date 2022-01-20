@@ -46,10 +46,6 @@ app_ui <- function(request) {
             mod_data_import_ui("data_import_ui_1")
           ),
           shinydashboard::tabItem(
-            "data_import_v2",
-            mod_data_import_v2_ui("data_import_v2_ui_1")
-          ),
-          shinydashboard::tabItem(
             "spectra_curation",
             mod_spectra_curation_ui("spectra_curation_ui_1")
           ),
