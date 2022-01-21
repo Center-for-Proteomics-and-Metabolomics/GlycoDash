@@ -174,6 +174,10 @@ mod_data_import_server <- function(id){
     # read in and a pop-up is shown with the automatically determined sample types.
     observeEvent(input$add_plate_design, {
       x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
+      
+      # Reset x$response in case the pop-up has been shown before:
+      x$response <- NULL
+      
       shinyalert::shinyalert(
         html = TRUE,
         text = tagList(
