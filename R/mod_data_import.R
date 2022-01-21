@@ -124,6 +124,8 @@ mod_data_import_server <- function(id){
     
     observe({
       x$data <- data_at_read_in()
+      showNotification("The data has been read in and converted.", 
+                       type = "message")
     })
     
     # When the read_summary actionButton is clicked, reset the data reactiveVals 
@@ -131,8 +133,16 @@ mod_data_import_server <- function(id){
     # Add some kind of confirmation step here so that users don't accidentally 
     # throw away their progress?
     observeEvent(input$read_summary, {
-      x$data_incl_plate_design <- NULL
-      x$data_incl_metadata <- NULL
+      if (isTruthy(x$data_incl_plate_design)){
+        x$data_incl_plate_design <- NULL
+        showNotification("Sample ID's and sample types have to be re-added to the data",
+                         type = "warning")
+        if (isTruthy(x$data_incl_metadata)) {
+          x$data_incl_metadata <- NULL
+          showNotification("The metadata has to be re-added to the data",
+                           type = "warning")
+        }
+      }
     })
     
     # When the lacytools summary has been read in, the converted data is shown
@@ -181,7 +191,11 @@ mod_data_import_server <- function(id){
       
       # The x$data_incl_metadata reactiveVal is reset to NULL, so that users can
       # change the plate design file after metadata has already been added:
-      x$data_incl_metadata <- NULL
+      if (isTruthy(x$data_incl_metadata)) {
+        x$data_incl_metadata <- NULL
+        showNotification("The metadata has to be re-added to the data",
+                         type = "warning")
+      }
       
       x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
       
@@ -243,6 +257,9 @@ mod_data_import_server <- function(id){
       if (!is.null(x$response)) {
         if (x$response == FALSE) {
           shinyjs::show("manual_sample_types")
+          # Reset the input for the file with manual sample types:
+          shinyjs::reset("groups_file")
+          shinyFeedback::hideFeedback(inputId = "groups_file")
         }
       }
     })
@@ -257,12 +274,8 @@ mod_data_import_server <- function(id){
     
     # Read in the file with manual sample types when it is uploaded, or show a 
     # warning when the uploaded file is of the wrong type:
-    observe({
+    observeEvent(ext_groups(), {
       req(ext_groups())
-      
-      # The x$data_incl_metadata reactiveVal is reset to NULL, so that users can
-      # change the plate design file after metadata has already been added:
-      x$data_incl_metadata <- NULL
       
       if (ext_groups() == "rds") {
         x$groups <- load_and_assign(input$groups_file$datapath)
@@ -300,7 +313,15 @@ mod_data_import_server <- function(id){
         shinyFeedback::feedbackSuccess(inputId = "groups_file", 
                                        show = isTruthy(x$groups_and_plate_design),
                                        text = "The sample types were added to the data.")
-        showNotification("The sample types were added to the data")
+        showNotification("The sample types were added to the data", type = "message")
+        
+        # The x$data_incl_metadata reactiveVal is reset to NULL, so that users can
+        # change the plate design file after metadata has already been added:
+        if (isTruthy(x$data_incl_metadata)) {
+          x$data_incl_metadata <- NULL
+          showNotification("The metadata has to be re-added to the data",
+                           type = "warning")
+        }
       }
     })
     
@@ -495,6 +516,7 @@ mod_data_import_server <- function(id){
     observeEvent(x$response_metadata, {
       if (x$response_metadata) {
         x$data_incl_metadata <- dplyr::left_join(x$data_incl_plate_design, x$merged_metadata)
+        showNotification("The metadata was added to the data", type = "message")
       }
     })
     
