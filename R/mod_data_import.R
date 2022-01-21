@@ -204,7 +204,7 @@ mod_data_import_server <- function(id){
       return(groups_tbl)
     })
     
-    # If the aytomatically determined sample_types shown in the pop-up are 
+    # If the automatically determined sample_types shown in the pop-up are 
     # accepted (x$response = TRUE), the plate design is joined with the data.
     # Now the data contains columns with the sample ID, with the sample type and
     # with whether the sample is a duplicate of another sample:
@@ -244,7 +244,7 @@ mod_data_import_server <- function(id){
         x$groups <- readxl::read_excel(input$groups_file$datapath)
         # write a check that column names are named correctly
       } else {
-        shinyFeedback::feedbackWarning("groups_file", 
+        shinyFeedback::feedbackWarning(inputId = "groups_file", 
                                        show = TRUE,
                                        text = "Please upload a .xlsx, .xls or .rds file.")
       }
@@ -254,12 +254,16 @@ mod_data_import_server <- function(id){
     # When the manual sample types are read in, join them with the plate design 
     # and the data:
     observeEvent(x$groups, {
-      print(x$plate_design)
       x$plate_design <- x$plate_design %>% 
         dplyr::select(-sample_type)
       x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups) %>% 
         dplyr::distinct()
       x$data <- dplyr::left_join(data(), x$groups_and_plate_design)
+      # choose which of these is better:
+      shinyFeedback::feedbackSuccess(inputId = "groups_file", 
+                                     show = isTruthy(x$groups_and_plate_design),
+                                     text = "The sample types were added to the data.")
+      showNotification("The sample types were added to the data")
     })
     
     # Metadata ----------------------------------------------------------------
