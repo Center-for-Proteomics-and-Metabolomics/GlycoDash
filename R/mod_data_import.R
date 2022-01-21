@@ -122,9 +122,17 @@ mod_data_import_server <- function(id){
       read_lacytools_summary(input$lacytools_summary$datapath)
     })
     
-    # 
     observe({
       x$data <- data_at_read_in()
+    })
+    
+    # When the read_summary actionButton is clicked, reset the data reactiveVals 
+    # to NULL (so that user can start over even after next steps have been taken).
+    # Add some kind of confirmation step here so that users don't accidentally 
+    # throw away their progress?
+    observeEvent(input$read_summary, {
+      x$data_incl_plate_design <- NULL
+      x$data_incl_metadata <- NULL
     })
     
     # When the lacytools summary has been read in, the converted data is shown
@@ -139,15 +147,12 @@ mod_data_import_server <- function(id){
         DT::datatable(x$data, options = list(scrollX = TRUE))
       }
       }
-      
     })
     
     # Hide the metadata menu until metadata is uploaded:
     observe({
       shinyjs::toggle("metadata_menu", condition = !is.null(x$metadata))
     })
-    
-    
     
     # Plate design ------------------------------------------------------------
     
@@ -173,6 +178,11 @@ mod_data_import_server <- function(id){
     # When the add_plate_design actionButton is clicked, the plate_design file is
     # read in and a pop-up is shown with the automatically determined sample types.
     observeEvent(input$add_plate_design, {
+      
+      # The x$data_incl_metadata reactiveVal is reset to NULL, so that users can
+      # change the plate design file after metadata has already been added:
+      x$data_incl_metadata <- NULL
+      
       x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
       
       # Reset x$response in case the pop-up has been shown before:
@@ -249,6 +259,11 @@ mod_data_import_server <- function(id){
     # warning when the uploaded file is of the wrong type:
     observe({
       req(ext_groups())
+      
+      # The x$data_incl_metadata reactiveVal is reset to NULL, so that users can
+      # change the plate design file after metadata has already been added:
+      x$data_incl_metadata <- NULL
+      
       if (ext_groups() == "rds") {
         x$groups <- load_and_assign(input$groups_file$datapath)
         # write a check that column names are named correctly
