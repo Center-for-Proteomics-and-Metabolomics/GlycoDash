@@ -409,9 +409,10 @@ mod_data_import_server <- function(id){
           size = "m",
           confirmButtonText = "Add the metadata despite the unmatched ID's",
           showCancelButton = TRUE,
-          cancelButtonText = "Abort adding the metadata",
-          callbackR = function(y) {
-            x$response_metadata <- y
+          cancelButtonText = "Don't add the metadata now",
+          type = ifelse(length(unmatched_ids) > 20, "warning", ""),
+          callbackR = function(response) {
+            x$response_metadata <- response
           }
         )
       }
