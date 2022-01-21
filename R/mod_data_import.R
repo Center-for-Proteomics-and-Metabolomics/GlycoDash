@@ -35,7 +35,7 @@ mod_data_import_ui <- function(id){
                 tags$b("Upload an Excel file or an R object (.rds) that contains:"),
                 tags$ul(
                   tags$li(tags$span("a column named \"sample_id\" with the sample ID's for all samples in the data")),
-                  tags$li(tags$span("a column named \"group\" with the corresponding group that the sample belongs to"))
+                  tags$li(tags$span("a column named \"sample_type\" with the corresponding sample types"))
                 ),
                 fileInput(ns("groups_file"), label = NULL))
           ),
@@ -243,27 +243,38 @@ mod_data_import_server <- function(id){
       } else { if (ext_groups() %in% c("xlsx", "xls")) {
         x$groups <- readxl::read_excel(input$groups_file$datapath)
         # write a check that column names are named correctly
-      } else {
-        shinyFeedback::feedbackWarning(inputId = "groups_file", 
-                                       show = TRUE,
-                                       text = "Please upload a .xlsx, .xls or .rds file.")
+      } 
       }
+      shinyFeedback::feedbackWarning(inputId = "groups_file", 
+                                     show = !(ext_groups() %in% c("rds", "xlsx", "xls")),
+                                     text = "Please upload a .xlsx, .xls or .rds file.")
+      if (isTruthy(x$groups)) {
+        if (all(c("sample_id", "sample_type") %in% colnames(x$groups))) {
+          x$correct_column_names <- TRUE
+        } else {
+          x$correct_column_names <- FALSE
+        }
+        shinyFeedback::feedbackWarning(inputId = "groups_file",
+                                       show = x$correct_column_names == FALSE,
+                                       text = "Please name the columns \"sample_id\" and \"sample_type\"")
       }
     })
     
     # When the manual sample types are read in, join them with the plate design 
     # and the data:
-    observeEvent(x$groups, {
-      x$plate_design <- x$plate_design %>% 
-        dplyr::select(-sample_type)
-      x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups) %>% 
-        dplyr::distinct()
-      x$data <- dplyr::left_join(data(), x$groups_and_plate_design)
-      # choose which of these is better:
-      shinyFeedback::feedbackSuccess(inputId = "groups_file", 
-                                     show = isTruthy(x$groups_and_plate_design),
-                                     text = "The sample types were added to the data.")
-      showNotification("The sample types were added to the data")
+    observeEvent(x$correct_column_names, {
+      if (isTruthy(x$correct_column_names)){
+        x$plate_design <- x$plate_design %>% 
+          dplyr::select(-sample_type)
+        x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups) %>% 
+          dplyr::distinct()
+        x$data <- dplyr::left_join(data(), x$groups_and_plate_design)
+        # choose which of these is better:
+        shinyFeedback::feedbackSuccess(inputId = "groups_file", 
+                                       show = isTruthy(x$groups_and_plate_design),
+                                       text = "The sample types were added to the data.")
+        showNotification("The sample types were added to the data")
+      }
     })
     
     # Metadata ----------------------------------------------------------------
@@ -297,17 +308,20 @@ mod_data_import_server <- function(id){
             dplyr::rename_with(.cols = tidyselect::everything(),
                                .fn = snakecase::to_snake_case)
         } else {
-          shinyFeedback::feedbackWarning("metadata",
-                                         show = TRUE,
-                                         text = "Please upload only .xlsx, .xls or .rds files.")
         }
         }
         i <- i + 1
       }
       
-      names(metadata_list) <- input$metadata$name
-      # Saving the metadata_list in the reactiveVals object x:
-      x$metadata <- metadata_list
+      shinyFeedback::feedbackWarning("metadata",
+                                     show = any(!(ext_metadata() %in% c("xlsx", "xls", "rds"))),
+                                     text = "Please upload only .xlsx, .xls or .rds files.")
+      
+      if (!rlang::is_empty(metadata_list)) {
+        names(metadata_list) <- input$metadata$name
+        # Saving the metadata_list in the reactiveVals object x:
+        x$metadata <- metadata_list
+      }
     })
     
     # Create inputIds for the sample_id_column selectizeInputs based on the 
