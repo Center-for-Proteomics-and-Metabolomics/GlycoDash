@@ -117,21 +117,29 @@ mod_data_import_server <- function(id){
     })
     
     # When the read_summary actionButton is clicked, the lacytools summary is read
-    # and saved as a reactive expression data()
-    data <- eventReactive(input$read_summary, {
+    # and saved as a reactive expression data_at_read_in()
+    data_at_read_in <- eventReactive(input$read_summary, {
       read_lacytools_summary(input$lacytools_summary$datapath)
     })
     
     # 
     observe({
-      x$data <- data()
+      x$data <- data_at_read_in()
     })
     
     # When the lacytools summary has been read in, the converted data is shown
     # in the data table
     output$data_table <- DT::renderDT({
       req(x$data)
-      DT::datatable(x$data, options = list(scrollX = TRUE))
+      if (isTruthy(x$data_incl_metadata)){
+        DT::datatable(x$data_incl_metadata, options = list(scrollX = TRUE))
+      } else { if (isTruthy(x$data_incl_plate_design)){
+        DT::datatable(x$data_incl_plate_design, options = list(scrollX = TRUE))
+      } else {
+        DT::datatable(x$data, options = list(scrollX = TRUE))
+      }
+      }
+      
     })
     
     # Hide the metadata menu until metadata is uploaded:
@@ -210,7 +218,7 @@ mod_data_import_server <- function(id){
     # with whether the sample is a duplicate of another sample:
     observeEvent(x$response, {
       if (x$response == TRUE) {
-        x$data <- dplyr::left_join(x$data, x$plate_design)
+        x$data_incl_plate_design <- dplyr::left_join(x$data, x$plate_design)
       } 
     })
     
@@ -268,7 +276,7 @@ mod_data_import_server <- function(id){
           dplyr::select(-sample_type)
         x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups) %>% 
           dplyr::distinct()
-        x$data <- dplyr::left_join(data(), x$groups_and_plate_design)
+        x$data_incl_plate_design <- dplyr::left_join(data_at_read_in(), x$groups_and_plate_design)
         # choose which of these is better:
         shinyFeedback::feedbackSuccess(inputId = "groups_file", 
                                        show = isTruthy(x$groups_and_plate_design),
@@ -283,9 +291,9 @@ mod_data_import_server <- function(id){
     # enabled under the right circumstances
     observe({
       shinyjs::disable(id = "add_metadata")
-      if (all(isTruthy(x$data), 
+      if (all(isTruthy(x$data_incl_plate_design), 
               isTruthy(x$metadata), 
-              "sample_id" %in% colnames(x$data))) {
+              "sample_id" %in% colnames(x$data_incl_plate_design))) {
         # Check if all sample_id_column inputs in the metadata menu are filled in: 
         if (all(purrr::map_lgl(sample_id_inputIds(),
                                ~ isTruthy(input[[.x]])))) {
@@ -407,22 +415,27 @@ mod_data_import_server <- function(id){
       x$merged_metadata <- purrr::reduce(metadata_list, dplyr::full_join, by = "sample_id")
       # Check for unmatched sample ID's in the data:
       tryCatch(expr = {
-        check_sample_id_matches(plate_design_ids = x$data$sample_id,
+        check_sample_id_matches(plate_design_ids = x$data_incl_plate_design$sample_id,
                                 metadata_ids = x$merged_metadata$sample_id)
-        x$data <- dplyr::left_join(x$data,
-                                   x$merged_metadata)
+        x$data_incl_metadata <- dplyr::left_join(x$data_incl_plate_design,
+                                                 x$merged_metadata)
       },
       warning = function(w) {
         # If there are any unmatched ID's a pop-up with those ID's is shown:
-        unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data$sample_id,
+        unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data_incl_plate_design$sample_id,
                                                                   metadata = x$merged_metadata$sample_id))
+        
+        x$response_metadata <- NULL
+        
         shinyalert::shinyalert(
           html = TRUE,
           text = tagList(
             paste(length(unmatched_ids),
                   "sample ID's in the data had no match in the metadata:"),
             DT::dataTableOutput(ns("unmatched_ids")),
-            "Please check if the spelling of sample IDs in your metadata corresponds to the spelling in your plate design."
+            br(),
+            "Please check: 1) Does the spelling of sample IDs in your metadata corresponds to the spelling in your plate design?",
+            "and 2) Have you selected the correct sample ID columns?"
           ),
           size = "m",
           confirmButtonText = "Add the metadata despite the unmatched ID's",
@@ -440,7 +453,7 @@ mod_data_import_server <- function(id){
     # This is the datatable containing the unmatched sample ID's that is shown 
     # in the pop-up:
     output$unmatched_ids <- DT::renderDataTable({
-      unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data$sample_id,
+      unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data_incl_plate_design$sample_id,
                                                                 # CREATE MERGED metadata reactiveVal
                                                                 metadata = x$merged_metadata$sample_id))
       unmatched_ids <- as.data.frame(unmatched_ids)
@@ -462,7 +475,7 @@ mod_data_import_server <- function(id){
     # (x$response_metadata = TRUE), the metadata is joined with the data:
     observeEvent(x$response_metadata, {
       if (x$response_metadata) {
-        x$data <- dplyr::left_join(x$data, x$merged_metadata)
+        x$data_incl_metadata <- dplyr::left_join(x$data_incl_plate_design, x$merged_metadata)
       }
     })
     
