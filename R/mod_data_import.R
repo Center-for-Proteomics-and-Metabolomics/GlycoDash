@@ -28,7 +28,7 @@ mod_data_import_ui <- function(id){
             title = "Upload your plate design",
             width = NULL,
             fileInput(ns("plate_design"), "Upload a plate design Excel file:"),
-            actionButton(ns("add_plate_design"), "Add sample ID's from the plate design to the data"),
+            actionButton(ns("add_plate_design"), "Add sample ID's and sample types to the data based on the plate design"),
             br(),
             br(),
             div(id = ns("manual_sample_types"),
@@ -407,7 +407,7 @@ mod_data_import_server <- function(id){
             "Please check if the spelling of sample IDs in your metadata corresponds to the spelling in your plate design."
           ),
           size = "m",
-          confirmButtonText = "Continue with adding metadata despite unmatched sample ID's",
+          confirmButtonText = "Add the metadata despite the unmatched ID's",
           showCancelButton = TRUE,
           cancelButtonText = "Abort adding the metadata",
           callbackR = function(y) {
