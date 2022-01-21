@@ -169,7 +169,9 @@ mod_data_import_server <- function(id){
       shinyalert::shinyalert(
         html = TRUE,
         text = tagList(
-          "Based on the sample IDs the following sample types were defined:",
+          paste("Based on the sample IDs the following",
+                length(unique(isolate(x$plate_design$sample_type))), 
+                "sample types were defined:"),
           DT::dataTableOutput(ns("group"))
         ),
         size = "m",
