@@ -31,7 +31,7 @@ A logical vector of which the length corresponds to the number of
 \description{
 \code{do_criteria_check()} performs an analyte quality criteria check for
 every spectrum in the data. This function is used within the function
-\code{create_spectra_check_data_frame()}.
+\code{\link{summarize_spectra_checks()}}.
 }
 \examples{
 data(long_data)
