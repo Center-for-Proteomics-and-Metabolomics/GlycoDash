@@ -38,7 +38,6 @@ app_ui <- function(request) {
         ),
       
       body = shinydashboard::dashboardBody(
-        shinyalert::useShinyalert(),
         shinyjs::useShinyjs(),
         shinydashboard::tabItems(
           shinydashboard::tabItem(
@@ -96,8 +95,6 @@ golem_add_external_resources <- function(){
       path = app_sys('app/www'),
       app_title = 'glycodash'
     )
-    # Add here other external resources
-    # for example, you can add shinyalert::useShinyalert() 
   )
 }
 

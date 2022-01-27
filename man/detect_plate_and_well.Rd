@@ -16,3 +16,10 @@ and in which well a sample was analysed.
 \description{
 Detect plate and well
 }
+\examples{
+block_example <- data.frame(sample_name = c("s_0216_Specific_pl_3.A10", 
+                                            "s_568_Total_P5_H4", 
+                                            "pl23_B6.s_8759"), 
+                            values = c(13.56, 738.34, 4.56))
+detect_plate_and_well(block_example)
+}

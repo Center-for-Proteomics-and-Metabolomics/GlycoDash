@@ -17,3 +17,14 @@ The row index for the next line with NAs.
 \description{
 Find the next empty line from a given line in a LacyTools summary file.
 }
+\examples{
+df <- data.frame(c("John", "Lisa", "Paul", NA, "Pete", NA),
+                 c(12, 15, 23, NA, 14, NA),
+                 c("apple", "pear", "orange", NA, "pear", NA))
+find_next_na(data = df,
+            row = 2)
+
+find_next_na(data = df,
+            row = 5)
+
+}

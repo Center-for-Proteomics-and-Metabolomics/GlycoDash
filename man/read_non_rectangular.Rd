@@ -22,3 +22,9 @@ not constant (non-rectangular data). Blank lines in the field are not skipped
 and empty fields "" are interpreted as \code{NA}. This function was created to read
 LacyTools summary files (tab-delimited .txt file).
 }
+\examples{
+data_file <- system.file("inst", "extdata", "LacyTools_summary.txt", 
+                         package = "glycodash")
+read_non_rectangular(path = data_file, delim = "\t")
+
+}

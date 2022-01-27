@@ -20,3 +20,8 @@ column named "group" that indicates whether a sample is Specific or Total.
 \description{
 Detect whether a sample is Specific or Total Ig based on the sample name.
 }
+\examples{
+block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"), 
+                            values = c(13.56, 738.34, 4.56))
+detect_group(block = block_example, name_specific = "Specific", name_total = "Total")
+}
