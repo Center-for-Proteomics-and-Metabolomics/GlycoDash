@@ -1,0 +1,133 @@
+---
+title: "glycodash_spectra_curation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{glycodash_spectra_curation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+
+#library(glycodash)
+devtools::load_all()
+
+load(system.file("inst",
+                 "extdata",
+                 "long_data.rds",
+                 package = "glycodash"))
+
+```
+
+```{r check_criteria}
+
+# Need to figure out how to separate this per cluster
+
+do_criteria_check <- function(data, min_ppm_deviation, max_ppm_deviation, max_ipq, min_sn) {
+  mass_acc_check <- dplyr::between(data$mass_accuracy_ppm, 
+                                   min_ppm_deviation, 
+                                   max_ppm_deviation)
+  IPQ_check <- data$isotopic_pattern_quality <= max_ipq
+  sn_check <- data$sn >= min_sn
+  all_checks <- mass_acc_check & IPQ_check & sn_check %>% 
+    tidyr::replace_na(FALSE)
+  return(all_checks)
+}
+
+create_spectra_check_dataframe <- function(data, min_ppm_deviation, max_ppm_deviation, max_ipq, min_sn) {
+  spectra_check <- data %>% 
+  dplyr::mutate(criteria_check = do_criteria_check(data,
+                                                   min_ppm_deviation = min_ppm_deviation,
+                                                   max_ppm_deviation =max_ppm_deviation,
+                                                   max_ipq = max_ipq,
+                                                   min_sn = min_sn)) %>% 
+  dplyr::group_by(group, sample_type, sample_name) %>% 
+  dplyr::summarise(passing_proportion = sum(criteria_check)/dplyr::n(), 
+                   sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE]))
+  return(spectra_check)
+}
+
+# Now I'm using the negative controls that were uncalibrated (or for other reason NA)
+# as 0 in the calculation of cut-offs (because I replace NAs in the criteria check 
+# with FALSE). Is that what we want?
+
+# Function to calculate the population standard deviation.
+sd_p <- function(x, na.rm) {
+  sd(x, na.rm = na.rm) * sqrt((length(x)-1)/length(x))
+}
+
+calculate_cut_offs <- function(spectra_check, group_to_filter, sample_type_to_filter) {
+  cut_offs <- spectra_check %>% 
+  # This filter should depend on the choice of the user
+  dplyr::filter(sample_type == sample_type_to_filter & group == group_to_filter) %>% 
+  dplyr::summarise(av_neg_prop = mean(passing_proportion, na.rm = TRUE),
+                   sd_neg_prop = sd_p(passing_proportion, na.rm = TRUE),
+                   cut_off_prop = av_neg_prop + (3 * sd_neg_prop),
+                   av_sum_int = mean(sum_intensity, na.rm = TRUE),
+                   sd_sum_int = sd_p(sum_intensity, na.rm = TRUE),
+                   cut_off_sum_int = av_sum_int + (3 * sd_sum_int))
+}
+
+
+curate_spectra <- function(data, min_ppm_deviation, max_ppm_deviation, max_ipq, 
+                           min_sn, group_to_filter, sample_type_to_filter) {
+  spectra_check <- create_spectra_check_dataframe(data = data, 
+                                                  min_ppm_deviation = min_ppm_deviation,
+                                                  max_ppm_deviation = max_ppm_deviation,
+                                                  max_ipq = max_ipq,
+                                                  min_sn = min_sn)
+  cut_offs <- calculate_cut_offs(spectra_check = spectra_check,
+                                 group_to_filter = group_to_filter,
+                                 sample_type_to_filter = sample_type_to_filter)
+  
+  passing_spectra <- spectra_check %>% 
+  dplyr::filter(passing_proportion > cut_offs$cut_off_prop & sum_intensity > cut_offs$cut_off_sum_int)
+  
+  data <- data %>% 
+  dplyr::mutate(passed_curation = dplyr::case_when(
+    sample_name %in% passing_spectra$sample_name ~ TRUE,
+    TRUE ~ FALSE))
+  
+  return(data)
+}
+
+long_data <- curate_spectra(data = long_data,
+                            min_ppm_deviation = -20,
+                            max_ppm_deviation = 20,
+                            max_ipq = 0.2,
+                            min_sn = 9,
+                            group_to_filter = "Spike",
+                          sample_type_to_filter = "CN")
+
+curated_spectra <- long_data %>% 
+  dplyr::filter(passed_curation == TRUE)
+
+```
+
+```{r visualization}
+
+long_data %>%  
+  dplyr::group_by(sample_type, group, passed_curation, sample_name, charge) %>% 
+  dplyr::count(sample_name, charge) %>% 
+  ggplot2::ggplot() +
+  ggplot2::geom_bar(ggplot2::aes(x = sample_type, fill = passed_curation), position = "fill") +
+  ggplot2::facet_wrap(~ group) +
+  ggplot2::xlab("Sample type") +
+  ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
+                              name = "Proportion of spectra (%)") +
+  ggplot2::scale_fill_discrete(name = "Passed curation?", labels = c(`TRUE`= "Yes",
+                                                                       `FALSE` = "No")) +
+  ggplot2::theme_classic() +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+                 strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
+  ggpubr::border(size = 0.5)
+
+```
+
