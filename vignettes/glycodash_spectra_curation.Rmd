@@ -30,38 +30,20 @@ load(system.file("inst",
 
 # Need to figure out how to separate this per cluster
 
-do_criteria_check <- function(data, min_ppm_deviation, max_ppm_deviation, max_ipq, min_sn) {
-  mass_acc_check <- dplyr::between(data$mass_accuracy_ppm, 
-                                   min_ppm_deviation, 
-                                   max_ppm_deviation)
-  IPQ_check <- data$isotopic_pattern_quality <= max_ipq
-  sn_check <- data$sn >= min_sn
-  all_checks <- mass_acc_check & IPQ_check & sn_check %>% 
-    tidyr::replace_na(FALSE)
-  return(all_checks)
-}
+data("long_data")
 
-create_spectra_check_dataframe <- function(data, min_ppm_deviation, max_ppm_deviation, max_ipq, min_sn) {
-  spectra_check <- data %>% 
-  dplyr::mutate(criteria_check = do_criteria_check(data,
-                                                   min_ppm_deviation = min_ppm_deviation,
-                                                   max_ppm_deviation =max_ppm_deviation,
-                                                   max_ipq = max_ipq,
-                                                   min_sn = min_sn)) %>% 
-  dplyr::group_by(group, sample_type, sample_name) %>% 
-  dplyr::summarise(passing_proportion = sum(criteria_check)/dplyr::n(), 
-                   sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE]))
-  return(spectra_check)
-}
+wrong_data <- long_data %>% dplyr::select(-c(sample_name, group))
+summarize_spectra_checks(data = wrong_data,
+                                min_ppm_deviation = -20,
+                                max_ppm_deviation = 20,
+                                max_ipq = 0.2,
+                                min_sn = 9)
 
 # Now I'm using the negative controls that were uncalibrated (or for other reason NA)
 # as 0 in the calculation of cut-offs (because I replace NAs in the criteria check 
 # with FALSE). Is that what we want?
 
 # Function to calculate the population standard deviation.
-sd_p <- function(x, na.rm) {
-  sd(x, na.rm = na.rm) * sqrt((length(x)-1)/length(x))
-}
 
 calculate_cut_offs <- function(spectra_check, group_to_filter, sample_type_to_filter) {
   cut_offs <- spectra_check %>% 
