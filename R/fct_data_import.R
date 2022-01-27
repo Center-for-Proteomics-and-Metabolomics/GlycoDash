@@ -22,7 +22,11 @@ outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
 #' @return A data frame (\code{\link{[base]data.frame}}) containing the data in the flat file.
 #' @export
 #'
-#' @examples
+#' @examples 
+#' data_file <- system.file("inst", "extdata", "LacyTools_summary.txt", 
+#'                          package = "glycodash")
+#' read_non_rectangular(path = data_file, delim = "\t")
+#' 
 read_non_rectangular <- function(path, delim = "\t") {
   lines <- readLines(path, n = -1, ok = TRUE)
   columns <- stringr::str_split(lines, pattern = delim)
@@ -45,10 +49,19 @@ read_non_rectangular <- function(path, delim = "\t") {
 #' @export
 #'
 #' @examples
+#' df <- data.frame(c("John", "Lisa", "Paul", NA, "Pete", NA),
+#'                  c(12, 15, 23, NA, 14, NA),
+#'                  c("apple", "pear", "orange", NA, "pear", NA))
+#'find_next_na(data = df,
+#'             row = 2)
+#'
+#'find_next_na(data = df,
+#'             row = 5)
+#' 
 find_next_na <- function(data, row) {
   na_index <- which(is.na(data[ , 1]))
   later_nas <- na_index[which(purrr::map_lgl(na_index, ~ .x > row))]
-  next_na <- later_nas[which.min(purrr::map_int(later_nas, ~ .x - row))]
+  next_na <- later_nas[which.min(purrr::map_int(later_nas, ~ .x - as.integer(row)))]
   return(next_na)
 }
 
@@ -61,11 +74,13 @@ find_next_na <- function(data, row) {
 #' @export
 #'
 #' @examples
+#' data("LacyTools_summary")
+#' find_block(data = data, variable = "S/N (2+)")
 find_block <- function(data, variable) {
   first_row <- which(data[ , 1] == variable)
   if (rlang::is_empty(first_row)) {
-    print(paste("Error: LacyTools output format",
-                variable, "is not present in the input file."))
+   stop(paste("Error: LacyTools output format",
+              variable, "is not present in the input file."))
   } else {
     next_na <- find_next_na(data, first_row)
     if (rlang::is_empty(next_na)) { 
@@ -88,8 +103,11 @@ find_block <- function(data, variable) {
 #' @export
 #'
 #' @examples
+#' block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"), 
+#'                             values = c(13.56, 738.34, 4.56))
+#'detect_group(block = block_example, name_specific = "Specific", name_total = "Total")
 detect_group <- function(block, name_specific, name_total) {
-  block %>% 
+  block <- block %>% 
     tidyr::extract(col = sample_name,
             into = "group",
             regex = paste0("(", name_specific, "|", 
@@ -140,11 +158,16 @@ get_block <- function(data, variable, name_specific = "Spike", name_total = "Tot
 #' @export
 #'
 #' @examples
+#' block_example <- data.frame(sample_name = c("s_0216_Specific_pl_3.A10", 
+#'                                             "s_568_Total_P5_H4", 
+#'                                             "pl23_B6.s_8759"), 
+#'                             values = c(13.56, 738.34, 4.56))
+#' detect_plate_and_well(block_example)
 detect_plate_and_well <- function(data) {
   data %>% 
     tidyr::extract(col = sample_name, 
             into = c("plate", "well"),
-            regex = "([-_][Pp]l\\d).+(_[A-H]\\d{1,2})", 
+            regex = "([Pp][Ll]?[_-]?\\.?\\d+).+([A-H]{1}\\d{1,2})", 
             remove = FALSE) %>% 
     dplyr::mutate(plate = stringr::str_extract(plate, "\\d+"),
            well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
@@ -153,20 +176,20 @@ detect_plate_and_well <- function(data) {
     dplyr::relocate(plate_well, .after = sample_name)
 }
 
-#' Merge a dataframe containing metadata to a dataframe containing the data.
+#' Get the analytes info from a LacyTools summary for one output format
+#' 
+#' This function gets the exact mass of the most abundant isotopologue and the
+#' fraction for each analyte in a LacyTools summary.
 #'
-#' @param data A dataframe containing data. Should contain a column named "plate_well".
-#' @param metadata A dataframe containing metadata. Should contain a column named "plate_well".
+#' @param data A dataframe with a LacyTools summary.
+#' @param variable The name of a LacyTools output format.
 #'
-#' @return
+#' @return A dataframe with three columns: analyte, exact mass and fraction.
 #' @export
 #'
 #' @examples
-add_metadata <- function(data, metadata){
-  data <- dplyr::left_join(data, metadata, by = "plate_well")
-  return (data)
-}
-
+#' data("LacyTools_summary")
+#' get_analytes_info(data = LacyTools_summary, variable = "S/N (2+)")
 get_analytes_info <- function(data, variable) {
   analyte_names <- which(data[ , 1] == variable)
   if (rlang::is_empty(analyte_names)){
@@ -191,6 +214,18 @@ get_analytes_info <- function(data, variable) {
   return(analytes_info)
 }
 
+#' Get the analytes info from a LacyTools summary for a list of output formats
+#'
+#' @param data A dataframe with a LacyTools summary.
+#' @param list_of_variables A list/vector with the name of LacyTools output formats.
+#'
+#' @return A dataframe with three columns (analyte, exact mass and fraction) and one
+#'         row per analyte.
+#' @export
+#'
+#' @examples
+#' data("LacyTools_summary")
+#' get_analytes_info_from_list(data = LacyTools_summary, list_of_variables = outputs)
 get_analytes_info_from_list <- function(data, list_of_variables) {
   for (variable in list_of_variables) {
     tryCatch({
@@ -204,6 +239,17 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
   stop("No output formats in the list are present in the input summary file")
 }
 
+#' Transform the Lacytools summary data to a long format.
+#'
+#' @param block A dataframe containing a block from a LacyTools summary file.
+#' @param metadata A dataframe containing metadata in case the metadata has already
+#'                 been added to the data.
+#'
+#' @return A dataframe containing the LacyTools summary in long format.
+#' @export
+#'
+#' @examples
+#' 
 create_long_data <- function(block, metadata = NULL) {
   charge_value <- stringr::str_extract(block$lacytools_output[1], "\\d\\+")
   new_output_name <- stringr::str_remove(block$lacytools_output[1], "_\\d\\+")
@@ -220,6 +266,14 @@ create_long_data <- function(block, metadata = NULL) {
   return(block)
 }
 
+#' Title
+#'
+#' @param summary_file 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 read_lacytools_summary <- function(summary_file) {
   
   data <- read_non_rectangular(summary_file)
@@ -242,6 +296,14 @@ read_lacytools_summary <- function(summary_file) {
   return(long_data)
 }
 
+#' Title
+#'
+#' @param plate_design_file 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 read_plate_design <- function(plate_design_file) {
   
   plate_design <- readxl::read_excel(plate_design_file)
@@ -252,6 +314,14 @@ read_plate_design <- function(plate_design_file) {
   return(plate_design)
 }
 
+#' Title
+#'
+#' @param plate_design 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 process_plate_design <- function (plate_design) {
   plate_design <- plate_design %>%
     tidyr::pivot_longer(cols = -well,
@@ -272,6 +342,14 @@ process_plate_design <- function (plate_design) {
   return(plate_design)
 }
 
+#' Title
+#'
+#' @param plate_design 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 handle_duplicates <- function(plate_design) {
   new_sample_ids <- vector()
   new_sample_types <- vector()
@@ -297,12 +375,28 @@ handle_duplicates <- function(plate_design) {
   return(new_plate_design)
 }
 
+#' Title
+#'
+#' @param plate_design_file 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 read_and_process_plate_design <- function(plate_design_file) {
   plate_design <- read_plate_design(plate_design_file)
   plate_design <- process_plate_design(plate_design)
   return(plate_design)
 }
 
+#' Title
+#'
+#' @param metadata_file 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 read_metadata <- function (metadata_file) {
   metadata <- readxl::read_excel(metadata_file,
                                  col_types = "text", 
@@ -313,6 +407,15 @@ read_metadata <- function (metadata_file) {
   return(metadata)
 }
 
+#' Title
+#'
+#' @param date_text_values 
+#' @param origin 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 date_with_text <- function(date_text_values, origin = "1899-12-30"){
   no_nas <- date_text_values[!is.na(date_text_values)]
   test <- suppressWarnings(as.numeric(no_nas))
@@ -328,6 +431,15 @@ date_with_text <- function(date_text_values, origin = "1899-12-30"){
   return(dates)
 }
 
+#' Title
+#'
+#' @param plate_design_ids 
+#' @param metadata_ids 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 check_sample_id_matches <- function (plate_design_ids, metadata_ids) {
   # no_match are the sample_ids that are present in the plate_design,
   # but missing in the metadata
@@ -342,15 +454,14 @@ check_sample_id_matches <- function (plate_design_ids, metadata_ids) {
   }
 }
 
-check_unmatched_ids <- function(ids1, ids2) {
-  test <- setdiff(ids1, ids2)
-  if (rlang::is_empty(test)) {
-    
-  }
-}
-
-# with this function you can load() a .rds file and assign a new name to it using:
-# name <- load_and_assign()
+#' Title
+#'
+#' @param file_path 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 load_and_assign <- function(file_path){
   load(file_path)
   get(ls()[ls() != "file_path"])

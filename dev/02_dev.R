@@ -48,6 +48,7 @@ golem::add_module( name = "data_import_v2" ) # Name of the module
 ## Add helper functions ----
 ## Creates fct_* and utils_*
 golem::add_fct( "data_import" ) 
+golem::add_fct( "spectra_curation" )
 golem::add_utils( "helpers" )
 
 ## External resources
@@ -60,15 +61,17 @@ golem::add_css_file( "custom" )
 ## If you have data in your package
 usethis::use_data_raw( name = "example_LacyTools_summary", open = TRUE )
 usethis::use_data_raw(name = "metadata_cleaned", open = TRUE)
+usethis::use_data_raw(name = "long_data", open = TRUE)
 
 ## Tests ----
 ## Add one line by test you want to create
-usethis::use_test( "app" )
+usethis::use_test( "spectra_curation" )
 
 # Documentation
 
 ## Vignette ----
 usethis::use_vignette("glycodash_data_import")
+usethis::use_vignette("glycodash_spectra_curation")
 devtools::build_vignettes()
 
 ## Code Coverage----

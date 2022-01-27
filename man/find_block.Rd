@@ -17,3 +17,7 @@ The row indices of the block.
 \description{
 Find a block in a LacyTools summary file
 }
+\examples{
+data("LacyTools_summary")
+find_block(data = data, variable = "S/N (2+)")
+}
