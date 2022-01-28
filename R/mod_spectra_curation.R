@@ -22,6 +22,10 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
+            numericInput(ns("n_clusters"), 
+                         "How many clusters does your data contain?",
+                         value = 1),
+            uiOutput(ns("clusters")),
             shinydashboard::box(
               title = "Quality criteria",
               width = NULL,
@@ -83,6 +87,27 @@ mod_spectra_curation_ui <- function(id){
 mod_spectra_curation_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    # Create inputIds for the cluster textInputs based on the 
+    # value of input$n_clusters:
+    cluster_inputIds <- reactive({
+      req(input$n_clusters)
+      cluster_inputIds <- purrr::map(seq_len(input$n_clusters),
+                                       ~ paste0("cluster", .x))
+      return(cluster_inputIds)
+    })
+    
+    output$clusters <- renderUI({
+      req(cluster_inputIds())
+        purrr::imap(cluster_inputIds(),
+                    function(inputId, i) textInput(
+                      ns(inputId),
+                      label = paste("By what words/letters in the analyte name can the analytes belonging to cluster",
+                                    i,
+                                    "be recognized?")
+                      ))
+    })
+    
     output$p <- renderTable({shinipsum::random_table(3, 3)})
     output$fail_table <- renderTable({shinipsum::random_table(3, 3)})
   })
