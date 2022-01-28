@@ -20,8 +20,6 @@ app_ui <- function(request) {
           id = "tabs",
           shinydashboard::menuItem("Data Import", 
                                    tabName = "data_import"),
-          shinydashboard::menuItem("Data Import v2",
-                                   tabName = "data_import_v2"),
           shinydashboard::menuItem("Spectra Curation", 
                                    tabName = "spectra_curation"),
           shinydashboard::menuItem("Analyte Curation", 
