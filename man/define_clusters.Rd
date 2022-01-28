@@ -10,14 +10,15 @@ define_clusters(data, clusters_regex)
 \item{data}{A dataframe in long format (one row for each analyte + sample
 combination).}
 
-\item{clusters_regex}{A vector with character strings that will be used as
-regular expressions to classify analytes into clusters. The vector should
-contain one character string per cluster.}
+\item{clusters_regex}{A vector containing character strings. These strings are
+used as regular expressions to classify analytes into clusters.
+\code{clusters_regex} should contain one character string per cluster in the
+data.}
 }
 \value{
 The function returns the original dataframe given as the data
-  argument, but with an additional column named "cluster". This
-  character column indicates to what cluster the analyte belongs.
+ argument, but with an additional column named "cluster". This character
+ column indicates to what cluster the analyte belongs.
 }
 \description{
 This function determines which cluster an analyte belongs to based on the
