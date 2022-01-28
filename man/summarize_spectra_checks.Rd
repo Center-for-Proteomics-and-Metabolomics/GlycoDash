@@ -29,21 +29,22 @@ theoretic isotopic pattern.}
 \item{min_sn}{The lowest allowed value for the signal to noise ratio (S/N).}
 }
 \value{
-A dataframe in which each row represents one spectrum. The dataframe
-  contains five columns: \describe{ \item{sample_name}{The name of the sample
-  for which this spectrum was recorded.} \item{sample_type}{The type of
-  sample (e.g. negative control, blank etc.).} \item{group}{The group (Total
-  or Specific) that this sample belongs to.} \item{passing_proportion}{The
-  proportion of analytes that passed the criteria checks in this spectrum.}
-  \item{sum_intensity}{The sum intensity of all passing analytes in this
-  spectrum} }
+A dataframe that contains one row per spectrum for each cluster (
+  Thus the number of rows is equal to the number of spectra times the number
+  of clusters). The dataframe contains five columns: \describe{
+  \item{sample_name}{The name of the sample for which this spectrum was
+  recorded.} \item{sample_type}{The type of sample (e.g. negative control,
+  blank etc.).} \item{group}{The group (Total or Specific) that this sample
+  belongs to.} \item{cluster}{The cluster that the analyte belongs to.}
+  \item{passing_proportion}{The proportion of analytes that passed the
+  criteria checks in this spectrum.} \item{sum_intensity}{The sum intensity
+  of all passing analytes in this spectrum} }
 }
 \description{
 \code{summarize_spectra_checks()} first performs analyte quality criteria
-checks for every spectrum in the data using
-\code{\link{do_criteria_check}}. Then it calculates the proportion of
-passing analytes per spectrum and the sum intensity of passing analytes per
-spectrum.
+checks for every spectrum in the data using \code{\link{do_criteria_check}}.
+Then it calculates the proportion of passing analytes per spectrum and the
+sum intensity of passing analytes per spectrum.
 }
 \examples{
 data("long_data")
