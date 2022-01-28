@@ -19,25 +19,73 @@ knitr::opts_chunk$set(
 #library(glycodash)
 devtools::load_all()
 
-load(system.file("inst",
-                 "extdata",
-                 "long_data.rds",
-                 package = "glycodash"))
-
+data("long_data")
 ```
 
 ```{r check_criteria}
 
-# Need to figure out how to separate this per cluster
+long_data <- define_clusters(long_data,
+                             clusters_regex = "IgGI1")
 
-data("long_data")
+to_replace <- sample(1:69888, 69888/2)
+long_data$cluster[to_replace] <- "IgG2"
+
+checks <- summarize_spectra_checks(data = long_data,
+                                   min_ppm_deviation = -20,
+                                   max_ppm_deviation = 20,
+                                   max_ipq = 0.2,
+                                   min_sn = 9)
+
+cut_offs <- calculate_cut_offs(checks,
+                               group_to_filter = "Spike",
+                               sample_type_to_filter = "CN") %>% 
+  dplyr::ungroup(.) %>% 
+  dplyr::select(-c(sample_type, group))
+
+spectra_check <- dplyr::left_join(checks, cut_offs, by = "cluster") %>% 
+  dplyr::ungroup(.)
+  
+passing_spectra <- spectra_check %>% 
+    dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int))
+  
+long_data <- long_data %>% 
+    dplyr::mutate(passed_curation = dplyr::case_when(
+      sample_name %in% passing_spectra$sample_name ~ TRUE,
+      TRUE ~ FALSE))
+
+no_NAs <- long_data %>% 
+    dplyr::filter(dplyr::if_all(.cols = c(mass_accuracy_ppm,
+                                          isotopic_pattern_quality,
+                                          sn),
+                                .fns = ~ !is.na(.x)))
+if (all(no_NAs$passed_curation == FALSE)) {
+    warning("None of the spectra passed curation.")
+  } else {
+    if (all(no_NAs$passed_curation == TRUE)) {
+      warning("All spectra passed curation.")
+    }
+  }
+
+
+  data <- data %>% 
+    dplyr::mutate(passed_curation = dplyr::case_when(
+      sample_name %in% passing_spectra$sample_name ~ TRUE,
+      TRUE ~ FALSE))
+  
+  no_NAs <- data %>% 
+    dplyr::filter(dplyr::across(.cols = c(mass_accuracy_ppm,
+                                          isotopic_pattern_quality,
+                                          sn),
+                                .fns = ~ !is.na(.x)))
 
 wrong_data <- long_data %>% dplyr::select(-c(sample_name, group))
-summarize_spectra_checks(data = wrong_data,
+spectra_check <- summarize_spectra_checks(data = long_data,
                                 min_ppm_deviation = -20,
                                 max_ppm_deviation = 20,
                                 max_ipq = 0.2,
                                 min_sn = 9)
+
+calculate_cut_offs(spectra_check, "Spike", "CN")
 
 # Now I'm using the negative controls that were uncalibrated (or for other reason NA)
 # as 0 in the calculation of cut-offs (because I replace NAs in the criteria check 
@@ -45,48 +93,21 @@ summarize_spectra_checks(data = wrong_data,
 
 # Function to calculate the population standard deviation.
 
-calculate_cut_offs <- function(spectra_check, group_to_filter, sample_type_to_filter) {
-  cut_offs <- spectra_check %>% 
-  # This filter should depend on the choice of the user
-  dplyr::filter(sample_type == sample_type_to_filter & group == group_to_filter) %>% 
-  dplyr::summarise(av_neg_prop = mean(passing_proportion, na.rm = TRUE),
-                   sd_neg_prop = sd_p(passing_proportion, na.rm = TRUE),
-                   cut_off_prop = av_neg_prop + (3 * sd_neg_prop),
-                   av_sum_int = mean(sum_intensity, na.rm = TRUE),
-                   sd_sum_int = sd_p(sum_intensity, na.rm = TRUE),
-                   cut_off_sum_int = av_sum_int + (3 * sd_sum_int))
-}
+curate_spectra(data = long_data,
+               min_ppm_deviation = -20,
+               max_ppm_deviation = 20,
+               max_ipq = 0.2,
+               min_sn = 9,
+               group_to_filter = "Spike",
+               sample_type_to_filter = "CN")
 
-
-curate_spectra <- function(data, min_ppm_deviation, max_ppm_deviation, max_ipq, 
-                           min_sn, group_to_filter, sample_type_to_filter) {
-  spectra_check <- create_spectra_check_dataframe(data = data, 
-                                                  min_ppm_deviation = min_ppm_deviation,
-                                                  max_ppm_deviation = max_ppm_deviation,
-                                                  max_ipq = max_ipq,
-                                                  min_sn = min_sn)
-  cut_offs <- calculate_cut_offs(spectra_check = spectra_check,
-                                 group_to_filter = group_to_filter,
-                                 sample_type_to_filter = sample_type_to_filter)
-  
-  passing_spectra <- spectra_check %>% 
-  dplyr::filter(passing_proportion > cut_offs$cut_off_prop & sum_intensity > cut_offs$cut_off_sum_int)
-  
-  data <- data %>% 
-  dplyr::mutate(passed_curation = dplyr::case_when(
-    sample_name %in% passing_spectra$sample_name ~ TRUE,
-    TRUE ~ FALSE))
-  
-  return(data)
-}
-
-long_data <- curate_spectra(data = long_data,
-                            min_ppm_deviation = -20,
-                            max_ppm_deviation = 20,
-                            max_ipq = 0.2,
-                            min_sn = 9,
-                            group_to_filter = "Spike",
-                          sample_type_to_filter = "CN")
+curate_spectra(data = long_data,
+                                min_ppm_deviation = 0,
+                                max_ppm_deviation = 0,
+                                max_ipq = 0,
+                                min_sn = 10000,
+                                group_to_filter = "Spike",
+                                sample_type_to_filter = "CN")
 
 curated_spectra <- long_data %>% 
   dplyr::filter(passed_curation == TRUE)
