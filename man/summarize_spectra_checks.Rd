@@ -30,21 +30,20 @@ theoretic isotopic pattern.}
 }
 \value{
 A dataframe in which each row represents one spectrum. The dataframe
-contains five columns: 
-\describe{
-    \item{sample_name}{The name of the sample for which this spectrum was recorded.}
-    \item{sample_type}{The type of sample (e.g. negative control, blank etc.).}
-    \item{group}{The group (Total or Specific) that this sample belongs to.}
-    \item{passing_proportion}{The proportion of analytes that 
-    passed the criteria checks in this spectrum.}
-    \item{sum_intensity}{The sum intensity of all passing analytes in this spectrum}
-    }
+  contains five columns: \describe{ \item{sample_name}{The name of the sample
+  for which this spectrum was recorded.} \item{sample_type}{The type of
+  sample (e.g. negative control, blank etc.).} \item{group}{The group (Total
+  or Specific) that this sample belongs to.} \item{passing_proportion}{The
+  proportion of analytes that passed the criteria checks in this spectrum.}
+  \item{sum_intensity}{The sum intensity of all passing analytes in this
+  spectrum} }
 }
 \description{
-\code{summarize_spectra_checks()} first performs analyte quality criteria checks
-for every spectrum in the data using \code{\link{do_criteria_check()}}. Then it
-calculates the proportion of passing analytes per spectrum and the sum
-intensity of passing analytes per spectrum.
+\code{summarize_spectra_checks()} first performs analyte quality criteria
+checks for every spectrum in the data using
+\code{\link{do_criteria_check}}. Then it calculates the proportion of
+passing analytes per spectrum and the sum intensity of passing analytes per
+spectrum.
 }
 \examples{
 data("long_data")
