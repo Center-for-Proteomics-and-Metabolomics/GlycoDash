@@ -84,9 +84,23 @@ mod_spectra_curation_ui <- function(id){
 #' spectra_curation Server Functions
 #'
 #' @noRd 
-mod_spectra_curation_server <- function(id){
+mod_spectra_curation_server <- function(id, results_data_import){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    x <- reactiveValues()
+    
+    observe({
+      if (isTruthy(results_data_import$data_incl_metadata())){
+        x$data <- results_data_import$data_incl_metadata()
+      } else { if (isTruthy(results_data_import$data_incl_plate_design())){
+        x$data <- results_data_import$data_incl_plate_design()
+      } else {
+        x$data <- results_data_import$data()
+      }
+      }
+      print(x$data)
+    })
     
     # Create inputIds for the cluster textInputs based on the 
     # value of input$n_clusters:

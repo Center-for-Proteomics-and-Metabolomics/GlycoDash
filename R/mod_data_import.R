@@ -520,6 +520,12 @@ mod_data_import_server <- function(id){
       }
     })
     
+    return(list(
+      data = reactive({x$data}),
+      data_incl_plate_design = reactive({x$data_incl_plate_design}),
+      data_incl_metadata = reactive({x$data_incl_metadata})
+    ))
+    
   })
 }
     
