@@ -1,11 +1,24 @@
 library(glycodash)
 
-data("long_data")
+test_that("define_clusters() works if clusters_regex is a list.", {
+  df <- data.frame(analyte = c("IgGI1H5N3", "IgGII1H5N3"),
+                   number = c(1:2))
+  # Using expect_error with regexp = NA means that there should be no errors.
+  expect_error(define_clusters(data = df,
+                               clusters_regex = list("IgGI1", "IgGII1")),
+               regexp = NA)
+})
 
 test_that("define_clusters() throws error when any element of clusters_regex results in zero matches", {
+  data("long_data")
   expect_error(define_clusters(data = long_data,
                                clusters_regex = c("nonsense",
                                                   "non-existent")),
+               "The regular expression\\(s\\) nonsense and non-existent matched no analytes in the \"analyte\" column of the data\\.")
+  # Same test but with clusters_regex as a list:
+  expect_error(define_clusters(data = long_data,
+                               clusters_regex = list("nonsense",
+                                                     "non-existent")),
                "The regular expression\\(s\\) nonsense and non-existent matched no analytes in the \"analyte\" column of the data\\.")
 })
 
@@ -15,15 +28,10 @@ test_that("define_clusters() throws an error when any analytes in the data don't
   expect_error(define_clusters(data = df,
                                clusters_regex = c("IgGI1", "IgGII1")),
                "Some analytes could not be assigned into a cluster\\. Please reconsider the regular expressions you gave as clusters_regex\\.")
-})
-
-test_that("define_clusters() works if clusters_regex is a list.", {
-  df <- data.frame(analyte = c("IgGI1H5N3", "IgGII1H5N3"),
-                   number = c(1:2))
-  # Using expect_error with regexp = NA means that there should be no errors.
+  # Same test but with clusters_regex as a list:
   expect_error(define_clusters(data = df,
                                clusters_regex = list("IgGI1", "IgGII1")),
-               regexp = NA)
+               "Some analytes could not be assigned into a cluster\\. Please reconsider the regular expressions you gave as clusters_regex\\.")
 })
 
 test_that("do_criteria_check() arguments fulfill the requirements.", {
