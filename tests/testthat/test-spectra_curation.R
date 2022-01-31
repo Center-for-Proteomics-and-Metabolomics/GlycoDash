@@ -17,6 +17,15 @@ test_that("define_clusters() throws an error when any analytes in the data don't
                "Some analytes could not be assigned into a cluster\\. Please reconsider the regular expressions you gave as clusters_regex\\.")
 })
 
+test_that("define_clusters() works if clusters_regex is a list.", {
+  df <- data.frame(analyte = c("IgGI1H5N3", "IgGII1H5N3"),
+                   number = c(1:2))
+  # Using expect_error with regexp = NA means that there should be no errors.
+  expect_error(define_clusters(data = df,
+                               clusters_regex = list("IgGI1", "IgGII1")),
+               regexp = NA)
+})
+
 test_that("do_criteria_check() arguments fulfill the requirements.", {
   expect_error(do_criteria_check(data = long_data, 
                                  min_ppm_deviation = "oops",
