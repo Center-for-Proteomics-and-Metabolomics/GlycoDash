@@ -93,13 +93,14 @@ calculate_cut_offs(spectra_check, "Spike", "CN")
 
 # Function to calculate the population standard deviation.
 
-curate_spectra(data = long_data,
-               min_ppm_deviation = -20,
-               max_ppm_deviation = 20,
-               max_ipq = 0.2,
-               min_sn = 9,
-               group_to_filter = "Spike",
-               sample_type_to_filter = "CN")
+long_data <- curate_spectra(data = long_data,
+                            min_ppm_deviation = -20,
+                            max_ppm_deviation = 20,
+                            max_ipq = 0.2,
+                            min_sn = 9,
+                            clusters_regex = "IgGI1",
+                            group_to_filter = "Spike",
+                            sample_type_to_filter = "CN")
 
 curate_spectra(data = long_data,
                                 min_ppm_deviation = 0,
@@ -117,11 +118,9 @@ curated_spectra <- long_data %>%
 ```{r visualization}
 
 long_data %>%  
-  dplyr::group_by(sample_type, group, passed_curation, sample_name, charge) %>% 
-  dplyr::count(sample_name, charge) %>% 
   ggplot2::ggplot() +
   ggplot2::geom_bar(ggplot2::aes(x = sample_type, fill = passed_curation), position = "fill") +
-  ggplot2::facet_wrap(~ group) +
+  ggplot2::facet_wrap(cluster ~ group) +
   ggplot2::xlab("Sample type") +
   ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
                               name = "Proportion of spectra (%)") +
