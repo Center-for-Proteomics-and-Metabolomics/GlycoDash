@@ -58,7 +58,7 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            radioButtons(ns("output_format"),
+            radioButtons(ns("download_format"),
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
             downloadButton(ns("download"), 
@@ -72,7 +72,7 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            tableOutput(ns("p")),
+            plotOutput(ns("curated_spectra_plot")),
             tableOutput(ns("fail_table"))
           )
         )
@@ -182,8 +182,54 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
     })
     
-    output$p <- renderTable({shinipsum::random_table(3, 3)})
-    output$fail_table <- renderTable({shinipsum::random_table(3, 3)})
+    output$curated_spectra_plot <- renderPlot({
+      req(x$data_spectra_curated)
+      # Move this code to a function instead?
+      x$data_spectra_curated %>%  
+        ggplot2::ggplot() +
+        ggplot2::geom_bar(ggplot2::aes(x = sample_type, fill = passed_curation), 
+                          position = "fill") +
+        ggplot2::facet_wrap(cluster ~ group) +
+        ggplot2::xlab("Sample type") +
+        ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
+                                    name = "Proportion of spectra (%)") +
+        ggplot2::scale_fill_discrete(name = "Passed curation?", 
+                                     labels = c(`TRUE`= "Yes",
+                                                `FALSE` = "No")) +
+        ggplot2::theme_classic() +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+                       strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
+        ggpubr::border(size = 0.5)
+      })
+    
+    output$fail_table <- renderTable({
+      # create an actual table here:
+      shinipsum::random_table(3, 3)
+      })
+    
+    # data_to_download <- reactive({
+    #   req(x$data_spectra_curated)
+    #   x$data_spectra_curated
+    # })
+    
+    output$download <- downloadHandler(
+      filename = function() {
+        todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
+                                                       pattern = "-",
+                                                       replacement = ""))
+        switch(input$download_format,
+               "R object" = paste0(todays_date, "_curated_spectra.rds"),
+               "Excel file" = paste0(todays_date, "_curated_spectra.xlsx"))
+      },
+      content = function(file) {
+        data_to_download <- x$data_spectra_curated
+        switch(input$download_format,
+               "R object" = save(data_to_download, 
+                                 file = file),
+               "Excel file" = writexl::write_xlsx(data_to_download, 
+                                                  path = file))
+      }
+    )
   })
 }
     
