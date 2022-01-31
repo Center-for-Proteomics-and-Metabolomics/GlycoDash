@@ -95,9 +95,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
         x$data <- results_data_import$data_incl_metadata()
       } else { if (isTruthy(results_data_import$data_incl_plate_design())){
         x$data <- results_data_import$data_incl_plate_design()
-      } else {
-        x$data <- results_data_import$data()
-      }
+      } 
       }
       print(x$data)
     })
@@ -120,6 +118,22 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                     i,
                                     "be recognized?")
                       ))
+    })
+    
+    observeEvent(x$data, {
+      combinations <- expand.grid(sample_type = unique(x$data$sample_type),
+                             group = unique(x$data$group))
+      combination_strings <- purrr::pmap_chr(combinations,
+                                        function(sample_type, group) {
+                                          paste0(sample_type,
+                                                 "; ",
+                                                 group)
+                                        })
+      options <- c(combination_strings, 
+                   unique(x$data$sample_type),
+                   unique(x$data$group))
+      updateSelectInput(inputId = "cut_off_basis",
+                        choices = options)
     })
     
     output$p <- renderTable({shinipsum::random_table(3, 3)})
