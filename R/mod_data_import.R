@@ -21,12 +21,16 @@ mod_data_import_ui <- function(id){
           shinydashboard::box(
             title = "Upload your data",
             width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
             fileInput(ns("lacytools_summary"), "Upload LacyTools summary.txt file:"),
             actionButton(ns("read_summary"), "Convert the LacyTools summary file to an R-suitable format")
           ),
           shinydashboard::box(
             title = "Upload your plate design",
             width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
             fileInput(ns("plate_design"), "Upload a plate design Excel file:"),
             actionButton(ns("add_plate_design"), "Add sample ID's and sample types to the data based on the plate design"),
             br(),
@@ -42,6 +46,8 @@ mod_data_import_ui <- function(id){
           shinydashboard::box(
             title = "Upload your metadata",
             width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
             fileInput(ns("metadata"), 
                       "Upload one or more metadata Excel file(s) or R object(s):",
                       multiple = TRUE),
@@ -58,6 +64,8 @@ mod_data_import_ui <- function(id){
           shinydashboard::box(
             title = "View the converted data",
             width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
             DT::dataTableOutput(ns("data_table"))
           )
         )
