@@ -24,7 +24,10 @@ mod_spectra_curation_ui <- function(id){
             status = "primary",
             numericInput(ns("n_clusters"), 
                          "How many clusters does your data contain?",
-                         value = 1),
+                         value = 1,
+                         min = 1,
+                         max = 25,
+                         step = 1),
             uiOutput(ns("clusters")),
             shinydashboard::box(
               title = "Quality criteria",
@@ -45,10 +48,12 @@ mod_spectra_curation_ui <- function(id){
                            "Min. S/N ratio:",
                            value = 9)
             ),
-            selectInput(ns("cut_off_basis"),
-                        "Base the spectra curation cut-off on:",
-                        choices = c("Negative controls; specific",
-                                    "Blanks")
+            selectizeInput(ns("cut_off_basis"),
+                           "Base the spectra curation cut-off on:",
+                           choices = c(""),
+                           selected = NULL,
+                           multiple = FALSE,
+                           options = list(placeholder = "select which samples to use as a basis for cut-off")
             ),
             actionButton(ns("curate_spectra"),
                          "Perform spectra curation")
@@ -106,6 +111,22 @@ mod_spectra_curation_server <- function(id, results_data_import){
       print(x$data)
     })
     
+    # This observe call ensures that the curate_spectra actionButton is only
+    # enabled under the right circumstances
+    observe({
+      shinyjs::disable(id = "curate_spectra")
+      if (all(isTruthy(x$data),
+              isTruthy(input$mass_accuracy),
+              isTruthy(input$ipq),
+              isTruthy(input$sn),
+              isTruthy(input$cut_off_basis))) {
+        if (all(purrr::map_lgl(cluster_inputIds(),
+                               ~ isTruthy(input[[.x]])))) {
+          shinyjs::enable("curate_spectra")
+        }
+      }
+    })
+    
     # Create inputIds for the cluster textInputs based on the 
     # value of input$n_clusters:
     cluster_inputIds <- reactive({
@@ -133,18 +154,17 @@ mod_spectra_curation_server <- function(id, results_data_import){
     # data.
     observeEvent(x$data, {
       combinations <- expand.grid(sample_type = unique(x$data$sample_type),
-                             group = unique(x$data$group))
+                                  group = unique(x$data$group))
       combination_strings <- purrr::pmap_chr(combinations,
-                                        function(sample_type, group) {
-                                          paste0(sample_type,
-                                                 "; ",
-                                                 group)
-                                        })
+                                             function(sample_type, group) {
+                                               paste(group,
+                                                     sample_type,
+                                                     "samples")
+                                             })
       options <- c(combination_strings, 
-                   unique(x$data$sample_type),
-                   unique(x$data$group))
-      updateSelectInput(inputId = "cut_off_basis",
-                        choices = options)
+                   paste("all", unique(x$data$sample_type), "samples"))
+      updateSelectizeInput(inputId = "cut_off_basis",
+                           choices = c("", options))
     })
     
     observeEvent(input$curate_spectra, {
