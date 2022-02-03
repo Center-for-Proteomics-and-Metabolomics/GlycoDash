@@ -32,6 +32,7 @@ usethis::use_package( "shinyalert" )
 usethis::use_package( "rhandsontable" )
 usethis::use_package( "glue" )
 usethis::use_package( "writexl" )
+usethis::use_package( "dashboardthemes" )
 
 usethis::use_pipe()
 
