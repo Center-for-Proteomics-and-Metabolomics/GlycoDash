@@ -28,10 +28,29 @@ define_clusters <- function(data, clusters_regex) {
                  })
   
   if (any(regex_found == FALSE)) {
-    stop(paste("The regular expression(s)",
-               paste0(clusters_regex[!regex_found],
-                      collapse = " and "),
-               "matched no analytes in the \"analyte\" column of the data."))
+    rlang::abort(class = "unmatched_regex",
+                 message = paste("The regular expression(s)",
+                                 paste0(clusters_regex[!regex_found],
+                                        collapse = " and "),
+                                 "matched no analytes in the \"analyte\" column of the data."))
+  }
+  
+  if (length(clusters_regex) > 1) {
+    regex_overlap <- purrr::imap_lgl(
+      clusters_regex,
+      function(regex, i) {
+        purrr::map_lgl(clusters_regex[[-i]],
+                       function(other_regex) {
+                         stringr::str_detect(string = other_regex,
+                                             pattern = regex)
+                       })
+      })
+    
+    if(any(regex_overlap == TRUE)) {
+      rlang::abort(class = "regex_overlap",
+                   message = paste("There is overlap between the cluster keywords.",
+                                   "Please make sure that each analyte matches only one cluster keyword."))
+    }
   }
   
   clusters <- data %>% 
@@ -44,8 +63,9 @@ define_clusters <- function(data, clusters_regex) {
                    remove = FALSE)
   
   if (anyNA(clusters$cluster)) {
-    stop(paste("Some analytes could not be assigned into a cluster.",
-               "Please reconsider the regular expressions you gave as clusters_regex."))
+    rlang::abort(class = "unmatched_analytes",
+                 message = paste("Some analytes could not be assigned into a cluster.",
+                                 "Please reconsider the regular expressions you gave as clusters_regex."))
   }
   return(clusters)
 }
