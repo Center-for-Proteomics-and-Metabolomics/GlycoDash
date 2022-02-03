@@ -149,6 +149,30 @@ mod_spectra_curation_server <- function(id, results_data_import){
                       ))
     })
     
+    values_cluster_inputs <- reactive({
+      req(cluster_inputIds())
+      purrr::map(cluster_inputIds(),
+                 ~ input[[.x]])
+    })
+    
+    # Check whether the values given as textInputs for the clusters have matches
+    # with the analytes in the data:
+    observeEvent(values_cluster_inputs(), {
+      req(x$data)
+      shinyjs::enable("curate_spectra")
+      purrr::map(cluster_inputIds(),
+                 function(cluster_inputId) {
+                   shinyFeedback::hideFeedback(cluster_inputId)
+                   tryCatch(define_clusters(data = x$data,
+                                            clusters_regex = input[[cluster_inputId]]),
+                            unmatched_regex = function(c) {
+                              shinyFeedback::feedbackDanger(cluster_inputId,
+                                                             show = TRUE,
+                                                             text = c$message)
+                              shinyjs::disable("curate_spectra")
+                            })})
+    })
+    
     # The selection menu for input$cut_off_basis is updated so that the choices
     # are all combinations of sample_types and groups that are present in the
     # data.
@@ -186,24 +210,38 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                       collapse = "|"))
       
       # Perform spectra curation:
-      x$data_spectra_curated <- curate_spectra(
-        data = x$data,
-        clusters_regex = clusters_regex,
-        min_ppm_deviation = input$mass_accuracy[1],
-        max_ppm_deviation = input$mass_accuracy[2],
-        max_ipq = input$ipq,
-        min_sn = input$sn,
-        group_to_filter = group_to_filter,
-        sample_type_to_filter = sample_type_to_filter)
-      
+      x$data_spectra_curated <- tryCatch(expr = { 
+        curate_spectra(
+          data = x$data,
+          clusters_regex = clusters_regex,
+          min_ppm_deviation = input$mass_accuracy[1],
+          max_ppm_deviation = input$mass_accuracy[2],
+          max_ipq = input$ipq,
+          min_sn = input$sn,
+          group_to_filter = group_to_filter,
+          sample_type_to_filter = sample_type_to_filter)
+      },
+      unmatched_regex = function(c) {
+        # Try to change this to a shinyFeedback appearing next to the relevant
+        # clusterInput
+        showNotification(ui = paste(c$message), 
+                         type = "error")
+      },
+      unmatched_analytes = function(c) {
+        showNotification(ui = paste(c$message), 
+                         type = "error")
+      })
+    })
+    
+    observeEvent(x$data_spectra_curated, {
+      req(x$data_spectra_curated)
       # Filter out all spectra that didn't pass curation:
       x$curated_spectra <- x$data_spectra_curated %>% 
         dplyr::filter(passed_curation == TRUE)
-      
     })
     
     output$curated_spectra_plot <- renderPlot({
-      req(x$data_spectra_curated)
+      req(x$curated_spectra)
       # Move this code to a function instead?
       x$data_spectra_curated %>%  
         ggplot2::ggplot() +
