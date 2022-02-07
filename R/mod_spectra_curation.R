@@ -121,7 +121,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
               isTruthy(input$sn),
               isTruthy(input$cut_off_basis))) {
         if (all(purrr::map_lgl(cluster_inputIds(),
-                               ~ isTruthy(input[[.x]])))) {
+                               ~ isTruthy(input[[.x]])),
+                x$clusters_OK)) {
           shinyjs::enable("curate_spectra")
         }
       }
@@ -149,17 +150,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
                       ))
     })
     
-    values_cluster_inputs <- reactive({
-      req(cluster_inputIds())
-      purrr::map(cluster_inputIds(),
-                 ~ input[[.x]])
-    })
-    
     # Check whether the values given as textInputs for the clusters have matches
     # with the analytes in the data:
-    observeEvent(values_cluster_inputs(), {
+    observeEvent({purrr::map(cluster_inputIds(),
+                            ~ input[[.x]])}, {
       req(x$data)
-      shinyjs::enable("curate_spectra")
+      x$clusters_OK <- TRUE
       purrr::map(cluster_inputIds(),
                  function(cluster_inputId) {
                    shinyFeedback::hideFeedback(cluster_inputId)
@@ -169,7 +165,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                               shinyFeedback::feedbackDanger(cluster_inputId,
                                                              show = TRUE,
                                                              text = c$message)
-                              shinyjs::disable("curate_spectra")
+                              x$clusters_OK <- FALSE
                             })})
     })
     
@@ -196,11 +192,19 @@ mod_spectra_curation_server <- function(id, results_data_import){
       clusters_regex <- purrr::map(cluster_inputIds(),
                                   ~ input[[.x]])
       
-      # Extract the group out of input$cut_off_basis that was selected by the
-      # user:
-      group_to_filter <- stringr::str_extract(string = input$cut_off_basis,
-                                              pattern = paste0(unique(x$data$group),
-                                                               collapse = "|"))
+      group_specified <- stringr::str_detect(string = input$cut_off_basis,
+                                             pattern = paste0(unique(x$data$group),
+                                                              collapse = "|"))
+      
+      if(group_specified == FALSE){
+        group_to_filter <- NULL
+      } else {
+        # Extract the group out of input$cut_off_basis that was selected by the
+        # user:
+        group_to_filter <- stringr::str_extract(string = input$cut_off_basis,
+                                                pattern = paste0(unique(x$data$group),
+                                                                 collapse = "|"))
+      }
       
       # Extract the sample_type out of input$cut_off_basis that was selected by
       # the user as cut_off_basis:
@@ -210,8 +214,9 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                       collapse = "|"))
       
       # Perform spectra curation:
-      x$data_spectra_curated <- tryCatch(expr = { 
-        curate_spectra(
+      tryCatch(expr = { 
+        # make work if group_to_filter is NULL
+        data_spectra_curated <- curate_spectra(
           data = x$data,
           clusters_regex = clusters_regex,
           min_ppm_deviation = input$mass_accuracy[1],
@@ -220,12 +225,14 @@ mod_spectra_curation_server <- function(id, results_data_import){
           min_sn = input$sn,
           group_to_filter = group_to_filter,
           sample_type_to_filter = sample_type_to_filter)
+        
+        x$data_spectra_curated <- data_spectra_curated
       },
-      unmatched_regex = function(c) {
-        # Try to change this to a shinyFeedback appearing next to the relevant
-        # clusterInput
+      regex_overlap = function(c) {
         showNotification(ui = paste(c$message), 
                          type = "error")
+        shinyalert::shinyalert(text = paste(c$message),
+                               type = "error")
       },
       unmatched_analytes = function(c) {
         showNotification(ui = paste(c$message), 
@@ -253,7 +260,9 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                     name = "Proportion of spectra (%)") +
         ggplot2::scale_fill_discrete(name = "Passed curation?", 
                                      labels = c(`TRUE`= "Yes",
-                                                `FALSE` = "No")) +
+                                                `FALSE` = "No"),
+                                     type = c(`TRUE` = "#3498DB",
+                                              `FALSE` = "#E74C3C")) +
         ggplot2::theme_classic() +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                        strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
@@ -288,6 +297,11 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                   path = file))
       }
     )
+    
+    return(list(
+      curated_spectra = reactive({x$curated_spectra})
+    ))
+    
   })
 }
     

@@ -320,6 +320,7 @@ mod_data_import_server <- function(id){
         # choose which of these is better:
         shinyFeedback::feedbackSuccess(inputId = "groups_file", 
                                        show = isTruthy(x$groups_and_plate_design),
+                                       color = "#18BC9C",
                                        text = "The sample types were added to the data.")
         showNotification("The sample types were added to the data", type = "message")
         
