@@ -29,7 +29,7 @@ mod_analyte_curation_ui <- function(id){
             fileInput(ns("analyte_list"), "Upload file with analyte list"),
             div(
               id = ns("curation_based_on_data"),
-              selectInput(ns("ignore_samples"),
+              selectizeInput(ns("ignore_samples"),
                           "Sample types to ignore regarding analyte curation:",
                           choices = c("Total", "Blanks", "Negative controls"),
                           multiple = TRUE),
@@ -68,9 +68,17 @@ mod_analyte_curation_ui <- function(id){
 #' analyte_curation Server Functions
 #'
 #' @noRd 
-mod_analyte_curation_server <- function(id){
+mod_analyte_curation_server <- function(id, results_spectra_curation){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    x <- reactiveValues()
+    
+    observe({
+      req(results_spectra_curation$curated_spectra())
+      x$data <- results_spectra_curation$curated_spectra()
+      print(x$data)
+    })
     
     observe({
       shinyjs::toggle("analyte_list", 
@@ -86,6 +94,24 @@ mod_analyte_curation_server <- function(id){
     })
     
     output$info_table <- renderTable({shinipsum::random_table(3, 3)})
+    
+    # The selection menu for input$ignore_samples is updated so that the choices
+    # are all combinations of sample_types and groups that are present in the
+    # data.
+    observeEvent(x$data, {
+      combinations <- expand.grid(sample_type = unique(x$data$sample_type),
+                                  group = unique(x$data$group))
+      combination_strings <- purrr::pmap_chr(combinations,
+                                             function(sample_type, group) {
+                                               paste(group,
+                                                     sample_type,
+                                                     "samples")
+                                             })
+      options <- c(paste("all", unique(x$data$sample_type), "samples"), 
+                   paste("all", unique(x$data$group), "samples"))
+      updateSelectizeInput(inputId = "ignore_samples",
+                           choices = c("", options))
+    })
  
   })
 }

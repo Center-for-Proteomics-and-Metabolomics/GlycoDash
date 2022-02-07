@@ -24,74 +24,9 @@ data("long_data")
 
 ```{r check_criteria}
 
-long_data <- define_clusters(long_data,
-                             clusters_regex = "IgGI1")
-
-to_replace <- sample(1:69888, 69888/2)
-long_data$cluster[to_replace] <- "IgG2"
-
-checks <- summarize_spectra_checks(data = long_data,
-                                   min_ppm_deviation = -20,
-                                   max_ppm_deviation = 20,
-                                   max_ipq = 0.2,
-                                   min_sn = 9)
-
-cut_offs <- calculate_cut_offs(checks,
-                               group_to_filter = "Spike",
-                               sample_type_to_filter = "CN") %>% 
-  dplyr::ungroup(.) %>% 
-  dplyr::select(-c(sample_type, group))
-
-spectra_check <- dplyr::left_join(checks, cut_offs, by = "cluster") %>% 
-  dplyr::ungroup(.)
-  
-passing_spectra <- spectra_check %>% 
-    dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int))
-  
-long_data <- long_data %>% 
-    dplyr::mutate(passed_curation = dplyr::case_when(
-      sample_name %in% passing_spectra$sample_name ~ TRUE,
-      TRUE ~ FALSE))
-
-no_NAs <- long_data %>% 
-    dplyr::filter(dplyr::if_all(.cols = c(mass_accuracy_ppm,
-                                          isotopic_pattern_quality,
-                                          sn),
-                                .fns = ~ !is.na(.x)))
-if (all(no_NAs$passed_curation == FALSE)) {
-    warning("None of the spectra passed curation.")
-  } else {
-    if (all(no_NAs$passed_curation == TRUE)) {
-      warning("All spectra passed curation.")
-    }
-  }
-
-
-  data <- data %>% 
-    dplyr::mutate(passed_curation = dplyr::case_when(
-      sample_name %in% passing_spectra$sample_name ~ TRUE,
-      TRUE ~ FALSE))
-  
-  no_NAs <- data %>% 
-    dplyr::filter(dplyr::across(.cols = c(mass_accuracy_ppm,
-                                          isotopic_pattern_quality,
-                                          sn),
-                                .fns = ~ !is.na(.x)))
-
-wrong_data <- long_data %>% dplyr::select(-c(sample_name, group))
-spectra_check <- summarize_spectra_checks(data = long_data,
-                                min_ppm_deviation = -20,
-                                max_ppm_deviation = 20,
-                                max_ipq = 0.2,
-                                min_sn = 9)
-
-calculate_cut_offs(spectra_check, "Spike", "CN")
-
 # Now I'm using the negative controls that were uncalibrated (or for other reason NA)
 # as 0 in the calculation of cut-offs (because I replace NAs in the criteria check 
 # with FALSE). Is that what we want?
-
-# Function to calculate the population standard deviation.
 
 long_data <- curate_spectra(data = long_data,
                             min_ppm_deviation = -20,
@@ -101,14 +36,6 @@ long_data <- curate_spectra(data = long_data,
                             clusters_regex = "IgGI1",
                             group_to_filter = "Spike",
                             sample_type_to_filter = "CN")
-
-curate_spectra(data = long_data,
-                                min_ppm_deviation = 0,
-                                max_ppm_deviation = 0,
-                                max_ipq = 0,
-                                min_sn = 10000,
-                                group_to_filter = "Spike",
-                                sample_type_to_filter = "CN")
 
 curated_spectra <- long_data %>% 
   dplyr::filter(passed_curation == TRUE)
@@ -131,5 +58,31 @@ long_data %>%
                  strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
   ggpubr::border(size = 0.5)
 
+# long_data %>% 
+#   dplyr::group_by(sample_type, group, passed_curation) %>% 
+#   dplyr::summarise(n = length(unique(sample_name)))
+
+```
+
+```{r analyte-curation-based-on-data}
+# User inputs:
+groups_to_ignore <- "Total"
+sample_types_to_ignore <- c("pool", "IVIGg", "CN", "Visucon", "PBS")
+cut_off_perc <- 25
+
+# Analyte curation:
+curated_analytes <- curated_spectra %>% 
+  dplyr::mutate(criteria_check = do_criteria_check(curated_spectra,
+                                                   min_ppm_deviation = -20,
+                                                   max_ppm_deviation = 20,
+                                                   max_ipq = 0.2,
+                                                   min_sn = 9)) %>% 
+  dplyr::filter(!(group %in% groups_to_ignore) & !(sample_type %in% sample_types_to_ignore)) %>% 
+  dplyr::group_by(cluster, charge, analyte) %>% 
+  dplyr::summarise(passing_percentage = sum(criteria_check) / dplyr::n() * 100) %>% 
+  dplyr::filter(passing_percentage > cut_off_perc)
+
+analyted_curated_data <- dplyr::left_join(curated_analytes, curated_spectra)
+  
 ```
 
