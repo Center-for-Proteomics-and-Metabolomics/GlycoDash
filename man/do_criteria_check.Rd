@@ -23,10 +23,11 @@ theoretic isotopic pattern.}
 \item{min_sn}{The lowest allowed value for the signal to noise ratio (S/N).}
 }
 \value{
-A logical vector of which the length corresponds to the number of
-  rows in the data. TRUE indicates that the analyte + sample combination
-  passed all three quality criteria checks, whereas FALSE indicates one or
-  more criteria were not fulfilled.
+The original dataframe given as the data argument, but with an
+  additional column named "criteria_check". This column is a logical vector:
+  TRUE indicates that the analyte + sample combination passed all three
+  quality criteria checks, whereas FALSE indicates one or more criteria were
+  not fulfilled.
 }
 \description{
 \code{do_criteria_check()} performs an analyte quality criteria check for

@@ -87,10 +87,11 @@ define_clusters <- function(data, clusters_regex) {
 #'   theoretic isotopic pattern.
 #' @param min_sn The lowest allowed value for the signal to noise ratio (S/N).
 #'
-#' @return A logical vector of which the length corresponds to the number of
-#'   rows in the data. TRUE indicates that the analyte + sample combination
-#'   passed all three quality criteria checks, whereas FALSE indicates one or
-#'   more criteria were not fulfilled.
+#' @return The original dataframe given as the data argument, but with an
+#'   additional column named "criteria_check". This column is a logical vector:
+#'   TRUE indicates that the analyte + sample combination passed all three
+#'   quality criteria checks, whereas FALSE indicates one or more criteria were
+#'   not fulfilled.
 #' @export
 #'
 #' @examples
@@ -126,15 +127,20 @@ do_criteria_check <- function(data,
   sn_check <- data$sn >= min_sn
   all_checks <- (mass_acc_check & IPQ_check & sn_check) %>% 
     tidyr::replace_na(., FALSE)
-  return(all_checks)
+  
+  data_checked <- data %>% 
+    dplyr::mutate(criteria_check = all_checks)
+  
+  return(data_checked)
 }
 
 #' Summarize analyte quality criteria checks
 #'
-#' \code{summarize_spectra_checks()} first performs analyte quality criteria
-#' checks for every spectrum in the data using \code{\link{do_criteria_check}}.
-#' Then it calculates the proportion of passing analytes per spectrum and the
-#' sum intensity of passing analytes per spectrum.
+#' \code{summarize_spectra_checks()} calculates the proportion of passing
+#' analytes per spectrum and the sum intensity of passing analytes per spectrum.
+#' \code{summarize_spectra_checks()} should be used after
+#' \code{\link{do_criteria_check}} has been used to perform analyte quality
+#' criteria checks for every spectrum and analyte combination in the data.
 #'
 #' @inheritParams do_criteria_check
 #'
@@ -153,30 +159,26 @@ do_criteria_check <- function(data,
 #' @examples
 #' data("long_data")
 #' summarize_spectra_checks(data = long_data,
-#'                                min_ppm_deviation = -20,
-#'                                max_ppm_deviation = 20,
-#'                                max_ipq = 0.2,
-#'                                min_sn = 9)
-summarize_spectra_checks <- function(data, min_ppm_deviation, max_ppm_deviation, max_ipq, min_sn) {
+#'                          min_ppm_deviation = -20,
+#'                          max_ppm_deviation = 20,
+#'                          max_ipq = 0.2,
+#'                          min_sn = 9)
+summarize_spectra_checks <- function(data_checked) {
   required_columns <- list("group",
                            "sample_type",
                            "sample_name",
-                           "cluster")
+                           "cluster",
+                           "criteria_check")
   
-  if(any(!(required_columns %in% colnames(data)))) {
-    missing_columns <- required_columns[!(required_columns %in% colnames(data))]
+  if(any(!(required_columns %in% colnames(data_checked)))) {
+    missing_columns <- required_columns[!(required_columns %in% colnames(data_checked))]
     stop(paste0("The data doesn't contain the required column(s) ",
                 paste0(missing_columns,
                        collapse = " and "),
                 "."))
   }
   
-  spectra_check <- data %>% 
-    dplyr::mutate(criteria_check = do_criteria_check(data,
-                                                     min_ppm_deviation = min_ppm_deviation,
-                                                     max_ppm_deviation = max_ppm_deviation,
-                                                     max_ipq = max_ipq,
-                                                     min_sn = min_sn)) %>% 
+  spectra_check <- data_checked %>% 
     dplyr::group_by(group, sample_type, cluster, sample_name) %>% 
     dplyr::summarise(passing_proportion = sum(criteria_check)/dplyr::n(), 
                      sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE]))
@@ -273,11 +275,12 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
                            max_ipq, min_sn, group_to_filter, sample_type_to_filter) {
   data <- define_clusters(data = data,
                           clusters_regex = clusters_regex)
-  spectra_check <- summarize_spectra_checks(data = data, 
-                                            min_ppm_deviation = min_ppm_deviation,
-                                            max_ppm_deviation = max_ppm_deviation,
-                                            max_ipq = max_ipq,
-                                            min_sn = min_sn)
+  checked_data <- do_criteria_check(data = data, 
+                                    min_ppm_deviation = min_ppm_deviation,
+                                    max_ppm_deviation = max_ppm_deviation,
+                                    max_ipq = max_ipq,
+                                    min_sn = min_sn)
+  spectra_check <- summarize_spectra_checks(checked_data)
   cut_offs <- calculate_cut_offs(spectra_check = spectra_check,
                                  group_to_filter = group_to_filter,
                                  sample_type_to_filter = sample_type_to_filter) %>% 
@@ -310,5 +313,53 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
   }
   
   return(data)
+}
+
+define_clusters_and_check_spectra <- function(data, clusters_regex, min_ppm_deviation, 
+                                              max_ppm_deviation, max_ipq, min_sn){
+  data <- define_clusters(data = data,
+                          clusters_regex = clusters_regex)
+  checked_data <- do_criteria_check(data = data, 
+                                    min_ppm_deviation = min_ppm_deviation,
+                                    max_ppm_deviation = max_ppm_deviation,
+                                    max_ipq = max_ipq,
+                                    min_sn = min_sn)
+  return(checked_data)
+}
+
+curate_spectra_v2 <- function(checked_data, group_to_filter, sample_type_to_filter) {
+  spectra_check <- summarize_spectra_checks(checked_data)
+  cut_offs <- calculate_cut_offs(spectra_check = spectra_check,
+                                 group_to_filter = group_to_filter,
+                                 sample_type_to_filter = sample_type_to_filter) %>% 
+    dplyr::ungroup(.) %>% 
+    dplyr::select(-c(sample_type, group))
+  
+  spectra_check <- dplyr::left_join(spectra_check, cut_offs, by = "cluster") %>% 
+    dplyr::ungroup(.)
+  
+  passing_spectra <- spectra_check %>% 
+    dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int))
+  
+  checked_data <- checked_data %>% 
+    dplyr::mutate(passed_curation = dplyr::case_when(
+      sample_name %in% passing_spectra$sample_name ~ TRUE,
+      TRUE ~ FALSE))
+  
+  no_NAs <- checked_data %>% 
+    dplyr::filter(dplyr::if_all(.cols = c(mass_accuracy_ppm,
+                                          isotopic_pattern_quality,
+                                          sn),
+                                .fns = ~ !is.na(.x)))
+  
+  if (all(no_NAs$passed_curation == FALSE)) {
+    warning("None of the spectra passed curation.")
+  } else {
+    if (all(no_NAs$passed_curation == TRUE)) {
+      warning("All spectra passed curation.")
+    }
+  }
+  
+  return(checked_data)
 }
 

@@ -215,16 +215,17 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
       # Perform spectra curation:
       tryCatch(expr = { 
+        checked_data <- define_clusters_and_check_spectra(data = x$data,
+                                                          clusters_regex = clusters_regex,
+                                                          min_ppm_deviation = input$mass_accuracy[1],
+                                                          max_ppm_deviation = input$mass_accuracy[2],
+                                                          max_ipq = input$ipq,
+                                                          min_sn = input$sn)
+        
         # make work if group_to_filter is NULL
-        data_spectra_curated <- curate_spectra(
-          data = x$data,
-          clusters_regex = clusters_regex,
-          min_ppm_deviation = input$mass_accuracy[1],
-          max_ppm_deviation = input$mass_accuracy[2],
-          max_ipq = input$ipq,
-          min_sn = input$sn,
-          group_to_filter = group_to_filter,
-          sample_type_to_filter = sample_type_to_filter)
+        data_spectra_curated <- curate_spectra_v2(checked_data = checked_data,
+                                                  group_to_filter = group_to_filter,
+                                                  sample_type_to_filter = sample_type_to_filter)
         
         x$data_spectra_curated <- data_spectra_curated
       },
@@ -238,13 +239,14 @@ mod_spectra_curation_server <- function(id, results_data_import){
         showNotification(ui = paste(c$message), 
                          type = "error")
       })
+      
     })
     
     observeEvent(x$data_spectra_curated, {
-      req(x$data_spectra_curated)
       # Filter out all spectra that didn't pass curation:
       x$curated_spectra <- x$data_spectra_curated %>% 
         dplyr::filter(passed_curation == TRUE)
+      print(x$data_spectra_curated$criteria_check)
     })
     
     output$curated_spectra_plot <- renderPlot({
@@ -273,11 +275,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
       # create an actual table here:
       shinipsum::random_table(3, 3)
       })
-    
-    # data_to_download <- reactive({
-    #   req(x$data_spectra_curated)
-    #   x$data_spectra_curated
-    # })
     
     output$download <- downloadHandler(
       filename = function() {

@@ -4,29 +4,7 @@
 \alias{summarize_spectra_checks}
 \title{Summarize analyte quality criteria checks}
 \usage{
-summarize_spectra_checks(
-  data,
-  min_ppm_deviation,
-  max_ppm_deviation,
-  max_ipq,
-  min_sn
-)
-}
-\arguments{
-\item{data}{A dataframe in long format (one row for each analyte + sample
-combination).}
-
-\item{min_ppm_deviation}{The lowest allowed value for the mass accuracy (in
-ppm).}
-
-\item{max_ppm_deviation}{The highest allowed value for the mass accuracy (in
-ppm).}
-
-\item{max_ipq}{The highest allowed value for the Isotopic Pattern Quality
-(IPQ). The IPQ indicates how much the isotopic pattern deviates from the
-theoretic isotopic pattern.}
-
-\item{min_sn}{The lowest allowed value for the signal to noise ratio (S/N).}
+summarize_spectra_checks(data_checked)
 }
 \value{
 A dataframe that contains one row per spectrum for each cluster (
@@ -41,16 +19,17 @@ A dataframe that contains one row per spectrum for each cluster (
   of all passing analytes in this spectrum} }
 }
 \description{
-\code{summarize_spectra_checks()} first performs analyte quality criteria
-checks for every spectrum in the data using \code{\link{do_criteria_check}}.
-Then it calculates the proportion of passing analytes per spectrum and the
-sum intensity of passing analytes per spectrum.
+\code{summarize_spectra_checks()} calculates the proportion of passing
+analytes per spectrum and the sum intensity of passing analytes per spectrum.
+\code{summarize_spectra_checks()} should be used after
+\code{\link{do_criteria_check}} has been used to perform analyte quality
+criteria checks for every spectrum and analyte combination in the data.
 }
 \examples{
 data("long_data")
 summarize_spectra_checks(data = long_data,
-                               min_ppm_deviation = -20,
-                               max_ppm_deviation = 20,
-                               max_ipq = 0.2,
-                               min_sn = 9)
+                         min_ppm_deviation = -20,
+                         max_ppm_deviation = 20,
+                         max_ipq = 0.2,
+                         min_sn = 9)
 }

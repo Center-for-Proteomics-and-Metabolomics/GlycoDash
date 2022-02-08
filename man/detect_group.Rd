@@ -4,24 +4,27 @@
 \alias{detect_group}
 \title{Detect whether a sample is Specific or Total Ig based on the sample name.}
 \usage{
-detect_group(block, name_specific, name_total)
+detect_group(block, keyword_specific, keyword_total)
 }
 \arguments{
 \item{block}{A dataframe containing a block from a LacyTools summary file.}
 
-\item{name_specific}{The word(s) within the sample name used to refer to Specific samples.}
+\item{keyword_specific}{The word(s)/characters within the sample name used to
+refer to Specific samples.}
 
-\item{name_total}{The word(s) within the sample name used to refer to Total samples.}
+\item{keyword_total}{The word(s)/characters within the sample name used to
+refer to Total samples.}
 }
 \value{
-The dataframe containing a block from a LacyTools summary file, with an additional
-column named "group" that indicates whether a sample is Specific or Total.
+The dataframe containing a block from a LacyTools summary file, with
+ an additional column named "group" that indicates whether a sample is
+ Specific or Total.
 }
 \description{
 Detect whether a sample is Specific or Total Ig based on the sample name.
 }
 \examples{
-block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"), 
+block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"),
                             values = c(13.56, 738.34, 4.56))
-detect_group(block = block_example, name_specific = "Specific", name_total = "Total")
+detect_group(block = block_example, keyword_specific = "Specific", keyword_total = "Total")
 }
