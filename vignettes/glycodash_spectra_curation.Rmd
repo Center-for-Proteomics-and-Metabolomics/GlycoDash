@@ -65,24 +65,16 @@ long_data %>%
 ```
 
 ```{r analyte-curation-based-on-data}
-# User inputs:
-groups_to_ignore <- "Total"
-sample_types_to_ignore <- c("pool", "IVIGg", "CN", "Visucon", "PBS")
-cut_off_perc <- 25
+
+
 
 # Analyte curation:
-curated_analytes <- curated_spectra %>% 
-  dplyr::mutate(criteria_check = do_criteria_check(curated_spectra,
-                                                   min_ppm_deviation = -20,
-                                                   max_ppm_deviation = 20,
-                                                   max_ipq = 0.2,
-                                                   min_sn = 9)) %>% 
-  dplyr::filter(!(group %in% groups_to_ignore) & !(sample_type %in% sample_types_to_ignore)) %>% 
-  dplyr::group_by(cluster, charge, analyte) %>% 
-  dplyr::summarise(passing_percentage = sum(criteria_check) / dplyr::n() * 100) %>% 
-  dplyr::filter(passing_percentage > cut_off_perc)
+curated_analytes <- curate_analytes(data = curated_spectra,
+                                    groups_to_ignore = "Total",
+                                    sample_types_to_ignore = c("pool", "IVIGg", "CN", "Visucon", "PBS"),
+                                    cut_off_percentage = 25)
 
-analyted_curated_data <- dplyr::left_join(curated_analytes, curated_spectra)
+analyte_curated_data <- dplyr::left_join(curated_analytes, curated_spectra)
   
 ```
 
