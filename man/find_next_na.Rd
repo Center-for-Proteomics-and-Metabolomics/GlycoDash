@@ -7,12 +7,15 @@
 find_next_na(data, row)
 }
 \arguments{
-\item{data}{A dataframe with the LacyTools summary.}
+\item{data}{A dataframe with the LacyTools summary (the result of
+\code{\link{read_non_rectangular}}).}
 
-\item{row}{The row used as a starting point from which to search for the next line with NAs.}
+\item{row}{The row used as a starting point from which to search for the next
+line with \code{NA}'s.}
 }
 \value{
-The row index for the next line with NAs.
+The row index (integer) for the next line with \code{NA}'s. If there
+ are no next lines with \code{NA}'s the function will return an empty integer vector.
 }
 \description{
 Find the next empty line from a given line in a LacyTools summary file.
@@ -21,10 +24,11 @@ Find the next empty line from a given line in a LacyTools summary file.
 df <- data.frame(c("John", "Lisa", "Paul", NA, "Pete", NA),
                  c(12, 15, 23, NA, 14, NA),
                  c("apple", "pear", "orange", NA, "pear", NA))
+                 
 find_next_na(data = df,
-            row = 2)
+             row = 2)
 
 find_next_na(data = df,
-            row = 5)
+             row = 5)
 
 }

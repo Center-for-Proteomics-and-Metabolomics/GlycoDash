@@ -52,12 +52,13 @@ test_that("do_criteria_check() arguments fulfill the requirements.", {
                "The data doesn't contain the required columns with the quality criteria.")
 })
 
-test_that("do_criteria_check() returns a logical vector without NA's.", {
-  criteria_check <- do_criteria_check(data = long_data, 
-                                      min_ppm_deviation = -20,
-                                      max_ppm_deviation = 20,
-                                      max_ipq = 0.2,
-                                      min_sn = 9)
+test_that("do_criteria_check() returns the data with an additional column a logical vector without NAs.", {
+  checked_data <- do_criteria_check(data = long_data, 
+                                    min_ppm_deviation = -20,
+                                    max_ppm_deviation = 20,
+                                    max_ipq = 0.2,
+                                    min_sn = 9)
+  criteria_check <- checked_data$criteria_check
   expect_type(criteria_check,
               "logical")
   expect_false(anyNA(criteria_check))
@@ -67,12 +68,8 @@ test_that("summarize_spectra_checks() verifies the existence of required columns
   data("long_data")
   wrong_data <- long_data %>% 
     dplyr::select(-c(sample_name, group))
-  expect_error(summarize_spectra_checks(data = wrong_data,
-                                        min_ppm_deviation = -20,
-                                        max_ppm_deviation = 20,
-                                        max_ipq = 0.2,
-                                        min_sn = 9),
-               regexp = "The data doesn't contain the required column\\(s\\) group and sample_name and cluster\\.")
+  expect_error(summarize_spectra_checks(data = wrong_data),
+               regexp = "The data doesn't contain the required column\\(s\\) group and sample_name and cluster and criteria_check\\.")
   
 })
 
@@ -82,11 +79,12 @@ test_that("summarize_spectra_checks() returns one row per cluster per spectrum",
                                clusters_regex = "IgGI1")
   to_replace <- sample(1:69888, 69888/2)
   long_data$cluster[to_replace] <- "IgGII1"
-  expect_equal(nrow(summarize_spectra_checks(data = long_data,
-                                        min_ppm_deviation = -20,
-                                        max_ppm_deviation = 20,
-                                        max_ipq = 0.2,
-                                        min_sn = 9)),
+  checked_data <- do_criteria_check(data = long_data,
+                                    min_ppm_deviation = -20,
+                                    max_ppm_deviation = 20,
+                                    max_ipq = 0.2,
+                                    min_sn = 9)
+  expect_equal(nrow(summarize_spectra_checks(data_checked = checked_data)),
                length(unique(long_data$cluster)) * length(unique(long_data$sample_name)))
 })
 

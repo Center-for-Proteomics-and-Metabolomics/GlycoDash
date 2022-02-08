@@ -12,7 +12,7 @@ outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
 #' \code{read_non_rectangular()} can read flat files where the number of fields per line is 
 #' not constant (non-rectangular data). Blank lines in the field are not skipped 
 #' and empty fields "" are interpreted as \code{NA}. This function was created to read
-#' LacyTools summary files (tab-delimited .txt file).
+#' LacyTools summary files (tab-delimited .txt files).
 #'
 #' @param path A path to a file with non-rectangular data.
 #' @param delim The field separator used in the file. 
@@ -28,9 +28,15 @@ outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
 #' read_non_rectangular(path = data_file, delim = "\t")
 #' 
 read_non_rectangular <- function(path, delim = "\t") {
-  lines <- readLines(path, n = -1, ok = TRUE)
+  tryCatch(lines <- readLines(path, n = -1, ok = TRUE),
+           error = function(e) stop("No such file or directory exists."))
   columns <- stringr::str_split(lines, pattern = delim)
   n_columns <- max(purrr::map_int(columns, ~ length(.x)))
+  if (n_columns == 1) {
+    rlang::warn(class = "wrong_delim",
+                message = paste("The file seems to consist of a single column.",
+                                "Are you sure that you chose the correct delimiter for your file?"))
+  }
   column_names <- vector()
   for (i in 1:n_columns) {
     column_names[i] <- paste("col", i, sep = "_")
@@ -40,27 +46,34 @@ read_non_rectangular <- function(path, delim = "\t") {
   return(data)
 }
 
-#' Find the next empty line from a given line in a LacyTools summary file.
+#'Find the next empty line from a given line in a LacyTools summary file.
 #'
-#' @param data A dataframe with the LacyTools summary.
-#' @param row The row used as a starting point from which to search for the next line with NAs.
+#'@param data A dataframe with the LacyTools summary (the result of
+#'  \code{\link{read_non_rectangular}}).
+#'@param row The row used as a starting point from which to search for the next
+#'  line with \code{NA}'s.
 #'
-#' @return The row index for the next line with NAs.
-#' @export
+#'@return The row index (integer) for the next line with \code{NA}'s. If there
+#'  are no next lines with \code{NA}'s the function will return an empty integer vector.
+#'@export
 #'
-#' @examples
+#'@examples
 #' df <- data.frame(c("John", "Lisa", "Paul", NA, "Pete", NA),
 #'                  c(12, 15, 23, NA, 14, NA),
 #'                  c("apple", "pear", "orange", NA, "pear", NA))
-#'find_next_na(data = df,
-#'             row = 2)
+#'                  
+#' find_next_na(data = df,
+#'              row = 2)
 #'
-#'find_next_na(data = df,
-#'             row = 5)
+#' find_next_na(data = df,
+#'              row = 5)
 #' 
 find_next_na <- function(data, row) {
+  # Find which rows in the first column contain NA's:
   na_index <- which(is.na(data[ , 1]))
+  # Select only the rows that are below the row used as a starting point:
   later_nas <- na_index[which(purrr::map_lgl(na_index, ~ .x > row))]
+  # From those, select the row that is closest to the starting row:
   next_na <- later_nas[which.min(purrr::map_int(later_nas, ~ .x - as.integer(row)))]
   return(next_na)
 }
@@ -74,13 +87,13 @@ find_next_na <- function(data, row) {
 #' @export
 #'
 #' @examples
-#' data("LacyTools_summary")
-#' find_block(data = data, variable = "S/N (2+)")
+#'  data("LacyTools_summary")
+#'  find_block(data = data, variable = "S/N (2+)")
 find_block <- function(data, variable) {
   first_row <- which(data[ , 1] == variable)
   if (rlang::is_empty(first_row)) {
    stop(paste("Error: LacyTools output format",
-              variable, "is not present in the input file."))
+              variable, "is not present in the first column of the input file."))
   } else {
     next_na <- find_next_na(data, first_row)
     if (rlang::is_empty(next_na)) { 
@@ -92,36 +105,42 @@ find_block <- function(data, variable) {
   return(rows)
 }
 
-#' Detect whether a sample is Specific or Total Ig based on the sample name.
+#'Detect whether a sample is Specific or Total Ig based on the sample name.
 #'
-#' @param block A dataframe containing a block from a LacyTools summary file. 
-#' @param name_specific The word(s) within the sample name used to refer to Specific samples.
-#' @param name_total The word(s) within the sample name used to refer to Total samples.
+#'@param block A dataframe containing a block from a LacyTools summary file.
+#'@param keyword_specific The word(s)/characters within the sample name used to
+#'  refer to Specific samples.
+#'@param keyword_total The word(s)/characters within the sample name used to
+#'  refer to Total samples.
 #'
-#' @return The dataframe containing a block from a LacyTools summary file, with an additional
-#' column named "group" that indicates whether a sample is Specific or Total.
-#' @export
+#'@return The dataframe containing a block from a LacyTools summary file, with
+#'  an additional column named "group" that indicates whether a sample is
+#'  Specific or Total.
+#'@export
 #'
-#' @examples
-#' block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"), 
+#'@examples
+#'block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"),
 #'                             values = c(13.56, 738.34, 4.56))
-#'detect_group(block = block_example, name_specific = "Specific", name_total = "Total")
-detect_group <- function(block, name_specific, name_total) {
+#'detect_group(block = block_example, keyword_specific = "Specific", keyword_total = "Total")
+detect_group <- function(block, keyword_specific, keyword_total) {
   block <- block %>% 
     tidyr::extract(col = sample_name,
-            into = "group",
-            regex = paste0("(", name_specific, "|", 
-                           name_total, ")"),
-            remove = FALSE)
+                   into = "group",
+                   regex = paste0("(", keyword_specific, "|", 
+                                  keyword_total, ")"),
+                   remove = FALSE)
+  if (any(is.na(block$group))) {
+    rlang::warn(class = "NAs",
+                message = paste("Some sample_names could not be classified as total or specific.",
+                                "Please reconsider your keywords (keyword_specific and keyword_total)."))
+  }
   return(block)
 }
 
 #' Create a subset containing one block from a LacyTools summary. 
 #'
-#' @param data A dataframe with the LacyTools summary.
-#' @param variable The name of a LacyTools output format.
-#' @param name_specific The word(s) within the sample name used to refer to Specific samples.
-#' @param name_total The word(s) within the sample name used to refer to Total samples.
+#' @inheritParams find_block
+#' @inheritParams detect_group
 #'
 #' @return A dataframe that is a subset of the input dataframe.
 #' @export
@@ -129,7 +148,7 @@ detect_group <- function(block, name_specific, name_total) {
 #' @examples
 #' data(LacyTools_summary)
 #' get_block(LacyTools_summary, variable = "Absolute Intensity (Background Subtracted, 2+)")
-get_block <- function(data, variable, name_specific = "Spike", name_total = "Total") {
+get_block <- function(data, variable, keyword_specific = "Spike", keyword_total = "Total") {
   rows <- find_block(data, variable)
   block <- data[rows, ]
   # The first row of the block contains the column names for the block:
@@ -144,7 +163,7 @@ get_block <- function(data, variable, name_specific = "Spike", name_total = "Tot
     dplyr::mutate(lacytools_output = better_name_output) %>% 
     dplyr::mutate(dplyr::across(-c(sample_name, lacytools_output), as.numeric)) %>% 
     dplyr::select(-tidyselect::vars_select_helpers$where(function(x) all(is.na(x))))
-  block <- detect_group(block, name_specific, name_total)
+  block <- detect_group(block, keyword_specific, keyword_total)
   block <- detect_plate_and_well(block)
   return(block)
 }
@@ -154,7 +173,7 @@ get_block <- function(data, variable, name_specific = "Spike", name_total = "Tot
 #' @param data A dataframe. Should include a column named "sample_name".
 #'
 #' @return The input dataframe with an added column named "plate_well" that says on which plate
-#' and in which well a sample was analysed. 
+#' and in which well a sample was analysed.
 #' @export
 #'
 #' @examples
@@ -177,14 +196,15 @@ detect_plate_and_well <- function(data) {
 }
 
 #' Get the analytes info from a LacyTools summary for one output format
-#' 
+#'
 #' This function gets the exact mass of the most abundant isotopologue and the
 #' fraction for each analyte in a LacyTools summary.
 #'
 #' @param data A dataframe with a LacyTools summary.
 #' @param variable The name of a LacyTools output format.
 #'
-#' @return A dataframe with three columns: analyte, exact mass and fraction.
+#' @return A dataframe with three columns: analyte, exact mass and fraction. The
+#'   number of rows will correspond to the number of analytes.
 #' @export
 #'
 #' @examples
@@ -220,13 +240,14 @@ get_analytes_info <- function(data, variable) {
 #' @param list_of_variables A list/vector with the name of LacyTools output formats.
 #'
 #' @return A dataframe with three columns (analyte, exact mass and fraction) and one
-#'         row per analyte.
+#'         row per analyte and charge combination.
 #' @export
 #'
 #' @examples
 #' data("LacyTools_summary")
 #' get_analytes_info_from_list(data = LacyTools_summary, list_of_variables = outputs)
 get_analytes_info_from_list <- function(data, list_of_variables) {
+  # Get the analytes_info for each variable and put them in a list:
   analytes_info_list <- purrr::map(list_of_variables,
                                    function(variable) {
                                      tryCatch({
@@ -239,15 +260,19 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
                                      # Ignore list items that result in an error:
                                      error = function(e) { })
                                    }) 
+  
+  # Throw error if no matches are found:
   if (rlang::is_empty(analytes_info_list)) {
-    # Throw error if no matches are found
     stop("No output formats in the list are present in the input summary file")
   }
   
+  # Find what charges are present in the LacyTools summary:
   charges <- as.factor(purrr::map_chr(analytes_info_list, 
                                       function(x) unique(x$charge)))
+  # Divide the analytes_info_list into one list per charge:
   charge_sep_list <- split(analytes_info_list,
                            charges)
+  # Take the first analytes_info dataframe from each list in the charge_sep_list:
   analytes_info <- purrr::map(charge_sep_list,
                               function(x) x[[1]]) %>% 
     purrr::reduce(., dplyr::full_join)

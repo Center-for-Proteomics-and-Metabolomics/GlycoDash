@@ -69,6 +69,7 @@ usethis::use_data_raw(name = "long_data", open = TRUE)
 ## Tests ----
 ## Add one line by test you want to create
 usethis::use_test( "spectra_curation" )
+usethis::use_test( "data_import" )
 
 # Documentation
 

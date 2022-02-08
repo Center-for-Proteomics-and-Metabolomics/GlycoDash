@@ -12,7 +12,8 @@ get_analytes_info(data, variable)
 \item{variable}{The name of a LacyTools output format.}
 }
 \value{
-A dataframe with three columns: analyte, exact mass and fraction.
+A dataframe with three columns: analyte, exact mass and fraction. The
+  number of rows will correspond to the number of analytes.
 }
 \description{
 This function gets the exact mass of the most abundant isotopologue and the

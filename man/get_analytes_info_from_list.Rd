@@ -13,7 +13,7 @@ get_analytes_info_from_list(data, list_of_variables)
 }
 \value{
 A dataframe with three columns (analyte, exact mass and fraction) and one
-        row per analyte.
+        row per analyte and charge combination.
 }
 \description{
 Get the analytes info from a LacyTools summary for a list of output formats

@@ -4,16 +4,18 @@
 \alias{get_block}
 \title{Create a subset containing one block from a LacyTools summary.}
 \usage{
-get_block(data, variable, name_specific = "Spike", name_total = "Total")
+get_block(data, variable, keyword_specific = "Spike", keyword_total = "Total")
 }
 \arguments{
 \item{data}{A dataframe with the LacyTools summary.}
 
 \item{variable}{The name of a LacyTools output format.}
 
-\item{name_specific}{The word(s) within the sample name used to refer to Specific samples.}
+\item{keyword_specific}{The word(s)/characters within the sample name used to
+refer to Specific samples.}
 
-\item{name_total}{The word(s) within the sample name used to refer to Total samples.}
+\item{keyword_total}{The word(s)/characters within the sample name used to
+refer to Total samples.}
 }
 \value{
 A dataframe that is a subset of the input dataframe.

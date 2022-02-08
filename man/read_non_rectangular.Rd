@@ -20,7 +20,7 @@ A data frame (\code{\link{[base]data.frame}}) containing the data in the flat fi
 \code{read_non_rectangular()} can read flat files where the number of fields per line is 
 not constant (non-rectangular data). Blank lines in the field are not skipped 
 and empty fields "" are interpreted as \code{NA}. This function was created to read
-LacyTools summary files (tab-delimited .txt file).
+LacyTools summary files (tab-delimited .txt files).
 }
 \examples{
 data_file <- system.file("inst", "extdata", "LacyTools_summary.txt", 
