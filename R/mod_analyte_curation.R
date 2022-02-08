@@ -107,8 +107,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                                      sample_type,
                                                      "samples")
                                              })
-      options <- c(paste("all", unique(x$data$sample_type), "samples"), 
-                   paste("all", unique(x$data$group), "samples"))
+      options <- c(paste(unique(x$data$sample_type), "samples"), 
+                   paste(unique(x$data$group), "samples"))
       updateSelectizeInput(inputId = "ignore_samples",
                            choices = c("", options))
     })

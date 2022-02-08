@@ -51,6 +51,7 @@ golem::add_module( name = "data_import_v2" ) # Name of the module
 ## Creates fct_* and utils_*
 golem::add_fct( "data_import" ) 
 golem::add_fct( "spectra_curation" )
+golem::add_fct( "analyte_curation" )
 golem::add_utils( "helpers" )
 
 ## External resources
