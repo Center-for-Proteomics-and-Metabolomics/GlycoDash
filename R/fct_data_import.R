@@ -227,16 +227,31 @@ get_analytes_info <- function(data, variable) {
 #' data("LacyTools_summary")
 #' get_analytes_info_from_list(data = LacyTools_summary, list_of_variables = outputs)
 get_analytes_info_from_list <- function(data, list_of_variables) {
-  for (variable in list_of_variables) {
-    tryCatch({
-      analytes_info <- get_analytes_info(data, variable)
-      return(analytes_info)
-    },
-    # Ignore list items that result in an error:
-    error = function(e) { })
+  analytes_info_list <- purrr::map(list_of_variables,
+                                   function(variable) {
+                                     tryCatch({
+                                       analytes_info <- get_analytes_info(data, variable) %>% 
+                                         dplyr::mutate(
+                                           charge = stringr::str_extract(variable, 
+                                                                         "\\d{1}[\\+-]{1}"))
+                                       return(analytes_info)
+                                     },
+                                     # Ignore list items that result in an error:
+                                     error = function(e) { })
+                                   }) 
+  if (rlang::is_empty(analytes_info_list)) {
+    # Throw error if no matches are found
+    stop("No output formats in the list are present in the input summary file")
   }
-  # Throw error if no matches are found
-  stop("No output formats in the list are present in the input summary file")
+  
+  charges <- as.factor(purrr::map_chr(analytes_info_list, 
+                                      function(x) unique(x$charge)))
+  charge_sep_list <- split(analytes_info_list,
+                           charges)
+  analytes_info <- purrr::map(charge_sep_list,
+                              function(x) x[[1]]) %>% 
+    purrr::reduce(., dplyr::full_join)
+  return(analytes_info)
 }
 
 #' Transform the Lacytools summary data to a long format.
@@ -291,7 +306,7 @@ read_lacytools_summary <- function(summary_file) {
   
   long_data <- purrr::map(charge_sep_list, function(x) purrr::reduce(x, dplyr::left_join)) %>%
     purrr::reduce(dplyr::full_join) %>% 
-    dplyr::left_join(analytes_info, by = "analyte")
+    dplyr::left_join(analytes_info, by = c("analyte", "charge"))
   
   return(long_data)
 }
