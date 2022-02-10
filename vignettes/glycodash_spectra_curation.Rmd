@@ -66,8 +66,6 @@ long_data %>%
 
 ```{r analyte-curation-based-on-data}
 
-
-
 # Analyte curation:
 curated_analytes <- curate_analytes(data = curated_spectra,
                                     groups_to_ignore = "Total",
@@ -76,5 +74,31 @@ curated_analytes <- curate_analytes(data = curated_spectra,
 
 analyte_curated_data <- dplyr::left_join(curated_analytes, curated_spectra)
   
+```
+
+```{r analyte-curation-based-on-list}
+
+analyte_list_file <- system.file("inst",
+                                 "extdata",
+                                 "Analyte_list.xlsx",
+                                 package = "glycodash")
+
+analyte_list <- readxl::read_excel(analyte_list_file,
+                                   col_names = FALSE)
+analyte_list <- as.data.frame(analyte_list)
+blob <- tibble::as_tibble(analyte_list)
+save(analyte_list, file = "analyte_list.rds")
+
+analytes_to_include <- purrr::map(analyte_list,
+                                  function(analyte) {
+                                    stringr::str_subset(string = unique(curated_spectra$analyte),
+                                                        pattern = paste0(analyte, 
+                                                                         "$"))
+                                  }) %>% 
+  unlist(.)
+
+analyte_curated_data <- curated_spectra %>% 
+  dplyr::filter(analyte %in% analytes_to_include)
+
 ```
 
