@@ -75,4 +75,23 @@ test_that("find_next_na() returns an empty integer vector if there are no next l
                 0)
 })
 
+test_that("detect_plate_and_well() can identify plate numbers in all allowed formats", {
+  df <- data.frame(sample_name = c("Testname_P-8_well_H5", 
+                                   "Testname_PL_8_well_H5",
+                                   "Testname_p.8_well_H5",
+                                   "Testname_pl8_well_H5",
+                                   "Testname_Pl8_well_H5",
+                                   "Testname_pL8_well_H5",
+                                   "Testname_Plate.8_well_H8",
+                                   "Testname_plate.8_well_H8"))
+  expect_error(detect_plate_and_well(df),
+               regexp = NA)
+})
+
+test_that("detect_plate_and_well() doesn't interpret a number larger than 12 or a letter not A-H as a well", {
+  df <- data.frame(sample_name = c("Testname_PL.8_well_H87", 
+                                   "Testname_pl5_well_L3"))
+  expect_error(detect_plate_and_well(df),
+               regexp = "For the sample\\(s\\) Testname_PL\\.8_well_H87 and Testname_pl5_well_L3 the plate and well could not be determined\\.")
+})
 
