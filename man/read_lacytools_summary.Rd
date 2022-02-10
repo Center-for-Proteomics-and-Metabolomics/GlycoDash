@@ -2,16 +2,39 @@
 % Please edit documentation in R/fct_data_import.R
 \name{read_lacytools_summary}
 \alias{read_lacytools_summary}
-\title{Title}
+\title{Read a LacyTools summary .txt file and convert it to a 'tidy' dataframe}
 \usage{
 read_lacytools_summary(summary_file)
 }
 \arguments{
-\item{summary_file}{}
+\item{summary_file}{The path to the LacyTools summary file. This file should
+be a tab-delimited .txt file. This function can process the output summary
+file of LacyTools without any changes needed.}
 }
 \value{
-
+This function returns a dataframe with the following columns:
+ \describe{ \item{sample_name}{The (unchanged) sample names.}
+ \item{plate_well}{The plate and well that the sample was analyzed in. This
+ information is deduced from the sample name using the function
+ \code{\link{detect_plate_and_well}}} \item{group}{The group (total or
+ specific Ig) that the sample belongs to. The groups are deduced from the
+ sample name using the function \code{\link{detect_group}}}
+ \item{analyte}{The analyte. For each sample, there is one row per analyte
+ (per charge state of that analyte).} \item{charge}{The charge state of the
+ analyte.} \item{LacyTools output formats}{The dataframe will contain one
+ column for each LacyTools output format that was present in the LacyTools
+ summary file.} \item{fraction}{The fraction of the isotopic pattern that was
+ included for the analyte.} \item{exact_mass}{The exact mass of the most
+ abundant isotopologue of the analyte.}}
 }
 \description{
-Title
+The function \code{read_lacytools_summary()} can read in a LacyTools summery
+file and convert it to a 'tidy' dataframe in long format.
+}
+\examples{
+path_to_file <- system.file("inst",
+                            "extdata",
+                            "LacyTools_summary.txt",
+                            package = "glycodash")
+read_lacytools_summary(summary_file = path_to_file)
 }

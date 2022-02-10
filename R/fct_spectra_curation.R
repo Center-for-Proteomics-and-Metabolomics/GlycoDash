@@ -257,9 +257,12 @@ calculate_cut_offs <- function(spectra_check, group_to_filter, sample_type_to_fi
 #' @inheritParams define_clusters
 #'
 #' @return The function returns the original dataframe given as the data
-#'   argument, but with an additional column named "passed_curation". This
-#'   logical column is \code{TRUE} for spectra that have passed curation and
-#'   \code{FALSE} for spectra that did not pass curation.
+#'   argument, but with two additional columns. One column is named
+#'   "passed_curation"; This logical column is \code{TRUE} for spectra that have
+#'   passed curation and \code{FALSE} for spectra that did not pass curation.
+#'   The other column is named "criteria_check" and is \code{TRUE} for analyte +
+#'   sample combinations that passed all three quality criteria checks, whereas
+#'   \code{FALSE} indicates that one or more criteria were not fulfilled.
 #' @export
 #'
 #' @examples
@@ -293,12 +296,12 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
   passing_spectra <- spectra_check %>% 
     dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int))
   
-  data <- data %>% 
+  curated_data <- checked_data %>% 
     dplyr::mutate(passed_curation = dplyr::case_when(
       sample_name %in% passing_spectra$sample_name ~ TRUE,
       TRUE ~ FALSE))
   
-  no_NAs <- data %>% 
+  no_NAs <- curated_data %>% 
     dplyr::filter(dplyr::if_all(.cols = c(mass_accuracy_ppm,
                                           isotopic_pattern_quality,
                                           sn),
@@ -312,54 +315,5 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
     }
   }
   
-  return(data)
+  return(curated_data)
 }
-
-define_clusters_and_check_spectra <- function(data, clusters_regex, min_ppm_deviation, 
-                                              max_ppm_deviation, max_ipq, min_sn){
-  data <- define_clusters(data = data,
-                          clusters_regex = clusters_regex)
-  checked_data <- do_criteria_check(data = data, 
-                                    min_ppm_deviation = min_ppm_deviation,
-                                    max_ppm_deviation = max_ppm_deviation,
-                                    max_ipq = max_ipq,
-                                    min_sn = min_sn)
-  return(checked_data)
-}
-
-curate_spectra_v2 <- function(checked_data, group_to_filter, sample_type_to_filter) {
-  spectra_check <- summarize_spectra_checks(checked_data)
-  cut_offs <- calculate_cut_offs(spectra_check = spectra_check,
-                                 group_to_filter = group_to_filter,
-                                 sample_type_to_filter = sample_type_to_filter) %>% 
-    dplyr::ungroup(.) %>% 
-    dplyr::select(-c(sample_type, group))
-  
-  spectra_check <- dplyr::left_join(spectra_check, cut_offs, by = "cluster") %>% 
-    dplyr::ungroup(.)
-  
-  passing_spectra <- spectra_check %>% 
-    dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int))
-  
-  checked_data <- checked_data %>% 
-    dplyr::mutate(passed_curation = dplyr::case_when(
-      sample_name %in% passing_spectra$sample_name ~ TRUE,
-      TRUE ~ FALSE))
-  
-  no_NAs <- checked_data %>% 
-    dplyr::filter(dplyr::if_all(.cols = c(mass_accuracy_ppm,
-                                          isotopic_pattern_quality,
-                                          sn),
-                                .fns = ~ !is.na(.x)))
-  
-  if (all(no_NAs$passed_curation == FALSE)) {
-    warning("None of the spectra passed curation.")
-  } else {
-    if (all(no_NAs$passed_curation == TRUE)) {
-      warning("All spectra passed curation.")
-    }
-  }
-  
-  return(checked_data)
-}
-

@@ -2,22 +2,25 @@
 % Please edit documentation in R/fct_data_import.R
 \name{get_analytes_info}
 \alias{get_analytes_info}
-\title{Get the analytes info from a LacyTools summary for one output format}
+\title{Get analytes info from a LacyTools summary for one output format}
 \usage{
 get_analytes_info(data, variable)
 }
 \arguments{
-\item{data}{A dataframe with a LacyTools summary.}
+\item{data}{A dataframe with the LacyTools summary (the result of
+\code{\link{read_non_rectangular}}).}
 
 \item{variable}{The name of a LacyTools output format.}
 }
 \value{
-A dataframe with three columns: analyte, exact mass and fraction. The
-  number of rows will correspond to the number of analytes.
+A dataframe with three columns named "analyte", "exact_mass" and
+  "fraction". The number of rows will correspond to the number of analytes in
+  the data.
 }
 \description{
 This function gets the exact mass of the most abundant isotopologue and the
-fraction for each analyte in a LacyTools summary.
+fraction for each analyte in a LacyTools summary, for a single output format.
+This function is used within \code{\link{get_analytes_info_from_list}}.
 }
 \examples{
 data("LacyTools_summary")
