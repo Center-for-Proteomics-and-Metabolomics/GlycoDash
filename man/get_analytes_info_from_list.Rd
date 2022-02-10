@@ -2,21 +2,28 @@
 % Please edit documentation in R/fct_data_import.R
 \name{get_analytes_info_from_list}
 \alias{get_analytes_info_from_list}
-\title{Get the analytes info from a LacyTools summary for a list of output formats}
+\title{Get the analytes info from a LacyTools summary using a list of output formats}
 \usage{
 get_analytes_info_from_list(data, list_of_variables)
 }
 \arguments{
 \item{data}{A dataframe with a LacyTools summary.}
 
-\item{list_of_variables}{A list/vector with the name of LacyTools output formats.}
+\item{list_of_variables}{A list/vector with the name of LacyTools output
+formats.}
 }
 \value{
-A dataframe with three columns (analyte, exact mass and fraction) and one
-        row per analyte and charge combination.
+A dataframe with three columns (analyte, exact mass and fraction) and
+  one row per analyte and charge combination.
 }
 \description{
-Get the analytes info from a LacyTools summary for a list of output formats
+This function uses \code{\link{get_analytes_info}} to get the exact mass of
+the most abundant isotopologue and the fraction for each analyte in a
+LacyTools summary, for each charge state of those analytes. The reason that
+the info is retrieved for each charge state is that the fraction of an
+analyte can be different in different charge states. This can happen when
+there are contaminants that need to be excluded near one charge state of an
+analyte, but not near another charge state of that same analyte.
 }
 \examples{
 data("LacyTools_summary")

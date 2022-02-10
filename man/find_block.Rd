@@ -7,7 +7,8 @@
 find_block(data, variable)
 }
 \arguments{
-\item{data}{A dataframe with the LacyTools summary.}
+\item{data}{A dataframe with the LacyTools summary (the result of
+\code{\link{read_non_rectangular}}).}
 
 \item{variable}{The name of a LacyTools output format.}
 }

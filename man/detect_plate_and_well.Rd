@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_data_import.R
 \name{detect_plate_and_well}
 \alias{detect_plate_and_well}
-\title{Detect plate and well}
+\title{Detect the plate and well of a sample from the sample name.}
 \usage{
 detect_plate_and_well(data)
 }
@@ -10,16 +10,23 @@ detect_plate_and_well(data)
 \item{data}{A dataframe. Should include a column named "sample_name".}
 }
 \value{
-The input dataframe with an added column named "plate_well" that says on which plate
-and in which well a sample was analysed.
+The input dataframe with an added column named "plate_well" that
+  indicates on which plate and in which well a sample was analysed.
 }
 \description{
-Detect plate and well
+This function detects the plate and well position of a sample, based on it's
+sample name. The sample name should be in a column named "sample_name" and
+should contain either "P", "p", "Pl" or "PL" followed by the plate number
+possibly separated by an underscore (_), a score (-) or a dot (.). In
+addition, the sample name should contain a single capital letter between A
+and H followed directly by a number between 1 and 12 (numbers smaller than 10
+may be preceded by a zero, e.g. A01 and A1 are both allowed). This
+letter-number combination indicates the well.
 }
 \examples{
-block_example <- data.frame(sample_name = c("s_0216_Specific_pl_3.A10", 
-                                            "s_568_Total_P5_H4", 
-                                            "pl23_B6.s_8759"), 
+block_example <- data.frame(sample_name = c("s_0216_Specific_pl_3.A10",
+                                            "s_568_Total_P5_H4",
+                                            "pl23_B6.s_8759"),
                             values = c(13.56, 738.34, 4.56))
 detect_plate_and_well(block_example)
 }

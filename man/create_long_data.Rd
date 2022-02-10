@@ -2,22 +2,29 @@
 % Please edit documentation in R/fct_data_import.R
 \name{create_long_data}
 \alias{create_long_data}
-\title{Transform the Lacytools summary data to a long format.}
+\title{Transform the LacyTools summary data to a long format.}
 \usage{
 create_long_data(block, metadata = NULL)
 }
 \arguments{
-\item{block}{A dataframe containing a block from a LacyTools summary file.}
+\item{block}{A dataframe containing a block from a LacyTools summary file
+(the result of \code{\link{get_block}}).}
 
-\item{metadata}{A dataframe containing metadata in case the metadata has already
-been added to the data.}
+\item{metadata}{A dataframe containing metadata in case the metadata has
+already been added to the data.Defaults too \code{NULL}.}
 }
 \value{
-A dataframe containing the LacyTools summary in long format.
+A dataframe containing the LacyTools summary block in long format.
 }
 \description{
-Transform the Lacytools summary data to a long format.
+\code{create_long_data()} transforms a LacyTools summary block from a wide
+format (each analyte has it's own column) to a long format (an column named
+"analyte" with the analytes has been added and each combination of sample and
+analyte has it's own row). In addition, a column is added that contains
+the charge of the LacyTools output format.
 }
 \examples{
-
+data("LacyTools_summary")
+block <- get_block(LacyTools_summary, variable = "Absolute Intensity (Background Subtracted, 2+)")
+create_long_data(block = block)
 }
