@@ -681,12 +681,24 @@ read_and_process_plate_design <- function(plate_design_file) {
 
 #' Read in a metadata file
 #'
-#' @param metadata_file 
+#' \code{read_metadata()} can be used to read in an Excel file containing
+#' metadata. It reads in all columns as class character and interprets both "NA"
+#' and empty cells as \code{NA}. The values in the first row are converted to
+#' snake case (see: \code{\link[snakecase]{to_snake_case}}) and used as column
+#' names. If the file contains multiple sheets, only the first sheet is read in.
 #'
-#' @return
+#' @param metadata_file The path to the metadata Excel file.
+#'
+#' @return This function returns a dataframe with the metadata.
 #' @export
 #'
 #' @examples
+#' path <- system.file("inst",
+#'                     "extdata",
+#'                     "Metadata.xlsx",
+#'                     package = "glycodash")
+#'                     
+#' read_metadata(path)
 read_metadata <- function (metadata_file) {
   metadata <- readxl::read_excel(metadata_file,
                                  col_types = "text", 
@@ -697,15 +709,123 @@ read_metadata <- function (metadata_file) {
   return(metadata)
 }
 
-#' Title
+#'Convert serial dates with comments to dates
 #'
-#' @param date_text_values 
-#' @param origin 
+#'\code{date_with_text()} tries to convert a vector with serial dates (given as
+#'character strings) to objects of the class "Date". In Excel dates are stored
+#'as serial numbers. These serial dates are the number of days passed since a
+#'set origin date. When Excel data is read into R the serial dates are usually
+#'recognized as dates and converted to objects of class "Date". However, when in
+#'Excel a cell contains both a date and a comment, the column containing this
+#'cell is no longer recognized as class "Date" and is instead converted to class
+#'"Character". \code{date_with_text()} attempts to convert serial dates (given
+#'as character strings) to objects of class "Date". If some serial dates include
+#'comments, the function instead converts the serial dates to character strings
+#'with the dates formatted as "year-month-day". \strong{Important: This function
+#'can only be used within the function \code{\link[dplyr]{across}} from the
+#'dplyr package!}
 #'
-#' @return
-#' @export
+#'@param date_text_values A column in a dataframe or tibble with serial dates in
+#'  the form of character strings.
+#'@param origin The origin date used to calculate the serial dates. Defaults to
+#'  1899-12-30 (year-month-day) which is the origin used in Excel on Windows for
+#'  all dates from 1900-01-01 and on.
+#'
+#'@return
+#'@export
+#'
+#' @section Credits:
+#' This function was based on a solution found on StackOverflow.\cr
+#' Question asked by Ryan C. Thompson:\cr
+#' \url{https://stackoverflow.com/questions/63027147/how-to-read-in-a-date-column-from-an-excel-sheet-with-ambiguous-formats-into-r}\cr
+#' Solution provided by Rui Barradas:\cr
+#' \url{https://stackoverflow.com/users/8245406/rui-barradas}
 #'
 #' @examples
+#' path <- system.file("inst",
+#'                     "extdata",
+#'                     "Dates_with_comment.xlsx",
+#'                     package = "glycodash")
+#'
+#'# Dates with comments in Excel are usually interpreted
+#'# as character strings in R:
+#'
+#' dates_with_comment <- readxl::read_excel(path)
+#'
+#' print(dates_with_comment)
+#'
+#'# # A tibble: 6 x 1
+#'# date
+#'# <chr>
+#'# 1 44603
+#'# 2 44604
+#'# 3 13-02-2022 oh no a comment
+#'# 4 44606
+#'# 5 44607
+#'# 6 44608
+#'
+#' dates_with_comment <- dates_with_comment %>%
+#'    dplyr::mutate(dplyr::across(.cols = date,
+#'                                .fns = date_with_text))
+#'
+#'# Because text is found within the dates
+#'# column the following message is shown:
+#'# "Some date entries in date contain text.
+#'# Output will have class character."
+#'
+#'print(dates_with_comment)
+#'
+#' # # A tibble: 6 x 1
+#' # date
+#' # <chr>
+#' # 1 2022-02-11
+#' # 2 2022-02-12
+#' # 3 13-02-2022 oh no a comment
+#' # 4 2022-02-14
+#' # 5 2022-02-15
+#' # 6 2022-02-16
+#'
+#' path <- system.file("inst",
+#'                     "extdata",
+#'                     "Dates.xlsx",
+#'                     package = "glycodash")
+#'
+#' # Forcing read_excel() to read the dates in as character strings 
+#' # (even though there are no comments in this file) for 
+#' # demonstration purposes:
+#' dates <- readxl::read_excel(path,
+#'                             col_types = "text")
+#'
+#' print(dates)
+#'
+#'# # A tibble: 6 x 1
+#'# date
+#'# <chr>
+#'# 1 44603
+#'# 2 44604
+#'# 3 44605
+#'# 4 44606
+#'# 5 44607
+#'# 6 44608
+#'
+#' dates <- dates %>%
+#'    dplyr::mutate(dplyr::across(.cols = date,
+#'                                .fns = date_with_text))
+#'                                
+#' # When no text is found within the dates column,
+#' # the serial dates are converted to objects of class "date":
+#' print(dates)
+#'
+#' # # A tibble: 6 x 1
+#' # date
+#' # <date>
+#' # 1 2022-02-11
+#' # 2 2022-02-12
+#' # 3 2022-02-13
+#' # 4 2022-02-14
+#' # 5 2022-02-15
+#' # 6 2022-02-16
+#'           
 date_with_text <- function(date_text_values, origin = "1899-12-30"){
   no_nas <- date_text_values[!is.na(date_text_values)]
   test <- suppressWarnings(as.numeric(no_nas))
@@ -744,15 +864,50 @@ check_sample_id_matches <- function (plate_design_ids, metadata_ids) {
   }
 }
 
-#' Title
+#' Load R-objects and assign them a new name
 #'
-#' @param file_path 
+#' When you load an R-object with \code{\link[base]{load}} the object keeps the
+#' name it had at the moment that it was saved. Sometimes it's more convenient
+#' to assign a new name to the object when it is being loaded.
+#' \code{load_and_assign()} allows you to do that.
+#' 
+#' @section Credits:
+#' The code for this function was found on StackOverflow.\cr
+#' Question asked by Ryan C. Thompson:\cr
+#' \url{https://stackoverflow.com/questions/5577221/how-can-i-load-an-object-into-a-variable-name-that-i-specify-from-an-r-data-file}\cr
+#' Solution provided by ricardo:\cr
+#' \url{https://stackoverflow.com/users/1453172/ricardo}
+#' 
+#' @param file_path The path to the R-object that you want to load.
 #'
 #' @return
 #' @export
 #'
 #' @examples
+#' old_name <- c("This is a random vector",
+#'               "to serve as an example")
+#'
+#' # Creating a temporary directory:
+#' file_path <- file.path(tempdir(),
+#'                        "R_object.rds")
+#'
+#' # Saving the vector as an R-object to the temporary directory:
+#' save(old_name,
+#'      file = file_path)
+#'
+#' # Loading the R object and assigning a new name to it:
+#' new_name <- load_and_assign(file_path)
+#' 
 load_and_assign <- function(file_path){
-  load(file_path)
+  tryCatch(
+    load(file_path),
+    error = function(e) {
+      
+    },
+    warning = function(w) { 
+      stop(paste("Check if the file_path was not misspelled.",
+                 "Was the R-object you're trying to load saved with the function saveRDS()?",
+                 "load_and_assign only works with objects saved with the function save()"))
+      })
   get(ls()[ls() != "file_path"])
 }

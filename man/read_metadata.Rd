@@ -2,16 +2,28 @@
 % Please edit documentation in R/fct_data_import.R
 \name{read_metadata}
 \alias{read_metadata}
-\title{Title}
+\title{Read in a metadata file}
 \usage{
 read_metadata(metadata_file)
 }
 \arguments{
-\item{metadata_file}{}
+\item{metadata_file}{The path to the metadata Excel file.}
 }
 \value{
-
+This function returns a dataframe with the metadata.
 }
 \description{
-Title
+\code{read_metadata()} can be used to read in an Excel file containing
+metadata. It reads in all columns as class character and interprets both "NA"
+and empty cells as \code{NA}. The values in the first row are converted to
+snake case (see: \code{\link[snakecase]{to_snake_case}}) and used as column
+names. If the file contains multiple sheets, only the first sheet is read in.
+}
+\examples{
+path <- system.file("inst",
+                    "extdata",
+                    "Metadata.xlsx",
+                    package = "glycodash")
+                    
+read_metadata(path)
 }

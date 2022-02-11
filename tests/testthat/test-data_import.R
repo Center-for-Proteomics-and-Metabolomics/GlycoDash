@@ -131,3 +131,37 @@ test_that("read_and_process_plate_design() returns a dataframe with the number o
   expect_equal(nrow(read_and_process_plate_design(plate_design_file = plate_design_file)),
                96 * 7)
 })
+
+test_that("load_and_assign() doesn't alter the R-object", {
+  old_name <- c("This is a random vector",
+                "to serve as an example")
+  
+  file_path <- file.path(tempdir(),
+                         "R_object.rds")
+  
+  save(old_name,
+       file = file_path)
+  
+  new_name <- load_and_assign(file_path)
+  
+  expect_identical(object = new_name,
+                   expected = old_name)
+})
+
+test_that("load_and_assign() throws an error for objects saved with saveRDS()", {
+  old_name <- c("This is a random vector",
+                "to serve as an example")
+  
+  file_path <- file.path(tempdir(),
+                         "R_object.rds")
+  
+  saveRDS(old_name,
+          file = file_path)
+  
+  expect_error(
+    object = {
+    new_name <- load_and_assign(file_path)
+    },
+    regexp = "Check if the file_path was not misspelled\\.") 
+  
+})
