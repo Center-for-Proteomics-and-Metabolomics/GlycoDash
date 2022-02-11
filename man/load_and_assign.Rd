@@ -2,16 +2,44 @@
 % Please edit documentation in R/fct_data_import.R
 \name{load_and_assign}
 \alias{load_and_assign}
-\title{Title}
+\title{Load R-objects and assign them a new name}
 \usage{
 load_and_assign(file_path)
 }
 \arguments{
-\item{file_path}{}
+\item{file_path}{The path to the R-object that you want to load.}
 }
 \value{
 
 }
 \description{
-Title
+When you load an R-object with \code{\link[base]{load}} the object keeps the
+name it had at the moment that it was saved. Sometimes it's more convenient
+to assign a new name to the object when it is being loaded.
+\code{load_and_assign()} allows you to do that.
+}
+\section{Credits}{
+
+The code for this function was found on StackOverflow.\cr
+Question asked by Ryan C. Thompson:\cr
+\url{https://stackoverflow.com/questions/5577221/how-can-i-load-an-object-into-a-variable-name-that-i-specify-from-an-r-data-file}\cr
+Solution provided by ricardo:\cr
+\url{https://stackoverflow.com/users/1453172/ricardo}
+}
+
+\examples{
+old_name <- c("This is a random vector",
+              "to serve as an example")
+
+# Creating a temporary directory:
+file_path <- file.path(tempdir(),
+                       "R_object.rds")
+
+# Saving the vector as an R-object to the temporary directory:
+save(old_name,
+     file = file_path)
+
+# Loading the R object and assigning a new name to it:
+new_name <- load_and_assign(file_path)
+
 }
