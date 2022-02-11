@@ -2,16 +2,36 @@
 % Please edit documentation in R/fct_data_import.R
 \name{process_plate_design}
 \alias{process_plate_design}
-\title{Title}
+\title{Process the result of read_plate_design()}
 \usage{
 process_plate_design(plate_design)
 }
 \arguments{
-\item{plate_design}{}
+\item{plate_design}{The dataframe that is returned by the
+\code{\link{read_plate_design}} function.}
 }
 \value{
-
+A dataframe with three columns: \describe{\item{sample_id}{The sample
+  ID's as given in the plate design file.} \item{sample_type}{Automatically
+  determined sample types. The function takes the first string of letters
+  within the sample ID as the sample type. This might not work for your
+  sample ID's so you may need to alter the sample types manually after using
+  this function.} \item{plate_well}{This column indicated the plate and well
+  that a sample was analyzed in. The format is as follows: the plate number
+  followed by the well ID, separated by an underscore (e.g. plate 1 well A1
+  is 1_A01).}}
 }
 \description{
-Title
+This function takes the result from the \code{\link{read_plate_design}}
+function and converts it to a different format. In addition it automatically
+determines sample types based on the sample ID's.
+}
+\examples{
+path <- system.file("inst",
+                    "extdata",
+                    "Plate_design.xlsx",
+                    package = "glycodash")
+
+plate_design <- read_plate_design(file_path)
+process_plate_design(plate_design)
 }
