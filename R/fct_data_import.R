@@ -426,39 +426,102 @@ read_lacytools_summary <- function(summary_file) {
   return(long_data)
 }
 
-#' Title
+#'Read in a plate design file
 #'
-#' @param plate_design_file 
+#'The function \code{read_plate_design} reads in a plate design Excel
+#'file and returns a dataframe. It uses the \code{\link[plater]{read_plate}}
+#'function from the plater package.
 #'
-#' @return
-#' @export
+#'@param plate_design_file The path to the plate design Excel file. The file
+#'  should be in the format described below.
+#'
+#'@return This function returns a dataframe with a column named "well" that
+#'  indicates in which well a sample was analyzed. In addition, there is one
+#'  column for each plate in the plate design file. Each plate column contains
+#'  the sample ID's of the samples on that plate.
+#'@export
+#'
+#'@section Plate design format: 
+#'The top-left cell of the Excel sheet should contain the plate number (e.g. 
+#'"Plate 1"). The cells to the right of the top-left cell need to be labelled 
+#'1-12 (for a 96-well plate), while the cells below the top-left cell need to be
+#'labelled A-H. The cells within the plate should contain the sample ID's.
+#'
+#'\preformatted{
+#'Plate number  1             2            3             ...
+#'A            sample_ID_A1  sample_ID_A2  sample_ID_A3  
+#'B            sample_ID_B1  sample_ID_B2  sample_ID_B3
+#'C            sample_ID_C1  sample_ID_C2  sample_ID_C3
+#'...          ...           ...           ...           ...}
+#'
+#'At the bottom of the plate, leave one row blank and then add the next plate in
+#'the same format.
 #'
 #' @examples
+#' path <- system.file("inst",
+#'                     "extdata",
+#'                     "Plate_design.xlsx",
+#'                     package = "glycodash")
+#' read_plate_design(plate_design_file = path)
 read_plate_design <- function(plate_design_file) {
   
-  plate_design <- readxl::read_excel(plate_design_file)
+  plate_design <- readxl::read_excel(plate_design_file,
+                                     .name_repair = "minimal")
   path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
   readr::write_csv(plate_design, file = path_to_platedesign_csv)
-  plate_design <- plater::read_plate(file = path_to_platedesign_csv, 
-                                     well_ids_column = "well")
+  tryCatch(expr = {
+    plate_design <- plater::read_plate(file = path_to_platedesign_csv, 
+                                       well_ids_column = "well")
+  },
+  # Ignore error thrown by plater::read_plate():
+  error = function(e) { 
+    
+  },
+  # Throw custom error when plater::read_plate() throws a warning:
+  warning = function(w) { 
+    rlang::abort(class = "incorrect_formatting",
+                 message = paste(
+                   "Please check that your plate design file is formatted correctly.",
+                   "Run `?read_and_process_plate_design` to find the required format."))})
+  
   return(plate_design)
 }
 
-#' Title
+#' Process the result of read_plate_design()
 #'
-#' @param plate_design 
+#' This function takes the result from the \code{\link{read_plate_design}}
+#' function and converts it to a different format. In addition it automatically
+#' determines sample types based on the sample ID's.
 #'
-#' @return
+#' @param plate_design The dataframe that is returned by the
+#'   \code{\link{read_plate_design}} function.
+#'
+#' @return A dataframe with three columns: \describe{\item{sample_id}{The sample
+#'   ID's as given in the plate design file.} \item{sample_type}{Automatically
+#'   determined sample types. The function takes the first string of letters
+#'   within the sample ID as the sample type. This might not work for your
+#'   sample ID's so you may need to alter the sample types manually after using
+#'   this function.} \item{plate_well}{This column indicated the plate and well
+#'   that a sample was analyzed in. The format is as follows: the plate number
+#'   followed by the well ID, separated by an underscore (e.g. plate 1 well A1
+#'   is 1_A01).}}
 #' @export
 #'
 #' @examples
+#' path <- system.file("inst",
+#'                     "extdata",
+#'                     "Plate_design.xlsx",
+#'                     package = "glycodash")
+#'
+#' plate_design <- read_plate_design(file_path)
+#' process_plate_design(plate_design)
 process_plate_design <- function (plate_design) {
   plate_design <- plate_design %>%
     tidyr::pivot_longer(cols = -well,
                         names_to = "plate",
                         values_to = "sample_id") %>%
     dplyr::mutate(plate = stringr::str_extract(plate, "\\d+"),
-                  well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
+                  well = stringr::str_extract(well, "[A-H]\\d+"),
                   plate_well = paste(plate, well, sep = "_")) %>% 
     dplyr::arrange(plate_well) %>% 
     dplyr::select(-c(plate, well)) %>% 
@@ -467,26 +530,49 @@ process_plate_design <- function (plate_design) {
                    regex = "([[:alpha:]]+)",
                    remove = FALSE)
   
-  plate_design <- handle_duplicates(plate_design)
-  
   return(plate_design)
 }
 
-#' Title
+#'Handle duplicate samples in a plate design file
 #'
-#' @param plate_design 
+#'\code{handle_duplicates()} finds the samples on a plate design that are
+#'specified as duplicate samples and finds the sample ID's and sample types of
+#'these samples by copying the sample ID and type of the preceding sample. This
+#'function assumes that duplicates are indicated in the plate design Excel file
+#'as "duplicate" and that duplicate samples are always the duplicate of the
+#'sample one well to the left, or, in case the duplicate is positioned in the
+#'left-most column of the plate, the duplicate of the right-most well one row
+#'up.
 #'
-#' @return
-#' @export
+#'@param plate_design The dataframe that is returned by the
+#'  \code{\link{process_plate_design}} function.
+#'
+#'@return The original dataframe passed as the \code{plate_design} argument with
+#'  an additional column named "duplicate". This column is \code{TRUE} for
+#'  samples that were specified on the plate design as duplicate samples and
+#'  \code{FALSE} for the remaining samples. In addition, the sample ID's in the
+#'  sample_id column and the sample types in the sample_type column of duplicate
+#'  samples are replaced with the sample ID's and sample types of the preceding
+#'  sample.
+#'@export
 #'
 #' @examples
+#' path <- system.file("inst",
+#'                     "extdata",
+#'                     "Plate_design.xlsx",
+#'                     package = "glycodash")
+#'
+#' plate_design <- read_plate_design(file_path)
+#' plate_design <- process_plate_design(plate_design)
+#' handle_duplicates(plate_design)
 handle_duplicates <- function(plate_design) {
   new_sample_ids <- vector()
   new_sample_types <- vector()
   duplicate <- vector()
   for (i in 1:length(plate_design$sample_id)) {
     if (i == 1 & plate_design$sample_id[i] == "duplicate") {
-      stop(print("Error: first sample is a duplicate."))
+      rlang::abort(class = "first_sample_duplicate", 
+                   message = "Error: first sample is a duplicate.")
     }
     if (plate_design$sample_id[i] == "duplicate") {
       new_sample_ids[i] <- plate_design$sample_id[i-1]
@@ -498,6 +584,14 @@ handle_duplicates <- function(plate_design) {
       duplicate[i] <- FALSE
     }
   }
+  
+  if (identical(new_sample_ids, plate_design$sample_id)) {
+    rlang::warn(class = "no_duplicates",
+                message = paste("No duplicates were found in your plate design file.",
+                                "If there should be duplicate samples to be found,",
+                                "please check if those samples are specified literally as \"duplicate\" in your plate design file."))
+  }
+  
   new_plate_design <- plate_design %>% 
     dplyr::mutate(sample_id = new_sample_ids,
                   sample_type = new_sample_types,
@@ -505,21 +599,87 @@ handle_duplicates <- function(plate_design) {
   return(new_plate_design)
 }
 
-#' Title
+#'Read and process a plate design file
 #'
-#' @param plate_design_file 
+#' The function \code{read_and_process_plate_design} reads in a plate design
+#' Excel file and processes it. It automatically determines sample types based
+#' on the sample ID's and finds the samples on a plate design that are specified
+#' as duplicate samples. The sample ID's and sample types of these duplicate
+#' samples are determined by copying the sample ID and type of the preceding
+#' sample.
+#' 
+#'@inheritParams read_plate_design
 #'
-#' @return
-#' @export
+#'@section Plate design format: The top-left cell of the Excel sheet should
+#'  contain the plate number (e.g. "Plate 1"). The cells to the right of the
+#'  top-left cell need to be labelled 1-12 (for a 96-well plate), while the
+#'  cells below the top-left cell need to be labelled A-H. The cells within the
+#'  plate should contain the sample ID's.
+#'
+#'  \preformatted{ 
+#'  Plate number  1             2            3             ... 
+#'  A            sample_ID_A1  sample_ID_A2  sample_ID_A3 
+#'  B            sample_ID_B1  sample_ID_B2  sample_ID_B3 
+#'  C            sample_ID_C1  sample_ID_C2  sample_ID_C3  
+#'  ...          ...           ...           ...           ...}
+#'
+#'  At the bottom of the plate, leave one row blank and then add the next plate
+#'  in the same format.
+#'
+#'  Duplicate samples should be indicated in the plate design Excel file as
+#'  "duplicate". \code{read_and_process_plate_design} assumes that duplicate 
+#'  samples are always the duplicate of the preceding sample, that is the 
+#'  sample one well to the left or, in case the duplicate is positioned in the 
+#'  left-most column of the plate, the sample in the right-most well one row up.
+#'
+#'@return This function returns a dataframe with four columns:
+#'  \describe{\item{sample_id}{The sample ID's as given in the plate design
+#'  file.} \item{sample_type}{Automatically determined sample types. The
+#'  function takes the first string of letters within the sample ID as the
+#'  sample type. This might not work for your sample ID's so you may need to
+#'  alter the sample types manually after using this function.}
+#'  \item{plate_well}{This column indicated the plate and well that a sample was
+#'  analyzed in. The format is as follows: the plate number followed by the well
+#'  ID, separated by an underscore (e.g. plate 1 well A1 is 1_A01).}
+#'  \item{duplicate}{This column is \code{TRUE} for samples that were specified
+#'  on the plate design as duplicate samples and \code{FALSE} for the remaining
+#'  samples.}}
+#'
+#'@export
 #'
 #' @examples
+#' path <- system.file("inst",
+#'                     "extdata",
+#'                     "Plate_design.xlsx",
+#'                     package = "glycodash")
+#' 
+#' read_and_process_plate_design(plate_design_file = path)
 read_and_process_plate_design <- function(plate_design_file) {
-  plate_design <- read_plate_design(plate_design_file)
+  # Pass along any errors (if applicable) from read_plate_design:
+  tryCatch(expr = {
+    plate_design <- read_plate_design(plate_design_file)
+  },
+  error = function(e) { 
+    rlang::abort(class = e$class,
+                 message = e$message)
+    })
+  
   plate_design <- process_plate_design(plate_design)
+  
+  # Pass along any errors (if applicable) from handle_duplicates. Warnings are
+  # passed along automatically.
+  tryCatch(expr = {
+    plate_design <- handle_duplicates(plate_design)
+  },
+  error = function(e) {
+    rlang::abort(class = e$class,
+                 message = e$message)
+  })
+  
   return(plate_design)
 }
 
-#' Title
+#' Read in a metadata file
 #'
 #' @param metadata_file 
 #'

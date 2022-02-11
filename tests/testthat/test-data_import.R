@@ -95,3 +95,39 @@ test_that("detect_plate_and_well() doesn't interpret a number larger than 12 or 
                regexp = "For the sample\\(s\\) Testname_PL\\.8_well_H87 and Testname_pl5_well_L3 the plate and well could not be determined\\.")
 })
 
+test_that("read_and_process_plate_design() throws an error when plate design file is formatted incorrectly.", {
+  file_no_blank_line <- system.file("inst",
+                                    "extdata",
+                                    "Plate_design_no_blank_line_between_plates.xlsx",
+                                    package = "glycodash")
+  
+  expect_error(read_and_process_plate_design(file_no_blank_line),
+               regexp = "Please check that your plate design file is formatted correctly\\. Run `\\?read_and_process_plate_design` to find the required format\\.")
+  
+  file_with_title <- system.file("inst",
+                                 "extdata",
+                                 "Plate_design_with_title.xlsx",
+                                 package = "glycodash")
+  
+  expect_error(read_and_process_plate_design(file_with_title),
+               regexp = "Please check that your plate design file is formatted correctly\\. Run `\\?read_and_process_plate_design` to find the required format\\.")
+})
+
+test_that("read_and_process_plate_design() throws a warning when no duplicates are found.", {
+  file_duplicates_wrong <- system.file("inst",
+                                       "extdata",
+                                       "Plate_design_duplicates_wrong.xlsx",
+                                       package = "glycodash")
+  
+  expect_warning(read_and_process_plate_design(file_duplicates_wrong),
+                 regexp = "No duplicates were found in your plate design file\\.")
+})
+
+test_that("read_and_process_plate_design() returns a dataframe with the number of plates * 96 as number of rows", {
+  plate_design_file <- system.file("inst",
+                                   "extdata",
+                                   "Plate_design.xlsx",
+                                   package = "glycodash")
+  expect_equal(nrow(read_and_process_plate_design(plate_design_file = plate_design_file)),
+               96 * 7)
+})

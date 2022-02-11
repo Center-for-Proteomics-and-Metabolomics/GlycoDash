@@ -2,16 +2,40 @@
 % Please edit documentation in R/fct_data_import.R
 \name{handle_duplicates}
 \alias{handle_duplicates}
-\title{Title}
+\title{Handle duplicate samples in a plate design file}
 \usage{
 handle_duplicates(plate_design)
 }
 \arguments{
-\item{plate_design}{}
+\item{plate_design}{The dataframe that is returned by the
+\code{\link{process_plate_design}} function.}
 }
 \value{
-
+The original dataframe passed as the \code{plate_design} argument with
+ an additional column named "duplicate". This column is \code{TRUE} for
+ samples that were specified on the plate design as duplicate samples and
+ \code{FALSE} for the remaining samples. In addition, the sample ID's in the
+ sample_id column and the sample types in the sample_type column of duplicate
+ samples are replaced with the sample ID's and sample types of the preceding
+ sample.
 }
 \description{
-Title
+\code{handle_duplicates()} finds the samples on a plate design that are
+specified as duplicate samples and finds the sample ID's and sample types of
+these samples by copying the sample ID and type of the preceding sample. This
+function assumes that duplicates are indicated in the plate design Excel file
+as "duplicate" and that duplicate samples are always the duplicate of the
+sample one well to the left, or, in case the duplicate is positioned in the
+left-most column of the plate, the duplicate of the right-most well one row
+up.
+}
+\examples{
+path <- system.file("inst",
+                    "extdata",
+                    "Plate_design.xlsx",
+                    package = "glycodash")
+
+plate_design <- read_plate_design(file_path)
+plate_design <- process_plate_design(plate_design)
+handle_duplicates(plate_design)
 }

@@ -2,16 +2,47 @@
 % Please edit documentation in R/fct_data_import.R
 \name{read_plate_design}
 \alias{read_plate_design}
-\title{Title}
+\title{Read in a plate design file}
 \usage{
 read_plate_design(plate_design_file)
 }
 \arguments{
-\item{plate_design_file}{}
+\item{plate_design_file}{The path to the plate design Excel file. The file
+should be in the format described below.}
 }
 \value{
-
+This function returns a dataframe with a column named "well" that
+ indicates in which well a sample was analyzed. In addition, there is one
+ column for each plate in the plate design file. Each plate column contains
+ the sample ID's of the samples on that plate.
 }
 \description{
-Title
+The function \code{read_plate_design} reads in a plate design Excel
+file and returns a dataframe. It uses the \code{\link[plater]{read_plate}}
+function from the plater package.
+}
+\section{Plate design format}{
+ 
+The top-left cell of the Excel sheet should contain the plate number (e.g. 
+"Plate 1"). The cells to the right of the top-left cell need to be labelled 
+1-12 (for a 96-well plate), while the cells below the top-left cell need to be
+labelled A-H. The cells within the plate should contain the sample ID's.
+
+\preformatted{
+Plate number  1             2            3             ...
+A            sample_ID_A1  sample_ID_A2  sample_ID_A3  
+B            sample_ID_B1  sample_ID_B2  sample_ID_B3
+C            sample_ID_C1  sample_ID_C2  sample_ID_C3
+...          ...           ...           ...           ...}
+
+At the bottom of the plate, leave one row blank and then add the next plate in
+the same format.
+}
+
+\examples{
+path <- system.file("inst",
+                    "extdata",
+                    "Plate_design.xlsx",
+                    package = "glycodash")
+read_plate_design(plate_design_file = path)
 }

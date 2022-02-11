@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_data_import.R
 \name{read_lacytools_summary}
 \alias{read_lacytools_summary}
-\title{Read a LacyTools summary .txt file and convert it to a 'tidy' dataframe}
+\title{Read a LacyTools summary file and convert it to a 'tidy' dataframe}
 \usage{
 read_lacytools_summary(summary_file)
 }
@@ -28,13 +28,14 @@ This function returns a dataframe with the following columns:
  abundant isotopologue of the analyte.}}
 }
 \description{
-The function \code{read_lacytools_summary()} can read in a LacyTools summery
-file and convert it to a 'tidy' dataframe in long format.
+The function \code{read_lacytools_summary()} can read in a LacyTools summary
+.txt file and convert it to a 'tidy' dataframe in long format.
 }
 \examples{
 path_to_file <- system.file("inst",
                             "extdata",
                             "LacyTools_summary.txt",
                             package = "glycodash")
+                            
 read_lacytools_summary(summary_file = path_to_file)
 }
