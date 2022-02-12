@@ -461,25 +461,23 @@ mod_data_import_server <- function(id){
           return(metadata)
         })
       # Merge all metadata files in metadata_list together (key = sample_id):
-      x$merged_metadata <- purrr::reduce(metadata_list, dplyr::full_join, by = "sample_id")
+      x$merged_metadata <- purrr::reduce(metadata_list, 
+                                         dplyr::full_join, by = "sample_id")
       # Check for unmatched sample ID's in the data:
-      tryCatch(expr = {
-        check_sample_id_matches(plate_design_ids = x$data_incl_plate_design$sample_id,
-                                metadata_ids = x$merged_metadata$sample_id)
+      unmatched <- setdiff(x$data_incl_plate_design$sample_id,
+                           x$merged_metadata$sample_id)
+      if(rlang::is_empty(unmatched)) {
         x$data_incl_metadata <- dplyr::left_join(x$data_incl_plate_design,
                                                  x$merged_metadata)
-      },
-      warning = function(w) {
-        # If there are any unmatched ID's a pop-up with those ID's is shown:
-        unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data_incl_plate_design$sample_id,
-                                                                  metadata = x$merged_metadata$sample_id))
-        
+      } else {
+        # If there are unmatched sample ID's a pop-up is shown.
+        # Reset the response to the pop-up in case it has been shown before:
         x$response_metadata <- NULL
         
         shinyalert::shinyalert(
           html = TRUE,
           text = tagList(
-            paste(length(unmatched_ids),
+            paste(length(unmatched),
                   "sample ID's in the data had no match in the metadata:"),
             DT::dataTableOutput(ns("unmatched_ids")),
             br(),
@@ -490,23 +488,21 @@ mod_data_import_server <- function(id){
           confirmButtonText = "Add the metadata despite the unmatched ID's",
           showCancelButton = TRUE,
           cancelButtonText = "Don't add the metadata now",
-          type = ifelse(length(unmatched_ids) > 20, "warning", ""),
+          type = ifelse(length(unmatched) > 20, "warning", ""),
           callbackR = function(response) {
             x$response_metadata <- response
-          }
-        )
+      })
       }
-      )
     })
     
     # This is the datatable containing the unmatched sample ID's that is shown 
     # in the pop-up:
     output$unmatched_ids <- DT::renderDataTable({
-      unmatched_ids <- suppressWarnings(check_sample_id_matches(plate_design = x$data_incl_plate_design$sample_id,
-                                                                # CREATE MERGED metadata reactiveVal
-                                                                metadata = x$merged_metadata$sample_id))
-      unmatched_ids <- as.data.frame(unmatched_ids)
-      table <- DT::datatable(unmatched_ids,
+      unmatched <- setdiff(x$data_incl_plate_design$sample_id,
+                           x$merged_metadata$sample_id)
+      
+      unmatched <- as.data.frame(unmatched)
+      table <- DT::datatable(unmatched,
                              options = list(
                                scrollY = "100px",
                                paging = FALSE,
