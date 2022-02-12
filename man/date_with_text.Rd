@@ -32,6 +32,15 @@ with the dates formatted as "year-month-day". \strong{Important: This function
 can only be used within the function \code{\link[dplyr]{across}} from the
 dplyr package!}
 }
+\section{Credits}{
+
+This function was based on a solution found on StackOverflow.\cr
+Question asked by Ryan C. Thompson:\cr
+\url{https://stackoverflow.com/questions/63027147/how-to-read-in-a-date-column-from-an-excel-sheet-with-ambiguous-formats-into-r}\cr
+Solution provided by Rui Barradas:\cr
+\url{https://stackoverflow.com/users/8245406/rui-barradas}
+}
+
 \examples{
 path <- system.file("inst",
                     "extdata",
