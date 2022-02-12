@@ -165,3 +165,5 @@ test_that("load_and_assign() throws an error for objects saved with saveRDS()", 
     regexp = "Check if the file_path was not misspelled\\.") 
   
 })
+
+

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_data_import.R
 \name{check_sample_id_matches}
 \alias{check_sample_id_matches}
-\title{Title}
+\title{Find unmatched sample ID's}
 \usage{
 check_sample_id_matches(plate_design_ids, metadata_ids)
 }
@@ -15,5 +15,5 @@ check_sample_id_matches(plate_design_ids, metadata_ids)
 
 }
 \description{
-Title
+Find unmatched sample ID's
 }
