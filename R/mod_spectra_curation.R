@@ -122,7 +122,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
               isTruthy(input$cut_off_basis))) {
         if (all(purrr::map_lgl(cluster_inputIds(),
                                ~ isTruthy(input[[.x]])),
-                x$clusters_OK)) {
+                x$clusters_OK,
+                x$clusters_no_overlap)) {
           shinyjs::enable("curate_spectra")
         }
       }
@@ -167,6 +168,41 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                              text = c$message)
                               x$clusters_OK <- FALSE
                             })})
+    })
+    
+    # Get the values of the cluster textInputs:
+    observe({
+      x$clusters_regex <- purrr::map(cluster_inputIds(),
+                                   ~ input[[.x]])
+    })
+    
+    observe({
+      req(all(purrr::map_lgl(x$clusters_regex,
+                             ~ isTruthy(.x))))
+      
+      x$clusters_no_overlap <- TRUE
+      
+      if (length(x$clusters_regex) > 1) {
+        regex_overlap <- purrr::imap_lgl(
+          x$clusters_regex,
+          function(regex, i) {
+            other_regexes <- unlist(x$clusters_regex)[-i]
+            any(purrr::map_lgl(other_regexes,
+                           function(other_regex) {
+                             stringr::str_detect(string = other_regex,
+                                                 pattern = regex)
+                           }))
+          })
+        
+        if(any(regex_overlap == TRUE)) {
+          purrr::map(cluster_inputIds(),
+                     ~ shinyFeedback::feedbackDanger(.x,
+                                                     show = TRUE,
+                                                     text = paste("Overlap between the cluster keywords is not allowed,",
+                                                                  "as each analyte should match only one cluster keyword.")))
+          x$clusters_no_overlap <- FALSE
+        }
+      }
     })
     
     # The selection menu for input$cut_off_basis is updated so that the choices
