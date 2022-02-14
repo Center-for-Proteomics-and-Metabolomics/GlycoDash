@@ -2,7 +2,6 @@
 
 export("%>%")
 export(calculate_cut_offs)
-export(check_sample_id_matches)
 export(create_long_data)
 export(curate_analytes)
 export(curate_spectra)
