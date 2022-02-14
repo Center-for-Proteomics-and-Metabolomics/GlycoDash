@@ -24,6 +24,14 @@ mod_data_import_ui <- function(id){
             solidHeader = TRUE,
             status = "primary",
             fileInput(ns("lacytools_summary"), "Upload LacyTools summary.txt file:"),
+            radioButtons(ns("Ig_data"), "Does your data contain total and specific immunoglobulin samples?",
+                         choices = c("Yes", "No"),
+                         selected = character(0)),
+            div(id = ns("keywords_specific_total"),
+                textInput(ns("keyword_specific"), 
+                          label = "By what keyword can the specific Ig samples be recognized?"),
+                textInput(ns("keyword_total"), 
+                          label = "By what keyword can the total Ig samples be recognized?")),
             actionButton(ns("read_summary"), "Convert the LacyTools summary file to an R-suitable format")
           ),
           shinydashboard::box(
@@ -116,18 +124,44 @@ mod_data_import_server <- function(id){
     })
     
     # Make sure that the read_summary actionButton is only available once the
-    # right type of file is uploaded as lacytools summary
+    # right type of file is uploaded as lacytools summary and once the user has
+    # provided all required inputs:
     observe({
-      shinyjs::toggleState(id = "read_summary", 
-                           !is.null(input$lacytools_summary))
-      shinyjs::toggleState(id = "read_summary",
-                           ext_lacytools_summary() == "txt")
+      shinyjs::disable(id = "read_summary")
+      if (all(isTruthy(input$lacytools_summary), 
+              ext_lacytools_summary() == "txt")) {
+        if (isTruthy(input$Ig_data)) {
+          if (input$Ig_data == "Yes") {
+            if (all(isTruthy(input$keyword_total), 
+                    isTruthy(input$keyword_specific))) {
+              shinyjs::enable(id = "read_summary")
+            }
+          } else {
+            shinyjs::enable(id = "read_summary")
+          }
+        }
+      }
+    })
+    
+    # If the user indicates (via input$Ig_data) that the data contains total and
+    # specific Ig samples, the textInputs for the specific and total keywords
+    # are shown.
+    observe({
+      shinyjs::hide("keywords_specific_total")
+      if (!is.null(input$Ig_data)) {
+        if (input$Ig_data == "Yes") {
+          shinyjs::show("keywords_specific_total")
+        }
+      }  
     })
     
     # When the read_summary actionButton is clicked, the lacytools summary is read
     # and saved as a reactive expression data_at_read_in()
     data_at_read_in <- eventReactive(input$read_summary, {
-      read_lacytools_summary(input$lacytools_summary$datapath)
+      read_lacytools_summary(summary_file = input$lacytools_summary$datapath,
+                             Ig_data = input$Ig_data,
+                             keyword_total = input$keyword_total,
+                             keyword_specific = input$keyword_specific)
     })
     
     observe({

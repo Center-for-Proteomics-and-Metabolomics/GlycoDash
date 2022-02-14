@@ -4,7 +4,13 @@
 \alias{get_block}
 \title{Create a subset containing one block from a LacyTools summary.}
 \usage{
-get_block(data, variable, keyword_specific = "Spike", keyword_total = "Total")
+get_block(
+  data,
+  variable,
+  Ig_data,
+  keyword_specific = NULL,
+  keyword_total = NULL
+)
 }
 \arguments{
 \item{data}{A dataframe with the LacyTools summary (the result of

@@ -148,7 +148,7 @@ detect_group <- function(block, keyword_specific, keyword_total) {
 #' @examples
 #' data(LacyTools_summary)
 #' get_block(LacyTools_summary, variable = "Absolute Intensity (Background Subtracted, 2+)")
-get_block <- function(data, variable, keyword_specific = "Spike", keyword_total = "Total") {
+get_block <- function(data, variable, Ig_data, keyword_specific = NULL, keyword_total= NULL) {
   rows <- find_block(data, variable)
   block <- data[rows, ]
   # The first row of the block contains the column names for the block:
@@ -163,8 +163,10 @@ get_block <- function(data, variable, keyword_specific = "Spike", keyword_total 
     dplyr::mutate(lacytools_output = better_name_output) %>% 
     dplyr::mutate(dplyr::across(-c(sample_name, lacytools_output), as.numeric)) %>% 
     dplyr::select(-tidyselect::vars_select_helpers$where(function(x) all(is.na(x))))
-  block <- detect_group(block, keyword_specific, keyword_total)
   block <- detect_plate_and_well(block)
+  if (Ig_data == "Yes") {
+    block <- detect_group(block, keyword_specific, keyword_total)
+  }
   return(block)
 }
 
@@ -404,12 +406,16 @@ create_long_data <- function(block, metadata = NULL) {
 #'                             package = "glycodash")
 #'                             
 #' read_lacytools_summary(summary_file = path_to_file)
-read_lacytools_summary <- function(summary_file) {
+read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, keyword_specific = NULL) {
   
   data <- read_non_rectangular(summary_file)
   
   all_blocks <- purrr::map(outputs,
-                           function(x) get_block(data, x))
+                           function(output) get_block(data = data, 
+                                                      variable = output, 
+                                                      Ig_data = Ig_data,
+                                                      keyword_specific = keyword_specific,
+                                                      keyword_total = keyword_total))
   
   all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
   
@@ -835,7 +841,8 @@ date_with_text <- function(date_text_values, origin = "1899-12-30"){
     dates <- as.character(dates)
     dates[is.na(num)] <- as.character(date_text_values[is.na(num)])
     message(paste("Some date entries in", 
-                  dplyr::cur_column(), 
+                  tryCatch(dplyr::cur_column(),
+                           error = function(e) {}), 
                   "contain text. Output will have class character."))
   }
   return(dates)
