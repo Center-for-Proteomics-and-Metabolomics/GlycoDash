@@ -39,11 +39,12 @@ define_clusters <- function(data, clusters_regex) {
     regex_overlap <- purrr::imap_lgl(
       clusters_regex,
       function(regex, i) {
-        purrr::map_lgl(clusters_regex[[-i]],
+        other_regexes <- unlist(x$clusters_regex)[-i]
+        any(purrr::map_lgl(other_regexes,
                        function(other_regex) {
                          stringr::str_detect(string = other_regex,
                                              pattern = regex)
-                       })
+                       }))
       })
     
     if(any(regex_overlap == TRUE)) {
