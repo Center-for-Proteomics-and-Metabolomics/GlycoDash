@@ -4,7 +4,12 @@
 \alias{read_lacytools_summary}
 \title{Read a LacyTools summary file and convert it to a 'tidy' dataframe}
 \usage{
-read_lacytools_summary(summary_file)
+read_lacytools_summary(
+  summary_file,
+  Ig_data,
+  keyword_total = NULL,
+  keyword_specific = NULL
+)
 }
 \arguments{
 \item{summary_file}{The path to the LacyTools summary file. This file should
