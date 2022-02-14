@@ -166,4 +166,54 @@ test_that("load_and_assign() throws an error for objects saved with saveRDS()", 
   
 })
 
+test_that("date_with_text() converts date without comments to class \"Date\"", {
+  path <- system.file("inst",
+                      "extdata",
+                      "Dates.xlsx",
+                      package = "glycodash")
+  
+  dates <- readxl::read_excel(path,
+                              col_types = "text")
+  
+  dates <- dates %>%
+    dplyr::mutate(dplyr::across(.cols = date,
+                                .fns = date_with_text))
+  
+  expect_s3_class(object = dates$date,
+                  class = "Date")
+  
+})
 
+test_that("date_with_text() converts date with comments to class \"Character\"", {
+  path <- system.file("inst",
+                      "extdata",
+                      "Dates_with_comment.xlsx",
+                      package = "glycodash")
+  
+  dates <- readxl::read_excel(path,
+                              col_types = "text")
+  
+  dates <- dates %>%
+    dplyr::mutate(dplyr::across(.cols = date,
+                                .fns = date_with_text))
+  
+  expect_type(object = dates$date,
+              type = "character")
+  
+})
+
+test_that("date_with_text() throws an error when used outside of dplyr::across()", {
+  path <- system.file("inst",
+                      "extdata",
+                      "Dates_with_comment.xlsx",
+                      package = "glycodash")
+  
+  dates <- readxl::read_excel(path,
+                              col_types = "text")
+  
+  date_with_text(dates$date)
+  
+  expect_type(object = dates$date,
+              type = "character")
+  
+})
