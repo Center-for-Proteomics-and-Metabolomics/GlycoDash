@@ -176,7 +176,6 @@ mod_data_import_server <- function(id){
       
       keyword_is_unmatched <- !(all(purrr::map_lgl(matches,
                                                    any)))
-      print(keyword_is_unmatched)
       
       if (keyword_is_unmatched) {
         shinyFeedback::feedbackDanger("keyword_specific",
@@ -202,6 +201,8 @@ mod_data_import_server <- function(id){
                             function(block) stringr::str_detect(block[["sample_name"]],
                                                                 pattern = input$keyword_total))
       
+      # In each block there needs to be at least one match, if not then the
+      # keyword is unmatched:
       keyword_is_unmatched <- !(all(purrr::map_lgl(matches,
                                                    any)))
       
