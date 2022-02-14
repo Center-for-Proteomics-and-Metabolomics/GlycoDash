@@ -134,7 +134,10 @@ mod_data_import_server <- function(id){
           if (input$Ig_data == "Yes") {
             if (all(isTruthy(input$keyword_total), 
                     isTruthy(input$keyword_specific))) {
-              shinyjs::enable(id = "read_summary")
+              if (all(isTruthy(x$keyword_total_OK),
+                      isTruthy(x$keyword_specific_OK))) {
+                shinyjs::enable(id = "read_summary")
+              }
             }
           } else {
             shinyjs::enable(id = "read_summary")
@@ -153,6 +156,61 @@ mod_data_import_server <- function(id){
           shinyjs::show("keywords_specific_total")
         }
       }  
+    })
+    
+    # Check whether the keyword given for specific samples has matches with the
+    # sample names in the data:
+    observeEvent(input$keyword_specific, {
+      req(input$lacytools_summary)               
+      x$keyword_specific_OK <- TRUE
+      shinyFeedback::hideFeedback("keyword_specific")
+      data <- read_non_rectangular(input$lacytools_summary$datapath)
+      all_blocks <- purrr::map(outputs,
+                               function(output) get_block(data = data, 
+                                                          variable = output, 
+                                                          Ig_data = "No"))
+      
+      matches <- purrr::map(all_blocks,
+                            function(block) stringr::str_detect(block[["sample_name"]],
+                                                                pattern = input$keyword_specific))
+      
+      keyword_is_unmatched <- !(all(purrr::map_lgl(matches,
+                                                   any)))
+      print(keyword_is_unmatched)
+      
+      if (keyword_is_unmatched) {
+        shinyFeedback::feedbackDanger("keyword_specific",
+                                      show = TRUE,
+                                      text = "This keyword did not match any sample names in your data. Please choose a different keyword.")
+        x$keyword_specific_OK <- FALSE
+      }
+    })
+    
+    # Check whether the keyword given for total samples has matches with the
+    # sample names in the data:
+    observeEvent(input$keyword_total, {
+      req(input$lacytools_summary)               
+      x$keyword_total_OK <- TRUE
+      shinyFeedback::hideFeedback("keyword_total")
+      data <- read_non_rectangular(input$lacytools_summary$datapath)
+      all_blocks <- purrr::map(outputs,
+                               function(output) get_block(data = data, 
+                                                          variable = output, 
+                                                          Ig_data = "No"))
+      
+      matches <- purrr::map(all_blocks,
+                            function(block) stringr::str_detect(block[["sample_name"]],
+                                                                pattern = input$keyword_total))
+      
+      keyword_is_unmatched <- !(all(purrr::map_lgl(matches,
+                                                   any)))
+      
+      if (keyword_is_unmatched) {
+        shinyFeedback::feedbackDanger("keyword_total",
+                                      show = TRUE,
+                                      text = "This keyword did not match any sample names in your data. Please choose a different keyword.")
+        x$keyword_total_OK <- FALSE
+      }
     })
     
     # When the read_summary actionButton is clicked, the lacytools summary is read
