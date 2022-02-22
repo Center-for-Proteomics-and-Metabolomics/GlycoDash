@@ -77,7 +77,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     observe({
       req(results_spectra_curation$curated_spectra())
       x$data <- results_spectra_curation$curated_spectra()
-      print(x$data)
     })
     
     observe({
@@ -160,22 +159,25 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       # x$curated_analytes <- NULL
       # x$analyte_curated_data <- NULL
       if (input$method == "Curate analytes based on data") {
-        groups_to_ignore <- stringr::str_extract(string = input$ignore_samples,
+        group_to_ignore <- stringr::str_extract(string = input$ignore_samples,
                                                  pattern = paste0(unique(x$data$group),
-                                                                  collapse = "|"))
+                                                                  collapse = "|")) %>% 
+          na.omit(.)
         
         sample_types_to_ignore <- stringr::str_extract(string = input$ignore_samples,
                                                        pattern = paste0(unique(x$data$sample_type),
-                                                                        collapse = "|"))
+                                                                        collapse = "|")) %>% 
+          na.omit(.)
         
         # Perform analyte curation:
         x$curated_analytes <- curate_analytes(data = x$data,
-                                              groups_to_ignore = groups_to_ignore,
+                                              group_to_ignore = group_to_ignore,
                                               sample_types_to_ignore = sample_types_to_ignore,
                                               cut_off_percentage = input$cut_off)
         
         passing_analytes <- x$curated_analytes %>% 
-          dplyr::filter(passed_curation == TRUE)
+          dplyr::filter(passed_curation == TRUE) %>% 
+          dplyr::select(-passed_curation)
         
         x$analyte_curated_data <- dplyr::left_join(passing_analytes, 
                                                    x$data)
@@ -195,7 +197,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
           unlist(.)
         
         x$analyte_curated_data <- x$data %>% 
-          dplyr::filter(analyte %in% analytes_to_include)
+          dplyr::filter(analyte %in% analytes_to_include) %>% 
+          dplyr::select(-passed_curation)
         
         showNotification("Analyte curation has been performed based on the analyte list.", 
                          type = "message")
@@ -223,6 +226,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                                   path = file))
       }
     )
+    
+    return(list(
+      analyte_curated_data = reactive({x$analyte_curated_data})
+    ))
  
   })
 }

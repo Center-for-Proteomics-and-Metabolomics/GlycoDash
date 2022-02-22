@@ -6,7 +6,7 @@
 \usage{
 curate_analytes(
   data,
-  groups_to_ignore,
+  group_to_ignore,
   sample_types_to_ignore,
   cut_off_percentage
 )
@@ -16,7 +16,7 @@ curate_analytes(
 filtered so that only spectra that passed curation remain (see example
 below).}
 
-\item{groups_to_ignore}{A character string with the keyword for total Ig
+\item{group_to_ignore}{A character string with the keyword for total Ig
 samples or the keyword for specific Ig samples. These samples will not be
 used as a basis for analyte curation. Specify \code{NULL} to exclude
 neither total nor specific Ig samples.}
@@ -65,7 +65,7 @@ curated_spectra <- long_data \%>\%
    dplyr::filter(passed_curation == TRUE)
 
 curate_analytes(data = curated_spectra,
-                groups_to_ignore = "Total",
+                group_to_ignore = "Total",
                 sample_types_to_ignore = c("pool", 
                                            "IVIGg", 
                                            "CN", 
