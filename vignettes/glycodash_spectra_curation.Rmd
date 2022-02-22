@@ -33,12 +33,13 @@ long_data <- curate_spectra(data = long_data,
                             max_ppm_deviation = 20,
                             max_ipq = 0.2,
                             min_sn = 9,
-                            clusters_regex = "IgGI1",
+                            clusters_regex = c("IgGI1H3", "IgGI1H4", "IgGI1H5"),
                             group_to_filter = "Spike",
                             sample_type_to_filter = "CN")
 
 curated_spectra <- long_data %>% 
-  dplyr::filter(passed_curation == TRUE)
+  dplyr::filter(passed_spectra_curation == TRUE) %>% 
+  dplyr::select(-passed_spectra_curation)
 
 ```
 
@@ -46,13 +47,18 @@ curated_spectra <- long_data %>%
 
 long_data %>%  
   ggplot2::ggplot() +
-  ggplot2::geom_bar(ggplot2::aes(x = sample_type, fill = passed_curation), position = "fill") +
+  ggplot2::geom_bar(ggplot2::aes(x = sample_type, 
+                                 fill = passed_spectra_curation), 
+                    position = "fill") +
   ggplot2::facet_wrap(cluster ~ group) +
   ggplot2::xlab("Sample type") +
   ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
                               name = "Proportion of spectra (%)") +
-  ggplot2::scale_fill_discrete(name = "Passed curation?", labels = c(`TRUE`= "Yes",
-                                                                       `FALSE` = "No")) +
+  ggplot2::scale_fill_discrete(name = "Passed curation?", 
+                               labels = c(`TRUE`= "Yes",
+                                          `FALSE` = "No"),
+                               type = c(`TRUE` = "#3498DB",
+                                        `FALSE` = "#E74C3C")) +
   ggplot2::theme_classic() +
   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                  strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
@@ -72,9 +78,31 @@ curated_analytes <- curate_analytes(data = curated_spectra,
                                     sample_types_to_ignore = c("pool", "IVIGg", "CN", "Visucon", "PBS"),
                                     cut_off_percentage = 25)
 
-analyte_curated_data <- dplyr::left_join(curated_analytes, curated_spectra)
+passing_analytes <- curated_analytes %>% 
+  dplyr::filter(passed_curation == TRUE) %>% 
+  dplyr::select(-passed_curation)
+
+analyte_curated_data <- dplyr::left_join(passing_analytes, curated_spectra)
   
 ```
+
+```{r plot-analyte-curation}
+
+plot_analyte_curation(curated_analytes = curated_analytes,
+                      cut_off_percentage = 25,
+                      selected_cluster = "IgGI1H3")
+cluster <- "IgGI1H3"
+data_to_plot <- curated_analytes %>% 
+    dplyr::filter(cluster == cluster)
+
+```
+
+```{r list-with-included-analytes}
+
+create_analyte_curation_table(analyte_curated_data = analyte_curated_data)
+                  
+```
+
 
 ```{r analyte-curation-based-on-list}
 
@@ -85,9 +113,7 @@ analyte_list_file <- system.file("inst",
 
 analyte_list <- readxl::read_excel(analyte_list_file,
                                    col_names = FALSE)
-analyte_list <- as.data.frame(analyte_list)
-blob <- tibble::as_tibble(analyte_list)
-save(analyte_list, file = "analyte_list.rds")
+analyte_list <- analyte_list$...1
 
 analytes_to_include <- purrr::map(analyte_list,
                                   function(analyte) {
@@ -100,5 +126,63 @@ analytes_to_include <- purrr::map(analyte_list,
 analyte_curated_data <- curated_spectra %>% 
   dplyr::filter(analyte %in% analytes_to_include)
 
+```
+
+```{r total-absolute-intensity}
+
+calculate_total_intensity <- function(data) {
+  
+  total_intensities <- data %>% 
+    dplyr::mutate(intensity_times_fraction = absolute_intensity_background_subtracted * fraction) %>% 
+    dplyr::group_by(sample_name, 
+                    analyte) %>% 
+    dplyr::summarize(total_absolute_intensity = sum(intensity_times_fraction))
+  
+  data <- dplyr::full_join(data, 
+                           total_intensities) %>% 
+    dplyr::ungroup() %>% 
+    dplyr::distinct(sample_name, 
+                    analyte, 
+                    .keep_all = TRUE) %>% 
+    # remove any columns that were charge-state specific:
+    dplyr::select(-any_of(c("charge", 
+                            "passing_percentage", 
+                            "absolute_intensity_background_subtracted",
+                            "mass_accuracy_ppm",
+                            "isotopic_pattern_quality",
+                            "sn",
+                            "fraction",
+                            "exact_mass",
+                            "criteria_check")))
+  
+  return(data)
+  
+}
+
+final_data <- calculate_total_intensity(data = analyte_curated_data)
+
+```
+
+```{r total-area-normalization}
+
+normalize_data <- function(data) {
+  
+  normalized_data <- final_data %>% 
+  dplyr::group_by(cluster, 
+                  sample_name) %>% 
+  dplyr::summarise(sum_intensity = sum(total_absolute_intensity),
+                   across()) %>% 
+  dplyr::mutate(relative_abundance = total_absolute_intensity / sum_intensity,
+                .keep = "unused")
+  
+}
+
+normalized_data <- normalize_data(data = final_data)
+
+normalized_data_wide <- normalized_data %>% 
+  tidyr::pivot_wider(names_from = c(cluster, analyte),
+                     names_sep = "_",
+                     values_from = relative_abundance)
+  
 ```
 

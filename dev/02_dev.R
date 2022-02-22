@@ -46,6 +46,7 @@ golem::add_module( name = "derived_traits" ) # Name of the module
 golem::add_module( name = "repeatability" ) # Name of the module
 golem::add_module( name = "data_exploration" ) # Name of the module
 golem::add_module( name = "data_import_v2" ) # Name of the module
+golem::add_module( name = "information_box" )
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*

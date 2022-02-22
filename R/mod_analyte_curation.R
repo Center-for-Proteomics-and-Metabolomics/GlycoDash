@@ -52,13 +52,13 @@ mod_analyte_curation_ui <- function(id){
         ),
         column(
           width = 6,
-          shinydashboard::box(
-            title = "Information on analyte curation",
-            width = NULL,
-            solidHeader = TRUE,
-            status = "primary",
-            tableOutput(ns("info_table"))
-          )
+          
+        )
+      ),
+      fluidRow(
+        column(
+          width = 12,
+          uiOutput(ns("information"))
         )
       )
     )
@@ -93,7 +93,32 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                              !is.null(input$ignore_samples))
     })
     
-    output$info_table <- renderTable({shinipsum::random_table(3, 3)})
+    clusters <- reactive({
+      unique(x$data$cluster)
+    })
+    
+    info <- list(
+      curated_analytes = reactive(x$curated_analytes),
+      cut_off = reactive(input$cut_off),
+      analyte_curated_data = reactive(x$analyte_curated_data)
+    )
+    
+    output$information <- renderUI({
+      # req(all(purrr::map_lgl(info,
+      #                        ~ isTruthy(.x()))))
+      
+      mod_information_box_ui(ns("information_box_ui_1"))
+        
+    })
+    
+    observe({
+      # req(all(purrr::map_lgl(info,
+      #                        ~ isTruthy(.x()))))
+      
+      mod_information_box_server("information_box_ui_1",
+                                 info = info,
+                                 clusters = clusters)
+    })
     
     # The selection menu for input$ignore_samples is updated so that the choices
     # are sample_types and groups that are present in the data.
@@ -132,7 +157,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     })
     
     observeEvent(input$curate_analytes, {
-      
+      # x$curated_analytes <- NULL
+      # x$analyte_curated_data <- NULL
       if (input$method == "Curate analytes based on data") {
         groups_to_ignore <- stringr::str_extract(string = input$ignore_samples,
                                                  pattern = paste0(unique(x$data$group),
@@ -143,25 +169,36 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                                                         collapse = "|"))
         
         # Perform analyte curation:
-        curated_analytes <- curate_analytes(data = x$data,
-                                            groups_to_ignore = groups_to_ignore,
-                                            sample_types_to_ignore = sample_types_to_ignore,
-                                            cut_off_percentage = input$cut_off)
+        x$curated_analytes <- curate_analytes(data = x$data,
+                                              groups_to_ignore = groups_to_ignore,
+                                              sample_types_to_ignore = sample_types_to_ignore,
+                                              cut_off_percentage = input$cut_off)
         
-        x$analyte_curated_data <- dplyr::left_join(curated_analytes,
+        passing_analytes <- x$curated_analytes %>% 
+          dplyr::filter(passed_curation == TRUE)
+        
+        x$analyte_curated_data <- dplyr::left_join(passing_analytes, 
                                                    x$data)
+        
+        showNotification("Analyte curation has been performed based on the data.", 
+                         type = "message")
+        
       } else { if (input$method == "Supply an analyte list") {
         
         analytes_to_include <- purrr::map(x$analyte_list,
                                           function(analyte) {
                                             stringr::str_subset(string = unique(x$data$analyte),
-                                                                pattern = paste0(analyte, 
+                                                                pattern = paste0("^",
+                                                                                 analyte, 
                                                                                  "$"))
                                           }) %>% 
           unlist(.)
         
         x$analyte_curated_data <- x$data %>% 
           dplyr::filter(analyte %in% analytes_to_include)
+        
+        showNotification("Analyte curation has been performed based on the analyte list.", 
+                         type = "message")
       }
       }
       
