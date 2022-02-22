@@ -74,9 +74,22 @@ long_data %>%
 
 # Analyte curation:
 curated_analytes <- curate_analytes(data = curated_spectra,
-                                    groups_to_ignore = "Total",
+                                    group_to_ignore = "Total",
                                     sample_types_to_ignore = c("pool", "IVIGg", "CN", "Visucon", "PBS"),
                                     cut_off_percentage = 25)
+
+x <- curated_spectra %>% 
+  dplyr::select(-criteria_check)
+
+curate_analytes(data = x,
+                group_to_ignore = "Total",
+                sample_types_to_ignore = c("pool", "IVIGg", "CN", "Visucon", "PBS"),
+                cut_off_percentage = 25)
+
+n_analyte_charge_per_cluster <- curated_spectra %>% 
+  dplyr::distinct(., analyte, charge, cluster) %>% 
+  dplyr::summarise(n = nrow(.)) %>% 
+  as.numeric()
 
 passing_analytes <- curated_analytes %>% 
   dplyr::filter(passed_curation == TRUE) %>% 

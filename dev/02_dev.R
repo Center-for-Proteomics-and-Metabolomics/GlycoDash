@@ -33,6 +33,8 @@ usethis::use_package( "rhandsontable" )
 usethis::use_package( "glue" )
 usethis::use_package( "writexl" )
 usethis::use_package( "dashboardthemes" )
+usethis::use_package( "ggplot2" )
+usethis::use_package( "ggpubr" )
 
 usethis::use_pipe()
 
@@ -71,6 +73,7 @@ usethis::use_data_raw(name = "long_data", open = TRUE)
 ## Add one line by test you want to create
 usethis::use_test( "spectra_curation" )
 usethis::use_test( "data_import" )
+usethis::use_test( "analyte_curation" )
 
 # Documentation
 
