@@ -39,7 +39,7 @@ define_clusters <- function(data, clusters_regex) {
     regex_overlap <- purrr::imap_lgl(
       clusters_regex,
       function(regex, i) {
-        other_regexes <- unlist(x$clusters_regex)[-i]
+        other_regexes <- unlist(clusters_regex)[-i]
         any(purrr::map_lgl(other_regexes,
                        function(other_regex) {
                          stringr::str_detect(string = other_regex,
@@ -259,7 +259,7 @@ calculate_cut_offs <- function(spectra_check, group_to_filter, sample_type_to_fi
 #'
 #' @return The function returns the original dataframe given as the data
 #'   argument, but with two additional columns. One column is named
-#'   "passed_curation"; This logical column is \code{TRUE} for spectra that have
+#'   "passed_spectra_curation"; This logical column is \code{TRUE} for spectra that have
 #'   passed curation and \code{FALSE} for spectra that did not pass curation.
 #'   The other column is named "criteria_check" and is \code{TRUE} for analyte +
 #'   sample combinations that passed all three quality criteria checks, whereas
@@ -298,7 +298,7 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
     dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int))
   
   curated_data <- checked_data %>% 
-    dplyr::mutate(passed_curation = dplyr::case_when(
+    dplyr::mutate(passed_spectra_curation = dplyr::case_when(
       sample_name %in% passing_spectra$sample_name ~ TRUE,
       TRUE ~ FALSE))
   
@@ -308,10 +308,10 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
                                           sn),
                                 .fns = ~ !is.na(.x)))
   
-  if (all(no_NAs$passed_curation == FALSE)) {
+  if (all(no_NAs$passed_spectra_curation == FALSE)) {
     warning("None of the spectra passed curation.")
   } else {
-    if (all(no_NAs$passed_curation == TRUE)) {
+    if (all(no_NAs$passed_spectra_curation == TRUE)) {
       warning("All spectra passed curation.")
     }
   }

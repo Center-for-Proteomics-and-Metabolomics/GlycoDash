@@ -167,7 +167,9 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                              show = TRUE,
                                                              text = c$message)
                               x$clusters_OK <- FALSE
-                            })})
+                            },
+                            unmatched_analytes = function(c){ #ignore this error
+                              })})
     })
     
     # Get the values of the cluster textInputs:
@@ -279,7 +281,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     observeEvent(x$data_spectra_curated, {
       # Filter out all spectra that didn't pass curation:
       x$curated_spectra <- x$data_spectra_curated %>% 
-        dplyr::filter(passed_curation == TRUE)
+        dplyr::filter(passed_spectra_curation == TRUE)
     })
     
     output$curated_spectra_plot <- renderPlot({
@@ -287,7 +289,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       # Move this code to a function instead?
       x$data_spectra_curated %>%  
         ggplot2::ggplot() +
-        ggplot2::geom_bar(ggplot2::aes(x = sample_type, fill = passed_curation), 
+        ggplot2::geom_bar(ggplot2::aes(x = sample_type, fill = passed_spectra_curation), 
                           position = "fill") +
         ggplot2::facet_wrap(cluster ~ group) +
         ggplot2::xlab("Sample type") +

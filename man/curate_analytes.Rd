@@ -12,17 +12,49 @@ curate_analytes(
 )
 }
 \arguments{
-\item{data}{}
+\item{data}{The result of the \code{\link{spectra_curation}} function, but
+filtered so that only spectra that passed curation remain (see examples
+below).}
 
-\item{groups_to_ignore}{}
+\item{groups_to_ignore}{A character string. Specify if you don't want to base
+analyte curation on samples from one of the groups (total Ig or specific
+Ig).}
 
-\item{sample_types_to_ignore}{}
+\item{sample_types_to_ignore}{A character vector with all sample types that
+you don't want to base analyte curation on (e.g. standards).}
 
-\item{cut_off_percentage}{}
+\item{cut_off_percentage}{The minimum percentage of spectra in which an
+analyte needs to fulfill the quality criteria in order for that analyte to
+pass curation.}
 }
 \value{
-
+A dataframe with one row for each combination of analyte and charge
+  in each cluster, a column named "passing_percentage" with the percentage of
+  spectra that pass the analyte quality criteria for that analyte and a
+  logical column named "passed_curation" that is \code{TRUE} for analytes
+  with a passing_percentage above the cut_off_percentage and \code{FALSE} for
+  analytes with a passing_percentage under or equal to the cut_off_percentage
 }
 \description{
 Perform analyte curation
+}
+\examples{
+data("long_data")
+long_data <- curate_spectra(data = long_data,
+                            min_ppm_deviation = -20,
+                            max_ppm_deviation = 20,
+                            max_ipq = 0.2,
+                            min_sn = 9,
+                            clusters_regex = "IgGI1",
+                            group_to_filter = "Spike",
+                           sample_type_to_filter = "CN")
+
+curated_spectra <- long_data \%>\%
+   dplyr::filter(passed_curation == TRUE)
+
+curate_analytes(data = curated_spectra,
+                groups_to_ignore = "Total",
+                sample_types_to_ignore = c("pool", "IVIGg", "CN", "Visucon", "PBS"),
+                cut_off_percentage = 25)
+                
 }
