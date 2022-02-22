@@ -10,6 +10,8 @@ Imports:
     dashboardthemes,
     dplyr,
     DT,
+    ggplot2,
+    ggpubr,
     glue,
     golem (>= 0.3.1),
     htmltools,

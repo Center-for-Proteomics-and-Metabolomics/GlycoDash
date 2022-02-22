@@ -221,6 +221,15 @@ sd_p <- function(x, na.rm = FALSE) {
 #' @export
 #'
 #' @examples
+#' data("long_data")
+#' spectra_check <- summarize_spectra_checks(data = long_data,
+#'                                           min_ppm_deviation = -20,
+#'                                           max_ppm_deviation = 20,
+#'                                           max_ipq = 0.2,
+#'                                           min_sn = 9)
+#' calculate_cut_offs(spectra_check = spectra_check,
+#'                    group_to_filter = "Spike",
+#'                    sample_type_to_filter = "CN")
 calculate_cut_offs <- function(spectra_check, group_to_filter, sample_type_to_filter) {
   if (any(!(group_to_filter %in% spectra_check$group), 
           !(sample_type_to_filter %in% spectra_check$sample_type))) {

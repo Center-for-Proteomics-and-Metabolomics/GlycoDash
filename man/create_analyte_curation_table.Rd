@@ -2,17 +2,59 @@
 % Please edit documentation in R/fct_analyte_curation.R
 \name{create_analyte_curation_table}
 \alias{create_analyte_curation_table}
-\title{Create a datatable with all analytes that passed curation}
+\title{Create a datatable with all analytes that passed curation.}
 \usage{
 create_analyte_curation_table(analyte_curated_data, selected_cluster)
 }
 \arguments{
-\item{analyte_curated_data}{Your data filtered so that only the analytes that
-passed curation are included.}
+\item{analyte_curated_data}{Your data after spectra curation (see
+\code{\link{curate_spectra}}), but filtered so that only analytes are
+included that passed curation with the \code{\link{curate_analytes}}
+function (see example below).}
+
+\item{selected_cluster}{The cluster for which the analyte curation results
+should be shown.}
 }
 \value{
-
+A \code{\link[DT]{datatable}} with one row per analyte that passed
+  curation, and one column per charge state present in the data to indicate
+  whether that charge state of the analyte passed curation.
 }
 \description{
-Create a datatable with all analytes that passed curation
+This function can be used to show the results from the
+\code{\link{curate_analytes}} function. It will create a datatable with all
+analytes and their charge states that passed curation.
+}
+\examples{
+data("long_data")
+long_data <- curate_spectra(data = long_data,
+                            min_ppm_deviation = -20,
+                            max_ppm_deviation = 20,
+                            max_ipq = 0.2,
+                            min_sn = 9,
+                            clusters_regex = "IgGI1",
+                            group_to_filter = "Spike",
+                            sample_type_to_filter = "CN")
+
+curated_spectra <- long_data \%>\%
+   dplyr::filter(passed_curation == TRUE)
+
+curated_analytes <- curate_analytes(
+                data = curated_spectra,
+                groups_to_ignore = "Total",
+                sample_types_to_ignore = c("pool",
+                                           "IVIGg",
+                                           "CN",
+                                           "Visucon",
+                                           "PBS"),
+                cut_off_percentage = 25)
+
+passing_analytes <- curated_analytes \%>\%
+   dplyr::filter(passed_curation == TRUE) \%>\%
+   dplyr::select(-passed_curation)
+
+analyte_curated_data <- dplyr::left_join(passing_analytes, curated_spectra)
+
+create_analyte_curation_table(analyte_curated_data = curated_analytes,
+                              selected_cluster = "IgGI1")
 }

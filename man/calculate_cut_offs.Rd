@@ -24,3 +24,14 @@ Calculate the cutoffs for the proportion of passing analytes per spectrum and
 for the sum intensity of passing analytes per spectrum. This function is used
 within the function \code{\link{curate_spectra}}.
 }
+\examples{
+data("long_data")
+spectra_check <- summarize_spectra_checks(data = long_data,
+                                          min_ppm_deviation = -20,
+                                          max_ppm_deviation = 20,
+                                          max_ipq = 0.2,
+                                          min_sn = 9)
+calculate_cut_offs(spectra_check = spectra_check,
+                   group_to_filter = "Spike",
+                   sample_type_to_filter = "CN")
+}

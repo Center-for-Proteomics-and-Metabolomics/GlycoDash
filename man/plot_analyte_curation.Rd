@@ -15,10 +15,45 @@ analyte curation.}
 \item{cut_off_percentage}{The minimum percentage of spectra in which an
 analyte needs to fulfill the quality criteria in order for that analyte to
 pass curation.}
+
+\item{selected_cluster}{The cluster for which the analyte curation results
+should be plotted.}
 }
 \value{
-
+A bar plot with all analytes in the selected cluster on the x-axis,
+  and the \code{passing_percentage} on the y-axis. The
+  \code{cut_off_percentage} is indicated with a red horizontal dashed line.
+  Analytes that passed curation are shown in blue, while analytes that didn't
+  pass curation are shown in red.
 }
 \description{
-Create a visual summary of the analyte curation process
+Create a plot showing the results of analyte curation for a single cluster.
+}
+\examples{
+data("long_data")
+long_data <- curate_spectra(data = long_data,
+                            min_ppm_deviation = -20,
+                            max_ppm_deviation = 20,
+                            max_ipq = 0.2,
+                            min_sn = 9,
+                            clusters_regex = "IgGI1",
+                            group_to_filter = "Spike",
+                            sample_type_to_filter = "CN")
+
+curated_spectra <- long_data \%>\%
+   dplyr::filter(passed_curation == TRUE)
+
+curated_analytes <- curate_analytes(
+                data = curated_spectra,
+                groups_to_ignore = "Total",
+                sample_types_to_ignore = c("pool",
+                                           "IVIGg",
+                                           "CN",
+                                           "Visucon",
+                                           "PBS"),
+                cut_off_percentage = 25)
+
+plot_analyte_curation(curated_analytes = curated_analytes,
+                      cut_off_percentage = 25,
+                      selected_cluster = "IgGI1")
 }
