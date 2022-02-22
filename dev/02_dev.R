@@ -55,6 +55,7 @@ golem::add_module( name = "information_box" )
 golem::add_fct( "data_import" ) 
 golem::add_fct( "spectra_curation" )
 golem::add_fct( "analyte_curation" )
+golem::add_fct( "normalization" )
 golem::add_utils( "helpers" )
 
 ## External resources

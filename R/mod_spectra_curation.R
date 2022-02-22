@@ -281,7 +281,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
     observeEvent(x$data_spectra_curated, {
       # Filter out all spectra that didn't pass curation:
       x$curated_spectra <- x$data_spectra_curated %>% 
-        dplyr::filter(passed_spectra_curation == TRUE)
+        dplyr::filter(passed_spectra_curation == TRUE) %>% 
+        dplyr::select(-passed_spectra_curation)
     })
     
     output$curated_spectra_plot <- renderPlot({

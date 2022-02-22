@@ -22,7 +22,7 @@ mod_normalization_ui <- function(id){
           status = "primary",
           selectInput(ns("method"),
                       "Choose method for normalization",
-                      choices = c("Total Area normalization", 
+                      choices = c("Total area normalization", 
                                   "other")),
           actionButton(ns("do_normalization"),
                        "Perform normalization")
@@ -44,18 +44,43 @@ mod_normalization_ui <- function(id){
 #' normalization Server Functions
 #'
 #' @noRd 
-mod_normalization_server <- function(id){
+mod_normalization_server <- function(id, results_analyte_curation){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    x <- reactiveValues()
+    
+    observe({
+      req(results_analyte_curation$analyte_curated_data())
+      x$data <- results_analyte_curation$analyte_curated_data()
+    })
     
     observe({
       shinyjs::toggleState("do_normalization", 
                            condition = !is.null(input$method))
     })
     
-    output$data_table <- DT::renderDT(shinipsum::random_DT(nrow = 100, 
-                                                           ncol = 50,
-                                                           options = list(scrollX = TRUE)))
+    observeEvent(input$do_normalization, {
+      if (input$method == "Total area normalization") {
+        
+        total_intensities <- calculate_total_intensity(data = x$data)
+        x$normalized_data <- normalize_data(data = total_intensities)
+        
+      }
+      
+    })
+    
+    output$data_table <- DT::renderDT({
+      req(x$normalized_data)
+      
+      normalized_data_wide <- x$normalized_data %>% 
+        tidyr::pivot_wider(names_from = c(cluster, analyte),
+                           names_sep = "_",
+                           values_from = relative_abundance)
+      
+      DT::datatable(data = normalized_data_wide,
+                    options = list(scrollX = TRUE))
+    })
  
   })
 }
