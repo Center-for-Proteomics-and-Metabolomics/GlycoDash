@@ -16,12 +16,12 @@ The input dataframe with an added column named "plate_well" that
 \description{
 This function detects the plate and well position of a sample, based on it's
 sample name. The sample name should be in a column named "sample_name" and
-should contain either "P", "p", "Pl" or "PL" followed by the plate number
-possibly separated by an underscore (_), a score (-) or a dot (.). In
-addition, the sample name should contain a single capital letter between A
-and H followed directly by a number between 1 and 12 (numbers smaller than 10
-may be preceded by a zero, e.g. A01 and A1 are both allowed). This
-letter-number combination indicates the well.
+should contain either "P", "p", "Pl" or "PL" followed by the plate number or
+a capital letter possibly separated by an underscore (_), a score (-) or a
+dot (.). In addition, the sample name should contain a single capital letter
+between A and H followed directly by a number between 1 and 12 (numbers
+smaller than 10 may be preceded by a zero, e.g. A01 and A1 are both allowed).
+This letter-number combination indicates the well.
 }
 \examples{
 block_example <- data.frame(sample_name = c("s_0216_Specific_pl_3.A10",
