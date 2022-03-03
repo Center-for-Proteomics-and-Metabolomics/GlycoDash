@@ -21,8 +21,8 @@ This function returns the dataframe given as \code{data} with the
 \description{
 The function \code{calculate_total_intensity} calculates the total intensity
 of an analyte in a spectrum, by combining the intensities from each charge
-state. For each charge state, the intensity is multiplied by the fraction.
-Then these multiplied intensities are summed up to get the total intensity of
+state. For each charge state, the intensity is divided by the fraction.
+Then these adjusted intensities are summed up to get the total intensity of
 the analyte.
 }
 \examples{

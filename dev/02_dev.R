@@ -75,6 +75,7 @@ usethis::use_data_raw(name = "long_data", open = TRUE)
 usethis::use_test( "spectra_curation" )
 usethis::use_test( "data_import" )
 usethis::use_test( "analyte_curation" )
+usethis::use_test( "normalization" )
 
 # Documentation
 

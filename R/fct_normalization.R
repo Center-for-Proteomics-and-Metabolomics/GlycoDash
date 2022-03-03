@@ -2,8 +2,8 @@
 #'
 #' The function \code{calculate_total_intensity} calculates the total intensity
 #' of an analyte in a spectrum, by combining the intensities from each charge
-#' state. For each charge state, the intensity is multiplied by the fraction.
-#' Then these multiplied intensities are summed up to get the total intensity of
+#' state. For each charge state, the intensity is divided by the fraction.
+#' Then these adjusted intensities are summed up to get the total intensity of
 #' the analyte.
 #'
 #' @param data The data in long format (one row for each analyte + charge
@@ -22,19 +22,41 @@
 #' calculate_total_intensity(long_data)
 calculate_total_intensity <- function(data) {
   
+  required_columns <- c("absolute_intensity_background_subtracted",
+                        "fraction",
+                        "sample_name", 
+                        "analyte")
+  
+  missing_columns <- required_columns[!(required_columns %in% colnames(data))]
+  
+  if(!rlang::is_empty(missing_columns)) {
+    rlang::abort(class = "missing_columns",
+                 message = paste("The required column(s)",
+                                 missing_columns,
+                                 "are not present in the data."))
+  }
+  
   total_intensities <- data %>% 
-    dplyr::mutate(intensity_times_fraction = absolute_intensity_background_subtracted * fraction) %>% 
+    dplyr::mutate(intensity_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
+    # For each sample + analyte combination, the intensities for all charge
+    # states should be added together:
     dplyr::group_by(sample_name, 
                     analyte) %>% 
-    dplyr::summarize(total_absolute_intensity = sum(intensity_times_fraction))
+    dplyr::summarize(total_absolute_intensity = sum(intensity_by_fraction))
   
   data <- dplyr::full_join(data, 
-                           total_intensities) %>% 
+                           total_intensities,
+                           by = c("sample_name", 
+                                  "analyte")) %>% 
+    # Now there is still multiple rows per sample + analyte combination (one
+    # for each charge state). We only want to keep one row for each sample +
+    # analyte combination:
     dplyr::ungroup() %>% 
     dplyr::distinct(sample_name, 
                     analyte, 
+                    # Keep all columns:
                     .keep_all = TRUE) %>% 
-    # remove any columns that were charge-state specific:
+    # Remove any columns that were charge-state specific:
     dplyr::select(-any_of(c("charge", 
                             "passing_percentage", 
                             "absolute_intensity_background_subtracted",

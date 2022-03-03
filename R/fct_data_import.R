@@ -174,12 +174,12 @@ get_block <- function(data, variable, Ig_data, keyword_specific = NULL, keyword_
 #'
 #' This function detects the plate and well position of a sample, based on it's
 #' sample name. The sample name should be in a column named "sample_name" and
-#' should contain either "P", "p", "Pl" or "PL" followed by the plate number
-#' possibly separated by an underscore (_), a score (-) or a dot (.). In
-#' addition, the sample name should contain a single capital letter between A
-#' and H followed directly by a number between 1 and 12 (numbers smaller than 10
-#' may be preceded by a zero, e.g. A01 and A1 are both allowed). This
-#' letter-number combination indicates the well.
+#' should contain either "P", "p", "Pl" or "PL" followed by the plate number or
+#' a capital letter possibly separated by an underscore (_), a score (-) or a
+#' dot (.). In addition, the sample name should contain a single capital letter
+#' between A and H followed directly by a number between 1 and 12 (numbers
+#' smaller than 10 may be preceded by a zero, e.g. A01 and A1 are both allowed).
+#' This letter-number combination indicates the well.
 #'
 #' @param data A dataframe. Should include a column named "sample_name".
 #'
@@ -204,7 +204,7 @@ detect_plate_and_well <- function(data) {
     tidyr::extract(
       col = sample_name, 
       into = c("plate", "well"),
-      regex = "([Pp](?:[Ll]?|late)[_\\-.]?\\d+).*([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
+      regex = "([Pp](?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z])).*([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
       remove = FALSE)
   
   if (any(anyNA(data$plate), anyNA(data$well))) {
@@ -224,9 +224,9 @@ detect_plate_and_well <- function(data) {
   }
   
   data <- data %>% 
-    dplyr::mutate(plate = stringr::str_extract(plate, "\\d+"),
-           well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
-           plate_well = paste(plate, well, sep = "_")) %>% 
+    dplyr::mutate(plate = stringr::str_match(plate, "[Pp][Ll]?(?:ate)?[\\s_]?(\\d+|[A-Z])")[ , 2],
+                  well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
+                  plate_well = paste(plate, well, sep = "_")) %>% 
     dplyr::select(-c(plate, well)) %>% 
     dplyr::relocate(plate_well, .after = sample_name)
   
