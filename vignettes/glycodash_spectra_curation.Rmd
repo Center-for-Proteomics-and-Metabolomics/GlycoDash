@@ -155,32 +155,11 @@ analyte_curated_data <- curated_spectra %>%
 
 ```{r total-absolute-intensity}
 
-total_intensities <- long_data %>% 
-    dplyr::mutate(intensity_times_fraction = absolute_intensity_background_subtracted * fraction) %>% 
-    dplyr::group_by(sample_name, 
-                    analyte) %>% 
-    dplyr::summarize(total_absolute_intensity = sum(intensity_times_fraction))
-
-data <- dplyr::full_join(long_data, 
-                           total_intensities) 
-
 final_data <- calculate_total_intensity(data = analyte_curated_data)
 
 ```
 
 ```{r total-area-normalization}
-
-normalize_data <- function(data) {
-  
-  normalized_data <- final_data %>% 
-  dplyr::group_by(cluster, 
-                  sample_name) %>% 
-  dplyr::summarise(sum_intensity = sum(total_absolute_intensity),
-                   across()) %>% 
-  dplyr::mutate(relative_abundance = total_absolute_intensity / sum_intensity,
-                .keep = "unused")
-  
-}
 
 normalized_data <- normalize_data(data = final_data) %>% 
   dplyr::ungroup(.)
@@ -192,96 +171,115 @@ normalized_data_wide <- normalized_data %>%
   
 ```
 
-```{r derived-traits-calculation}
+```{r derived-traits-long-format}
 
-row_sum_across <- function(x) {
-  rowSums(dplyr::across(dplyr::all_of(x)))
-}
-
-calculate_derived_traits <- function(data, derived_traits) {
-  analytes <- stringr::str_subset(string = colnames(normalized_data_wide),
-                                  pattern = "H\\dN\\d")
+calculate_fucosylation <- function(.data) {
   
-  data <- data %>%
-    dplyr::mutate(sum_all_analytes = row_sum_across(analytes))
-  
-  if("fucosylation" %in% derived_traits) {
-    data <- data %>%
-      calculate_fucosylation(., analytes)
-  }
-  
-  if("sialylation" %in% derived_traits) {
-    data <- data %>%
-      calculate_sialylation(., analytes)
-  }
-  
-  if("galactosylation" %in% derived_traits) {
-    data <- data %>%
-      calculate_galactosylation(., analytes)
-  }
-  
-  if("bisection" %in% derived_traits) {
-    data <- data %>%
-      calculate_bisection(., analytes)
-  }
-  
-  return(data)
-}
-
-calculate_fucosylation <- function(.data, analytes) {
-  
-  fucosylated_analytes <- stringr::str_subset(string = analytes,
+  fucosylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                               pattern = "F\\d")
   .data %>% 
-    dplyr::mutate(fucosylation = row_sum_across(fucosylated_analytes) / sum_all_analytes)
+    dplyr::summarise(
+      fucosylation = sum(relative_abundance[analyte %in% fucosylated_analytes]) / sum_all_analytes) %>% 
+    dplyr::distinct()
   
 }
 
-calculate_sialylation <- function(.data, analytes) {
+calculate_sialylation <- function(.data) {
   
-  monosialylated_analytes <- stringr::str_subset(string = analytes,
+  monosialylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                                  pattern = "S1")
-  disialylated_analytes <- stringr::str_subset(string = analytes,
+  disialylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                                pattern = "S2")
   
   .data %>% 
-    dplyr::mutate(monosialylation = row_sum_across(monosialylated_analytes),
-                  disialylation = row_sum_across(disialylated_analytes),
-                  sialylation = (monosialylation * 1/2 + disialylation) / sum_all_analytes) %>% 
-    dplyr::select(-c(monosialylation, disialylation))
+    dplyr::summarise(monosialylation = sum(relative_abundance[analyte %in% monosialylated_analytes]) / sum_all_analytes,
+                     disialylation = sum(relative_abundance[analyte %in% disialylated_analytes]) / sum_all_analytes,
+                     sialylation = (monosialylation * 1/2 + disialylation) / sum_all_analytes) %>% 
+    dplyr::select(-c(monosialylation, disialylation)) %>% 
+    dplyr::distinct()
   
 }
 
-calculate_galactosylation <- function(.data, analytes) {
+calculate_galactosylation <- function(.data) {
   
-  monogalactosylated_analytes <- stringr::str_subset(string = analytes,
+  monogalactosylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                                      pattern = "H4")
-  digalactosylated_analytes <- stringr::str_subset(string = analytes,
+  digalactosylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                                    pattern = "H5")
   
   .data %>% 
-    dplyr::mutate(monogalactosylation = row_sum_across(monogalactosylated_analytes),
-                  digalactosylation = row_sum_across(digalactosylated_analytes),
+    dplyr::summarise(monogalactosylation = sum(relative_abundance[analyte %in% monogalactosylated_analytes]) / sum_all_analytes,
+                  digalactosylation = sum(relative_abundance[analyte %in% digalactosylated_analytes]) / sum_all_analytes,
                   galactosylation = (monogalactosylation * 1/2 + digalactosylation) / sum_all_analytes) %>% 
-    dplyr::select(-c(monogalactosylation, digalactosylation))
+    dplyr::select(-c(monogalactosylation, digalactosylation)) %>% 
+    dplyr::distinct()
 }
 
 calculate_bisection <- function(.data, analytes) {
   
-  bisected_analytes <- stringr::str_subset(string = analytes,
+  bisected_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                               pattern = "N5")
   .data %>% 
-    dplyr::mutate(bisection = row_sum_across(bisected_analytes) / sum_all_analytes)
+    dplyr::summarise(bisection = sum(relative_abundance[analyte %in% bisected_analytes]) / sum_all_analytes) %>% 
+    dplyr::distinct()
   
 }
 
-normalized_data_wide <- calculate_derived_traits(normalized_data_wide, 
-                                                 derived_traits = c("fucosylation",
-                                                                    "bisection",
-                                                                    "galactosylation",
-                                                                    "sialylation"))
+calculate_derived_traits <- function(data, derived_traits) {
+  
+  data <- data %>%
+  dplyr::group_by(sample_name, cluster, group) %>% 
+  dplyr::summarize(sum_all_analytes = sum(relative_abundance),
+                   across())
+  
+  if("fucosylation" %in% derived_traits) {
+    fucosylation <- data %>%
+      calculate_fucosylation(.)
+  }
+  
+  if("sialylation" %in% derived_traits) {
+    sialylation <- data %>%
+      calculate_sialylation(.)
+  }
+  
+  if("galactosylation" %in% derived_traits) {
+    galactosylation <- data %>%
+      calculate_galactosylation(.)
+  }
+  
+  if("bisection" %in% derived_traits) {
+    bisection <- data %>%
+      calculate_bisection(.)
+  }
+  
+  to_join <- purrr::map(derived_traits,
+                        function(trait) {
+                          get0(trait)
+                        })
+  
+  derived_traits <- purrr::reduce(to_join,
+                                  dplyr::full_join)
+  
+  return(derived_traits)
+}
+
+derived_trait_names <-c("fucosylation",
+                        "bisection",
+                        "galactosylation",
+                        "sialylation")
+
+derived_traits <- calculate_derived_traits(data = normalized_data,
+                                           derived_traits = derived_trait_names) %>% 
+  tidyr::pivot_wider(names_from = cluster,
+                     values_from = dplyr::any_of(derived_trait_names),
+                     names_glue = "{cluster}_{.value}")
+
+data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
+                                             derived_traits)
+
 
 ```
+
 
 ```{r repeatability-plot}
 
