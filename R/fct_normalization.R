@@ -42,7 +42,8 @@ calculate_total_intensity <- function(data) {
     # states should be added together:
     dplyr::group_by(sample_name, 
                     analyte) %>% 
-    dplyr::summarize(total_absolute_intensity = sum(intensity_by_fraction))
+    dplyr::summarize(total_absolute_intensity = sum(intensity_by_fraction,
+                                                    na.rm = TRUE))
   
   data <- dplyr::full_join(data, 
                            total_intensities,
