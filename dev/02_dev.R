@@ -35,19 +35,17 @@ usethis::use_package( "writexl" )
 usethis::use_package( "dashboardthemes" )
 usethis::use_package( "ggplot2" )
 usethis::use_package( "ggpubr" )
-
 usethis::use_pipe()
 
 ## Add modules ----
 ## Create a module infrastructure in R/
-golem::add_module( name = "data_import" ) # Name of the module
-golem::add_module( name = "spectra_curation" ) # Name of the module
-golem::add_module( name = "analyte_curation" ) # Name of the module
-golem::add_module( name = "normalization" ) # Name of the module
-golem::add_module( name = "derived_traits" ) # Name of the module
-golem::add_module( name = "repeatability" ) # Name of the module
-golem::add_module( name = "data_exploration" ) # Name of the module
-golem::add_module( name = "data_import_v2" ) # Name of the module
+golem::add_module( name = "data_import" ) 
+golem::add_module( name = "spectra_curation" ) 
+golem::add_module( name = "analyte_curation" ) 
+golem::add_module( name = "normalization" ) 
+golem::add_module( name = "derived_traits" ) 
+golem::add_module( name = "repeatability" ) 
+golem::add_module( name = "data_exploration" ) 
 golem::add_module( name = "information_box" )
 
 ## Add helper functions ----
@@ -58,7 +56,6 @@ golem::add_fct( "analyte_curation" )
 golem::add_fct( "normalization" )
 golem::add_fct( "derived_traits" )
 golem::add_fct( "repeatability" )
-golem::add_utils( "helpers" )
 
 ## External resources
 ## Creates .js and .css files at inst/app/www

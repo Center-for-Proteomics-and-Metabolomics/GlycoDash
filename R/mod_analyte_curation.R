@@ -197,8 +197,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
           unlist(.)
         
         x$analyte_curated_data <- x$data %>% 
-          dplyr::filter(analyte %in% analytes_to_include) %>% 
-          dplyr::select(-passed_curation)
+          dplyr::filter(analyte %in% analytes_to_include) #%>% 
+          #dplyr::select(-passed_curation)
         
         showNotification("Analyte curation has been performed based on the analyte list.", 
                          type = "message")

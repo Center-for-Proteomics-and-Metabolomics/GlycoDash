@@ -10,11 +10,11 @@
 #' @examples
 visualize_repeatability <- function(repeatability_data) {
   
-  range_av_abundance <- max(repeatability$average_abundance,
-                            na.rm = TRUE) - min(repeatability$average_abundance,
+  range_av_abundance <- max(repeatability_data$average_abundance,
+                            na.rm = TRUE) - min(repeatability_data$average_abundance,
                                                 na.rm = TRUE)
-  range_RSD <- max(repeatability$RSD,
-                   na.rm = TRUE) - min(repeatability$RSD,
+  range_RSD <- max(repeatability_data$RSD,
+                   na.rm = TRUE) - min(repeatability_data$RSD,
                                        na.rm = TRUE)
   rescale_RSD_with <- range_av_abundance / range_RSD
   

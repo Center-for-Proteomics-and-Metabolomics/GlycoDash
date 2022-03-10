@@ -91,10 +91,7 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
                                                        standard_sample_type = input$standard_sample_type,
                                                        standard_group = input$standard_group)
       x$variation_table <- x$repeatability %>% 
-        dplyr::summarise(intra_plate_variation = mean(RSD)) %>% 
-        dplyr::summarise(across(),
-                         inter_plate_variation = mean(intra_plate_variation, 
-                                                      na.rm = TRUE))
+        dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
     })
     
     output$plot <- renderPlot({
@@ -104,13 +101,22 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
     
     output$table <- DT::renderDataTable({
       req(x$variation_table)
-      for_table <- x$variation_table %>% 
-        dplyr::select(-inter_plate_variation)
       
-      DT::datatable(for_table,
-                    rownames = FALSE,
-                    colnames = c("Plate" = "plate",
-                                 "Intra-plate variation" = "intra_plate_variation"))
+      for_table <- x$variation_table %>% 
+        dplyr::mutate(intra_plate_variation = signif(intra_plate_variation,
+                                                     digits = 3))
+      
+      sketch <- htmltools::withTags(table(
+        DT::tableHeader(c("Plate", "Intra-plate variation (%)")),
+        DT::tableFooter(c("Inter-plate variation (%)", 
+                          signif(mean(for_table$intra_plate_variation, 
+                                      na.rm = TRUE),
+                                 digits = 3)))
+      ))
+      
+      DT::datatable(data = for_table,
+                    container = sketch,
+                    rownames = FALSE)
     })
  
   })
