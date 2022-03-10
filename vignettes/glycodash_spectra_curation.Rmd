@@ -165,61 +165,17 @@ data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
 
 ```{r repeatability-plot}
 
-standard_sample_types <- c("pool")
-
-group_to_plot <- "Spike"
-
-visualize_repeatability <- function(repeatability_data, second_axis_rescale_with) {
-  repeatability_data %>% ggplot2::ggplot() +
-    ggplot2::geom_col(ggplot2::aes(x = analyte, 
-                                   y = average_abundance, 
-                                   fill = plate),
-                      position = "dodge") +
-    ggplot2::theme_classic() +
-    ggpubr::border(size = 0.5) +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
-                                                       hjust = 1)) +
-    ggplot2::geom_point(ggplot2::aes(x = analyte, 
-                                     y = RSD, 
-                                     groups = plate), 
-                        position = ggplot2::position_dodge(width = .9)) +
-    ggplot2::scale_y_continuous(name = "Relative abundance (%)",
-                                labels = function(x) paste0(x, "%"),
-                                sec.axis = ggplot2::sec_axis(~ . / second_axis_rescale_with, 
-                                                             name = "RSD (%)",
-                                                             labels = function(x) paste0(x,
-                                                                                         "%"))) +
-    ggplot2::scale_x_discrete(name = "Analyte") +
-    ggplot2::scale_fill_discrete(name = "Plate")
-}
-
-calculate_repeatability_stats <- function(data,
-                                          standard_sample_types,
-                                          group_to_plot,
-                                          second_axis_rescale_with) {
-  repeatability <- data %>% 
-    dplyr::filter(sample_type %in% standard_sample_types & group == group_to_plot) %>% 
-    dplyr::mutate(plate = stringr::str_extract(plate_well, "^[A-Z]|\\d+")) %>% 
-    dplyr::group_by(plate, analyte) %>% 
-    dplyr::summarise(average_abundance = mean(relative_abundance * 100),
-                     RSD = sd(relative_abundance * 100) / average_abundance * 100 * second_axis_rescale_with)
-}
-
 repeatability <- calculate_repeatability_stats(data = normalized_data,
-                                               standard_sample_types = "Visucon",
-                                               group_to_plot = "Total",
-                                               second_axis_rescale_with = 2)
+                                               standard_sample_type = "Visucon",
+                                               standard_group = "Total")
 
-visualize_repeatability(repeatability_data = repeatability,
-                        second_axis_rescale_with = 2)
+visualize_repeatability(repeatability_data = repeatability)
 
 variation_table <- repeatability %>% 
   dplyr::summarise(intra_plate_variation = mean(RSD)) %>% 
   dplyr::summarise(across(),
                    inter_plate_variation = mean(intra_plate_variation, 
                                                 na.rm = TRUE))
-
-
 
 ```
 
