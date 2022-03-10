@@ -631,7 +631,8 @@ mod_data_import_server <- function(id){
     
     return(list(
       data_incl_plate_design = reactive({x$data_incl_plate_design}),
-      data_incl_metadata = reactive({x$data_incl_metadata})
+      data_incl_metadata = reactive({x$data_incl_metadata}),
+      Ig_data = reactive({input$Ig_data})
     ))
     
   })

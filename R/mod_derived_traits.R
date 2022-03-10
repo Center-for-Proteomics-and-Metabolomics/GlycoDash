@@ -81,6 +81,13 @@ mod_derived_traits_server <- function(id, results_normalization){
                     options = list(scrollX = TRUE))
     })
     
+    return(
+      list(
+        data_with_derived_traits = reactive({x$data_with_derived_traits}),
+        normalized_data = reactive({x$data})
+      )
+    )
+    
  
   })
 }
