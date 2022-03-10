@@ -29,6 +29,15 @@ mod_derived_traits_ui <- function(id){
           actionButton(ns("do_calculation"),
                        "Calculate derived traits")
         )
+      ),
+      fluidRow(
+        shinydashboard::box(
+          title = "View data with derived traits",
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          DT::dataTableOutput(ns("data_table"))
+        )
       )
     )
   )
@@ -37,14 +46,41 @@ mod_derived_traits_ui <- function(id){
 #' derived_traits Server Functions
 #'
 #' @noRd 
-mod_derived_traits_server <- function(id){
+mod_derived_traits_server <- function(id, results_normalization){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    x <- reactiveValues()
+    
+    observe({
+      req(results_normalization$normalized_data())
+      x$data <- results_normalization$normalized_data()
+    })
+    
     observe({
       shinyjs::toggleState("do_calculation", 
-                           condition = !is.null(input$traits_menu))
+                           condition = isTruthy(input$traits_menu))
     })
+    
+    observeEvent(input$do_calculation, {
+      derived_traits <- calculate_derived_traits(data = x$data,
+                                                 selected_derived_traits = input$traits_menu) %>% 
+        tidyr::pivot_wider(names_from = cluster,
+                           values_from = dplyr::any_of(input$traits_menu),
+                           names_glue = "{cluster}_{.value}")
+      
+      x$data_with_derived_traits <- dplyr::full_join(results_normalization$normalized_data_wide(),
+                                                     derived_traits)
+      
+    })
+    
+    output$data_table <- DT::renderDT({
+      req(x$data_with_derived_traits)
+      
+      DT::datatable(data = x$data_with_derived_traits,
+                    options = list(scrollX = TRUE))
+    })
+    
  
   })
 }

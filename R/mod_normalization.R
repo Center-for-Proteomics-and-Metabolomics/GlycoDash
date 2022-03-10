@@ -73,14 +73,19 @@ mod_normalization_server <- function(id, results_analyte_curation){
     output$data_table <- DT::renderDT({
       req(x$normalized_data)
       
-      normalized_data_wide <- x$normalized_data %>% 
+      x$normalized_data_wide <- x$normalized_data %>% 
         tidyr::pivot_wider(names_from = c(cluster, analyte),
                            names_sep = "_",
                            values_from = relative_abundance)
       
-      DT::datatable(data = normalized_data_wide,
+      DT::datatable(data = x$normalized_data_wide,
                     options = list(scrollX = TRUE))
     })
+    
+    return(list(
+      normalized_data = reactive({x$normalized_data}),
+      normalized_data_wide = reactive({x$normalized_data_wide})
+    ))
  
   })
 }

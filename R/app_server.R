@@ -15,8 +15,9 @@ app_server <- function( input, output, session ) {
   results_analyte_curation <- mod_analyte_curation_server(id = "analyte_curation_ui_1",
                                                           results_spectra_curation = results_spectra_curation)
   
-  mod_normalization_server(id = "normalization_ui_1",
-                           results_analyte_curation = results_analyte_curation)
+  results_normalization <- mod_normalization_server(id = "normalization_ui_1",
+                                                    results_analyte_curation = results_analyte_curation)
   
-  mod_derived_traits_server("derived_traits_ui_1")
+  mod_derived_traits_server(id = "derived_traits_ui_1",
+                            results_normalization = results_normalization)
 }

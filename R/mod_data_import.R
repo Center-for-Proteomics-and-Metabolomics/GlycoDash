@@ -537,6 +537,8 @@ mod_data_import_server <- function(id){
     # When the add_metadata actionButton is clicked the process of adding the 
     # metadata to the data is started:
     observeEvent(input$add_metadata, {
+      # Reset x$merged_metadata:
+      x$merged_metadata <- NULL
       # For all metadata files in the metadata_list:
       # Convert all date columns to date format (or if it's a mixed date and text format,
       # to character) and rename the column with sample ID's to "sample_id":
@@ -547,6 +549,15 @@ mod_data_import_server <- function(id){
         function(metadata, 
                  sample_id_inputId,
                  date_column_inputId) {
+          # Check whether the metadata contains a column named "sample_id" that
+          # is not chosen as the sample ID column. If this is the case, the
+          # column needs to be renamed to prevent duplicated names (which would
+          # cause the app to crash)
+          conflict <- "sample_id" %in% colnames(metadata) & input[[sample_id_inputId]] != "sample_id"
+          if (conflict == TRUE) {
+            metadata <- metadata %>% 
+              dplyr::rename(sample_id_original = sample_id)
+          }
           metadata <- metadata %>% 
             dplyr::mutate(dplyr::across(tidyselect::any_of(input[[date_column_inputId]]), 
                                         date_with_text)) %>% 
