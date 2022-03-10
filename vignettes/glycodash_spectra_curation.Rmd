@@ -72,36 +72,11 @@ long_data %>%
 
 ```{r analyte-curation-based-on-data}
 
-ignore_samples  <- c("Total", "pool", "Visucon")
-
-group_to_ignore <- stringr::str_extract(string = ignore_samples,
-                                                 pattern = paste0(unique(curated_spectra$group),
-                                                                  collapse = "|")) %>% 
-  na.omit(.)
-group_to_ignore <- group_to_ignore[!is.na(group_to_ignore)]
-
-sample_types_to_ignore <- stringr::str_extract(string = ignore_samples,
-                                               pattern = paste0(unique(curated_spectra$sample_type),
-                                                                collapse = "|")) %>% 
-  na.omit(.)
-
-sample_types_to_ignore <- sample_types_to_ignore[!is.na(sample_types_to_ignore)]
-
-na.omit(sample_types_to_ignore)
-
-any(!(sample_types_to_ignore %in% curated_spectra$sample_type))
-
-
 # Analyte curation:
 curated_analytes <- curate_analytes(data = curated_spectra,
                                     group_to_ignore = "Total",
                                     sample_types_to_ignore = c("pool", "IVIGg", "CN", "Visucon", "PBS"),
                                     cut_off_percentage = 25)
-
-n_analyte_charge_per_cluster <- curated_spectra %>% 
-  dplyr::distinct(., analyte, charge, cluster) %>% 
-  dplyr::summarise(n = nrow(.)) %>% 
-  as.numeric()
 
 passing_analytes <- curated_analytes %>% 
   dplyr::filter(passed_curation == TRUE) %>% 
@@ -115,16 +90,14 @@ analyte_curated_data <- dplyr::left_join(passing_analytes, curated_spectra)
 
 plot_analyte_curation(curated_analytes = curated_analytes,
                       cut_off_percentage = 25,
-                      selected_cluster = "IgGI1H3")
-cluster <- "IgGI1H3"
-data_to_plot <- curated_analytes %>% 
-    dplyr::filter(cluster == cluster)
+                      selected_cluster = "IgGI")
 
 ```
 
 ```{r list-with-included-analytes}
 
-create_analyte_curation_table(analyte_curated_data = analyte_curated_data)
+create_analyte_curation_table(analyte_curated_data = analyte_curated_data,
+                              selected_cluster = "IgGI")
                   
 ```
 
@@ -173,103 +146,12 @@ normalized_data_wide <- normalized_data %>%
 
 ```{r derived-traits-long-format}
 
-calculate_fucosylation <- function(.data) {
-  
-  fucosylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
-                                              pattern = "F\\d")
-  .data %>% 
-    dplyr::summarise(
-      fucosylation = sum(relative_abundance[analyte %in% fucosylated_analytes]) / sum_all_analytes) %>% 
-    dplyr::distinct()
-  
-}
-
-calculate_sialylation <- function(.data) {
-  
-  monosialylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
-                                                 pattern = "S1")
-  disialylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
-                                               pattern = "S2")
-  
-  .data %>% 
-    dplyr::summarise(monosialylation = sum(relative_abundance[analyte %in% monosialylated_analytes]) / sum_all_analytes,
-                     disialylation = sum(relative_abundance[analyte %in% disialylated_analytes]) / sum_all_analytes,
-                     sialylation = (monosialylation * 1/2 + disialylation) / sum_all_analytes) %>% 
-    dplyr::select(-c(monosialylation, disialylation)) %>% 
-    dplyr::distinct()
-  
-}
-
-calculate_galactosylation <- function(.data) {
-  
-  monogalactosylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
-                                                     pattern = "H4")
-  digalactosylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
-                                                   pattern = "H5")
-  
-  .data %>% 
-    dplyr::summarise(monogalactosylation = sum(relative_abundance[analyte %in% monogalactosylated_analytes]) / sum_all_analytes,
-                  digalactosylation = sum(relative_abundance[analyte %in% digalactosylated_analytes]) / sum_all_analytes,
-                  galactosylation = (monogalactosylation * 1/2 + digalactosylation) / sum_all_analytes) %>% 
-    dplyr::select(-c(monogalactosylation, digalactosylation)) %>% 
-    dplyr::distinct()
-}
-
-calculate_bisection <- function(.data, analytes) {
-  
-  bisected_analytes <- stringr::str_subset(string = unique(.data$analyte),
-                                              pattern = "N5")
-  .data %>% 
-    dplyr::summarise(bisection = sum(relative_abundance[analyte %in% bisected_analytes]) / sum_all_analytes) %>% 
-    dplyr::distinct()
-  
-}
-
-calculate_derived_traits <- function(data, derived_traits) {
-  
-  data <- data %>%
-  dplyr::group_by(sample_name, cluster, group) %>% 
-  dplyr::summarize(sum_all_analytes = sum(relative_abundance),
-                   across())
-  
-  if("fucosylation" %in% derived_traits) {
-    fucosylation <- data %>%
-      calculate_fucosylation(.)
-  }
-  
-  if("sialylation" %in% derived_traits) {
-    sialylation <- data %>%
-      calculate_sialylation(.)
-  }
-  
-  if("galactosylation" %in% derived_traits) {
-    galactosylation <- data %>%
-      calculate_galactosylation(.)
-  }
-  
-  if("bisection" %in% derived_traits) {
-    bisection <- data %>%
-      calculate_bisection(.)
-  }
-  
-  to_join <- purrr::map(derived_traits,
-                        function(trait) {
-                          get0(trait)
-                        })
-  
-  derived_traits <- purrr::reduce(to_join,
-                                  dplyr::full_join)
-  
-  return(derived_traits)
-}
-
-derived_trait_names <-c("fucosylation",
-                        "bisection",
-                        "galactosylation",
-                        "sialylation")
+derived_trait_names <-c("Fucosylation",
+                        "Bisection",
+                        "Galactosylation")
 
 derived_traits <- calculate_derived_traits(data = normalized_data,
-                                           derived_traits = derived_trait_names) %>% 
+                                           selected_derived_traits = derived_trait_names) %>% 
   tidyr::pivot_wider(names_from = cluster,
                      values_from = dplyr::any_of(derived_trait_names),
                      names_glue = "{cluster}_{.value}")
@@ -287,29 +169,57 @@ standard_sample_types <- c("pool")
 
 group_to_plot <- "Spike"
 
-standards <- normalized_data %>% 
-  dplyr::filter(sample_type %in% standard_sample_types & group == group_to_plot) %>% 
-  dplyr::mutate(plate = stringr::str_extract(plate_well, "^[A-Z]|\\d+")) %>% 
-  dplyr::group_by(plate, analyte) %>% 
-  dplyr::summarise(average_abundance = mean(relative_abundance * 100),
-                   RSD = sd(relative_abundance * 100) / average_abundance * 100 * 5)
+visualize_repeatability <- function(repeatability_data, second_axis_rescale_with) {
+  repeatability_data %>% ggplot2::ggplot() +
+    ggplot2::geom_col(ggplot2::aes(x = analyte, 
+                                   y = average_abundance, 
+                                   fill = plate),
+                      position = "dodge") +
+    ggplot2::theme_classic() +
+    ggpubr::border(size = 0.5) +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
+                                                       hjust = 1)) +
+    ggplot2::geom_point(ggplot2::aes(x = analyte, 
+                                     y = RSD, 
+                                     groups = plate), 
+                        position = ggplot2::position_dodge(width = .9)) +
+    ggplot2::scale_y_continuous(name = "Relative abundance (%)",
+                                labels = function(x) paste0(x, "%"),
+                                sec.axis = ggplot2::sec_axis(~ . / second_axis_rescale_with, 
+                                                             name = "RSD (%)",
+                                                             labels = function(x) paste0(x,
+                                                                                         "%"))) +
+    ggplot2::scale_x_discrete(name = "Analyte") +
+    ggplot2::scale_fill_discrete(name = "Plate")
+}
 
-ggplot2::ggplot(standards) +
-  ggplot2::geom_col(ggplot2::aes(x = analyte, y = average_abundance, fill = plate),
-                    position = "dodge") +
-  ggplot2::theme_classic() +
-  ggpubr::border(size = 0.5) +
-  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
-                                                     hjust = 1)) +
-  ggplot2::geom_point(ggplot2::aes(x = analyte, y = RSD, groups = plate), 
-                      position = ggplot2::position_dodge(width = .9)) +
-  ggplot2::scale_y_continuous(name = "Relative abundance (%)",
-                              labels = function(x) paste0(x, "%"),
-                              sec.axis = ggplot2::sec_axis(~ . / 5, 
-                                                           name = "RSD (%)",
-                                                           labels = function(x) paste0(x, "%"))) +
-  ggplot2::scale_x_discrete(name = "Analyte") +
-  ggplot2::scale_fill_discrete(name = "Plate")
+calculate_repeatability_stats <- function(data,
+                                          standard_sample_types,
+                                          group_to_plot,
+                                          second_axis_rescale_with) {
+  repeatability <- data %>% 
+    dplyr::filter(sample_type %in% standard_sample_types & group == group_to_plot) %>% 
+    dplyr::mutate(plate = stringr::str_extract(plate_well, "^[A-Z]|\\d+")) %>% 
+    dplyr::group_by(plate, analyte) %>% 
+    dplyr::summarise(average_abundance = mean(relative_abundance * 100),
+                     RSD = sd(relative_abundance * 100) / average_abundance * 100 * second_axis_rescale_with)
+}
+
+repeatability <- calculate_repeatability_stats(data = normalized_data,
+                                               standard_sample_types = "Visucon",
+                                               group_to_plot = "Total",
+                                               second_axis_rescale_with = 2)
+
+visualize_repeatability(repeatability_data = repeatability,
+                        second_axis_rescale_with = 2)
+
+variation_table <- repeatability %>% 
+  dplyr::summarise(intra_plate_variation = mean(RSD)) %>% 
+  dplyr::summarise(across(),
+                   inter_plate_variation = mean(intra_plate_variation, 
+                                                na.rm = TRUE))
+
+
 
 ```
 
