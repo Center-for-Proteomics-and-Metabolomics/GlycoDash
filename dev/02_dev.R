@@ -35,6 +35,10 @@ usethis::use_package( "writexl" )
 usethis::use_package( "dashboardthemes" )
 usethis::use_package( "ggplot2" )
 usethis::use_package( "ggpubr" )
+usethis::use_package( "shinyBS" )
+usethis::use_package( "shinyWidgets" )
+usethis::use_package( "RLumShiny" )
+usethis::use_package( "bsplus" )
 usethis::use_pipe()
 
 ## Add modules ----
