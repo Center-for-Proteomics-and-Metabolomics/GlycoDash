@@ -6,6 +6,7 @@ Description: Package for processing IgG/IgA glycosylation data.
 License: MIT + file LICENSE
 Imports: 
     attempt,
+    bsplus,
     config (>= 0.3.1),
     dashboardthemes,
     dplyr,
@@ -20,12 +21,15 @@ Imports:
     purrr,
     rhandsontable,
     rlang,
+    RLumShiny,
     shinipsum,
     shiny (>= 1.7.1),
     shinyalert,
+    shinyBS,
     shinydashboard,
     shinyFeedback,
     shinyjs,
+    shinyWidgets,
     snakecase,
     stringr,
     tidyr,

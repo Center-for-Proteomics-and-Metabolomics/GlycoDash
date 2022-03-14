@@ -11,6 +11,7 @@ mod_data_import_ui <- function(id){
   ns <- NS(id)
   tagList(
     shinyFeedback::useShinyFeedback(),
+    bsplus::use_bs_popover(),
     fluidPage(
       fluidRow(
         h1("Data Import")
@@ -28,21 +29,56 @@ mod_data_import_ui <- function(id){
                          choices = c("Yes", "No"),
                          selected = character(0)),
             div(id = ns("keywords_specific_total"),
+                tags$style(HTML(".popover{
+                                    width: 200px;
+                                  }")),
                 textInput(ns("keyword_specific"), 
-                          label = "By what keyword can the specific Ig samples be recognized?"),
+                          label = "By what keyword can the specific Ig samples be recognized?") %>% 
+                  bsplus::bs_embed_popover(title = "Information",
+                                           content = "All specific Ig samples should have sample names that contain this keyword. Numbers are allowed and the keyword is case-sensitive.",
+                                           trigger = "hover",
+                                           placement = "right"),
                 textInput(ns("keyword_total"), 
                           label = "By what keyword can the total Ig samples be recognized?")),
             actionButton(ns("read_summary"), "Convert the LacyTools summary file to an R-suitable format")
           ),
-          shinydashboard::box(
+          shinydashboardPlus::box(
             title = "Upload your plate design",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            fileInput(ns("plate_design"), "Upload a plate design Excel file:"),
-            actionButton(ns("add_plate_design"), "Add sample ID's and sample types to the data based on the plate design"),
             br(),
-            br(),
+            fluidRow(column(width = 10,
+                            fileInput(ns("plate_design"), "Upload a plate design Excel file:")),
+                     column(width = 2,
+                            tags$style(
+                                HTML("button {margin-top:23px;}")
+                              ),
+                              shinyWidgets::dropdownButton(
+                                "Plate design format:",
+                                br(),
+                                tags$p(
+                                  "The top-left cell of the Excel sheet should contain the plate number (e.g. \"Plate 1\"). The cells to the right of the top-left cell need to be labelled 1-12 (for a 96-well plate), while the cells below the top-left cell need to be labelled A-H. The cells within the plate should contain the sample ID's."
+                                ),
+                                tags$p("At the bottom of the plate, leave one row blank and then add the next plate in the same format."),
+                                tags$p("Duplicate samples should be indicated in the plate design Excel file as \"duplicate\". Duplicate samples are always assumed to be the duplicate of the preceding sample, that is the sample one well to the left or, in the case the duplicate is positioned in the left-most column of the plate, the sample in the right-most well one row up."),
+                                "Example:",
+                                br(),
+                                tags$img(src = "www/plate_design_format_example2.png",
+                                         width = 500),
+                                icon = icon("info-circle"),
+                                label = "Information on the correct format of the plate design file",
+                                tooltip = TRUE,
+                                size = "sm",
+                                right = TRUE,
+                                inline = TRUE,
+                                width = "600px"))),
+            fluidRow(
+              column(
+                width = 12,
+              actionButton(ns("add_plate_design"), "Add sample ID's and sample types to the data based on the plate design"),
+              br(),
+              br(),
             div(id = ns("manual_sample_types"),
                 tags$b("Upload an Excel file or an R object (.rds) that contains:"),
                 tags$ul(
@@ -50,7 +86,7 @@ mod_data_import_ui <- function(id){
                   tags$li(tags$span("a column named \"sample_type\" with the corresponding sample types"))
                 ),
                 fileInput(ns("groups_file"), label = NULL))
-          ),
+          ))),
           shinydashboard::box(
             title = "Upload your metadata",
             width = NULL,
@@ -157,6 +193,10 @@ mod_data_import_server <- function(id){
         }
       }  
     })
+    
+    shinyBS::addTooltip(session = session,
+                          title = "test",
+                          id = ns("keyword_total"))
     
     # Check whether the keyword given for specific samples has matches with the
     # sample names in the data:

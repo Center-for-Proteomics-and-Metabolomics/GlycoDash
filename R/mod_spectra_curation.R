@@ -164,12 +164,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                             clusters_regex = input[[cluster_inputId]]),
                             unmatched_regex = function(c) {
                               shinyFeedback::feedbackDanger(cluster_inputId,
-                                                             show = TRUE,
-                                                             text = c$message)
+                                                            show = TRUE,
+                                                            text = c$message)
                               x$clusters_OK <- FALSE
                             },
                             unmatched_analytes = function(c){ #ignore this error
-                              })})
+                              })
+                   })
     })
     
     # Get the values of the cluster textInputs:
@@ -197,6 +198,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
           })
         
         if(any(regex_overlap == TRUE)) {
+          req(x$clusters_no_overlap, cancelOutput = TRUE)
           purrr::map(cluster_inputIds(),
                      ~ shinyFeedback::feedbackDanger(.x,
                                                      show = TRUE,
@@ -204,6 +206,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                                   "as each analyte should match only one cluster keyword.")))
           x$clusters_no_overlap <- FALSE
         }
+        
       }
     })
     
