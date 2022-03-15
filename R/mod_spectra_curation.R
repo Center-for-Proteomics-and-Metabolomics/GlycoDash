@@ -10,6 +10,7 @@
 mod_spectra_curation_ui <- function(id){
   ns <- NS(id)
   tagList(
+    bsplus::use_bs_popover(),
     fluidPage(
       fluidRow(
         h1("Spectra curation") 
@@ -29,8 +30,44 @@ mod_spectra_curation_ui <- function(id){
                          max = 25,
                          step = 1),
             uiOutput(ns("clusters")),
-            shinydashboard::box(
-              title = "Quality criteria",
+            shinydashboardPlus::box(
+              id = ns("qc"),
+              tags$style(
+                HTML(paste0("#",
+                            ns("qc"),
+                            " .fa {float: right; margin-top: 3px}",
+                            "#",
+                            ns("qc"),
+                            " .box-title {width: 100%}"))
+              ),
+              title = span(
+                  "Analyte quality criteria",
+                  icon("info-circle",
+                       class = "ml",
+                       tabindex = "-1") %>% 
+                    bsplus::bs_embed_popover(
+                      title = "Explanation",
+                      content = HTML(paste0(
+                        tags$p(paste(
+                          "For each spectrum, analytes are curated based on",
+                          "the chosen criteria for the mass accuracy, the",
+                          "isotopic pattern quality (IPQ) and the signal-to-noise",
+                          "ratio (S/N)."
+                        )),
+                        tags$p(paste(
+                          "Next, the proportion of passing analytes and the sum intensity",
+                          "of the passing analytes within each spectrum are calculated."
+                        )),
+                        tags$p(paste(
+                          "Based on this proportion and this sum intensity it is decided",
+                          "whether a spectrum passes spectra curation."
+                        ))
+                      )),
+                      trigger = "focus",
+                      placement = "right",
+                      html = "true",
+                      container = "body")
+              ),
               width = NULL,
               status = "primary",
               solidHeader = TRUE,
@@ -48,16 +85,40 @@ mod_spectra_curation_ui <- function(id){
                            "Min. S/N ratio:",
                            value = 9)
             ),
-            selectizeInput(ns("cut_off_basis"),
-                           "Base the spectra curation cut-off on:",
-                           choices = c(""),
-                           selected = NULL,
-                           multiple = FALSE,
-                           options = list(placeholder = "select which samples to use as a basis for cut-off")
+            tags$style(HTML(paste0("#",
+                                   ns("popover_cut_off"),
+                                   " .popover{width: 400px !important;}"))),
+            div(
+              id = ns("popover_cut_off"),
+              selectizeInput(ns("cut_off_basis"),
+                             "Base the spectra curation cut-off on:",
+                             choices = c(""),
+                             selected = NULL,
+                             multiple = FALSE,
+                             options = list(placeholder = "select which samples to use as a basis for cut-off")
+              ) %>% 
+                bsplus::bs_embed_popover(
+                  title = "Explanation",
+                  content = HTML(paste0(
+                    tags$p(paste(
+                      "Choose a group of samples that should not pass curation",
+                      "(e.g. Specific Ig negative control samples)."
+                    )),
+                    tags$p(paste(
+                      "The average proportion of passing analytes and average sum intensity",
+                      "in this group of samples will be used as cut-off values;"
+                    )),
+                    tags$p(paste(
+                      "All spectra that have a proportion of passing analytes and a sum intensity",
+                      "higher than these cut-off values will pass spectra curation."
+                    ))
+                  )),
+                  trigger = "hover",
+                  placement = "right",
+                  html = "true")
             ),
             actionButton(ns("curate_spectra"),
-                         "Perform spectra curation")
-          ),
+                         "Perform spectra curation")),
           shinydashboard::box(
             title = "Export results",
             width = NULL,
@@ -67,7 +128,7 @@ mod_spectra_curation_ui <- function(id){
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
             downloadButton(ns("download"), 
-                         "Download curated spectra")
+                           "Download curated spectra")
           )
         ),
         column(
@@ -77,8 +138,7 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            plotOutput(ns("curated_spectra_plot")),
-            tableOutput(ns("fail_table"))
+            plotOutput(ns("curated_spectra_plot"))
           )
         )
       )
@@ -145,7 +205,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
         purrr::imap(cluster_inputIds(),
                     function(inputId, i) textInput(
                       ns(inputId),
-                      label = paste("By what words/letters in the analyte name can the analytes belonging to cluster",
+                      label = paste("By what word/letters within the analyte name can the analytes belonging to cluster",
                                     i,
                                     "be recognized?")
                       ))
@@ -308,11 +368,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                        strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
         ggpubr::border(size = 0.5)
-      })
-    
-    output$fail_table <- renderTable({
-      # create an actual table here:
-      shinipsum::random_table(3, 3)
       })
     
     output$download <- downloadHandler(
