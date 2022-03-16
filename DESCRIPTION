@@ -6,6 +6,7 @@ Description: Package for processing IgG/IgA glycosylation data.
 License: MIT + file LICENSE
 Imports: 
     attempt,
+    bslib,
     bsplus,
     config (>= 0.3.1),
     dashboardthemes,
