@@ -44,7 +44,7 @@ mod_spectra_curation_ui <- function(id){
                   "Analyte quality criteria",
                   icon("info-circle",
                        class = "ml",
-                       tabindex = "-1") %>% 
+                       tabindex = "0") %>% 
                     bsplus::bs_embed_popover(
                       title = "Explanation",
                       content = HTML(paste0(
@@ -59,7 +59,8 @@ mod_spectra_curation_ui <- function(id){
                           "of the passing analytes within each spectrum are calculated."
                         )),
                         tags$p(paste(
-                          "Based on this proportion and this sum intensity it is decided",
+                          "Based on this proportion and this sum intensity",
+                          "and the spectra curation cut-off (see below) it is decided",
                           "whether a spectrum passes spectra curation."
                         ))
                       )),

@@ -38,7 +38,7 @@ app_ui <- function(request) {
       body = shinydashboard::dashboardBody(
         shinyjs::useShinyjs(),
         
-        dashboardthemes::shinyDashboardThemes(theme = "poor_mans_flatly"),
+        #dashboardthemes::shinyDashboardThemes(theme = "poor_mans_flatly"),
         
         shinydashboard::tabItems(
           shinydashboard::tabItem(

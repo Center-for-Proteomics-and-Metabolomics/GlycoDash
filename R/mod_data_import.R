@@ -24,77 +24,145 @@ mod_data_import_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            fileInput(ns("lacytools_summary"), "Upload LacyTools summary.txt file:"),
-            radioButtons(ns("Ig_data"), "Does your data contain total and specific immunoglobulin samples?",
-                         choices = c("Yes", "No"),
-                         selected = character(0)),
+            fileInput(ns("lacytools_summary"), 
+                      "Upload LacyTools summary.txt file:"),
+            shinyWidgets::awesomeRadio(ns("Ig_data"),
+                                       "Does your data contain total and specific immunoglobulin samples?",
+                                       choices = c("Yes", "No"),
+                                       selected = "No"),
+            # radioButtons(ns("Ig_data"),
+            #              "Does your data contain total and specific immunoglobulin samples?",
+            #              choices = c("Yes", "No"),
+            #              selected = character(0)),
             div(id = ns("keywords_specific_total"),
+                # Set the width of popovers in this div to 200px:
                 tags$style(HTML(paste0("#",
                                        ns("keywords_specific_total"),
                                        " .popover{width: 200px !important;}"))),
                 textInput(ns("keyword_specific"), 
                           label = "By what keyword can the specific Ig samples be recognized?") %>% 
-                  bsplus::bs_embed_popover(title = "Explanation",
-                                           content = "All specific Ig samples should have sample names that contain this keyword. Numbers are allowed and the keyword is case-sensitive.",
-                                           trigger = "hover",
-                                           placement = "right"),
+                  bsplus::bs_embed_popover(
+                    title = "Explanation",
+                    content = paste("All specific Ig samples should have sample names",
+                                    "that contain this keyword. The keyword is case-sensitive."),
+                    trigger = "hover",
+                    placement = "right"),
                 textInput(ns("keyword_total"), 
                           label = "By what keyword can the total Ig samples be recognized?") %>% 
-                  bsplus::bs_embed_popover(title = "Explanation",
-                                           content = "All total Ig samples should have sample names that contain this keyword. Numbers are allowed and the keyword is case-sensitive.",
-                                           trigger = "hover",
-                                           placement = "right")
-                ),
-            actionButton(ns("read_summary"), "Convert the LacyTools summary file to an R-suitable format")
+                  bsplus::bs_embed_popover(
+                    title = "Explanation",
+                    content = paste("All total Ig samples should have sample names",
+                                    "that contain this keyword. The keyword is case-sensitive."),
+                    trigger = "hover",
+                    placement = "right")
+            ),
+            actionButton(ns("read_summary"), 
+                         "Convert the LacyTools summary file to an R-suitable format")
           ),
           shinydashboardPlus::box(
             title = "Upload your plate design",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            br(),
-            fluidRow(column(width = 10,
-                            fileInput(ns("plate_design"), "Upload a plate design Excel file:")),
-                     column(width = 2,
-                            tags$style(
-                              HTML(paste0(
-                                "#",
-                                ns("popover_plate_design"),
-                                " .fa {margin-top:25px;}",
-                                " .popover {width: 600px; max-width: 600px !important;}"
-                              ))
-                            ),
-                            div(
-                              id = ns("popover_plate_design"),
-                              icon("info-circle",
-                                   class = "fa-2x",
-                                   tabindex = "-1") %>% 
-                                bsplus::bs_embed_popover(title = "Explanation",
-                                                         content = HTML(paste0(
-                                                           "Plate design format:",
-                                                           br(),
-                                                           tags$p(
-                                                             "The top-left cell of the Excel sheet should contain the plate number (e.g. \"Plate 1\"). The cells to the right of the top-left cell need to be labelled 1-12 (for a 96-well plate), while the cells below the top-left cell need to be labelled A-H. The cells within the plate should contain the sample ID's."
-                                                           ),
-                                                           tags$p("At the bottom of the plate, leave one row blank and then add the next plate in the same format."),
-                                                           tags$p("Duplicate samples should be indicated in the plate design Excel file as \"duplicate\". Duplicate samples are always assumed to be the duplicate of the preceding sample, that is the sample one well to the left or, in the case the duplicate is positioned in the left-most column of the plate, the sample in the right-most well one row up."),
-                                                           "Example:",
-                                                           br(),
-                                                           tags$img(src = "www/plate_design_format_example2.png",
-                                                                    width = 500)
-                                                         )
-                                                         ),
-                                                         trigger = "focus",
-                                                         placement = "right",
-                                                         html = "true",
-                                                         container = "body")
-                              )
-                     )
+            # shinyWidgets::awesomeRadio(ns("two_plate_designs"),
+            #                            "Do you have two separate plate design files for specific and total Ig samples?",
+            #                            choices = c("Yes", "No"),
+            #                            selected = "No"),
+            shinyWidgets::materialSwitch(ns("switch_two_plate_designs"),
+                                         "Add separate plate design files for specific and and for total Ig samples.",
+                                         status = "primary",
+                                         right = TRUE),
+            div(id = ns("one_plate_design"),
+                fluidRow(
+                  column(
+                    width = 10,
+                    fileInput(ns("plate_design"), "Upload a plate design Excel file:")),
+                  column(
+                    width = 2,
+                    tags$style(
+                      HTML(paste0(
+                        "#",
+                        ns("popover_plate_design"),
+                        " .fa {margin-top:25px;}",
+                        " .popover {width: 600px; max-width: 600px !important;}"
+                        ))
+                    ),
+                    div(id = ns("popover_plate_design"),
+                        icon("info-circle",
+                             class = "fa-2x",
+                             tabindex = "-1") %>% 
+                          bsplus::bs_embed_popover(
+                            title = "Plate design format:",
+                            content = HTML(paste0(
+                              tags$p(paste(
+                                "The top-left cell of the Excel sheet should contain",
+                                "the plate number (e.g. \"Plate 1\"). The cells to the",
+                                "right of the top-left cell need to be labelled 1-12,", 
+                                "while the cells below the top-left cell need to be",
+                                "labelled A-H (for a 96-well plate). The cells",
+                                "within the plate should contain the sample ID's."
+                              )),
+                              tags$p("At the bottom of the plate, leave one row blank and then add the next plate in the same format."),
+                              tags$p("Duplicate samples should be indicated in the plate design Excel file as \"duplicate\". Duplicate samples are always assumed to be the duplicate of the preceding sample, that is the sample one well to the left or, in the case the duplicate is positioned in the left-most column of the plate, the sample in the right-most well one row up."),
+                              "Example:",
+                              br(),
+                              tags$img(src = "www/plate_design_format_example2.png",
+                                       width = 500)
+                            )),
+                            trigger = "focus",
+                            placement = "right",
+                            html = "true",
+                            container = "body")))
+                )),
+            div(id = ns("two_plate_designs"),
+                fluidRow(
+                  column(
+                    width = 10,
+                    fileInput(ns("plate_design_specific"), 
+                              "Upload a plate design Excel file for the specific Ig samples:")),
+                  column(
+                    width = 2,
+                    tags$style(
+                      HTML(paste0(
+                        "#",
+                        ns("popover_plate_design_specific"),
+                        " .fa {margin-top:25px;}",
+                        " .popover {width: 600px; max-width: 600px !important;}"
+                      ))
+                    ),
+                    div(id = ns("popover_plate_design_specific"),
+                        icon("info-circle",
+                             class = "fa-2x",
+                             tabindex = "-1") %>% 
+                          bsplus::bs_embed_popover(
+                            title = "Plate design format:",
+                            content = HTML(paste0(
+                              tags$p(
+                                "The top-left cell of the Excel sheet should contain the plate number (e.g. \"Plate 1\"). The cells to the right of the top-left cell need to be labelled 1-12 (for a 96-well plate), while the cells below the top-left cell need to be labelled A-H. The cells within the plate should contain the sample ID's."
+                              ),
+                              tags$p("At the bottom of the plate, leave one row blank and then add the next plate in the same format."),
+                              tags$p("Duplicate samples should be indicated in the plate design Excel file as \"duplicate\". Duplicate samples are always assumed to be the duplicate of the preceding sample, that is the sample one well to the left or, in the case the duplicate is positioned in the left-most column of the plate, the sample in the right-most well one row up."),
+                              "Example:",
+                              br(),
+                              tags$img(src = "www/plate_design_format_example2.png",
+                                       width = 500)
+                            )),
+                            trigger = "focus",
+                            placement = "right",
+                            html = "true",
+                            container = "body"))
+                  )),
+                fluidRow(
+                  column(
+                    width = 10,
+                    fileInput(ns("plate_design_total"), 
+                              "Upload a plate design Excel file for the total Ig samples:")))
             ),
             fluidRow(
               column(
                 width = 12,
-                actionButton(ns("add_plate_design"), "Add sample ID's and sample types to the data based on the plate design"),
+                actionButton(ns("add_plate_design"), 
+                             "Add sample ID's and sample types to the data based on the plate design"),
                 br(),
                 br(),
                 div(id = ns("manual_sample_types"),
@@ -158,6 +226,18 @@ mod_data_import_server <- function(id){
     ext_plate_design <- reactive({
       req(input$plate_design)
       ext <- tools::file_ext(input$plate_design$name)
+      return(ext)
+    })
+    
+    ext_plate_design_specific <- reactive({
+      req(input$plate_design_specific)
+      ext <- tools::file_ext(input$plate_design_specific$name)
+      return(ext)
+    })
+    
+    ext_plate_design_total <- reactive({
+      req(input$plate_design_total)
+      ext <- tools::file_ext(input$plate_design_total$name)
       return(ext)
     })
     
@@ -325,6 +405,20 @@ mod_data_import_server <- function(id){
     
     # Plate design ------------------------------------------------------------
     
+    # If the user indicates (via input$switch_two_plate_design) that there are
+    # separate plate designs for total and specific Ig samples, two fileInputs
+    # are shown instead of one.
+    observe({
+      shinyjs::show("one_plate_design")
+      shinyjs::hide("two_plate_designs")
+      if (!is.null(input$switch_two_plate_designs)) {
+        if (input$switch_two_plate_designs == TRUE) {
+          shinyjs::show("two_plate_designs")
+          shinyjs::hide("one_plate_design")
+        }
+      }  
+    })
+    
     # Show a warning when the wrong type of file is uploaded as plate design:
     observe({
       req(input$plate_design)
@@ -333,12 +427,35 @@ mod_data_import_server <- function(id){
                                      text = "Please upload a .xlsx or .xls file.")
     })
     
+    observe({
+      req(input$plate_design_specific)
+      shinyFeedback::feedbackWarning("plate_design_specific",
+                                     !(ext_plate_design_specific() %in% c("xlsx", "xls")),
+                                     text = "Please upload a .xlsx or .xls file.")
+    })
+    
+    observe({
+      req(input$plate_design_total)
+      shinyFeedback::feedbackWarning("plate_design_total",
+                                     !(ext_plate_design_total() %in% c("xlsx", "xls")),
+                                     text = "Please upload a .xlsx or .xls file.")
+    })
+    
     # This observe call ensures that the add_plate_design actionButton is only
     # enabled under the right circumstances
     observe({
       shinyjs::disable(id = "add_plate_design")
-      if (all(isTruthy(x$data), isTruthy(input$plate_design))) {
+      if (all(isTruthy(x$data),
+              isTruthy(input$plate_design))) {
         if (ext_plate_design() %in% c("xlsx", "xls")) {
+          shinyjs::enable(id = "add_plate_design")
+        } 
+      } 
+      if (all(isTruthy(x$data),
+              isTruthy(input$plate_design_specific),
+              isTruthy(input$plate_design_total))) {
+        if (all(ext_plate_design_specific() %in% c("xlsx", "xls"),
+                ext_plate_design_total() %in% c("xlsx", "xls"))) {
           shinyjs::enable(id = "add_plate_design")
         }
       }
@@ -356,7 +473,17 @@ mod_data_import_server <- function(id){
                          type = "warning")
       }
       
-      x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
+      if (input$switch_two_plate_designs == FALSE) {
+        x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
+      } else {
+       plate_design_specific <- read_and_process_plate_design(input$plate_design_specific$datapath) %>% 
+         dplyr::mutate(group = input$keyword_total)
+       plate_design_total <- read_and_process_plate_design(input$plate_design_total$datapath) %>% 
+         dplyr::mutate(group = input$keyword_specific)
+       
+       x$plate_design <- dplyr::full_join(plate_design_specific,
+                                          plate_design_total)
+      }
       
       # Reset x$response in case the pop-up has been shown before:
       x$response <- NULL
@@ -405,7 +532,8 @@ mod_data_import_server <- function(id){
     # with whether the sample is a duplicate of another sample:
     observeEvent(x$response, {
       if (x$response == TRUE) {
-        x$data_incl_plate_design <- dplyr::left_join(x$data, x$plate_design)
+        x$data_incl_plate_design <- dplyr::left_join(x$data, 
+                                                     x$plate_design)
       } 
     })
     
