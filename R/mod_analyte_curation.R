@@ -26,7 +26,26 @@ mod_analyte_curation_ui <- function(id){
                         "Choose method for analyte curation:",
                         choices = c("Supply an analyte list", 
                                     "Curate analytes based on data")),
-            fileInput(ns("analyte_list"), "Upload an Excel file or R object with an analyte list"),
+            fileInput(ns("analyte_list"), 
+                      "Upload an Excel file or R object with an analyte list") %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(paste(
+                  tags$b("Excel file:"),
+                  tags$p(paste(
+                    "The file should consist of one column with the names of the",
+                    "analytes that you want to keep. A column name is not required."
+                  )),
+                  tags$b("R object:"),
+                  tags$p(paste(
+                    "The R object should be a character vector or a list of",
+                    "character strings (not a dataframe!) with the names of",
+                    "the analytes that you want to keep."
+                  ))
+                )),
+                html = "true",
+                trigger = "hover",
+                placement = "right"),
             tags$style(
               HTML(paste0("#",
                           ns("curation_based_on_data"),
