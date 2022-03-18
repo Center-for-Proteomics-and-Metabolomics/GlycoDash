@@ -26,12 +26,6 @@ mod_derived_traits_ui <- function(id){
                                                          "Bisection",
                                                          "Galactosylation",
                                                          "Sialylation")),
-          # checkboxGroupInput(ns("traits_menu"),
-          #                    "Choose which derived traits should be calculated",
-          #                    choices = c("Fucosylation",
-          #                                "Bisection",
-          #                                "Galactosylation",
-          #                                "Sialylation")),
           actionButton(ns("do_calculation"),
                        "Calculate derived traits")
         )
@@ -65,7 +59,8 @@ mod_derived_traits_server <- function(id, results_normalization){
     
     observe({
       shinyjs::toggleState("do_calculation", 
-                           condition = isTruthy(input$traits_menu))
+                           condition = all(isTruthy(input$traits_menu),
+                                           isTruthy(x$data)))
     })
     
     observeEvent(input$do_calculation, {
