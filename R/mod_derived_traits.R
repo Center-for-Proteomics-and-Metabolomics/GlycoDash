@@ -20,12 +20,18 @@ mod_derived_traits_ui <- function(id){
           width = 3,
           solidHeader = TRUE,
           status = "primary",
-          checkboxGroupInput(ns("traits_menu"),
-                             "Choose which derived traits should be calculated",
-                             choices = c("Fucosylation",
-                                         "Bisection",
-                                         "Galactosylation",
-                                         "Sialylation")),
+          shinyWidgets::awesomeCheckboxGroup(ns("traits_menu"),
+                                             "Select the derived traits that should be calculated:",
+                                             choices = c("Fucosylation",
+                                                         "Bisection",
+                                                         "Galactosylation",
+                                                         "Sialylation")),
+          # checkboxGroupInput(ns("traits_menu"),
+          #                    "Choose which derived traits should be calculated",
+          #                    choices = c("Fucosylation",
+          #                                "Bisection",
+          #                                "Galactosylation",
+          #                                "Sialylation")),
           actionButton(ns("do_calculation"),
                        "Calculate derived traits")
         )
@@ -87,7 +93,6 @@ mod_derived_traits_server <- function(id, results_normalization){
         normalized_data = reactive({x$data})
       )
     )
-    
  
   })
 }

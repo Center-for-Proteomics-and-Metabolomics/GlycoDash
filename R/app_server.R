@@ -30,4 +30,8 @@ app_server <- function( input, output, session ) {
     results_normalization = results_normalization,
     results_data_import = results_data_import
   )
+  
+  mod_data_exploration_server(
+    id = "data_exploration_ui_1",
+    results_derived_traits = results_derived_traits)
 }

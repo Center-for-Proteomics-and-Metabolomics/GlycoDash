@@ -59,8 +59,8 @@ mod_spectra_curation_ui <- function(id){
                           "of the passing analytes within each spectrum are calculated."
                         )),
                         tags$p(paste(
-                          "Based on this proportion and this sum intensity",
-                          "and the spectra curation cut-off (see below) it is decided",
+                          "This proportion and this sum intensity are then compared",
+                          "to the spectra curation cut-off values (see below) to decide",
                           "whether a spectrum passes spectra curation."
                         ))
                       )),
@@ -328,12 +328,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                sample_type_to_filter = sample_type_to_filter)
         
         x$data_spectra_curated <- data_spectra_curated
+        
+        showNotification("Spectra curation has been performed.",
+                         type = "message")
       },
       regex_overlap = function(c) {
         showNotification(ui = paste(c$message), 
                          type = "error")
-        shinyalert::shinyalert(text = paste(c$message),
-                               type = "error")
       },
       unmatched_analytes = function(c) {
         showNotification(ui = paste(c$message), 
@@ -367,7 +368,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                               `FALSE` = "#E74C3C")) +
         ggplot2::theme_classic() +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
-                       strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
+                       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+                       text = ggplot2::element_text(size = 16)) +
         ggpubr::border(size = 0.5)
       })
     

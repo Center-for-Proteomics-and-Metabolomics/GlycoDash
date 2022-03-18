@@ -30,10 +30,6 @@ mod_data_import_ui <- function(id){
                                        "Does your data contain total and specific immunoglobulin samples?",
                                        choices = c("Yes", "No"),
                                        selected = "No"),
-            # radioButtons(ns("Ig_data"),
-            #              "Does your data contain total and specific immunoglobulin samples?",
-            #              choices = c("Yes", "No"),
-            #              selected = character(0)),
             div(id = ns("keywords_specific_total"),
                 # Set the width of popovers in this div to 200px:
                 tags$style(HTML(paste0("#",
@@ -64,10 +60,6 @@ mod_data_import_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            # shinyWidgets::awesomeRadio(ns("two_plate_designs"),
-            #                            "Do you have two separate plate design files for specific and total Ig samples?",
-            #                            choices = c("Yes", "No"),
-            #                            selected = "No"),
             shinyWidgets::materialSwitch(ns("switch_two_plate_designs"),
                                          "Add separate plate design files for specific and and for total Ig samples.",
                                          status = "primary",
@@ -285,9 +277,11 @@ mod_data_import_server <- function(id){
     # are shown.
     observe({
       shinyjs::hide("keywords_specific_total")
+      shinyjs::hide("switch_two_plate_designs")
       if (!is.null(input$Ig_data)) {
         if (input$Ig_data == "Yes") {
           shinyjs::show("keywords_specific_total")
+          shinyjs::show("switch_two_plate_designs")
         }
       }  
     })
@@ -501,6 +495,7 @@ mod_data_import_server <- function(id){
         showCancelButton = TRUE,
         # --> Explain further what the user can expect when choosing cancel
         cancelButtonText = "Manually enter sample types",
+        confirmButtonCol = "#3c8dbc",
         callbackR = function(response) {
           x$response <- response
         }
@@ -776,6 +771,7 @@ mod_data_import_server <- function(id){
           ),
           size = "m",
           confirmButtonText = "Add the metadata despite the unmatched ID's",
+          confirmButtonCol = "#3c8dbc",
           showCancelButton = TRUE,
           cancelButtonText = "Don't add the metadata now",
           type = ifelse(length(unmatched) > 20, "warning", ""),
