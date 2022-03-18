@@ -27,12 +27,21 @@ mod_analyte_curation_ui <- function(id){
                         choices = c("Supply an analyte list", 
                                     "Curate analytes based on data")),
             fileInput(ns("analyte_list"), "Upload an Excel file or R object with an analyte list"),
+            tags$style(
+              HTML(paste0("#",
+                          ns("curation_based_on_data"),
+                          " .popover {width: 200px;}"))
+            ),
             div(
               id = ns("curation_based_on_data"),
               selectizeInput(ns("ignore_samples"),
                           "Sample types to ignore regarding analyte curation:",
                           choices = c("Total", "Blanks", "Negative controls"),
-                          multiple = TRUE),
+                          multiple = TRUE) %>% 
+                bsplus::bs_embed_popover(title = "Explanation",
+                                         content = "To be added",
+                                         placement = "right",
+                                         trigger = "hover"),
               numericInput(ns("cut_off"), "Cut-off (%)", value = 25)
               ),
             actionButton(ns("curate_analytes"), 
