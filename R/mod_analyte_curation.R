@@ -26,30 +26,37 @@ mod_analyte_curation_ui <- function(id){
                         "Choose method for analyte curation:",
                         choices = c("Supply an analyte list", 
                                     "Curate analytes based on data")),
-            fileInput(ns("analyte_list"), 
-                      "Upload an Excel file or R object with an analyte list") %>% 
-              bsplus::bs_embed_popover(
-                title = "Explanation",
-                content = HTML(paste(
-                  tags$b("Excel file:"),
-                  tags$p(paste(
-                    "The file should consist of one column with the names of the",
-                    "analytes that you want to keep. A column name is not required."
-                  )),
-                  tags$b("R object:"),
-                  tags$p(paste(
-                    "The R object should be a character vector or a list of",
-                    "character strings (not a dataframe!) with the names of",
-                    "the analytes that you want to keep."
-                  ))
-                )),
-                html = "true",
-                trigger = "hover",
-                placement = "right"),
+            tags$style(
+              HTML(paste0("#",
+                          ns("analyte_list_div"),
+                          " .popover {width: 400px;}"))
+            ),
+            div(id = ns("analyte_list_div"),
+                fileInput(ns("analyte_list"), 
+                          "Upload an Excel file or R object with an analyte list") %>% 
+                  bsplus::bs_embed_popover(
+                    title = "Explanation",
+                    content = HTML(paste(
+                      tags$b("Excel file:"),
+                      tags$p(paste(
+                        "The file should consist of one column with the names of the",
+                        "analytes that you want to keep. A column name is not required."
+                      )),
+                      tags$b("R object:"),
+                      tags$p(paste(
+                        "The R object should be a character vector or a list of",
+                        "character strings (not a dataframe!) with the names of",
+                        "the analytes that you want to keep."
+                      ))
+                    )),
+                    html = "true",
+                    trigger = "hover",
+                    placement = "right")
+            ),
             tags$style(
               HTML(paste0("#",
                           ns("curation_based_on_data"),
-                          " .popover {width: 200px;}"))
+                          " .popover {width: 400px;}"))
             ),
             div(
               id = ns("curation_based_on_data"),
@@ -57,12 +64,28 @@ mod_analyte_curation_ui <- function(id){
                           "Sample types to ignore regarding analyte curation:",
                           choices = c("Total", "Blanks", "Negative controls"),
                           multiple = TRUE) %>% 
-                bsplus::bs_embed_popover(title = "Explanation",
-                                         content = "To be added",
-                                         placement = "right",
-                                         trigger = "hover"),
+                bsplus::bs_embed_popover(
+                  title = "Explanation",
+                  content = HTML(paste0(
+                    tags$p(paste(
+                      "Analytes are curated based on the percentage of spectra",
+                      "in which they pass the analyte quality criteria (go to \"",
+                      "Spectra curation\" to choose these criteria)."
+                    )),
+                    tags$p(paste(
+                      "However, some spectra (e.g. blanks, standards or total", 
+                      "Ig samples) should not be included in this assesment."
+                    )),
+                    tags$p(paste(
+                      "Select here which samples should be ignored with regards",
+                      "to analyte curation."
+                    ))
+                  )),
+                  placement = "right",
+                  trigger = "hover",
+                  html = "true"),
               numericInput(ns("cut_off"), "Cut-off (%)", value = 25)
-              ),
+            ),
             actionButton(ns("curate_analytes"), 
                          "Perform analyte curation")
           ),
