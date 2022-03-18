@@ -21,7 +21,8 @@ mod_data_exploration_ui <- function(id){
           solidHeader = TRUE,
           status = "primary",
           shinyWidgets::dropdownButton(
-            icon = icon("gear"),
+            icon = icon("gears",
+                        verify_fa = FALSE),
             status = "primary",
             size = "sm",
             selectizeInput(ns("yvar"),
