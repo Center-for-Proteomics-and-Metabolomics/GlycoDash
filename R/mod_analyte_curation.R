@@ -84,7 +84,19 @@ mod_analyte_curation_ui <- function(id){
                   placement = "right",
                   trigger = "hover",
                   html = "true"),
-              numericInput(ns("cut_off"), "Cut-off (%)", value = 25)
+              numericInput(ns("cut_off"), "Cut-off (%)", value = 25) %>% 
+                bsplus::bs_embed_popover(
+                  title = "Explanation",
+                  content = HTML(paste0(
+                    tags$p(paste(
+                      "Choose the percentage of spectra in which an analyte",
+                      "needs to fulfill the quality criteria in order to pass", 
+                      "analyte curation."
+                    ))
+                  )),
+                  placement = "right",
+                  trigger = "hover",
+                  html = "true")
             ),
             actionButton(ns("curate_analytes"), 
                          "Perform analyte curation")
