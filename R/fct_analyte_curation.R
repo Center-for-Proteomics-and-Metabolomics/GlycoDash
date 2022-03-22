@@ -75,6 +75,7 @@ curate_analytes <- function(data, group_to_ignore, sample_types_to_ignore, cut_o
                         "charge", 
                         "analyte", 
                         "criteria_check")
+  
   missing_columns <- required_columns[!(required_columns %in% colnames(data))] 
   if(!rlang::is_empty(missing_columns)) {
     rlang::abort(class = "missing_columns",
@@ -143,6 +144,19 @@ curate_analytes_with_list <- function(data,
   if (!("analyte" %in% colnames(data))) {
     rlang::abort(class = "missing_column",
                  message = "The required column \"analyte\" is missing from the data.")
+  }
+  
+  missing_analytes <- analyte_list[!(analyte_list %in% data$analyte)]
+    
+  if (!rlang::is_empty(missing_analytes)) {
+    if (!identical(missing_analytes, analyte_list[1])) {
+      rlang::warn(class = "missing_analytes",
+                  message = paste("The analyte(s)", 
+                                  paste(missing_analytes, 
+                                        collapse = "and"),
+                                  "from the analyte list are not present in",
+                                  "the \"analyte\" column of the data."))
+    }
   }
   
   analytes_to_include <- purrr::map(

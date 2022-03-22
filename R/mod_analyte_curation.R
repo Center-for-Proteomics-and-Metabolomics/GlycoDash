@@ -203,10 +203,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       } 
       }
       
-      # if (is.data.frame(x$analyte_list)) {
-      #   x$analyte_list <- x$analyte_list$...1
-      # }
-      
       shinyFeedback::feedbackWarning(inputId = "analyte_list", 
                                      show = !(ext_analyte_list() %in% c("rds", "xlsx", "xls")),
                                      text = "Please upload a .xlsx, .xls or .rds file.")
@@ -276,6 +272,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
             shinyFeedback::feedbackDanger("analyte_list",
                                           show = TRUE,
                                           text = c$message)
+          },
+          missing_analytes = function(c){
+            showNotification(c$message,
+                             type = "warning")
           })
       }
       
