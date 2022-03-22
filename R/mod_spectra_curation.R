@@ -169,7 +169,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
         x$data <- results_data_import$data_incl_plate_design()
       } 
       }
-      print(x$data)
     })
     
     # This observe call ensures that the curate_spectra actionButton is only

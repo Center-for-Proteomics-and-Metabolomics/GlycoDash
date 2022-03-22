@@ -276,6 +276,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
           missing_analytes = function(c){
             showNotification(c$message,
                              type = "warning")
+            x$analyte_curated_data <- suppressWarnings(
+              curate_analytes_with_list(
+                data = x$data,
+                analyte_list = x$analyte_list))
           })
       }
       

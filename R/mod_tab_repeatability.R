@@ -45,7 +45,7 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
       req(data())
       req(Ig_data())
       
-      sample_type_menu <- selectInput(ns("sample_type"),
+      sample_type_menu <- selectInput(ns("standard_sample_type"),
                                       label = "Choose which standard you want to assess:",
                                       choices = unique(data()$sample_type))
       
