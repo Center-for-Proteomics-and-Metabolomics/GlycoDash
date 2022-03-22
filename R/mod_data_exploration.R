@@ -25,6 +25,12 @@ mod_data_exploration_ui <- function(id){
                         verify_fa = FALSE),
             status = "primary",
             size = "sm",
+            selectizeInput(ns("filter"),
+                           choices = "",
+                           selected = NULL,
+                           multiple = TRUE,
+                           label = "Choose which sample types should be excluded from the plot:",
+                           options = list(placeholder = "select one or more sample type(s)")),
             selectizeInput(ns("yvar"),
                            choices = "",
                            selected = NULL,
@@ -79,14 +85,30 @@ mod_data_exploration_server <- function(id, results_derived_traits){
                            choices = c("", colnames(x$data)))
       updateSelectizeInput(inputId = "color",
                            choices = c("", colnames(x$data)))
+      updateSelectizeInput(inputId = "filter",
+                           choices = c("", unique(x$data$sample_type)))
+    })
+    
+    filtered_data <- reactive({
+      req(x$data)
+      
+      if(isTruthy(input$filter)) {
+        filtered_data <- x$data %>% 
+          dplyr::filter(!(sample_type %in% input$filter))
+      } else {
+        filtered_data <- x$data
+      }
+      
+      return(filtered_data)
+      
     })
     
     output$boxplot <- renderPlot({
-      req(x$data,
+      req(filtered_data(),
           input$xvar,
           input$yvar)
       
-      plot <- x$data %>% 
+      plot <- filtered_data() %>% 
         ggplot2::ggplot() +
         ggplot2::geom_boxplot(ggplot2::aes(x = .data[[input$xvar]],
                                            y = .data[[input$yvar]]),
