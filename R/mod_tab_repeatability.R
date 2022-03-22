@@ -12,6 +12,7 @@ mod_tab_repeatability_ui <- function(id){
   tagList(
     column(
       width = 6,
+      br(),
       shinydashboard::box(
         title = "Select a standard",
         width = NULL,
@@ -25,6 +26,7 @@ mod_tab_repeatability_ui <- function(id){
     ),
     column(
       width = 6,
+      br(),
       DT::dataTableOutput(ns("table"))
     )
   )
@@ -54,7 +56,7 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
       }
       
       menu <- list(sample_type_menu, 
-                   groups_menu)
+                   get0("groups_menu"))
       menu[sapply(menu, is.null)] <- NULL
       
       return(menu)

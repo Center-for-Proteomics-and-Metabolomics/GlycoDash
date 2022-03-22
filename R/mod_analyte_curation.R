@@ -166,8 +166,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     )
     
     output$information <- renderUI({
-      # req(all(purrr::map_lgl(info,
-      #                        ~ isTruthy(.x()))))
       
       mod_information_box_ui(ns("information_box_ui_1"))
         
