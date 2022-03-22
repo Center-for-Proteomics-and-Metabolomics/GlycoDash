@@ -49,6 +49,7 @@ golem::add_module( name = "derived_traits" )
 golem::add_module( name = "repeatability" ) 
 golem::add_module( name = "data_exploration" ) 
 golem::add_module( name = "information_box" )
+golem::add_module( name = "tab_repeatability" )
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
