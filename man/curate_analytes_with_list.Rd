@@ -16,7 +16,9 @@ curation process. This can be a list with character strings, a character
 vector or a dataframe consisting of a single column with character strings.}
 }
 \value{
-
+This function returns the same dataframe that was given as the
+  \code{data} argument, but filtered so that only those analytes that are in
+  \code{analyte_list} remain.
 }
 \description{
 Analyte curation based on a list
@@ -34,7 +36,7 @@ long_data <- curate_spectra(data = long_data,
 
 curated_spectra <- long_data \%>\%
    dplyr::filter(passed_curation == TRUE)
-   
+
 analyte_list_file <- system.file("inst",
                                  "extdata",
                                  "Analyte_list.xlsx",

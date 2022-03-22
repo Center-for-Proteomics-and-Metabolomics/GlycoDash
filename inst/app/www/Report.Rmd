@@ -1,0 +1,42 @@
+---
+title: "Report"
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+params: 
+  lacytools_summary: blub
+  plate_design: !r c("test1", "test2")
+  metadata: !r c("metadata_file.xlsx")
+  manual_sample_types: TRUE
+  sample_types_file: "sample_types.rds"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Data import
+## Files
+- LacyTools summary file: `r params$lacytools_summary`
+- Plate design file(s): `r paste(params$plate_design, collapse = " and ")`
+- Metadata file(s): `r paste(params$metadata, collapse = " and ")`
+
+## Settings
+Sample types were added `r ifelse(params$manual_sample_types, "manually", "automatically")`.
+
+```{r results='asis'}
+
+if (params$manual_sample_types) {
+  text <- cat("Sample types file: \"",
+            params$sample_types_file,
+            "\"")
+}
+
+```
+# Spectra curation
+## Settings
+- Analyte quality criteria:
+  - Acceptable mass accuracy range: 
+  - Max. IPQ value:
+  - Min. S/N ratio:

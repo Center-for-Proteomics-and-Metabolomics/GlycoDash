@@ -103,7 +103,10 @@ curate_analytes <- function(data, group_to_ignore, sample_types_to_ignore, cut_o
 #'   curation process. This can be a list with character strings, a character
 #'   vector or a dataframe consisting of a single column with character strings.
 #'
-#' @return
+#' @return This function returns the same dataframe that was given as the
+#'   \code{data} argument, but filtered so that only those analytes that are in
+#'   \code{analyte_list} remain.
+#'   
 #' @export
 #'
 #' @examples
@@ -119,14 +122,14 @@ curate_analytes <- function(data, group_to_ignore, sample_types_to_ignore, cut_o
 #'
 #' curated_spectra <- long_data %>%
 #'    dplyr::filter(passed_curation == TRUE)
-#'    
+#'
 #' analyte_list_file <- system.file("inst",
 #'                                  "extdata",
 #'                                  "Analyte_list.xlsx",
 #'                                  package = "glycodash")
-#' 
+#'
 #' analyte_list <- readxl::read_excel(analyte_list_file)
-#' 
+#'
 #' curate_analytes_with_list(data = curated_spectra,
 #'                           analyte_list = analyte_list)
 #'                           
