@@ -50,6 +50,7 @@ golem::add_module( name = "repeatability" )
 golem::add_module( name = "data_exploration" ) 
 golem::add_module( name = "information_box" )
 golem::add_module( name = "tab_repeatability" )
+golem::add_module( name = "export" )
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*

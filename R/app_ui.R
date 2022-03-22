@@ -26,12 +26,14 @@ app_ui <- function(request) {
                                    tabName = "analyte_curation"),
           shinydashboard::menuItem("Normalization", 
                                    tabName = "normalization"),
-          shinydashboard::menuItem("Derived Traits", 
+          shinydashboard::menuItem("Derived Traits (optional)", 
                                    tabName = "derived_traits"),
-          shinydashboard::menuItem("Repeatability", 
+          shinydashboard::menuItem("Repeatability (optional)", 
                                    tabName = "repeatability"),
-          shinydashboard::menuItem("Data Exploration", 
-                                   tabName = "data_exploration")
+          shinydashboard::menuItem("Data Exploration (optional)", 
+                                   tabName = "data_exploration"),
+          shinydashboard::menuItem("Export results",
+                                   tabName = "export")
           )
         ),
       
@@ -68,6 +70,10 @@ app_ui <- function(request) {
           shinydashboard::tabItem(
             "data_exploration",
             mod_data_exploration_ui("data_exploration_ui_1")
+          ),
+          shinydashboard::tabItem(
+            "export",
+            mod_export_ui("export_ui_1")
           )
         )
       ),
