@@ -106,23 +106,16 @@ create_analyte_curation_table(analyte_curated_data = analyte_curated_data,
 
 analyte_list_file <- system.file("inst",
                                  "extdata",
-                                 "Analyte_list.xlsx",
+                                 "analyte_list_df.rds",
                                  package = "glycodash")
 
-analyte_list <- readxl::read_excel(analyte_list_file,
-                                   col_names = FALSE)
-analyte_list <- analyte_list$...1
+analyte_list <- load_and_assign(analyte_list_file)
 
-analytes_to_include <- purrr::map(analyte_list,
-                                  function(analyte) {
-                                    stringr::str_subset(string = unique(curated_spectra$analyte),
-                                                        pattern = paste0(analyte, 
-                                                                         "$"))
-                                  }) %>% 
-  unlist(.)
+# analyte_list <- readxl::read_excel(analyte_list_file,
+#                                    col_names = FALSE)
 
-analyte_curated_data <- curated_spectra %>% 
-  dplyr::filter(analyte %in% analytes_to_include)
+analyte_curated_data <- curate_analytes_with_list(data = curated_spectra,
+                                                  analyte_list = analyte_list)
 
 ```
 

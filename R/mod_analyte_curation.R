@@ -162,19 +162,15 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     info <- list(
       curated_analytes = reactive(x$curated_analytes),
       cut_off = reactive(input$cut_off),
-      analyte_curated_data = reactive(x$analyte_curated_data)
+      analyte_curated_data = reactive(x$analyte_curated_data),
+      method = reactive(input$method)
     )
     
     output$information <- renderUI({
-      
       mod_information_box_ui(ns("information_box_ui_1"))
-        
     })
     
     observe({
-      # req(all(purrr::map_lgl(info,
-      #                        ~ isTruthy(.x()))))
-      
       mod_information_box_server("information_box_ui_1",
                                  info = info,
                                  clusters = clusters)
@@ -199,17 +195,17 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     # it's the wrong filetype:
     observeEvent(input$analyte_list, {
       req(ext_analyte_list())
+      shinyFeedback::hideFeedback("analyte_list")
       if (ext_analyte_list() == "rds") {
         x$analyte_list <- load_and_assign(input$analyte_list$datapath)
       } else { if (ext_analyte_list() %in% c("xlsx", "xls")) {
-        x$analyte_list <- readxl::read_excel(input$analyte_list$datapath,
-                                             col_names = FALSE)
+        x$analyte_list <- readxl::read_excel(input$analyte_list$datapath)
       } 
       }
       
-      if (is.data.frame(x$analyte_list)) {
-        x$analyte_list <- x$analyte_list$...1
-      }
+      # if (is.data.frame(x$analyte_list)) {
+      #   x$analyte_list <- x$analyte_list$...1
+      # }
       
       shinyFeedback::feedbackWarning(inputId = "analyte_list", 
                                      show = !(ext_analyte_list() %in% c("rds", "xlsx", "xls")),
@@ -220,21 +216,24 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       # x$curated_analytes <- NULL
       # x$analyte_curated_data <- NULL
       if (input$method == "Curate analytes based on data") {
-        group_to_ignore <- stringr::str_extract(string = input$ignore_samples,
-                                                 pattern = paste0(unique(x$data$group),
-                                                                  collapse = "|")) %>% 
+        group_to_ignore <- stringr::str_extract(
+          string = input$ignore_samples,
+          pattern = paste0(unique(x$data$group),
+                           collapse = "|")) %>% 
           na.omit(.)
         
-        sample_types_to_ignore <- stringr::str_extract(string = input$ignore_samples,
-                                                       pattern = paste0(unique(x$data$sample_type),
-                                                                        collapse = "|")) %>% 
+        sample_types_to_ignore <- stringr::str_extract(
+          string = input$ignore_samples,
+          pattern = paste0(unique(x$data$sample_type),
+                           collapse = "|")) %>% 
           na.omit(.)
         
         # Perform analyte curation:
-        x$curated_analytes <- curate_analytes(data = x$data,
-                                              group_to_ignore = group_to_ignore,
-                                              sample_types_to_ignore = sample_types_to_ignore,
-                                              cut_off_percentage = input$cut_off)
+        x$curated_analytes <- curate_analytes(
+          data = x$data,
+          group_to_ignore = group_to_ignore,
+          sample_types_to_ignore = sample_types_to_ignore,
+          cut_off_percentage = input$cut_off)
         
         passing_analytes <- x$curated_analytes %>% 
           dplyr::filter(passed_curation == TRUE) %>% 
@@ -246,24 +245,38 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
         showNotification("Analyte curation has been performed based on the data.", 
                          type = "message")
         
-      } else { if (input$method == "Supply an analyte list") {
+      } 
+      
+      if (input$method == "Supply an analyte list") {
         
-        analytes_to_include <- purrr::map(x$analyte_list,
-                                          function(analyte) {
-                                            stringr::str_subset(string = unique(x$data$analyte),
-                                                                pattern = paste0("^",
-                                                                                 analyte, 
-                                                                                 "$"))
-                                          }) %>% 
-          unlist(.)
+        # analytes_to_include <- purrr::map(
+        #   x$analyte_list,
+        #   function(analyte) {
+        #     stringr::str_subset(string = unique(x$data$analyte),
+        #                         pattern = paste0("^",
+        #                                          analyte, 
+        #                                          "$"))
+        #   }) %>% 
+        #   unlist(.)
+        # 
+        # x$analyte_curated_data <- x$data %>% 
+        #   dplyr::filter(analyte %in% analytes_to_include)
         
-        x$analyte_curated_data <- x$data %>% 
-          dplyr::filter(analyte %in% analytes_to_include) #%>% 
-          #dplyr::select(-passed_curation)
-        
-        showNotification("Analyte curation has been performed based on the analyte list.", 
-                         type = "message")
-      }
+        tryCatch(expr = {
+          x$analyte_curated_data <- curate_analytes_with_list(
+            data = x$data,
+            analyte_list = x$analyte_list)
+          
+          showNotification("Analyte curation has been performed based on the analyte list.", 
+                           type = "message")
+          },
+          too_many_columns = function(c) {
+            showNotification(c$message, 
+                             type = "error")
+            shinyFeedback::feedbackDanger("analyte_list",
+                                          show = TRUE,
+                                          text = c$message)
+          })
       }
       
     })

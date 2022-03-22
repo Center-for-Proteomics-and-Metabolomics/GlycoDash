@@ -95,6 +95,73 @@ curate_analytes <- function(data, group_to_ignore, sample_types_to_ignore, cut_o
   return(curated_analytes)
 }
 
+#' Analyte curation based on a list
+#'
+#' @inheritParams curate_analytes
+#' @param analyte_list The list of analytes that should pass the analyte
+#'   curation process. This can be a list with character strings, a character
+#'   vector or a dataframe consisting of a single column with character strings.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' data("long_data")
+#' long_data <- curate_spectra(data = long_data,
+#'                             min_ppm_deviation = -20,
+#'                             max_ppm_deviation = 20,
+#'                             max_ipq = 0.2,
+#'                             min_sn = 9,
+#'                             clusters_regex = "IgGI1",
+#'                             group_to_filter = "Spike",
+#'                             sample_type_to_filter = "CN")
+#'
+#' curated_spectra <- long_data %>%
+#'    dplyr::filter(passed_curation == TRUE)
+#'    
+#' analyte_list_file <- system.file("inst",
+#'                                  "extdata",
+#'                                  "Analyte_list.xlsx",
+#'                                  package = "glycodash")
+#' 
+#' analyte_list <- readxl::read_excel(analyte_list_file)
+#' 
+#' curate_analytes_with_list(data = curated_spectra,
+#'                           analyte_list = analyte_list)
+#'                           
+curate_analytes_with_list <- function(data,
+                                      analyte_list) {
+  
+  if (is.data.frame(analyte_list)) {
+    if (ncol(analyte_list) > 1) {
+      rlang::abort(class = "too_many_columns",
+                   message = "The Excel file (or R dataframe) should contain only one column.")
+    }
+    analyte_list <- analyte_list[[1]]
+  }
+  
+  if (!("analyte" %in% colnames(data))) {
+    rlang::abort(class = "missing_column",
+                 message = "The required column \"analyte\" is missing from the data.")
+  }
+  
+  analytes_to_include <- purrr::map(
+    analyte_list,
+    function(analyte) {
+      stringr::str_subset(string = unique(data$analyte),
+                          pattern = paste0("^",
+                                           analyte, 
+                                           "$"))
+    }) %>% 
+    unlist(.)
+  
+  analyte_curated_data <- data %>% 
+    dplyr::filter(analyte %in% analytes_to_include)
+  
+  return(analyte_curated_data)
+  
+}
+
 #' Create a visual summary of the analyte curation process
 #'
 #' Create a plot showing the results of analyte curation for a single cluster.
