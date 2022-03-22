@@ -34,4 +34,9 @@ app_server <- function( input, output, session ) {
   mod_data_exploration_server(
     id = "data_exploration_ui_1",
     results_derived_traits = results_derived_traits)
+  
+  mod_export_server(
+    id = "export_ui_1",
+    results_derived_traits = results_derived_traits)
+  
 }
