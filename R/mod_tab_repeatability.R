@@ -10,28 +10,49 @@
 mod_tab_repeatability_ui <- function(id){
   ns <- NS(id)
   tagList(
-    column(
-      width = 6,
-      br(),
-      shinydashboard::box(
-        title = "Select a standard",
-        width = NULL,
-        solidHeader = TRUE,
-        status = "primary",
-        uiOutput(ns("standards_menu")),
-        actionButton(ns("assess_repeatability"),
-                     label = "Assess repeatability")
+    fluidPage(
+      fluidRow(
+        br(),
+        tags$style(
+          HTML(paste0("#",
+                      ns("assess_repeatability"),
+                      ".btn {float: left; padding: 6px 12px; border-color: #ddd; border: 1px solid;}"
+          ))
+        ),
+        shinydashboard::box(
+          title = "Select a standard",
+          width = 4,
+          solidHeader = TRUE,
+          status = "primary",
+          uiOutput(ns("standards_menu")),
+          actionButton(ns("assess_repeatability"),
+                       label = "Assess repeatability")
+        )
       ),
-      plotOutput(ns("plot"))
-    ),
-    column(
-      width = 6,
-      br(),
-      DT::dataTableOutput(ns("table"))
+      fluidRow(
+        column(
+          width = 12,
+          shinydashboard::box(
+            title = "Results",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            column(
+              width = 9,
+              plotOutput(ns("plot"))
+            ),
+            column(
+              width = 3,
+              br(),
+              DT::dataTableOutput(ns("table"))
+            )
+          )
+        )
+      )
     )
   )
 }
-    
+
 #' tab_repeatability Server Functions
 #'
 #' @noRd 
@@ -92,8 +113,16 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
       
       DT::datatable(data = for_table,
                     container = sketch,
-                    rownames = FALSE)
+                    rownames = FALSE,
+                    filter = "none",
+                    options = list(searching = FALSE,
+                                   paging = FALSE))
     })
+    
+    return(list(
+      plot = reactive({output$plot}),
+      table = reactive({output$table})
+    ))
     
   })
 }

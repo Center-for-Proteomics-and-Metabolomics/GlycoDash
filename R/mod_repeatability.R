@@ -18,7 +18,7 @@ mod_repeatability_ui <- function(id){
         tags$style(
           HTML(paste0("#",
                       ns("tabbed_box"),
-                      " .btn {float: right;}",
+                      " .btn {float: right; padding-top: 2px; border-color: #fff; border: 1.5px solid; padding-bottom: 2px}",
                       "#",
                       ns("tabbed_box"),
                       " .box-title {width: 100%;}",
@@ -48,13 +48,15 @@ mod_repeatability_ui <- function(id){
     )
   )
 }
-    
+
 #' repeatability Server Functions
 #'
 #' @noRd 
 mod_repeatability_server <- function(id, results_normalization, results_data_import){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    x <- reactiveValues()
     
     data <- reactive({
       results_normalization$normalized_data()
@@ -69,9 +71,9 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
     })
 
     observe({
-      mod_tab_repeatability_server("tab1",
-                                   data = data,
-                                   Ig_data = Ig_data)
+      x$results_first_tab <- mod_tab_repeatability_server("tab1",
+                                                        data = data,
+                                                        Ig_data = Ig_data)
     })
     
     observeEvent(input$add_tab, {
@@ -79,15 +81,20 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
                 tabPanel(title = paste("Standard",
                                        input$add_tab + 1),
                          mod_tab_repeatability_ui(ns("tab2")))
-                )
+      )
       
-      mod_tab_repeatability_server("tab2",
-                                   data = data,
-                                   Ig_data = Ig_data)
+      x$results_second_tab <-mod_tab_repeatability_server("tab2",
+                                                        data = data,
+                                                        Ig_data = Ig_data)
       
-      print(input$add_tab)
-
+      shinyjs::disable("add_tab")
+      
     })
+    
+    return(list(
+      first_tab = reactive({x$results_first_tab}),
+      second_tab = reactive({x$results_second_tab})
+    ))
     
   })
 }
