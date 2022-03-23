@@ -25,7 +25,7 @@ app_server <- function( input, output, session ) {
     id = "derived_traits_ui_1",
     results_normalization = results_normalization)
   
-  mod_repeatability_server(
+  results_repeatability <- mod_repeatability_server(
     id = "repeatability_ui_1",
     results_normalization = results_normalization,
     results_data_import = results_data_import
@@ -37,6 +37,11 @@ app_server <- function( input, output, session ) {
   
   mod_export_server(
     id = "export_ui_1",
-    results_derived_traits = results_derived_traits)
+    results_derived_traits = results_derived_traits,
+    results_data_import = results_data_import,
+    results_spectra_curation = results_spectra_curation,
+    results_analyte_curation = results_analyte_curation,
+    results_repeatability = results_repeatability
+    )
   
 }

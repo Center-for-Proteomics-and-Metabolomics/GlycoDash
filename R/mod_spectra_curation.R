@@ -258,7 +258,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
           })
         
         if(any(regex_overlap == TRUE)) {
-          req(x$clusters_no_overlap, cancelOutput = TRUE)
           purrr::map(cluster_inputIds(),
                      ~ shinyFeedback::feedbackDanger(.x,
                                                      show = TRUE,
@@ -349,7 +348,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
         dplyr::select(-passed_spectra_curation)
     })
     
-    output$curated_spectra_plot <- renderPlot({
+    curated_spectra_plot <- reactive({
       req(x$curated_spectra)
       # Move this code to a function instead?
       x$data_spectra_curated %>%  
@@ -370,6 +369,11 @@ mod_spectra_curation_server <- function(id, results_data_import){
                        strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
                        text = ggplot2::element_text(size = 16)) +
         ggpubr::border(size = 0.5)
+    })
+    
+    output$curated_spectra_plot <- renderPlot({
+     req(curated_spectra_plot())
+      curated_spectra_plot()
       })
     
     output$download <- downloadHandler(
@@ -392,7 +396,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
     )
     
     return(list(
-      curated_spectra = reactive({x$curated_spectra})
+      curated_spectra = reactive({x$curated_spectra}),
+      mass_acc = reactive({input$mass_accuracy}),
+      ipq = reactive({input$ipq}),
+      sn = reactive({input$sn}),
+      cut_off = reactive({input$cut_off_basis}),
+      plot = reactive({curated_spectra_plot()})
     ))
     
   })

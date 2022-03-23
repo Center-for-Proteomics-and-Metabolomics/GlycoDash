@@ -52,7 +52,7 @@ mod_data_import_ui <- function(id){
                     trigger = "hover",
                     placement = "right")
             ),
-            actionButton(ns("read_summary"), 
+            actionButton(ns("read_summary"),
                          "Convert the LacyTools summary file to an R-suitable format")
           ),
           shinydashboardPlus::box(
@@ -814,7 +814,14 @@ mod_data_import_server <- function(id){
     return(list(
       data_incl_plate_design = reactive({x$data_incl_plate_design}),
       data_incl_metadata = reactive({x$data_incl_metadata}),
-      Ig_data = reactive({input$Ig_data})
+      Ig_data = reactive({input$Ig_data}),
+      lacytools_summary = reactive({input$lacytools_summary$name}),
+      plate_design = reactive({input$plate_design$name}),
+                          # reactive({input$plate_design_specific$name}),
+                          # reactive({input$plate_design_total$name})),
+      metadata = reactive({input$metadata$name}),
+      manual_sample_types = reactive({x$response}),
+      sample_types_file = reactive({input$groups_file})
     ))
     
   })

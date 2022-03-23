@@ -1,0 +1,149 @@
+---
+title: "Report"
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+params: 
+  lacytools_summary: NA
+  plate_design: NA
+  metadata: NA
+  manual_sample_types: NA
+  sample_types_file: NA
+  mass_acc: NA
+  ipq: NA
+  sn: NA
+  spectra_curation_cut_off: NA
+  spectra_curation_plot: NA
+  analyte_curation_method: NA
+  ignore_samples: NA
+  cut_off_percentage: NA
+  analyte_list: NA
+  analyte_curation_plot: NA
+  analyte_curation_table: NA
+  derived_traits: NA
+  repeatability_1: NA
+  repeatability_2: NA
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Data import
+
+- LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
+- Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
+- Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", paste(params$metadata, collapse = " and "), "\""))`
+
+Sample types were added `r ifelse(params$manual_sample_types, "manually", "automatically")`.
+
+```{r results='asis'}
+
+if (params$manual_sample_types) {
+  text <- cat("Sample types file: \"",
+            params$sample_types_file,
+            "\"")
+}
+
+```
+
+## Spectra curation
+
+- Analyte quality criteria:
+  - Acceptable mass accuracy range: `r min(params$mass_acc)` - `r max(params$mass_acc)`
+  - Max. IPQ value: `r params$ipq`
+  - Min. S/N ratio: `r params$sn`
+- Basis for spectra curation cut-off: `r params$spectra_curation_cut_off`  
+
+
+```{r spectra-curation-plot, results='markup'}
+
+params$spectra_curation_plot +
+  ggplot2::theme(text = ggplot2::element_text(size = 12))
+
+```
+
+
+## Analyte curation
+
+
+```{r analyte-curation, results='asis'}
+
+if (params$analyte_curation_method == "Curate analytes based on data") {
+  text <- paste0(params$ignore_samples, collapse = ", ")
+  cat(
+      "- Method: based on data\n",
+      "- Samples excluded from analyte curation:",
+      text,
+      "\n- Cut-off percentage:",
+      params$cut_off,
+      "%")
+}
+
+if (params$analyte_curation_method == "Supply an analyte list") {
+  cat(
+    "- Method: based on analyte list\n",
+    "- Analyte list file: \"",
+    params$analyte_list,
+    "\""
+  )
+}
+```
+
+```{r analyte-curation-plot-table, results='markup'}
+
+# if (params$analyte_curation_method == "Curate analytes based on data") {
+#   if (length(params$analyte_curation_plot) > 1) {
+#     unlist(params$analyte_curation_plot,
+#            recursive = FALSE)
+#   } else {
+#     params$analyte_curation_plot
+#   }
+# }
+# 
+# if (length(params$analyte_curation_table) > 1) {
+#   unlist(params$analyte_curation_table,
+#          recursive = FALSE)
+# } else {
+#   params$analyte_curation_table
+# }
+
+```
+
+## Derived traits
+
+```{r derived-traits, results='asis'}
+
+if (is.null(params$derived_traits)) {
+  cat("No derived traits were calculated")
+} else {
+  cat("The following derived traits were calculated:\n\n- ",
+      paste(params$derived_traits, collapse = "\n- "))
+}
+
+```
+
+## Repeatability
+
+```{r repeatability-plots, results='markup'}
+
+# unlist(params$repeatability_1, 
+#        recursive = FALSE)
+# 
+# if (!is.null(params$repeatability_2)) {
+#   unlist(params$repeatability_2, 
+#        recursive = FALSE)
+# }
+
+```
+
+## Data exploration
+
+```{r data-exploration-plot, results='markup'}
+
+#params$data_exploration_plot
+
+```
+

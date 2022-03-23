@@ -26,7 +26,10 @@ mod_export_ui <- function(id){
                                        "Choose a file format:",
                                        choices = c("Excel file", "R object")),
             downloadButton(ns("download"), 
-                           "Download processed data")
+                           "Download processed data"),
+            br(),
+            downloadButton(ns("report"),
+                           "Generate report")
           )
         )
       )
@@ -38,7 +41,12 @@ mod_export_ui <- function(id){
 #' export Server Functions
 #'
 #' @noRd 
-mod_export_server <- function(id, results_derived_traits){
+mod_export_server <- function(id, 
+                              results_derived_traits,
+                              results_data_import,
+                              results_spectra_curation,
+                              results_analyte_curation,
+                              results_repeatability){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -73,6 +81,46 @@ mod_export_server <- function(id, results_derived_traits){
                                  file = file),
                "Excel file" = writexl::write_xlsx(data_to_download, 
                                                   path = file))
+      }
+    )
+    
+    output$report <- downloadHandler(
+      filename = function() {
+        todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
+                                                       pattern = "-",
+                                                       replacement = ""))
+        paste0(todays_date, "_data_processing_report.html")
+      },
+      content = function(file) {
+        params <- list(lacytools_summary = results_data_import$lacytools_summary(),
+                       plate_design = results_data_import$plate_design(),
+                       metadata = results_data_import$metadata(),
+                       manual_sample_types = results_data_import$manual_sample_types(),
+                       sample_types_file = results_data_import$sample_types_file(),
+                       mass_acc = results_spectra_curation$mass_acc(),
+                       ipq = results_spectra_curation$ipq(),
+                       sn = results_spectra_curation$sn(),
+                       spectra_curation_cut_off = results_spectra_curation$cut_off(),
+                       spectra_curation_plot = results_spectra_curation$plot(),
+                       analyte_curation_method = results_analyte_curation$method(),
+                       ignore_samples = results_analyte_curation$ignore_samples(),
+                       cut_off_percentage = results_analyte_curation$cut_off(),
+                       analyte_list = results_analyte_curation$analyte_list(),
+                       #analyte_curation_plot = results_analyte_curation$plot(),
+                       #analyte_curation_table = results_analyte_curation$table(),
+                       derived_traits = results_derived_traits$derived_traits()#,
+                       #repeatability_1 = results_repeatability$first_tab(),
+                       #repeatability_2 = results_repeatability$second_tab()
+                       )
+        
+        temp_report <- file.path(tempdir(), "Report.Rmd")
+        file.copy("Report.Rmd", temp_report, overwrite = TRUE)
+        
+        rmarkdown::render(temp_report, 
+                          output_file = file,
+                          params = params,
+                          envir = new.env(parent = globalenv())
+        )
       }
     )
     
