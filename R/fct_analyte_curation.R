@@ -325,7 +325,8 @@ create_analyte_curation_table <- function(analyte_curated_data, selected_cluster
                                                                   "No"),
                        values_fill = "No")
   
-  analyte_curation_table <- DT::datatable(analyte_curation_dataframe) %>% 
+  analyte_curation_table <- DT::datatable(analyte_curation_dataframe,
+                                          options = list(searching = FALSE)) %>% 
     DT::formatStyle(columns = 2:ncol(analyte_curation_dataframe),
                     color = DT::styleEqual(levels = c("Yes", 
                                                       "No"), 

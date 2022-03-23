@@ -44,7 +44,8 @@ visualize_repeatability <- function(repeatability_data) {
                                                              labels = function(x) paste0(x,
                                                                                          "%"))) +
     ggplot2::scale_x_discrete(name = "Analyte") +
-    ggplot2::scale_fill_discrete(name = "Plate")
+    ggplot2::scale_fill_brewer(palette = "Set2", 
+                               name = "Plate")
   
   return(plot)
 }
