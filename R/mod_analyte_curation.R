@@ -61,9 +61,9 @@ mod_analyte_curation_ui <- function(id){
             div(
               id = ns("curation_based_on_data"),
               selectizeInput(ns("ignore_samples"),
-                          "Sample types to ignore regarding analyte curation:",
-                          choices = c("Total", "Blanks", "Negative controls"),
-                          multiple = TRUE) %>% 
+                             "Sample types to ignore regarding analyte curation:",
+                             choices = c("Total", "Blanks", "Negative controls"),
+                             multiple = TRUE) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
                   content = HTML(paste0(
@@ -119,9 +119,16 @@ mod_analyte_curation_ui <- function(id){
         )
       ),
       fluidRow(
-        column(
-          width = 12,
-          uiOutput(ns("information"))
+        div(
+          id = ns("tabbed_box"),
+          shinydashboard::box(
+            width = 12,
+            solidHeader = TRUE,
+            status = "primary",
+            title = "Information on analyte curation per cluster",
+            #uiOutput(ns("information")),
+            tabsetPanel(id = ns("tabs"))
+          )
         )
       )
     )
@@ -166,15 +173,39 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       method = reactive(input$method)
     )
     
-    output$information <- renderUI({
-      mod_information_box_ui(ns("information_box_ui_1"))
+    observeEvent(clusters(), {
+      
+      purrr::map(clusters(),
+                 function(cluster) {
+                   appendTab("tabs",
+                             select = TRUE,
+                             tabPanel(
+                               title = cluster,
+                               mod_information_box_ui(ns(cluster))
+                             ))
+                 })
     })
     
     observe({
-      mod_information_box_server("information_box_ui_1",
-                                 info = info,
-                                 clusters = clusters)
+      x$mod_results <- purrr::map(
+        clusters(),
+        function(cluster) {
+          mod_information_box_server(cluster,
+                                     info = info,
+                                     cluster = cluster)
+        })
+      
     })
+    
+    # output$information <- renderUI({
+    #   mod_information_box_ui(ns("information_box_ui_1"))
+    # })
+    # 
+    # observe({
+    #   x$mod_results <- mod_information_box_server("information_box_ui_1",
+    #                                             info = info,
+    #                                             clusters = clusters)
+    # })
     
     # The selection menu for input$ignore_samples is updated so that the choices
     # are sample_types and groups that are present in the data.
@@ -212,6 +243,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       # x$curated_analytes <- NULL
       # x$analyte_curated_data <- NULL
       if (input$method == "Curate analytes based on data") {
+        
+        
         group_to_ignore <- stringr::str_extract(
           string = input$ignore_samples,
           pattern = paste0(unique(x$data$group),
@@ -306,7 +339,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     )
     
     return(list(
-      analyte_curated_data = reactive({x$analyte_curated_data})
+      analyte_curated_data = reactive({x$analyte_curated_data}),
+      method = reactive({input$method}),
+      ignore_samples = reactive({input$ignore_samples}),
+      cut_off_percentage = reactive({input$cut_off}),
+      analyte_list = reactive({input$analyte_list$name}),
+      plot = reactive({x$mod_results$plots}),
+      table = reactive({x$mod_results$tables})
     ))
  
   })
