@@ -47,7 +47,8 @@ mod_export_server <- function(id,
                               results_data_import,
                               results_spectra_curation,
                               results_analyte_curation,
-                              results_repeatability){
+                              results_repeatability,
+                              results_data_exploration){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -126,7 +127,8 @@ mod_export_server <- function(id,
                        analyte_curation_plot = ac_plots_tables,
                        derived_traits = results_derived_traits$derived_traits(),
                        repeatability_1 = rep1_plot_table,
-                       repeatability_2 = rep2_plot_table
+                       repeatability_2 = rep2_plot_table,
+                       data_exploration_plot = results_data_exploration$plot()
                        )
         
         temp_report <- file.path(tempdir(), "Report.Rmd")

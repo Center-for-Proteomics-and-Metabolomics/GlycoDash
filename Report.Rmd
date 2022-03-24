@@ -24,6 +24,7 @@ params:
   derived_traits: NA
   repeatability_1: NA
   repeatability_2: NA
+  data_exploration_plot: NA
   
 ---
 
@@ -165,7 +166,7 @@ if (!is.null(params$repeatability_2$for_table)) {
 
 ```{r data-exploration-plot, results='markup'}
 
-#params$data_exploration_plot
+params$data_exploration_plot
 
 ```
 
