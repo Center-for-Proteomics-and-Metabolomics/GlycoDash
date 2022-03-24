@@ -92,23 +92,28 @@ if (params$analyte_curation_method == "Supply an analyte list") {
 }
 ```
 
-```{r analyte-curation-plot-table, results='markup'}
+```{r analyte-curation-plot-table, results='asis'}
 
-# if (params$analyte_curation_method == "Curate analytes based on data") {
-#   if (length(params$analyte_curation_plot) > 1) {
-#     unlist(params$analyte_curation_plot,
-#            recursive = FALSE)
-#   } else {
-#     params$analyte_curation_plot
-#   }
-# }
-# 
-# if (length(params$analyte_curation_table) > 1) {
-#   unlist(params$analyte_curation_table,
-#          recursive = FALSE)
-# } else {
-#   params$analyte_curation_table
-# }
+if (params$analyte_curation_method == "Curate analytes based on data") {
+  
+  tables <- params$analyte_curation_plot[names(params$analyte_curation_plot) == "table"]
+  plots <- params$analyte_curation_plot[names(params$analyte_curation_plot) == "plot"]
+  
+  for (table in tables) {
+    table %>% 
+      kableExtra::kbl() %>% 
+      kableExtra::kable_styling(bootstrap_options = "striped", 
+                                full_width = F, 
+                                position = "left") %>% 
+      htmltools::HTML() %>% 
+      print()
+  }
+  
+  for (plot in plots) {
+    print(plot)
+  }
+  
+}
 
 ```
 
@@ -127,15 +132,32 @@ if (is.null(params$derived_traits)) {
 
 ## Repeatability
 
-```{r repeatability-plots, results='markup'}
+```{r repeatability-plots, results='asis', warning=FALSE}
 
-# unlist(params$repeatability_1, 
-#        recursive = FALSE)
-# 
-# if (!is.null(params$repeatability_2)) {
-#   unlist(params$repeatability_2, 
-#        recursive = FALSE)
-# }
+print(params$repeatability_1$plot)
+
+params$repeatability_1$for_table %>% 
+      kableExtra::kbl() %>% 
+      kableExtra::kable_styling(bootstrap_options = "striped", 
+                                full_width = F, 
+                                position = "left") %>% 
+      htmltools::HTML() %>% 
+      print()
+
+
+if (!is.null(params$repeatability_2$plot)) {
+  print(params$repeatability_1$plot)
+}
+
+if (!is.null(params$repeatability_2$for_table)) {
+  params$repeatability_2$for_table %>% 
+      kableExtra::kbl() %>% 
+      kableExtra::kable_styling(bootstrap_options = "striped", 
+                                full_width = F, 
+                                position = "left") %>% 
+      htmltools::HTML() %>% 
+      print()
+}
 
 ```
 

@@ -187,6 +187,9 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     })
     
     observe({
+      req(clusters())
+      purrr::map(info,
+                ~ req(.x))
       x$mod_results <- purrr::map(
         clusters(),
         function(cluster) {
@@ -195,6 +198,20 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                      cluster = cluster)
         })
       
+      
+      #mod_results <- split(mod_results, names(mod_results))
+      
+      # mod_results <- unlist(mod_results, 
+      #                       recursive = FALSE)
+      # 
+      # purrr::map(mod_results,
+      #            ~ print(do.call(.x,
+      #                            args = list())))
+      
+      
+    })
+    
+    observe({
     })
     
     # output$information <- renderUI({
@@ -278,19 +295,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       
       if (input$method == "Supply an analyte list") {
         
-        # analytes_to_include <- purrr::map(
-        #   x$analyte_list,
-        #   function(analyte) {
-        #     stringr::str_subset(string = unique(x$data$analyte),
-        #                         pattern = paste0("^",
-        #                                          analyte, 
-        #                                          "$"))
-        #   }) %>% 
-        #   unlist(.)
-        # 
-        # x$analyte_curated_data <- x$data %>% 
-        #   dplyr::filter(analyte %in% analytes_to_include)
-        
         tryCatch(expr = {
           x$analyte_curated_data <- curate_analytes_with_list(
             data = x$data,
@@ -344,8 +348,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       ignore_samples = reactive({input$ignore_samples}),
       cut_off_percentage = reactive({input$cut_off}),
       analyte_list = reactive({input$analyte_list$name}),
-      plot = reactive({x$mod_results$plots}),
-      table = reactive({x$mod_results$tables})
+      plots = reactive({x$mod_results})
     ))
  
   })

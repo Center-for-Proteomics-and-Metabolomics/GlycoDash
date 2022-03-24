@@ -267,13 +267,9 @@ plot_analyte_curation <- function(curated_analytes,
 #' This function can be used to show the results from the
 #' \code{\link{curate_analytes}} function. It will create a datatable with all
 #' analytes and their charge states that passed curation.
-#' 
-#' @param analyte_curated_data Your data after spectra curation (see
-#'   \code{\link{curate_spectra}}), but filtered so that only analytes are
-#'   included that passed curation with the \code{\link{curate_analytes}}
-#'   function (see example below).
-#' @param selected_cluster The cluster for which the analyte curation results
-#'   should be shown.
+#'
+#' @param dataframe_for_table The result of the
+#'   \code{\link{prepare_analyte_curation_table}} function.
 #' @return A \code{\link[DT]{datatable}} with one row per analyte that passed
 #'   curation, and one column per charge state present in the data to indicate
 #'   whether that charge state of the analyte passed curation.
@@ -308,10 +304,74 @@ plot_analyte_curation <- function(curated_analytes,
 #'    dplyr::select(-passed_curation)
 #'
 #' analyte_curated_data <- dplyr::left_join(passing_analytes, curated_spectra)
+#' 
+#' dataframe <- prepare_analyte_curation_table(analyte_curated_data = curated_analytes,
+#'                                             selected_cluster = "IgGI1")
 #'
-#' create_analyte_curation_table(analyte_curated_data = curated_analytes,
-#'                               selected_cluster = "IgGI1")
-create_analyte_curation_table <- function(analyte_curated_data, selected_cluster) {
+#' create_analyte_curation_table(dataframe_for_table = dataframe)
+#' 
+create_analyte_curation_table <- function(dataframe_for_table) {
+  
+  analyte_curation_table <- DT::datatable(dataframe_for_table,
+                                          options = list(searching = FALSE)) %>% 
+    DT::formatStyle(columns = 2:ncol(dataframe_for_table),
+                    color = DT::styleEqual(levels = c("Yes", 
+                                                      "No"), 
+                                           values = c("#3498DB", 
+                                                      "#E74C3C")))
+  
+  return(analyte_curation_table)
+  
+}
+
+#' Prepare a dataframe for the analyte curation table
+#'
+#' @param analyte_curated_data Your data after spectra curation (see
+#'   \code{\link{curate_spectra}}), but filtered so that only analytes are
+#'   included that passed curation with the \code{\link{curate_analytes}}
+#'   function (see example below).
+#' @param selected_cluster The cluster for which the analyte curation results
+#'   should be shown.
+#'
+#' @return This function returns a dataframe that can be passed as the
+#'   \code{dataframe_for_table} argument to the
+#'   \code{\link{create_analyte_curation_table}} function.
+#' @export
+#'
+#' @examples
+#' data("long_data")
+#' long_data <- curate_spectra(data = long_data,
+#'                             min_ppm_deviation = -20,
+#'                             max_ppm_deviation = 20,
+#'                             max_ipq = 0.2,
+#'                             min_sn = 9,
+#'                             clusters_regex = "IgGI1",
+#'                             group_to_filter = "Spike",
+#'                             sample_type_to_filter = "CN")
+#'
+#' curated_spectra <- long_data %>%
+#'    dplyr::filter(passed_curation == TRUE)
+#'
+#' curated_analytes <- curate_analytes(
+#'                 data = curated_spectra,
+#'                 groups_to_ignore = "Total",
+#'                 sample_types_to_ignore = c("pool",
+#'                                            "IVIGg",
+#'                                            "CN",
+#'                                            "Visucon",
+#'                                            "PBS"),
+#'                 cut_off_percentage = 25)
+#'
+#' passing_analytes <- curated_analytes %>%
+#'    dplyr::filter(passed_curation == TRUE) %>%
+#'    dplyr::select(-passed_curation)
+#'
+#' analyte_curated_data <- dplyr::left_join(passing_analytes, curated_spectra)
+#' 
+#' dataframe <- prepare_analyte_curation_table(analyte_curated_data = curated_analytes,
+#'                                             selected_cluster = "IgGI1")
+#'                                             
+prepare_analyte_curation_table <- function(analyte_curated_data, selected_cluster) {
   
   analyte_curation_dataframe <- analyte_curated_data %>% 
     dplyr::ungroup() %>% 
@@ -325,14 +385,5 @@ create_analyte_curation_table <- function(analyte_curated_data, selected_cluster
                                                                   "No"),
                        values_fill = "No")
   
-  analyte_curation_table <- DT::datatable(analyte_curation_dataframe,
-                                          options = list(searching = FALSE)) %>% 
-    DT::formatStyle(columns = 2:ncol(analyte_curation_dataframe),
-                    color = DT::styleEqual(levels = c("Yes", 
-                                                      "No"), 
-                                           values = c("#3498DB", 
-                                                      "#E74C3C")))
-  
-  return(analyte_curation_table)
-  
+  return(analyte_curation_dataframe)
 }
