@@ -91,27 +91,33 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
         dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
     })
     
-    output$plot <- renderPlot({
+    plot <- reactive({
       req(x$repeatability)
       visualize_repeatability(x$repeatability)
     })
     
-    output$table <- DT::renderDataTable({
+    output$plot <- renderPlot({
+      plot()
+    })
+    
+    for_table <- reactive({
       req(x$variation_table)
-      
-      for_table <- x$variation_table %>% 
+      x$variation_table %>% 
         dplyr::mutate(intra_plate_variation = signif(intra_plate_variation,
                                                      digits = 3))
-      
+    })
+    
+    output$table <- DT::renderDataTable({
+      req(for_table())
       sketch <- htmltools::withTags(table(
         DT::tableHeader(c("Plate", "Intra-plate variation (%)")),
         DT::tableFooter(c("Inter-plate variation (%)", 
-                          signif(mean(for_table$intra_plate_variation, 
+                          signif(mean(for_table()$intra_plate_variation, 
                                       na.rm = TRUE),
                                  digits = 3)))
       ))
       
-      DT::datatable(data = for_table,
+      DT::datatable(data = for_table(),
                     container = sketch,
                     rownames = FALSE,
                     filter = "none",
@@ -120,8 +126,8 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
     })
     
     return(list(
-      plot = reactive({output$plot}),
-      table = reactive({output$table})
+      plot = plot,
+      for_table = for_table
     ))
     
   })

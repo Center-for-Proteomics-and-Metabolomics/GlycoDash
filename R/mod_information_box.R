@@ -62,12 +62,12 @@ mod_information_box_server <- function(id, info, cluster){
     info_table <- reactive({
       req(info$analyte_curated_data())
       
-      create_analyte_curation_table(analyte_curated_data = info$analyte_curated_data(),
-                                    selected_cluster = cluster)
+      prepare_analyte_curation_table(analyte_curated_data = info$analyte_curated_data(),
+                                     selected_cluster = cluster)
     })
     
     output$table <- DT::renderDT({
-      info_table()
+      create_analyte_curation_table(dataframe_for_table = info_table())
     })
     
     # observe({

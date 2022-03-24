@@ -28,6 +28,7 @@ mod_export_ui <- function(id){
             downloadButton(ns("download"), 
                            "Download processed data"),
             br(),
+            br(),
             downloadButton(ns("report"),
                            "Generate report")
           )
@@ -92,6 +93,22 @@ mod_export_server <- function(id,
         paste0(todays_date, "_data_processing_report.html")
       },
       content = function(file) {
+        
+        ac_plots_tables <- unlist(results_analyte_curation$plots(),
+                                  recursive = FALSE)
+        
+        ac_plots_tables <- purrr::map(ac_plots_tables,
+                                      ~ do.call(.x,
+                                                args = list()))
+        
+        rep1_plot_table <- purrr::map(results_repeatability$first_tab(),
+                                      ~ do.call(.x,
+                                                args = list()))
+        
+        rep2_plot_table <- purrr::map(results_repeatability$second_tab(),
+                                      ~ do.call(.x,
+                                                args = list()))
+        
         params <- list(lacytools_summary = results_data_import$lacytools_summary(),
                        plate_design = results_data_import$plate_design(),
                        metadata = results_data_import$metadata(),
@@ -106,11 +123,10 @@ mod_export_server <- function(id,
                        ignore_samples = results_analyte_curation$ignore_samples(),
                        cut_off_percentage = results_analyte_curation$cut_off(),
                        analyte_list = results_analyte_curation$analyte_list(),
-                       #analyte_curation_plot = results_analyte_curation$plot(),
-                       #analyte_curation_table = results_analyte_curation$table(),
-                       derived_traits = results_derived_traits$derived_traits()#,
-                       #repeatability_1 = results_repeatability$first_tab(),
-                       #repeatability_2 = results_repeatability$second_tab()
+                       analyte_curation_plot = ac_plots_tables,
+                       derived_traits = results_derived_traits$derived_traits(),
+                       repeatability_1 = rep1_plot_table,
+                       repeatability_2 = rep2_plot_table
                        )
         
         temp_report <- file.path(tempdir(), "Report.Rmd")
