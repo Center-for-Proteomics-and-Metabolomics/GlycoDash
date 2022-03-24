@@ -31,7 +31,7 @@ app_server <- function( input, output, session ) {
     results_data_import = results_data_import
   )
   
-  mod_data_exploration_server(
+  results_data_exploration <- mod_data_exploration_server(
     id = "data_exploration_ui_1",
     results_derived_traits = results_derived_traits)
   
@@ -41,7 +41,8 @@ app_server <- function( input, output, session ) {
     results_data_import = results_data_import,
     results_spectra_curation = results_spectra_curation,
     results_analyte_curation = results_analyte_curation,
-    results_repeatability = results_repeatability
+    results_repeatability = results_repeatability,
+    results_data_exploration = results_data_exploration
     )
   
 }

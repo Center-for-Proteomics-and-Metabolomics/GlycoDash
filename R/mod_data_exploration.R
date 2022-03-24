@@ -103,7 +103,7 @@ mod_data_exploration_server <- function(id, results_derived_traits){
       
     })
     
-    output$boxplot <- renderPlot({
+    my_plot <- reactive({
       req(filtered_data(),
           input$xvar,
           input$yvar)
@@ -137,6 +137,14 @@ mod_data_exploration_server <- function(id, results_derived_traits){
       }
       return(plot)
     })
+    
+    output$boxplot <- renderPlot({
+      my_plot()
+    })
+    
+    return(list(
+      plot = my_plot
+    ))
     
   })
 }
