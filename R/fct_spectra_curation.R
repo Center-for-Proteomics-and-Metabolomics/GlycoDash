@@ -124,8 +124,8 @@ do_criteria_check <- function(data,
   mass_acc_check <- dplyr::between(data$mass_accuracy_ppm, 
                                    min_ppm_deviation, 
                                    max_ppm_deviation)
-  IPQ_check <- data$isotopic_pattern_quality <= max_ipq
-  sn_check <- data$sn >= min_sn
+  IPQ_check <- data$isotopic_pattern_quality < max_ipq
+  sn_check <- data$sn > min_sn
   all_checks <- (mass_acc_check & IPQ_check & sn_check) %>% 
     tidyr::replace_na(., FALSE)
   
@@ -165,8 +165,7 @@ do_criteria_check <- function(data,
 #'                          max_ipq = 0.2,
 #'                          min_sn = 9)
 summarize_spectra_checks <- function(data_checked) {
-  required_columns <- list("group",
-                           "sample_type",
+  required_columns <- list("sample_type",
                            "sample_name",
                            "cluster",
                            "criteria_check")
@@ -179,10 +178,16 @@ summarize_spectra_checks <- function(data_checked) {
                 "."))
   }
   
+  grouping_variables <- c("group", "sample_type", "cluster", "sample_name")
+  
   spectra_check <- data_checked %>% 
-    dplyr::group_by(group, sample_type, cluster, sample_name) %>% 
+    # I'm using across() and any_of() because if the data is not Ig data, the
+    # column "group" doesn't exist:
+    dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
     dplyr::summarise(passing_proportion = sum(criteria_check)/dplyr::n(), 
-                     sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE]))
+                     sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE])) %>% 
+    dplyr::ungroup(.)
+  
   return(spectra_check)
 }
 
@@ -212,9 +217,9 @@ sd_p <- function(x, na.rm = FALSE) {
 #'
 #' @param spectra_check The dataframe returned by
 #'   \code{\link{summarize_spectra_checks()}}.
-#' @param group_to_filter The group (Specific or Total) to base spectra curation
+#' @param groups_to_filter The group (Specific or Total) to base spectra curation
 #'   cut-offs on.
-#' @param sample_type_to_filter The sample type to base spectra curation
+#' @param sample_types_to_filter The sample type to base spectra curation
 #'   cut-offs on.
 #'
 #' @return
@@ -230,16 +235,13 @@ sd_p <- function(x, na.rm = FALSE) {
 #' calculate_cut_offs(spectra_check = spectra_check,
 #'                    group_to_filter = "Spike",
 #'                    sample_type_to_filter = "CN")
-calculate_cut_offs <- function(spectra_check, group_to_filter, sample_type_to_filter) {
-  if (any(!(group_to_filter %in% spectra_check$group), 
-          !(sample_type_to_filter %in% spectra_check$sample_type))) {
-    stop("The group_to_filter and/or sample_type_to_filter are not present in spectra_check.")
-  } 
+calculate_cut_offs <- function(spectra_check, cut_off_basis) {
   
-  cut_offs <- spectra_check %>% 
-    # This filter should depend on the choice of the user
-    # Implement check for non-existing sample_types/groups
-    dplyr::filter(sample_type == sample_type_to_filter & group == group_to_filter) %>% 
+  cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
+                                                data = spectra_check)
+  
+  cut_offs <- cut_off_basis_samples %>%  
+    dplyr::group_by(cluster) %>% 
     dplyr::summarise(av_prop = mean(passing_proportion, na.rm = FALSE),
                      sd_prop = sd_p(passing_proportion, na.rm = FALSE),
                      cut_off_prop = av_prop + (3 * sd_prop),
@@ -285,7 +287,7 @@ calculate_cut_offs <- function(spectra_check, group_to_filter, sample_type_to_fi
 #'                group_to_filter = "Spike",
 #'                sample_type_to_filter = "CN")
 curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_deviation, 
-                           max_ipq, min_sn, group_to_filter, sample_type_to_filter) {
+                           max_ipq, min_sn, cut_off_basis) {
   data <- define_clusters(data = data,
                           clusters_regex = clusters_regex)
   checked_data <- do_criteria_check(data = data, 
@@ -295,10 +297,8 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
                                     min_sn = min_sn)
   spectra_check <- summarize_spectra_checks(checked_data)
   cut_offs <- calculate_cut_offs(spectra_check = spectra_check,
-                                 group_to_filter = group_to_filter,
-                                 sample_type_to_filter = sample_type_to_filter) %>% 
-    dplyr::ungroup(.) %>% 
-    dplyr::select(-c(sample_type, group))
+                                 cut_off_basis = cut_off_basis) %>% 
+    dplyr::ungroup(.)
   
   spectra_check <- dplyr::left_join(spectra_check, cut_offs, by = "cluster") %>% 
     dplyr::ungroup(.)
@@ -325,5 +325,94 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
     }
   }
   
-  return(curated_data)
+  return(list(curated_data = curated_data,
+              spectra_check = spectra_check))
+}
+
+filter_cut_off_basis <- function(cut_off_basis, data) {
+  
+  sample_types_to_filter <- stringr::str_extract(
+    string = cut_off_basis,
+    pattern = paste0(unique(data$sample_type),
+                     collapse = "|")) %>% 
+    na.omit(.)
+  
+  if (any(!(sample_types_to_filter %in% data$sample_type))) {
+    stop("One or more of the sample types in cut_off_basis are not present in the data.")
+  }
+  
+  if ("group" %in% colnames(data)) {
+    
+    groups_to_filter <- stringr::str_extract(
+      string = cut_off_basis,
+      pattern = paste0(unique(data$group),
+                       collapse = "|")) %>% 
+      na.omit(.)
+    
+    if (any(!(groups_to_filter %in% data$group))) {
+      stop("One or more of the groups in cut_off_basis are not present in the data.")
+    } 
+    
+    cut_off_basis_samples <- purrr::map2_dfr(
+      groups_to_filter,
+      sample_types_to_filter,
+      function(group_to_filter, sample_type_to_filter) {
+        data %>% 
+          dplyr::filter(group == group_to_filter & sample_type == sample_type_to_filter)
+      })
+    
+  } else {
+    
+    cut_off_basis_samples <- purrr::map_dfr(sample_types_to_filter,
+                                            function(sample_type_to_filter) {
+                                              data %>% 
+                                                dplyr::filter(sample_type == sample_type_to_filter)
+                                            })
+  }
+  
+  return(cut_off_basis_samples)
+}
+
+create_cut_off_plot <- function(spectra_check, cut_off_basis) {
+  
+  p <- spectra_check %>% 
+    ggplot2::ggplot(ggplot2::aes(x = passing_proportion,
+                                 y = sum_intensity)) +
+    ggplot2::geom_jitter(ggplot2::aes(color = sample_type),
+                        size = 1) +
+    ggplot2::theme_classic() +
+    ggpubr::border(size = 0.5) +
+    ggplot2::geom_hline(yintercept = spectra_check$cut_off_sum_int,
+                        linetype = "dashed") +
+    ggplot2::geom_vline(xintercept = spectra_check$cut_off_prop,
+                        linetype = "dashed") +
+    ggplot2::scale_color_brewer(palette = "Set2")
+  
+  if ("group" %in% colnames(spectra_check)) {
+    p <- p +
+      ggplot2::facet_wrap(~ group)
+  }
+  
+  cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
+                                                data = spectra_check)
+  
+  distinct_data_points <- cut_off_basis_samples %>% 
+    dplyr::distinct(passing_proportion, 
+                    sum_intensity,
+                    .keep_all = TRUE) %>% 
+    dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
+    dplyr::summarise(n = dplyr::n())
+  
+  ellipse_possible <- all(distinct_data_points$n >= 3)
+  
+  if (ellipse_possible) {
+    p <- p +
+      ggplot2::stat_ellipse(data = cut_off_basis_samples)
+  } else {
+    p <- p +
+      ggplot2::geom_point(data = cut_off_basis_samples,
+                          shape = 1, size = 2.5) 
+  }
+  
+  return(p)
 }

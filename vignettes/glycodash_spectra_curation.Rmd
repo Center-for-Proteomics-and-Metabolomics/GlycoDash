@@ -34,8 +34,8 @@ long_data <- curate_spectra(data = long_data,
                             max_ipq = 0.2,
                             min_sn = 9,
                             clusters_regex = "IgGI",
-                            group_to_filter = "Spike",
-                            sample_type_to_filter = "CN")
+                            groups_to_filter = "Spike",
+                            sample_types_to_filter = "CN")
 
 curated_spectra <- long_data %>% 
   dplyr::filter(passed_spectra_curation == TRUE) %>% 

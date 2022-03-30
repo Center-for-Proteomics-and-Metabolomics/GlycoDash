@@ -29,188 +29,100 @@ The data-import functions can be used to convert a LacyTools summary file to a f
 
 ```{r load-data}
 
-lacytools_file <- system.file("extdata", "LacyTools_summary.txt", package = "glycodash")
+lacytools_file <- system.file("extdata", "Tuebingen_LacyTools_summary.txt", package = "glycodash")
 
-# save(groups, file = "groups.rds")
+data <- read_lacytools_summary(lacytools_file,
+                               Ig_data = "Yes",
+                               keyword_total = "Total",
+                               keyword_specific = "Spike")
 
-data <- read_lacytools_summary(lacytools_file)
-
-# Reading in the platedesign from an Excel file, writing the platedesign 
-# into a .csv file (because this is required for the read_plate() function from plater) 
-# and reading the plates using the read_plate() function from the plater package.
-# I want users to upload an Excel file and not a .csv file, because if the csv file
-# is delimited with ";" instead of "," the read_plate() function no longer works.
-# If a user would have to save an Excel file as a .csv file manually, it cannot be 
-# guaranteed that the right delimiter would be used.
-
-read_plate_design <- function(plate_design_file) {
-  
-  plate_design <- readxl::read_excel(plate_design_file)
-  path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
-  readr::write_csv(plate_design, file = path_to_platedesign_csv)
-  plate_design <- plater::read_plate(file = path_to_platedesign_csv, 
-                                     well_ids_column = "well")
-  return(plate_design)
-}
-
-# Processing the plate_design dataframe (pivoting to a long format and adding
-# a plate_well column)
-# Exclude the sample_type part since this could be different for different data?
-
-# Make this into a process plate_design function
-
-plate_design_file <- system.file("extdata",
-                                 "plate_design.xlsx",
+plate_design_file_s <- system.file("extdata",
+                                 "For_plater_Tuebingen_COVID_Specific.xlsx",
                                  package = "glycodash")
 
-process_plate_design <- function (plate_design) {
-  plate_design <- plate_design %>%
-  tidyr::pivot_longer(cols = -well,
-                      names_to = "plate",
-                      values_to = "sample_id") %>%
-    dplyr::mutate(plate = stringr::str_extract(plate, "\\d+"),
-                  well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
-                  plate_well = paste(plate, well, sep = "_")) %>% 
-    dplyr::arrange(plate_well) %>% 
-    dplyr::select(-c(plate, well)) %>% 
-    tidyr::extract(col = sample_id, 
-                   into = c("sample_type"), 
-                   regex = "([[:alpha:]]+)",
-                   remove = FALSE)
+plate_design_file_t <- system.file("extdata",
+                                 "For_plater_Tuebingen_COVID_Total.xlsx",
+                                 package = "glycodash")
+
+plate_design_s <- read_and_process_plate_design(plate_design_file_s) %>% 
+  dplyr::mutate(group = "Spike")
+plate_design_t <- read_and_process_plate_design(plate_design_file_t) %>% 
+  dplyr::mutate(group = "Total")
+
+plate_design <- dplyr::full_join(plate_design_s,
+                          plate_design_t)
+
+data <- dplyr::left_join(data,
+                      plate_design)
+
+```
+
+```{r}
+
+cut_off_basis <- c("Spike visucon", "Spike PBS")
+
+if ("group" %in% colnames(data)) {
+  groups_to_filter <- stringr::str_extract(
+    string = cut_off_basis,
+    pattern = paste0(unique(data$group),
+                     collapse = "|")) %>% 
+    na.omit(.)
+} else {
+  groups_to_filter <- NULL
+}
+
+# Extract the sample_type out of input$cut_off_basis that was selected by
+# the user as cut_off_basis:
+sample_types_to_filter <- stringr::str_extract(
+  string = cut_off_basis,
+  pattern = paste0(unique(data$sample_type),
+                   collapse = "|")) %>% 
+  na.omit(.)
+
+
+data <- define_clusters(data = data,
+                        clusters_regex = "IgGI1")
+
+checked_data <- do_criteria_check(data = data, 
+                                  min_ppm_deviation = -40,
+                                  max_ppm_deviation = 40,
+                                  max_ipq = 0.25,
+                                  min_sn = 9)
+
+grouping_variables <- c("group", "sample_type", "cluster", "sample_name")
+
+spectra_check <- checked_data %>% 
+  # I'm using across() and any_of() because if the data is not Ig data, the
+  # column "group" doesn't exist:
+  dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
+  dplyr::summarise(passing_proportion = sum(criteria_check)/dplyr::n(), 
+                   sum = sum(criteria_check),
+                   n = dplyr::n(),
+                   sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE])) %>% 
+  dplyr::ungroup(.)
+
+cut_offs <- calculate_cut_offs(spectra_check = spectra_check,
+                               groups_to_filter = c("Spike", "Spike"),
+                               sample_types_to_filter = c("PBS", "visucon")) %>% 
+  dplyr::ungroup(.)
+
+spectra_check <- dplyr::left_join(spectra_check, cut_offs, by = "cluster") %>% 
+  dplyr::ungroup(.)
+
+passing_spectra <- spectra_check %>% 
+  dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int))
+
+# Turn into function:
+
+
+
+
   
-  plate_design <- handle_duplicates(plate_design)
+cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
+                                              data = spectra_check)
+
+create_cut_off_plot(spectra_check = spectra_check,
+                    cut_off_basis_samples = cut_off_basis_samples)
   
-  return(plate_design)
-}
-
-# Show automatically determined groups and ask user if they want to edit them
-
-# Ask Tamas whether plate_design files always look like this and whether duplicates
-# are always handled in this way.
-handle_duplicates <- function(plate_design) {
-  new_sample_ids <- vector()
-  new_sample_types <- vector()
-  duplicate <- vector()
-  for (i in 1:length(plate_design$sample_id)) {
-    if (i == 1 & plate_design$sample_id[i] == "duplicate") {
-      stop(print("Error: first sample is a duplicate."))
-      }
-    if (plate_design$sample_id[i] == "duplicate") {
-      new_sample_ids[i] <- plate_design$sample_id[i-1]
-      new_sample_types[i] <- plate_design$sample_type[i-1]
-      duplicate[i] <- TRUE
-      } else {
-        new_sample_ids[i] <- plate_design$sample_id[i]
-        new_sample_types[i] <- plate_design$sample_type[i]
-        duplicate[i] <- FALSE
-    }
-  }
-  new_plate_design <- plate_design %>% 
-    dplyr::mutate(sample_id = new_sample_ids,
-                  sample_type = new_sample_types,
-                  duplicate = duplicate)
-  return(new_plate_design)
-}
-
-read_and_process_plate_design <- function(plate_design_file) {
-  plate_design <- read_plate_design(plate_design_file)
-  plate_design <- process_plate_design(plate_design)
-  return(plate_design)
-}
-
-groups_file <- system.file("extdata", "groups.rds", package = "glycodash")
-load(groups_file)
-
-
-plate_design <- read_and_process_plate_design(plate_design_file)
-plate_design <- plate_design %>% 
-  dplyr::select(-sample_type)
-plate_design <- dplyr::left_join(plate_design, groups, by = "sample_id") %>% 
-  dplyr::distinct()
-
-# make a read metadata function, choose date columns and sample_id column?
-
-date_with_text <- function(date_text_values, origin = "1899-12-30"){
-  no_nas <- date_text_values[!is.na(date_text_values)]
-  test <- suppressWarnings(as.numeric(no_nas))
-  num <- suppressWarnings(as.numeric(date_text_values))
-  dates <- as.Date(num, origin = origin)
-  if(anyNA(test)){
-    dates <- as.character(dates)
-    dates[is.na(num)] <- as.character(date_text_values[is.na(num)])
-    message(paste("Some date entries in", 
-                  dplyr::cur_column(), 
-                  "contain text. Output will have class character."))
-  }
-  return(dates)
-}
-
-read_metadata <- function (metadata_file, sample_id_column) {
-  metadata <- readxl::read_excel(metadata_file,
-                               col_types = "text", 
-                               na = c("", "NA"))
-  metadata <- metadata %>% 
-    dplyr::rename_with(.cols = tidyselect::everything(), 
-                       .fn = snakecase::to_snake_case) 
-}
-
-metadata_file <- system.file("extdata",
-                             "Metadata.xlsx",
-                             package = "glycodash")
-
-date_cols <- c("start_of_symptoms", "collection_date")
-metadata <- read_metadata(metadata_file)
-metadata <- metadata %>% 
-  dplyr::mutate(across(date_cols, date_with_text)) %>% 
-  dplyr::rename(sample_id = id_on_sample_tube)
-
-link_metadata_to_platedesign <- function(plate_design, metadata) {
-  no_match <- check_matches(plate_design, metadata)
-  metadata_left <- dplyr::left_join(plate_design, metadata, by = "sample_id")
-  return(list(metadata_left, no_match))
-}
-
-check_sample_id_matches <- function (plate_design, metadata) {
-  # no_match are the sample_ids that are present in the plate_design,
-  # but missing in the metadata
-  no_match <- setdiff(plate_design$sample_id, metadata$sample_id)
-  if (!rlang::is_empty(no_match)) {
-    warning(paste(length(no_match),
-                  "sample_ids in platedesign don't have a match in the metadata.",
-                  "The unmatched sample_ids can be found in the vector \"no_match\"."))
-    return(no_match)
-  } else {
-    message("All sample_ids in platedesign have a match in the metadata.")
-  }
-}
-
-data <- dplyr::left_join(data, plate_design, by = "plate_well") %>% 
-  distinct()
-
-a <- suppressWarnings(check_sample_id_matches(data, metadata))
-
-empty_data <- data.frame("group" = c("", "", ""),
-                         "pattern" = c("", "", ""))
-
-DT::datatable(empty_data)
-
-
-data("metadata_cleaned")
-metadata_recovida_file <- system.file("inst",
-                                      "extdata",
-                                      "recovida_metadata.rds",
-                                      package = "glycodash")
-metadata_recovida <- load_and_assign(metadata_recovida_file)
-
-metadata_cleaned <- metadata_cleaned %>% 
-  dplyr::rename(sample_id = `ID on Sample tube`)
-
-a <- dplyr::full_join(metadata_recovida, metadata_cleaned) %>% 
-  distinct()
-
-test <- dplyr::left_join(data, a, by = "sample_id", suffix = c("_data", "_meta")) %>% 
-  distinct()
-
-a <- test %>% dplyr::select(duplicate, duplicate_data, duplicate_meta)
 ```
 

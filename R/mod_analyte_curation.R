@@ -227,8 +227,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     # The selection menu for input$ignore_samples is updated so that the choices
     # are sample_types and groups that are present in the data.
     observeEvent(x$data, {
-      options <- c(paste(unique(x$data$sample_type), "samples"), 
-                   paste(unique(x$data$group), "samples"))
+      
+      if ("group" %in% colnames(x$data)) {
+        options <- c(paste(unique(x$data$sample_type), "samples"), 
+                     paste(unique(x$data$group), "samples"))
+      } else {
+        options <- c(paste(unique(x$data$sample_type), "samples"))
+      }
+      
       updateSelectizeInput(inputId = "ignore_samples",
                            choices = c("", options))
     })
@@ -261,12 +267,15 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       # x$analyte_curated_data <- NULL
       if (input$method == "Curate analytes based on data") {
         
-        
-        group_to_ignore <- stringr::str_extract(
-          string = input$ignore_samples,
-          pattern = paste0(unique(x$data$group),
-                           collapse = "|")) %>% 
-          na.omit(.)
+        if ("group" %in% colnames(x$data)) {
+          group_to_ignore <- stringr::str_extract(
+            string = input$ignore_samples,
+            pattern = paste0(unique(x$data$group),
+                             collapse = "|")) %>% 
+            na.omit(.)
+        } else {
+          group_to_ignore <- NULL
+        }
         
         sample_types_to_ignore <- stringr::str_extract(
           string = input$ignore_samples,

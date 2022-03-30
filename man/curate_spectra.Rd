@@ -11,8 +11,7 @@ curate_spectra(
   max_ppm_deviation,
   max_ipq,
   min_sn,
-  group_to_filter,
-  sample_type_to_filter
+  cut_off_basis
 )
 }
 \arguments{
@@ -35,12 +34,6 @@ ppm).}
 theoretic isotopic pattern.}
 
 \item{min_sn}{The lowest allowed value for the signal to noise ratio (S/N).}
-
-\item{group_to_filter}{The group (Specific or Total) to base spectra curation
-cut-offs on.}
-
-\item{sample_type_to_filter}{The sample type to base spectra curation
-cut-offs on.}
 }
 \value{
 The function returns the original dataframe given as the data

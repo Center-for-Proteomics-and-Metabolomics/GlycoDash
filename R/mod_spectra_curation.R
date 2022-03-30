@@ -95,7 +95,7 @@ mod_spectra_curation_ui <- function(id){
                              "Base the spectra curation cut-off on:",
                              choices = c(""),
                              selected = NULL,
-                             multiple = FALSE,
+                             multiple = TRUE,
                              options = list(placeholder = "select which samples to use as a basis for cut-off")
               ) %>% 
                 bsplus::bs_embed_popover(
@@ -139,7 +139,13 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            plotOutput(ns("curated_spectra_plot"))
+            plotOutput(ns("curated_spectra_plot")),
+            plotOutput(ns("cut_off_plot"),
+                       dblclick = ns("dblclick"),
+                       brush = brushOpts(
+                         id = ns("brush"),
+                         resetOnNew = TRUE
+                       ))
           )
         )
       )
@@ -273,16 +279,19 @@ mod_spectra_curation_server <- function(id, results_data_import){
     # are all combinations of sample_types and groups that are present in the
     # data.
     observeEvent(x$data, {
-      combinations <- expand.grid(sample_type = unique(x$data$sample_type),
-                                  group = unique(x$data$group))
-      combination_strings <- purrr::pmap_chr(combinations,
-                                             function(sample_type, group) {
-                                               paste(group,
-                                                     sample_type,
-                                                     "samples")
-                                             })
-      options <- c(combination_strings, 
-                   paste("all", unique(x$data$sample_type), "samples"))
+      if ("group" %in% colnames(x$data)) {
+        combinations <- expand.grid(sample_type = unique(x$data$sample_type),
+                                    group = unique(x$data$group))
+        options <- purrr::pmap_chr(combinations,
+                                   function(sample_type, group) {
+                                     paste(group,
+                                           sample_type,
+                                           "samples")
+                                   })
+      } else {
+        options <- paste("all", unique(x$data$sample_type), "samples")
+      }
+      
       updateSelectizeInput(inputId = "cut_off_basis",
                            choices = c("", options))
     })
@@ -292,44 +301,24 @@ mod_spectra_curation_server <- function(id, results_data_import){
       clusters_regex <- purrr::map(cluster_inputIds(),
                                   ~ input[[.x]])
       
-      group_specified <- stringr::str_detect(string = input$cut_off_basis,
-                                             pattern = paste0(unique(x$data$group),
-                                                              collapse = "|"))
-      
-      if(group_specified == FALSE){
-        group_to_filter <- NULL
-      } else {
-        # Extract the group out of input$cut_off_basis that was selected by the
-        # user:
-        group_to_filter <- stringr::str_extract(string = input$cut_off_basis,
-                                                pattern = paste0(unique(x$data$group),
-                                                                 collapse = "|"))
-      }
-      
-      # Extract the sample_type out of input$cut_off_basis that was selected by
-      # the user as cut_off_basis:
-      sample_type_to_filter <- stringr::str_extract(string = input$cut_off_basis,
-                                                    pattern = paste0(
-                                                      unique(x$data$sample_type),
-                                                      collapse = "|"))
-      
       # Perform spectra curation:
       tryCatch(expr = { 
-        # Make work if group_to_filter is NULL:
-        data_spectra_curated <- curate_spectra(data = x$data,
+        spectra_curation_results <- curate_spectra(data = x$data,
                                                clusters_regex = clusters_regex,
                                                min_ppm_deviation = input$mass_accuracy[1],
                                                max_ppm_deviation = input$mass_accuracy[2],
                                                max_ipq = input$ipq,
                                                min_sn = input$sn,
-                                               group_to_filter = group_to_filter,
-                                               sample_type_to_filter = sample_type_to_filter)
+                                               cut_off_basis = input$cut_off_basis)
         
-        x$data_spectra_curated <- data_spectra_curated
+        x$data_spectra_curated <- spectra_curation_results$curated_data
+        
+        x$spectra_check <- spectra_curation_results$spectra_check
         
         showNotification("Spectra curation has been performed.",
                          type = "message")
-      },
+        
+              },
       regex_overlap = function(c) {
         showNotification(ui = paste(c$message), 
                          type = "error")
@@ -346,16 +335,16 @@ mod_spectra_curation_server <- function(id, results_data_import){
       x$curated_spectra <- x$data_spectra_curated %>% 
         dplyr::filter(passed_spectra_curation == TRUE) %>% 
         dplyr::select(-passed_spectra_curation)
+      
     })
     
     curated_spectra_plot <- reactive({
       req(x$curated_spectra)
       # Move this code to a function instead?
-      x$data_spectra_curated %>%  
+      plot <- x$data_spectra_curated %>%  
         ggplot2::ggplot() +
         ggplot2::geom_bar(ggplot2::aes(x = sample_type, fill = passed_spectra_curation), 
                           position = "fill") +
-        ggplot2::facet_wrap(cluster ~ group) +
         ggplot2::xlab("Sample type") +
         ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
                                     name = "Proportion of spectra (%)") +
@@ -369,6 +358,14 @@ mod_spectra_curation_server <- function(id, results_data_import){
                        strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
                        text = ggplot2::element_text(size = 16)) +
         ggpubr::border(size = 0.5)
+      
+      if ("group" %in% colnames(x$data_spectra_curated)) {
+        plot +
+          ggplot2::facet_wrap(cluster ~ group)
+      } else {
+        plot +
+          ggplot2::facet_wrap(~ cluster)
+      }
     })
     
     output$curated_spectra_plot <- renderPlot({
@@ -386,7 +383,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                "Excel file" = paste0(todays_date, "_curated_spectra.xlsx"))
       },
       content = function(file) {
-        data_to_download <- x$data_spectra_curated
+        data_to_download <- x$curated_spectra
         switch(input$download_format,
                "R object" = save(data_to_download, 
                                  file = file),
@@ -394,6 +391,38 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                   path = file))
       }
     )
+    
+    ranges <- reactiveValues(x = NULL, 
+                             y = NULL)
+    
+    cut_off_plot <- reactive({
+      req(x$spectra_check,
+          input$cut_off_basis)
+      create_cut_off_plot(spectra_check = x$spectra_check,
+                          cut_off_basis = input$cut_off_basis)
+    })
+    
+    output$cut_off_plot <- renderPlot({
+      req(cut_off_plot())
+      cut_off_plot() +
+        ggplot2::coord_cartesian(xlim = ranges$x, 
+                                 ylim = ranges$y, 
+                                 expand = FALSE)
+    })
+    
+    # When a double-click happens, check if there's a brush on the plot.
+    # If so, zoom to the brush bounds; if not, reset the zoom.
+    observeEvent(input$dblclick, {
+      brush <- input$brush
+      if (!is.null(brush)) {
+        ranges$x <- c(brush$xmin, brush$xmax)
+        ranges$y <- c(brush$ymin, brush$ymax)
+        
+      } else {
+        ranges$x <- NULL
+        ranges$y <- NULL
+      }
+    })
     
     return(list(
       curated_spectra = reactive({x$curated_spectra}),

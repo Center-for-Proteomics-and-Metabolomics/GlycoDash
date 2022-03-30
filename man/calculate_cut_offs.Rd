@@ -4,16 +4,16 @@
 \alias{calculate_cut_offs}
 \title{Calculate cut-off values for spectra curation}
 \usage{
-calculate_cut_offs(spectra_check, group_to_filter, sample_type_to_filter)
+calculate_cut_offs(spectra_check, cut_off_basis)
 }
 \arguments{
 \item{spectra_check}{The dataframe returned by
 \code{\link{summarize_spectra_checks()}}.}
 
-\item{group_to_filter}{The group (Specific or Total) to base spectra curation
+\item{groups_to_filter}{The group (Specific or Total) to base spectra curation
 cut-offs on.}
 
-\item{sample_type_to_filter}{The sample type to base spectra curation
+\item{sample_types_to_filter}{The sample type to base spectra curation
 cut-offs on.}
 }
 \value{
