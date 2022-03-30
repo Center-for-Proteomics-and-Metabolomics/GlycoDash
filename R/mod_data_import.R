@@ -467,11 +467,13 @@ mod_data_import_server <- function(id){
                          type = "warning")
       }
       
-      if (input$switch_two_plate_designs == FALSE) {
+      if (!isTruthy(input$switch_two_plate_designs)) {
         x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
+        print(x$plate_design)
       } else {
        plate_design_specific <- read_and_process_plate_design(input$plate_design_specific$datapath) %>% 
          dplyr::mutate(group = input$keyword_total)
+       
        plate_design_total <- read_and_process_plate_design(input$plate_design_total$datapath) %>% 
          dplyr::mutate(group = input$keyword_specific)
        

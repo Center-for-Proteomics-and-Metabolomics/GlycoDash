@@ -19,7 +19,8 @@ visualize_repeatability <- function(repeatability_data) {
   rescale_RSD_with <- range_av_abundance / range_RSD
   
   plot <- repeatability_data %>% 
-    dplyr::mutate(RSD = RSD * rescale_RSD_with) %>% ggplot2::ggplot() +
+    dplyr::mutate(RSD = RSD * rescale_RSD_with) %>% 
+    ggplot2::ggplot() +
     ggplot2::geom_col(ggplot2::aes(x = analyte, 
                                    y = average_abundance, 
                                    fill = plate),
@@ -53,11 +54,10 @@ visualize_repeatability <- function(repeatability_data) {
 #' Calculate the RSD of standards across a plate.
 #'
 #' @param data A dataframe with the curated (and normalized) data.
-#' @param standard_sample_types The sample type of the standards that the RSD's
+#' @param standard_sample_type The sample type of the standards that the RSD's
 #'   should be calculated for.
-#' @param group_to_plot The group (total or specific Ig) that the RSD's should
+#' @param standard_group The group (total or specific Ig) that the RSD's should
 #'   be calculated for.
-#' @param second_axis_rescale_with
 #'
 #' @return
 #' @export
@@ -66,10 +66,27 @@ visualize_repeatability <- function(repeatability_data) {
 calculate_repeatability_stats <- function(data,
                                           standard_sample_type,
                                           standard_group) {
-  repeatability <- data %>% 
-    dplyr::filter(sample_type %in% standard_sample_type & group == standard_group) %>% 
+  if (is.null(standard_group)) {
+    repeatability <- data %>% 
+      dplyr::filter(sample_type %in% standard_sample_type)
+  } else {
+    repeatability <- data %>% 
+      dplyr::filter(sample_type %in% standard_sample_type & group == standard_group)
+  }
+  
+  if (all(purrr::map_lgl(repeatability, rlang::is_empty))) {
+    rlang::abort(class = "no_samples",
+                 message = paste("There are no samples of this sample_type",
+                                 ifelse(is.null(standard_group), "", "and group"),
+                                 "that passed curation. Please choose a different", 
+                                 "standard to assess."))
+  }
+  
+  repeatability <- repeatability %>% 
     dplyr::mutate(plate = stringr::str_extract(plate_well, "^[A-Z]|\\d+")) %>% 
-    dplyr::group_by(plate, analyte) %>% 
+    dplyr::group_by(plate, analyte)
+  
+  repeatability <- repeatability %>% 
     dplyr::summarise(average_abundance = mean(relative_abundance * 100),
                      RSD = sd(relative_abundance * 100) / average_abundance * 100)
   

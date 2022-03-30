@@ -84,9 +84,28 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
     })
     
     observeEvent(input$assess_repeatability, {
-      x$repeatability <- calculate_repeatability_stats(data = data(),
-                                                       standard_sample_type = input$standard_sample_type,
-                                                       standard_group = input$standard_group)
+      # Reset x$repeatability and x$variation_table:
+      x$repeatability <- NULL
+      x$variation_table <- NULL
+      
+      # Try to calculate the repeatability stats, but show a notification if
+      # there are no samples of the selected sample type and group combination:
+      tryCatch(
+        expr = {
+          x$repeatability <- calculate_repeatability_stats(
+            data = data(),
+            standard_sample_type = input$standard_sample_type,
+            standard_group = input$standard_group)
+        },
+        no_samples = function(c) {
+          showNotification(c$message, type = "error")
+        }
+      )
+      
+      # Pause until x$repeatability has been calculated:
+      req(x$repeatability)
+      
+      # Calculate the intra-plate variations to show in the table:
       x$variation_table <- x$repeatability %>% 
         dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
     })

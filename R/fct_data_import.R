@@ -272,8 +272,12 @@ get_analytes_info <- function(data, variable) {
                         names_to = "analyte", 
                         values_to = "value") %>%
     tidyr::pivot_wider(names_from = info_variables) %>% 
-    dplyr::rename(exact_mass = `Exact mass of most abundant isotopologue`,
-                  fraction = Fraction) %>% 
+    # I don't rename the columns directly using new_name = old_name, because in
+    # different versions of LacyTools these columns are named differently
+    # ("Exact mass of most abundant isotopologue" in one version and
+    # "Monoisotopic mass" in the other):
+    dplyr::rename(fraction = tidyselect::contains("fraction"),
+                  exact_mass = tidyselect::contains("mass")) %>% 
     dplyr::mutate(exact_mass = purrr::map_chr(exact_mass,
                                               function(x) stringr::str_remove_all(x, 
                                                                                   "[\\[\\]]"))) %>% 
@@ -526,15 +530,32 @@ process_plate_design <- function (plate_design) {
     tidyr::pivot_longer(cols = -well,
                         names_to = "plate",
                         values_to = "sample_id") %>%
-    dplyr::mutate(plate = stringr::str_extract(plate, "\\d+"),
-                  well = stringr::str_extract(well, "[A-H]\\d+"),
-                  plate_well = paste(plate, well, sep = "_")) %>% 
+    dplyr::mutate(plate = stringr::str_match(plate, "[Pp][Ll]?(?:ate)?[\\s_#]*(\\d+|[A-Z])")[ , 2],
+                  well = stringr::str_extract(well, "[A-H]\\d+"))
+  
+  if (any(is.na(plate_design$plate))) {
+    rlang::abort(class = "plate_numbers",
+                 message = paste(
+                   "The plate numbers could not be detected. Please check if",
+                   "your plate design Excel file is in the correct format."))
+  }
+  
+  print("check")
+  
+  plate_design <- plate_design %>% 
+    dplyr::mutate(plate_well = paste(plate, well, sep = "_")) %>% 
     dplyr::arrange(plate_well) %>% 
     dplyr::select(-c(plate, well)) %>% 
     tidyr::extract(col = sample_id, 
                    into = c("sample_type"), 
                    regex = "([[:alpha:]]+)",
-                   remove = FALSE)
+                   remove = FALSE) %>% 
+    # Remove rows where sample_type is NA (these were empty cells
+    # in the plate design Excel file)
+    tidyr::replace_na(list(sample_type = "unknown",
+                           sample_id = "unknown"))
+    # dplyr::filter(dplyr::if_all(.cols = c(sample_type),
+    #                             .fns = ~ !is.na(.x)))
   
   return(plate_design)
 }
@@ -597,6 +618,8 @@ handle_duplicates <- function(plate_design) {
                                 "If there should be duplicate samples to be found,",
                                 "please check if those samples are specified literally as \"duplicate\" in your plate design file."))
   }
+  
+  print("check2")
   
   new_plate_design <- plate_design %>% 
     dplyr::mutate(sample_id = new_sample_ids,
@@ -664,6 +687,7 @@ read_and_process_plate_design <- function(plate_design_file) {
   # Pass along any errors (if applicable) from read_plate_design:
   tryCatch(expr = {
     plate_design <- read_plate_design(plate_design_file)
+    print("plate design has been read")
   },
   error = function(e) { 
     rlang::abort(class = e$class,
@@ -671,6 +695,7 @@ read_and_process_plate_design <- function(plate_design_file) {
     })
   
   plate_design <- process_plate_design(plate_design)
+  print("plate design has been processed")
   
   # Pass along any errors (if applicable) from handle_duplicates. Warnings are
   # passed along automatically.
