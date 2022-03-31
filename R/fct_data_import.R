@@ -540,8 +540,6 @@ process_plate_design <- function (plate_design) {
                    "your plate design Excel file is in the correct format."))
   }
   
-  print("check")
-  
   plate_design <- plate_design %>% 
     dplyr::mutate(plate_well = paste(plate, well, sep = "_")) %>% 
     dplyr::arrange(plate_well) %>% 
@@ -618,8 +616,6 @@ handle_duplicates <- function(plate_design) {
                                 "If there should be duplicate samples to be found,",
                                 "please check if those samples are specified literally as \"duplicate\" in your plate design file."))
   }
-  
-  print("check2")
   
   new_plate_design <- plate_design %>% 
     dplyr::mutate(sample_id = new_sample_ids,

@@ -375,6 +375,8 @@ filter_cut_off_basis <- function(cut_off_basis, data) {
 
 create_cut_off_plot <- function(spectra_check, cut_off_basis) {
   
+  #my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(20)
+  
   p <- spectra_check %>% 
     ggplot2::ggplot(ggplot2::aes(x = passing_proportion,
                                  y = sum_intensity)) +
@@ -386,6 +388,7 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
                         linetype = "dashed") +
     ggplot2::geom_vline(xintercept = spectra_check$cut_off_prop,
                         linetype = "dashed") +
+    #ggplot2::scale_color_manual(values = my_palette)
     ggplot2::scale_color_brewer(palette = "Set2")
   
   if ("group" %in% colnames(spectra_check)) {
@@ -395,23 +398,23 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
   
   cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
                                                 data = spectra_check)
-  
-  distinct_data_points <- cut_off_basis_samples %>% 
-    dplyr::distinct(passing_proportion, 
+
+  distinct_data_points <- cut_off_basis_samples %>%
+    dplyr::distinct(passing_proportion,
                     sum_intensity,
-                    .keep_all = TRUE) %>% 
-    dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
+                    .keep_all = TRUE) %>%
+    dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>%
     dplyr::summarise(n = dplyr::n())
-  
+
   ellipse_possible <- all(distinct_data_points$n >= 3)
-  
+
   if (ellipse_possible) {
     p <- p +
       ggplot2::stat_ellipse(data = cut_off_basis_samples)
   } else {
     p <- p +
       ggplot2::geom_point(data = cut_off_basis_samples,
-                          shape = 1, size = 2.5) 
+                          shape = 1, size = 2.5)
   }
   
   return(p)

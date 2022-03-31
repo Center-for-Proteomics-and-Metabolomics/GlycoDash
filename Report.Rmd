@@ -91,14 +91,22 @@ if (params$analyte_curation_method == "Supply an analyte list") {
     "\""
   )
 }
+
 ```
 
 ```{r analyte-curation-plot-table, results='asis'}
 
 if (params$analyte_curation_method == "Curate analytes based on data") {
   
-  tables <- params$analyte_curation_plot[names(params$analyte_curation_plot) == "table"]
-  plots <- params$analyte_curation_plot[names(params$analyte_curation_plot) == "plot"]
+  tables <- params$analyte_curation_plot[stringr::str_subset(
+    string = names(params$analyte_curation_plot),
+    pattern = "table")]
+  plots <- params$analyte_curation_plot[stringr::str_subset(
+    string = names(params$analyte_curation_plot),
+    pattern = "plot")]
+  
+  print(names(tables))
+  print(names(plots))
   
   for (table in tables) {
     table %>% 

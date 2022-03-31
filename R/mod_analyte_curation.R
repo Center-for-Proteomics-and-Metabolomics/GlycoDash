@@ -193,36 +193,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       x$mod_results <- purrr::map(
         clusters(),
         function(cluster) {
-          mod_information_box_server(cluster,
+          #results <- 
+            mod_information_box_server(cluster,
                                      info = info,
                                      cluster = cluster)
+          #check if this does work
+          #assign(cluster, results)
         })
-      
-      
-      #mod_results <- split(mod_results, names(mod_results))
-      
-      # mod_results <- unlist(mod_results, 
-      #                       recursive = FALSE)
-      # 
-      # purrr::map(mod_results,
-      #            ~ print(do.call(.x,
-      #                            args = list())))
-      
-      
     })
-    
-    observe({
-    })
-    
-    # output$information <- renderUI({
-    #   mod_information_box_ui(ns("information_box_ui_1"))
-    # })
-    # 
-    # observe({
-    #   x$mod_results <- mod_information_box_server("information_box_ui_1",
-    #                                             info = info,
-    #                                             clusters = clusters)
-    # })
     
     # The selection menu for input$ignore_samples is updated so that the choices
     # are sample_types and groups that are present in the data.

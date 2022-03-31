@@ -304,12 +304,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
       # Perform spectra curation:
       tryCatch(expr = { 
         spectra_curation_results <- curate_spectra(data = x$data,
-                                               clusters_regex = clusters_regex,
-                                               min_ppm_deviation = input$mass_accuracy[1],
-                                               max_ppm_deviation = input$mass_accuracy[2],
-                                               max_ipq = input$ipq,
-                                               min_sn = input$sn,
-                                               cut_off_basis = input$cut_off_basis)
+                                                   clusters_regex = clusters_regex,
+                                                   min_ppm_deviation = input$mass_accuracy[1],
+                                                   max_ppm_deviation = input$mass_accuracy[2],
+                                                   max_ipq = input$ipq,
+                                                   min_sn = input$sn,
+                                                   cut_off_basis = input$cut_off_basis)
         
         x$data_spectra_curated <- spectra_curation_results$curated_data
         
@@ -343,7 +343,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
       # Move this code to a function instead?
       plot <- x$data_spectra_curated %>%  
         ggplot2::ggplot() +
-        ggplot2::geom_bar(ggplot2::aes(x = sample_type, fill = passed_spectra_curation), 
+        ggplot2::geom_bar(ggplot2::aes(x = sample_type, 
+                                       fill = passed_spectra_curation), 
                           position = "fill") +
         ggplot2::xlab("Sample type") +
         ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
@@ -368,10 +369,15 @@ mod_spectra_curation_server <- function(id, results_data_import){
       }
     })
     
+    # observe({
+    #   req(curated_spectra_plot())
+    #   print(curated_spectra_plot())
+    # })
+    
     output$curated_spectra_plot <- renderPlot({
-     req(curated_spectra_plot())
+      req(curated_spectra_plot())
       curated_spectra_plot()
-      })
+    })
     
     output$download <- downloadHandler(
       filename = function() {
@@ -392,24 +398,24 @@ mod_spectra_curation_server <- function(id, results_data_import){
       }
     )
     
-    ranges <- reactiveValues(x = NULL, 
+    ranges <- reactiveValues(x = NULL,
                              y = NULL)
-    
+
     cut_off_plot <- reactive({
       req(x$spectra_check,
           input$cut_off_basis)
       create_cut_off_plot(spectra_check = x$spectra_check,
                           cut_off_basis = input$cut_off_basis)
     })
-    
+
     output$cut_off_plot <- renderPlot({
       req(cut_off_plot())
       cut_off_plot() +
-        ggplot2::coord_cartesian(xlim = ranges$x, 
-                                 ylim = ranges$y, 
+        ggplot2::coord_cartesian(xlim = ranges$x,
+                                 ylim = ranges$y,
                                  expand = FALSE)
     })
-    
+
     # When a double-click happens, check if there's a brush on the plot.
     # If so, zoom to the brush bounds; if not, reset the zoom.
     observeEvent(input$dblclick, {
@@ -417,7 +423,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       if (!is.null(brush)) {
         ranges$x <- c(brush$xmin, brush$xmax)
         ranges$y <- c(brush$ymin, brush$ymax)
-        
+
       } else {
         ranges$x <- NULL
         ranges$y <- NULL
