@@ -188,7 +188,7 @@ mod_data_import_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            DT::dataTableOutput(ns("data_table"))
+            DT::DTOutput(ns("data_table"))
           )
         )
       )
@@ -383,11 +383,14 @@ mod_data_import_server <- function(id){
     output$data_table <- DT::renderDT({
       req(x$data)
       if (isTruthy(x$data_incl_metadata)){
-        DT::datatable(x$data_incl_metadata, options = list(scrollX = TRUE))
+        DT::datatable(x$data_incl_metadata, options = list(scrollX = TRUE),
+                      filter = "top")
       } else { if (isTruthy(x$data_incl_plate_design)){
-        DT::datatable(x$data_incl_plate_design, options = list(scrollX = TRUE))
+        DT::datatable(x$data_incl_plate_design, options = list(scrollX = TRUE),
+                      filter = "top")
       } else {
-        DT::datatable(x$data, options = list(scrollX = TRUE))
+        DT::datatable(x$data, options = list(scrollX = TRUE),
+                      filter = "top")
       }
       }
     })
