@@ -95,12 +95,14 @@ mod_export_server <- function(id,
       },
       content = function(file) {
         
-        ac_plots_tables <- unlist(results_analyte_curation$plots(),
+        analyte_curation_objects <- unlist(results_analyte_curation$plots(),
                                   recursive = FALSE)
         
-        ac_plots_tables <- purrr::map(ac_plots_tables,
+        called_analyte_curation_objects <- purrr::map(analyte_curation_objects,
                                       ~ do.call(.x,
                                                 args = list()))
+        
+        #names(called_analyte_curation_objects) <- names(analyte_curation_objects)
         
         rep1_plot_table <- purrr::map(results_repeatability$first_tab(),
                                       ~ do.call(.x,
@@ -124,7 +126,7 @@ mod_export_server <- function(id,
                        ignore_samples = results_analyte_curation$ignore_samples(),
                        cut_off_percentage = results_analyte_curation$cut_off(),
                        analyte_list = results_analyte_curation$analyte_list(),
-                       analyte_curation_plot = ac_plots_tables,
+                       analyte_curation_plot = called_analyte_curation_objects,
                        derived_traits = results_derived_traits$derived_traits(),
                        repeatability_1 = rep1_plot_table,
                        repeatability_2 = rep2_plot_table,

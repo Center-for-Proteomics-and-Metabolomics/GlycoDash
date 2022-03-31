@@ -383,13 +383,16 @@ mod_data_import_server <- function(id){
     output$data_table <- DT::renderDT({
       req(x$data)
       if (isTruthy(x$data_incl_metadata)){
-        DT::datatable(x$data_incl_metadata, options = list(scrollX = TRUE),
+        DT::datatable(x$data_incl_metadata, 
+                      options = list(scrollX = TRUE),
                       filter = "top")
       } else { if (isTruthy(x$data_incl_plate_design)){
-        DT::datatable(x$data_incl_plate_design, options = list(scrollX = TRUE),
+        DT::datatable(x$data_incl_plate_design, 
+                      options = list(scrollX = TRUE),
                       filter = "top")
       } else {
-        DT::datatable(x$data, options = list(scrollX = TRUE),
+        DT::datatable(x$data, 
+                      options = list(scrollX = TRUE),
                       filter = "top")
       }
       }
@@ -493,6 +496,7 @@ mod_data_import_server <- function(id){
               duration = NULL
             )
             
+            # Continue reading plate design despite the warning:
             x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
           }
         )
@@ -525,6 +529,7 @@ mod_data_import_server <- function(id){
               duration = NULL
             )
             
+            # Continue reading plate design despite the warning:
             plate_design_specific <- read_and_process_plate_design(input$plate_design_specific$datapath) %>% 
               dplyr::mutate(group = input$keyword_total)
             
@@ -540,7 +545,7 @@ mod_data_import_server <- function(id){
       # Reset x$response in case the pop-up has been shown before:
       x$response <- NULL
       
-      # Don't show pop-up if reading in the plate design failed:
+      # Don't show pop-up if reading in the plate design has failed:
       req(x$plate_design)
       
       shinyalert::shinyalert(
@@ -590,7 +595,8 @@ mod_data_import_server <- function(id){
       if (x$response == TRUE) {
         x$data_incl_plate_design <- dplyr::left_join(x$data, 
                                                      x$plate_design)
-        showNotification("The sample types were added to the data", type = "message")
+        showNotification("The sample types were added to the data", 
+                         type = "message")
       } 
     })
     
