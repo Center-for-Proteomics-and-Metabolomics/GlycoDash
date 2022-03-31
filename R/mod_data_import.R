@@ -534,6 +534,7 @@ mod_data_import_server <- function(id){
       if (x$response == TRUE) {
         x$data_incl_plate_design <- dplyr::left_join(x$data, 
                                                      x$plate_design)
+        showNotification("The sample types were added to the data", type = "message")
       } 
     })
     
