@@ -471,21 +471,77 @@ mod_data_import_server <- function(id){
       }
       
       if (!isTruthy(input$switch_two_plate_designs)) {
-        x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
-        print(x$plate_design)
+        tryCatch(
+          expr = {
+            x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
+          },
+          error = function(e) {
+            showNotification(
+              paste(
+                "Please check that your plate design file is formatted correctly.",
+                "Click on the information icon to find the required format."
+              ), 
+              type = "error",
+              duration = NULL
+            )
+            print(e$class)
+          },
+          warning = function(w) {
+            showNotification(
+              w$message,
+              type = "error",
+              duration = NULL
+            )
+            
+            x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
+          }
+        )
       } else {
-       plate_design_specific <- read_and_process_plate_design(input$plate_design_specific$datapath) %>% 
-         dplyr::mutate(group = input$keyword_total)
-       
-       plate_design_total <- read_and_process_plate_design(input$plate_design_total$datapath) %>% 
-         dplyr::mutate(group = input$keyword_specific)
-       
-       x$plate_design <- dplyr::full_join(plate_design_specific,
-                                          plate_design_total)
+        tryCatch(
+          expr = {
+            plate_design_specific <- read_and_process_plate_design(input$plate_design_specific$datapath) %>% 
+              dplyr::mutate(group = input$keyword_total)
+            
+            plate_design_total <- read_and_process_plate_design(input$plate_design_total$datapath) %>% 
+              dplyr::mutate(group = input$keyword_specific)
+            
+            x$plate_design <- dplyr::full_join(plate_design_specific,
+                                               plate_design_total)
+          },
+          error = function(e) {
+            showNotification(
+              paste(
+                "Please check that your plate design file is formatted correctly.",
+                "Click on the information icon to find the required format."
+              ), 
+              type = "error",
+              duration = NULL
+            )
+          },
+          warning = function(w) {
+            showNotification(
+              w$message,
+              type = "error",
+              duration = NULL
+            )
+            
+            plate_design_specific <- read_and_process_plate_design(input$plate_design_specific$datapath) %>% 
+              dplyr::mutate(group = input$keyword_total)
+            
+            plate_design_total <- read_and_process_plate_design(input$plate_design_total$datapath) %>% 
+              dplyr::mutate(group = input$keyword_specific)
+            
+            x$plate_design <- dplyr::full_join(plate_design_specific,
+                                               plate_design_total)
+          }
+        )
       }
       
       # Reset x$response in case the pop-up has been shown before:
       x$response <- NULL
+      
+      # Don't show pop-up if reading in the plate design failed:
+      req(x$plate_design)
       
       shinyalert::shinyalert(
         html = TRUE,

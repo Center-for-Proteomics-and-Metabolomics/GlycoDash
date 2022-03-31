@@ -687,7 +687,6 @@ read_and_process_plate_design <- function(plate_design_file) {
   # Pass along any errors (if applicable) from read_plate_design:
   tryCatch(expr = {
     plate_design <- read_plate_design(plate_design_file)
-    print("plate design has been read")
   },
   error = function(e) { 
     rlang::abort(class = e$class,
@@ -695,7 +694,6 @@ read_and_process_plate_design <- function(plate_design_file) {
     })
   
   plate_design <- process_plate_design(plate_design)
-  print("plate design has been processed")
   
   # Pass along any errors (if applicable) from handle_duplicates. Warnings are
   # passed along automatically.
