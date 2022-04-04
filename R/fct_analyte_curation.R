@@ -245,11 +245,15 @@ plot_analyte_curation <- function(curated_analytes,
     ggplot2::geom_col(ggplot2::aes(x = analyte, 
                                    y = passing_percentage,
                                    fill = passed_curation)) +
-    ggplot2::scale_fill_discrete(name = "Passed curation?", 
+    ggplot2::scale_fill_discrete(name = "Passed curation?",
                                  labels = c(`TRUE`= "Yes",
                                             `FALSE` = "No"),
                                  type = c(`TRUE` = "#3498DB",
                                           `FALSE` = "#E74C3C")) +
+    # ggplot2::scale_fill_brewer(name = "Passed curation?", 
+    #                            labels = c(`TRUE`= "Yes",
+    #                                       `FALSE` = "No"),
+    #                            palette = "Set2") +
     ggplot2::geom_hline(yintercept = cut_off_percentage, 
                         linetype = "dashed",
                         color = "#E74C3C", 
@@ -265,8 +269,7 @@ plot_analyte_curation <- function(curated_analytes,
     ggplot2::xlab("Analyte") +
     ggplot2::scale_y_continuous(labels = function(x) paste0(x, "%"), 
                                 name = "Proportion of passing spectra (%)") +
-    ggpubr::border(size = 0.5) +
-    ggplot2::labs(title = selected_cluster)
+    ggpubr::border(size = 0.5)
   
   return(plot)
   

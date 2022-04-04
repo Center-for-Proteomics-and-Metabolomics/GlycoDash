@@ -189,14 +189,15 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     observe({
       req(clusters())
       purrr::map(info,
-                ~ req(.x))
-      x$mod_results <- purrr::map(
-        clusters(),
-        function(cluster) {
-          mod_information_box_server(cluster,
-                                     info = info,
-                                     cluster = cluster)
-        })
+                 ~ req(.x))
+      x$mod_results <- purrr::set_names(clusters()) %>% 
+        purrr::map(
+          .,
+          function(cluster) {
+            mod_information_box_server(id = cluster,
+                                       info = info,
+                                       cluster = cluster)
+          })
     })
     
     # The selection menu for input$ignore_samples is updated so that the choices

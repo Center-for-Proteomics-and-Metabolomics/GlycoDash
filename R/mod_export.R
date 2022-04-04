@@ -94,12 +94,15 @@ mod_export_server <- function(id,
       },
       content = function(file) {
         
-        analyte_curation_objects <- unlist(results_analyte_curation$objects(),
-                                           recursive = FALSE)
+        called_analyte_curation_objects <- purrr::map(results_analyte_curation$objects(),
+                                                      function(list_of_objects) {
+                                                        purrr::map(
+                                                          list_of_objects,
+                                                          ~ do.call(.x,
+                                                                    args = list()))
+                                                      })
         
-        called_analyte_curation_objects <- purrr::map(analyte_curation_objects,
-                                                      ~ do.call(.x,
-                                                                args = list()))
+        print(called_analyte_curation_objects[[1]])                                              
         
         rep1_plot_table <- tryCatch(
           expr = {
