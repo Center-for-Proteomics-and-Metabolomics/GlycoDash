@@ -144,9 +144,15 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
                                    paging = FALSE))
     })
     
+    title_for_report <- reactive({
+      paste(input$standard_sample_type,
+            ifelse(is.null(input$standard_group), "", input$standard_group))
+    })
+    
     return(list(
-      plot = reactive({plot()}),
-      for_table = reactive({for_table()})
+      plot = plot,
+      for_table = for_table,
+      title_for_report = title_for_report
     ))
     
   })

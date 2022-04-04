@@ -104,9 +104,6 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
     string = names(params$analyte_curation_objects),
     pattern = "plot")]
   
-  print(names(tables))
-  print(names(plots))
-  
   for (table in tables) {
     table %>% 
       kableExtra::kbl() %>% 
@@ -140,37 +137,46 @@ if (is.null(params$derived_traits)) {
 
 ## Repeatability
 
-```{r repeatability-plots, results='asis', warning=FALSE}
+```{r repeatability-first-tab, results='asis', warning=FALSE}
 
 if (!is.null(params$repeatability_1)) {
-params$repeatability_1$for_table %>% 
-      kableExtra::kbl() %>% 
-      kableExtra::kable_styling(bootstrap_options = "striped", 
-                                full_width = F, 
-                                position = "left") %>% 
-      htmltools::HTML() %>% 
-      print()
-}
-
-if (!is.null(params$repeatability_1)) {
+  cat("###",
+      params$repeatability_1$title_for_report,
+      "\n")
+  
+  params$repeatability_1$for_table %>% 
+    kableExtra::kbl() %>% 
+    kableExtra::kable_styling(bootstrap_options = "striped", 
+                              full_width = F, 
+                              position = "left") %>% 
+    htmltools::HTML() %>% 
+    print()
+  
   print(params$repeatability_1$plot)
 }
 
-if (!is.null(params$repeatability_2)) {
-  params$repeatability_2$for_table %>% 
-      kableExtra::kbl() %>% 
-      kableExtra::kable_styling(bootstrap_options = "striped", 
-                                full_width = F, 
-                                position = "left") %>% 
-      htmltools::HTML() %>% 
-      print()
-}
+```
+
+```{r repeatability-second-tab, results='asis', warning=FALSE}
 
 if (!is.null(params$repeatability_2)) {
+  cat("###",
+      params$repeatability_2$title_for_report,
+      "\n")
+  
+  params$repeatability_2$for_table %>% 
+    kableExtra::kbl() %>% 
+    kableExtra::kable_styling(bootstrap_options = "striped", 
+                              full_width = F, 
+                              position = "left") %>% 
+    htmltools::HTML() %>% 
+    print()
+  
   print(params$repeatability_2$plot)
 }
 
 ```
+
 
 ## Data exploration
 
