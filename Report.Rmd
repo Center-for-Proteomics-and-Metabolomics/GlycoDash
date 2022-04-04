@@ -97,27 +97,23 @@ if (params$analyte_curation_method == "Supply an analyte list") {
 
 if (params$analyte_curation_method == "Curate analytes based on data") {
   
-  tables <- params$analyte_curation_objects[stringr::str_subset(
-    string = names(params$analyte_curation_objects),
-    pattern = "table")]
-  plots <- params$analyte_curation_objects[stringr::str_subset(
-    string = names(params$analyte_curation_objects),
-    pattern = "plot")]
-  
-  for (table in tables) {
-    table %>% 
-      kableExtra::kbl() %>% 
-      kableExtra::kable_styling(bootstrap_options = "striped", 
-                                full_width = F, 
-                                position = "left") %>% 
-      htmltools::HTML() %>% 
-      print()
-  }
-  
-  for (plot in plots) {
-    print(plot)
-  }
-  
+  silent_map <- purrr::imap(params$analyte_curation_objects, 
+                            function(objects_list,
+                                     name) {
+                              cat("###",
+                                  name,
+                                  "\n")
+                              
+                              objects_list$table %>% 
+                                kableExtra::kbl() %>% 
+                                kableExtra::kable_styling(bootstrap_options = "striped", 
+                                                          full_width = F, 
+                                                          position = "left") %>% 
+                                htmltools::HTML() %>% 
+                                print()
+                              
+                              print(objects_list$plot)
+                            })
 }
 
 ```
