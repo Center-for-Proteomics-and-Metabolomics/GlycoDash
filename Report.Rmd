@@ -19,8 +19,7 @@ params:
   ignore_samples: NA
   cut_off_percentage: NA
   analyte_list: NA
-  analyte_curation_plot: NA
-  analyte_curation_table: NA
+  analyte_curation_objects: NA
   derived_traits: NA
   repeatability_1: NA
   repeatability_2: NA
@@ -98,11 +97,11 @@ if (params$analyte_curation_method == "Supply an analyte list") {
 
 if (params$analyte_curation_method == "Curate analytes based on data") {
   
-  tables <- params$analyte_curation_plot[stringr::str_subset(
-    string = names(params$analyte_curation_plot),
+  tables <- params$analyte_curation_objects[stringr::str_subset(
+    string = names(params$analyte_curation_objects),
     pattern = "table")]
-  plots <- params$analyte_curation_plot[stringr::str_subset(
-    string = names(params$analyte_curation_plot),
+  plots <- params$analyte_curation_objects[stringr::str_subset(
+    string = names(params$analyte_curation_objects),
     pattern = "plot")]
   
   print(names(tables))
@@ -143,8 +142,7 @@ if (is.null(params$derived_traits)) {
 
 ```{r repeatability-plots, results='asis', warning=FALSE}
 
-print(params$repeatability_1$plot)
-
+if (!is.null(params$repeatability_1)) {
 params$repeatability_1$for_table %>% 
       kableExtra::kbl() %>% 
       kableExtra::kable_styling(bootstrap_options = "striped", 
@@ -152,13 +150,13 @@ params$repeatability_1$for_table %>%
                                 position = "left") %>% 
       htmltools::HTML() %>% 
       print()
+}
 
-
-if (!is.null(params$repeatability_2$plot)) {
+if (!is.null(params$repeatability_1)) {
   print(params$repeatability_1$plot)
 }
 
-if (!is.null(params$repeatability_2$for_table)) {
+if (!is.null(params$repeatability_2)) {
   params$repeatability_2$for_table %>% 
       kableExtra::kbl() %>% 
       kableExtra::kable_styling(bootstrap_options = "striped", 
@@ -168,13 +166,19 @@ if (!is.null(params$repeatability_2$for_table)) {
       print()
 }
 
+if (!is.null(params$repeatability_2)) {
+  print(params$repeatability_2$plot)
+}
+
 ```
 
 ## Data exploration
 
 ```{r data-exploration-plot, results='markup'}
 
-params$data_exploration_plot
+if (!is.null(params$data_exploration_plot)) {
+  print(params$data_exploration_plot)
+}
 
 ```
 

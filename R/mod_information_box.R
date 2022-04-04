@@ -13,7 +13,6 @@ mod_information_box_ui <- function(id){
     plotOutput(ns("plot")),
     br(),
     DT::dataTableOutput(ns("table"))
-    #uiOutput(ns("infobox"))
   )
 }
     

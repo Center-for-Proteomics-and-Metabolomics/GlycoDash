@@ -193,12 +193,9 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       x$mod_results <- purrr::map(
         clusters(),
         function(cluster) {
-          #results <- 
-            mod_information_box_server(cluster,
+          mod_information_box_server(cluster,
                                      info = info,
                                      cluster = cluster)
-          #check if this does work
-          #assign(cluster, results)
         })
     })
     
@@ -335,7 +332,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       ignore_samples = reactive({input$ignore_samples}),
       cut_off_percentage = reactive({input$cut_off}),
       analyte_list = reactive({input$analyte_list$name}),
-      plots = reactive({x$mod_results})
+      objects = reactive({x$mod_results})
     ))
  
   })

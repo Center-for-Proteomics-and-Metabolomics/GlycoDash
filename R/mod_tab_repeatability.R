@@ -145,8 +145,8 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
     })
     
     return(list(
-      plot = plot,
-      for_table = for_table
+      plot = reactive({plot()}),
+      for_table = reactive({for_table()})
     ))
     
   })
