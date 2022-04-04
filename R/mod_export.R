@@ -94,16 +94,29 @@ mod_export_server <- function(id,
       },
       content = function(file) {
         
-        called_analyte_curation_objects <- purrr::map(results_analyte_curation$objects(),
-                                                      function(list_of_objects) {
-                                                        purrr::map(
-                                                          list_of_objects,
-                                                          ~ do.call(.x,
-                                                                    args = list()))
-                                                      })
+        called_analyte_curation_objects <- tryCatch(
+          expr = {
+            purrr::map(results_analyte_curation$objects(),
+                       function(list_of_objects) {
+                         purrr::map(
+                           list_of_objects,
+                           ~ do.call(.x,
+                                     args = list()))
+                       })
+          },
+          error = function(e) {
+            NULL
+          }
+        )
         
-        print(called_analyte_curation_objects[[1]])                                              
-        
+        # called_analyte_curation_objects <- purrr::map(results_analyte_curation$objects(),
+        #                                               function(list_of_objects) {
+        #                                                 purrr::map(
+        #                                                   list_of_objects,
+        #                                                   ~ do.call(.x,
+        #                                                             args = list()))
+        #                                               })
+                                                
         rep1_plot_table <- tryCatch(
           expr = {
             purrr::map(results_repeatability$first_tab(),
@@ -144,8 +157,14 @@ mod_export_server <- function(id,
             NULL
           })
         
+        plate_design <- purrr::map(results_data_import$plate_design,
+                                   ~ do.call(.x,
+                                             args = list()))
+        
+        plate_design[sapply(plate_design, is.null)] <- NULL
+      
         params <- list(lacytools_summary = results_data_import$lacytools_summary(),
-                       plate_design = results_data_import$plate_design(),
+                       plate_design = plate_design,
                        metadata = results_data_import$metadata(),
                        manual_sample_types = results_data_import$manual_sample_types(),
                        sample_types_file = results_data_import$sample_types_file(),
