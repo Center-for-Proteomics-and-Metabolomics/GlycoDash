@@ -265,7 +265,8 @@ plot_analyte_curation <- function(curated_analytes,
     ggplot2::xlab("Analyte") +
     ggplot2::scale_y_continuous(labels = function(x) paste0(x, "%"), 
                                 name = "Proportion of passing spectra (%)") +
-    ggpubr::border(size = 0.5)
+    ggpubr::border(size = 0.5) +
+    ggplot2::labs(title = selected_cluster)
   
   return(plot)
   
