@@ -34,7 +34,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ## Data import
 
 - LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
-- Plate design file(s): `r paste0("\"", paste(params$plate_design, collapse = "\" and \"), "\"")`
+- Plate design file(s): `r paste0("\"", paste(params$plate_design, collapse = "\" and \""), "\"")`
 - Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", paste(params$metadata, collapse = " and "), "\""))`
 
 Sample types were added `r ifelse(params$manual_sample_types, "manually", "automatically")`.
