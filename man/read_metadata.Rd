@@ -22,7 +22,7 @@ names. If the file contains multiple sheets, only the first sheet is read in.
 \examples{
 path <- system.file("inst",
                     "extdata",
-                    "Metadata.xlsx",
+                    "Metadata_example.xlsx",
                     package = "glycodash")
                     
 read_metadata(path)

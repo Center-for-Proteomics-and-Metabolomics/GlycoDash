@@ -16,14 +16,16 @@ outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
 #'
 #' @param path A path to a file with non-rectangular data.
 #' @param delim The field separator used in the file. 
-#'              For example, use "\t" for files with tab-separated values 
+#'              For example, use "\\t" for files with tab-separated values 
 #'              and "," or ";" for files with comma-separated values (.csv).
 #'
 #' @return A data frame (\code{\link{[base]data.frame}}) containing the data in the flat file.
 #' @export
 #'
 #' @examples 
-#' data_file <- system.file("inst", "extdata", "LacyTools_summary.txt", 
+#' data_file <- system.file("inst", 
+#'                          "extdata", 
+#'                          "LacyTools_summary_example.txt", 
 #'                          package = "glycodash")
 #' read_non_rectangular(path = data_file, delim = "\t")
 #' 
@@ -42,7 +44,7 @@ read_non_rectangular <- function(path, delim = "\t") {
     column_names[i] <- paste("col", i, sep = "_")
   }
   data <- read.table(path, fill = TRUE, header = FALSE, col.names = column_names, 
-                     sep = delim, blank.lines.skip = FALSE, na.strings = "")
+                     sep = delim, blank.lines.skip = FALSE, na.strings = c("", "0"))
   return(data)
 }
 
@@ -406,7 +408,7 @@ create_long_data <- function(block, metadata = NULL) {
 #' @examples
 #' path_to_file <- system.file("inst",
 #'                             "extdata",
-#'                             "LacyTools_summary.txt",
+#'                             "LacyTools_summary_example.txt",
 #'                             package = "glycodash")
 #'                             
 #' read_lacytools_summary(summary_file = path_to_file)
@@ -470,7 +472,7 @@ read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, 
 #' @examples
 #' path <- system.file("inst",
 #'                     "extdata",
-#'                     "Plate_design.xlsx",
+#'                     "Plate_design_example.xlsx",
 #'                     package = "glycodash")
 #' read_plate_design(plate_design_file = path)
 read_plate_design <- function(plate_design_file) {
@@ -520,7 +522,7 @@ read_plate_design <- function(plate_design_file) {
 #' @examples
 #' path <- system.file("inst",
 #'                     "extdata",
-#'                     "Plate_design.xlsx",
+#'                     "Plate_design_example.xlsx",
 #'                     package = "glycodash")
 #'
 #' plate_design <- read_plate_design(file_path)
@@ -584,7 +586,7 @@ process_plate_design <- function (plate_design) {
 #' @examples
 #' path <- system.file("inst",
 #'                     "extdata",
-#'                     "Plate_design.xlsx",
+#'                     "Plate_design_example.xlsx",
 #'                     package = "glycodash")
 #'
 #' plate_design <- read_plate_design(file_path)
@@ -675,7 +677,7 @@ handle_duplicates <- function(plate_design) {
 #' @examples
 #' path <- system.file("inst",
 #'                     "extdata",
-#'                     "Plate_design.xlsx",
+#'                     "Plate_design_example.xlsx",
 #'                     package = "glycodash")
 #' 
 #' read_and_process_plate_design(plate_design_file = path)
@@ -720,7 +722,7 @@ read_and_process_plate_design <- function(plate_design_file) {
 #' @examples
 #' path <- system.file("inst",
 #'                     "extdata",
-#'                     "Metadata.xlsx",
+#'                     "Metadata_example.xlsx",
 #'                     package = "glycodash")
 #'                     
 #' read_metadata(path)

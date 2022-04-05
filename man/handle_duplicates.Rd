@@ -32,7 +32,7 @@ up.
 \examples{
 path <- system.file("inst",
                     "extdata",
-                    "Plate_design.xlsx",
+                    "Plate_design_example.xlsx",
                     package = "glycodash")
 
 plate_design <- read_plate_design(file_path)

@@ -59,7 +59,7 @@ sample.
 \examples{
 path <- system.file("inst",
                     "extdata",
-                    "Plate_design.xlsx",
+                    "Plate_design_example.xlsx",
                     package = "glycodash")
 
 read_and_process_plate_design(plate_design_file = path)

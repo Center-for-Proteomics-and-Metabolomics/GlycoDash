@@ -25,7 +25,7 @@ This function determines which cluster an analyte belongs to based on the
 analyte name.
 }
 \examples{
-data("long_data")
+data("example_data")
 define_clusters(data = long_data,
                 clusters_regex = "IgGI1")
 }

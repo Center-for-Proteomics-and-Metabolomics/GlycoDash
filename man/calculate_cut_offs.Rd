@@ -25,7 +25,7 @@ for the sum intensity of passing analytes per spectrum. This function is used
 within the function \code{\link{curate_spectra}}.
 }
 \examples{
-data("long_data")
+data("example_data")
 spectra_check <- summarize_spectra_checks(data = long_data,
                                           min_ppm_deviation = -20,
                                           max_ppm_deviation = 20,

@@ -18,7 +18,7 @@
 #' @export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' calculate_total_intensity(long_data)
 calculate_total_intensity <- function(data) {
   
@@ -87,7 +87,7 @@ calculate_total_intensity <- function(data) {
 #' @export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' 
 #' # First spectra curation is performed:
 #' long_data <- curate_spectra(data = long_data,

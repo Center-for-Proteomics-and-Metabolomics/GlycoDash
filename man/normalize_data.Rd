@@ -22,7 +22,7 @@ within that cluster and spectrum is divided by that sum intensity. This
 yields the relative abundance of the analyte in that spectrum.
 }
 \examples{
-data("long_data")
+data("example_data")
 
 # First spectra curation is performed:
 long_data <- curate_spectra(data = long_data,

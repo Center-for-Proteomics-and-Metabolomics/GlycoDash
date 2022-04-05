@@ -26,6 +26,6 @@ Then these adjusted intensities are summed up to get the total intensity of
 the analyte.
 }
 \examples{
-data("long_data")
+data("example_data")
 calculate_total_intensity(long_data)
 }

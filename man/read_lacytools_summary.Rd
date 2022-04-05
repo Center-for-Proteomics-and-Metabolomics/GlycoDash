@@ -39,7 +39,7 @@ The function \code{read_lacytools_summary()} can read in a LacyTools summary
 \examples{
 path_to_file <- system.file("inst",
                             "extdata",
-                            "LacyTools_summary.txt",
+                            "LacyTools_summary_example.txt",
                             package = "glycodash")
                             
 read_lacytools_summary(summary_file = path_to_file)

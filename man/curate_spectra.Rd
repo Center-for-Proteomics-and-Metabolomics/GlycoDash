@@ -57,12 +57,11 @@ curation are defined (using the function \code{\link{calculate_cut_offs}}).
 All spectra with values above those cut-off values pass the spectra curation.
 }
 \examples{
-data("long_data")
+data("example_data")
 curate_spectra(data = long_data,
                min_ppm_deviation = -20,
                max_ppm_deviation = 20,
                max_ipq = 0.2,
                min_sn = 9,
-               group_to_filter = "Spike",
-               sample_type_to_filter = "CN")
+               cut_off_basis = "PBS")
 }

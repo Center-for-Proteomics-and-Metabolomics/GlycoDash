@@ -51,7 +51,7 @@ performed with \code{\link{curate_spectra}} and after the spectra that did
 not pass spectra curation have been filtered out (see example below).
 }
 \examples{
-data("long_data")
+data("example_data")
 long_data <- curate_spectra(data = long_data,
                             min_ppm_deviation = -20,
                             max_ppm_deviation = 20,
