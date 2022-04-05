@@ -26,7 +26,7 @@ analytes per spectrum and the sum intensity of passing analytes per spectrum.
 criteria checks for every spectrum and analyte combination in the data.
 }
 \examples{
-data("long_data")
+data("example_data")
 summarize_spectra_checks(data = long_data,
                          min_ppm_deviation = -20,
                          max_ppm_deviation = 20,

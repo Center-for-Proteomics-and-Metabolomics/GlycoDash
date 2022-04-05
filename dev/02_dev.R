@@ -70,9 +70,9 @@ golem::add_css_file( "custom" )
 
 ## Add internal datasets ----
 ## If you have data in your package
-usethis::use_data_raw( name = "example_LacyTools_summary", open = TRUE )
+usethis::use_data_raw( name = "LacyTools_summary", open = TRUE )
 usethis::use_data_raw(name = "metadata_cleaned", open = TRUE)
-usethis::use_data_raw(name = "long_data", open = TRUE)
+usethis::use_data_raw(name = "example_data", open = TRUE)
 
 ## Tests ----
 ## Add one line by test you want to create

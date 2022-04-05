@@ -15,7 +15,7 @@
 #'@export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' define_clusters(data = long_data,
 #'                 clusters_regex = "IgGI1")
 define_clusters <- function(data, clusters_regex) {
@@ -158,7 +158,7 @@ do_criteria_check <- function(data,
 #' @export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' summarize_spectra_checks(data = long_data,
 #'                          min_ppm_deviation = -20,
 #'                          max_ppm_deviation = 20,
@@ -226,7 +226,7 @@ sd_p <- function(x, na.rm = FALSE) {
 #' @export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' spectra_check <- summarize_spectra_checks(data = long_data,
 #'                                           min_ppm_deviation = -20,
 #'                                           max_ppm_deviation = 20,
@@ -278,14 +278,13 @@ calculate_cut_offs <- function(spectra_check, cut_off_basis) {
 #' @export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' curate_spectra(data = long_data,
 #'                min_ppm_deviation = -20,
 #'                max_ppm_deviation = 20,
 #'                max_ipq = 0.2,
 #'                min_sn = 9,
-#'                group_to_filter = "Spike",
-#'                sample_type_to_filter = "CN")
+#'                cut_off_basis = "PBS")
 curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_deviation, 
                            max_ipq, min_sn, cut_off_basis) {
   data <- define_clusters(data = data,
@@ -353,14 +352,24 @@ filter_cut_off_basis <- function(cut_off_basis, data) {
       stop("One or more of the groups in cut_off_basis are not present in the data.")
     } 
     
-    cut_off_basis_samples <- purrr::map2_dfr(
-      groups_to_filter,
-      sample_types_to_filter,
-      function(group_to_filter, sample_type_to_filter) {
-        data %>% 
-          dplyr::filter(group == group_to_filter & sample_type == sample_type_to_filter)
-      })
-    
+    if (!rlang::is_empty(groups_to_filter)) {
+      
+      cut_off_basis_samples <- purrr::map2_dfr(
+        groups_to_filter,
+        sample_types_to_filter,
+        function(group_to_filter, sample_type_to_filter) {
+          data %>% 
+            dplyr::filter(group == group_to_filter & sample_type == sample_type_to_filter)
+        })
+      
+    } else {
+      
+      cut_off_basis_samples <- purrr::map_dfr(sample_types_to_filter,
+                                              function(sample_type_to_filter) {
+                                                data %>% 
+                                                  dplyr::filter(sample_type == sample_type_to_filter)
+                                              })
+    }
   } else {
     
     cut_off_basis_samples <- purrr::map_dfr(sample_types_to_filter,

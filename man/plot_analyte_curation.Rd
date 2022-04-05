@@ -30,7 +30,7 @@ A bar plot with all analytes in the selected cluster on the x-axis,
 Create a plot showing the results of analyte curation for a single cluster.
 }
 \examples{
-data("long_data")
+data("example_data")
 long_data <- curate_spectra(data = long_data,
                             min_ppm_deviation = -20,
                             max_ppm_deviation = 20,

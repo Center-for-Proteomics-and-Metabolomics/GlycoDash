@@ -24,7 +24,7 @@ This function returns the same dataframe that was given as the
 Analyte curation based on a list
 }
 \examples{
-data("long_data")
+data("example_data")
 long_data <- curate_spectra(data = long_data,
                             min_ppm_deviation = -20,
                             max_ppm_deviation = 20,

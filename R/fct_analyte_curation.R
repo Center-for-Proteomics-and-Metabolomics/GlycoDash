@@ -35,7 +35,7 @@
 #' @export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' long_data <- curate_spectra(data = long_data,
 #'                             min_ppm_deviation = -20,
 #'                             max_ppm_deviation = 20,
@@ -119,7 +119,7 @@ curate_analytes <- function(data, group_to_ignore, sample_types_to_ignore, cut_o
 #' @export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' long_data <- curate_spectra(data = long_data,
 #'                             min_ppm_deviation = -20,
 #'                             max_ppm_deviation = 20,
@@ -208,7 +208,7 @@ curate_analytes_with_list <- function(data,
 #' @export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' long_data <- curate_spectra(data = long_data,
 #'                             min_ppm_deviation = -20,
 #'                             max_ppm_deviation = 20,
@@ -289,7 +289,7 @@ plot_analyte_curation <- function(curated_analytes,
 #' @export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' long_data <- curate_spectra(data = long_data,
 #'                             min_ppm_deviation = -20,
 #'                             max_ppm_deviation = 20,
@@ -352,7 +352,7 @@ create_analyte_curation_table <- function(dataframe_for_table) {
 #' @export
 #'
 #' @examples
-#' data("long_data")
+#' data("example_data")
 #' long_data <- curate_spectra(data = long_data,
 #'                             min_ppm_deviation = -20,
 #'                             max_ppm_deviation = 20,

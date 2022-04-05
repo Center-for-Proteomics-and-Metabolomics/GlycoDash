@@ -10,7 +10,7 @@ read_non_rectangular(path, delim = "\\t")
 \item{path}{A path to a file with non-rectangular data.}
 
 \item{delim}{The field separator used in the file. 
-For example, use "\t" for files with tab-separated values 
+For example, use "\\t" for files with tab-separated values 
 and "," or ";" for files with comma-separated values (.csv).}
 }
 \value{
@@ -23,7 +23,9 @@ and empty fields "" are interpreted as \code{NA}. This function was created to r
 LacyTools summary files (tab-delimited .txt files).
 }
 \examples{
-data_file <- system.file("inst", "extdata", "LacyTools_summary.txt", 
+data_file <- system.file("inst", 
+                         "extdata", 
+                         "LacyTools_summary_example.txt", 
                          package = "glycodash")
 read_non_rectangular(path = data_file, delim = "\t")
 

@@ -24,7 +24,7 @@ This function returns a dataframe that can be passed as the
 Prepare a dataframe for the analyte curation table
 }
 \examples{
-data("long_data")
+data("example_data")
 long_data <- curate_spectra(data = long_data,
                             min_ppm_deviation = -20,
                             max_ppm_deviation = 20,
