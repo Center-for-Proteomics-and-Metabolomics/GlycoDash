@@ -296,25 +296,50 @@ mod_data_import_server <- function(id){
       req(input$lacytools_summary)               
       x$keyword_specific_OK <- TRUE
       shinyFeedback::hideFeedback("keyword_specific")
+      shinyFeedback::hideFeedback("lacytools_summary")
+      # Read in the data so that the keywords can be compared to it:
       data <- read_non_rectangular(input$lacytools_summary$datapath)
+      
       all_blocks <- purrr::map(outputs,
-                               function(output) get_block(data = data, 
-                                                          variable = output, 
-                                                          Ig_data = "No"))
+                               function(output) {
+                                 tryCatch(expr = {
+                                   get_block(data = data, 
+                                             variable = output, 
+                                             Ig_data = "No")
+                                 },
+                                 error = function(e) { })
+                               })
       
-      matches <- purrr::map(all_blocks,
-                            function(block) stringr::str_detect(block[["sample_name"]],
-                                                                pattern = input$keyword_specific))
+      all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
       
-      keyword_is_unmatched <- !(all(purrr::map_lgl(matches,
-                                                   any)))
-      
-      if (keyword_is_unmatched) {
-        shinyFeedback::feedbackDanger("keyword_specific",
-                                      show = TRUE,
-                                      text = "This keyword did not match any sample names in your data. Please choose a different keyword.")
-        x$keyword_specific_OK <- FALSE
+      if (rlang::is_empty(all_blocks)) {
+        shinyFeedback::feedbackDanger(
+          "lacytools_summary",
+          show = TRUE,
+          text = paste("No LacyTools output variables could be found in this file."))
+      } else {
+        # stringr::str_detect() throws an error when pattern is an empty string,
+        # so don't proceed if input$keyword_specific is empty:
+        req(input$keyword_specific != "")
+        
+        matches <- purrr::map(all_blocks,
+                              function(block) {
+                                stringr::str_detect(
+                                  block[["sample_name"]],
+                                  pattern = stringr::fixed(input$keyword_specific))
+                              })
+        
+        keyword_is_unmatched <- !(all(purrr::map_lgl(matches,
+                                                     any)))
+        
+        if (keyword_is_unmatched) {
+          shinyFeedback::feedbackDanger("keyword_specific",
+                                        show = TRUE,
+                                        text = "This keyword did not match any sample names in your data. Please choose a different keyword.")
+          x$keyword_specific_OK <- FALSE
+        }
       }
+      
     })
     
     # Check whether the keyword given for total samples has matches with the
@@ -323,26 +348,46 @@ mod_data_import_server <- function(id){
       req(input$lacytools_summary)               
       x$keyword_total_OK <- TRUE
       shinyFeedback::hideFeedback("keyword_total")
+      shinyFeedback::hideFeedback("lacytools_summary")
       data <- read_non_rectangular(input$lacytools_summary$datapath)
       all_blocks <- purrr::map(outputs,
-                               function(output) get_block(data = data, 
-                                                          variable = output, 
-                                                          Ig_data = "No"))
+                               function(output) {
+                                 tryCatch(expr = {
+                                   get_block(data = data, 
+                                             variable = output, 
+                                             Ig_data = "No")
+                                 },
+                                 error = function(e) { })
+                                 })
       
-      matches <- purrr::map(all_blocks,
-                            function(block) stringr::str_detect(block[["sample_name"]],
-                                                                pattern = input$keyword_total))
+      all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
       
-      # In each block there needs to be at least one match, if not then the
-      # keyword is unmatched:
-      keyword_is_unmatched <- !(all(purrr::map_lgl(matches,
-                                                   any)))
-      
-      if (keyword_is_unmatched) {
-        shinyFeedback::feedbackDanger("keyword_total",
-                                      show = TRUE,
-                                      text = "This keyword did not match any sample names in your data. Please choose a different keyword.")
-        x$keyword_total_OK <- FALSE
+      if (rlang::is_empty(all_blocks)) {
+        shinyFeedback::feedbackDanger(
+          "lacytools_summary",
+          show = TRUE,
+          text = paste("No LacyTools output variables could be found in this file."))
+      } else {
+        # stringr::str_detect() throws an error when pattern is an empty string,
+        # so don't proceed if input$keyword_total is empty:
+        req(input$keyword_total != "")
+        
+        matches <- purrr::map(all_blocks,
+                              function(block) stringr::str_detect(
+                                block[["sample_name"]],
+                                pattern = stringr::fixed(input$keyword_total)))
+        
+        # In each block there needs to be at least one match, if not then the
+        # keyword is unmatched:
+        keyword_is_unmatched <- !(all(purrr::map_lgl(matches,
+                                                     any)))
+        
+        if (keyword_is_unmatched) {
+          shinyFeedback::feedbackDanger("keyword_total",
+                                        show = TRUE,
+                                        text = "This keyword did not match any sample names in your data. Please choose a different keyword.")
+          x$keyword_total_OK <- FALSE
+        }
       }
     })
     
