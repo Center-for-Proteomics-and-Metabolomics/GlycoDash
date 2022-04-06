@@ -226,6 +226,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       purrr::map(cluster_inputIds(),
                  function(cluster_inputId) {
                    shinyFeedback::hideFeedback(cluster_inputId)
+                   req(input[[cluster_inputId]] != "")
                    tryCatch(define_clusters(data = x$data,
                                             clusters_regex = input[[cluster_inputId]]),
                             unmatched_regex = function(c) {
