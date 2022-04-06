@@ -24,7 +24,7 @@ define_clusters <- function(data, clusters_regex) {
     clusters_regex,
     function(regex) {
       any(stringr::str_detect(string = data$analyte,
-                              pattern = regex))
+                              pattern = stringr::fixed(regex)))
                  })
   
   if (any(regex_found == FALSE)) {
@@ -43,7 +43,7 @@ define_clusters <- function(data, clusters_regex) {
         any(purrr::map_lgl(other_regexes,
                        function(other_regex) {
                          stringr::str_detect(string = other_regex,
-                                             pattern = regex)
+                                             pattern = stringr::fixed(regex))
                        }))
       })
     
