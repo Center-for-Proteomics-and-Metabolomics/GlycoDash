@@ -417,13 +417,25 @@ read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, 
   data <- read_non_rectangular(summary_file)
   
   all_blocks <- purrr::map(outputs,
-                           function(output) get_block(data = data, 
-                                                      variable = output, 
-                                                      Ig_data = Ig_data,
-                                                      keyword_specific = keyword_specific,
-                                                      keyword_total = keyword_total))
+                           function(output) {
+                             tryCatch(expr = {
+                               get_block(data = data, 
+                                         variable = output, 
+                                         Ig_data = Ig_data,
+                                         keyword_specific = keyword_specific,
+                                         keyword_total = keyword_total)
+                             },
+                             error = function(e) { })
+                           })
   
   all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
+  
+  if (rlang::is_empty(all_blocks)) {
+    rlang::abort(class = "no_outputs_present",
+                 message = paste("None of the LacyTools output variables are", 
+                                 "present in the first column of the LacyTools",
+                                 "summary file. Did you choose the correct file?"))
+  }
   
   long_data_list <- purrr::map(all_blocks, create_long_data)
   charges <- as.factor(purrr::map_chr(long_data_list, function(x) unique(x$charge)))
