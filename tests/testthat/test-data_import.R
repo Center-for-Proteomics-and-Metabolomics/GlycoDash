@@ -1,12 +1,10 @@
 test_that("read_non_rectangular can read in files with different delimiters", {
-  path_to_csv <- system.file("inst",
-                             "extdata",
+  path_to_csv <- system.file("extdata",
                              "for_tests",
                              "flatfile.csv",
                              package = "glycodash")
   
-  path_to_txt <- system.file("inst",
-                             "extdata",
+  path_to_txt <- system.file("extdata",
                              "for_tests",
                              "flatfile.txt",
                              package = "glycodash")
@@ -33,8 +31,7 @@ test_that("read_non_rectangular can read in files with different delimiters", {
 })
 
 test_that("number of columns of dataframe read in with read_non_rectangular() is equal to the widest part of the flat file", {
-  path_to_csv <- system.file("inst",
-                             "extdata",
+  path_to_csv <- system.file("extdata",
                              "for_tests",
                              "flatfile.csv",
                              package = "glycodash")
@@ -45,8 +42,7 @@ test_that("number of columns of dataframe read in with read_non_rectangular() is
 })
 
 test_that("read_non_rectangular reads blank lines as a row with only NAs", {
-  path_to_txt <- system.file("inst",
-                             "extdata",
+  path_to_txt <- system.file("extdata",
                              "for_tests",
                              "flatfile.txt",
                              package = "glycodash")
@@ -64,8 +60,7 @@ test_that("read_non_rectangular reads blank lines as a row with only NAs", {
 })
 
 test_that("read_non_rectangular() throws an error if the resulting dataframe has only one column", {
-  path_to_lacytools <- system.file("inst",
-                                   "extdata",
+  path_to_lacytools <- system.file("extdata",
                                    "LacyTools_summary_example.txt",
                                    package = "glycodash")
   expect_warning(read_non_rectangular(path_to_lacytools, delim = ";"),
@@ -101,8 +96,7 @@ test_that("detect_plate_and_well() doesn't interpret a number larger than 12 or 
 })
 
 test_that("read_and_process_plate_design() throws an error when plate design file is formatted incorrectly.", {
-  file_no_blank_line <- system.file("inst",
-                                    "extdata",
+  file_no_blank_line <- system.file("extdata",
                                     "for_tests",
                                     "Plate_design_no_blank_line_between_plates.xlsx",
                                     package = "glycodash")
@@ -110,8 +104,7 @@ test_that("read_and_process_plate_design() throws an error when plate design fil
   expect_error(read_and_process_plate_design(file_no_blank_line),
                regexp = "Please check that your plate design file is formatted correctly\\. Run `\\?read_and_process_plate_design` to find the required format\\.")
   
-  file_with_title <- system.file("inst",
-                                 "extdata",
+  file_with_title <- system.file("extdata",
                                  "for_tests",
                                  "Plate_design_with_title.xlsx",
                                  package = "glycodash")
@@ -121,8 +114,7 @@ test_that("read_and_process_plate_design() throws an error when plate design fil
 })
 
 test_that("read_and_process_plate_design() throws a warning when no duplicates are found.", {
-  file_duplicates_wrong <- system.file("inst",
-                                       "extdata",
+  file_duplicates_wrong <- system.file("extdata",
                                        "for_tests",
                                        "Plate_design_duplicates_wrong.xlsx",
                                        package = "glycodash")
@@ -132,8 +124,7 @@ test_that("read_and_process_plate_design() throws a warning when no duplicates a
 })
 
 test_that("read_and_process_plate_design() returns a dataframe with the number of plates * 96 as number of rows", {
-  plate_design_file <- system.file("inst",
-                                   "extdata",
+  plate_design_file <- system.file("extdata",
                                    "Plate_design_example.xlsx",
                                    package = "glycodash")
   # This test doesn't work if the plate_design contains rows that are completely
@@ -179,8 +170,7 @@ test_that("load_and_assign() throws an error for objects saved with saveRDS()", 
 })
 
 test_that("date_with_text() converts date without comments to class \"Date\"", {
-  path <- system.file("inst",
-                      "extdata",
+  path <- system.file("extdata",
                       "for_tests",
                       "Dates.xlsx",
                       package = "glycodash")
@@ -198,8 +188,7 @@ test_that("date_with_text() converts date without comments to class \"Date\"", {
 })
 
 test_that("date_with_text() converts date with comments to class \"Character\"", {
-  path <- system.file("inst",
-                      "extdata",
+  path <- system.file("extdata",
                       "for_tests",
                       "Dates_with_comment.xlsx",
                       package = "glycodash")
@@ -217,8 +206,7 @@ test_that("date_with_text() converts date with comments to class \"Character\"",
 })
 
 test_that("date_with_text() throws an error when used outside of dplyr::across()", {
-  path <- system.file("inst",
-                      "extdata",
+  path <- system.file("extdata",
                       "for_tests",
                       "Dates_with_comment.xlsx",
                       package = "glycodash")

@@ -20,8 +20,7 @@ snake case (see: \code{\link[snakecase]{to_snake_case}}) and used as column
 names. If the file contains multiple sheets, only the first sheet is read in.
 }
 \examples{
-path <- system.file("inst",
-                    "extdata",
+path <- system.file("extdata",
                     "Metadata_example.xlsx",
                     package = "glycodash")
                     

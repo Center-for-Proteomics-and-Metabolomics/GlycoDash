@@ -9,8 +9,6 @@ visualize_repeatability(repeatability_data)
 \arguments{
 \item{repeatability_data}{The dataframe that is returned by the
 \code{\link{calculate_repeatability_stats}} function.}
-
-\item{second_axis_rescale_with}{The factor used to rescale the RSD's.}
 }
 \value{
 

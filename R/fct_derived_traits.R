@@ -1,10 +1,11 @@
 #' Calculate fucosylation
 #'
-#' This function calculates the derived trait fucosylation based on the
-#' relative abundances of glycans. This function is used in the function
+#' This function calculates the derived trait fucosylation based on the relative
+#' abundances of glycans. This function is used in the function
 #' \code{\link{calculate_derived_traits}}.
 #'
-#' @param .data
+#' @param .data A data frame. Can be passed to the function via a pipe (%>%)
+#'   (see Examples below).
 #'
 #' @return
 #' @export
@@ -14,8 +15,8 @@
 #'                    relative_abundance = c(0.45, 0.15, 0.03, 0.37),
 #'                    analyte = c("H5N4F1", "H4N3F1", "H3N4S1", "H3N4F1S1"),
 #'                    sum_all_analytes = rep(1, 4))
-#'                    
-#' calculate_fucosylation(example_data)
+#'
+#' example_data %>% calculate_fucosylation(.)
 #' 
 calculate_fucosylation <- function(.data) {
   
@@ -34,7 +35,7 @@ calculate_fucosylation <- function(.data) {
 #' relative abundances of glycans. This function is used in the function
 #' \code{\link{calculate_derived_traits}}.
 #'
-#' @param .data 
+#' @inheritParams calculate_fucosylation 
 #'
 #' @return
 #' @export
@@ -45,7 +46,7 @@ calculate_fucosylation <- function(.data) {
 #'                    analyte = c("H5N4F1", "H4N3F1", "H3N4S1", "H3N4F1S2"),
 #'                    sum_all_analytes = rep(1, 4))
 #'                    
-#' calculate_sialylation(example_data)
+#' example_data %>% calculate_sialylation(.)
 calculate_sialylation <- function(.data) {
   
   monosialylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
@@ -68,7 +69,7 @@ calculate_sialylation <- function(.data) {
 #' relative abundances of glycans. This function is used in the function
 #' \code{\link{calculate_derived_traits}}.
 #'
-#' @param .data 
+#' @inheritParams calculate_fucosylation
 #'
 #' @return
 #' @export
@@ -79,7 +80,7 @@ calculate_sialylation <- function(.data) {
 #'                    analyte = c("H5N4F1", "H4N3F1", "H3N4S1", "H3N4F1S2"),
 #'                    sum_all_analytes = rep(1, 4))
 #'                    
-#' calculate_galactosylation(example_data)
+#' example_data %>% calculate_galactosylation(.)
 #' 
 calculate_galactosylation <- function(.data) {
   
@@ -102,8 +103,7 @@ calculate_galactosylation <- function(.data) {
 #' relative abundances of glycans. This function is used in the function
 #' \code{\link{calculate_derived_traits}}.
 #'
-#' @param .data 
-#' @param analytes 
+#' @inheritParams calculate_fucosylation
 #'
 #' @return
 #' @export
@@ -114,9 +114,9 @@ calculate_galactosylation <- function(.data) {
 #'                    analyte = c("H5N4F1", "H4N3F1", "H3N4S1", "H3N4F1S1"),
 #'                    sum_all_analytes = rep(1, 4))
 #'                    
-#' calculate_bisection(example_data)
+#' example_data %>% calculate_bisection(.)
 #' 
-calculate_bisection <- function(.data, analytes) {
+calculate_bisection <- function(.data) {
   
   bisected_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                            pattern = "N5")
@@ -134,7 +134,7 @@ calculate_bisection <- function(.data, analytes) {
 #'
 #' @param data A dataframe that contains at least the columns "sample_name", "cluster",
 #'   "relative_abundance" and "analyte".
-#' @param derived_traits A character vector containing the names of the derived
+#' @param selected_derived_traits A character vector containing the names of the derived
 #'   traits that should be calculated. The derived traits that can be
 #'   calculated with this function are: \describe{ \item{"Fucosylation"}{The
 #'   proportion of detected glycans that is fucosylated.} \item{"Bisection"}{The
@@ -150,7 +150,7 @@ calculate_bisection <- function(.data, analytes) {
 #'                    group = c("Spike", "Total", "Spike", "Total"),
 #'                    cluster = c("C1", "C1", "C1", "C2"),
 #'                    analyte = c("H5N4F1", "H4N3F1", "H3N4S1", "H3N4F1S1"),
-#'                    sum_all_analytes = rep(1, 4))
+#'                    relative_abundance = c(0.3, 0.8, 0.2, 0.3))
 #'                    
 #' calculate_derived_traits(data = example_data,
 #'                          selected_derived_traits = c("Galactosylation",

@@ -16,7 +16,7 @@
 #'
 #' @examples
 #' data("example_data")
-#' define_clusters(data = long_data,
+#' define_clusters(data = example_data,
 #'                 clusters_regex = "IgGI1")
 define_clusters <- function(data, clusters_regex) {
   
@@ -96,8 +96,8 @@ define_clusters <- function(data, clusters_regex) {
 #' @export
 #'
 #' @examples
-#' data(long_data)
-#' do_criteria_check(data = long_data,
+#' data(example_data)
+#' do_criteria_check(data = example_data,
 #'                   min_ppm_deviation = -20,
 #'                   max_ppm_deviation = 20,
 #'                   max_ipq = 0.2,
@@ -143,7 +143,8 @@ do_criteria_check <- function(data,
 #' \code{\link{do_criteria_check}} has been used to perform analyte quality
 #' criteria checks for every spectrum and analyte combination in the data.
 #'
-#' @inheritParams do_criteria_check
+#' @param data_checked The dataframe that is returned by
+#'   \code{\link{do_criteria_check}}.
 #'
 #' @return A dataframe that contains one row per spectrum for each cluster (
 #'   Thus the number of rows is equal to the number of spectra times the number
@@ -159,11 +160,17 @@ do_criteria_check <- function(data,
 #'
 #' @examples
 #' data("example_data")
-#' summarize_spectra_checks(data = long_data,
-#'                          min_ppm_deviation = -20,
-#'                          max_ppm_deviation = 20,
-#'                          max_ipq = 0.2,
-#'                          min_sn = 9)
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 clusters_regex = "IgGI1")
+#'
+#' checked_data <- do_criteria_check(data = example_data,
+#'                                   min_ppm_deviation = -20,
+#'                                   max_ppm_deviation = 20,
+#'                                   max_ipq = 0.2,
+#'                                   min_sn = 9)
+#'
+#' summarize_spectra_checks(data_checked = checked_data)
 summarize_spectra_checks <- function(data_checked) {
   required_columns <- list("sample_type",
                            "sample_name",
@@ -216,25 +223,36 @@ sd_p <- function(x, na.rm = FALSE) {
 #' within the function \code{\link{curate_spectra}}.
 #'
 #' @param spectra_check The dataframe returned by
-#'   \code{\link{summarize_spectra_checks()}}.
-#' @param groups_to_filter The group (Specific or Total) to base spectra curation
-#'   cut-offs on.
-#' @param sample_types_to_filter The sample type to base spectra curation
-#'   cut-offs on.
+#'   \code{\link{summarize_spectra_checks}}.
+#' @param cut_off_basis A character vector or a single character string
+#'   specifying which sample types (and optionally which group (Specific or
+#'   Total Ig)) the spectra curation cut-offs should be based on. For each
+#'   sample type or sample type-group combination that you want to base the
+#'   cut-offs on you should add a character string. For example. if you want to
+#'   base the cut-offs on all PBS samples and on the Specific negative_control
+#'   samples, \code{cut_off_basis} should be \code{c("PBS", "Specific
+#'   negative_control")}
 #'
 #' @return
 #' @export
 #'
 #' @examples
 #' data("example_data")
-#' spectra_check <- summarize_spectra_checks(data = long_data,
-#'                                           min_ppm_deviation = -20,
-#'                                           max_ppm_deviation = 20,
-#'                                           max_ipq = 0.2,
-#'                                           min_sn = 9)
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 clusters_regex = "IgGI1")
+#'
+#' checked_data <- do_criteria_check(data = example_data,
+#'                                   min_ppm_deviation = -20,
+#'                                   max_ppm_deviation = 20,
+#'                                   max_ipq = 0.2,
+#'                                   min_sn = 9)
+#'
+#' spectra_check <- summarize_spectra_checks(data_checked = checked_data)
+#'
 #' calculate_cut_offs(spectra_check = spectra_check,
-#'                    group_to_filter = "Spike",
-#'                    sample_type_to_filter = "CN")
+#'                    cut_off_basis = c("Spike PBS", "Total PBS"))
+#'                    
 calculate_cut_offs <- function(spectra_check, cut_off_basis) {
   
   cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
@@ -279,12 +297,13 @@ calculate_cut_offs <- function(spectra_check, cut_off_basis) {
 #'
 #' @examples
 #' data("example_data")
-#' curate_spectra(data = long_data,
+#' curate_spectra(data = example_data,
+#'                clusters_regex = "IgGI1",
 #'                min_ppm_deviation = -20,
 #'                max_ppm_deviation = 20,
 #'                max_ipq = 0.2,
 #'                min_sn = 9,
-#'                cut_off_basis = "PBS")
+#'                cut_off_basis = c("Spike PBS", "Total PBS"))
 curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_deviation, 
                            max_ipq, min_sn, cut_off_basis) {
   data <- define_clusters(data = data,
@@ -382,6 +401,31 @@ filter_cut_off_basis <- function(cut_off_basis, data) {
   return(cut_off_basis_samples)
 }
 
+#' Create a plot to show the cut_offs for spectra curation
+#'
+#' @param spectra_check The dataframe returned by \code{\link{curate_spectra}}.
+#'   \code{curate_spectra} returns two dataframes in a list. The dataframe that
+#'   should be passed as the \code{spectra_check} argument to
+#'   \code{create_cut_off_plot} is named "spectra_check".
+#' @inheritParams calculate_cut_offs
+#'
+#' @return This function returns a ggplot object.
+#' @export
+#'
+#' @importFrom grDevices colorRampPalette
+#'
+#' @examples
+#' data("example_data")
+#' spectra_curation <- curate_spectra(data = example_data,
+#'                                    clusters_regex = "IgGI1",
+#'                                    min_ppm_deviation = -20,
+#'                                    max_ppm_deviation = 20,
+#'                                    max_ipq = 0.2,
+#'                                    min_sn = 9,
+#'                                    cut_off_basis = c("Spike PBS", "Total PBS"))
+#' 
+#' create_cut_off_plot(spectra_check = spectra_curation$spectra_check,
+#'                     cut_off_basis = c("Spike PBS", "Total PBS"))
 create_cut_off_plot <- function(spectra_check, cut_off_basis) {
   
   n_colors <- length(unique(spectra_check$sample_type))
@@ -398,8 +442,10 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
                         linetype = "dashed") +
     ggplot2::geom_vline(xintercept = spectra_check$cut_off_prop,
                         linetype = "dashed") +
-    ggplot2::scale_color_manual(values = my_palette)
-    #ggplot2::scale_color_brewer(palette = "Set2")
+    ggplot2::scale_color_manual(values = my_palette) +
+    ggplot2::labs(y = "Sum intensity of passing analytes") +
+    ggplot2::scale_x_continuous(labels = function(x) paste0(x * 100, "%"), 
+                                name = "Proportion of spectra (%)")
   
   if ("group" %in% colnames(spectra_check)) {
     p <- p +

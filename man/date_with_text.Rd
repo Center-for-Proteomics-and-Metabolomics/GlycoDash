@@ -42,8 +42,8 @@ Solution provided by Rui Barradas:\cr
 }
 
 \examples{
-path <- system.file("inst",
-                    "extdata",
+path <- system.file("extdata",
+                    "for_tests",
                     "Dates_with_comment.xlsx",
                     package = "glycodash")
 
@@ -85,8 +85,8 @@ print(dates_with_comment)
 # 5 2022-02-15
 # 6 2022-02-16
 
-path <- system.file("inst",
-                    "extdata",
+path <- system.file("extdata",
+                    "for_tests",
                     "Dates.xlsx",
                     package = "glycodash")
 

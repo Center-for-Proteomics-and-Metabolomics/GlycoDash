@@ -55,7 +55,7 @@ mod_data_import_ui <- function(id){
             actionButton(ns("read_summary"),
                          "Convert the LacyTools summary file to an R-suitable format")
           ),
-          shinydashboardPlus::box(
+          shinydashboard::box(
             title = "Upload your plate design",
             width = NULL,
             solidHeader = TRUE,

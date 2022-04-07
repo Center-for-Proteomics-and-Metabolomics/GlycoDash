@@ -27,5 +27,15 @@ analyte, but not near another charge state of that same analyte.
 }
 \examples{
 data("LacyTools_summary")
+
+outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
+                "Absolute Intensity (Background Subtracted, 3+)", 
+                "Mass Accuracy [ppm] (2+)", 
+                "Mass Accuracy [ppm] (3+)",
+                "Isotopic Pattern Quality (2+)",
+                "Isotopic Pattern Quality (3+)",
+                "S/N (2+)",
+                "S/N (3+)")
+
 get_analytes_info_from_list(data = LacyTools_summary, list_of_variables = outputs)
 }

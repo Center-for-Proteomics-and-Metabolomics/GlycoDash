@@ -27,11 +27,10 @@ function and converts it to a different format. In addition it automatically
 determines sample types based on the sample ID's.
 }
 \examples{
-path <- system.file("inst",
-                    "extdata",
+path <- system.file("extdata",
                     "Plate_design_example.xlsx",
                     package = "glycodash")
 
-plate_design <- read_plate_design(file_path)
+plate_design <- read_plate_design(path)
 process_plate_design(plate_design)
 }

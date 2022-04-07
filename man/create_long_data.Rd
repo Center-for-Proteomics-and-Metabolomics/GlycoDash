@@ -25,6 +25,10 @@ the charge of the LacyTools output format.
 }
 \examples{
 data("LacyTools_summary")
-block <- get_block(LacyTools_summary, variable = "Absolute Intensity (Background Subtracted, 2+)")
+block <- get_block(LacyTools_summary, 
+                   variable = "Absolute Intensity (Background Subtracted, 2+)", 
+                   Ig_data = "Yes", 
+                   keyword_specific = "Spike", 
+                   keyword_total = "Total")
 create_long_data(block = block)
 }

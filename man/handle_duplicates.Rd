@@ -30,12 +30,11 @@ left-most column of the plate, the duplicate of the right-most well one row
 up.
 }
 \examples{
-path <- system.file("inst",
-                    "extdata",
+path <- system.file("extdata",
                     "Plate_design_example.xlsx",
                     package = "glycodash")
 
-plate_design <- read_plate_design(file_path)
+plate_design <- read_plate_design(path)
 plate_design <- process_plate_design(plate_design)
 handle_duplicates(plate_design)
 }

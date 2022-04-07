@@ -15,6 +15,16 @@ read_lacytools_summary(
 \item{summary_file}{The path to the LacyTools summary file. This file should
 be a tab-delimited .txt file. This function can process the output summary
 file of LacyTools without any changes needed.}
+
+\item{Ig_data}{A character string. Is your data immunoglobulin data that
+contains both total Ig and specific Ig samples? If yes then \code{Ig_data}
+should be "Yes" if not \code{Ig_data} should be "No".}
+
+\item{keyword_total}{The word(s)/characters within the sample name used to
+refer to Total samples.}
+
+\item{keyword_specific}{The word(s)/characters within the sample name used to
+refer to Specific samples.}
 }
 \value{
 This function returns a dataframe with the following columns:
@@ -37,10 +47,12 @@ The function \code{read_lacytools_summary()} can read in a LacyTools summary
 .txt file and convert it to a 'tidy' dataframe in long format.
 }
 \examples{
-path_to_file <- system.file("inst",
-                            "extdata",
+path_to_file <- system.file("extdata",
                             "LacyTools_summary_example.txt",
                             package = "glycodash")
                             
-read_lacytools_summary(summary_file = path_to_file)
+read_lacytools_summary(summary_file = path_to_file,
+                       Ig_data = "Yes",
+                       keyword_specific = "Spike",
+                       keyword_total = "Total")
 }

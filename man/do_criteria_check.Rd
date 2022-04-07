@@ -35,8 +35,8 @@ every spectrum in the data. This function is used within the function
 \code{\link{summarize_spectra_checks}}.
 }
 \examples{
-data(long_data)
-do_criteria_check(data = long_data,
+data(example_data)
+do_criteria_check(data = example_data,
                   min_ppm_deviation = -20,
                   max_ppm_deviation = 20,
                   max_ipq = 0.2,

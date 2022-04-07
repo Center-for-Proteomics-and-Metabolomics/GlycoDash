@@ -2,7 +2,7 @@ Package: glycodash
 Title: glycodash
 Version: 0.0.0.9000
 Authors@R: person('Sterre', 'Siekman', email = 's.l.siekman@lumc.nl', role = c('cre', 'aut'))
-Description: Package for processing IgG/IgA glycosylation data.
+Description: Package for processing glycomics data.
 License: MIT + file LICENSE
 Imports: 
     attempt,
@@ -16,11 +16,15 @@ Imports:
     ggpubr,
     glue,
     golem (>= 0.3.1),
+    htmltools,
     kableExtra,
     magrittr,
     plater,
     processx,
     purrr,
+    RColorBrewer,
+    readr,
+    readxl,
     rhandsontable,
     rlang,
     RLumShiny,
@@ -48,6 +52,6 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Language: en-US
-VignetteBuilder: knitr
+VignetteBuilder: rmarkdown, knitr
 Depends: 
     R (>= 2.10)

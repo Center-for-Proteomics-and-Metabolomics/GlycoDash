@@ -27,5 +27,5 @@ the analyte.
 }
 \examples{
 data("example_data")
-calculate_total_intensity(long_data)
+calculate_total_intensity(example_data)
 }

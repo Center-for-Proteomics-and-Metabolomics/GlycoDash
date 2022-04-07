@@ -12,14 +12,16 @@ mod_derived_traits_ui <- function(id){
   tagList(
     fluidPage(
       fluidRow(
-        h1("Derived traits")
-      ),
+        h1("Derived traits"),
+              ),
       fluidRow(
         shinydashboard::box(
           title = "Calculate derived traits",
           width = 3,
           solidHeader = TRUE,
           status = "primary",
+          "Attention: derived traits calculation can only be used on IgG data for now!",
+          br(),
           shinyWidgets::awesomeCheckboxGroup(ns("traits_menu"),
                                              "Select the derived traits that should be calculated:",
                                              choices = c("Fucosylation",
