@@ -7,14 +7,15 @@
 calculate_fucosylation(.data)
 }
 \arguments{
-\item{.data}{}
+\item{.data}{A data frame. Can be passed to the function via a pipe (%>%)
+(see Examples below).}
 }
 \value{
 
 }
 \description{
-This function calculates the derived trait fucosylation based on the
-relative abundances of glycans. This function is used in the function
+This function calculates the derived trait fucosylation based on the relative
+abundances of glycans. This function is used in the function
 \code{\link{calculate_derived_traits}}.
 }
 \examples{
@@ -22,7 +23,7 @@ example_data <- data.frame(
                    relative_abundance = c(0.45, 0.15, 0.03, 0.37),
                    analyte = c("H5N4F1", "H4N3F1", "H3N4S1", "H3N4F1S1"),
                    sum_all_analytes = rep(1, 4))
-                   
-calculate_fucosylation(example_data)
+
+example_data \%>\% calculate_fucosylation(.)
 
 }

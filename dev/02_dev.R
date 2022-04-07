@@ -38,6 +38,10 @@ usethis::use_package( "ggpubr" )
 usethis::use_package( "shinyWidgets" )
 usethis::use_package( "bsplus" )
 usethis::use_package( "kableExtra" )
+usethis::use_package( "readxl" )
+usethis::use_package( "readr" )
+usethis::use_package( "RColorBrewer")
+usethis::use_package( "htmltools" )
 usethis::use_pipe()
 
 ## Add modules ----

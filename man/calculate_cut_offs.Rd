@@ -8,13 +8,16 @@ calculate_cut_offs(spectra_check, cut_off_basis)
 }
 \arguments{
 \item{spectra_check}{The dataframe returned by
-\code{\link{summarize_spectra_checks()}}.}
+\code{\link{summarize_spectra_checks}}.}
 
-\item{groups_to_filter}{The group (Specific or Total) to base spectra curation
-cut-offs on.}
-
-\item{sample_types_to_filter}{The sample type to base spectra curation
-cut-offs on.}
+\item{cut_off_basis}{A character vector or a single character string
+specifying which sample types (and optionally which group (Specific or
+Total Ig)) the spectra curation cut-offs should be based on. For each
+sample type or sample type-group combination that you want to base the
+cut-offs on you should add a character string. For example. if you want to
+base the cut-offs on all PBS samples and on the Specific negative_control
+samples, \code{cut_off_basis} should be \code{c("PBS", "Specific
+negative_control")}}
 }
 \value{
 
@@ -26,12 +29,19 @@ within the function \code{\link{curate_spectra}}.
 }
 \examples{
 data("example_data")
-spectra_check <- summarize_spectra_checks(data = long_data,
-                                          min_ppm_deviation = -20,
-                                          max_ppm_deviation = 20,
-                                          max_ipq = 0.2,
-                                          min_sn = 9)
+
+example_data <- define_clusters(data = example_data,
+                                clusters_regex = "IgGI1")
+
+checked_data <- do_criteria_check(data = example_data,
+                                  min_ppm_deviation = -20,
+                                  max_ppm_deviation = 20,
+                                  max_ipq = 0.2,
+                                  min_sn = 9)
+
+spectra_check <- summarize_spectra_checks(data_checked = checked_data)
+
 calculate_cut_offs(spectra_check = spectra_check,
-                   group_to_filter = "Spike",
-                   sample_type_to_filter = "CN")
+                   cut_off_basis = c("Spike PBS", "Total PBS"))
+                   
 }

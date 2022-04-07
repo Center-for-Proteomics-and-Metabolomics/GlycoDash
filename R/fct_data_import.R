@@ -19,12 +19,13 @@ outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
 #'              For example, use "\\t" for files with tab-separated values 
 #'              and "," or ";" for files with comma-separated values (.csv).
 #'
-#' @return A data frame (\code{\link{[base]data.frame}}) containing the data in the flat file.
+#' @return A data frame (\code{\link[base]{data.frame}}) containing the data in the flat file.
 #' @export
+#' 
+#' @importFrom utils read.table
 #'
 #' @examples 
-#' data_file <- system.file("inst", 
-#'                          "extdata", 
+#' data_file <- system.file("extdata", 
 #'                          "LacyTools_summary_example.txt", 
 #'                          package = "glycodash")
 #' read_non_rectangular(path = data_file, delim = "\t")
@@ -90,7 +91,7 @@ find_next_na <- function(data, row) {
 #'
 #' @examples
 #'  data("LacyTools_summary")
-#'  find_block(data = data, variable = "S/N (2+)")
+#'  find_block(data = LacyTools_summary, variable = "S/N (2+)")
 find_block <- function(data, variable) {
   first_row <- which(data[ , 1] == variable)
   if (rlang::is_empty(first_row)) {
@@ -139,17 +140,25 @@ detect_group <- function(block, keyword_specific, keyword_total) {
   return(block)
 }
 
-#' Create a subset containing one block from a LacyTools summary. 
+#' Create a subset containing one block from a LacyTools summary.
 #'
 #' @inheritParams find_block
 #' @inheritParams detect_group
+#' @param Ig_data A character string. Is your data immunoglobulin data that
+#'   contains both total Ig and specific Ig samples? If yes then \code{Ig_data}
+#'   should be "Yes" if not \code{Ig_data} should be "No".
 #'
 #' @return A dataframe that is a subset of the input dataframe.
 #' @export
 #'
 #' @examples
 #' data(LacyTools_summary)
-#' get_block(LacyTools_summary, variable = "Absolute Intensity (Background Subtracted, 2+)")
+#' get_block(LacyTools_summary, 
+#'           variable = "Absolute Intensity (Background Subtracted, 2+)", 
+#'           Ig_data = "Yes", 
+#'           keyword_specific = "Spike", 
+#'           keyword_total = "Total")
+#'           
 get_block <- function(data, variable, Ig_data, keyword_specific = NULL, keyword_total= NULL) {
   rows <- find_block(data, variable)
   block <- data[rows, ]
@@ -307,6 +316,16 @@ get_analytes_info <- function(data, variable) {
 #'
 #' @examples
 #' data("LacyTools_summary")
+#' 
+#' outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
+#'                 "Absolute Intensity (Background Subtracted, 3+)", 
+#'                 "Mass Accuracy [ppm] (2+)", 
+#'                 "Mass Accuracy [ppm] (3+)",
+#'                 "Isotopic Pattern Quality (2+)",
+#'                 "Isotopic Pattern Quality (3+)",
+#'                 "S/N (2+)",
+#'                 "S/N (3+)")
+#' 
 #' get_analytes_info_from_list(data = LacyTools_summary, list_of_variables = outputs)
 get_analytes_info_from_list <- function(data, list_of_variables) {
   # Get the analytes_info for each variable and put them in a list:
@@ -362,7 +381,11 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
 #'
 #' @examples
 #' data("LacyTools_summary")
-#' block <- get_block(LacyTools_summary, variable = "Absolute Intensity (Background Subtracted, 2+)")
+#' block <- get_block(LacyTools_summary, 
+#'                    variable = "Absolute Intensity (Background Subtracted, 2+)", 
+#'                    Ig_data = "Yes", 
+#'                    keyword_specific = "Spike", 
+#'                    keyword_total = "Total")
 #' create_long_data(block = block)
 create_long_data <- function(block, metadata = NULL) {
   charge_value <- stringr::str_extract(block$lacytools_output[1], "\\d[+\\-]")
@@ -388,6 +411,8 @@ create_long_data <- function(block, metadata = NULL) {
 #'@param summary_file The path to the LacyTools summary file. This file should
 #'  be a tab-delimited .txt file. This function can process the output summary
 #'  file of LacyTools without any changes needed.
+#'  
+#'@inheritParams get_block
 #'
 #'@return This function returns a dataframe with the following columns:
 #'  \describe{ \item{sample_name}{The (unchanged) sample names.}
@@ -406,12 +431,14 @@ create_long_data <- function(block, metadata = NULL) {
 #'@export
 #'
 #' @examples
-#' path_to_file <- system.file("inst",
-#'                             "extdata",
+#' path_to_file <- system.file("extdata",
 #'                             "LacyTools_summary_example.txt",
 #'                             package = "glycodash")
 #'                             
-#' read_lacytools_summary(summary_file = path_to_file)
+#' read_lacytools_summary(summary_file = path_to_file,
+#'                        Ig_data = "Yes",
+#'                        keyword_specific = "Spike",
+#'                        keyword_total = "Total")
 read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, keyword_specific = NULL) {
   
   data <- read_non_rectangular(summary_file)
@@ -481,9 +508,10 @@ read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, 
 #'At the bottom of the plate, leave one row blank and then add the next plate in
 #'the same format.
 #'
+#'@importFrom readr write_csv
+#'
 #' @examples
-#' path <- system.file("inst",
-#'                     "extdata",
+#' path <- system.file("extdata",
 #'                     "Plate_design_example.xlsx",
 #'                     package = "glycodash")
 #' read_plate_design(plate_design_file = path)
@@ -532,12 +560,11 @@ read_plate_design <- function(plate_design_file) {
 #' @export
 #'
 #' @examples
-#' path <- system.file("inst",
-#'                     "extdata",
+#' path <- system.file("extdata",
 #'                     "Plate_design_example.xlsx",
 #'                     package = "glycodash")
 #'
-#' plate_design <- read_plate_design(file_path)
+#' plate_design <- read_plate_design(path)
 #' process_plate_design(plate_design)
 process_plate_design <- function (plate_design) {
   plate_design <- plate_design %>%
@@ -596,12 +623,11 @@ process_plate_design <- function (plate_design) {
 #'@export
 #'
 #' @examples
-#' path <- system.file("inst",
-#'                     "extdata",
+#' path <- system.file("extdata",
 #'                     "Plate_design_example.xlsx",
 #'                     package = "glycodash")
 #'
-#' plate_design <- read_plate_design(file_path)
+#' plate_design <- read_plate_design(path)
 #' plate_design <- process_plate_design(plate_design)
 #' handle_duplicates(plate_design)
 handle_duplicates <- function(plate_design) {
@@ -687,8 +713,7 @@ handle_duplicates <- function(plate_design) {
 #'@export
 #'
 #' @examples
-#' path <- system.file("inst",
-#'                     "extdata",
+#' path <- system.file("extdata",
 #'                     "Plate_design_example.xlsx",
 #'                     package = "glycodash")
 #' 
@@ -732,8 +757,7 @@ read_and_process_plate_design <- function(plate_design_file) {
 #' @export
 #'
 #' @examples
-#' path <- system.file("inst",
-#'                     "extdata",
+#' path <- system.file("extdata",
 #'                     "Metadata_example.xlsx",
 #'                     package = "glycodash")
 #'                     
@@ -781,8 +805,8 @@ read_metadata <- function (metadata_file) {
 #' \url{https://stackoverflow.com/users/8245406/rui-barradas}
 #'
 #' @examples
-#' path <- system.file("inst",
-#'                     "extdata",
+#' path <- system.file("extdata",
+#'                     "for_tests",
 #'                     "Dates_with_comment.xlsx",
 #'                     package = "glycodash")
 #'
@@ -824,8 +848,8 @@ read_metadata <- function (metadata_file) {
 #' # 5 2022-02-15
 #' # 6 2022-02-16
 #'
-#' path <- system.file("inst",
-#'                     "extdata",
+#' path <- system.file("extdata",
+#'                     "for_tests",
 #'                     "Dates.xlsx",
 #'                     package = "glycodash")
 #'

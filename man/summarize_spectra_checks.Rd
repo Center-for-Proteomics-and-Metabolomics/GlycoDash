@@ -6,6 +6,10 @@
 \usage{
 summarize_spectra_checks(data_checked)
 }
+\arguments{
+\item{data_checked}{The dataframe that is returned by
+\code{\link{do_criteria_check}}.}
+}
 \value{
 A dataframe that contains one row per spectrum for each cluster (
   Thus the number of rows is equal to the number of spectra times the number
@@ -27,9 +31,15 @@ criteria checks for every spectrum and analyte combination in the data.
 }
 \examples{
 data("example_data")
-summarize_spectra_checks(data = long_data,
-                         min_ppm_deviation = -20,
-                         max_ppm_deviation = 20,
-                         max_ipq = 0.2,
-                         min_sn = 9)
+
+example_data <- define_clusters(data = example_data,
+                                clusters_regex = "IgGI1")
+
+checked_data <- do_criteria_check(data = example_data,
+                                  min_ppm_deviation = -20,
+                                  max_ppm_deviation = 20,
+                                  max_ipq = 0.2,
+                                  min_sn = 9)
+
+summarize_spectra_checks(data_checked = checked_data)
 }

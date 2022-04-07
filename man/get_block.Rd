@@ -18,6 +18,10 @@ get_block(
 
 \item{variable}{The name of a LacyTools output format.}
 
+\item{Ig_data}{A character string. Is your data immunoglobulin data that
+contains both total Ig and specific Ig samples? If yes then \code{Ig_data}
+should be "Yes" if not \code{Ig_data} should be "No".}
+
 \item{keyword_specific}{The word(s)/characters within the sample name used to
 refer to Specific samples.}
 
@@ -32,5 +36,10 @@ Create a subset containing one block from a LacyTools summary.
 }
 \examples{
 data(LacyTools_summary)
-get_block(LacyTools_summary, variable = "Absolute Intensity (Background Subtracted, 2+)")
+get_block(LacyTools_summary, 
+          variable = "Absolute Intensity (Background Subtracted, 2+)", 
+          Ig_data = "Yes", 
+          keyword_specific = "Spike", 
+          keyword_total = "Total")
+          
 }

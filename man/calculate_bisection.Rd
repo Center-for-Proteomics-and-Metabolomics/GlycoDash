@@ -4,12 +4,11 @@
 \alias{calculate_bisection}
 \title{Calculate bisection}
 \usage{
-calculate_bisection(.data, analytes)
+calculate_bisection(.data)
 }
 \arguments{
-\item{.data}{}
-
-\item{analytes}{}
+\item{.data}{A data frame. Can be passed to the function via a pipe (%>%)
+(see Examples below).}
 }
 \value{
 
@@ -25,6 +24,6 @@ example_data <- data.frame(
                    analyte = c("H5N4F1", "H4N3F1", "H3N4S1", "H3N4F1S1"),
                    sum_all_analytes = rep(1, 4))
                    
-calculate_bisection(example_data)
+example_data \%>\% calculate_bisection(.)
 
 }

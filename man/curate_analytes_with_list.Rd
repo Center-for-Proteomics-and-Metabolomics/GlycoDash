@@ -25,20 +25,19 @@ Analyte curation based on a list
 }
 \examples{
 data("example_data")
-long_data <- curate_spectra(data = long_data,
+example_data <- curate_spectra(data = example_data,
                             min_ppm_deviation = -20,
                             max_ppm_deviation = 20,
                             max_ipq = 0.2,
                             min_sn = 9,
                             clusters_regex = "IgGI1",
-                            group_to_filter = "Spike",
-                            sample_type_to_filter = "CN")
+                            cut_off_basis = c("Spike PBS", "Total PBS"))
 
-curated_spectra <- long_data \%>\%
-   dplyr::filter(passed_curation == TRUE)
+curated_spectra <- example_data$curated_data \%>\%
+   dplyr::filter(passed_spectra_curation == TRUE) \%>\% 
+   dplyr::select(-passed_spectra_curation)
 
-analyte_list_file <- system.file("inst",
-                                 "extdata",
+analyte_list_file <- system.file("extdata",
                                  "Analyte_list.xlsx",
                                  package = "glycodash")
 

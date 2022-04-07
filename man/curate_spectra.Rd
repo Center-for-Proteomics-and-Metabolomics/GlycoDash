@@ -34,6 +34,15 @@ ppm).}
 theoretic isotopic pattern.}
 
 \item{min_sn}{The lowest allowed value for the signal to noise ratio (S/N).}
+
+\item{cut_off_basis}{A character vector or a single character string
+specifying which sample types (and optionally which group (Specific or
+Total Ig)) the spectra curation cut-offs should be based on. For each
+sample type or sample type-group combination that you want to base the
+cut-offs on you should add a character string. For example. if you want to
+base the cut-offs on all PBS samples and on the Specific negative_control
+samples, \code{cut_off_basis} should be \code{c("PBS", "Specific
+negative_control")}}
 }
 \value{
 The function returns the original dataframe given as the data
@@ -58,10 +67,11 @@ All spectra with values above those cut-off values pass the spectra curation.
 }
 \examples{
 data("example_data")
-curate_spectra(data = long_data,
+curate_spectra(data = example_data,
+               clusters_regex = "IgGI1",
                min_ppm_deviation = -20,
                max_ppm_deviation = 20,
                max_ipq = 0.2,
                min_sn = 9,
-               cut_off_basis = "PBS")
+               cut_off_basis = c("Spike PBS", "Total PBS"))
 }

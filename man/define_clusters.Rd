@@ -26,6 +26,6 @@ analyte name.
 }
 \examples{
 data("example_data")
-define_clusters(data = long_data,
+define_clusters(data = example_data,
                 clusters_regex = "IgGI1")
 }

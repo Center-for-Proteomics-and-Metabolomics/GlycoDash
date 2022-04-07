@@ -40,8 +40,7 @@ the same format.
 }
 
 \examples{
-path <- system.file("inst",
-                    "extdata",
+path <- system.file("extdata",
                     "Plate_design_example.xlsx",
                     package = "glycodash")
 read_plate_design(plate_design_file = path)

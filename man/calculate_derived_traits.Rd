@@ -10,7 +10,7 @@ calculate_derived_traits(data, selected_derived_traits)
 \item{data}{A dataframe that contains at least the columns "sample_name", "cluster",
 "relative_abundance" and "analyte".}
 
-\item{derived_traits}{A character vector containing the names of the derived
+\item{selected_derived_traits}{A character vector containing the names of the derived
 traits that should be calculated. The derived traits that can be
 calculated with this function are: \describe{ \item{"Fucosylation"}{The
 proportion of detected glycans that is fucosylated.} \item{"Bisection"}{The
@@ -31,7 +31,7 @@ example_data <- data.frame(
                    group = c("Spike", "Total", "Spike", "Total"),
                    cluster = c("C1", "C1", "C1", "C2"),
                    analyte = c("H5N4F1", "H4N3F1", "H3N4S1", "H3N4F1S1"),
-                   sum_all_analytes = rep(1, 4))
+                   relative_abundance = c(0.3, 0.8, 0.2, 0.3))
                    
 calculate_derived_traits(data = example_data,
                          selected_derived_traits = c("Galactosylation",

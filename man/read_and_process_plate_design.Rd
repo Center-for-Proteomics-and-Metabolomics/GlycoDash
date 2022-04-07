@@ -57,8 +57,7 @@ sample.
 }
 
 \examples{
-path <- system.file("inst",
-                    "extdata",
+path <- system.file("extdata",
                     "Plate_design_example.xlsx",
                     package = "glycodash")
 

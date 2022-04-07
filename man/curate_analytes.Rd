@@ -44,7 +44,7 @@ maximum allowed mass accuracy deviations, the isotopic pattern quality (IPQ)
 and the signal-to-noise ratio (S/N) (see \code{\link{do_criteria_check}}).
 Analyte curation should not be based on spectra for which you don't expect
 any analytes to pass, or for which you expect all analytes to pass. The
-arguments \code{sample_types_to_ignore} and \code{groups_to_ignore} should be
+arguments \code{sample_types_to_ignore} and \code{group_to_ignore} should be
 used to indicate which spectra should not be used as basis for analyte
 curation. This function should be used only after spectra curation has been
 performed with \code{\link{curate_spectra}} and after the spectra that did
@@ -52,24 +52,21 @@ not pass spectra curation have been filtered out (see example below).
 }
 \examples{
 data("example_data")
-long_data <- curate_spectra(data = long_data,
+example_data <- curate_spectra(data = example_data,
                             min_ppm_deviation = -20,
                             max_ppm_deviation = 20,
                             max_ipq = 0.2,
                             min_sn = 9,
                             clusters_regex = "IgGI1",
-                            group_to_filter = "Spike",
-                            sample_type_to_filter = "CN")
+                            cut_off_basis = c("Spike PBS", "Total PBS"))
 
-curated_spectra <- long_data \%>\%
-   dplyr::filter(passed_curation == TRUE)
+curated_spectra <- example_data$curated_data \%>\%
+   dplyr::filter(passed_spectra_curation == TRUE) \%>\% 
+   dplyr::select(-passed_spectra_curation)
 
 curate_analytes(data = curated_spectra,
                 group_to_ignore = "Total",
-                sample_types_to_ignore = c("pool", 
-                                           "IVIGg", 
-                                           "CN", 
-                                           "Visucon", 
+                sample_types_to_ignore = c("Visucon", 
                                            "PBS"),
                 cut_off_percentage = 25)
                 

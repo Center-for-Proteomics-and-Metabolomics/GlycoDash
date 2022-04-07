@@ -30,7 +30,7 @@ mod_spectra_curation_ui <- function(id){
                          max = 25,
                          step = 1),
             uiOutput(ns("clusters")),
-            shinydashboardPlus::box(
+            shinydashboard::box(
               id = ns("qc"),
               tags$style(
                 HTML(paste0("#",
@@ -238,36 +238,27 @@ mod_spectra_curation_server <- function(id, results_data_import){
                             unmatched_analytes = function(c){ #ignore this error
                               })
                    })
-    })
     
-    # Get the values of the cluster textInputs:
-    observe({
-      x$clusters_regex <- purrr::map(cluster_inputIds(),
+      clusters_regex <- purrr::map(cluster_inputIds(),
                                    ~ input[[.x]])
-    })
-    
-    observe({
-      req(all(purrr::map_lgl(x$clusters_regex,
-                             ~ isTruthy(.x))))
-      
       x$clusters_no_overlap <- TRUE
       
-      if (length(x$clusters_regex) > 1) {
+      if (length(clusters_regex) > 1) {
         regex_overlap <- purrr::imap_lgl(
-          x$clusters_regex,
+          clusters_regex,
           function(regex, i) {
-            other_regexes <- unlist(x$clusters_regex)[-i]
+            other_regexes <- unlist(clusters_regex)[-i]
             any(purrr::map_lgl(other_regexes,
-                           function(other_regex) {
-                             stringr::str_detect(string = other_regex,
-                                                 pattern = regex)
-                           }))
+                               function(other_regex) {
+                                 stringr::str_detect(string = other_regex,
+                                                     pattern = stringr::fixed(regex))
+                               }))
           })
         
         if(any(regex_overlap == TRUE)) {
           purrr::map(cluster_inputIds(),
                      ~ shinyFeedback::feedbackDanger(.x,
-                                                     show = TRUE,
+                                                     show = any(regex_overlap == TRUE),
                                                      text = paste("Overlap between the cluster keywords is not allowed,",
                                                                   "as each analyte should match only one cluster keyword.")))
           x$clusters_no_overlap <- FALSE

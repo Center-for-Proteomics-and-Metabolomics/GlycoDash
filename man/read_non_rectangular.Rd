@@ -14,7 +14,7 @@ For example, use "\\t" for files with tab-separated values
 and "," or ";" for files with comma-separated values (.csv).}
 }
 \value{
-A data frame (\code{\link{[base]data.frame}}) containing the data in the flat file.
+A data frame (\code{\link[base]{data.frame}}) containing the data in the flat file.
 }
 \description{
 \code{read_non_rectangular()} can read flat files where the number of fields per line is 
@@ -23,8 +23,7 @@ and empty fields "" are interpreted as \code{NA}. This function was created to r
 LacyTools summary files (tab-delimited .txt files).
 }
 \examples{
-data_file <- system.file("inst", 
-                         "extdata", 
+data_file <- system.file("extdata", 
                          "LacyTools_summary_example.txt", 
                          package = "glycodash")
 read_non_rectangular(path = data_file, delim = "\t")
