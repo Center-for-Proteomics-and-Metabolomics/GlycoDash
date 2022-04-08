@@ -185,7 +185,7 @@ mod_export_server <- function(id,
                        )
         
         temp_report <- file.path(tempdir(), "Report.Rmd")
-        file.copy("Report.Rmd", temp_report, overwrite = TRUE)
+        file.copy(system.file("www", "Report.Rmd"), temp_report, overwrite = TRUE)
         
         rmarkdown::render(input = temp_report,
                           output_file = file,
