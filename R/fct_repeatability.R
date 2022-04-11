@@ -25,10 +25,10 @@ visualize_repeatability <- function(repeatability_data) {
                                    fill = plate),
                       position = "dodge") +
     ggplot2::theme_classic() +
-    ggpubr::border(size = 0.5) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
                                                        hjust = 1),
-                   text = ggplot2::element_text(size = 16)) +
+                   text = ggplot2::element_text(size = 16),
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
     ggplot2::geom_point(ggplot2::aes(x = analyte, 
                                      y = RSD,
                                      group = plate,

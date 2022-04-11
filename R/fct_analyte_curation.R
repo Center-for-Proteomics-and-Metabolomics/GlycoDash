@@ -258,11 +258,11 @@ plot_analyte_curation <- function(curated_analytes,
                                                        hjust = 1),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
                    text = ggplot2::element_text(size = 16),
-                   legend.position = "top") +
+                   legend.position = "top",
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
     ggplot2::xlab("Analyte") +
     ggplot2::scale_y_continuous(labels = function(x) paste0(x, "%"), 
-                                name = "Proportion of passing spectra (%)") +
-    ggpubr::border(size = 0.5)
+                                name = "Proportion of passing spectra (%)")
   
   return(plot)
   

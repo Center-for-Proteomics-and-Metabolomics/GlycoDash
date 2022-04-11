@@ -508,7 +508,6 @@ read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, 
 #'At the bottom of the plate, leave one row blank and then add the next plate in
 #'the same format.
 #'
-#'@importFrom readr write_csv
 #'
 #' @examples
 #' path <- system.file("extdata",
@@ -520,14 +519,21 @@ read_plate_design <- function(plate_design_file) {
   plate_design <- readxl::read_excel(plate_design_file,
                                      .name_repair = "minimal")
   path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
-  readr::write_csv(plate_design, file = path_to_platedesign_csv)
+  write.csv(plate_design,
+            file = path_to_platedesign_csv, 
+            row.names = FALSE,
+            na = "",
+            quote = FALSE)
   tryCatch(expr = {
     plate_design <- plater::read_plate(file = path_to_platedesign_csv, 
                                        well_ids_column = "well")
   },
   # Ignore error thrown by plater::read_plate():
   error = function(e) { 
-    
+    rlang::abort(class = "incorrect_formatting",
+                 message = paste(
+                   "Please check that your plate design file is formatted correctly.",
+                   "Run `?read_and_process_plate_design` to find the required format."))
   },
   # Throw custom error when plater::read_plate() throws a warning:
   warning = function(w) { 
