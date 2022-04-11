@@ -437,7 +437,7 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
     ggplot2::geom_jitter(ggplot2::aes(color = sample_type),
                         size = 1) +
     ggplot2::theme_classic() +
-    ggpubr::border(size = 0.5) +
+    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
     ggplot2::geom_hline(yintercept = spectra_check$cut_off_sum_int,
                         linetype = "dashed") +
     ggplot2::geom_vline(xintercept = spectra_check$cut_off_prop,

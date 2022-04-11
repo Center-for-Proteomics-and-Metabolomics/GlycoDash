@@ -349,8 +349,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
         ggplot2::theme_classic() +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                        strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                       text = ggplot2::element_text(size = 16)) +
-        ggpubr::border(size = 0.5)
+                       text = ggplot2::element_text(size = 16),
+                       panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
       
       if ("group" %in% colnames(x$data_spectra_curated)) {
         plot +

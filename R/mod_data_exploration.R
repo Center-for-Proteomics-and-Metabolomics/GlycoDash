@@ -114,10 +114,10 @@ mod_data_exploration_server <- function(id, results_derived_traits){
                                            y = .data[[input$yvar]]),
                               outlier.shape = NA) +
         ggplot2::theme_classic() +
+        ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
                                                            hjust = 1),
-                       text = ggplot2::element_text(size = 16)) +
-        ggpubr::border(size = 0.5)
+                       text = ggplot2::element_text(size = 16))
       
       if (isTruthy(input$color)) {
         plot <- plot +
