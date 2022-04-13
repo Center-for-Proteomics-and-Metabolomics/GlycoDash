@@ -22,8 +22,7 @@ mod_normalization_ui <- function(id){
           status = "primary",
           selectInput(ns("method"),
                       "Choose method for normalization",
-                      choices = c("Total area normalization", 
-                                  "other")),
+                      choices = c("Total area normalization")),
           actionButton(ns("do_normalization"),
                        "Perform normalization")
         )   
