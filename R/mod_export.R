@@ -185,9 +185,12 @@ mod_export_server <- function(id,
                        )
         
         temp_report <- file.path(tempdir(), "Report.Rmd")
-        file.copy(system.file("www", 
-                              "Report.Rmd",
-                              package = "glycodash"), 
+        report_file <- system.file("app",
+                                   "www", 
+                                   "Report.Rmd",
+                                   package = "glycodash")
+        
+        file.copy(report_file, 
                   temp_report, 
                   overwrite = TRUE)
         
