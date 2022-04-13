@@ -29,6 +29,7 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+library(magrittr)
 ```
 
 ## Data import
