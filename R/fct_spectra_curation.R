@@ -437,12 +437,15 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
     ggplot2::geom_jitter(ggplot2::aes(color = sample_type),
                         size = 1) +
     ggplot2::theme_classic() +
-    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
+    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
+                   text = ggplot2::element_text(size = 16),
+                   strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
     ggplot2::geom_hline(yintercept = spectra_check$cut_off_sum_int,
                         linetype = "dashed") +
     ggplot2::geom_vline(xintercept = spectra_check$cut_off_prop,
                         linetype = "dashed") +
-    ggplot2::scale_color_manual(values = my_palette) +
+    ggplot2::scale_color_manual(values = my_palette,
+                                name = "Sample type") +
     ggplot2::labs(y = "Sum intensity of passing analytes") +
     ggplot2::scale_x_continuous(labels = function(x) paste0(x * 100, "%"), 
                                 name = "Proportion of spectra (%)")

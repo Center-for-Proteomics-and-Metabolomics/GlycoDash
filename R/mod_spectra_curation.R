@@ -140,12 +140,15 @@ mod_spectra_curation_ui <- function(id){
             solidHeader = TRUE,
             status = "primary",
             plotOutput(ns("curated_spectra_plot")),
+            br(),
             plotOutput(ns("cut_off_plot"),
                        dblclick = ns("dblclick"),
                        brush = brushOpts(
                          id = ns("brush"),
                          resetOnNew = TRUE
-                       ))
+                       )),
+            br(),
+            "Select and double click a plot area to zoom in."
           )
         )
       )
