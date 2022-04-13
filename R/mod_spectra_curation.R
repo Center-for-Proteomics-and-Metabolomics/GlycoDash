@@ -30,17 +30,18 @@ mod_spectra_curation_ui <- function(id){
                          max = 25,
                          step = 1),
             uiOutput(ns("clusters")),
-            shinydashboard::box(
+            div(
               id = ns("qc"),
-              tags$style(
-                HTML(paste0("#",
-                            ns("qc"),
-                            " .fa {float: right; margin-top: 3px}",
-                            "#",
-                            ns("qc"),
-                            " .box-title {width: 100%}"))
-              ),
-              title = span(
+              shinydashboard::box(
+                tags$style(
+                  HTML(paste0("#",
+                              ns("qc"),
+                              " .fa {float: right; margin-top: 3px}",
+                              "#",
+                              ns("qc"),
+                              " .box-title {width: 100%}"))
+                ),
+                title = span(
                   "Analyte quality criteria",
                   icon("info-circle",
                        class = "ml",
@@ -68,23 +69,24 @@ mod_spectra_curation_ui <- function(id){
                       placement = "right",
                       html = "true",
                       container = "body")
-              ),
-              width = NULL,
-              status = "primary",
-              solidHeader = TRUE,
-              sliderInput(ns("mass_accuracy"), 
-                          "Acceptable mass accuracy range:",
-                          min = -50,
-                          max = 50,
-                          value = c(-20, 20)
-              ),
-              numericInput(ns("ipq"),
-                           "Max. IPQ value:",
-                           value = 0.2,
-                           step = 0.1),
-              numericInput(ns("sn"),
-                           "Min. S/N ratio:",
-                           value = 9)
+                ),
+                width = NULL,
+                status = "primary",
+                solidHeader = TRUE,
+                sliderInput(ns("mass_accuracy"), 
+                            "Acceptable mass accuracy range:",
+                            min = -50,
+                            max = 50,
+                            value = c(-20, 20)
+                ),
+                numericInput(ns("ipq"),
+                             "Max. IPQ value:",
+                             value = 0.2,
+                             step = 0.1),
+                numericInput(ns("sn"),
+                             "Min. S/N ratio:",
+                             value = 9)
+              )
             ),
             tags$style(HTML(paste0("#",
                                    ns("popover_cut_off"),
