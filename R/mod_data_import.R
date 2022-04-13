@@ -867,6 +867,7 @@ mod_data_import_server <- function(id){
       if(rlang::is_empty(unmatched)) {
         x$data_incl_metadata <- dplyr::left_join(x$data_incl_plate_design,
                                                  x$merged_metadata)
+        showNotification("The metadata was added to the data", type = "message")
       } else {
         # If there are unmatched sample ID's a pop-up is shown.
         # Reset the response to the pop-up in case it has been shown before:
