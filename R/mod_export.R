@@ -108,14 +108,6 @@ mod_export_server <- function(id,
             NULL
           }
         )
-        
-        # called_analyte_curation_objects <- purrr::map(results_analyte_curation$objects(),
-        #                                               function(list_of_objects) {
-        #                                                 purrr::map(
-        #                                                   list_of_objects,
-        #                                                   ~ do.call(.x,
-        #                                                             args = list()))
-        #                                               })
                                                 
         rep1_plot_table <- tryCatch(
           expr = {
@@ -184,7 +176,8 @@ mod_export_server <- function(id,
                        data_exploration_plot = data_exploration_plot
                        )
         
-        temp_report <- file.path(tempdir(), "Report.Rmd")
+        temp_report <- file.path(tempdir(), paste0(session$token, 
+                                                   "Report.Rmd"))
         report_file <- system.file("app",
                                    "www", 
                                    "Report.Rmd",
