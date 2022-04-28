@@ -1,3 +1,5 @@
+options(shiny.maxRequestSize=30*1024^2)
+
 #' The application server-side
 #' 
 #' @param input,output,session Internal parameters for {shiny}. 
