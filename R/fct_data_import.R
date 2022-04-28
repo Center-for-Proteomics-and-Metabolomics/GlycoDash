@@ -338,7 +338,7 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
                                          dplyr::mutate(
                                            charge = stringr::str_extract(variable, 
                                                                          # This doesn't work for charges higher/lower than 9!
-                                                                         "\\d[+\\-]"))
+                                                                         "\\d+[+\\-]"))
                                        return(analytes_info)
                                      },
                                      # Ignore list items that result in an error:
