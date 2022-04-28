@@ -135,7 +135,6 @@ find_next_na <- function(data, row) {
 #'
 #' @examples
 #'  data("LacyTools_summary")
-#'  find_block(data = LacyTools_summary, variable = "S/N (2+)")
 find_block <- function(data, variable) {
   first_row <- which(data[ , 1] == variable)
   if (rlang::is_empty(first_row)) {
@@ -261,6 +260,16 @@ detect_plate_and_well <- function(data) {
       into = c("plate", "well"),
       regex = "([Pp]?(?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z]))[_\\-.\\s]?([A-H][_\\-.\\s]?(?:0?\\d\\D|0?\\d$|1[012]))",
       remove = FALSE)
+  
+  if (any(anyNA(data$plate), anyNA(data$well))) {
+    data <- data %>% 
+      dplyr::select(-c(plate, well)) %>% 
+      tidyr::extract(
+        col = sample_name, 
+        into = c("plate", "well"),
+        regex = "([Pp](?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z])).*([A-H][_\\-.\\s]?(?:0?\\d\\D|0?\\d$|1[012]))",
+        remove = FALSE)
+  }
   
   if (any(anyNA(data$plate), anyNA(data$well))) {
     NA_samples <- data$sample_name[is.na(data$plate) | is.na(data$well)]
@@ -502,7 +511,9 @@ read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, 
                              error = function(e) { })
                            })
   
-  all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
+  #all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
+  
+  all_blocks <- all_blocks[!sapply(all_blocks, is.null)]
   
   if (rlang::is_empty(all_blocks)) {
     rlang::abort(class = "no_outputs_present",

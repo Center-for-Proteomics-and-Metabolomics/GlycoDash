@@ -310,7 +310,8 @@ mod_data_import_server <- function(id){
                                  error = function(e) { })
                                })
       
-      all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
+      #all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
+      all_blocks <- all_blocks[!sapply(all_blocks, is.null)]
       
       if (rlang::is_empty(all_blocks)) {
         shinyFeedback::feedbackDanger(
