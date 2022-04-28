@@ -1,11 +1,55 @@
-outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
+outputs <- list("Absolute Intensity (Background Subtracted, 1+)",
+                "Absolute Intensity (Background Subtracted, 2+)",
                 "Absolute Intensity (Background Subtracted, 3+)", 
-                "Mass Accuracy [ppm] (2+)", 
+                "Absolute Intensity (Background Subtracted, 4+)",
+                "Absolute Intensity (Background Subtracted, 5+)",
+                "Absolute Intensity (Background Subtracted, 6+)",
+                "Absolute Intensity (Background Subtracted, 7+)",
+                "Absolute Intensity (Background Subtracted, 8+)",
+                "Absolute Intensity (Background Subtracted, 9+)",
+                "Absolute Intensity (Background Subtracted, 10+)",
+                "Absolute Intensity (Background Subtracted, 11+)",
+                "Absolute Intensity (Background Subtracted, 12+)",
+                "Absolute Intensity (Background Subtracted, 13+)",
+                "Mass Accuracy [ppm] (1+)",
+                "Mass Accuracy [ppm] (2+)",
                 "Mass Accuracy [ppm] (3+)",
+                "Mass Accuracy [ppm] (4+)",
+                "Mass Accuracy [ppm] (5+)",
+                "Mass Accuracy [ppm] (6+)",
+                "Mass Accuracy [ppm] (7+)",
+                "Mass Accuracy [ppm] (8+)",
+                "Mass Accuracy [ppm] (9+)",
+                "Mass Accuracy [ppm] (10+)",
+                "Mass Accuracy [ppm] (11+)",
+                "Mass Accuracy [ppm] (12+)",
+                "Mass Accuracy [ppm] (13+)",
+                "Isotopic Pattern Quality (1+)",
                 "Isotopic Pattern Quality (2+)",
                 "Isotopic Pattern Quality (3+)",
+                "Isotopic Pattern Quality (4+)",
+                "Isotopic Pattern Quality (5+)",
+                "Isotopic Pattern Quality (6+)",
+                "Isotopic Pattern Quality (7+)",
+                "Isotopic Pattern Quality (8+)",
+                "Isotopic Pattern Quality (9+)",
+                "Isotopic Pattern Quality (10+)",
+                "Isotopic Pattern Quality (11+)",
+                "Isotopic Pattern Quality (12+)",
+                "Isotopic Pattern Quality (13+)",
+                "S/N (1+)",
                 "S/N (2+)",
-                "S/N (3+)")
+                "S/N (3+)",
+                "S/N (4+)",
+                "S/N (5+)",
+                "S/N (6+)",
+                "S/N (7+)",
+                "S/N (8+)",
+                "S/N (9+)",
+                "S/N (10+)",
+                "S/N (11+)",
+                "S/N (12+)",
+                "S/N (13+)")
 
 #' Read in non-rectangular delimited files
 #' 
@@ -215,7 +259,7 @@ detect_plate_and_well <- function(data) {
     tidyr::extract(
       col = sample_name, 
       into = c("plate", "well"),
-      regex = "([Pp](?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z])).*([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
+      regex = "([Pp]?(?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z]))[_\\-.\\s]?([A-H][_\\-.\\s]?(?:0?\\d\\D|0?\\d$|1[012]))",
       remove = FALSE)
   
   if (any(anyNA(data$plate), anyNA(data$well))) {
@@ -235,8 +279,8 @@ detect_plate_and_well <- function(data) {
   }
   
   data <- data %>% 
-    dplyr::mutate(plate = stringr::str_match(plate, "[Pp][Ll]?(?:ate)?[\\s_]?(\\d+|[A-Z])")[ , 2],
-                  well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
+    dplyr::mutate(plate = stringr::str_match(plate, "[Pp]?[Ll]?(?:ate)?[_\\-.\\s]?(\\d+|[A-Z])")[ , 2],
+                  well = stringr::str_extract(well, "[A-H][_\\-.\\s]?\\d{1,2}"),
                   plate_well = paste(plate, well, sep = "_")) %>% 
     dplyr::select(-c(plate, well)) %>% 
     dplyr::relocate(plate_well, .after = sample_name)
@@ -349,6 +393,9 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
   if (rlang::is_empty(analytes_info_list)) {
     stop("No output formats in the list are present in the input summary file")
   }
+  
+  # Remove NULL items from the analytes_info_list:
+  analytes_info_list <- analytes_info_list[!sapply(analytes_info_list, is.null)]
   
   # Find what charges are present in the LacyTools summary:
   charges <- as.factor(purrr::map_chr(analytes_info_list, 
