@@ -388,8 +388,8 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
 #'                    keyword_total = "Total")
 #' create_long_data(block = block)
 create_long_data <- function(block, metadata = NULL) {
-  charge_value <- stringr::str_extract(block$lacytools_output[1], "\\d[+\\-]")
-  new_output_name <- stringr::str_remove(block$lacytools_output[1], "_\\d[+\\-]")
+  charge_value <- stringr::str_extract(block$lacytools_output[1], "\\d+[+\\-]")
+  new_output_name <- stringr::str_remove(block$lacytools_output[1], "_\\d+[+\\-]")
   cols_not_to_pivot <- c("sample_name", "group", "plate_well", colnames(metadata))
   
   block <- block %>% 
