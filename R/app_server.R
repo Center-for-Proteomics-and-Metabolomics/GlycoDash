@@ -1,4 +1,3 @@
-options(shiny.maxRequestSize=30*1024^2)
 
 #' The application server-side
 #' 
@@ -7,7 +6,9 @@ options(shiny.maxRequestSize=30*1024^2)
 #' @import shiny
 #' @noRd
 app_server <- function( input, output, session ) {
-  # Your application server logic 
+  
+  # Increasing the maximum size of files that can be uploaded:
+  options(shiny.maxRequestSize=30*1024^2)
   
   results_data_import <- mod_data_import_server("data_import_ui_1")
   
