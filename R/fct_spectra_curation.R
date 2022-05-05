@@ -448,7 +448,7 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
                                 name = "Sample type") +
     ggplot2::labs(y = "Sum intensity of passing analytes") +
     ggplot2::scale_x_continuous(labels = function(x) paste0(x * 100, "%"), 
-                                name = "Proportion of spectra (%)")
+                                name = "Proportion of analytes that passed curation (%)")
   
   if ("group" %in% colnames(spectra_check)) {
     p <- p +
