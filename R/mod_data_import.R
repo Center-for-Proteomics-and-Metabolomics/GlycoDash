@@ -53,7 +53,7 @@ mod_data_import_ui <- function(id){
                     placement = "right")
             ),
             actionButton(ns("read_summary"),
-                         "Convert the LacyTools summary file to an R-suitable format")
+                         "Load the LacyTools summary file")
           ),
           shinydashboard::box(
             title = "Upload your plate design",
