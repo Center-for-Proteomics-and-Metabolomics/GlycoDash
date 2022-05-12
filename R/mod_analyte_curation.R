@@ -175,6 +175,15 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     
     observeEvent(clusters(), {
       
+      # Remove tabs in case they have been created before. Still not ideal cause
+      # if cluster names are changed then the old tabs won't be removed
+      purrr::map(clusters(),
+                function(cluster) {
+                  removeTab("tabs",
+                            target = cluster)
+                })
+      
+      # Create one tab for each cluster:
       purrr::map(clusters(),
                  function(cluster) {
                    appendTab("tabs",
@@ -184,6 +193,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                mod_information_box_ui(ns(cluster))
                              ))
                  })
+      
     })
     
     observe({
@@ -229,7 +239,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       if (ext_analyte_list() == "rds") {
         x$analyte_list <- load_and_assign(input$analyte_list$datapath)
       } else { if (ext_analyte_list() %in% c("xlsx", "xls")) {
-        x$analyte_list <- readxl::read_excel(input$analyte_list$datapath)
+        x$analyte_list <- readxl::read_excel(input$analyte_list$datapath,
+                                             col_names = FALSE)
       } 
       }
       
@@ -239,8 +250,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     })
     
     observeEvent(input$curate_analytes, {
-      # x$curated_analytes <- NULL
-      # x$analyte_curated_data <- NULL
+      # Reset x$curated_analytes and x$analyte_curated data so that the plot is
+      # no longer shown if curation based on data had already been performed
+      x$curated_analytes <- NULL
+      x$analyte_curated_data <- NULL
       if (input$method == "Curate analytes based on data") {
         
         if ("group" %in% colnames(x$data)) {
@@ -284,6 +297,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
           x$analyte_curated_data <- curate_analytes_with_list(
             data = x$data,
             analyte_list = x$analyte_list)
+          
+          print(unique(x$analyte_curated_data$analyte))
           
           showNotification("Analyte curation has been performed based on the analyte list.", 
                            type = "message")
