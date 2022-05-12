@@ -433,17 +433,18 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
   my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
   
   p <- spectra_check %>% 
-    ggplot2::ggplot(ggplot2::aes(x = passing_proportion,
-                                 y = sum_intensity)) +
-    ggplot2::geom_jitter(ggplot2::aes(color = sample_type),
-                        size = 1) +
+    ggplot2::ggplot() +
+    ggplot2::geom_jitter(ggplot2::aes(color = sample_type,
+                                      x = passing_proportion,
+                                      y = sum_intensity),
+                         size = 1) +
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
                    text = ggplot2::element_text(size = 16),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
-    ggplot2::geom_hline(yintercept = spectra_check$cut_off_sum_int,
+    ggplot2::geom_hline(ggplot2::aes(yintercept = cut_off_sum_int),
                         linetype = "dashed") +
-    ggplot2::geom_vline(xintercept = spectra_check$cut_off_prop,
+    ggplot2::geom_vline(ggplot2::aes(xintercept = cut_off_prop),
                         linetype = "dashed") +
     ggplot2::scale_color_manual(values = my_palette,
                                 name = "Sample type") +
@@ -453,7 +454,10 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
   
   if ("group" %in% colnames(spectra_check)) {
     p <- p +
-      ggplot2::facet_wrap(~ group)
+      ggplot2::facet_wrap(cluster ~ group)
+  } else {
+    p <- p +
+      ggplot2::facet_wrap(~ cluster)
   }
   
   # cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
