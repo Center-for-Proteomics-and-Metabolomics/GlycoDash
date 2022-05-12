@@ -322,12 +322,13 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
     dplyr::ungroup(.)
   
   passing_spectra <- spectra_check %>% 
-    dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int))
+    dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int)) %>% 
+    dplyr::select(sample_name, cluster) %>% 
+    dplyr::mutate(passed_spectra_curation = TRUE)
   
-  curated_data <- checked_data %>% 
-    dplyr::mutate(passed_spectra_curation = dplyr::case_when(
-      sample_name %in% passing_spectra$sample_name ~ TRUE,
-      TRUE ~ FALSE))
+  curated_data <- dplyr::full_join(passing_spectra, checked_data) %>% 
+    dplyr::mutate(passed_spectra_curation = tidyr::replace_na(passed_spectra_curation, 
+                                                              FALSE))
   
   no_NAs <- curated_data %>% 
     dplyr::filter(dplyr::if_all(.cols = c(mass_accuracy_ppm,
