@@ -213,6 +213,12 @@ get_block <- function(data, variable, Ig_data, keyword_specific = NULL, keyword_
                                        "[\\(\\)\\,\\/\\[\\]]")
   # The first three rows of each block contain the column names, the fraction and the exact mass.
   # These rows should be removed:
+  
+  # In case there are duplicated analyte names in the LacyTools summary, apply
+  # .name_repair (and issue a warning message --> IMPLEMENT THIS)
+  block <- tibble::tibble(block,
+                          .name_repair = "universal")
+  
   block <- block[-c(1, 2, 3), ] %>% 
     dplyr::mutate(lacytools_output = better_name_output) %>% 
     dplyr::mutate(dplyr::across(-c(sample_name, lacytools_output), as.numeric)) %>% 
@@ -258,6 +264,8 @@ detect_plate_and_well <- function(data) {
     tidyr::extract(
       col = sample_name, 
       into = c("plate", "well"),
+      # Plate number/letter does not have to be preceded by a P/p, but between
+      # the plate number and well position only a _ - . or space are allowed:
       regex = "([Pp]?(?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z]))[_\\-.\\s]?([A-H][_\\-.\\s]?(?:0?\\d\\D|0?\\d$|1[012]))",
       remove = FALSE)
   
@@ -267,7 +275,22 @@ detect_plate_and_well <- function(data) {
       tidyr::extract(
         col = sample_name, 
         into = c("plate", "well"),
+        # Plate number/letter has to be preceded by at least a P/p but there can
+        # be all kinds of characters between the plate number and the well position:
         regex = "([Pp](?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z])).*([A-H][_\\-.\\s]?(?:0?\\d\\D|0?\\d$|1[012]))",
+        remove = FALSE)
+  }
+  
+  if (any(anyNA(data$plate), anyNA(data$well))) {
+    data <- data %>% 
+      dplyr::select(-c(plate, well)) %>% 
+      tidyr::extract(
+        col = sample_name, 
+        into = c("well", "plate"),
+        # The well position directly precedes the plate number (can only be
+        # separated by a _ - . or space), but the plate number/letter does not
+        # need to be preceded by a P/p:
+        regex = "([A-H][_\\-.\\s]?(?:0?\\d\\D|0?\\d$|1[012]))[_\\-.\\s]?([Pp]?(?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z]))",
         remove = FALSE)
   }
   
@@ -329,6 +352,10 @@ get_analytes_info <- function(data, variable) {
   # the first column:
   colnames(analytes_info) <- unlist(analytes_info[1, ])
   colnames(analytes_info)[1] <- "info_variables"
+  
+  analytes_info <- tibble::as_tibble(analytes_info,
+                                     .name_repair = "universal")
+  
   # Pivot the dataframe and do some formatting:
   analytes_info <- analytes_info %>%
     dplyr::slice(n = -1) %>% 
