@@ -216,8 +216,20 @@ get_block <- function(data, variable, Ig_data, keyword_specific = NULL, keyword_
   
   # In case there are duplicated analyte names in the LacyTools summary, apply
   # .name_repair (and issue a warning message --> IMPLEMENT THIS)
-  block <- tibble::tibble(block,
-                          .name_repair = "universal")
+  if (any(duplicated(colnames(block)))) {
+    duplicated_analytes <- unique(colnames(block)[duplicated(colnames(block))])
+    rlang::warn(class = "duplicated_analytes",
+                message = paste("In your LacyTools summary file, the analytes",
+                                paste(duplicated_analytes, collapse = " "),
+                                "are present more than once. The names of the", 
+                                "duplicated analytes are given a suffix", 
+                                "('..columnnumber') to differentiate between them."),
+                .frequency = "once",
+                .frequency_id = "duplicated_analytes")
+  }
+  
+  block <- suppressMessages(tibble::tibble(block,
+                                           .name_repair = "universal"))
   
   block <- block[-c(1, 2, 3), ] %>% 
     dplyr::mutate(lacytools_output = better_name_output) %>% 
@@ -353,8 +365,8 @@ get_analytes_info <- function(data, variable) {
   colnames(analytes_info) <- unlist(analytes_info[1, ])
   colnames(analytes_info)[1] <- "info_variables"
   
-  analytes_info <- tibble::as_tibble(analytes_info,
-                                     .name_repair = "universal")
+  analytes_info <- suppressMessages(tibble::as_tibble(analytes_info,
+                                                      .name_repair = "universal"))
   
   # Pivot the dataframe and do some formatting:
   analytes_info <- analytes_info %>%
@@ -372,7 +384,7 @@ get_analytes_info <- function(data, variable) {
     dplyr::mutate(exact_mass = purrr::map_chr(exact_mass,
                                               function(x) stringr::str_remove_all(x, 
                                                                                   "[\\[\\]]"))) %>% 
-    dplyr::mutate(dplyr::across(-analyte, as.numeric))
+    dplyr::mutate(dplyr::across(-analyte, ~ suppressWarnings(as.numeric(.x))))
   return(analytes_info)
 }
 
@@ -529,11 +541,16 @@ read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, 
   all_blocks <- purrr::map(outputs,
                            function(output) {
                              tryCatch(expr = {
-                               get_block(data = data, 
-                                         variable = output, 
-                                         Ig_data = Ig_data,
-                                         keyword_specific = keyword_specific,
-                                         keyword_total = keyword_total)
+                               withCallingHandlers(expr = {
+                                 get_block(data = data, 
+                                           variable = output, 
+                                           Ig_data = Ig_data,
+                                           keyword_specific = keyword_specific,
+                                           keyword_total = keyword_total)
+                               },
+                               duplicated_analytes = function(c) {
+                                 c$message
+                               })
                              },
                              error = function(e) { })
                            })
