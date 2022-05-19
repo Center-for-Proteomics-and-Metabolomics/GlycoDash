@@ -55,8 +55,83 @@ mod_data_import_ui <- function(id){
             actionButton(ns("read_summary"),
                          "Load the LacyTools summary file")
           ),
-          shinydashboard::box(
-            title = "Add sample ID's",
+          tags$style(HTML(paste0(
+            "#",
+            ns("box_header"),
+            " .awesome-checkbox {padding-top: 7px}",
+            "#",
+            ns("box_header"),
+            " .popover {max-width: 400px !important; color: #333}",
+            "#",
+            ns("sample_id_box"),
+            " .box-title {width: 100%}",
+            "#",
+            ns("box_header"),
+            " .fa {float: right; margin-right: 5px; font-size: 18px}",
+            "#",
+            ns("box_header"),
+            " .direct-chat-contacts {right: 0; background: #222d32!important}",
+            "#",
+            ns("box_header"),
+            " .btn {float: right; border-width: 0px; margin-right: 10px}",
+            "#",
+            ns("sample_id_box"),
+            " .dropdown {display: inline-block; float: right; width: 330px}",
+            "#",
+            ns("box_header"),
+            " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+          ))
+          ),
+          shinydashboardPlus::box(
+            id = ns("sample_id_box"),
+            title = div(
+              id = ns("box_header"),
+              "Add sample ID's",
+              icon("info-circle",
+                   class = "ml",
+                   tabindex = "0") %>% 
+                bsplus::bs_embed_popover(
+                  title = "Explanation",
+                  content = HTML(paste0(
+                    tags$p(paste(
+                      "Adding sample ID's to your data allows you to see", 
+                      "which measurement corresponds to which sample.")),
+                    "Sample ID's will in later steps be used to:",
+                    tags$ul(tags$li(paste(
+                      "determine the sample type (e.g. blank, standard,", 
+                      "negative control, patient, etc.)"
+                    )), 
+                    tags$li(paste(
+                      "link metadata to your data (e.g. age and", 
+                      "gender of the study subjects)"
+                    ))
+                    ))),
+                  # Don't use body = container here, because then the custom CSS
+                  # styling for .popover won't be applied
+                  trigger = "hover",
+                  placement = "right",
+                  html = "true"),
+              shinyWidgets::dropdownButton(
+                tags$style(HTML(paste0(
+                  "#",
+                  ns("dropdown_content"),
+                  " .fa {float: left}",
+                  "#",
+                  ns("dropdown_content"),
+                  " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
+                ))),
+                div(id = ns("dropdown_content"),
+                    downloadButton(ns("download_ex_plate_design"),
+                                   "Download a plate design example file"),
+                    downloadButton(ns("download_ex_sample_list"),
+                                   "Download a sample list example file")),
+                icon = icon("paperclip",
+                            class = "ml"),
+                tooltip = shinyWidgets::tooltipOptions(placement = "top",
+                                                       title = "Examples"),
+                width = "330px",
+                size = "xs"
+              )),
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
@@ -65,30 +140,31 @@ mod_data_import_ui <- function(id){
                         choices = c("Upload a plate design",
                                     "Upload a sample list")) %>% 
               bsplus::bs_embed_popover(
-                title = "Adding sample ID's",
+                title = "Method to add sample ID's",
                 content = HTML(paste0(
-                  tags$p(paste(
-                    "Adding sample ID's to your data is necessary to identify", 
-                    "which measurement belongs to which sample. Sample ID's can",
-                    "in later steps be used to automatically determine the", 
-                    "sample type (e.g. blank, standard, negative control,", 
-                    "patient, etc.) and can be used to link metadata (e.g. age", 
-                    "and gender of the study subjects) to your data."
-                  )),
                   tags$b("Plate design:"),
                   tags$p(paste(
-                    "Upload an Excel file with your plate design. To use this",
-                    "method your sample names should contain the plate and well",
-                    "position of the sample in the following format:"
+                    "You can only use this method when your sample names contain",
+                    "information on the plate and well position of the sample,", 
+                    "in the correct format:"
                   )),
-                  tags$p("Pl[plate number]_[well position]"),
-                  tags$p("For example: \"Pl3_C5\""),
+                  paste0("plate",
+                         tags$i("[insert plate number here]"),
+                         "_",
+                         tags$i("[insert well position here]")),
+                  br(),
+                  br(),
+                  "An example of a valid sample name is:",
+                  br(),
+                  paste0("\"38160_38161_IM5_", 
+                         tags$b("plate1_A8"), 
+                         "_01_Spike 20210409_000237.raw\""),
+                  br(),
+                  br(),
                   tags$b("Sample list:"),
                   tags$p(paste(
-                    "Upload an Excel file with sample names and corresponding",
-                    "sample ID's. Use this method if you didn't measure your",
-                    "samples on plates or if your sample names don't meet the",
-                    "requirements described above."
+                    "Use this method when your samples were not measured on plates",
+                    "or when your sample names don't meet the requirements described above."
                   ))
                 )),
                 html = "true",
@@ -102,16 +178,17 @@ mod_data_import_ui <- function(id){
             div(id = ns("one_plate_design"),
                 fluidRow(
                   column(
-                    width = 10,
+                    width = 11,
                     fileInput(ns("plate_design"), "Upload a plate design Excel file:")),
                   column(
-                    width = 2,
+                    width = 1,
                     tags$style(
                       HTML(paste0(
                         "#",
                         ns("popover_plate_design"),
-                        " .fa {margin-top:25px;}",
-                        " .popover {width: 600px; max-width: 600px !important;}"
+                        " .fa {margin-top:25px; color: #3c8dbc;}",
+                        " .popover {width: 600px; max-width: 600px !important;}",
+                        " .col-sm-11 {padding-right: 0px}"
                         ))
                     ),
                     div(id = ns("popover_plate_design"),
@@ -133,20 +210,13 @@ mod_data_import_ui <- function(id){
                               tags$p(paste("At the bottom of the plate, leave one row", 
                                            "blank and then add the next plate in the", 
                                            "same format.")),
-                              tags$p(paste("Duplicate samples should be indicated", 
-                                           "in the plate design Excel file as \"duplicate\".", 
-                                           "Duplicate samples are always assumed to", 
-                                           "be the duplicate of the preceding sample,", 
-                                           "that is the sample one well to the left or,", 
-                                           "in the case the duplicate is positioned", 
-                                           "in the left-most column of the plate,", 
-                                           "the sample in the right-most well one row up.")),
-                              "Example:",
-                              br(),
-                              tags$img(src = "www/plate_design_format_example2.png",
-                                       width = 500)
+                              tags$p("For an example, click on the paperclip icon.")
+                              # "Example:",
+                              # br(),
+                              # tags$img(src = "www/plate_design_format_example2.png",
+                              #          width = 500)
                             )),
-                            trigger = "focus",
+                            trigger = "hover",
                             placement = "right",
                             html = "true",
                             container = "body")))
@@ -195,6 +265,8 @@ mod_data_import_ui <- function(id){
                     fileInput(ns("plate_design_total"), 
                               "Upload a plate design Excel file for the total Ig samples:")))
             ),
+            fileInput(ns("sample_list"),
+                      "Upload an Excel file with your sample list."),
             fluidRow(
               column(
                 width = 12,
