@@ -135,6 +135,7 @@ find_next_na <- function(data, row) {
 #'
 #' @examples
 #'  data("LacyTools_summary")
+#'  find_block(data = LacyTools_summary, variable = "S/N (2+)")
 find_block <- function(data, variable) {
   first_row <- which(data[ , 1] == variable)
   if (rlang::is_empty(first_row)) {
