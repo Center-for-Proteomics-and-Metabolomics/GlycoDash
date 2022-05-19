@@ -56,10 +56,45 @@ mod_data_import_ui <- function(id){
                          "Load the LacyTools summary file")
           ),
           shinydashboard::box(
-            title = "Upload your plate design",
+            title = "Add sample ID's",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
+            selectInput(ns("sample_id_method"),
+                        "Choose a method to add sample ID's to your data:",
+                        choices = c("Upload a plate design",
+                                    "Upload a sample list")) %>% 
+              bsplus::bs_embed_popover(
+                title = "Adding sample ID's",
+                content = HTML(paste0(
+                  tags$p(paste(
+                    "Adding sample ID's to your data is necessary to identify", 
+                    "which measurement belongs to which sample. Sample ID's can",
+                    "in later steps be used to automatically determine the", 
+                    "sample type (e.g. blank, standard, negative control,", 
+                    "patient, etc.) and can be used to link metadata (e.g. age", 
+                    "and gender of the study subjects) to your data."
+                  )),
+                  tags$b("Plate design:"),
+                  tags$p(paste(
+                    "Upload an Excel file with your plate design. To use this",
+                    "method your sample names should contain the plate and well",
+                    "position of the sample in the following format:"
+                  )),
+                  tags$p("Pl[plate number]_[well position]"),
+                  tags$p("For example: \"Pl3_C5\""),
+                  tags$b("Sample list:"),
+                  tags$p(paste(
+                    "Upload an Excel file with sample names and corresponding",
+                    "sample ID's. Use this method if you didn't measure your",
+                    "samples on plates or if your sample names don't meet the",
+                    "requirements described above."
+                  ))
+                )),
+                html = "true",
+                trigger = "hover",
+                placement = "right"
+              ),
             shinyWidgets::materialSwitch(ns("switch_two_plate_designs"),
                                          "Add separate plate design files for specific and and for total Ig samples.",
                                          status = "primary",
