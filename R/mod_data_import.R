@@ -148,24 +148,17 @@ mod_data_import_ui <- function(id){
                     "information on the plate and well position of the sample,", 
                     "in the correct format:"
                   )),
-                  paste0("plate",
-                         tags$i("[insert plate number here]"),
-                         "_",
-                         tags$i("[insert well position here]")),
-                  br(),
-                  br(),
+                  "<p>plate<i>[insert plate number here]</i>_<i>[insert well position here]</i></p>",
                   "An example of a valid sample name is:",
-                  br(),
-                  paste0("\"38160_38161_IM5_", 
-                         tags$b("plate1_A8"), 
-                         "_01_Spike 20210409_000237.raw\""),
+                  "<p>\"38160_38161_IM5_<b>plate1_A8</b>_01_Spike 20210409_000237.raw\"</P",
                   br(),
                   br(),
-                  tags$b("Sample list:"),
-                  tags$p(paste(
-                    "Use this method when your samples were not measured on plates",
-                    "or when your sample names don't meet the requirements described above."
-                  ))
+                  tags$p(tags$b("Sample list:"),
+                         br(),
+                         paste(
+                           "Use this method when your samples were not measured on plates",
+                           "or when your sample names don't meet the requirements described above."
+                         ))
                 )),
                 html = "true",
                 trigger = "hover",
@@ -176,136 +169,69 @@ mod_data_import_ui <- function(id){
                                          status = "primary",
                                          right = TRUE),
             div(id = ns("one_plate_design"),
-                fluidRow(
-                  column(
-                    width = 11,
-                    fileInput(ns("plate_design"), "Upload a plate design Excel file:")),
-                  column(
-                    width = 1,
-                    tags$style(
-                      HTML(paste0(
-                        "#",
-                        ns("popover_plate_design"),
-                        " .fa {margin-top:28px; color: #3c8dbc;}",
-                        " .popover {width: 400px; max-width: 600px !important;}",
-                        " .col-sm-1 {padding-left: 0px}"
-                        ))
-                    ),
-                    div(id = ns("popover_plate_design"),
-                        icon("info-circle",
-                             class = "fa-2x",
-                             tabindex = "-1") %>% 
-                          bsplus::bs_embed_popover(
-                            title = "Plate design format:",
-                            content = HTML(paste0(
-                              tags$p(paste(
-                                "The top-left cell of the Excel sheet should contain",
-                                "the plate number (e.g. \"Plate 1\"). The cells to the",
-                                "right of the top-left cell need to be labelled 1-12,", 
-                                "while the cells below the top-left cell need to be",
-                                "labelled A-H (for a 96-well plate). The cells",
-                                "within the plate should contain the sample ID's.",
-                                "Sample ID's must not contain commas (,) or line breaks."
-                              )),
-                              tags$p(paste("At the bottom of the plate, leave one row", 
-                                           "blank and then add the next plate in the", 
-                                           "same format.")),
-                              tags$p("For an example, click on the paperclip icon.")
-                              # "Example:",
-                              # br(),
-                              # tags$img(src = "www/plate_design_format_example2.png",
-                              #          width = 500)
-                            )),
-                            trigger = "hover",
-                            placement = "right",
-                            html = "true",
-                            container = "body")))
-                )),
+                mod_fileInput_with_info_ui(
+                  id = ns("plate_design"),
+                  fileInput_label = "Upload a plate design Excel file:",
+                  popover_width = "400px",
+                  popover_title = "Plate design format:",
+                  popover_content_html = HTML(paste0(
+                    tags$p(paste(
+                      "The top-left cell of the Excel sheet should contain",
+                      "the plate number (e.g. \"Plate 1\"). The cells to the",
+                      "right of the top-left cell need to be labelled 1-12,", 
+                      "while the cells below the top-left cell need to be",
+                      "labelled A-H (for a 96-well plate). The cells",
+                      "within the plate should contain the sample ID's.",
+                      "Sample ID's must not contain commas (,) or line breaks."
+                    )),
+                    tags$p(paste("At the bottom of the plate, leave one row", 
+                                 "blank and then add the next plate in the", 
+                                 "same format.")),
+                    tags$p("For an example, click on the paperclip icon.")
+                  ))
+                )
+            ),
             div(id = ns("two_plate_designs"),
+                mod_fileInput_with_info_ui(
+                  id = ns("plate_design_specific"),
+                  fileInput_label = "Upload a plate design Excel file for the specific Ig samples:",
+                  popover_width = "400px",
+                  popover_title = "Plate design format:",
+                  popover_content_html = HTML(paste0(
+                    tags$p(paste(
+                      "The top-left cell of the Excel sheet should contain",
+                      "the plate number (e.g. \"Plate 1\"). The cells to the",
+                      "right of the top-left cell need to be labelled 1-12,", 
+                      "while the cells below the top-left cell need to be",
+                      "labelled A-H (for a 96-well plate). The cells",
+                      "within the plate should contain the sample ID's.",
+                      "Sample ID's must not contain commas (,) or line breaks."
+                    )),
+                    tags$p(paste("At the bottom of the plate, leave one row", 
+                                 "blank and then add the next plate in the", 
+                                 "same format.")),
+                    tags$p("For an example, click on the paperclip icon.")
+                  ))
+                ),
                 fluidRow(
-                  column(
-                    width = 11,
-                    fileInput(ns("plate_design_specific"), 
-                              "Upload a plate design Excel file for the specific Ig samples:")),
-                  column(
-                    width = 1,
-                    tags$style(
-                      HTML(paste0(
-                        "#",
-                        ns("popover_plate_design_specific"),
-                        " .fa {margin-top:25px;}",
-                        " .popover {width: 400px; max-width: 600px !important;}"
-                      ))
-                    ),
-                    div(id = ns("popover_plate_design_specific"),
-                        icon("info-circle",
-                             class = "fa-2x",
-                             tabindex = "-1") %>% 
-                          bsplus::bs_embed_popover(
-                            title = "Plate design format:",
-                            content = HTML(paste0(
-                              tags$p(
-                                "The top-left cell of the Excel sheet should contain the plate number (e.g. \"Plate 1\"). The cells to the right of the top-left cell need to be labelled 1-12 (for a 96-well plate), while the cells below the top-left cell need to be labelled A-H. The cells within the plate should contain the sample ID's."
-                              ),
-                              tags$p("At the bottom of the plate, leave one row blank and then add the next plate in the same format."),
-                              tags$p("Duplicate samples should be indicated in the plate design Excel file as \"duplicate\". Duplicate samples are always assumed to be the duplicate of the preceding sample, that is the sample one well to the left or, in the case the duplicate is positioned in the left-most column of the plate, the sample in the right-most well one row up."),
-                              "Example:",
-                              br(),
-                              tags$img(src = "www/plate_design_format_example2.png",
-                                       width = 500)
-                            )),
-                            trigger = "focus",
-                            placement = "right",
-                            html = "true",
-                            container = "body"))
-                  )),
-                fluidRow(
-                  column(
-                    width = 11,
-                    fileInput(ns("plate_design_total"), 
-                              "Upload a plate design Excel file for the total Ig samples:")))
+                  column(width = 11,
+                         fileInput(ns("plate_design_total"), 
+                                   "Upload a plate design Excel file for the total Ig samples:")))
             ),
             div(id = ns("sample_list_ui"),
-                fluidRow(
-                  column(
-                    width = 11,
-                    fileInput(ns("sample_list"),
-                              "Upload an Excel file with your sample list:"),
-                  ),
-                  column(
-                    width = 1,
-                    tags$style(
-                      HTML(paste0(
-                        "#",
-                        ns("popover_sample_list"),
-                        " .fa {margin-top:28px; color: #3c8dbc;}",
-                        "#",
-                        ns("popover_sample_list"),
-                        " .popover {width: 400px;}",
-                        "#",
-                        ns("popover_sample_list"),
-                        " .col-sm-1 {padding-left: 0px}"
-                      ))
-                    ),
-                    div(id = ns("popover_sample_list"),
-                        icon("info-circle",
-                             class = "fa-2x",
-                             tabindex = "-1") %>% 
-                          bsplus::bs_embed_popover(
-                            title = "Sample list format:",
-                            content = HTML(paste0(
-                              tags$p(paste(
-                                "The Excel file should contain only one sheet.",
-                                "This sheet should contain one column named \"sample_name\"",
-                                "and one column named \"sample_id\"."
-                              )),
-                              tags$p("For an example, click on the paperclip icon.")
-                            )),
-                            trigger = "hover",
-                            placement = "right",
-                            html = "true",
-                            container = "body"))
-                  )
+                mod_fileInput_with_info_ui(
+                  id = ns("sample_list"),
+                  fileInput_label = "Upload an Excel file with your sample list:",
+                  popover_width = "400px",
+                  popover_title = "Sample list format:",
+                  popover_content_html = HTML(paste0(
+                    tags$p(paste(
+                      "The Excel file should contain only one sheet.",
+                      "This sheet should contain one column named \"sample_name\"",
+                      "and one column named \"sample_id\"."
+                    )),
+                    tags$p("For an example, click on the paperclip icon.")
+                  ))
                 )
             ),
             fluidRow(
@@ -370,18 +296,6 @@ mod_data_import_server <- function(id){
     ext_lacytools_summary <- reactive({
       req(input$lacytools_summary)
       ext <- tools::file_ext(input$lacytools_summary$name)
-      return(ext)
-    })
-    
-    ext_plate_design <- reactive({
-      req(input$plate_design)
-      ext <- tools::file_ext(input$plate_design$name)
-      return(ext)
-    })
-    
-    ext_plate_design_specific <- reactive({
-      req(input$plate_design_specific)
-      ext <- tools::file_ext(input$plate_design_specific$name)
       return(ext)
     })
     
@@ -622,20 +536,20 @@ mod_data_import_server <- function(id){
                       ))
     })
     
-    # Show a warning when the wrong type of file is uploaded as plate design:
-    observe({
-      req(input$plate_design)
-      shinyFeedback::feedbackWarning("plate_design",
-                                     !(ext_plate_design() %in% c("xlsx", "xls")),
-                                     text = "Please upload a .xlsx or .xls file.")
-    })
+    plate_design_file <- mod_fileInput_with_info_server(
+      id = "plate_design",
+      allowed = c("xlsx", "xls")
+    )
     
-    observe({
-      req(input$plate_design_specific)
-      shinyFeedback::feedbackWarning("plate_design_specific",
-                                     !(ext_plate_design_specific() %in% c("xlsx", "xls")),
-                                     text = "Please upload a .xlsx or .xls file.")
-    })
+    plate_design_specific_file <- mod_fileInput_with_info_server(
+      id = "plate_design_specific",
+      allowed = c("xlsx", "xls")
+    )
+    
+    sample_list_file <- mod_fileInput_with_info_server(
+      id = "sample_list",
+      allowed = c("xlsx", "xls")
+    )
     
     observe({
       req(input$plate_design_total)

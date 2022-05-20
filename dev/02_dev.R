@@ -43,6 +43,7 @@ usethis::use_pipe()
 ## Add modules ----
 ## Create a module infrastructure in R/
 golem::add_module( name = "data_import" ) 
+golem::add_module( name = "fileInput_with_info" )
 golem::add_module( name = "spectra_curation" ) 
 golem::add_module( name = "analyte_curation" ) 
 golem::add_module( name = "normalization" ) 
