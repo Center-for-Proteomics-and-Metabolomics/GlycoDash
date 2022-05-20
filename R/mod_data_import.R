@@ -186,9 +186,9 @@ mod_data_import_ui <- function(id){
                       HTML(paste0(
                         "#",
                         ns("popover_plate_design"),
-                        " .fa {margin-top:25px; color: #3c8dbc;}",
-                        " .popover {width: 600px; max-width: 600px !important;}",
-                        " .col-sm-11 {padding-right: 0px}"
+                        " .fa {margin-top:28px; color: #3c8dbc;}",
+                        " .popover {width: 400px; max-width: 600px !important;}",
+                        " .col-sm-1 {padding-left: 0px}"
                         ))
                     ),
                     div(id = ns("popover_plate_design"),
@@ -224,17 +224,17 @@ mod_data_import_ui <- function(id){
             div(id = ns("two_plate_designs"),
                 fluidRow(
                   column(
-                    width = 10,
+                    width = 11,
                     fileInput(ns("plate_design_specific"), 
                               "Upload a plate design Excel file for the specific Ig samples:")),
                   column(
-                    width = 2,
+                    width = 1,
                     tags$style(
                       HTML(paste0(
                         "#",
                         ns("popover_plate_design_specific"),
                         " .fa {margin-top:25px;}",
-                        " .popover {width: 600px; max-width: 600px !important;}"
+                        " .popover {width: 400px; max-width: 600px !important;}"
                       ))
                     ),
                     div(id = ns("popover_plate_design_specific"),
@@ -261,12 +261,53 @@ mod_data_import_ui <- function(id){
                   )),
                 fluidRow(
                   column(
-                    width = 10,
+                    width = 11,
                     fileInput(ns("plate_design_total"), 
                               "Upload a plate design Excel file for the total Ig samples:")))
             ),
-            fileInput(ns("sample_list"),
-                      "Upload an Excel file with your sample list."),
+            div(id = ns("sample_list_ui"),
+                fluidRow(
+                  column(
+                    width = 11,
+                    fileInput(ns("sample_list"),
+                              "Upload an Excel file with your sample list:"),
+                  ),
+                  column(
+                    width = 1,
+                    tags$style(
+                      HTML(paste0(
+                        "#",
+                        ns("popover_sample_list"),
+                        " .fa {margin-top:28px; color: #3c8dbc;}",
+                        "#",
+                        ns("popover_sample_list"),
+                        " .popover {width: 400px;}",
+                        "#",
+                        ns("popover_sample_list"),
+                        " .col-sm-1 {padding-left: 0px}"
+                      ))
+                    ),
+                    div(id = ns("popover_sample_list"),
+                        icon("info-circle",
+                             class = "fa-2x",
+                             tabindex = "-1") %>% 
+                          bsplus::bs_embed_popover(
+                            title = "Sample list format:",
+                            content = HTML(paste0(
+                              tags$p(paste(
+                                "The Excel file should contain only one sheet.",
+                                "This sheet should contain one column named \"sample_name\"",
+                                "and one column named \"sample_id\"."
+                              )),
+                              tags$p("For an example, click on the paperclip icon.")
+                            )),
+                            trigger = "hover",
+                            placement = "right",
+                            html = "true",
+                            container = "body"))
+                  )
+                )
+            ),
             fluidRow(
               column(
                 width = 12,
@@ -394,18 +435,12 @@ mod_data_import_server <- function(id){
     # are shown.
     observe({
       shinyjs::hide("keywords_specific_total")
-      shinyjs::hide("switch_two_plate_designs")
       if (!is.null(input$Ig_data)) {
         if (input$Ig_data == "Yes") {
           shinyjs::show("keywords_specific_total")
-          shinyjs::show("switch_two_plate_designs")
         }
       }  
     })
-    
-    shinyBS::addTooltip(session = session,
-                          title = "test",
-                          id = ns("keyword_total"))
     
     # Check whether the keyword given for specific samples has matches with the
     # sample names in the data:
@@ -427,7 +462,6 @@ mod_data_import_server <- function(id){
                                  error = function(e) { })
                                })
       
-      #all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
       all_blocks <- all_blocks[!sapply(all_blocks, is.null)]
       
       if (rlang::is_empty(all_blocks)) {
@@ -568,18 +602,24 @@ mod_data_import_server <- function(id){
     
     # Plate design ------------------------------------------------------------
     
-    # If the user indicates (via input$switch_two_plate_design) that there are
-    # separate plate designs for total and specific Ig samples, two fileInputs
-    # are shown instead of one.
     observe({
-      shinyjs::show("one_plate_design")
-      shinyjs::hide("two_plate_designs")
-      if (!is.null(input$switch_two_plate_designs)) {
-        if (input$switch_two_plate_designs == TRUE) {
-          shinyjs::show("two_plate_designs")
-          shinyjs::hide("one_plate_design")
-        }
-      }  
+      shinyjs::toggle("sample_list_ui", 
+                      condition = input$sample_id_method == "Upload a sample list")
+      shinyjs::toggle("one_plate_design",
+                      condition = all(
+                        input$sample_id_method == "Upload a plate design",
+                        !isTruthy(input$switch_two_plate_designs)
+                      ))
+      shinyjs::toggle("two_plate_designs",
+                      condition = all(
+                        input$sample_id_method == "Upload a plate design",
+                        isTruthy(input$switch_two_plate_designs)
+                      ))
+      shinyjs::toggle("switch_two_plate_designs",
+                      condition = all(
+                        input$Ig_data == "Yes",
+                        input$sample_id_method == "Upload a plate design"
+                      ))
     })
     
     # Show a warning when the wrong type of file is uploaded as plate design:
