@@ -139,8 +139,10 @@ find_next_na <- function(data, row) {
 find_block <- function(data, variable) {
   first_row <- which(data[ , 1] == variable)
   if (rlang::is_empty(first_row)) {
-   stop(paste("Error: LacyTools output format",
-              variable, "is not present in the first column of the input file."))
+    rlang::abort(
+      class = "lacytools_output_not_found",
+      message = paste("Error: LacyTools output format",
+                      variable, "is not present in the first column of the input file."))
   } else {
     next_na <- find_next_na(data, first_row)
     if (rlang::is_empty(next_na)) { 
@@ -169,19 +171,32 @@ find_block <- function(data, variable) {
 #'block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"),
 #'                             values = c(13.56, 738.34, 4.56))
 #'detect_group(block = block_example, keyword_specific = "Specific", keyword_total = "Total")
-detect_group <- function(block, keyword_specific, keyword_total) {
-  block <- block %>% 
+detect_group <- function(data, keyword_specific, keyword_total) {
+  data <- data %>% 
     tidyr::extract(col = sample_name,
                    into = "group",
                    regex = paste0("(", keyword_specific, "|", 
                                   keyword_total, ")"),
                    remove = FALSE)
-  if (any(is.na(block$group))) {
+  
+  if (all(!sapply(data$group, identical, keyword_specific))) {
+    rlang::abort(class = "unmatched_keyword_specific",
+                 message = paste("This keyword for specific samples did not match", 
+                                 "any sample names in your data. Please choose a different keyword."))
+  }
+  
+  if (all(!sapply(data$group, identical, keyword_total))) {
+    rlang::abort(class = "unmatched_keyword_total",
+                 message = paste("This keyword for total samples did not match", 
+                                 "any sample names in your data. Please choose a different keyword."))
+  }
+  
+  if (any(is.na(data$group))) {
     rlang::warn(class = "NAs",
                 message = paste("Some sample_names could not be classified as total or specific.",
                                 "Please reconsider your keywords (keyword_specific and keyword_total)."))
   }
-  return(block)
+  return(data)
 }
 
 #' Create a subset containing one block from a LacyTools summary.
@@ -203,7 +218,7 @@ detect_group <- function(block, keyword_specific, keyword_total) {
 #'           keyword_specific = "Spike", 
 #'           keyword_total = "Total")
 #'           
-get_block <- function(data, variable, Ig_data, keyword_specific = NULL, keyword_total= NULL) {
+get_block <- function(data, variable, Ig_data = NULL, keyword_specific = NULL, keyword_total= NULL) {
   rows <- find_block(data, variable)
   block <- data[rows, ]
   # The first row of the block contains the column names for the block:
@@ -236,10 +251,10 @@ get_block <- function(data, variable, Ig_data, keyword_specific = NULL, keyword_
     dplyr::mutate(lacytools_output = better_name_output) %>% 
     dplyr::mutate(dplyr::across(-c(sample_name, lacytools_output), as.numeric)) %>% 
     dplyr::select(-tidyselect::vars_select_helpers$where(function(x) all(is.na(x))))
-  block <- detect_plate_and_well(block)
-  if (Ig_data == "Yes") {
-    block <- detect_group(block, keyword_specific, keyword_total)
-  }
+  #block <- detect_plate_and_well(block)
+  # if (Ig_data == "Yes") {
+  #   block <- detect_group(block, keyword_specific, keyword_total)
+  # }
   return(block)
 }
 
@@ -535,9 +550,9 @@ create_long_data <- function(block, metadata = NULL) {
 #'                        Ig_data = "Yes",
 #'                        keyword_specific = "Spike",
 #'                        keyword_total = "Total")
-read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, keyword_specific = NULL) {
+read_lacytools_summary <- function(data, Ig_data, keyword_total = NULL, keyword_specific = NULL) {
   
-  data <- read_non_rectangular(summary_file)
+  #data <- read_non_rectangular(summary_file)
   
   all_blocks <- purrr::map(outputs,
                            function(output) {
@@ -555,8 +570,6 @@ read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, 
                              },
                              error = function(e) { })
                            })
-  
-  #all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
   
   all_blocks <- all_blocks[!sapply(all_blocks, is.null)]
   
