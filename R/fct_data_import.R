@@ -239,9 +239,7 @@ get_block <- function(data, variable, Ig_data = NULL, keyword_specific = NULL, k
                                 paste(duplicated_analytes, collapse = " "),
                                 "are present more than once. The names of the", 
                                 "duplicated analytes are given a suffix", 
-                                "('..columnnumber') to differentiate between them."),
-                .frequency = "once",
-                .frequency_id = "duplicated_analytes")
+                                "('..columnnumber') to differentiate between them."))
   }
   
   block <- suppressMessages(tibble::tibble(block,
@@ -557,16 +555,13 @@ read_lacytools_summary <- function(data, Ig_data, keyword_total = NULL, keyword_
   all_blocks <- purrr::map(outputs,
                            function(output) {
                              tryCatch(expr = {
-                               withCallingHandlers(expr = {
+                               suppressWarnings(
                                  get_block(data = data, 
                                            variable = output, 
                                            Ig_data = Ig_data,
                                            keyword_specific = keyword_specific,
                                            keyword_total = keyword_total)
-                               },
-                               duplicated_analytes = function(c) {
-                                 c$message
-                               })
+                               )
                              },
                              error = function(e) { })
                            })
@@ -1089,4 +1084,20 @@ comma_or <- function(string_components) {
                           replacement = " or \\1",
                           x = comma_string)
   return(comma_and_string)
+}
+
+is_truthy <- function(x) {
+  valid <- tryCatch(
+    expr = {
+      x
+      TRUE
+    },
+    error = function(e) {
+      FALSE
+    })
+  if (valid) {
+    return(isTruthy(x))
+  } else {
+    return(FALSE)
+  }
 }
