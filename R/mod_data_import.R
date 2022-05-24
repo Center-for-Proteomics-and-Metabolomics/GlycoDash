@@ -20,200 +20,200 @@ mod_data_import_ui <- function(id){
         column(
           width = 6,
           mod_read_lacytools_ui(ns("read_lacytools_ui_1")),
-          tags$style(HTML(paste0(
-            "#",
-            ns("box_header"),
-            " .awesome-checkbox {padding-top: 7px}",
-            "#",
-            ns("box_header"),
-            " .popover {max-width: 400px !important; color: #333}",
-            "#",
-            ns("sample_id_box"),
-            " .box-title {width: 100%}",
-            "#",
-            ns("box_header"),
-            " .fa {float: right; margin-right: 5px; font-size: 18px}",
-            "#",
-            ns("box_header"),
-            " .direct-chat-contacts {right: 0; background: #222d32!important}",
-            "#",
-            ns("box_header"),
-            " .btn {float: right; border-width: 0px; margin-right: 10px}",
-            "#",
-            ns("sample_id_box"),
-            " .dropdown {display: inline-block; float: right; width: 330px}",
-            "#",
-            ns("box_header"),
-            " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
-          ))
-          ),
-          shinydashboardPlus::box(
-            id = ns("sample_id_box"),
-            title = div(
-              id = ns("box_header"),
-              "Add sample ID's",
-              icon("info-circle",
-                   class = "ml",
-                   tabindex = "0") %>% 
-                bsplus::bs_embed_popover(
-                  title = "Explanation",
-                  content = HTML(paste0(
-                    tags$p(paste(
-                      "Adding sample ID's to your data allows you to see", 
-                      "which measurement corresponds to which sample.")),
-                    "Sample ID's will in later steps be used to:",
-                    tags$ul(tags$li(paste(
-                      "determine the sample type (e.g. blank, standard,", 
-                      "negative control, patient, etc.)"
-                    )), 
-                    tags$li(paste(
-                      "link metadata to your data (e.g. age and", 
-                      "gender of the study subjects)"
-                    ))
-                    ))),
-                  # Don't use body = container here, because then the custom CSS
-                  # styling for .popover won't be applied
-                  trigger = "hover",
-                  placement = "right",
-                  html = "true"),
-              shinyWidgets::dropdownButton(
-                tags$style(HTML(paste0(
-                  "#",
-                  ns("dropdown_content"),
-                  " .fa {float: left}",
-                  "#",
-                  ns("dropdown_content"),
-                  " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
-                ))),
-                div(id = ns("dropdown_content"),
-                    downloadButton(ns("download_ex_plate_design"),
-                                   "Download a plate design example file"),
-                    downloadButton(ns("download_ex_sample_list"),
-                                   "Download a sample list example file")),
-                icon = icon("paperclip",
-                            class = "ml"),
-                tooltip = shinyWidgets::tooltipOptions(placement = "top",
-                                                       title = "Examples"),
-                width = "330px",
-                size = "xs"
-              )),
-            width = NULL,
-            solidHeader = TRUE,
-            status = "primary",
-            selectInput(ns("sample_id_method"),
-                        "Choose a method to add sample ID's to your data:",
-                        choices = c("Upload a plate design",
-                                    "Upload a sample list")) %>% 
-              bsplus::bs_embed_popover(
-                title = "Method to add sample ID's",
-                content = HTML(paste0(
-                  tags$b("Plate design:"),
-                  tags$p(paste(
-                    "You can only use this method when your sample names contain",
-                    "information on the plate and well position of the sample,", 
-                    "in the correct format:"
-                  )),
-                  "<p>plate<i>[insert plate number here]</i>_<i>[insert well position here]</i></p>",
-                  "An example of a valid sample name is:",
-                  "<p>\"38160_38161_IM5_<b>plate1_A8</b>_01_Spike 20210409_000237.raw\"</P",
-                  br(),
-                  br(),
-                  tags$p(tags$b("Sample list:"),
-                         br(),
-                         paste(
-                           "Use this method when your samples were not measured on plates",
-                           "or when your sample names don't meet the requirements described above."
-                         ))
-                )),
-                html = "true",
-                trigger = "hover",
-                placement = "right"
-              ),
-            shinyWidgets::materialSwitch(ns("switch_two_plate_designs"),
-                                         "Add separate plate design files for specific and and for total Ig samples.",
-                                         status = "primary",
-                                         right = TRUE),
-            div(id = ns("one_plate_design"),
-                mod_fileInput_with_info_ui(
-                  id = ns("plate_design"),
-                  fileInput_label = "Upload a plate design Excel file:",
-                  popover_width = "400px",
-                  popover_title = "Plate design format:",
-                  popover_content_html = HTML(paste0(
-                    tags$p(paste(
-                      "The top-left cell of the Excel sheet should contain",
-                      "the plate number (e.g. \"Plate 1\"). The cells to the",
-                      "right of the top-left cell need to be labelled 1-12,", 
-                      "while the cells below the top-left cell need to be",
-                      "labelled A-H (for a 96-well plate). The cells",
-                      "within the plate should contain the sample ID's.",
-                      "Sample ID's must not contain commas (,) or line breaks."
-                    )),
-                    tags$p(paste("At the bottom of the plate, leave one row", 
-                                 "blank and then add the next plate in the", 
-                                 "same format.")),
-                    tags$p("For an example, click on the paperclip icon.")
-                  ))
-                )
-            ),
-            div(id = ns("two_plate_designs"),
-                mod_fileInput_with_info_ui(
-                  id = ns("plate_design_specific"),
-                  fileInput_label = "Upload a plate design Excel file for the specific Ig samples:",
-                  popover_width = "400px",
-                  popover_title = "Plate design format:",
-                  popover_content_html = HTML(paste0(
-                    tags$p(paste(
-                      "The top-left cell of the Excel sheet should contain",
-                      "the plate number (e.g. \"Plate 1\"). The cells to the",
-                      "right of the top-left cell need to be labelled 1-12,", 
-                      "while the cells below the top-left cell need to be",
-                      "labelled A-H (for a 96-well plate). The cells",
-                      "within the plate should contain the sample ID's.",
-                      "Sample ID's must not contain commas (,) or line breaks."
-                    )),
-                    tags$p(paste("At the bottom of the plate, leave one row", 
-                                 "blank and then add the next plate in the", 
-                                 "same format.")),
-                    tags$p("For an example, click on the paperclip icon.")
-                  ))
-                ),
-                fluidRow(
-                  column(width = 11,
-                         fileInput(ns("plate_design_total"), 
-                                   "Upload a plate design Excel file for the total Ig samples:")))
-            ),
-            div(id = ns("sample_list_ui"),
-                mod_fileInput_with_info_ui(
-                  id = ns("sample_list"),
-                  fileInput_label = "Upload an Excel file with your sample list:",
-                  popover_width = "400px",
-                  popover_title = "Sample list format:",
-                  popover_content_html = HTML(paste0(
-                    tags$p(paste(
-                      "The Excel file should contain only one sheet.",
-                      "This sheet should contain one column named \"sample_name\"",
-                      "and one column named \"sample_id\"."
-                    )),
-                    tags$p("For an example, click on the paperclip icon.")
-                  ))
-                )
-            ),
-            fluidRow(
-              column(
-                width = 12,
-                actionButton(ns("add_plate_design"), 
-                             "Add sample ID's and sample types to the data based on the plate design"),
-                br(),
-                br(),
-                div(id = ns("manual_sample_types"),
-                    tags$b("Upload an Excel file or an R object (.rds) that contains:"),
-                    tags$ul(
-                      tags$li(tags$span("a column named \"sample_id\" with the sample ID's for all samples in the data")),
-                      tags$li(tags$span("a column named \"sample_type\" with the corresponding sample types"))
-                    ),
-                    fileInput(ns("groups_file"), label = NULL))
-              ))),
+          # tags$style(HTML(paste0(
+          #   "#",
+          #   ns("box_header"),
+          #   " .awesome-checkbox {padding-top: 7px}",
+          #   "#",
+          #   ns("box_header"),
+          #   " .popover {max-width: 400px !important; color: #333}",
+          #   "#",
+          #   ns("sample_id_box"),
+          #   " .box-title {width: 100%}",
+          #   "#",
+          #   ns("box_header"),
+          #   " .fa {float: right; margin-right: 5px; font-size: 18px}",
+          #   "#",
+          #   ns("box_header"),
+          #   " .direct-chat-contacts {right: 0; background: #222d32!important}",
+          #   "#",
+          #   ns("box_header"),
+          #   " .btn {float: right; border-width: 0px; margin-right: 10px}",
+          #   "#",
+          #   ns("sample_id_box"),
+          #   " .dropdown {display: inline-block; float: right; width: 330px}",
+          #   "#",
+          #   ns("box_header"),
+          #   " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+          # ))
+          # ),
+          # shinydashboardPlus::box(
+          #   id = ns("sample_id_box"),
+          #   title = div(
+          #     id = ns("box_header"),
+          #     "Add sample ID's",
+          #     icon("info-circle",
+          #          class = "ml",
+          #          tabindex = "0") %>% 
+          #       bsplus::bs_embed_popover(
+          #         title = "Explanation",
+          #         content = HTML(paste0(
+          #           tags$p(paste(
+          #             "Adding sample ID's to your data allows you to see", 
+          #             "which measurement corresponds to which sample.")),
+          #           "Sample ID's will in later steps be used to:",
+          #           tags$ul(tags$li(paste(
+          #             "determine the sample type (e.g. blank, standard,", 
+          #             "negative control, patient, etc.)"
+          #           )), 
+          #           tags$li(paste(
+          #             "link metadata to your data (e.g. age and", 
+          #             "gender of the study subjects)"
+          #           ))
+          #           ))),
+          #         # Don't use body = container here, because then the custom CSS
+          #         # styling for .popover won't be applied
+          #         trigger = "hover",
+          #         placement = "right",
+          #         html = "true"),
+          #     shinyWidgets::dropdownButton(
+          #       tags$style(HTML(paste0(
+          #         "#",
+          #         ns("dropdown_content"),
+          #         " .fa {float: left}",
+          #         "#",
+          #         ns("dropdown_content"),
+          #         " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
+          #       ))),
+          #       div(id = ns("dropdown_content"),
+          #           downloadButton(ns("download_ex_plate_design"),
+          #                          "Download a plate design example file"),
+          #           downloadButton(ns("download_ex_sample_list"),
+          #                          "Download a sample list example file")),
+          #       icon = icon("paperclip",
+          #                   class = "ml"),
+          #       tooltip = shinyWidgets::tooltipOptions(placement = "top",
+          #                                              title = "Examples"),
+          #       width = "330px",
+          #       size = "xs"
+          #     )),
+          #   width = NULL,
+          #   solidHeader = TRUE,
+          #   status = "primary",
+          #   selectInput(ns("sample_id_method"),
+          #               "Choose a method to add sample ID's to your data:",
+          #               choices = c("Upload a plate design",
+          #                           "Upload a sample list")) %>% 
+          #     bsplus::bs_embed_popover(
+          #       title = "Method to add sample ID's",
+          #       content = HTML(paste0(
+          #         tags$b("Plate design:"),
+          #         tags$p(paste(
+          #           "You can only use this method when your sample names contain",
+          #           "information on the plate and well position of the sample,", 
+          #           "in the correct format:"
+          #         )),
+          #         "<p>plate<i>[insert plate number here]</i>_<i>[insert well position here]</i></p>",
+          #         "An example of a valid sample name is:",
+          #         "<p>\"38160_38161_IM5_<b>plate1_A8</b>_01_Spike 20210409_000237.raw\"</P",
+          #         br(),
+          #         br(),
+          #         tags$p(tags$b("Sample list:"),
+          #                br(),
+          #                paste(
+          #                  "Use this method when your samples were not measured on plates",
+          #                  "or when your sample names don't meet the requirements described above."
+          #                ))
+          #       )),
+          #       html = "true",
+          #       trigger = "hover",
+          #       placement = "right"
+          #     ),
+          #   shinyWidgets::materialSwitch(ns("switch_two_plate_designs"),
+          #                                "Add separate plate design files for specific and and for total Ig samples.",
+          #                                status = "primary",
+          #                                right = TRUE),
+          #   div(id = ns("one_plate_design"),
+          #       mod_fileInput_with_info_ui(
+          #         id = ns("plate_design"),
+          #         fileInput_label = "Upload a plate design Excel file:",
+          #         popover_width = "400px",
+          #         popover_title = "Plate design format:",
+          #         popover_content_html = HTML(paste0(
+          #           tags$p(paste(
+          #             "The top-left cell of the Excel sheet should contain",
+          #             "the plate number (e.g. \"Plate 1\"). The cells to the",
+          #             "right of the top-left cell need to be labelled 1-12,", 
+          #             "while the cells below the top-left cell need to be",
+          #             "labelled A-H (for a 96-well plate). The cells",
+          #             "within the plate should contain the sample ID's.",
+          #             "Sample ID's must not contain commas (,) or line breaks."
+          #           )),
+          #           tags$p(paste("At the bottom of the plate, leave one row", 
+          #                        "blank and then add the next plate in the", 
+          #                        "same format.")),
+          #           tags$p("For an example, click on the paperclip icon.")
+          #         ))
+          #       )
+          #   ),
+          #   div(id = ns("two_plate_designs"),
+          #       mod_fileInput_with_info_ui(
+          #         id = ns("plate_design_specific"),
+          #         fileInput_label = "Upload a plate design Excel file for the specific Ig samples:",
+          #         popover_width = "400px",
+          #         popover_title = "Plate design format:",
+          #         popover_content_html = HTML(paste0(
+          #           tags$p(paste(
+          #             "The top-left cell of the Excel sheet should contain",
+          #             "the plate number (e.g. \"Plate 1\"). The cells to the",
+          #             "right of the top-left cell need to be labelled 1-12,", 
+          #             "while the cells below the top-left cell need to be",
+          #             "labelled A-H (for a 96-well plate). The cells",
+          #             "within the plate should contain the sample ID's.",
+          #             "Sample ID's must not contain commas (,) or line breaks."
+          #           )),
+          #           tags$p(paste("At the bottom of the plate, leave one row", 
+          #                        "blank and then add the next plate in the", 
+          #                        "same format.")),
+          #           tags$p("For an example, click on the paperclip icon.")
+          #         ))
+          #       ),
+          #       fluidRow(
+          #         column(width = 11,
+          #                fileInput(ns("plate_design_total"), 
+          #                          "Upload a plate design Excel file for the total Ig samples:")))
+          #   ),
+          #   div(id = ns("sample_list_ui"),
+          #       mod_fileInput_with_info_ui(
+          #         id = ns("sample_list"),
+          #         fileInput_label = "Upload an Excel file with your sample list:",
+          #         popover_width = "400px",
+          #         popover_title = "Sample list format:",
+          #         popover_content_html = HTML(paste0(
+          #           tags$p(paste(
+          #             "The Excel file should contain only one sheet.",
+          #             "This sheet should contain one column named \"sample_name\"",
+          #             "and one column named \"sample_id\"."
+          #           )),
+          #           tags$p("For an example, click on the paperclip icon.")
+          #         ))
+          #       )
+          #   ),
+          #   fluidRow(
+          #     column(
+          #       width = 12,
+          #       actionButton(ns("add_plate_design"), 
+          #                    "Add sample ID's and sample types to the data based on the plate design"),
+          #       br(),
+          #       br(),
+          #       div(id = ns("manual_sample_types"),
+          #           tags$b("Upload an Excel file or an R object (.rds) that contains:"),
+          #           tags$ul(
+          #             tags$li(tags$span("a column named \"sample_id\" with the sample ID's for all samples in the data")),
+          #             tags$li(tags$span("a column named \"sample_type\" with the corresponding sample types"))
+          #           ),
+          #           fileInput(ns("groups_file"), label = NULL))
+          #     ))),
           shinydashboard::box(
             title = "Upload your metadata",
             width = NULL,
@@ -256,19 +256,7 @@ mod_data_import_server <- function(id){
     # (reactiveVals are often easier to work with than reactive expressions for some reason)
     x <- reactiveValues()
     
-    # Make reactive expressions containing the file extensions for each file that 
-    # can be uploaded:
-    ext_lacytools_summary <- reactive({
-      req(input$lacytools_summary)
-      ext <- tools::file_ext(input$lacytools_summary$name)
-      return(ext)
-    })
     
-    ext_plate_design_total <- reactive({
-      req(input$plate_design_total)
-      ext <- tools::file_ext(input$plate_design_total$name)
-      return(ext)
-    })
     
     ext_metadata <- reactive({
       req(input$metadata)
@@ -277,10 +265,6 @@ mod_data_import_server <- function(id){
     })
     
     summary <- mod_read_lacytools_server("read_lacytools_ui_1")
-    
-    observe({
-      print(summary$data())
-    })
     
     # When the lacytools summary has been read in, the converted data is shown
     # in the data table
@@ -313,148 +297,148 @@ mod_data_import_server <- function(id){
     
     # Plate design ------------------------------------------------------------
     
-    observe({
-      shinyjs::toggle("sample_list_ui", 
-                      condition = input$sample_id_method == "Upload a sample list")
-      shinyjs::toggle("one_plate_design",
-                      condition = all(
-                        input$sample_id_method == "Upload a plate design",
-                        !isTruthy(input$switch_two_plate_designs)
-                      ))
-      shinyjs::toggle("two_plate_designs",
-                      condition = all(
-                        input$sample_id_method == "Upload a plate design",
-                        isTruthy(input$switch_two_plate_designs)
-                      ))
-      shinyjs::toggle("switch_two_plate_designs",
-                      condition = all(
-                        input$Ig_data == "Yes",
-                        input$sample_id_method == "Upload a plate design"
-                      ))
-    })
-    
-    plate_design_file <- mod_fileInput_with_info_server(
-      id = "plate_design",
-      allowed = c("xlsx", "xls")
-    )
-    
-    plate_design_specific_file <- mod_fileInput_with_info_server(
-      id = "plate_design_specific",
-      allowed = c("xlsx", "xls")
-    )
-    
-    sample_list_file <- mod_fileInput_with_info_server(
-      id = "sample_list",
-      allowed = c("xlsx", "xls")
-    )
-    
-    observe({
-      req(input$plate_design_total)
-      shinyFeedback::feedbackWarning("plate_design_total",
-                                     !(ext_plate_design_total() %in% c("xlsx", "xls")),
-                                     text = "Please upload a .xlsx or .xls file.")
-    })
-    
-    # This observe call ensures that the add_plate_design actionButton is only
-    # enabled under the right circumstances
-    observe({
-      shinyjs::disable(id = "add_plate_design")
-      if (all(isTruthy(x$data),
-              isTruthy(input$plate_design))) {
-        if (ext_plate_design() %in% c("xlsx", "xls")) {
-          shinyjs::enable(id = "add_plate_design")
-        } 
-      } 
-      if (all(isTruthy(x$data),
-              isTruthy(input$plate_design_specific),
-              isTruthy(input$plate_design_total))) {
-        if (all(ext_plate_design_specific() %in% c("xlsx", "xls"),
-                ext_plate_design_total() %in% c("xlsx", "xls"))) {
-          shinyjs::enable(id = "add_plate_design")
-        }
-      }
-    })
-    
-    # When the add_plate_design actionButton is clicked, the plate_design file is
-    # read in and a pop-up is shown with the automatically determined sample types.
-    observeEvent(input$add_plate_design, {
-      
-      # The x$data_incl_metadata reactiveVal is reset to NULL, so that users can
-      # change the plate design file after metadata has already been added:
-      if (isTruthy(x$data_incl_metadata)) {
-        x$data_incl_metadata <- NULL
-        showNotification("The metadata has to be re-added to the data",
-                         type = "warning")
-      }
-      
-      if (!isTruthy(input$switch_two_plate_designs)) {
-        tryCatch(
-          expr = {
-            x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
-          },
-          error = function(e) {
-            showNotification(
-              paste(
-                "Please check that your plate design file is formatted correctly.",
-                "Click on the information icon to find the required format."
-              ), 
-              type = "error",
-              duration = NULL
-            )
-            print(e$class)
-          },
-          warning = function(w) {
-            showNotification(
-              w$message,
-              type = "error",
-              duration = NULL
-            )
-            
-            # Continue reading plate design despite the warning:
-            x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
-          }
-        )
-      } else {
-        tryCatch(
-          expr = {
-            plate_design_specific <- read_and_process_plate_design(input$plate_design_specific$datapath) %>% 
-              dplyr::mutate(group = input$keyword_total)
-            
-            plate_design_total <- read_and_process_plate_design(input$plate_design_total$datapath) %>% 
-              dplyr::mutate(group = input$keyword_specific)
-            
-            x$plate_design <- dplyr::full_join(plate_design_specific,
-                                               plate_design_total)
-          },
-          error = function(e) {
-            showNotification(
-              paste(
-                "Please check that your plate design file is formatted correctly.",
-                "Click on the information icon to find the required format."
-              ), 
-              type = "error",
-              duration = NULL
-            )
-          },
-          warning = function(w) {
-            showNotification(
-              w$message,
-              type = "error",
-              duration = NULL
-            )
-            
-            # Continue reading plate design despite the warning:
-            plate_design_specific <- read_and_process_plate_design(input$plate_design_specific$datapath) %>% 
-              dplyr::mutate(group = input$keyword_total)
-            
-            plate_design_total <- read_and_process_plate_design(input$plate_design_total$datapath) %>% 
-              dplyr::mutate(group = input$keyword_specific)
-            
-            x$plate_design <- dplyr::full_join(plate_design_specific,
-                                               plate_design_total)
-          }
-        )
-      }
+    # observe({
+    #   shinyjs::toggle("sample_list_ui", 
+    #                   condition = input$sample_id_method == "Upload a sample list")
+    #   shinyjs::toggle("one_plate_design",
+    #                   condition = all(
+    #                     input$sample_id_method == "Upload a plate design",
+    #                     !isTruthy(input$switch_two_plate_designs)
+    #                   ))
+    #   shinyjs::toggle("two_plate_designs",
+    #                   condition = all(
+    #                     input$sample_id_method == "Upload a plate design",
+    #                     isTruthy(input$switch_two_plate_designs)
+    #                   ))
+    #   shinyjs::toggle("switch_two_plate_designs",
+    #                   condition = all(
+    #                     input$Ig_data == "Yes",
+    #                     input$sample_id_method == "Upload a plate design"
+    #                   ))
+    # })
+    # 
+    # plate_design_file <- mod_fileInput_with_info_server(
+    #   id = "plate_design",
+    #   allowed = c("xlsx", "xls")
+    # )
+    # 
+    # plate_design_specific_file <- mod_fileInput_with_info_server(
+    #   id = "plate_design_specific",
+    #   allowed = c("xlsx", "xls")
+    # )
+    # 
+    # sample_list_file <- mod_fileInput_with_info_server(
+    #   id = "sample_list",
+    #   allowed = c("xlsx", "xls")
+    # )
+    # 
+    # observe({
+    #   req(input$plate_design_total)
+    #   shinyFeedback::feedbackWarning("plate_design_total",
+    #                                  !(ext_plate_design_total() %in% c("xlsx", "xls")),
+    #                                  text = "Please upload a .xlsx or .xls file.")
+    # })
+    # 
+    # # This observe call ensures that the add_plate_design actionButton is only
+    # # enabled under the right circumstances
+    # observe({
+    #   shinyjs::disable(id = "add_plate_design")
+    #   if (all(isTruthy(x$data),
+    #           isTruthy(input$plate_design))) {
+    #     if (ext_plate_design() %in% c("xlsx", "xls")) {
+    #       shinyjs::enable(id = "add_plate_design")
+    #     } 
+    #   } 
+    #   if (all(isTruthy(x$data),
+    #           isTruthy(input$plate_design_specific),
+    #           isTruthy(input$plate_design_total))) {
+    #     if (all(ext_plate_design_specific() %in% c("xlsx", "xls"),
+    #             ext_plate_design_total() %in% c("xlsx", "xls"))) {
+    #       shinyjs::enable(id = "add_plate_design")
+    #     }
+    #   }
+    # })
+    # 
+    # # When the add_plate_design actionButton is clicked, the plate_design file is
+    # # read in and a pop-up is shown with the automatically determined sample types.
+    # observeEvent(input$add_plate_design, {
+    #   
+    #   # The x$data_incl_metadata reactiveVal is reset to NULL, so that users can
+    #   # change the plate design file after metadata has already been added:
+    #   if (isTruthy(x$data_incl_metadata)) {
+    #     x$data_incl_metadata <- NULL
+    #     showNotification("The metadata has to be re-added to the data",
+    #                      type = "warning")
+    #   }
+    #   
+    #   if (!isTruthy(input$switch_two_plate_designs)) {
+    #     tryCatch(
+    #       expr = {
+    #         x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
+    #       },
+    #       error = function(e) {
+    #         showNotification(
+    #           paste(
+    #             "Please check that your plate design file is formatted correctly.",
+    #             "Click on the information icon to find the required format."
+    #           ), 
+    #           type = "error",
+    #           duration = NULL
+    #         )
+    #         print(e$class)
+    #       },
+    #       warning = function(w) {
+    #         showNotification(
+    #           w$message,
+    #           type = "error",
+    #           duration = NULL
+    #         )
+    #         
+    #         # Continue reading plate design despite the warning:
+    #         x$plate_design <- read_and_process_plate_design(input$plate_design$datapath)
+    #       }
+    #     )
+    #   } else {
+    #     tryCatch(
+    #       expr = {
+    #         plate_design_specific <- read_and_process_plate_design(input$plate_design_specific$datapath) %>% 
+    #           dplyr::mutate(group = input$keyword_total)
+    #         
+    #         plate_design_total <- read_and_process_plate_design(input$plate_design_total$datapath) %>% 
+    #           dplyr::mutate(group = input$keyword_specific)
+    #         
+    #         x$plate_design <- dplyr::full_join(plate_design_specific,
+    #                                            plate_design_total)
+    #       },
+    #       error = function(e) {
+    #         showNotification(
+    #           paste(
+    #             "Please check that your plate design file is formatted correctly.",
+    #             "Click on the information icon to find the required format."
+    #           ), 
+    #           type = "error",
+    #           duration = NULL
+    #         )
+    #       },
+    #       warning = function(w) {
+    #         showNotification(
+    #           w$message,
+    #           type = "error",
+    #           duration = NULL
+    #         )
+    #         
+    #         # Continue reading plate design despite the warning:
+    #         plate_design_specific <- read_and_process_plate_design(input$plate_design_specific$datapath) %>% 
+    #           dplyr::mutate(group = input$keyword_total)
+    #         
+    #         plate_design_total <- read_and_process_plate_design(input$plate_design_total$datapath) %>% 
+    #           dplyr::mutate(group = input$keyword_specific)
+    #         
+    #         x$plate_design <- dplyr::full_join(plate_design_specific,
+    #                                            plate_design_total)
+    #       }
+    #     )
+    #   }
       
       # Reset x$response in case the pop-up has been shown before:
       x$response <- NULL
