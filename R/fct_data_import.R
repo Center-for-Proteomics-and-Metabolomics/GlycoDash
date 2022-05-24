@@ -702,16 +702,18 @@ process_plate_design <- function (plate_design) {
     dplyr::mutate(plate_well = paste(plate, well, sep = "_")) %>% 
     dplyr::arrange(plate_well) %>% 
     dplyr::select(-c(plate, well)) %>% 
-    tidyr::extract(col = sample_id, 
-                   into = c("sample_type"), 
-                   regex = "([[:alpha:]]+)",
-                   remove = FALSE) %>% 
+    # tidyr::extract(col = sample_id, 
+    #                into = c("sample_type"), 
+    #                regex = "([[:alpha:]]+)",
+    #                remove = FALSE) %>% 
     # Remove rows where sample_type is NA (these were empty cells
     # in the plate design Excel file)
-    tidyr::replace_na(list(sample_type = "unknown",
-                           sample_id = "unknown"))
-    # dplyr::filter(dplyr::if_all(.cols = c(sample_type),
-    #                             .fns = ~ !is.na(.x)))
+    tidyr::replace_na(list(
+      #sample_type = "unknown",
+      sample_id = "unknown"
+    ))
+  # dplyr::filter(dplyr::if_all(.cols = c(sample_type),
+  #                             .fns = ~ !is.na(.x)))
   
   return(plate_design)
 }
@@ -849,13 +851,13 @@ read_and_process_plate_design <- function(plate_design_file) {
   
   # Pass along any errors (if applicable) from handle_duplicates. Warnings are
   # passed along automatically.
-  tryCatch(expr = {
-    plate_design <- handle_duplicates(plate_design)
-  },
-  error = function(e) {
-    rlang::abort(class = e$class,
-                 message = e$message)
-  })
+  # tryCatch(expr = {
+  #   plate_design <- handle_duplicates(plate_design)
+  # },
+  # error = function(e) {
+  #   rlang::abort(class = e$class,
+  #                message = e$message)
+  # })
   
   return(plate_design)
 }
