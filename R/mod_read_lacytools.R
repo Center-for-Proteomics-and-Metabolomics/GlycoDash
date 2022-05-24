@@ -75,14 +75,14 @@ mod_read_lacytools_server <- function(id){
     observe({
       shinyjs::toggleState(
         id = "read_summary",
-        condition = all(
-          extension() == "txt",
-          any(
+        condition = any(
+          all(
             input$Ig_data == "No",
-            all(
-              input$Ig_data == "Yes",
-              isTruthy(lacytools_summary_Ig_data())
-            )
+            is_truthy(lacytools_summary())
+          ),
+          all(
+            input$Ig_data == "Yes",
+            is_truthy(lacytools_summary_Ig_data())
           )
         )
       )
@@ -97,43 +97,83 @@ mod_read_lacytools_server <- function(id){
     })
     
     raw_lacytools_summary <- reactive({
+      req(input$lacytools_summary$datapath)
       read_non_rectangular(input$lacytools_summary$datapath)
     })
     
     warn_duplicated_analytes <- reactive({
+      req(raw_lacytools_summary())
+      # Create the object 'warning' to save the result of for-loop in:
+      warning <- NULL
+      
+      # Try to get_block() with each output, until either a block is found
+      # without errors/warnings, or until the 'duplicated_analytes' warning
+      # occurs:
       for (output in outputs) {
-        tryCatch(expr = {
-          get_block(data = raw_lacytools_summary(),
-                    variable = output)
-          # If get_block has run without errors/warnings, exit the loop and
-          # return FALSE
-          return(FALSE)
-        },
-        lacytools_output_not_found = function(c) {
-          # If this error occurs, go through loop again with next output
-        },
-        duplicated_analytes = function(c) {
-          # If this warning occurs, exit loop and return TRUE
-          return(TRUE)
-        })
+        result <- tryCatch(
+          expr = {
+            get_block(data = raw_lacytools_summary(),
+                      variable = output)
+            # If get_block has run without errors/warnings, return NULL
+            NULL
+          },
+          lacytools_output_not_found = function(c) {
+            # If this error occurs, return 'block_not_found"
+            "block_not_found"
+          },
+          duplicated_analytes = function(c) {
+            # If this warning occurs, return warning message
+            c$message
+          })
+        
+        # Save the result of this round in warning
+        warning <- result
+        
+        # Unless result of this round was "block_not_found", exit the loop
+        if (result != "block_not_found") {
+          break
+        }
+      }
+      
+      # In case we have looped through all outputs and no block was found,
+      # return 'warning' as NULL
+      if (warning == "block_not_found") {
+        warning <- NULL
+      }
+      
+      return(warning)
+    })
+    
+    observeEvent(input$read_summary, {
+      if (isTruthy(warn_duplicated_analytes())) {
+        showNotification(warn_duplicated_analytes(),
+                         type = "warning",
+                         duration = NULL)
       }
     })
     
     lacytools_summary <- reactive({
-      tryCatch(expr = {
-        read_lacytools_summary(data = raw_lacytools_summary())
-      },
-      no_outputs_present = function(c) {
-        # Show feedback that there are no outputs found in the LacyTools file:
-        shinyFeedback::feedbackDanger("lacytools_summary",
-                                      show = TRUE,
-                                      text = c$message)
-        # Return NULL to the reactive lacytools_summary()
-        NULL
-      })
+      req(raw_lacytools_summary())
+      summary <- tryCatch(
+        expr = {
+          read_lacytools_summary(data = raw_lacytools_summary())
+        },
+        no_outputs_present = function(c) {
+          # Show feedback that there are no outputs found in the LacyTools file:
+          shinyFeedback::feedbackDanger("lacytools_summary",
+                                        show = TRUE,
+                                        text = c$message)
+          # Return NULL to the reactive lacytools_summary()
+          NULL
+        })
+      return(summary)
     })
     
     lacytools_summary_Ig_data <- reactive({
+      
+      shinyFeedback::hideFeedback("keyword_specific")
+      shinyFeedback::hideFeedback("keyword_total")
+      
       # Pause here until lacytools_summary() is Truthy, and until the inputs for
       # the keywords are not empty:
       req(
@@ -142,189 +182,48 @@ mod_read_lacytools_server <- function(id){
         input$keyword_total
       )
       
-      shinyFeedback::hideFeedback("keyword_specific")
-      shinyFeedback::hideFeedback("keyword_total")
+      summary <- tryCatch(
+        expr = {
+          # Detect based on sample names which samples are Total Ig and which are
+          # Specific Ig samples
+          detect_group(data = lacytools_summary(),
+                       keyword_specific = input$keyword_specific,
+                       keyword_total = input$keyword_total)
+        },
+        unmatched_keyword_specific = function(c) {
+          shinyFeedback::feedbackDanger(
+            inputId = "keyword_specific",
+            show = TRUE,
+            text = paste("This keyword did not match any sample names in your data.", 
+                         "Please choose a different keyword.")
+          )
+          NULL
+        },
+        unmatched_keyword_total = function(c) {
+          shinyFeedback::feedbackDanger(
+            inputId = "keyword_total",
+            show = TRUE,
+            text = paste("This keyword did not match any sample names in your data.", 
+                         "Please choose a different keyword.")
+          )
+          NULL
+        })
       
-      tryCatch(expr = {
-        # Detect based on sample names which samples are Total Ig and which are
-        # Specific Ig samples
-        detect_group(data = lacytools_summary(),
-                     keyword_specific = input$keyword_specific,
-                     keyword_total = input$keyword_total)
-      },
-      unmatched_keyword_specific = function(c) {
-        shinyFeedback::feedbackDanger(
-          inputId = "keyword_specific",
-          show = TRUE,
-          text = paste("This keyword did not match any sample names in your data.", 
-                       "Please choose a different keyword.")
-        )
-        NULL
-      },
-      unmatched_keyword_total = function(c) {
-        shinyFeedback::feedbackDanger(
-          inputId = "keyword_total",
-          show = TRUE,
-          text = paste("This keyword did not match any sample names in your data.", 
-                       "Please choose a different keyword.")
-        )
-        NULL
-      })
+      return(summary)
     })
     
-    #     # Check whether the keyword given for specific samples has matches with the
-    # # sample names in the data:
-    # observeEvent(input$keyword_specific, {
-    #   req(input$lacytools_summary)               
-    #   x$keyword_specific_OK <- TRUE
-    #   shinyFeedback::hideFeedback("keyword_specific")
-    #   shinyFeedback::hideFeedback("lacytools_summary")
-    #   # Read in the data so that the keywords can be compared to it:
-    #   data <- read_non_rectangular(input$lacytools_summary$datapath)
-    #   
-    #   all_blocks <- purrr::map(outputs,
-    #                            function(output) {
-    #                              tryCatch(expr = {
-    #                                get_block(data = data, 
-    #                                          variable = output, 
-    #                                          Ig_data = "No")
-    #                              },
-    #                              error = function(e) { })
-    #                            })
-    #   
-    #   all_blocks <- all_blocks[!sapply(all_blocks, is.null)]
-    #   
-    #   if (rlang::is_empty(all_blocks)) {
-    #     shinyFeedback::feedbackDanger(
-    #       "lacytools_summary",
-    #       show = TRUE,
-    #       text = paste("No LacyTools output variables could be found in this file."))
-    #   } else {
-    #     # stringr::str_detect() throws an error when pattern is an empty string,
-    #     # so don't proceed if input$keyword_specific is empty:
-    #     req(input$keyword_specific != "")
-    #     
-    #     matches <- purrr::map(all_blocks,
-    #                           function(block) {
-    #                             stringr::str_detect(
-    #                               block[["sample_name"]],
-    #                               pattern = stringr::fixed(input$keyword_specific))
-    #                           })
-    #     
-    #     keyword_is_unmatched <- !(all(purrr::map_lgl(matches,
-    #                                                  any)))
-    #     
-    #     if (keyword_is_unmatched) {
-    #       shinyFeedback::feedbackDanger("keyword_specific",
-    #                                     show = TRUE,
-    #                                     text = "This keyword did not match any sample names in your data. Please choose a different keyword.")
-    #       x$keyword_specific_OK <- FALSE
-    #     }
-    #   }
-    #   
-    # })
-    # 
-    # # Check whether the keyword given for total samples has matches with the
-    # # sample names in the data:
-    # observeEvent(input$keyword_total, {
-    #   req(input$lacytools_summary)               
-    #   x$keyword_total_OK <- TRUE
-    #   shinyFeedback::hideFeedback("keyword_total")
-    #   shinyFeedback::hideFeedback("lacytools_summary")
-    #   data <- read_non_rectangular(input$lacytools_summary$datapath)
-    #   all_blocks <- purrr::map(outputs,
-    #                            function(output) {
-    #                              tryCatch(expr = {
-    #                                get_block(data = data, 
-    #                                          variable = output, 
-    #                                          Ig_data = "No")
-    #                              },
-    #                              error = function(e) { })
-    #                            })
-    #   
-    #   all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
-    #   
-    #   if (rlang::is_empty(all_blocks)) {
-    #     shinyFeedback::feedbackDanger(
-    #       "lacytools_summary",
-    #       show = TRUE,
-    #       text = paste("No LacyTools output variables could be found in this file."))
-    #   } else {
-    #     # stringr::str_detect() throws an error when pattern is an empty string,
-    #     # so don't proceed if input$keyword_total is empty:
-    #     req(input$keyword_total != "")
-    #     
-    #     matches <- purrr::map(all_blocks,
-    #                           function(block) stringr::str_detect(
-    #                             block[["sample_name"]],
-    #                             pattern = stringr::fixed(input$keyword_total)))
-    #     
-    #     # In each block there needs to be at least one match, if not then the
-    #     # keyword is unmatched:
-    #     keyword_is_unmatched <- !(all(purrr::map_lgl(matches,
-    #                                                  any)))
-    #     
-    #     if (keyword_is_unmatched) {
-    #       shinyFeedback::feedbackDanger("keyword_total",
-    #                                     show = TRUE,
-    #                                     text = "This keyword did not match any sample names in your data. Please choose a different keyword.")
-    #       x$keyword_total_OK <- FALSE
-    #     }
-    #   }
-    # })
-    
-    # When the read_summary actionButton is clicked, the lacytools summary is read
-    # and saved as a reactive expression data_at_read_in()
-    data_at_read_in <- eventReactive(input$read_summary, {
-      read_lacytools_summary(summary_file = input$lacytools_summary$datapath,
-                             Ig_data = input$Ig_data,
-                             keyword_total = input$keyword_total,
-                             keyword_specific = input$keyword_specific)
+    to_return <- eventReactive(input$read_summary, {
+      req(lacytools_summary())
+      summary <- tryCatch(lacytools_summary_Ig_data(),
+                          error = function(e) {
+                            lacytools_summary()
+                          })
+      return(summary)
     })
     
-    observe({
-      x$data <- data_at_read_in()
-      showNotification("The data has been read in and converted.", 
-                       type = "message")
-    })
-    
-    # When the read_summary actionButton is clicked, reset the data reactiveVals 
-    # to NULL (so that user can start over even after next steps have been taken).
-    # Add some kind of confirmation step here so that users don't accidentally 
-    # throw away their progress?
-    observeEvent(input$read_summary, {
-      if (isTruthy(x$data_incl_plate_design)){
-        x$data_incl_plate_design <- NULL
-        showNotification("Sample ID's and sample types have to be re-added to the data",
-                         type = "warning")
-        if (isTruthy(x$data_incl_metadata)) {
-          x$data_incl_metadata <- NULL
-          showNotification("The metadata has to be re-added to the data",
-                           type = "warning")
-        }
-      }
-    })
-    
-    # When the lacytools summary has been read in, the converted data is shown
-    # in the data table
-    output$data_table <- DT::renderDT({
-      req(x$data)
-      if (isTruthy(x$data_incl_metadata)){
-        DT::datatable(x$data_incl_metadata, 
-                      options = list(scrollX = TRUE),
-                      filter = "top")
-      } else { if (isTruthy(x$data_incl_plate_design)){
-        DT::datatable(x$data_incl_plate_design, 
-                      options = list(scrollX = TRUE),
-                      filter = "top")
-      } else {
-        DT::datatable(x$data, 
-                      options = list(scrollX = TRUE),
-                      filter = "top")
-      }
-      }
-    })
-    
+    return(list(
+      data = to_return
+    ))
     
   })
 }
