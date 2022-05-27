@@ -145,7 +145,7 @@ mod_read_lacytools_server <- function(id){
     })
     
     observeEvent(input$read_summary, {
-      if (isTruthy(warn_duplicated_analytes())) {
+      if (is_truthy(warn_duplicated_analytes())) {
         showNotification(warn_duplicated_analytes(),
                          type = "warning",
                          duration = NULL)

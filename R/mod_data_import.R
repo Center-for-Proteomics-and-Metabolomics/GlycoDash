@@ -20,6 +20,7 @@ mod_data_import_ui <- function(id){
         column(
           width = 6,
           mod_read_lacytools_ui(ns("read_lacytools_ui_1")),
+          mod_add_sample_ids_ui(ns("add_sample_ids_ui_1")),
           # tags$style(HTML(paste0(
           #   "#",
           #   ns("box_header"),
@@ -256,8 +257,6 @@ mod_data_import_server <- function(id){
     # (reactiveVals are often easier to work with than reactive expressions for some reason)
     x <- reactiveValues()
     
-    
-    
     ext_metadata <- reactive({
       req(input$metadata)
       ext <- tools::file_ext(input$metadata$name)
@@ -266,12 +265,27 @@ mod_data_import_server <- function(id){
     
     summary <- mod_read_lacytools_server("read_lacytools_ui_1")
     
+    data_incl_sample_ids <- mod_add_sample_ids_server("add_sample_ids_ui_1",
+                                                      keyword_specific = reactive({input$keyword_specific}),
+                                                      keyword_total = reactive({input$keyword_total}),
+                                                      summary = summary$data)
+    observe({
+      req(data_incl_sample_ids)
+      print(data_incl_sample_ids())
+    })
+    
     # When the lacytools summary has been read in, the converted data is shown
     # in the data table
     output$data_table <- DT::renderDT({
       req(summary$data())
       
-      DT::datatable(summary$data(),
+      if (is_truthy(data_incl_sample_ids())) {
+        show_in_table <- data_incl_sample_ids()
+      } else {
+        show_in_table <- summary$data()
+      }
+      
+      DT::datatable(show_in_table,
                     options = list(scrollX = TRUE),
                     filter = "top")
       # if (isTruthy(x$data_incl_metadata)){
@@ -440,139 +454,139 @@ mod_data_import_server <- function(id){
     #     )
     #   }
       
-      # Reset x$response in case the pop-up has been shown before:
-      x$response <- NULL
-      
-      # Don't show pop-up if reading in the plate design has failed:
-      req(x$plate_design)
-      
-      shinyalert::shinyalert(
-        html = TRUE,
-        text = tagList(
-          paste("Based on the sample IDs the following",
-                length(unique(isolate(x$plate_design$sample_type))), 
-                "sample types were defined:"),
-          DT::dataTableOutput(ns("group"))
-        ),
-        size = "m",
-        confirmButtonText = "Accept these sample types",
-        showCancelButton = TRUE,
-        # --> Explain further what the user can expect when choosing cancel
-        cancelButtonText = "Manually enter sample types",
-        confirmButtonCol = "#3c8dbc",
-        callbackR = function(response) {
-          x$response <- response
-        }
-      )
-    })
-    
-    # This datatable with the automatically determined sample_types is shown in
-    # the pop-up:
-    output$group <- DT::renderDataTable({
-      groups <- data.frame(unique(isolate(x$plate_design$sample_type)))
-      groups_tbl <- DT::datatable(groups,
-                                  options = list(
-                                    scrollY = "150px",
-                                    paging = FALSE,
-                                    searching = FALSE,
-                                    columnDefs = list(
-                                      list(
-                                        className = 'dt-center', 
-                                        targets = "_all"))),
-                                  colnames = "Sample type",
-                                  rownames = FALSE
-      )
-      return(groups_tbl)
-    })
-    
-    # If the automatically determined sample_types shown in the pop-up are 
-    # accepted (x$response = TRUE), the plate design is joined with the data.
-    # Now the data contains columns with the sample ID, with the sample type and
-    # with whether the sample is a duplicate of another sample:
-    observeEvent(x$response, {
-      if (x$response == TRUE) {
-        x$data_incl_plate_design <- dplyr::left_join(x$data, 
-                                                     x$plate_design)
-        showNotification("The sample types were added to the data", 
-                         type = "message")
-      } 
-    })
-    
-    # Hide the fileInput for the manual sample_type addition until the manual option
-    # is chosen in the pop-up (x$response = FALSE)
-    observe({
-      shinyjs::hide("manual_sample_types")
-      if (!is.null(x$response)) {
-        if (x$response == FALSE) {
-          shinyjs::show("manual_sample_types")
-          # Reset the input for the file with manual sample types:
-          shinyjs::reset("groups_file")
-          shinyFeedback::hideFeedback(inputId = "groups_file")
-        }
-      }
-    })
-    
-    # Make  a reactive expression that contains the file extension for the file 
-    # to manually add sample types:
-    ext_groups <- reactive({
-      req(input$groups_file)
-      ext <- tools::file_ext(input$groups_file$name)
-      return(ext)
-    })
-    
-    # Read in the file with manual sample types when it is uploaded, or show a 
-    # warning when the uploaded file is of the wrong type:
-    observeEvent(ext_groups(), {
-      req(ext_groups())
-      
-      if (ext_groups() == "rds") {
-        x$groups <- load_and_assign(input$groups_file$datapath)
-        # write a check that column names are named correctly
-      } else { if (ext_groups() %in% c("xlsx", "xls")) {
-        x$groups <- readxl::read_excel(input$groups_file$datapath)
-        # write a check that column names are named correctly
-      } 
-      }
-      shinyFeedback::feedbackWarning(inputId = "groups_file", 
-                                     show = !(ext_groups() %in% c("rds", "xlsx", "xls")),
-                                     text = "Please upload a .xlsx, .xls or .rds file.")
-      if (isTruthy(x$groups)) {
-        if (all(c("sample_id", "sample_type") %in% colnames(x$groups))) {
-          x$correct_column_names <- TRUE
-        } else {
-          x$correct_column_names <- FALSE
-        }
-        shinyFeedback::feedbackWarning(inputId = "groups_file",
-                                       show = x$correct_column_names == FALSE,
-                                       text = "Please name the columns \"sample_id\" and \"sample_type\"")
-      }
-    })
-    
-    # When the manual sample types are read in, join them with the plate design 
-    # and the data:
-    observeEvent(x$correct_column_names, {
-      if (isTruthy(x$correct_column_names)){
-        x$plate_design <- x$plate_design %>% 
-          dplyr::select(-sample_type)
-        x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups) %>% 
-          dplyr::distinct()
-        x$data_incl_plate_design <- dplyr::left_join(data_at_read_in(), x$groups_and_plate_design)
-        # choose which of these is better:
-        shinyFeedback::feedbackSuccess(inputId = "groups_file", 
-                                       show = isTruthy(x$groups_and_plate_design),
-                                       color = "#18BC9C",
-                                       text = "The sample types were added to the data.")
-        showNotification("The sample types were added to the data", type = "message")
-        
-        # The x$data_incl_metadata reactiveVal is reset to NULL, so that users can
-        # change the plate design file after metadata has already been added:
-        if (isTruthy(x$data_incl_metadata)) {
-          x$data_incl_metadata <- NULL
-          showNotification("The metadata has to be re-added to the data",
-                           type = "warning")
-        }
-      }
-    })
+    #   # Reset x$response in case the pop-up has been shown before:
+    #   x$response <- NULL
+    #   
+    #   # Don't show pop-up if reading in the plate design has failed:
+    #   req(x$plate_design)
+    #   
+    #   shinyalert::shinyalert(
+    #     html = TRUE,
+    #     text = tagList(
+    #       paste("Based on the sample IDs the following",
+    #             length(unique(isolate(x$plate_design$sample_type))), 
+    #             "sample types were defined:"),
+    #       DT::dataTableOutput(ns("group"))
+    #     ),
+    #     size = "m",
+    #     confirmButtonText = "Accept these sample types",
+    #     showCancelButton = TRUE,
+    #     # --> Explain further what the user can expect when choosing cancel
+    #     cancelButtonText = "Manually enter sample types",
+    #     confirmButtonCol = "#3c8dbc",
+    #     callbackR = function(response) {
+    #       x$response <- response
+    #     }
+    #   )
+    # })
+    # 
+    # # This datatable with the automatically determined sample_types is shown in
+    # # the pop-up:
+    # output$group <- DT::renderDataTable({
+    #   groups <- data.frame(unique(isolate(x$plate_design$sample_type)))
+    #   groups_tbl <- DT::datatable(groups,
+    #                               options = list(
+    #                                 scrollY = "150px",
+    #                                 paging = FALSE,
+    #                                 searching = FALSE,
+    #                                 columnDefs = list(
+    #                                   list(
+    #                                     className = 'dt-center', 
+    #                                     targets = "_all"))),
+    #                               colnames = "Sample type",
+    #                               rownames = FALSE
+    #   )
+    #   return(groups_tbl)
+    # })
+    # 
+    # # If the automatically determined sample_types shown in the pop-up are 
+    # # accepted (x$response = TRUE), the plate design is joined with the data.
+    # # Now the data contains columns with the sample ID, with the sample type and
+    # # with whether the sample is a duplicate of another sample:
+    # observeEvent(x$response, {
+    #   if (x$response == TRUE) {
+    #     x$data_incl_plate_design <- dplyr::left_join(x$data, 
+    #                                                  x$plate_design)
+    #     showNotification("The sample types were added to the data", 
+    #                      type = "message")
+    #   } 
+    # })
+    # 
+    # # Hide the fileInput for the manual sample_type addition until the manual option
+    # # is chosen in the pop-up (x$response = FALSE)
+    # observe({
+    #   shinyjs::hide("manual_sample_types")
+    #   if (!is.null(x$response)) {
+    #     if (x$response == FALSE) {
+    #       shinyjs::show("manual_sample_types")
+    #       # Reset the input for the file with manual sample types:
+    #       shinyjs::reset("groups_file")
+    #       shinyFeedback::hideFeedback(inputId = "groups_file")
+    #     }
+    #   }
+    # })
+    # 
+    # # Make  a reactive expression that contains the file extension for the file 
+    # # to manually add sample types:
+    # ext_groups <- reactive({
+    #   req(input$groups_file)
+    #   ext <- tools::file_ext(input$groups_file$name)
+    #   return(ext)
+    # })
+    # 
+    # # Read in the file with manual sample types when it is uploaded, or show a 
+    # # warning when the uploaded file is of the wrong type:
+    # observeEvent(ext_groups(), {
+    #   req(ext_groups())
+    #   
+    #   if (ext_groups() == "rds") {
+    #     x$groups <- load_and_assign(input$groups_file$datapath)
+    #     # write a check that column names are named correctly
+    #   } else { if (ext_groups() %in% c("xlsx", "xls")) {
+    #     x$groups <- readxl::read_excel(input$groups_file$datapath)
+    #     # write a check that column names are named correctly
+    #   } 
+    #   }
+    #   shinyFeedback::feedbackWarning(inputId = "groups_file", 
+    #                                  show = !(ext_groups() %in% c("rds", "xlsx", "xls")),
+    #                                  text = "Please upload a .xlsx, .xls or .rds file.")
+    #   if (isTruthy(x$groups)) {
+    #     if (all(c("sample_id", "sample_type") %in% colnames(x$groups))) {
+    #       x$correct_column_names <- TRUE
+    #     } else {
+    #       x$correct_column_names <- FALSE
+    #     }
+    #     shinyFeedback::feedbackWarning(inputId = "groups_file",
+    #                                    show = x$correct_column_names == FALSE,
+    #                                    text = "Please name the columns \"sample_id\" and \"sample_type\"")
+    #   }
+    # })
+    # 
+    # # When the manual sample types are read in, join them with the plate design 
+    # # and the data:
+    # observeEvent(x$correct_column_names, {
+    #   if (isTruthy(x$correct_column_names)){
+    #     x$plate_design <- x$plate_design %>% 
+    #       dplyr::select(-sample_type)
+    #     x$groups_and_plate_design <- dplyr::full_join(x$plate_design, x$groups) %>% 
+    #       dplyr::distinct()
+    #     x$data_incl_plate_design <- dplyr::left_join(data_at_read_in(), x$groups_and_plate_design)
+    #     # choose which of these is better:
+    #     shinyFeedback::feedbackSuccess(inputId = "groups_file", 
+    #                                    show = isTruthy(x$groups_and_plate_design),
+    #                                    color = "#18BC9C",
+    #                                    text = "The sample types were added to the data.")
+    #     showNotification("The sample types were added to the data", type = "message")
+    #     
+    #     # The x$data_incl_metadata reactiveVal is reset to NULL, so that users can
+    #     # change the plate design file after metadata has already been added:
+    #     if (isTruthy(x$data_incl_metadata)) {
+    #       x$data_incl_metadata <- NULL
+    #       showNotification("The metadata has to be re-added to the data",
+    #                        type = "warning")
+    #     }
+    #   }
+    # })
     
     # Metadata ----------------------------------------------------------------
     

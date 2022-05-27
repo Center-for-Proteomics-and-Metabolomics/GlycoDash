@@ -173,7 +173,7 @@ mod_add_sample_ids_ui <- function(id){
           )
       ),
       div(id = ns("sample_list_ui"),
-          mod_fileInput_with_info_ui(
+          mod_process_sample_list_ui(
             id = ns("sample_list"),
             fileInput_label = "Upload an Excel file with your sample list:",
             popover_width = "400px",
@@ -255,7 +255,8 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, summa
     
     plate_design_total <- mod_process_plate_design_server(
       id = "plate_design_total",
-      allowed = c("xlsx", "xls")
+      allowed = c("xlsx", "xls"),
+      with_info_icon = FALSE
     )
     
     plate_design_total_with_group <- reactive({
@@ -274,32 +275,34 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, summa
                        plate_design_total_with_group())
     })
     
-    sample_list_file <- mod_fileInput_with_info_server(
+    sample_list <- mod_process_sample_list_server(
       id = "sample_list",
       allowed = c("xlsx", "xls")
     )
     
-    sample_list <- reactive({
-      readxl::read_excel(sample_list_file()$datapath)
-      # Make a function to process a sample list file Should include errors in
-      # case formatting is wrong or if sample_names are missing from the sample
-      # list (later when sample_list is joined with data) or give warning when
-      # there is samples in your list that are not in the data
+    observe({
+      print(sample_list())
     })
     
     data_with_sample_ids <- reactive({
+      print("check1")
       req(summary())
+      print("check2")
       
-      # implement if method is sample list here
-      
-      if (is_truthy(input$switch_two_plate_designs)) {
-        req(plate_design_combined())
-        dplyr::left_join(summary(),
-                         plate_design_combined())
+      if (input$sample_id_method == "Upload a plate design") {
+        if (is_truthy(input$switch_two_plate_designs)) {
+          req(plate_design_combined())
+          dplyr::left_join(summary(),
+                           plate_design_combined())
+        } else {
+          req(plate_design())
+          dplyr::left_join(summary(),
+                           plate_design())
+        }
       } else {
-        req(plate_design())
+        req(sample_list())
         dplyr::left_join(summary(),
-                         plate_design())
+                         sample_list())
       }
       
     })
@@ -307,6 +310,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, summa
     # This observe call ensures that the add_plate_design actionButton is only
     # enabled under the right circumstances
     observe({
+      print(is_truthy(data_with_sample_ids()))
       shinyjs::toggleState("add_plate_design",
                            condition = is_truthy(data_with_sample_ids()))
     })
@@ -315,9 +319,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, summa
       data_with_sample_ids()
     })
     
-    return(list(
-      data = to_return
-    ))
+    return(to_return)
     
   })
 }
