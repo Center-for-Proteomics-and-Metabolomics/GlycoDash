@@ -192,17 +192,9 @@ mod_add_sample_ids_ui <- function(id){
         column(
           width = 12,
           actionButton(ns("add_plate_design"), 
-                       "Add sample ID's and sample types to the data based on the plate design"),
-          br(),
-          br(),
-          div(id = ns("manual_sample_types"),
-              tags$b("Upload an Excel file or an R object (.rds) that contains:"),
-              tags$ul(
-                tags$li(tags$span("a column named \"sample_id\" with the sample ID's for all samples in the data")),
-                tags$li(tags$span("a column named \"sample_type\" with the corresponding sample types"))
-              ),
-              fileInput(ns("groups_file"), label = NULL))
-        ))),
+                       "Add sample ID's to the data")
+        ))
+      ),
   )
 }
     
@@ -280,37 +272,33 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, summa
       allowed = c("xlsx", "xls")
     )
     
-    observe({
-      print(sample_list())
-    })
-    
     data_with_sample_ids <- reactive({
-      print("check1")
       req(summary())
-      print("check2")
       
       if (input$sample_id_method == "Upload a plate design") {
+        summary_with_plate_well <- detect_plate_and_well(summary())
         if (is_truthy(input$switch_two_plate_designs)) {
           req(plate_design_combined())
-          dplyr::left_join(summary(),
-                           plate_design_combined())
+          with_sample_ids <- dplyr::left_join(summary_with_plate_well,
+                                              plate_design_combined())
         } else {
           req(plate_design())
-          dplyr::left_join(summary(),
-                           plate_design())
+          with_sample_ids <- dplyr::left_join(summary_with_plate_well,
+                                              plate_design())
         }
       } else {
         req(sample_list())
-        dplyr::left_join(summary(),
-                         sample_list())
+        with_sample_ids <- dplyr::left_join(summary(),
+                                            sample_list())
       }
+      
+      return(with_sample_ids)
       
     })
     
     # This observe call ensures that the add_plate_design actionButton is only
     # enabled under the right circumstances
     observe({
-      print(is_truthy(data_with_sample_ids()))
       shinyjs::toggleState("add_plate_design",
                            condition = is_truthy(data_with_sample_ids()))
     })

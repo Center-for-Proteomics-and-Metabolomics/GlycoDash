@@ -842,10 +842,10 @@ read_and_process_plate_design <- function(plate_design_file) {
   tryCatch(expr = {
     plate_design <- read_plate_design(plate_design_file)
   },
-  error = function(e) { 
-    rlang::abort(class = e$class,
-                 message = e$message)
-    })
+  incorrect_formatting = function(cnd) {
+    rlang::abort(message = cnd$message,
+                 class = "incorrect_formatting")
+  })
   
   plate_design <- process_plate_design(plate_design)
   

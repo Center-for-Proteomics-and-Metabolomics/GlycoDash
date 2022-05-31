@@ -107,9 +107,11 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon){
             type = "error",
             duration = NULL
           )
+        },
+        error = function(e) {
+          print(e)
         }
       )
-      
     })
     
     return(plate_design)
