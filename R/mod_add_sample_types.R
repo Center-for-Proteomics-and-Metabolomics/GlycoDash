@@ -43,9 +43,14 @@ mod_add_sample_types_ui <- function(id){
         placement = "right"
       ),
     div(id = ns("upload_div"),
-        fileInput(ns("file"),
-                  "Upload an Excel file with your sample types:")
-        ),
+        mod_process_sample_type_file_ui(
+          ns("process_sample_type_file_ui_1"),
+          fileInput_label = "Upload an Excel file with your sample types:",
+          popover_width = "400px",
+          popover_title = "Format of sample type list",
+          popover_content_html = ""
+        )
+    ),
     actionButton(ns("button"),
                  "Determine the sample types")
   )
@@ -63,6 +68,17 @@ mod_add_sample_types_server <- function(id, summary){
                       condition = input$method == "Upload a list with sample ID's and corresponding sample types")
     })
     
+    observe({
+      shinyjs::toggleState(id = "button",
+                           condition = any(
+                             input$method == "Automatically determine sample types based on sample ID's",
+                             all(
+                               input$method == "Upload a list with sample ID's and corresponding sample types",
+                               is_truthy(manual_sample_types())
+                             )
+                           ))
+    })
+    
     with_auto_sample_types <- reactive({
       req(summary(),
           input$method == "Automatically determine sample types based on sample ID's")
@@ -74,63 +90,21 @@ mod_add_sample_types_server <- function(id, summary){
                        remove = FALSE)
     })
     
-    extension <- reactive({
-      req(input$file)
-      tools::file_ext(input$file$name)
-    })
+    manual_sample_types <- mod_process_sample_type_file_server("process_sample_type_file_ui_1",
+                                                               allowed = c("rds", "xlsx", "xls"))
     
-    allowed <- c("rds", "xlsx", "xls")
-    
-    wrong_extension_warning <- paste("Please upload a",
-                                     comma_or(paste0(".", allowed)),
-                                     "file.")
-    
-    observe({
-      req(extension())
-      shinyFeedback::feedbackDanger("file",
-                                    !(extension() %in% allowed),
-                                    text = wrong_extension_warning)
-    })
-    
-    manual_sample_types <- reactive({
-      req(extension())
+    with_manual_sample_types <- reactive({
+      req(manual_sample_types(),
+          summary(),
+          input$method == "Upload a list with sample ID's and corresponding sample types")
       
-      if (extension() == "rds") {
-        load_and_assign(input$file$datapath)
-      } else { if (extension() %in% c("xlsx", "xls")) {
-        readxl::read_excel(input$file$datapath, 
-                           col_names = TRUE)
-      }
-      }
-    })
-    
-    observe({
-      # rewrite this into an add_sample_types function that throws an
-      # error when columns are missing and adds the sample types to the data.
-      # put into a reactive with tryCatch
-      req(manual_sample_types())
-      
-      required_columns <- c("sample_id", "sample_type")
-      columns_are_missing <- any(!(required_columns %in% colnames(manual_sample_types())))
-      
-      shinyFeedback::feedbackDanger("file",
-                                    show = columns_are_missing,
-                                    text = "Incorrect column names.")
-      if (columns_are_missing) {
-        showNotification(
-          paste(
-            "Please check that your file with sample types is formatted correctly.",
-            "Click on the information icon to find the required format."
-          ),
-          type = "error",
-          duration = NULL
-        )
-      }
+      dplyr::left_join(summary(),
+                       manual_sample_types())
     })
     
     # Show popup with automatically determined sample types if automatic method
     # is chosen and button is clicked:
-    observeEvent(input$button, {
+    observe({
       req(with_auto_sample_types())
       
       shinyalert::shinyalert(
@@ -148,7 +122,7 @@ mod_add_sample_types_server <- function(id, summary){
         cancelButtonText = "Cancel",
         confirmButtonCol = "#3c8dbc"
       )
-    })
+    }) %>% bindEvent(input$button)
     
     # This datatable with the automatically determined sample_types is shown in
     # the pop-up:
@@ -194,10 +168,7 @@ mod_add_sample_types_server <- function(id, summary){
                        type = "message")
     }) %>% bindEvent(to_return())
     
-    observe({
-      req(to_return())
-      print(to_return())
-    })
+    return(to_return)
     
   })
 }

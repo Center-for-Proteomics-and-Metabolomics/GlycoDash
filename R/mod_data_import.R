@@ -78,18 +78,21 @@ mod_data_import_server <- function(id){
                                                       Ig_data = summary$Ig_data,
                                                       summary = summary$data)
     
-    mod_add_sample_types_server("add_sample_types_ui_1",
-                                summary = data_incl_sample_ids)
+    data_incl_sample_types <- mod_add_sample_types_server("add_sample_types_ui_1",
+                                                          summary = data_incl_sample_ids)
     
     # When the lacytools summary has been read in, the converted data is shown
     # in the data table
     output$data_table <- DT::renderDT({
       req(summary$data())
       
-      if (is_truthy(data_incl_sample_ids())) {
+      if (is_truthy(data_incl_sample_types())) {
+        show_in_table <- data_incl_sample_types()
+      } else { if (is_truthy(data_incl_sample_ids())) {
         show_in_table <- data_incl_sample_ids()
       } else {
         show_in_table <- summary$data()
+      } 
       }
       
       DT::datatable(show_in_table,

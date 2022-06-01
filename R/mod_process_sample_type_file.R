@@ -1,4 +1,4 @@
-#' process_sample_list UI Function
+#' process_sample_type_file UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -7,11 +7,11 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_process_sample_list_ui <- function(id, 
-                                       fileInput_label, 
-                                       popover_width, 
-                                       popover_title, 
-                                       popover_content_html){
+mod_process_sample_type_file_ui <- function(id, 
+                                            fileInput_label, 
+                                            popover_width, 
+                                            popover_title, 
+                                            popover_content_html){
   ns <- NS(id)
   
   fluidRow(
@@ -44,67 +44,62 @@ mod_process_sample_list_ui <- function(id,
   )
 }
     
-#' process_sample_list Server Functions
+#' process_sample_type_file Server Functions
 #'
 #' @noRd 
-mod_process_sample_list_server <- function(id, allowed){
+mod_process_sample_type_file_server <- function(id, allowed){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    extension <- reactive({
-      req(input$file)
-      tools::file_ext(input$file$name)
-    })
-    
-    wrong_extension_warning <- paste("Please upload a",
-                                     comma_or(paste0(".", allowed)),
-                                     "file.")
-    
-    observe({
-      req(extension())
-      shinyFeedback::feedbackDanger("file",
-                                    !(extension() %in% allowed),
-                                    text = wrong_extension_warning)
-    })
-    
-    sample_list <- reactive({
+    sample_type_list <- reactive({
       req(input$file)
       
       shinyFeedback::hideFeedback("file")
       
-      sample_list <- tryCatch(
+      sample_types <- tryCatch(
         expr = {
-          process_sample_list(input$file$datapath)
+          read_sample_type_file(input$file$datapath,
+                                input$file$name)
         },
-        wrong_column_names = function(c) {
+        wrong_extension = function(c) {
+          shinyFeedback::feedbackDanger("file",
+                                        show = TRUE,
+                                        text = c$message)
+          NULL
+        },
+        missing_columns = function(c) {
           error_message_first_sentence <- stringr::str_replace(c$message,
                                                                "(.+\\.).+",
                                                                "\\1")
-          shinyFeedback::feedbackDanger(inputId = "file",
+          
+          shinyFeedback::feedbackDanger("file",
                                         show = TRUE,
                                         text = error_message_first_sentence)
           
           showNotification(
             paste(
-              "Please check that your sample list file is formatted correctly.",
+              "Please check that your sample types file is formatted correctly.",
               "Click on the information icon to find the required format."
             ),
             type = "error",
             duration = NULL
           )
           
-        })  
+          NULL
+          
+        })
+      print(sample_types)
       
-      return(sample_list)
-    })
+      return(sample_types)
+    }) %>% bindEvent(input$file)
     
-    return(sample_list)
+    return(sample_type_list)
     
   })
 }
     
 ## To be copied in the UI
-# mod_process_sample_list_ui("process_sample_list_ui_1")
+# mod_process_sample_type_file_ui("process_sample_type_file_ui_1")
     
 ## To be copied in the server
-# mod_process_sample_list_server("process_sample_list_ui_1")
+# mod_process_sample_type_file_server("process_sample_type_file_ui_1")
