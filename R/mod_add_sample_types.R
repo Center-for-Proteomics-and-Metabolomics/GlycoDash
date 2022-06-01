@@ -9,57 +9,123 @@
 #' @importFrom shiny NS tagList 
 mod_add_sample_types_ui <- function(id){
   ns <- NS(id)
-  shinydashboardPlus::box(
-    title = "Add sample types",
-    width = NULL,
-    solidHeader = TRUE,
-    status = "primary",
-    selectInput(ns("method"),
-                "Choose a method to add sample types to your data:",
-                choices = c("Automatically determine sample types based on sample ID's",
-                            "Upload a list with sample ID's and corresponding sample types")) %>% 
-      bsplus::bs_embed_popover(
-        title = "Method to add sample types",
-        content = HTML(paste0(
-          tags$b("Automatically:"),
-          tags$p(paste(
-            "For each sample the first string of letters within the sample ID is", 
-            "assumed to be the sample type."
-          )),
-          tags$p(paste(
-            "For example, if the sample ID is",
-            "\"36_patient_67b\", then the automatically determined sample type",
-            "will be \"patient\"."
-          )),
-          tags$p(tags$b("Upload a list:"),
-                 br(),
-                 paste(
-                   "If your sample ID's are not suitable for automatic sample type",
-                   "determination, use this method instead."
-                 ))
-        )),
-        html = "true",
-        trigger = "hover",
-        placement = "right"
-      ),
-    div(id = ns("upload_div"),
-        mod_process_sample_type_file_ui(
-          ns("process_sample_type_file_ui_1"),
-          fileInput_label = "Upload an Excel file with your sample types:",
-          popover_width = "400px",
-          popover_title = "Format of sample type list",
-          popover_content_html = HTML(paste0(
-            tags$p(paste(
-              "The Excel file should contain only one sheet.",
-              "This sheet should contain one column named \"sample_id\"",
-              "and one column named \"sample_type\"."
-            )),
-            tags$p("For an example, click on the paperclip icon.")
-          ))
-        )
+  tagList(
+    tags$style(HTML(paste0(
+      "#",
+      ns("box_header"),
+      " .awesome-checkbox {padding-top: 7px}",
+      "#",
+      ns("box_header"),
+      " .popover {max-width: 400px !important; color: #333}",
+      "#",
+      ns("box"),
+      " .box-title {width: 100%}",
+      "#",
+      ns("box_header"),
+      " .fa {float: right; margin-right: 5px; font-size: 18px}",
+      "#",
+      ns("box_header"),
+      " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#",
+      ns("box_header"),
+      " .btn {float: right; border-width: 0px; margin-right: 10px}",
+      "#",
+      ns("box"),
+      " .dropdown {display: inline-block; float: right; width: 330px}",
+      "#",
+      ns("box_header"),
+      " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+    ))
     ),
-    actionButton(ns("button"),
-                 "Determine the sample types")
+    shinydashboardPlus::box(
+      id = ns("box"),
+      title = div(
+        id = ns("box_header"),
+        "Add sample types",
+        icon("info-circle",
+             class = "ml") %>% 
+          bsplus::bs_embed_popover(
+            title = "Explanation",
+            content = HTML(paste0(
+              tags$p(paste(
+                "Your samples need to be divided into categories (sample types)",
+                "like blanks, negative controls, patients, standards etc.")),
+              tags$p("This step cannot be skipped, because sample types are needed in later steps.")
+            )),
+            # Don't use body = container here, because then the custom CSS
+            # styling for .popover won't be applied
+            trigger = "hover", # if trigger = "focus" use tabindex: 0 on icon
+            placement = "right",
+            html = "true"),
+        shinyWidgets::dropdownButton(
+          tags$style(HTML(paste0(
+            "#",
+            ns("dropdown_content"),
+            " .fa {float: left}",
+            "#",
+            ns("dropdown_content"),
+            " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
+          ))),
+          div(id = ns("dropdown_content"),
+              downloadButton(ns("download_ex_sample_types"),
+                             "Download a sample types example file")),
+          icon = icon("paperclip",
+                      class = "ml"),
+          tooltip = shinyWidgets::tooltipOptions(placement = "top",
+                                                 title = "Examples"),
+          width = "330px",
+          size = "xs"
+        )),
+      width = NULL,
+      solidHeader = TRUE,
+      status = "primary",
+      selectInput(ns("method"),
+                  "Choose a method to add sample types to your data:",
+                  choices = c("Automatically determine sample types based on sample ID's",
+                              "Upload a list with sample ID's and corresponding sample types")) %>% 
+        bsplus::bs_embed_popover(
+          title = "Method to add sample types",
+          content = HTML(paste0(
+            tags$b("Automatically:"),
+            tags$p(paste(
+              "For each sample the first string of letters within the sample ID is", 
+              "assumed to be the sample type."
+            )),
+            tags$p(paste(
+              "For example, if the sample ID is",
+              "\"36_patient_67b\", then the automatically determined sample type",
+              "will be \"patient\"."
+            )),
+            tags$p(tags$b("Upload a list:"),
+                   br(),
+                   paste(
+                     "If your sample ID's are not suitable for automatic sample type",
+                     "determination, use this method instead."
+                   ))
+          )),
+          html = "true",
+          trigger = "hover",
+          placement = "right"
+        ),
+      div(id = ns("upload_div"),
+          mod_process_sample_type_file_ui(
+            ns("process_sample_type_file_ui_1"),
+            fileInput_label = "Upload an Excel file with your sample types:",
+            popover_width = "400px",
+            popover_title = "Format of sample type list",
+            popover_content_html = HTML(paste0(
+              tags$p(paste(
+                "The Excel file should contain only one sheet.",
+                "This sheet should contain one column named \"sample_id\"",
+                "and one column named \"sample_type\"."
+              )),
+              tags$p("For an example, click on the paperclip icon.")
+            ))
+          )
+      ),
+      actionButton(ns("button"),
+                   "Determine the sample types")
+    )
   )
 }
     
