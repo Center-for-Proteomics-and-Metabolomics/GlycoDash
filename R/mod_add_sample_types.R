@@ -236,10 +236,10 @@ mod_add_sample_types_server <- function(id, summary){
         req(with_manual_sample_types())
         with_manual_sample_types()
       }
-    }) %>% bindEvent(input$button)
+    }) %>% bindEvent(input$button,
+                     input$popup)
     
     observe({
-      req(to_return())
       showNotification("The sample types were added to the data",
                        type = "message")
     }) %>% bindEvent(to_return())
