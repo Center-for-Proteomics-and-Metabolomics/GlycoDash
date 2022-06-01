@@ -77,6 +77,11 @@ mod_add_sample_ids_ui <- function(id){
           div(id = ns("dropdown_content"),
               downloadButton(ns("download_ex_plate_design"),
                              "Download a plate design example file"),
+              # tags$p(paste(
+              #   "This example plate design contains 179 samples of which 9 samples were", 
+              #   "measured in duplicate. In addition 1 standard and 1 blank (PBS)", "
+              #   were measured on each plate. "
+              # )),
               downloadButton(ns("download_ex_sample_list"),
                              "Download a sample list example file")),
           icon = icon("paperclip",
@@ -306,6 +311,28 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     to_return <- eventReactive(input$add_plate_design, {
       data_with_sample_ids()
     })
+    
+    output$download_ex_plate_design <- downloadHandler(
+      filename = "Example plate design file.xlsx",
+      content = function(file) {
+        example_file <- system.file("app",
+                                    "www",
+                                    "Example plate design file.xlsx",
+                                    package = "glycodash")
+        file.copy(example_file, file)
+      }
+    )
+    
+    output$download_ex_sample_list <- downloadHandler(
+      filename = "Example sample list file.xlsx",
+      content = function(file) {
+        example_file <- system.file("app",
+                                    "www",
+                                    "Example sample list file.xlsx",
+                                    package = "glycodash")
+        file.copy(example_file, file)
+      }
+    )
     
     return(to_return)
     

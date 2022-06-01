@@ -117,7 +117,10 @@ mod_add_sample_types_ui <- function(id){
               tags$p(paste(
                 "The Excel file should contain only one sheet.",
                 "This sheet should contain one column named \"sample_id\"",
-                "and one column named \"sample_type\"."
+                "and one column named \"sample_type\". The \"sample_id\" column should",
+                "contain all your sample ID's including blanks and standards.",
+                "The \"sample_type\" column should contain the corresponding sample",
+                "type of each sample."
               )),
               tags$p("For an example, click on the paperclip icon.")
             ))
@@ -240,6 +243,17 @@ mod_add_sample_types_server <- function(id, summary){
       showNotification("The sample types were added to the data",
                        type = "message")
     }) %>% bindEvent(to_return())
+    
+    output$download_ex_sample_types <- downloadHandler(
+      filename = "Example sample types file.xlsx",
+      content = function(file) {
+        example_file <- system.file("app",
+                                    "www",
+                                    "Example sample types file.xlsx",
+                                    package = "glycodash")
+        file.copy(example_file, file)
+      }
+    )
     
     return(to_return)
     
