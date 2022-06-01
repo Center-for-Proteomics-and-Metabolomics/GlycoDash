@@ -48,7 +48,14 @@ mod_add_sample_types_ui <- function(id){
           fileInput_label = "Upload an Excel file with your sample types:",
           popover_width = "400px",
           popover_title = "Format of sample type list",
-          popover_content_html = ""
+          popover_content_html = HTML(paste0(
+            tags$p(paste(
+              "The Excel file should contain only one sheet.",
+              "This sheet should contain one column named \"sample_id\"",
+              "and one column named \"sample_type\"."
+            )),
+            tags$p("For an example, click on the paperclip icon.")
+          ))
         )
     ),
     actionButton(ns("button"),
