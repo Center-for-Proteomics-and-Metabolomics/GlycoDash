@@ -73,8 +73,9 @@ mod_data_import_server <- function(id){
     summary <- mod_read_lacytools_server("read_lacytools_ui_1")
     
     data_incl_sample_ids <- mod_add_sample_ids_server("add_sample_ids_ui_1",
-                                                      keyword_specific = reactive({input$keyword_specific}),
-                                                      keyword_total = reactive({input$keyword_total}),
+                                                      keyword_specific = summary$keyword_specific,
+                                                      keyword_total = summary$keyword_total,
+                                                      Ig_data = summary$Ig_data,
                                                       summary = summary$data)
     
     mod_add_sample_types_server("add_sample_types_ui_1",

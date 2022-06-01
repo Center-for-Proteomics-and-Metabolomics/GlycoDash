@@ -201,7 +201,7 @@ mod_add_sample_ids_ui <- function(id){
 #' add_sample_ids Server Functions
 #'
 #' @noRd 
-mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, summary){
+mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_data, summary){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -220,7 +220,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, summa
                       ))
       shinyjs::toggle("switch_two_plate_designs",
                       condition = all(
-                        input$Ig_data == "Yes",
+                        Ig_data() == "Yes",
                         input$sample_id_method == "Upload a plate design"
                       ))
     })

@@ -222,7 +222,10 @@ mod_read_lacytools_server <- function(id){
     })
     
     return(list(
-      data = to_return
+      data = to_return,
+      keyword_specific = reactive({input$keyword_specific}),
+      keyword_total = reactive({input$keyword_total}),
+      Ig_data = reactive({input$Ig_data})
     ))
     
   })
