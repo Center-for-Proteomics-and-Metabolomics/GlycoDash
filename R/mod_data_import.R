@@ -22,7 +22,8 @@ mod_data_import_ui <- function(id){
           mod_read_lacytools_ui(ns("read_lacytools_ui_1")),
           mod_add_sample_ids_ui(ns("add_sample_ids_ui_1")),
           mod_add_sample_types_ui(ns("add_sample_types_ui_1")),
-          mod_add_metadata_ui(ns("add_metadata_ui_1"))
+          mod_add_metadata_ui(ns("add_metadata_ui_1")),
+          mod_clusters_ui(ns("clusters_ui_1"))
         ),
         column(
           width = 6,
@@ -51,7 +52,6 @@ mod_data_import_server <- function(id){
     x <- reactiveValues()
     
     
-    
     summary <- mod_read_lacytools_server("read_lacytools_ui_1")
     
     data_incl_sample_ids <- mod_add_sample_ids_server("add_sample_ids_ui_1",
@@ -63,8 +63,11 @@ mod_data_import_server <- function(id){
     data_incl_sample_types <- mod_add_sample_types_server("add_sample_types_ui_1",
                                                           summary = data_incl_sample_ids)
     
+    data_incl_clusters <- mod_clusters_server("clusters_ui_1",
+                                              summary = data_incl_sample_types)
+    
     data_incl_metadata <- mod_add_metadata_server("add_metadata_ui_1",
-                                                  data_incl_sample_types)
+                                                  data_incl_clusters)
     
     # When the lacytools summary has been read in, the converted data is shown
     # in the data table
@@ -74,14 +77,18 @@ mod_data_import_server <- function(id){
       if (is_truthy(data_incl_metadata())) {
         show_in_table <- data_incl_metadata()
       } else {
-        if (is_truthy(data_incl_sample_types())) {
-          show_in_table <- data_incl_sample_types()
-        } else { 
-          if (is_truthy(data_incl_sample_ids())) {
-            show_in_table <- data_incl_sample_ids()
-          } else {
-            show_in_table <- summary$data()
-          } 
+        if (is_truthy(data_incl_clusters())) {
+          show_in_table <- data_incl_clusters()
+        } else {
+          if (is_truthy(data_incl_sample_types())) {
+            show_in_table <- data_incl_sample_types()
+          } else { 
+            if (is_truthy(data_incl_sample_ids())) {
+              show_in_table <- data_incl_sample_ids()
+            } else {
+              show_in_table <- summary$data()
+            } 
+          }
         }
       }
       
@@ -94,8 +101,8 @@ mod_data_import_server <- function(id){
       if (is_truthy(data_incl_metadata())) {
         data_incl_metadata()
       } else {
-        if (is_truthy(data_incl_sample_types())) {
-          data_incl_sample_types()
+        if (is_truthy(data_incl_clusters())) {
+          data_incl_clusters()
         } else { 
           NULL
         }
@@ -104,7 +111,6 @@ mod_data_import_server <- function(id){
     
     return(list(
       summary = to_return,
-      data_incl_metadata = reactive({x$data_incl_metadata}),
       Ig_data = reactive({input$Ig_data}),
       lacytools_summary = reactive({input$lacytools_summary$name}),
       plate_design = list(reactive({input$plate_design$name}),
@@ -117,9 +123,9 @@ mod_data_import_server <- function(id){
     
   })
 }
-    
+
 ## To be copied in the UI
 # mod_data_import_ui("data_import_ui_1")
-    
+
 ## To be copied in the server
 # mod_data_import_server("data_import_ui_1")
