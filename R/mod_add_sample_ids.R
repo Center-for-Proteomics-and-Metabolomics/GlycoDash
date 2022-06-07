@@ -196,7 +196,7 @@ mod_add_sample_ids_ui <- function(id){
       fluidRow(
         column(
           width = 12,
-          actionButton(ns("add_plate_design"), 
+          actionButton(ns("add_sample_ids"), 
                        "Add sample ID's to the data")
         ))
       ),
@@ -301,16 +301,21 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
       
     })
     
-    # This observe call ensures that the add_plate_design actionButton is only
+    # This observe call ensures that the add_sample_ids actionButton is only
     # enabled under the right circumstances
     observe({
-      shinyjs::toggleState("add_plate_design",
+      shinyjs::toggleState("add_sample_ids",
                            condition = is_truthy(data_with_sample_ids()))
     })
     
-    to_return <- eventReactive(input$add_plate_design, {
+    to_return <- eventReactive(input$add_sample_ids, {
       data_with_sample_ids()
     })
+    
+    observe({
+      showNotification("The sample ID's were added to the data",
+                       type = "message")
+    }) %>% bindEvent(to_return())
     
     output$download_ex_plate_design <- downloadHandler(
       filename = "Example plate design file.xlsx",

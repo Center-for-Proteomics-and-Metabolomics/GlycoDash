@@ -881,15 +881,15 @@ read_and_process_plate_design <- function(plate_design_file) {
 #'                     package = "glycodash")
 #'                     
 #' read_metadata(path)
-read_metadata <- function (metadata_file) {
-  metadata <- readxl::read_excel(metadata_file,
-                                 col_types = "text", 
-                                 na = c("", "NA"))
-  metadata <- metadata %>% 
-    dplyr::rename_with(.cols = tidyselect::everything(), 
-                       .fn = snakecase::to_snake_case) 
-  return(metadata)
-}
+# read_metadata <- function (metadata_file) {
+#   metadata <- readxl::read_excel(metadata_file,
+#                                  col_types = "text", 
+#                                  na = c("", "NA"))
+#   metadata <- metadata %>% 
+#     dplyr::rename_with(.cols = tidyselect::everything(), 
+#                        .fn = snakecase::to_snake_case) 
+#   return(metadata)
+# }
 
 #'Convert serial dates with comments to dates
 #'
@@ -1016,10 +1016,11 @@ date_with_text <- function(date_text_values, origin = "1899-12-30"){
   if(anyNA(test)){
     dates <- as.character(dates)
     dates[is.na(num)] <- as.character(date_text_values[is.na(num)])
-    message(paste("Some date entries in", 
-                  tryCatch(dplyr::cur_column(),
-                           error = function(e) {}), 
-                  "contain text. Output will have class character."))
+    rlang::warn(class = "text_in_dates",
+                message = paste("Some date entries in", 
+                                tryCatch(dplyr::cur_column(),
+                                         error = function(e) {}), 
+                                "contain text. Output will have class character."))
   }
   return(dates)
 }

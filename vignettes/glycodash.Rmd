@@ -16,7 +16,8 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 
-library(glycodash)
+#library(glycodash)
+devtools::load_all()
 
 ```
 
@@ -31,11 +32,9 @@ The data import functions can be used to convert a LacyTools summary file to a f
 lacytools_file <- system.file("extdata",
                               "LacyTools_summary_example.txt", 
                               package = "glycodash")
+data <- read_non_rectangular(lacytools_file)
 
-data <- read_lacytools_summary(lacytools_file,
-                               Ig_data = "Yes",
-                               keyword_total = "Total",
-                               keyword_specific = "Spike")
+data <- read_lacytools_summary(data)
 
 data
 
@@ -53,6 +52,9 @@ plate_design <- read_and_process_plate_design(plate_design_file)
 
 plate_design
 
+data <- data %>% 
+  detect_plate_and_well()
+
 data <- dplyr::left_join(data,
                          plate_design)
 
@@ -68,7 +70,8 @@ metadata_file <- system.file("extdata",
                             "Metadata_example.xlsx",
                             package = "glycodash")
 
-metadata <- read_metadata(metadata_file)
+metadata <- read_metadata(metadata_file,
+                          "Metadata_example.xlsx")
 
 metadata
 
@@ -76,7 +79,12 @@ data <- dplyr::left_join(data,
                          metadata,
                          by = c(sample_id = "sample_id"))
 
-data
+x <- data %>% 
+  dplyr::group_by(sample_name) %>% 
+  dplyr::filter(!all(is.na(absolute_intensity_background_subtracted))) %>% 
+  dplyr::filter(sample_id == "PBS")
+
+unique(x$sample_name)
 
 ```
 

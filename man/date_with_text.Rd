@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_data_import.R
 \name{date_with_text}
 \alias{date_with_text}
-\title{Convert serial dates with comments to dates}
+\title{Read in a metadata file}
 \usage{
 date_with_text(date_text_values, origin = "1899-12-30")
 }
@@ -13,11 +13,38 @@ the form of character strings.}
 \item{origin}{The origin date used to calculate the serial dates. Defaults to
 1899-12-30 (year-month-day) which is the origin used in Excel on Windows for
 all dates from 1900-01-01 and on.}
+
+\item{metadata_file}{The path to the metadata Excel file.}
 }
 \value{
+This function returns a dataframe with the metadata.
+
 
 }
 \description{
+\code{read_metadata()} can be used to read in an Excel file containing
+metadata. It reads in all columns as class character and interprets both "NA"
+and empty cells as \code{NA}. The values in the first row are converted to
+snake case (see: \code{\link[snakecase]{to_snake_case}}) and used as column
+names. If the file contains multiple sheets, only the first sheet is read in.
+}
+\section{Credits}{
+
+This function was based on a solution found on StackOverflow.\cr
+Question asked by Ryan C. Thompson:\cr
+\url{https://stackoverflow.com/questions/63027147/how-to-read-in-a-date-column-from-an-excel-sheet-with-ambiguous-formats-into-r}\cr
+Solution provided by Rui Barradas:\cr
+\url{https://stackoverflow.com/users/8245406/rui-barradas}
+}
+
+\examples{
+path <- system.file("extdata",
+                    "Metadata_example.xlsx",
+                    package = "glycodash")
+                    
+read_metadata(path)
+Convert serial dates with comments to dates
+
 \code{date_with_text()} tries to convert a vector with serial dates (given as
 character strings) to objects of the class "Date". In Excel dates are stored
 as serial numbers. These serial dates are the number of days passed since a
@@ -31,17 +58,7 @@ comments, the function instead converts the serial dates to character strings
 with the dates formatted as "year-month-day". \strong{Important: This function
 can only be used within the function \code{\link[dplyr]{across}} from the
 dplyr package!}
-}
-\section{Credits}{
 
-This function was based on a solution found on StackOverflow.\cr
-Question asked by Ryan C. Thompson:\cr
-\url{https://stackoverflow.com/questions/63027147/how-to-read-in-a-date-column-from-an-excel-sheet-with-ambiguous-formats-into-r}\cr
-Solution provided by Rui Barradas:\cr
-\url{https://stackoverflow.com/users/8245406/rui-barradas}
-}
-
-\examples{
 path <- system.file("extdata",
                     "for_tests",
                     "Dates_with_comment.xlsx",

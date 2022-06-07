@@ -436,11 +436,19 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
     ggplot2::ggplot() +
     ggplot2::geom_jitter(ggplot2::aes(color = sample_type,
                                       x = passing_proportion,
-                                      y = sum_intensity),
+                                      y = sum_intensity,
+                                      text = paste0("Sample name: ", 
+                                                   sample_name,
+                                                   "\n",
+                                                   "Passing proportion: ",
+                                                   passing_proportion,
+                                                   "\n",
+                                                   "Sum intensity: ",
+                                                   sum_intensity)),
                          size = 1) +
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
-                   text = ggplot2::element_text(size = 16),
+                   #text = ggplot2::element_text(size = 16),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
     ggplot2::geom_hline(ggplot2::aes(yintercept = cut_off_sum_int),
                         linetype = "dashed") +
@@ -482,4 +490,33 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
   # }
   
   return(p)
+}
+
+#' Title
+#'
+#' @param gp 
+#' @param size 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+facet_strip_bigger <- function(ggplotly, size = 38){
+  if(missing(ggplotly)){
+    rlang::abort(class = "no_ggplotly_object",
+                 message = "This function needs a facet_wrap ggplotly object.")
+  }
+  
+  ggplotly[["x"]][["layout"]][["margin"]][["t"]] <- as.numeric(size)
+  
+  n_facets <- c(1:length(ggplotly[["x"]][["layout"]][["shapes"]]))
+  
+  for(i in n_facets){
+    if(n_facets[i] %% 2 == 0){
+      ggplotly[["x"]][["layout"]][["shapes"]][[i]][["y0"]] <- as.numeric(size)
+      ggplotly[["x"]][["layout"]][["shapes"]][[i]][["y1"]] <- 0
+    }
+  }
+  
+  return(ggplotly)
 }

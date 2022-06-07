@@ -143,12 +143,13 @@ mod_spectra_curation_ui <- function(id){
             status = "primary",
             plotOutput(ns("curated_spectra_plot")),
             br(),
-            plotOutput(ns("cut_off_plot"),
-                       dblclick = ns("dblclick"),
-                       brush = brushOpts(
-                         id = ns("brush"),
-                         resetOnNew = TRUE
-                       )),
+            # plotOutput(ns("cut_off_plot"),
+            #            dblclick = ns("dblclick"),
+            #            brush = brushOpts(
+            #              id = ns("brush"),
+            #              resetOnNew = TRUE
+            #            )),
+            plotly::plotlyOutput(ns("cut_off_plot")),
             br(),
             "Select and double click a plot area to zoom in."
           )
@@ -165,28 +166,18 @@ mod_spectra_curation_server <- function(id, results_data_import){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    # Creating a reactiveValues object in which reactiveVals from this module
-    # can be saved: (reactiveVals are often easier to work with than reactive
-    # expressions for some reason)
     x <- reactiveValues()
     
-    # If data_incl_metadata exists it is assigned to x$data, otherwise
-    # data_incl_plate_design is assigned to x$data. x$data (not the reactives
-    # from the previous module) will be used from this point in the module.
-    observe({
-      if (isTruthy(results_data_import$data_incl_metadata())){
-        x$data <- results_data_import$data_incl_metadata()
-      } else { if (isTruthy(results_data_import$data_incl_plate_design())){
-        x$data <- results_data_import$data_incl_plate_design()
-      } 
-      }
+    summary <- reactive({
+      req(results_data_import$summary)
+      results_data_import$summary()
     })
     
     # This observe call ensures that the curate_spectra actionButton is only
     # enabled under the right circumstances
     observe({
       shinyjs::disable(id = "curate_spectra")
-      if (all(isTruthy(x$data),
+      if (all(is_truthy(summary()),
               isTruthy(input$mass_accuracy),
               isTruthy(input$ipq),
               isTruthy(input$sn),
@@ -226,13 +217,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
     # with the analytes in the data:
     observeEvent({purrr::map(cluster_inputIds(),
                             ~ input[[.x]])}, {
-      req(x$data)
+      req(summary())
       x$clusters_OK <- TRUE
       purrr::map(cluster_inputIds(),
                  function(cluster_inputId) {
                    shinyFeedback::hideFeedback(cluster_inputId)
                    req(input[[cluster_inputId]] != "")
-                   tryCatch(define_clusters(data = x$data,
+                   tryCatch(define_clusters(data = summary(),
                                             clusters_regex = input[[cluster_inputId]]),
                             unmatched_regex = function(c) {
                               shinyFeedback::feedbackDanger(cluster_inputId,
@@ -275,10 +266,10 @@ mod_spectra_curation_server <- function(id, results_data_import){
     # The selection menu for input$cut_off_basis is updated so that the choices
     # are all combinations of sample_types and groups that are present in the
     # data.
-    observeEvent(x$data, {
-      if ("group" %in% colnames(x$data)) {
-        combinations <- expand.grid(sample_type = unique(x$data$sample_type),
-                                    group = unique(x$data$group))
+    observeEvent(summary(), {
+      if ("group" %in% colnames(summary())) {
+        combinations <- expand.grid(sample_type = unique(summary()$sample_type),
+                                    group = unique(summary()$group))
         options <- purrr::pmap_chr(combinations,
                                    function(sample_type, group) {
                                      paste(group,
@@ -286,7 +277,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                            "samples")
                                    })
       } else {
-        options <- paste("all", unique(x$data$sample_type), "samples")
+        options <- paste("all", unique(summary()$sample_type), "samples")
       }
       
       updateSelectizeInput(inputId = "cut_off_basis",
@@ -300,7 +291,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
       # Perform spectra curation:
       tryCatch(expr = { 
-        spectra_curation_results <- curate_spectra(data = x$data,
+        spectra_curation_results <- curate_spectra(data = summary(),
                                                    clusters_regex = clusters_regex,
                                                    min_ppm_deviation = input$mass_accuracy[1],
                                                    max_ppm_deviation = input$mass_accuracy[2],
@@ -364,12 +355,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
         plot +
           ggplot2::facet_wrap(~ cluster)
       }
+      
     })
     
-    # observe({
-    #   req(curated_spectra_plot())
-    #   print(curated_spectra_plot())
-    # })
+    observe({
+      req(x$spectra_check)
+      print(x$spectra_check)
+    })
     
     output$curated_spectra_plot <- renderPlot({
       req(curated_spectra_plot())
@@ -405,27 +397,35 @@ mod_spectra_curation_server <- function(id, results_data_import){
                           cut_off_basis = input$cut_off_basis)
     })
 
-    output$cut_off_plot <- renderPlot({
+    output$cut_off_plot <- plotly::renderPlotly({
       req(cut_off_plot())
-      cut_off_plot() +
+      plot <- cut_off_plot() +
         ggplot2::coord_cartesian(xlim = ranges$x,
                                  ylim = ranges$y,
-                                 expand = FALSE)
+                                 expand = FALSE) +
+        ggplot2::theme(axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 20)))
+      
+      plotly <- plotly::ggplotly(plot, tooltip = "text")
+      
+      plotly[["x"]][["layout"]][["margin"]][["l"]] <- plotly[["layout"]][["margin"]][["l"]] + 20
+      
+      plotly <- facet_strip_bigger(plotly)
+      
     })
 
     # When a double-click happens, check if there's a brush on the plot.
     # If so, zoom to the brush bounds; if not, reset the zoom.
-    observeEvent(input$dblclick, {
-      brush <- input$brush
-      if (!is.null(brush)) {
-        ranges$x <- c(brush$xmin, brush$xmax)
-        ranges$y <- c(brush$ymin, brush$ymax)
-
-      } else {
-        ranges$x <- NULL
-        ranges$y <- NULL
-      }
-    })
+    # observeEvent(input$dblclick, {
+    #   brush <- input$brush
+    #   if (!is.null(brush)) {
+    #     ranges$x <- c(brush$xmin, brush$xmax)
+    #     ranges$y <- c(brush$ymin, brush$ymax)
+    # 
+    #   } else {
+    #     ranges$x <- NULL
+    #     ranges$y <- NULL
+    #   }
+    # })
     
     return(list(
       curated_spectra = reactive({x$curated_spectra}),

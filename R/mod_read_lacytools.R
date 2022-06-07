@@ -221,6 +221,11 @@ mod_read_lacytools_server <- function(id){
       return(summary)
     })
     
+    observe({
+      showNotification("The LacyTools summary has been loaded.",
+                       type = "message")
+    }) %>% bindEvent(to_return())
+    
     return(list(
       data = to_return,
       keyword_specific = reactive({input$keyword_specific}),
