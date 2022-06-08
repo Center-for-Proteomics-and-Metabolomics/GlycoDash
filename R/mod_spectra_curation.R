@@ -112,9 +112,10 @@ mod_spectra_curation_ui <- function(id){
                   trigger = "hover",
                   placement = "right",
                   html = "true"),
-              "Based on these samples the cut-off values are:",
-              textOutput(ns("sum_int_cut_off")),
-              textOutput(ns("prop_cut_off")),
+              tabsetPanel(id = ns("tabs")),
+              # "Based on these samples the cut-off values are:",
+              # textOutput(ns("sum_int_cut_off")),
+              # textOutput(ns("prop_cut_off")),
               # shinydashboard::valueBoxOutput(ns("sum_int_cut_off"),
               #                                width = 6),
               # shinydashboard::valueBoxOutput(ns("prop_cut_off"),
@@ -122,7 +123,7 @@ mod_spectra_curation_ui <- function(id){
               br(),
               shinyWidgets::materialSwitch(ns("manual_cut_offs"),
                                            "Choose cut-off values manually instead"),
-              actionButton(ns("curate_spectra"),
+              actionButton(ns("button"),
                            "Perform spectra curation")
             )
         ),
@@ -171,129 +172,53 @@ mod_spectra_curation_server <- function(id, results_data_import){
       results_data_import$summary()
     })
     
-    output$sum_int_cut_off <- renderText({
-      paste("Sum intensity:",
-            1)
+    clusters <- reactive({
+      req(summary())
+      
+      unique(summary()$cluster)
     })
     
-    output$prop_cut_off <- renderText({
-      paste("Percentage of passing analytes:",
-            1)
+    observeEvent(clusters(), {
+      # Remove tabs in case they have been created before. Still not ideal cause
+      # if cluster names are changed then the old tabs won't be removed
+      purrr::map(clusters(),
+                 function(cluster) {
+                   removeTab("tabs",
+                             target = cluster)
+                 })
+      
+      # Create one tab for each cluster:
+      purrr::map(clusters(),
+                 function(cluster) {
+                   appendTab("tabs",
+                             select = TRUE,
+                             tabPanel(
+                               title = cluster,
+                               mod_tab_cut_offs_ui(ns(cluster))
+                             ))
+                 })
     })
     
-    # output$sum_int_cut_off <- shinydashboard::renderValueBox({
-    #   shinydashboard::valueBox(
-    #     width = NULL,
-    #     value = 1,
-    #     subtitle = "Sum intensity cut-off value",
-    #     color = "light-blue"
-    #   )
-    # })
-    # 
-    # output$prop_cut_off <- shinydashboard::renderValueBox({
-    #   shinydashboard::valueBox(
-    #     width = NULL,
-    #     value = 1,
-    #     subtitle = "Passing analytes percentage cut-off value",
-    #     color = "light-blue"
-    #   )
-    # })
-    
-    # This observe call ensures that the curate_spectra actionButton is only
-    # enabled under the right circumstances
     observe({
-      shinyjs::disable(id = "curate_spectra")
-      if (all(is_truthy(summary()),
-              isTruthy(input$mass_accuracy),
-              isTruthy(input$ipq),
-              isTruthy(input$sn),
-              isTruthy(input$cut_off_basis))) {
-        if (all(purrr::map_lgl(cluster_inputIds(),
-                               ~ isTruthy(input[[.x]])),
-                x$clusters_OK,
-                x$clusters_no_overlap)) {
-          shinyjs::enable("curate_spectra")
-        }
-      }
+      req(clusters())
+      req(checked_spectra())
+      purrr::map(
+        clusters(),
+        function(cluster) {
+          mod_tab_cut_offs_server(id = cluster,
+                                  cluster = cluster,
+                                  checked_spectra = checked_spectra,
+                                  cut_off_basis = reactive({input$cut_off_basis}))
+        })
     })
     
-    # # Create inputIds for the cluster textInputs based on the 
-    # # value of input$n_clusters:
-    # cluster_inputIds <- reactive({
-    #   req(input$n_clusters)
-    #   cluster_inputIds <- purrr::map(seq_len(input$n_clusters),
-    #                                    ~ paste0("cluster", .x))
-    #   return(cluster_inputIds)
-    # })
-    # 
-    # # Create textInputs for the clusters. The number of inputs created is the
-    # # same as the value of input$n_clusters.
-    # output$clusters <- renderUI({
-    #   req(cluster_inputIds())
-    #     purrr::imap(cluster_inputIds(),
-    #                 function(inputId, i) textInput(
-    #                   ns(inputId),
-    #                   label = paste("By what word/letters within the analyte name can the analytes belonging to cluster",
-    #                                 i,
-    #                                 "be recognized?")
-    #                   ))
-    # })
-    
-    # # Check whether the values given as textInputs for the clusters have matches
-    # # with the analytes in the data:
-    # observeEvent({purrr::map(cluster_inputIds(),
-    #                         ~ input[[.x]])}, {
-    #   req(summary())
-    #   x$clusters_OK <- TRUE
-    #   purrr::map(cluster_inputIds(),
-    #              function(cluster_inputId) {
-    #                shinyFeedback::hideFeedback(cluster_inputId)
-    #                req(input[[cluster_inputId]] != "")
-    #                tryCatch(define_clusters(data = summary(),
-    #                                         clusters_regex = input[[cluster_inputId]]),
-    #                         unmatched_regex = function(c) {
-    #                           shinyFeedback::feedbackDanger(cluster_inputId,
-    #                                                         show = TRUE,
-    #                                                         text = c$message)
-    #                           x$clusters_OK <- FALSE
-    #                         },
-    #                         unmatched_analytes = function(c){ #ignore this error
-    #                           })
-    #                })
-    # 
-    #   clusters_regex <- purrr::map(cluster_inputIds(),
-    #                                ~ input[[.x]])
-    #   x$clusters_no_overlap <- TRUE
-    #   
-    #   if (length(clusters_regex) > 1) {
-    #     regex_overlap <- purrr::imap_lgl(
-    #       clusters_regex,
-    #       function(regex, i) {
-    #         other_regexes <- unlist(clusters_regex)[-i]
-    #         any(purrr::map_lgl(other_regexes,
-    #                            function(other_regex) {
-    #                              stringr::str_detect(string = other_regex,
-    #                                                  pattern = stringr::fixed(regex))
-    #                            }))
-    #       })
-    #     
-    #     if(any(regex_overlap == TRUE)) {
-    #       purrr::map(cluster_inputIds(),
-    #                  ~ shinyFeedback::feedbackDanger(.x,
-    #                                                  show = any(regex_overlap == TRUE),
-    #                                                  text = paste("Overlap between the cluster keywords is not allowed,",
-    #                                                               "as each analyte should match only one cluster keyword.")))
-    #       x$clusters_no_overlap <- FALSE
-    #     }
-    #     
-    #   }
-    # })
     
     # The selection menu for input$cut_off_basis is updated so that the choices
     # are all combinations of sample_types and groups that are present in the
     # data.
-    observeEvent(summary(), {
-      if ("group" %in% colnames(summary())) {
+    observe({
+      req(summary())
+      if (results_data_import$Ig_data() == "Yes") {
         combinations <- expand.grid(sample_type = unique(summary()$sample_type),
                                     group = unique(summary()$group))
         options <- purrr::pmap_chr(combinations,
@@ -310,52 +235,51 @@ mod_spectra_curation_server <- function(id, results_data_import){
                            choices = c("", options))
     })
     
-    observeEvent(input$curate_spectra, {
-      # Get the values of the cluster textInputs:
-      clusters_regex <- purrr::map(cluster_inputIds(),
-                                  ~ input[[.x]])
-      
-      # Perform spectra curation:
-      tryCatch(expr = { 
-        spectra_curation_results <- curate_spectra(data = summary(),
-                                                   clusters_regex = clusters_regex,
-                                                   min_ppm_deviation = input$mass_accuracy[1],
-                                                   max_ppm_deviation = input$mass_accuracy[2],
-                                                   max_ipq = input$ipq,
-                                                   min_sn = input$sn,
-                                                   cut_off_basis = input$cut_off_basis)
-        
-        x$data_spectra_curated <- spectra_curation_results$curated_data
-        
-        x$spectra_check <- spectra_curation_results$spectra_check
-        
-        showNotification("Spectra curation has been performed.",
-                         type = "message")
-        
-              },
-      regex_overlap = function(c) {
-        showNotification(ui = paste(c$message), 
-                         type = "error")
-      },
-      unmatched_analytes = function(c) {
-        showNotification(ui = paste(c$message), 
-                         type = "error")
-      })
-      
+    checked_spectra <- reactive({
+      req(summary(),
+          input$sn,
+          input$ipq)
+      check_spectra(data = summary(),
+                    min_ppm_deviation = input$mass_accuracy[1],
+                    max_ppm_deviation = input$mass_accuracy[2],
+                    max_ipq = input$ipq,
+                    min_sn = input$sn)
     })
     
-    observeEvent(x$data_spectra_curated, {
-      # Filter out all spectra that didn't pass curation:
-      x$curated_spectra <- x$data_spectra_curated %>% 
+    # Perform spectra curation:
+    spectra_curation <- reactive({
+      req(summary(),
+          input$cut_off_basis)
+      
+      spectra_curation <- tryCatch(
+        expr = { 
+          curate_spectra(data = summary(),
+                         min_ppm_deviation = input$mass_accuracy[1],
+                         max_ppm_deviation = input$mass_accuracy[2],
+                         max_ipq = input$ipq,
+                         min_sn = input$sn,
+                         cut_off_basis = input$cut_off_basis)
+        })
+      return(spectra_curation)
+    }) %>% bindEvent(input$button)
+    
+    observe({
+      showNotification("Spectra curation has been performed.",
+                       type = "message")
+    }) %>% bindEvent(spectra_curation())
+    
+    passing_spectra <- reactive({
+      req(spectra_curation())
+      
+      spectra_curation()$curated_data %>% 
         dplyr::filter(passed_spectra_curation == TRUE) %>% 
         dplyr::select(-passed_spectra_curation)
-      
     })
     
     curated_spectra_plot <- reactive({
-      req(x$curated_spectra)
+      req(spectra_curation())
       # Move this code to a function instead?
-      plot <- x$data_spectra_curated %>%  
+      plot <- spectra_curation()$curated_data %>% 
         ggplot2::ggplot() +
         ggplot2::geom_bar(ggplot2::aes(x = sample_type, 
                                        fill = passed_spectra_curation), 
@@ -374,7 +298,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                        text = ggplot2::element_text(size = 16),
                        panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
       
-      if ("group" %in% colnames(x$data_spectra_curated)) {
+      if (results_data_import$Ig_data() == "Yes") {
         plot +
           ggplot2::facet_wrap(cluster ~ group)
       } else {
@@ -382,11 +306,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
           ggplot2::facet_wrap(~ cluster)
       }
       
-    })
-    
-    observe({
-      req(x$spectra_check)
-      print(x$spectra_check)
     })
     
     output$curated_spectra_plot <- renderPlot({
@@ -404,7 +323,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                "Excel file" = paste0(todays_date, "_curated_spectra.xlsx"))
       },
       content = function(file) {
-        data_to_download <- x$curated_spectra
+        data_to_download <- passing_spectra()
         switch(input$download_format,
                "R object" = save(data_to_download, 
                                  file = file),
@@ -413,13 +332,15 @@ mod_spectra_curation_server <- function(id, results_data_import){
       }
     )
     
+    
     ranges <- reactiveValues(x = NULL,
                              y = NULL)
 
+    
     cut_off_plot <- reactive({
-      req(x$spectra_check,
+      req(spectra_curation(),
           input$cut_off_basis)
-      create_cut_off_plot(spectra_check = x$spectra_check,
+      create_cut_off_plot(spectra_check = spectra_curation()$spectra_check,
                           cut_off_basis = input$cut_off_basis)
     })
 
@@ -440,7 +361,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     return(list(
-      curated_spectra = reactive({x$curated_spectra}),
+      curated_spectra = reactive({passing_spectra()}),
       mass_acc = reactive({input$mass_accuracy}),
       ipq = reactive({input$ipq}),
       sn = reactive({input$sn}),

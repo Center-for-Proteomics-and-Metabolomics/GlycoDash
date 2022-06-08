@@ -33,8 +33,6 @@ mod_clusters_server <- function(id, summary){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-
-
 # Create textInputs -------------------------------------------------------
 
     # Create inputIds for the cluster textInputs based on the
@@ -80,8 +78,6 @@ mod_clusters_server <- function(id, summary){
         })
       
       names(keywords_found) <- cluster_inputIds()
-      print("cluster_keywords_found() was updated")
-      print(keywords_found)
       
       return(keywords_found)
     })

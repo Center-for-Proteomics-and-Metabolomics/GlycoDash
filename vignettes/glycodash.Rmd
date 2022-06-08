@@ -58,7 +58,9 @@ data <- data %>%
 data <- dplyr::left_join(data,
                          plate_design)
 
-data
+data <- data %>% 
+  dplyr::mutate(sample_type = sample_id) %>% 
+  define_clusters(., cluster_keywords = c("IgGI1"))
 
 ```
 
@@ -107,6 +109,21 @@ spectra_curation <- curate_spectra(data = data,
                                   max_ipq = 0.2,
                                   min_sn = 9,
                                   cut_off_basis = c("Spike PBS", "Total PBS"))
+
+grouping_variables <- c("group", "cluster", "sample_type")
+
+inspect_spectra(data, 
+                min_ppm_deviation = -20,
+                max_ppm_deviation = 20,
+                max_ipq = 0.2,
+                min_sn = 9) %>% 
+  dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
+  dplyr::summarize(av_prop = mean(passing_proportion, na.rm = FALSE),
+                     sd_prop = sd_p(passing_proportion, na.rm = FALSE),
+                     cut_off_prop = av_prop + (3 * sd_prop),
+                     av_sum_int = mean(sum_intensity, na.rm = FALSE),
+                     sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
+                     cut_off_sum_int = av_sum_int + (3 * sd_sum_int))
 
 spectra_curation
 

@@ -141,8 +141,6 @@ mod_add_metadata_server <- function(id, summary){
     # This observe call ensures that the actionButton is only enabled under the
     # right circumstances
     observe({
-      print(is_truthy(metadata_list()))
-      print(is_truthy(summary()))
       
       shinyjs::toggleState("button",
                            condition = all(

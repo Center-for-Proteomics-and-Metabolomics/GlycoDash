@@ -6,7 +6,6 @@
 \usage{
 curate_spectra(
   data,
-  clusters_regex,
   min_ppm_deviation,
   max_ppm_deviation,
   max_ipq,
@@ -17,11 +16,6 @@ curate_spectra(
 \arguments{
 \item{data}{A dataframe in long format (one row for each analyte + sample
 combination).}
-
-\item{clusters_regex}{A vector containing character strings. These strings are
-used as regular expressions to classify analytes into clusters.
-\code{clusters_regex} should contain one character string per cluster in the
-data.}
 
 \item{min_ppm_deviation}{The lowest allowed value for the mass accuracy (in
 ppm).}

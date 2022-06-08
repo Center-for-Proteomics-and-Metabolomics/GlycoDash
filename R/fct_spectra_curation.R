@@ -233,10 +233,8 @@ calculate_cut_offs <- function(spectra_check, cut_off_basis) {
 #'                max_ipq = 0.2,
 #'                min_sn = 9,
 #'                cut_off_basis = c("Spike PBS", "Total PBS"))
-curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_deviation, 
+curate_spectra <- function(data, min_ppm_deviation, max_ppm_deviation, 
                            max_ipq, min_sn, cut_off_basis) {
-  data <- define_clusters(data = data,
-                          clusters_regex = clusters_regex)
   checked_data <- do_criteria_check(data = data, 
                                     min_ppm_deviation = min_ppm_deviation,
                                     max_ppm_deviation = max_ppm_deviation,
@@ -275,6 +273,18 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
   
   return(list(curated_data = curated_data,
               spectra_check = spectra_check))
+}
+
+check_spectra <- function(data, min_ppm_deviation, max_ppm_deviation, 
+                            max_ipq, min_sn) {
+  checked_data <- do_criteria_check(data = data, 
+                                    min_ppm_deviation = min_ppm_deviation,
+                                    max_ppm_deviation = max_ppm_deviation,
+                                    max_ipq = max_ipq,
+                                    min_sn = min_sn)
+  spectra_check <- summarize_spectra_checks(checked_data) 
+    
+  return(spectra_check)
 }
 
 filter_cut_off_basis <- function(cut_off_basis, data) {
@@ -419,6 +429,44 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
   # }
   
   return(p)
+}
+
+create_cut_off_plot2 <- function(spectra_check) {
+  
+  n_colors <- length(unique(spectra_check$sample_type))
+  my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
+  
+  p <- spectra_check %>% 
+    ggplot2::ggplot() +
+    ggplot2::geom_jitter(ggplot2::aes(color = sample_type,
+                                      x = passing_proportion,
+                                      y = sum_intensity,
+                                      text = paste0("Sample name: ", 
+                                                    sample_name,
+                                                    "\n",
+                                                    "Passing proportion: ",
+                                                    passing_proportion,
+                                                    "\n",
+                                                    "Sum intensity: ",
+                                                    sum_intensity)),
+                         size = 1) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
+                   #text = ggplot2::element_text(size = 16),
+                   strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
+    ggplot2::scale_color_manual(values = my_palette,
+                                name = "Sample type") +
+    ggplot2::labs(y = "Sum intensity of passing analytes") +
+    ggplot2::scale_x_continuous(labels = function(x) paste0(x * 100, "%"), 
+                                name = "Proportion of analytes that passed curation (%)")
+  
+  if ("group" %in% colnames(spectra_check)) {
+    p <- p +
+      ggplot2::facet_wrap(cluster ~ group)
+  } else {
+    p <- p +
+      ggplot2::facet_wrap(~ cluster)
+  }
 }
 
 #' Title
