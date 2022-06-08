@@ -67,7 +67,7 @@ mod_data_import_server <- function(id){
                                               summary = data_incl_sample_types)
     
     data_incl_metadata <- mod_add_metadata_server("add_metadata_ui_1",
-                                                  data_incl_clusters)
+                                                  summary = data_incl_clusters)
     
     # When the lacytools summary has been read in, the converted data is shown
     # in the data table

@@ -18,13 +18,6 @@ mod_spectra_curation_ui <- function(id){
       fluidRow(
         column(
           width = 6,
-          # numericInput(ns("n_clusters"), 
-          #              "How many clusters does your data contain?",
-          #              value = 1,
-          #              min = 1,
-          #              max = 25,
-          #              step = 1),
-          # uiOutput(ns("clusters")),
           div(
             id = ns("qc"),
             shinydashboard::box(

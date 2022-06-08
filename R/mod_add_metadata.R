@@ -29,7 +29,7 @@ mod_add_metadata_ui <- function(id){
 #' add_metadata Server Functions
 #'
 #' @noRd 
-mod_add_metadata_server <- function(id, data_incl_sample_types){
+mod_add_metadata_server <- function(id, summary){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -56,6 +56,7 @@ mod_add_metadata_server <- function(id, data_incl_sample_types){
       return(metadata_list)
     })
     
+    
     # Create inputIds for the sample_id_column selectizeInputs based on the 
     # number of metadata files that were uploaded:
     sample_id_inputIds <- reactive({
@@ -64,19 +65,6 @@ mod_add_metadata_server <- function(id, data_incl_sample_types){
                  ~ paste0("sample_id_column", .x))
     })
     
-    # This observe call ensures that the add_metadata actionButton is only
-    # enabled under the right circumstances
-    # observe({
-    #   shinyjs::disable(id = "button")
-    #   if (all(is_truthy(data_incl_sample_types()), 
-    #           isTruthy(x$metadata))) {
-    #     # Check if all sample_id_column inputs in the metadata menu are filled in: 
-    #     if (all(purrr::map_lgl(sample_id_inputIds(),
-    #                            ~ isTruthy(input[[.x]])))) {
-    #       shinyjs::enable(id = "add_metadata")
-    #     }
-    #   }
-    # })
     
     # Create selectizeInputs for the sample_id_columns. The number of inputs 
     # created is the same as the number of metadata files that were uploaded.
@@ -138,6 +126,32 @@ mod_add_metadata_server <- function(id, data_incl_sample_types){
                       condition = is_truthy(metadata_list()))
     })
     
+    # Check if the inputs for the sample ID columns have been filled in by the
+    # user.
+    sample_id_inputs_completed <- reactive({
+      if (is_truthy(sample_id_inputIds())) {
+        all(purrr::map_lgl(sample_id_inputIds(),
+                           ~ is_truthy(input[[.x]])))
+      } else {
+        TRUE
+      }
+    })
+    
+    
+    # This observe call ensures that the actionButton is only enabled under the
+    # right circumstances
+    observe({
+      print(is_truthy(metadata_list()))
+      print(is_truthy(summary()))
+      
+      shinyjs::toggleState("button",
+                           condition = all(
+                             is_truthy(metadata_list()),
+                             is_truthy(summary()),
+                             sample_id_inputs_completed()
+                           ))
+    })
+    
     # For all metadata files in the metadata_list:
     # Convert all date columns to date format (or if it's a mixed date and text format,
     # to character) and rename the column with sample ID's to "sample_id":
@@ -181,9 +195,9 @@ mod_add_metadata_server <- function(id, data_incl_sample_types){
     
     unmatched_ids <- reactive({
       req(merged_metadata(),
-          data_incl_sample_types())
+          summary())
       
-      unmatched <- setdiff(data_incl_sample_types()$sample_id,
+      unmatched <- setdiff(summary()$sample_id,
                            merged_metadata()$sample_id)
       
     if (rlang::is_empty(unmatched)) {
@@ -195,7 +209,7 @@ mod_add_metadata_server <- function(id, data_incl_sample_types){
     
     # If there are unmatched sample ID's a pop-up is shown.
     observe({
-      if (!isTRUE(all.equal(unmatched_ids(), "none"))) {
+      if (isFALSE(all.equal(unmatched_ids(), "none"))) {
         shinyalert::shinyalert(
           inputId = "popup",
           html = TRUE,
@@ -223,7 +237,7 @@ mod_add_metadata_server <- function(id, data_incl_sample_types){
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
       )) {
-        dplyr::left_join(data_incl_sample_types(),
+        dplyr::left_join(summary(),
                          merged_metadata())
       }
     })
