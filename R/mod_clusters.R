@@ -68,14 +68,21 @@ mod_clusters_server <- function(id, summary){
       keywords_found <- purrr::map_lgl(
         cluster_inputIds(),
         function(cluster_inputId) {
-          req(input[[cluster_inputId]])
-          req(input[[cluster_inputId]] != "")
+          req(!is.null(input[[cluster_inputId]]))
           
-          find_cluster_keyword_match(data = summary(),
-                                     cluster_keyword = input[[cluster_inputId]])
+          if (input[[cluster_inputId]] != "") {
+            find_cluster_keyword_match(data = summary(),
+                                       cluster_keyword = input[[cluster_inputId]])
+          } else {
+            TRUE
+          }
+          
         })
       
       names(keywords_found) <- cluster_inputIds()
+      print("cluster_keywords_found() was updated")
+      print(keywords_found)
+      
       return(keywords_found)
     })
     
@@ -91,6 +98,7 @@ mod_clusters_server <- function(id, summary){
     
     cluster_keywords_overlap <- reactive({
       req(keywords())
+      req(all(keywords() != ""))
       
       # Convert to function:
       if (length(keywords()) > 1) {
@@ -113,7 +121,7 @@ mod_clusters_server <- function(id, summary){
     
     # Display feedback based on the checks that were performed:
     observe({
-      req(cluster_keywords_found())
+      req(!is.null(cluster_keywords_found()))
       
       purrr::map(cluster_inputIds(),
                  ~ shinyFeedback::hideFeedback(.x))
@@ -130,8 +138,7 @@ mod_clusters_server <- function(id, summary){
                       )
                     })
       } else {
-        req(cluster_keywords_overlap())
-        if (cluster_keywords_overlap()) {
+        if (is_truthy(cluster_keywords_overlap())) {
           purrr::map(cluster_inputIds(),
                      ~ shinyFeedback::feedbackDanger(
                        .x,
@@ -146,6 +153,16 @@ mod_clusters_server <- function(id, summary){
 
 # Add clusters to data ----------------------------------------------------
 
+    observe({
+      shinyjs::toggleState("button",
+                           condition = all(
+                             is_truthy(summary()),
+                             is_truthy(cluster_keywords_found()),
+                             is_truthy(isFALSE(cluster_keywords_overlap()))
+                           ))
+    })
+    
+    
     with_clusters <- reactive({
       tryCatch(
         expr = {
