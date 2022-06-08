@@ -146,12 +146,15 @@ mod_add_sample_types_server <- function(id, summary){
     
     observe({
       shinyjs::toggleState(id = "button",
-                           condition = any(
-                             input$method == "Automatically determine sample types based on sample ID's",
-                             all(
-                               input$method == "Upload a list with sample ID's and corresponding sample types",
-                               is_truthy(manual_sample_types())
-                             )
+                           condition = all(
+                             any(
+                               input$method == "Automatically determine sample types based on sample ID's",
+                               all(
+                                 input$method == "Upload a list with sample ID's and corresponding sample types",
+                                 is_truthy(manual_sample_types())
+                               )
+                             ),
+                             is_truthy(summary())
                            ))
     })
     
