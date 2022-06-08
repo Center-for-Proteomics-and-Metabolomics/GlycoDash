@@ -22,8 +22,8 @@ mod_data_import_ui <- function(id){
           mod_read_lacytools_ui(ns("read_lacytools_ui_1")),
           mod_add_sample_ids_ui(ns("add_sample_ids_ui_1")),
           mod_add_sample_types_ui(ns("add_sample_types_ui_1")),
-          mod_add_metadata_ui(ns("add_metadata_ui_1")),
-          mod_clusters_ui(ns("clusters_ui_1"))
+          mod_clusters_ui(ns("clusters_ui_1")),
+          mod_add_metadata_ui(ns("add_metadata_ui_1"))
         ),
         column(
           width = 6,

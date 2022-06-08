@@ -122,9 +122,12 @@ mod_clusters_server <- function(id, summary){
         purrr::imap(cluster_keywords_found(),
                     function(keyword_found,
                              inputId) {
-                      shinyFeedback::feedbackDanger(inputId,
-                                                    show = !keyword_found,
-                                                    text = "This keyword did not match any analytes in your data. Please choose a different keyword.")
+                      shinyFeedback::feedbackDanger(
+                        inputId,
+                        show = !keyword_found,
+                        text = paste("This keyword did not match any analytes in your data.", 
+                                     "Please choose a different keyword.")
+                      )
                     })
       } else {
         req(cluster_keywords_overlap())
@@ -140,6 +143,9 @@ mod_clusters_server <- function(id, summary){
       } 
     })
     
+
+# Add clusters to data ----------------------------------------------------
+
     with_clusters <- reactive({
       tryCatch(
         expr = {
@@ -153,6 +159,11 @@ mod_clusters_server <- function(id, summary){
           NULL
         })
     }) %>% bindEvent(input$button)
+    
+    observe({
+      showNotification("The clusters have been added to the data.",
+                       type = "message")
+    }) %>% bindEvent(with_clusters())
     
     return(with_clusters)
     
