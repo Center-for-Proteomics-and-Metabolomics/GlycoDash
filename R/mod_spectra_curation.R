@@ -112,17 +112,12 @@ mod_spectra_curation_ui <- function(id){
                   trigger = "hover",
                   placement = "right",
                   html = "true"),
-              tabsetPanel(id = ns("tabs")),
-              # "Based on these samples the cut-off values are:",
-              # textOutput(ns("sum_int_cut_off")),
-              # textOutput(ns("prop_cut_off")),
-              # shinydashboard::valueBoxOutput(ns("sum_int_cut_off"),
-              #                                width = 6),
-              # shinydashboard::valueBoxOutput(ns("prop_cut_off"),
-              #                                width = 6),
-              br(),
               shinyWidgets::materialSwitch(ns("manual_cut_offs"),
-                                           "Choose cut-off values manually instead"),
+                                           "Choose cut-off values manually instead",
+                                           right = TRUE,
+                                           status = "primary"),
+              tabsetPanel(id = ns("tabs")),
+              br(),
               actionButton(ns("button"),
                            "Perform spectra curation")
             )
@@ -208,6 +203,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
           mod_tab_cut_offs_server(id = cluster,
                                   cluster = cluster,
                                   checked_spectra = checked_spectra,
+                                  chosen_cut_offs = chosen_cut_offs,
                                   cut_off_basis = reactive({input$cut_off_basis}))
         })
     })
@@ -244,6 +240,20 @@ mod_spectra_curation_server <- function(id, results_data_import){
                     max_ppm_deviation = input$mass_accuracy[2],
                     max_ipq = input$ipq,
                     min_sn = input$sn)
+    })
+    
+    chosen_cut_offs <- reactive({
+      req(checked_spectra(),
+          input$cut_off_basis)
+      
+      calculate_cut_offs(checked_spectra(),
+                         input$cut_off_basis)
+    })
+    
+    cut_offs_table <- reactive({
+      req(checked_spectra())
+      
+      calculate_cut_offs_per_type(checked_spectra())
     })
     
     # Perform spectra curation:

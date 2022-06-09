@@ -282,9 +282,24 @@ check_spectra <- function(data, min_ppm_deviation, max_ppm_deviation,
                                     max_ppm_deviation = max_ppm_deviation,
                                     max_ipq = max_ipq,
                                     min_sn = min_sn)
-  spectra_check <- summarize_spectra_checks(checked_data) 
+  spectra_check <- summarize_spectra_checks(checked_data)
     
   return(spectra_check)
+}
+
+calculate_cut_offs_per_type <- function(checked_spectra) {
+  
+  grouping_variables <- c("group", "cluster", "sample_type")
+  
+  cut_offs <- checked_spectra %>%  
+    dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
+    dplyr::summarise(av_prop = mean(passing_proportion, na.rm = FALSE),
+                     sd_prop = sd_p(passing_proportion, na.rm = FALSE),
+                     cut_off_prop = av_prop + (3 * sd_prop),
+                     av_sum_int = mean(sum_intensity, na.rm = FALSE),
+                     sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
+                     cut_off_sum_int = av_sum_int + (3 * sd_sum_int))
+  return(cut_offs)
 }
 
 filter_cut_off_basis <- function(cut_off_basis, data) {
