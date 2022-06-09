@@ -112,7 +112,7 @@ mod_spectra_curation_ui <- function(id){
                   trigger = "hover",
                   placement = "right",
                   html = "true"),
-              shinyWidgets::materialSwitch(ns("manual_cut_offs"),
+              shinyWidgets::materialSwitch(ns("switch_to_manual"),
                                            "Choose cut-off values manually instead",
                                            right = TRUE,
                                            status = "primary"),
@@ -176,15 +176,14 @@ mod_spectra_curation_server <- function(id, results_data_import){
     # Hide the cut_off_basis selectInput when manual_cut_off is chosen:
     observe({
       shinyjs::toggle("cut_off_sum_intensity",
-                      condition = is_truthy(input$manual_cut_offs))
+                      condition = is_truthy(input$switch_to_manual))
       shinyjs::toggle("cut_off_passing_proportion",
-                      condition = is_truthy(input$manual_cut_offs))
+                      condition = is_truthy(input$switch_to_manual))
     })
     
     
     clusters <- reactive({
       req(summary())
-      
       unique(summary()$cluster)
     })
     
@@ -214,12 +213,17 @@ mod_spectra_curation_server <- function(id, results_data_import){
       req(checked_spectra())
       purrr::map(
         clusters(),
-        function(cluster) {
-          mod_tab_cut_offs_server(id = cluster,
-                                  selected_cluster = cluster,
-                                  checked_spectra = checked_spectra,
-                                  chosen_cut_offs = chosen_cut_offs,
-                                  cut_off_basis = reactive({input$cut_off_basis}))
+        function(current_cluster) {
+          checked_spectra_filtered <- checked_spectra() %>% 
+            dplyr::filter(cluster == current_cluster)
+          
+          mod_tab_cut_offs_server(id = current_cluster,
+                                  selected_cluster = current_cluster,
+                                  checked_spectra = reactive({checked_spectra_filtered}),
+                                  cut_offs_based_on_samples = cut_offs_based_on_samples,
+                                  cut_off_basis = reactive({input$cut_off_basis}),
+                                  manual_cut_offs = manual_cut_offs,
+                                  switch_to_manual = reactive({input$switch_to_manual}))
         })
     })
     
@@ -257,12 +261,32 @@ mod_spectra_curation_server <- function(id, results_data_import){
                     min_sn = input$sn)
     })
     
-    chosen_cut_offs <- reactive({
+    cut_offs_based_on_samples <- reactive({
       req(checked_spectra(),
           input$cut_off_basis)
       
       calculate_cut_offs(checked_spectra(),
-                         input$cut_off_basis)
+                         input$cut_off_basis) %>% 
+        dplyr::select(cluster,
+                      cut_off_prop,
+                      cut_off_sum_int)
+    })
+    
+    cut_offs_to_use <- reactive({
+      if (all(is_truthy(input$switch_to_manual),
+              is_truthy(manual_cut_offs()))) {
+        manual_cut_offs()
+      } else {
+        req(cut_offs_based_on_samples())
+        cut_offs_based_on_samples()
+      }
+    })
+    
+    manual_cut_offs <- reactive({
+      req(input$cut_off_sum_intensity,
+          input$cut_off_passing_proportion)
+      data.frame(cut_off_sum_int = input$cut_off_sum_intensity,
+                 cut_off_prop = input$cut_off_passing_proportion)
     })
     
     cut_offs_table <- reactive({
@@ -274,16 +298,15 @@ mod_spectra_curation_server <- function(id, results_data_import){
     # Perform spectra curation:
     spectra_curation <- reactive({
       req(summary(),
-          input$cut_off_basis)
+          checked_spectra(),
+          cut_offs_to_use())
       
       spectra_curation <- tryCatch(
         expr = { 
+          print("check1")
           curate_spectra(data = summary(),
-                         min_ppm_deviation = input$mass_accuracy[1],
-                         max_ppm_deviation = input$mass_accuracy[2],
-                         max_ipq = input$ipq,
-                         min_sn = input$sn,
-                         cut_off_basis = input$cut_off_basis)
+                         spectra_check = checked_spectra(),
+                         cut_offs = cut_offs_to_use())
         })
       return(spectra_curation)
     }) %>% bindEvent(input$button)

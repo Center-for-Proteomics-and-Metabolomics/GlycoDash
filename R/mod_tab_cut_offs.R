@@ -13,51 +13,69 @@ mod_tab_cut_offs_ui <- function(id){
     br(),
     plotly::plotlyOutput(ns("plot")),
     textOutput(ns("cut_off_basis_text")),
-    
     textOutput(ns("sum_int_cut_off")),
-    textOutput(ns("prop_cut_off"))
+    textOutput(ns("prop_cut_off")),
+    shinyjs::hidden(
+      div(id = ns("manual_cut_offs_text"),
+          "Manual cut-off values were used instead:",
+          br(),
+          textOutput(ns("manual_cut_offs_line1")),
+          textOutput(ns("manual_cut_offs_line2"))
+      )
+    )
   )
 }
     
 #' tab_cut_offs Server Functions
 #'
 #' @noRd 
-mod_tab_cut_offs_server <- function(id, selected_cluster, checked_spectra, chosen_cut_offs, cut_off_basis){
+mod_tab_cut_offs_server <- function(id, selected_cluster, checked_spectra, 
+                                    cut_offs_based_on_samples, cut_off_basis,
+                                    manual_cut_offs, switch_to_manual){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    spectra_check_filtered <- reactive({
-      req(checked_spectra())
-      
-      checked_spectra() %>% 
+    # checked_spectra_filtered <- reactive({
+    #   req(checked_spectra())
+    #   checked_spectra() %>% 
+    #     dplyr::filter(cluster == selected_cluster)
+    # })
+    
+    # cut_offs_filtered <- reactive({
+    #   req(cut_offs_based_on_samples())
+    #   cut_offs_based_on_samples() %>% 
+    #     dplyr::filter(cluster == selected_cluster)
+    # })
+    
+    cut_offs_based_on_samples_filtered <- reactive({
+      req(cut_offs_based_on_samples())
+      cut_offs_based_on_samples() %>% 
         dplyr::filter(cluster == selected_cluster)
     })
     
-    cut_offs_filtered <- reactive({
-      req(chosen_cut_offs())
-      chosen_cut_offs() %>% 
-        dplyr::filter(cluster == selected_cluster)
-    })
-    
-    observe({
-      req(cut_offs_filtered)
-      
-      print(cut_offs_filtered())
+    cut_offs_to_use <- reactive({
+      if (all(is_truthy(switch_to_manual()),
+              is_truthy(manual_cut_offs()))) {
+        manual_cut_offs()
+      } else {
+        req(cut_offs_based_on_samples())
+        cut_offs_based_on_samples_filtered()
+      }
     })
     
     my_plot <- reactive({
-      req(spectra_check_filtered())
-      plot <- create_cut_off_plot2(spectra_check_filtered())
+      req(checked_spectra())
+      plot <- create_cut_off_plot2(checked_spectra())
       
-      if (is_truthy(cut_offs_filtered())) {
+      if (is_truthy(cut_offs_to_use())) {
         plot <- plot +
-          ggplot2::geom_vline(ggplot2::aes(xintercept = cut_offs_filtered()$cut_off_prop,
+          ggplot2::geom_vline(ggplot2::aes(xintercept = cut_offs_to_use()$cut_off_prop,
                                            text = paste0("Passing proportion cut-off: ",
-                                                         cut_offs_filtered()$cut_off_prop)),
+                                                         cut_offs_to_use()$cut_off_prop)),
                               linetype = "dotted") +
-          ggplot2::geom_hline(ggplot2::aes(yintercept = cut_offs_filtered()$cut_off_sum_int,
+          ggplot2::geom_hline(ggplot2::aes(yintercept = cut_offs_to_use()$cut_off_sum_int,
                                            text = paste0("Sum intensity cut-off: ",
-                                                         cut_offs_filtered()$cut_off_sum_int)),
+                                                         cut_offs_to_use()$cut_off_sum_int)),
                               linetype = "dotted")
       }
       return(plot)
@@ -90,12 +108,32 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, checked_spectra, chose
     
     output$sum_int_cut_off <- renderText({
       paste("Sum intensity:",
-            ifelse(is_truthy(cut_offs_filtered()), cut_offs_filtered()$cut_off_sum_int, ""))
+            ifelse(is_truthy(cut_offs_based_on_samples_filtered()), 
+                   cut_offs_based_on_samples_filtered()$cut_off_sum_int, 
+                   ""))
     })
     
     output$prop_cut_off <- renderText({
       paste("Percentage of passing analytes:",
-            ifelse(is_truthy(cut_offs_filtered()), cut_offs_filtered()$cut_off_prop, ""))
+            ifelse(is_truthy(cut_offs_based_on_samples_filtered()), 
+                   cut_offs_based_on_samples_filtered()$cut_off_prop, ""))
+    })
+    
+    output$manual_cut_offs_line1 <- renderText({
+      req(manual_cut_offs())
+      paste("Sum intensity:",
+            manual_cut_offs()$cut_off_sum_int)
+    })
+    
+    output$manual_cut_offs_line2 <- renderText({
+      req(manual_cut_offs())
+      paste("Percentage of passing analytes:",
+            manual_cut_offs()$cut_off_prop)
+    })
+    
+    observe({
+      shinyjs::toggle(id = "manual_cut_offs_text",
+                      condition = is_truthy(switch_to_manual()))
     })
     
   })
