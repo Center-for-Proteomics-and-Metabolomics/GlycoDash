@@ -74,26 +74,14 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon){
     })
     
     plate_design <- reactive({
-      req(input$file)
+      #req(input$file)
+      req(extension() %in% allowed)
       
       shinyFeedback::hideFeedback("file")
       
       plate_design <- tryCatch(
         expr = {
           read_and_process_plate_design(input$file$datapath)
-        },
-        incorrect_formatting = function(c) {
-          shinyFeedback::feedbackDanger("file",
-                                        show = TRUE,
-                                        text = "Incorrect file format.")
-          showNotification(
-            paste(
-              "Please check that your plate design file is formatted correctly.",
-              "Click on the information icon to find the required format."
-            ),
-            type = "error",
-            duration = NULL
-          )
         },
         plate_numbers = function(c) {
           shinyFeedback::feedbackDanger("file",
@@ -108,8 +96,18 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon){
             duration = NULL
           )
         },
-        error = function(e) {
-          print(e)
+        incorrect_formatting = function(c) {
+          shinyFeedback::feedbackDanger("file",
+                                        show = TRUE,
+                                        text = "Incorrect file format.")
+          showNotification(
+            paste(
+              "Please check that your plate design file is formatted correctly.",
+              "Click on the information icon to find the required format."
+            ),
+            type = "error",
+            duration = NULL
+          )
         }
       )
     })
