@@ -116,6 +116,12 @@ mod_spectra_curation_ui <- function(id){
                                            "Choose cut-off values manually instead",
                                            right = TRUE,
                                            status = "primary"),
+              numericInput(ns("cut_off_sum_intensity"),
+                           "Choose a cut-off value for the sum intensity:",
+                           value = ""),
+              numericInput(ns("cut_off_passing_proportion"),
+                           "Choose a cut-off value for the percentage of passing analytes:",
+                           value = ""),
               tabsetPanel(id = ns("tabs")),
               br(),
               actionButton(ns("button"),
@@ -167,6 +173,15 @@ mod_spectra_curation_server <- function(id, results_data_import){
       results_data_import$summary()
     })
     
+    # Hide the cut_off_basis selectInput when manual_cut_off is chosen:
+    observe({
+      shinyjs::toggle("cut_off_sum_intensity",
+                      condition = is_truthy(input$manual_cut_offs))
+      shinyjs::toggle("cut_off_passing_proportion",
+                      condition = is_truthy(input$manual_cut_offs))
+    })
+    
+    
     clusters <- reactive({
       req(summary())
       
@@ -201,7 +216,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
         clusters(),
         function(cluster) {
           mod_tab_cut_offs_server(id = cluster,
-                                  cluster = cluster,
+                                  selected_cluster = cluster,
                                   checked_spectra = checked_spectra,
                                   chosen_cut_offs = chosen_cut_offs,
                                   cut_off_basis = reactive({input$cut_off_basis}))

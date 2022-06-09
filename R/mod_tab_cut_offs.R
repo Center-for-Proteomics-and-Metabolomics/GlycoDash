@@ -12,7 +12,8 @@ mod_tab_cut_offs_ui <- function(id){
   tagList(
     br(),
     plotly::plotlyOutput(ns("plot")),
-    "Based on the selected samples the cut-off values are:",
+    textOutput(ns("cut_off_basis_text")),
+    
     textOutput(ns("sum_int_cut_off")),
     textOutput(ns("prop_cut_off"))
   )
@@ -21,7 +22,7 @@ mod_tab_cut_offs_ui <- function(id){
 #' tab_cut_offs Server Functions
 #'
 #' @noRd 
-mod_tab_cut_offs_server <- function(id, cluster, checked_spectra, chosen_cut_offs, cut_off_basis){
+mod_tab_cut_offs_server <- function(id, selected_cluster, checked_spectra, chosen_cut_offs, cut_off_basis){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -29,15 +30,19 @@ mod_tab_cut_offs_server <- function(id, cluster, checked_spectra, chosen_cut_off
       req(checked_spectra())
       
       checked_spectra() %>% 
-        dplyr::filter(cluster == cluster)
+        dplyr::filter(cluster == selected_cluster)
     })
     
     cut_offs_filtered <- reactive({
       req(chosen_cut_offs())
-      
-      print(chosen_cut_offs())
       chosen_cut_offs() %>% 
-        dplyr::filter(cluster == cluster)
+        dplyr::filter(cluster == selected_cluster)
+    })
+    
+    observe({
+      req(cut_offs_filtered)
+      
+      print(cut_offs_filtered())
     })
     
     my_plot <- reactive({
@@ -52,7 +57,7 @@ mod_tab_cut_offs_server <- function(id, cluster, checked_spectra, chosen_cut_off
                               linetype = "dotted") +
           ggplot2::geom_hline(ggplot2::aes(yintercept = cut_offs_filtered()$cut_off_sum_int,
                                            text = paste0("Sum intensity cut-off: ",
-                                                         cut_offs_filtered()$cut_off_prop)),
+                                                         cut_offs_filtered()$cut_off_sum_int)),
                               linetype = "dotted")
       }
       return(plot)
@@ -73,6 +78,14 @@ mod_tab_cut_offs_server <- function(id, cluster, checked_spectra, chosen_cut_off
       
       
       return(plotly)
+    })
+    
+    output$cut_off_basis_text <- renderText({
+      req(cut_off_basis())
+      
+      paste("Based on the", 
+            comma_and(cut_off_basis()),
+            "the cut-off values are:")
     })
     
     output$sum_int_cut_off <- renderText({
