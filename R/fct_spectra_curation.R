@@ -243,9 +243,6 @@ curate_spectra <- function(data, spectra_check, cut_offs) {
   # cut_offs <- calculate_cut_offs(spectra_check = spectra_check,
   #                                cut_off_basis = cut_off_basis) %>% 
   #   dplyr::ungroup(.)
-  print("check2")
-  print(spectra_check)
-  print(cut_offs)
   
   if ("cluster" %in% colnames(cut_offs)) {
     spectra_check <- dplyr::left_join(spectra_check, cut_offs, by = "cluster") %>% 
@@ -255,9 +252,6 @@ curate_spectra <- function(data, spectra_check, cut_offs) {
       dplyr::mutate(cut_off_sum_int = cut_offs$cut_off_sum_int,
                     cut_off_prop = cut_offs$cut_off_prop)
   }
-  
-  print("check3")
-  print(spectra_check)
   
   passing_spectra <- spectra_check %>% 
     dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int)) %>% 
