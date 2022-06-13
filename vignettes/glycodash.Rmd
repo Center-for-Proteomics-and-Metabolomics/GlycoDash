@@ -102,13 +102,64 @@ deviations in a chosen group of spectra that should not pass curation (cut_off_b
 
 ```{r spectra-curation}
 
+checked_spectra <- check_spectra(data = data,
+                                 min_ppm_deviation = -20,
+                                 max_ppm_deviation = 20,
+                                 max_ipq = 0.2,
+                                 min_sn = 9)
+
+cut_offs <- calculate_cut_offs(spectra_check = checked_spectra,
+                               cut_off_basis = c("Spike PBS", "Total PBS"))
+
 spectra_curation <- curate_spectra(data = data,
-                                  clusters_regex = "IgGI1",
-                                  min_ppm_deviation = -20,
-                                  max_ppm_deviation = 20,
-                                  max_ipq = 0.2,
-                                  min_sn = 9,
-                                  cut_off_basis = c("Spike PBS", "Total PBS"))
+                                   spectra_check = checked_spectra,
+                                   cut_offs = cut_offs)
+
+my_data <- spectra_curation$curated_data  %>% 
+  dplyr::distinct(dplyr::across(!(analyte:exact_mass)), .keep_all = TRUE) %>% 
+  dplyr::mutate(
+    `Passed curation?` = dplyr::case_when(
+      passed_spectra_curation == "TRUE" ~ "Yes",
+      passed_spectra_curation == "FALSE" ~ "No"
+    )) %>% 
+  dplyr::group_by(dplyr::across(tidyselect::any_of(c("sample_type", "cluster", "group")))) %>% 
+  dplyr::mutate(
+    number_true = length(passed_spectra_curation[passed_spectra_curation == "TRUE"]),
+    number_false = length(passed_spectra_curation[passed_spectra_curation == "FALSE"]),
+    number = dplyr::case_when(
+      passed_spectra_curation == "TRUE" ~ number_true,
+      passed_spectra_curation == "FALSE" ~ number_false,
+      TRUE ~ as.integer(NA)
+    ),
+    percentage = scales::label_percent(accuracy = 0.01)(number / dplyr::n())
+  ) 
+  
+  plot <- my_data %>% 
+        ggplot2::ggplot(ggplot2::aes(x = sample_type, 
+                                       fill = `Passed curation?`,
+                                       text = paste(
+                                         "Number of spectra:",
+                                         number,
+                                         "\nPercentage of spectra:",
+                                         percentage
+                                       )
+                                       #)
+                                     )) +
+        ggplot2::geom_bar(position = "fill") +
+        ggplot2::xlab("Sample type") +
+        ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
+                                    name = "Proportion of spectra (%)") +
+        ggplot2::scale_fill_discrete(type = c("Yes" = "#3498DB",
+                                              "No" = "#E74C3C")) +
+        ggplot2::theme_classic() +
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+                       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+                       panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
+  
+  plotly::ggplotly(plot, tooltip = "text")
+ 
+ y <- spectra_curation$curated_data %>% 
+   dplyr::distinct(sample_name, .keep_all = TRUE)
 
 grouping_variables <- c("group", "cluster", "sample_type")
 

@@ -16,142 +16,148 @@ mod_spectra_curation_ui <- function(id){
         h1("Spectra curation") 
       ),
       fluidRow(
-        column(
-          width = 6,
-          div(
-            id = ns("qc"),
-            shinydashboard::box(
-              tags$style(
-                HTML(paste0("#",
-                            ns("qc"),
-                            " .fa {float: right; margin-top: 3px}",
-                            "#",
-                            ns("qc"),
-                            " .box-title {width: 100%}"))
-              ),
-              title = span(
-                "Analyte quality criteria",
-                icon("info-circle",
-                     class = "ml",
-                     tabindex = "0") %>% 
+          column(
+            width = 9,
+            tags$style(HTML(paste0("#",
+                                   ns("popover_cut_off"),
+                                   " .popover{width: 400px !important;}"))),
+            div(
+              id = ns("popover_cut_off"),
+              shinydashboard::box(
+                title = "Spectra curation cut-offs",
+                width = NULL,
+                status = "primary",
+                solidHeader = TRUE,
+                selectizeInput(ns("cut_off_basis"),
+                               "Base the spectra curation cut-off on:",
+                               choices = c(""),
+                               selected = NULL,
+                               multiple = TRUE,
+                               options = list(placeholder = "select which samples to use as a basis for cut-off")
+                ) %>% 
                   bsplus::bs_embed_popover(
                     title = "Explanation",
                     content = HTML(paste0(
                       tags$p(paste(
-                        "For each spectrum, analytes are curated based on",
-                        "the chosen criteria for the mass accuracy, the",
-                        "isotopic pattern quality (IPQ) and the signal-to-noise",
-                        "ratio (S/N)."
+                        "Choose a group of samples that should not pass curation",
+                        "(e.g. Specific Ig negative control samples)."
                       )),
                       tags$p(paste(
-                        "Next, the proportion of passing analytes and the sum intensity",
-                        "of the passing analytes within each spectrum are calculated."
+                        "The average proportion of passing analytes and average sum intensity",
+                        "in this group of samples will be used as cut-off values;"
                       )),
                       tags$p(paste(
-                        "This proportion and this sum intensity are then compared",
-                        "to the spectra curation cut-off values (see below) to decide",
-                        "whether a spectrum passes spectra curation."
+                        "All spectra that have a proportion of passing analytes and a sum intensity",
+                        "higher than these cut-off values will pass spectra curation."
                       ))
                     )),
-                    trigger = "focus",
+                    trigger = "hover",
                     placement = "right",
-                    html = "true",
-                    container = "body")
-              ),
-              width = NULL,
-              status = "primary",
-              solidHeader = TRUE,
-              sliderInput(ns("mass_accuracy"), 
-                          "Acceptable mass accuracy range:",
-                          min = -50,
-                          max = 50,
-                          value = c(-20, 20)
-              ),
-              numericInput(ns("ipq"),
-                           "Max. IPQ value:",
-                           value = 0.2,
-                           step = 0.1),
-              numericInput(ns("sn"),
-                           "Min. S/N ratio:",
-                           value = 9)
+                    html = "true"),
+                shinyWidgets::materialSwitch(ns("switch_to_manual"),
+                                             "Choose cut-off values manually instead",
+                                             right = TRUE,
+                                             status = "primary"),
+                numericInput(ns("cut_off_sum_intensity"),
+                             "Choose a cut-off value for the sum intensity:",
+                             value = ""),
+                numericInput(ns("cut_off_passing_proportion"),
+                             "Choose a cut-off value for the percentage of passing analytes:",
+                             value = ""),
+                tabsetPanel(id = ns("tabs")),
+                br(),
+                actionButton(ns("button"),
+                             "Perform spectra curation")
+              )
             )
           ),
-          tags$style(HTML(paste0("#",
-                                 ns("popover_cut_off"),
-                                 " .popover{width: 400px !important;}"))),
-          div(
-            id = ns("popover_cut_off"),
-            shinydashboard::box(
-              title = "Spectra curation cut-offs",
-              width = NULL,
-              status = "primary",
-              solidHeader = TRUE,
-              selectizeInput(ns("cut_off_basis"),
-                             "Base the spectra curation cut-off on:",
-                             choices = c(""),
-                             selected = NULL,
-                             multiple = TRUE,
-                             options = list(placeholder = "select which samples to use as a basis for cut-off")
-              ) %>% 
-                bsplus::bs_embed_popover(
-                  title = "Explanation",
-                  content = HTML(paste0(
-                    tags$p(paste(
-                      "Choose a group of samples that should not pass curation",
-                      "(e.g. Specific Ig negative control samples)."
-                    )),
-                    tags$p(paste(
-                      "The average proportion of passing analytes and average sum intensity",
-                      "in this group of samples will be used as cut-off values;"
-                    )),
-                    tags$p(paste(
-                      "All spectra that have a proportion of passing analytes and a sum intensity",
-                      "higher than these cut-off values will pass spectra curation."
-                    ))
-                  )),
-                  trigger = "hover",
-                  placement = "right",
-                  html = "true"),
-              shinyWidgets::materialSwitch(ns("switch_to_manual"),
-                                           "Choose cut-off values manually instead",
-                                           right = TRUE,
-                                           status = "primary"),
-              numericInput(ns("cut_off_sum_intensity"),
-                           "Choose a cut-off value for the sum intensity:",
-                           value = ""),
-              numericInput(ns("cut_off_passing_proportion"),
-                           "Choose a cut-off value for the percentage of passing analytes:",
-                           value = ""),
-              tabsetPanel(id = ns("tabs")),
-              br(),
-              actionButton(ns("button"),
-                           "Perform spectra curation")
+          column(
+            width = 3,
+            div(
+              id = ns("qc"),
+              shinydashboard::box(
+                tags$style(
+                  HTML(paste0("#",
+                              ns("qc"),
+                              " .fa {float: right; margin-top: 3px}",
+                              "#",
+                              ns("qc"),
+                              " .box-title {width: 100%}"))
+                ),
+                title = span(
+                  "Analyte quality criteria",
+                  icon("info-circle",
+                       class = "ml",
+                       tabindex = "0") %>% 
+                    bsplus::bs_embed_popover(
+                      title = "Explanation",
+                      content = HTML(paste0(
+                        tags$p(paste(
+                          "For each spectrum, analytes are curated based on",
+                          "the chosen criteria for the mass accuracy, the",
+                          "isotopic pattern quality (IPQ) and the signal-to-noise",
+                          "ratio (S/N)."
+                        )),
+                        tags$p(paste(
+                          "Next, the proportion of passing analytes and the sum intensity",
+                          "of the passing analytes within each spectrum are calculated."
+                        )),
+                        tags$p(paste(
+                          "This proportion and this sum intensity are then compared",
+                          "to the spectra curation cut-off values (see below) to decide",
+                          "whether a spectrum passes spectra curation."
+                        ))
+                      )),
+                      trigger = "focus",
+                      placement = "right",
+                      html = "true",
+                      container = "body")
+                ),
+                width = NULL,
+                status = "primary",
+                solidHeader = TRUE,
+                sliderInput(ns("mass_accuracy"), 
+                            "Acceptable mass accuracy range:",
+                            min = -50,
+                            max = 50,
+                            value = c(-20, 20)
+                ),
+                numericInput(ns("ipq"),
+                             "Max. IPQ value:",
+                             value = 0.2,
+                             step = 0.1),
+                numericInput(ns("sn"),
+                             "Min. S/N ratio:",
+                             value = 9)
+              )
             )
+          )
+      ),
+      fluidRow(
+        column(
+          width = 9,
+          shinydashboard::box(
+            title = "Information on spectra curation",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            plotly::plotlyOutput(ns("curated_spectra_plot")),
+            br(),
+            "Select and double click a plot area to zoom in."
+          )
         ),
-        shinydashboard::box(
-          title = "Export results",
-          width = NULL,
-          solidHeader = TRUE,
+        column(
+          width = 3,
+          shinydashboard::box(
+            title = "Export results",
+            width = NULL,
+            solidHeader = TRUE,
             status = "primary",
             radioButtons(ns("download_format"),
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
             downloadButton(ns("download"), 
                            "Download curated spectra")
-          )
-        ),
-        column(
-          width = 6,
-          shinydashboard::box(
-            title = "Information on spectra curation",
-            width = NULL,
-            solidHeader = TRUE,
-            status = "primary",
-            plotOutput(ns("curated_spectra_plot")),
-            br(),
-            plotly::plotlyOutput(ns("cut_off_plot")),
-            br(),
-            "Select and double click a plot area to zoom in."
           )
         )
       )
@@ -327,23 +333,48 @@ mod_spectra_curation_server <- function(id, results_data_import){
     curated_spectra_plot <- reactive({
       req(spectra_curation())
       # Move this code to a function instead?
-      plot <- spectra_curation()$curated_data %>% 
+      
+      # We need to change the values of passed_spectra_curation to what we want
+      # to be shown in the legend, because plotly ignores legend labels that are
+      # set with scale_ functions:
+      my_data <- spectra_curation()$curated_data %>% 
+        dplyr::distinct(dplyr::across(!(analyte:exact_mass)), .keep_all = TRUE) %>% 
+        dplyr::mutate(
+          `Passed curation?` = dplyr::case_when(
+            passed_spectra_curation == "TRUE" ~ "Yes",
+            passed_spectra_curation == "FALSE" ~ "No"
+          )) %>% 
+        dplyr::group_by(dplyr::across(tidyselect::any_of(c("sample_type", "cluster", "group")))) %>% 
+        dplyr::mutate(
+          number_true = length(passed_spectra_curation[passed_spectra_curation == "TRUE"]),
+          number_false = length(passed_spectra_curation[passed_spectra_curation == "FALSE"]),
+          number = dplyr::case_when(
+            passed_spectra_curation == "TRUE" ~ number_true,
+            passed_spectra_curation == "FALSE" ~ number_false,
+            TRUE ~ as.integer(NA)
+          ),
+          percentage = scales::label_percent(accuracy = 0.01)(number / dplyr::n())
+        ) 
+      
+      plot <- my_data %>% 
         ggplot2::ggplot() +
         ggplot2::geom_bar(ggplot2::aes(x = sample_type, 
-                                       fill = passed_spectra_curation), 
+                                       fill = `Passed curation?`,
+                                       text = paste(
+                                         "Number of spectra:",
+                                         number,
+                                         "\nPercentage of spectra:",
+                                         percentage
+                                       )), 
                           position = "fill") +
         ggplot2::xlab("Sample type") +
         ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
                                     name = "Proportion of spectra (%)") +
-        ggplot2::scale_fill_discrete(name = "Passed curation?", 
-                                     labels = c(`TRUE`= "Yes",
-                                                `FALSE` = "No"),
-                                     type = c(`TRUE` = "#3498DB",
-                                              `FALSE` = "#E74C3C")) +
+        ggplot2::scale_fill_discrete(type = c("Yes" = "#3498DB",
+                                              "No" = "#E74C3C")) +
         ggplot2::theme_classic() +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                        strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                       text = ggplot2::element_text(size = 16),
                        panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
       
       if (results_data_import$Ig_data() == "Yes") {
@@ -356,9 +387,14 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
     })
     
-    output$curated_spectra_plot <- renderPlot({
+    output$curated_spectra_plot <- plotly::renderPlotly({
       req(curated_spectra_plot())
-      curated_spectra_plot()
+      
+      plotly_object <- plotly::ggplotly(curated_spectra_plot(), tooltip = "text")
+      
+      plotly_object <- facet_strip_bigger(plotly_object)
+      
+      return(plotly_object)
     })
     
     output$download <- downloadHandler(
@@ -384,29 +420,29 @@ mod_spectra_curation_server <- function(id, results_data_import){
     ranges <- reactiveValues(x = NULL,
                              y = NULL)
 
-    
-    cut_off_plot <- reactive({
-      req(spectra_curation(),
-          input$cut_off_basis)
-      create_cut_off_plot(spectra_check = spectra_curation()$spectra_check,
-                          cut_off_basis = input$cut_off_basis)
-    })
-
-    output$cut_off_plot <- plotly::renderPlotly({
-      req(cut_off_plot())
-      plot <- cut_off_plot() +
-        ggplot2::coord_cartesian(xlim = ranges$x,
-                                 ylim = ranges$y,
-                                 expand = FALSE) +
-        ggplot2::theme(axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 20)))
-      
-      plotly <- plotly::ggplotly(plot, tooltip = "text")
-      
-      plotly[["x"]][["layout"]][["margin"]][["l"]] <- plotly[["layout"]][["margin"]][["l"]] + 20
-      
-      plotly <- facet_strip_bigger(plotly)
-      
-    })
+    # 
+    # cut_off_plot <- reactive({
+    #   req(spectra_curation(),
+    #       input$cut_off_basis)
+    #   create_cut_off_plot(spectra_check = spectra_curation()$spectra_check,
+    #                       cut_off_basis = input$cut_off_basis)
+    # })
+    # 
+    # output$cut_off_plot <- plotly::renderPlotly({
+    #   req(cut_off_plot())
+    #   plot <- cut_off_plot() +
+    #     ggplot2::coord_cartesian(xlim = ranges$x,
+    #                              ylim = ranges$y,
+    #                              expand = FALSE) +
+    #     ggplot2::theme(axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 20)))
+    #   
+    #   plotly <- plotly::ggplotly(plot, tooltip = "text")
+    #   
+    #   plotly[["x"]][["layout"]][["margin"]][["l"]] <- plotly[["layout"]][["margin"]][["l"]] + 20
+    #   
+    #   plotly <- facet_strip_bigger(plotly)
+    #   
+    # })
     
     return(list(
       curated_spectra = reactive({passing_spectra()}),
