@@ -141,10 +141,8 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            plotly::plotlyOutput(ns("curated_spectra_plot")),
-            br(),
-            "Select and double click a plot area to zoom in."
-          )
+            plotly::plotlyOutput(ns("curated_spectra_plot"))
+            )
         ),
         column(
           width = 3,
@@ -393,6 +391,14 @@ mod_spectra_curation_server <- function(id, results_data_import){
       plotly_object <- plotly::ggplotly(curated_spectra_plot(), tooltip = "text")
       
       plotly_object <- facet_strip_bigger(plotly_object)
+      
+      # plotly_object[["x"]][["layout"]][["margin"]][["l"]] <- plotly_object[["x"]][["layout"]][["margin"]][["l"]] + 100
+      # 
+      # plotly_object[["x"]][["layout"]][["margin"]][["b"]] <- plotly_object[["x"]][["layout"]][["margin"]][["b"]] + 100
+      
+      plotly_object[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
+      
+      plotly_object[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -50
       
       return(plotly_object)
     })

@@ -17,7 +17,7 @@ mod_tab_cut_offs_ui <- function(id){
     textOutput(ns("prop_cut_off")),
     shinyjs::hidden(
       div(id = ns("manual_cut_offs_text"),
-          "Manual cut-off values were used instead:",
+          "Manual cut-off values will be used instead:",
           br(),
           textOutput(ns("manual_cut_offs_line1")),
           textOutput(ns("manual_cut_offs_line2"))
