@@ -182,7 +182,7 @@ sd_p <- function(x, na.rm = FALSE) {
 #' calculate_cut_offs(spectra_check = spectra_check,
 #'                    cut_off_basis = c("Spike PBS", "Total PBS"))
 #'                    
-calculate_cut_offs <- function(spectra_check, cut_off_basis) {
+calculate_cut_offs <- function(spectra_check, cut_off_basis, sd_factor, central_tendency_measure) {
   
   cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
                                                 data = spectra_check)
@@ -190,11 +190,17 @@ calculate_cut_offs <- function(spectra_check, cut_off_basis) {
   cut_offs <- cut_off_basis_samples %>%  
     dplyr::group_by(cluster) %>% 
     dplyr::summarise(av_prop = mean(passing_proportion, na.rm = FALSE),
+                     med_prop = median(passing_proportion, na.rm = FALSE),
                      sd_prop = sd_p(passing_proportion, na.rm = FALSE),
-                     cut_off_prop = av_prop + (3 * sd_prop),
+                     cut_off_prop = dplyr::if_else(central_tendency_measure == "Mean", 
+                                           av_prop + (sd_factor * sd_prop),
+                                           med_prop + (sd_factor * sd_prop)),
                      av_sum_int = mean(sum_intensity, na.rm = FALSE),
+                     med_sum_int = median(sum_intensity, na.rm = FALSE),
                      sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
-                     cut_off_sum_int = av_sum_int + (3 * sd_sum_int))
+                     cut_off_sum_int = dplyr::if_else(central_tendency_measure == "Mean", 
+                                                      av_sum_int + (sd_factor * sd_sum_int),
+                                                      med_sum_int + (sd_factor * sd_sum_int)))
   return(cut_offs)
 }
 

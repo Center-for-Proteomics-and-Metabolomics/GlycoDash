@@ -54,6 +54,13 @@ mod_spectra_curation_ui <- function(id){
                     trigger = "hover",
                     placement = "right",
                     html = "true"),
+                selectInput(ns("central_tendency_measure"),
+                            "Choose whether the cut-off values should be calculated with the mean or with the median:",
+                            choices = c("Mean", "Median")),
+                numericInput(ns("sd_factor"),
+                             "Choose what factor the standard deviation should be multiplied with:",
+                             value = 3,
+                             step = 1),
                 shinyWidgets::materialSwitch(ns("switch_to_manual"),
                                              "Choose cut-off values manually instead",
                                              right = TRUE,
@@ -212,10 +219,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     cut_offs_based_on_samples <- reactive({
       req(summarized_checks(),
-          input$cut_off_basis)
+          input$cut_off_basis,
+          input$sd_factor)
       
       calculate_cut_offs(summarized_checks(),
-                         input$cut_off_basis) %>% 
+                         input$cut_off_basis,
+                         sd_factor = input$sd_factor,
+                         central_tendency_measure = input$central_tendency_measure) %>% 
         dplyr::select(cluster,
                       cut_off_prop,
                       cut_off_sum_int)
@@ -327,12 +337,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
       showNotification("Spectra curation has been performed.",
                        type = "message")
     }) %>% bindEvent(curated_data())
-    
-    observe({
-      req(curated_data())
-      print("curated_data() is:")
-      print(curated_data())
-    })
     
     passing_spectra <- reactive({
       req(curated_data())
