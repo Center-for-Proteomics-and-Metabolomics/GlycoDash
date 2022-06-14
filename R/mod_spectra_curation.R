@@ -141,7 +141,8 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            plotly::plotlyOutput(ns("curated_spectra_plot"))
+            plotly::plotlyOutput(ns("curated_spectra_plot")),
+            DT::dataTableOutput(ns( ))
             )
         ),
         column(
