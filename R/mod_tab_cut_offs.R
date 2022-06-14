@@ -89,7 +89,9 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       
       plotly <- plotly::ggplotly(plot, tooltip = "text")
       
-      plotly[["x"]][["layout"]][["margin"]][["l"]] <- plotly[["layout"]][["margin"]][["l"]] + 20
+      plotly[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -70
+      
+      plotly[["x"]][["layout"]][["margin"]][["l"]] <- 90
       
       plotly <- facet_strip_bigger(plotly)
       
