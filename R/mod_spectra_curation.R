@@ -316,7 +316,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       spectra_curated_data <- tryCatch(
         expr = { 
           print("check1")
-          curate_spectra(checked_data = summary(),
+          curate_spectra(checked_data = checked_data(),
                          summarized_checks = summarized_checks(),
                          cut_offs = cut_offs_to_use())
         })
@@ -327,6 +327,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
       showNotification("Spectra curation has been performed.",
                        type = "message")
     }) %>% bindEvent(curated_data())
+    
+    observe({
+      req(curated_data())
+      print("curated_data() is:")
+      print(curated_data())
+    })
     
     passing_spectra <- reactive({
       req(curated_data())
@@ -399,10 +405,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
       plotly_object <- plotly::ggplotly(curated_spectra_plot(), tooltip = "text")
       
       plotly_object <- facet_strip_bigger(plotly_object)
-      
-      # plotly_object[["x"]][["layout"]][["margin"]][["l"]] <- plotly_object[["x"]][["layout"]][["margin"]][["l"]] + 100
-      # 
-      # plotly_object[["x"]][["layout"]][["margin"]][["b"]] <- plotly_object[["x"]][["layout"]][["margin"]][["b"]] + 100
       
       plotly_object[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
       

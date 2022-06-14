@@ -168,7 +168,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     })
     
     clusters <- reactive({
-      unique(x$data$cluster)
+      unique(summary()$cluster)
     })
     
     info <- list(
@@ -217,13 +217,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     
     # The selection menu for input$ignore_samples is updated so that the choices
     # are sample_types and groups that are present in the data.
-    observeEvent(x$data, {
+    observeEvent(summary(), {
       
-      if ("group" %in% colnames(x$data)) {
-        options <- c(paste(unique(x$data$sample_type), "samples"), 
-                     paste(unique(x$data$group), "samples"))
+      if ("group" %in% colnames(summary())) {
+        options <- c(paste(unique(summary()$sample_type), "samples"), 
+                     paste(unique(summary()$group), "samples"))
       } else {
-        options <- c(paste(unique(x$data$sample_type), "samples"))
+        options <- c(paste(unique(summary()$sample_type), "samples"))
       }
       
       updateSelectizeInput(inputId = "ignore_samples",
@@ -261,10 +261,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       x$analyte_curated_data <- NULL
       if (input$method == "Curate analytes based on data") {
         
-        if ("group" %in% colnames(x$data)) {
+        if ("group" %in% colnames(summary())) {
           group_to_ignore <- stringr::str_extract(
             string = input$ignore_samples,
-            pattern = paste0(unique(x$data$group),
+            pattern = paste0(unique(summary()$group),
                              collapse = "|")) %>% 
             na.omit(.)
         } else {
@@ -273,13 +273,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
         
         sample_types_to_ignore <- stringr::str_extract(
           string = input$ignore_samples,
-          pattern = paste0(unique(x$data$sample_type),
+          pattern = paste0(unique(summary()$sample_type),
                            collapse = "|")) %>% 
           na.omit(.)
         
         # Perform analyte curation:
         x$curated_analytes <- curate_analytes(
-          data = x$data,
+          data = summary(),
           group_to_ignore = group_to_ignore,
           sample_types_to_ignore = sample_types_to_ignore,
           cut_off_percentage = input$cut_off)
@@ -289,7 +289,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
           dplyr::select(-passed_curation)
         
         x$analyte_curated_data <- dplyr::left_join(passing_analytes, 
-                                                   x$data)
+                                                   summary())
         
         showNotification("Analyte curation has been performed based on the data.", 
                          type = "message")
@@ -300,7 +300,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
         
         tryCatch(expr = {
           x$analyte_curated_data <- curate_analytes_with_list(
-            data = x$data,
+            data = summary(),
             analyte_list = x$analyte_list)
           
           print(unique(x$analyte_curated_data$analyte))
@@ -320,7 +320,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                              type = "warning")
             x$analyte_curated_data <- suppressWarnings(
               curate_analytes_with_list(
-                data = x$data,
+                data = summary(),
                 analyte_list = x$analyte_list))
           })
       }

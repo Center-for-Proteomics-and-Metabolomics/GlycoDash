@@ -73,7 +73,7 @@ data_complete
 
 Finally, metadata can be added to the data.
 
-```{r adding-metadata}
+```{r adding-metadata, eval=FALSE}
 
 metadata_file <- system.file("extdata",
                             "Metadata_example.xlsx",
@@ -135,22 +135,12 @@ data_curated <- dplyr::full_join(passing_spectra,
     dplyr::mutate(passed_spectra_curation = tidyr::replace_na(passed_spectra_curation, 
                                                               FALSE))
 
-data_final <- dplyr::full_join(x, data_curated)
 
-cut_offs <- calculate_cut_offs(spectra_check = checked_spectra,
-                               cut_off_basis = c("Spike PBS", "Total PBS")) %>% 
-  dplyr::select(cluster,
-                cut_off_prop,
-                cut_off_sum_int)
+data_curated
 
-spectra_curation <- curate_spectra(data = data,
-                                   spectra_check = checked_spectra,
-                                   cut_offs = cut_offs)
-
-
-spectra_curation$curated_data
-
-spectra_curation$spectra_check
+test <- curate_spectra(checked_data,
+                       checked_spectra,
+                       cut_offs)
 
 ```
 
