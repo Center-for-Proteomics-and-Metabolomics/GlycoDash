@@ -233,32 +233,25 @@ calculate_cut_offs <- function(spectra_check, cut_off_basis) {
 #'                max_ipq = 0.2,
 #'                min_sn = 9,
 #'                cut_off_basis = c("Spike PBS", "Total PBS"))
-curate_spectra <- function(data, spectra_check, cut_offs) {
-  # checked_data <- do_criteria_check(data = data, 
-  #                                   min_ppm_deviation = min_ppm_deviation,
-  #                                   max_ppm_deviation = max_ppm_deviation,
-  #                                   max_ipq = max_ipq,
-  #                                   min_sn = min_sn)
-  # spectra_check <- summarize_spectra_checks(checked_data)
-  # cut_offs <- calculate_cut_offs(spectra_check = spectra_check,
-  #                                cut_off_basis = cut_off_basis) %>% 
-  #   dplyr::ungroup(.)
+curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
   
   if ("cluster" %in% colnames(cut_offs)) {
-    spectra_check <- dplyr::left_join(spectra_check, cut_offs, by = "cluster") %>% 
+    summarized_checks <- dplyr::left_join(summarized_checks, 
+                                          cut_offs, 
+                                          by = "cluster") %>% 
       dplyr::ungroup(.)
   } else {
-    spectra_check <- spectra_check %>% 
+    summarized_checks <- summarized_checks %>% 
       dplyr::mutate(cut_off_sum_int = cut_offs$cut_off_sum_int,
                     cut_off_prop = cut_offs$cut_off_prop)
   }
   
-  passing_spectra <- spectra_check %>% 
-    dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int)) %>% 
-    dplyr::select(sample_name, cluster) %>% 
+  passing_spectra <- summarized_checks %>% 
+    dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int)) %>%
     dplyr::mutate(passed_spectra_curation = TRUE)
   
-  curated_data <- dplyr::full_join(passing_spectra, data) %>% 
+  curated_data <- dplyr::full_join(passing_spectra, 
+                                   checked_data) %>% 
     dplyr::mutate(passed_spectra_curation = tidyr::replace_na(passed_spectra_curation, 
                                                               FALSE))
   
@@ -276,8 +269,7 @@ curate_spectra <- function(data, spectra_check, cut_offs) {
     }
   }
   
-  return(list(curated_data = curated_data,
-              spectra_check = spectra_check))
+  return(curated_data)
 }
 
 check_spectra <- function(data, min_ppm_deviation, max_ppm_deviation, 

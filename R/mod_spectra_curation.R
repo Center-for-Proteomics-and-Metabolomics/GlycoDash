@@ -141,8 +141,8 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            plotly::plotlyOutput(ns("curated_spectra_plot")),
-            DT::dataTableOutput(ns( ))
+            plotly::plotlyOutput(ns("curated_spectra_plot"))#,
+            #DT::dataTableOutput(ns( ))
             )
         ),
         column(
@@ -192,6 +192,52 @@ mod_spectra_curation_server <- function(id, results_data_import){
       unique(summary()$cluster)
     })
     
+    # Data with criteria checks for each analyte in each sample:
+    checked_data <- reactive({
+      req(summary(),
+          input$sn,
+          input$ipq)
+      do_criteria_check(data = summary(),
+                        min_ppm_deviation = input$mass_accuracy[1],
+                        max_ppm_deviation = input$mass_accuracy[2],
+                        max_ipq = input$ipq,
+                        min_sn = input$sn)
+    })
+    
+    # Analyte quality criteria checks summarized per cluster per sample: 
+    summarized_checks <- reactive({
+      req(checked_data())
+      summarize_spectra_checks(checked_data())
+    })
+    
+    cut_offs_based_on_samples <- reactive({
+      req(summarized_checks(),
+          input$cut_off_basis)
+      
+      calculate_cut_offs(summarized_checks(),
+                         input$cut_off_basis) %>% 
+        dplyr::select(cluster,
+                      cut_off_prop,
+                      cut_off_sum_int)
+    })
+    
+    manual_cut_offs <- reactive({
+      req(input$cut_off_sum_intensity,
+          input$cut_off_passing_proportion)
+      data.frame(cut_off_sum_int = input$cut_off_sum_intensity,
+                 cut_off_prop = input$cut_off_passing_proportion)
+    })
+    
+    cut_offs_to_use <- reactive({
+      if (all(is_truthy(input$switch_to_manual),
+              is_truthy(manual_cut_offs()))) {
+        manual_cut_offs()
+      } else {
+        req(cut_offs_based_on_samples())
+        cut_offs_based_on_samples()
+      }
+    })
+    
     observeEvent(clusters(), {
       # Remove tabs in case they have been created before. Still not ideal cause
       # if cluster names are changed then the old tabs won't be removed
@@ -215,16 +261,16 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     observe({
       req(clusters())
-      req(checked_spectra())
+      req(summarized_checks())
       purrr::map(
         clusters(),
         function(current_cluster) {
-          checked_spectra_filtered <- checked_spectra() %>% 
+          summarized_checks_filtered <- summarized_checks() %>% 
             dplyr::filter(cluster == current_cluster)
           
           mod_tab_cut_offs_server(id = current_cluster,
                                   selected_cluster = current_cluster,
-                                  checked_spectra = reactive({checked_spectra_filtered}),
+                                  summarized_checks = reactive({summarized_checks_filtered}),
                                   cut_offs_based_on_samples = cut_offs_based_on_samples,
                                   cut_off_basis = reactive({input$cut_off_basis}),
                                   manual_cut_offs = manual_cut_offs,
@@ -255,88 +301,49 @@ mod_spectra_curation_server <- function(id, results_data_import){
                            choices = c("", options))
     })
     
-    checked_spectra <- reactive({
-      req(summary(),
-          input$sn,
-          input$ipq)
-      check_spectra(data = summary(),
-                    min_ppm_deviation = input$mass_accuracy[1],
-                    max_ppm_deviation = input$mass_accuracy[2],
-                    max_ipq = input$ipq,
-                    min_sn = input$sn)
-    })
-    
-    cut_offs_based_on_samples <- reactive({
-      req(checked_spectra(),
-          input$cut_off_basis)
-      
-      calculate_cut_offs(checked_spectra(),
-                         input$cut_off_basis) %>% 
-        dplyr::select(cluster,
-                      cut_off_prop,
-                      cut_off_sum_int)
-    })
-    
-    cut_offs_to_use <- reactive({
-      if (all(is_truthy(input$switch_to_manual),
-              is_truthy(manual_cut_offs()))) {
-        manual_cut_offs()
-      } else {
-        req(cut_offs_based_on_samples())
-        cut_offs_based_on_samples()
-      }
-    })
-    
-    manual_cut_offs <- reactive({
-      req(input$cut_off_sum_intensity,
-          input$cut_off_passing_proportion)
-      data.frame(cut_off_sum_int = input$cut_off_sum_intensity,
-                 cut_off_prop = input$cut_off_passing_proportion)
-    })
-    
     cut_offs_table <- reactive({
-      req(checked_spectra())
+      req(summarized_checks())
       
-      calculate_cut_offs_per_type(checked_spectra())
+      calculate_cut_offs_per_type(summarized_checks())
     })
     
     # Perform spectra curation:
-    spectra_curation <- reactive({
+    curated_data <- reactive({
       req(summary(),
-          checked_spectra(),
+          summarized_checks(),
           cut_offs_to_use())
       
-      spectra_curation <- tryCatch(
+      spectra_curated_data <- tryCatch(
         expr = { 
           print("check1")
-          curate_spectra(data = summary(),
-                         spectra_check = checked_spectra(),
+          curate_spectra(checked_data = summary(),
+                         summarized_checks = summarized_checks(),
                          cut_offs = cut_offs_to_use())
         })
-      return(spectra_curation)
+      return(spectra_curated_data)
     }) %>% bindEvent(input$button)
     
     observe({
       showNotification("Spectra curation has been performed.",
                        type = "message")
-    }) %>% bindEvent(spectra_curation())
+    }) %>% bindEvent(curated_data())
     
     passing_spectra <- reactive({
-      req(spectra_curation())
+      req(curated_data())
       
-      spectra_curation()$curated_data %>% 
+      curated_data() %>% 
         dplyr::filter(passed_spectra_curation == TRUE) %>% 
         dplyr::select(-passed_spectra_curation)
     })
     
     curated_spectra_plot <- reactive({
-      req(spectra_curation())
+      req(curated_data())
       # Move this code to a function instead?
       
       # We need to change the values of passed_spectra_curation to what we want
       # to be shown in the legend, because plotly ignores legend labels that are
       # set with scale_ functions:
-      my_data <- spectra_curation()$curated_data %>% 
+      my_data <- curated_data() %>% 
         dplyr::distinct(dplyr::across(!(analyte:exact_mass)), .keep_all = TRUE) %>% 
         dplyr::mutate(
           `Passed curation?` = dplyr::case_when(
@@ -423,36 +430,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
       }
     )
     
-    
-    ranges <- reactiveValues(x = NULL,
-                             y = NULL)
-
-    # 
-    # cut_off_plot <- reactive({
-    #   req(spectra_curation(),
-    #       input$cut_off_basis)
-    #   create_cut_off_plot(spectra_check = spectra_curation()$spectra_check,
-    #                       cut_off_basis = input$cut_off_basis)
-    # })
-    # 
-    # output$cut_off_plot <- plotly::renderPlotly({
-    #   req(cut_off_plot())
-    #   plot <- cut_off_plot() +
-    #     ggplot2::coord_cartesian(xlim = ranges$x,
-    #                              ylim = ranges$y,
-    #                              expand = FALSE) +
-    #     ggplot2::theme(axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 20)))
-    #   
-    #   plotly <- plotly::ggplotly(plot, tooltip = "text")
-    #   
-    #   plotly[["x"]][["layout"]][["margin"]][["l"]] <- plotly[["layout"]][["margin"]][["l"]] + 20
-    #   
-    #   plotly <- facet_strip_bigger(plotly)
-    #   
-    # })
-    
     return(list(
-      curated_spectra = reactive({passing_spectra()}),
+      curated_spectra = passing_spectra,
       mass_acc = reactive({input$mass_accuracy}),
       ipq = reactive({input$ipq}),
       sn = reactive({input$sn}),

@@ -4,14 +4,7 @@
 \alias{curate_spectra}
 \title{Perform spectra curation}
 \usage{
-curate_spectra(data, spectra_check, cut_offs)
-}
-\arguments{
-\item{data}{A dataframe in long format (one row for each analyte + sample
-combination).}
-
-\item{spectra_check}{The dataframe returned by
-\code{\link{summarize_spectra_checks}}.}
+curate_spectra(checked_data, summarized_checks, cut_offs)
 }
 \value{
 The function returns the original dataframe given as the data

@@ -29,15 +29,15 @@ mod_tab_cut_offs_ui <- function(id){
 #' tab_cut_offs Server Functions
 #'
 #' @noRd 
-mod_tab_cut_offs_server <- function(id, selected_cluster, checked_spectra, 
+mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks, 
                                     cut_offs_based_on_samples, cut_off_basis,
                                     manual_cut_offs, switch_to_manual){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    # checked_spectra_filtered <- reactive({
-    #   req(checked_spectra())
-    #   checked_spectra() %>% 
+    # summarized_checks_filtered <- reactive({
+    #   req(summarized_checks())
+    #   summarized_checks() %>% 
     #     dplyr::filter(cluster == selected_cluster)
     # })
     
@@ -64,8 +64,8 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, checked_spectra,
     })
     
     my_plot <- reactive({
-      req(checked_spectra())
-      plot <- create_cut_off_plot2(checked_spectra())
+      req(summarized_checks())
+      plot <- create_cut_off_plot2(summarized_checks())
       
       if (is_truthy(cut_offs_to_use())) {
         plot <- plot +

@@ -144,9 +144,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     
     x <- reactiveValues()
     
-    observe({
+    summary <- reactive({
       req(results_spectra_curation$curated_spectra())
-      x$data <- results_spectra_curation$curated_spectra()
+      results_spectra_curation$curated_spectra()
+    })
+    
+    observe({
+      req(summary())
+      print(summary())
     })
     
     observe({
