@@ -54,29 +54,34 @@
 #'                                            "PBS"),
 #'                 cut_off_percentage = 25)
 #'                 
-curate_analytes <- function(data, group_to_ignore, sample_types_to_ignore, cut_off_percentage) {
+curate_analytes <- function(data, cut_off_percentage) {
   
-  if (!is.null(group_to_ignore)) { 
-    if (!(group_to_ignore %in% data$group)) {
-      rlang::abort(class =  "wrong_group",
-                   message = paste("The group_to_ignore",
-                                   group_to_ignore,
-                                   "is not present in the group column of the data."))
-    } 
-  }
+  # if (!is.null(group_to_ignore)) { 
+  #   if (!(group_to_ignore %in% data$group)) {
+  #     rlang::abort(class =  "wrong_group",
+  #                  message = paste("The group_to_ignore",
+  #                                  group_to_ignore,
+  #                                  "is not present in the group column of the data."))
+  #   } 
+  # }
+  # 
+  # if (!is.null(sample_types_to_ignore)) {
+  #   if (any(!(sample_types_to_ignore %in% data$sample_type))) {
+  #     rlang::abort(class =  "wrong_sample_type",
+  #                  message = "One or more of sample_types_to_ignore is not present in the \"sample_type\" column of the data.")
+  #   }
+  #   
+  #   if (is.null(group_to_ignore)) {
+  #     curated_analytes <- data %>% 
+  #       dplyr::filter(!(sample_type %in% sample_types_to_ignore))
+  #   } else {
+  #     curated_analytes <- data %>% 
+  #       dplyr::filter(!(group %in% group_to_ignore) & !(sample_type %in% sample_types_to_ignore))
+  #   }
+  # } else {
+  #   curated_analytes <- data
+  # }
   
-  if (any(!(sample_types_to_ignore %in% data$sample_type))) {
-    rlang::abort(class =  "wrong_sample_type",
-                 message = "One or more of sample_types_to_ignore is not present in the \"sample_type\" column of the data.")
-  }
-  
-  if (is.null(group_to_ignore)) {
-    curated_analytes <- data %>% 
-      dplyr::filter(!(sample_type %in% sample_types_to_ignore))
-  } else {
-    curated_analytes <- data %>% 
-      dplyr::filter(!(group %in% group_to_ignore) & !(sample_type %in% sample_types_to_ignore))
-  }
   
   required_columns <- c("cluster", 
                         "charge", 
@@ -92,7 +97,7 @@ curate_analytes <- function(data, group_to_ignore, sample_types_to_ignore, cut_o
                                  "Attention: curate_analytes() can only be used after spectra curation has been performed with curate_spectra()"))
   }
   
-  curated_analytes <- curated_analytes %>% 
+  curated_analytes <- data %>% 
     dplyr::group_by(cluster, charge, analyte) %>% 
     dplyr::summarise(passing_percentage = sum(criteria_check) / dplyr::n() * 100) %>% 
     dplyr::mutate(passed_curation = dplyr::if_else(passing_percentage > cut_off_percentage, 
