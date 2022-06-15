@@ -12,7 +12,8 @@ mod_information_box_ui <- function(id){
   tagList(
     plotOutput(ns("plot")),
     br(),
-    DT::dataTableOutput(ns("table"))
+    DT::dataTableOutput(ns("table")),
+    verbatimTextOutput(ns("test"))
   )
 }
     
@@ -36,15 +37,84 @@ mod_information_box_server <- function(id, info, cluster){
       info_plot()
     })
     
+    # create a character vector of shiny inputs
+    shinyInput <- function(FUN, len, id, values) {
+      inputs <- character(len)
+      for (i in seq_len(len)) {
+        inputs[i] <- as.character(FUN(ns(paste0(id, i)), label = NULL, value = values[i]))
+      }
+      inputs
+    }
+    
+    # obtain the values of inputs
+    shinyValue <- function(id, len) {
+      unlist(lapply(seq_len(len), function(i) {
+        value <- input[[paste0(id, i)]]
+        if (is.null(value)) NA else value
+      }))
+    }
+    
     info_table <- reactive({
       req(info$analyte_curated_data())
       
-      prepare_analyte_curation_table(analyte_curated_data = info$analyte_curated_data(),
-                                     selected_cluster = cluster)
+      table <- prepare_analyte_curation_table(analyte_curated_data = info$analyte_curated_data(),
+                                              selected_cluster = cluster)
+      
+      table_with_checkboxes <- table %>% 
+        dplyr::mutate(include = shinyInput(checkboxInput,
+                                           len = nrow(table),
+                                           id = "checkbox",
+                                           values = dplyr::if_else(table$`3+` == "Yes", TRUE, FALSE)))
+      
+      
     })
     
-    output$table <- DT::renderDT({
-      create_analyte_curation_table(dataframe_for_table = info_table())
+#     output$table <- DT::renderDT(
+#       #create_analyte_curation_table(dataframe_for_table = info_table())
+#       req(info_table()),
+#       server = FALSE,
+#       escape = FALSE,
+#       selection = "none",
+#       options = list(searching = FALSE,
+#                      paging = FALSE,
+#                      preDrawCallback = DT::JS('function() {
+# Shiny.unbindAll(this.api().table().node()); }'),
+# drawCallback = DT::JS('function() {
+# Shiny.bindAll(this.api().table().node()); } ')
+#       )
+#     ) %>%
+#       DT::formatStyle(columns = 2:ncol(dataframe_for_table),
+#                       color = DT::styleEqual(levels = c("Yes", 
+#                                                         "No"), 
+#                                              values = c("#3498DB", 
+#                                                         "#E74C3C")))
+      
+    output$table <- DT::renderDT(server = FALSE, expr = {
+      req(info_table()) 
+      
+      DT::datatable(
+        info_table(),
+        escape = FALSE,
+        selection = "none",
+        options = list(searching = FALSE,
+                       paging = FALSE,
+                       preDrawCallback = DT::JS('function() {
+Shiny.unbindAll(this.api().table().node()); }'),
+drawCallback = DT::JS('function() {
+Shiny.bindAll(this.api().table().node()); } ')
+        )
+      ) %>%
+        DT::formatStyle(columns = 2:ncol(info_table()),
+                        color = DT::styleEqual(levels = c("Yes", 
+                                                          "No"), 
+                                               values = c("#3498DB", 
+                                                          "#E74C3C")))
+      
+    })
+    
+    output$test <- renderPrint({
+      req(info_table())
+      data.frame(checkboxes = shinyValue("checkbox", nrow(info_table())))
     })
     
     return(list(plot = info_plot,

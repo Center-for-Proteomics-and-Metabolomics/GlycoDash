@@ -320,10 +320,18 @@ plot_analyte_curation <- function(curated_analytes,
 #' 
 create_analyte_curation_table <- function(dataframe_for_table) {
   
-  analyte_curation_table <- DT::datatable(dataframe_for_table,
-                                          options = list(searching = FALSE)) %>% 
+  analyte_curation_table <- DT::datatable(
+    dataframe_for_table,
+    server = FALSE, 
+    escape = FALSE, 
+    options = list(searching = FALSE,
+                   preDrawCallback = JS('function() {
+Shiny.unbindAll(this.api().table().node()); }'),
+drawCallback = JS('function() {
+Shiny.bindAll(this.api().table().node()); } ')
+    )) %>% 
     DT::formatStyle(columns = 2:ncol(dataframe_for_table),
-                    color = DT::styleEqual(levels = c("Yes", 
+                  color = DT::styleEqual(levels = c("Yes", 
                                                       "No"), 
                                            values = c("#3498DB", 
                                                       "#E74C3C")))
