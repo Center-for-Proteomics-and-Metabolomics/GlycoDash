@@ -302,6 +302,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       
     })
     
+    observe({
+      req(x$analyte_curated_data)
+      print(x$analyte_curated_data)
+    })
+    
     observeEvent(input$curate_analytes, {
       # Reset x$curated_analytes and x$analyte_curated data so that the plot is
       # no longer shown if curation based on data had already been performed
@@ -322,7 +327,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
           dplyr::filter(passed_curation == TRUE) %>% 
           dplyr::select(-passed_curation)
         
-        x$analyte_curated_data <- dplyr::left_join(passing_analytes, 
+        x$analyte_curated_data <- dplyr::left_join(x$curated_analytes, 
                                                    summary())
         
         showNotification("Analyte curation has been performed based on the data.", 

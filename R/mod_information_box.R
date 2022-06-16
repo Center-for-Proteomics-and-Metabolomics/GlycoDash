@@ -60,13 +60,29 @@ mod_information_box_server <- function(id, info, cluster){
       table <- prepare_analyte_curation_table(analyte_curated_data = info$analyte_curated_data(),
                                               selected_cluster = cluster)
       
+      charge_columns <- colnames(table)[-1]
+      
       table_with_checkboxes <- table %>% 
-        dplyr::mutate(include = shinyInput(checkboxInput,
-                                           len = nrow(table),
-                                           id = "checkbox",
-                                           values = dplyr::if_else(table$`3+` == "Yes", TRUE, FALSE)))
+        dplyr::mutate(
+          dplyr::across(tidyselect::all_of(charge_columns),
+                        ~ shinyInput(checkboxInput,
+                                     len = nrow(table),
+                                     id = "checkbox",
+                                     values = dplyr::if_else(.x == "Yes", TRUE, FALSE)),
+                        .names = "Include {col} in further analysis")
+          # include = shinyInput(checkboxInput,
+          #                                  len = nrow(table),
+          #                                  id = "checkbox",
+          #                                  values = dplyr::if_else(table$`3+` == "Yes", TRUE, FALSE))
+        )
       
       
+    })
+    
+    observe({
+      req(info$analyte_curated_data())
+      print("info$analyte_curated_data():")
+      print(info$analyte_curated_data())
     })
     
 #     output$table <- DT::renderDT(

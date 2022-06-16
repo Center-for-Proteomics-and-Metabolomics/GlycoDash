@@ -389,12 +389,12 @@ prepare_analyte_curation_table <- function(analyte_curated_data, selected_cluste
   analyte_curation_dataframe <- analyte_curated_data %>% 
     dplyr::ungroup() %>% 
     dplyr::filter(cluster == selected_cluster) %>% 
-    dplyr::select(analyte, charge) %>% 
+    dplyr::select(analyte, charge, passed_curation) %>% 
     dplyr::distinct() %>% 
-    tidyr::pivot_wider(names_from = charge, 
-                       values_from = charge,
-                       values_fn = function(value) dplyr::if_else(!is.na(value), 
-                                                                  "Yes", 
+    tidyr::pivot_wider(names_from = charge,
+                       values_from = passed_curation,
+                       values_fn = function(value) dplyr::if_else(isTRUE(value),
+                                                                  "Yes",
                                                                   "No"),
                        values_fill = "No")
   
