@@ -12,8 +12,7 @@ mod_information_box_ui <- function(id){
   tagList(
     plotOutput(ns("plot")),
     br(),
-    DT::dataTableOutput(ns("table")),
-    verbatimTextOutput(ns("test"))
+    DT::dataTableOutput(ns("table"))
   )
 }
     
@@ -67,43 +66,12 @@ mod_information_box_server <- function(id, info, cluster){
           dplyr::across(tidyselect::all_of(charge_columns),
                         ~ shinyInput(checkboxInput,
                                      len = nrow(table),
-                                     id = "checkbox",
+                                     id = paste0("checkbox", dplyr::cur_column()),
                                      values = dplyr::if_else(.x == "Yes", TRUE, FALSE)),
                         .names = "Include {col} in further analysis")
-          # include = shinyInput(checkboxInput,
-          #                                  len = nrow(table),
-          #                                  id = "checkbox",
-          #                                  values = dplyr::if_else(table$`3+` == "Yes", TRUE, FALSE))
-        )
-      
-      
+          )
+      return(table_with_checkboxes)
     })
-    
-    observe({
-      req(info$analyte_curated_data())
-      print("info$analyte_curated_data():")
-      print(info$analyte_curated_data())
-    })
-    
-#     output$table <- DT::renderDT(
-#       #create_analyte_curation_table(dataframe_for_table = info_table())
-#       req(info_table()),
-#       server = FALSE,
-#       escape = FALSE,
-#       selection = "none",
-#       options = list(searching = FALSE,
-#                      paging = FALSE,
-#                      preDrawCallback = DT::JS('function() {
-# Shiny.unbindAll(this.api().table().node()); }'),
-# drawCallback = DT::JS('function() {
-# Shiny.bindAll(this.api().table().node()); } ')
-#       )
-#     ) %>%
-#       DT::formatStyle(columns = 2:ncol(dataframe_for_table),
-#                       color = DT::styleEqual(levels = c("Yes", 
-#                                                         "No"), 
-#                                              values = c("#3498DB", 
-#                                                         "#E74C3C")))
       
     output$table <- DT::renderDT(server = FALSE, expr = {
       req(info_table()) 
@@ -128,9 +96,27 @@ Shiny.bindAll(this.api().table().node()); } ')
       
     })
     
-    output$test <- renderPrint({
+    analytes_to_include <- reactive({
       req(info_table())
-      data.frame(checkboxes = shinyValue("checkbox", nrow(info_table())))
+      
+      charge_columns <- stringr::str_subset(colnames(info_table())[-1],
+                                            "Include",
+                                            negate = TRUE)
+      
+      analytes_to_include_per_charge <- rlang::set_names(charge_columns) %>% 
+        purrr::map(.,
+                   function(charge_column) {
+                     checkbox_values <- shinyValue(paste0("checkbox", charge_column),
+                                                   nrow(info_table()))
+                     info_table()$analyte[checkbox_values]
+                   })
+      
+      return(analytes_to_include_per_charge)
+    })
+    
+    observe({
+      req(analytes_to_include())
+      print(analytes_to_include())
     })
     
     return(list(plot = info_plot,
