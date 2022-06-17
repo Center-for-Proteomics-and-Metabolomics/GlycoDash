@@ -80,7 +80,9 @@ mod_information_box_server <- function(id, info, cluster){
                                      id = paste0("checkbox", dplyr::cur_column()),
                                      values = dplyr::if_else(.x == "Yes", TRUE, FALSE)),
                         .names = "Include {col} in further analysis")
-          )
+        ) %>% 
+        dplyr::select(analyte,
+                      tidyselect::contains(charge_columns))
       return(table_with_checkboxes)
     })
       
