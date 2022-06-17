@@ -322,10 +322,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
         x$curated_analytes <- curate_analytes(
           data = data_to_use,
           cut_off_percentage = input$cut_off)
-        
-        passing_analytes <- x$curated_analytes %>% 
-          dplyr::filter(passed_curation == TRUE) %>% 
-          dplyr::select(-passed_curation)
+        # 
+        # passing_analytes <- x$curated_analytes %>% 
+        #   dplyr::filter(passed_curation == TRUE) %>% 
+        #   dplyr::select(-passed_curation)
         
         x$analyte_curated_data <- dplyr::left_join(x$curated_analytes, 
                                                    summary())
@@ -364,6 +364,29 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
           })
       }
       
+    })
+    
+    with_analytes_to_include <- reactive({
+      req(summary(),
+          purrr::map(x$mod_results,
+                     ~ is_truthy(.x$analytes_to_include())))
+      
+      purrr::imap(x$mod_results,
+                  function(results, current_cluster) {
+                    data_current_cluster <- summary() %>% 
+                      dplyr::filter(cluster == current_cluster)
+                    
+                    dplyr::left_join(results$analytes_to_include(),
+                                     data_current_cluster)
+                      
+                  })
+      
+    })
+    
+    observe({
+      req(with_analytes_to_include()) 
+      print("with_analytes_to_include():")
+      print(with_analytes_to_include())
     })
     
     # Make downloading analyte_curated_data possible:

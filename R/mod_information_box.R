@@ -104,12 +104,21 @@ Shiny.bindAll(this.api().table().node()); } ')
                                             negate = TRUE)
       
       analytes_to_include_per_charge <- rlang::set_names(charge_columns) %>% 
-        purrr::map(.,
+        purrr::map_dfc(.,
                    function(charge_column) {
                      checkbox_values <- shinyValue(paste0("checkbox", charge_column),
                                                    nrow(info_table()))
-                     info_table()$analyte[checkbox_values]
-                   })
+                     ifelse(checkbox_values,
+                            info_table()$analyte,
+                            NA)
+                   }) %>% 
+        tidyr::pivot_longer(
+          tidyselect::everything(),
+          names_to = "charge",
+          values_to = "analyte"
+        ) %>% 
+        dplyr::filter(!is.na(analyte)) %>% 
+        dplyr::mutate(dplyr::across(analyte, as.character))
       
       return(analytes_to_include_per_charge)
     })
@@ -120,7 +129,8 @@ Shiny.bindAll(this.api().table().node()); } ')
     })
     
     return(list(plot = info_plot,
-                table = info_table))
+                table = info_table,
+                analytes_to_include = analytes_to_include))
     
   })
 }
