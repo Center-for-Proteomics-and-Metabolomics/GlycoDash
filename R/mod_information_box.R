@@ -10,7 +10,8 @@
 mod_information_box_ui <- function(id){
   ns <- NS(id)
   tagList(
-    plotOutput(ns("plot")),
+    plotly::plotlyOutput(ns("plot")),
+    #plotOutput(ns("plot")),
     br(),
     DT::dataTableOutput(ns("table"))
   )
@@ -32,8 +33,18 @@ mod_information_box_server <- function(id, info, cluster){
                             selected_cluster = cluster)
     })
     
-    output$plot <- renderPlot({
-      info_plot()
+    output$plot <- plotly::renderPlotly({
+      req(info_plot())
+      plotly_object <- plotly::ggplotly(info_plot())
+      
+      plotly_object[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
+      
+      plotly_object[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -90
+      
+      
+      
+      return(plotly_object)
+      
     })
     
     # create a character vector of shiny inputs

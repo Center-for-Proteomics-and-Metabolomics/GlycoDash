@@ -237,21 +237,19 @@ plot_analyte_curation <- function(curated_analytes,
                                   selected_cluster) {
   
   data_to_plot <- curated_analytes %>% 
-    dplyr::filter(cluster == selected_cluster)
+    dplyr::filter(cluster == selected_cluster) %>% 
+    dplyr::mutate(
+      `Passed curation?` = dplyr::case_when(
+        passed_curation == "TRUE" ~ "Yes",
+        passed_curation == "FALSE" ~ "No"
+      ))
   
   plot <- ggplot2::ggplot(data_to_plot) + 
     ggplot2::geom_col(ggplot2::aes(x = analyte, 
                                    y = passing_percentage,
-                                   fill = passed_curation)) +
-    ggplot2::scale_fill_discrete(name = "Passed curation?",
-                                 labels = c(`TRUE`= "Yes",
-                                            `FALSE` = "No"),
-                                 type = c(`TRUE` = "#3498DB",
-                                          `FALSE` = "#E74C3C")) +
-    # ggplot2::scale_fill_brewer(name = "Passed curation?", 
-    #                            labels = c(`TRUE`= "Yes",
-    #                                       `FALSE` = "No"),
-    #                            palette = "Set2") +
+                                   fill = `Passed curation?`)) +
+    ggplot2::scale_fill_discrete(type = c("Yes" = "#3498DB",
+                                          "No" = "#E74C3C")) +
     ggplot2::geom_hline(yintercept = cut_off_percentage, 
                         linetype = "dashed",
                         color = "#E74C3C", 
@@ -262,7 +260,7 @@ plot_analyte_curation <- function(curated_analytes,
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, 
                                                        hjust = 1),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                   text = ggplot2::element_text(size = 16),
+                   #text = ggplot2::element_text(size = 16),
                    legend.position = "top",
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
     ggplot2::xlab("Analyte") +
