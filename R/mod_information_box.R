@@ -35,7 +35,7 @@ mod_information_box_server <- function(id, info, cluster){
     
     output$plot <- plotly::renderPlotly({
       req(info_plot())
-      plotly_object <- plotly::ggplotly(info_plot())
+      plotly_object <- plotly::ggplotly(info_plot(), tooltip = "text")
       
       plotly_object[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
       
