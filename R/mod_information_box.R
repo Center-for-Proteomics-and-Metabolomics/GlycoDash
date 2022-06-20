@@ -21,7 +21,7 @@ mod_information_box_ui <- function(id){
 #'
 #' @noRd 
 mod_information_box_server <- function(id, info, cluster){
-  moduleServer( id, function(input, output, session){
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     info_plot <- reactive({
@@ -40,8 +40,6 @@ mod_information_box_server <- function(id, info, cluster){
       plotly_object[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
       
       plotly_object[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -90
-      
-      
       
       return(plotly_object)
       
@@ -138,6 +136,7 @@ Shiny.bindAll(this.api().table().node()); } ')
     
     observe({
       req(analytes_to_include())
+      print("analytes_to_include() looks like this:")
       print(analytes_to_include())
     })
     

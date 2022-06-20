@@ -304,6 +304,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     
     observe({
       req(x$analyte_curated_data)
+      print("x$analyte_curated_data looks like this:")
       print(x$analyte_curated_data)
     })
     
@@ -379,13 +380,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                     dplyr::left_join(results$analytes_to_include(),
                                      data_current_cluster)
                       
-                  })
+                  }) %>% 
+        purrr::reduce(dplyr::full_join)
       
     })
     
     observe({
       req(with_analytes_to_include()) 
-      print("with_analytes_to_include():")
+      print("with_analytes_to_include() looks like this:")
       print(with_analytes_to_include())
     })
     
@@ -400,7 +402,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                "Excel file" = paste0(todays_date, "_curated_analytes.xlsx"))
       },
       content = function(file) {
-        data_to_download <- x$analyte_curated_data
+        data_to_download <- with_analytes_to_include()
         switch(input$download_format,
                "R object" = save(data_to_download, 
                                  file = file),
@@ -410,7 +412,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     )
     
     return(list(
-      analyte_curated_data = reactive({x$analyte_curated_data}),
+      analyte_curated_data = with_analytes_to_include,
       method = reactive({input$method}),
       ignore_samples = reactive({input$ignore_samples}),
       cut_off_percentage = reactive({input$cut_off}),

@@ -122,23 +122,11 @@ checked_spectra <- check_spectra(data = data_complete,
                                  min_sn = 9)
 
 cut_offs <- calculate_cut_offs(checked_spectra,
-                               c("Spike PBS", "Total PBS"))
+                               c("Spike PBS", "Total PBS"),
+                               3,
+                               "Mean")
 
-passing_spectra <- checked_spectra %>% 
-  dplyr::mutate(cut_off_sum_int = cut_offs$cut_off_sum_int,
-                cut_off_prop = cut_offs$cut_off_prop) %>% 
-  dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int)) %>% 
-  dplyr::mutate(passed_spectra_curation = TRUE)
-
-data_curated <- dplyr::full_join(passing_spectra, 
-                                 checked_data) %>% 
-    dplyr::mutate(passed_spectra_curation = tidyr::replace_na(passed_spectra_curation, 
-                                                              FALSE))
-
-
-data_curated
-
-test <- curate_spectra(checked_data,
+data_curated <- curate_spectra(checked_data,
                        checked_spectra,
                        cut_offs)
 
@@ -148,31 +136,54 @@ test <- curate_spectra(checked_data,
 
 ```{r analyte-curation}
 
-curated_analytes <- curate_analytes(data = spectra_curation$curated_data,
-                                    group_to_ignore = "Total",
-                                    sample_types_to_ignore = c("Visucon", 
-                                                               "PBS"),
+curated_analytes <- curate_analytes(data = data_curated,
                                     cut_off_percentage = 25)
 
-passing_analytes <- curated_analytes %>% 
-  dplyr::filter(passed_curation == TRUE) %>% 
-  dplyr::select(-passed_curation)
-
-data <- dplyr::left_join(passing_analytes, 
-                         data)
-
-data
+analyte_curated_data <- dplyr::left_join(curated_analytes, 
+                                         data_curated)
 
 plot_analyte_curation(curated_analytes = curated_analytes,
                       cut_off_percentage = 25,
                       selected_cluster = "IgGI1") 
 
 dataframe_for_table <- prepare_analyte_curation_table(
-  analyte_curated_data = data,
+  analyte_curated_data = analyte_curated_data,
   selected_cluster = "IgGI1")
 
 dataframe_for_table
 
+charge_columns <- colnames(dataframe_for_table)[-1]
+
+analytes_to_include <- rlang::set_names(charge_columns) %>% 
+  purrr::map_dfc(.,
+                 function(charge_column) {
+                   print(charge_column)
+                   ifelse(dataframe_for_table[[charge_column]] == "Yes",
+                          dataframe_for_table$analyte,
+                          NA)
+                 }) %>% 
+  tidyr::pivot_longer(
+    tidyselect::everything(),
+    names_to = "charge",
+    values_to = "analyte"
+  ) %>% 
+  dplyr::filter(!is.na(analyte)) %>% 
+  dplyr::mutate(dplyr::across(analyte, as.character))
+
+data_for_norm <- dplyr::left_join(analytes_to_include,
+                 data_curated)
+
 ```
 
+```{r normalization}
+
+total_intensities <- calculate_total_intensity(data = data_for_norm)
+normalized_data <- normalize_data(data = total_intensities) %>% 
+        tidyr::pivot_wider(names_from = c(cluster, analyte),
+                           names_sep = "_",
+                           values_from = relative_abundance)
+      
+        
+
+```
 

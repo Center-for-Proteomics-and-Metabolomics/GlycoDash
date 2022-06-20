@@ -55,6 +55,15 @@ mod_normalization_server <- function(id, results_analyte_curation){
     })
     
     observe({
+      req(x$data)
+      print("x$data looks like this:")
+      print(x$data)
+      
+      print("colnames(x$data) looks like this:")
+      print(colnames(x$data))
+    })
+    
+    observe({
       shinyjs::toggleState("do_normalization", 
                            condition = !is.null(input$method))
     })
@@ -64,15 +73,18 @@ mod_normalization_server <- function(id, results_analyte_curation){
         
         total_intensities <- calculate_total_intensity(data = x$data)
         x$normalized_data <- normalize_data(data = total_intensities)
-        
       }
       
     })
+    
+    
     
     output$data_table <- DT::renderDT({
       req(x$normalized_data)
       
       x$normalized_data_wide <- x$normalized_data %>% 
+        # removing columns with values that differ between clusters:
+        dplyr::select(-c(passing_proportion, cut_off_prop, cut_off_sum_int)) %>% 
         tidyr::pivot_wider(names_from = c(cluster, analyte),
                            names_sep = "_",
                            values_from = relative_abundance)
