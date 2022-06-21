@@ -95,7 +95,8 @@ mod_spectra_curation_ui <- function(id){
                   "Analyte quality criteria",
                   icon("info-circle",
                        class = "ml",
-                       tabindex = "0") %>% 
+                       #tabindex = "0" #only needed for trigger = "focus"
+                       ) %>% 
                     bsplus::bs_embed_popover(
                       title = "Explanation",
                       content = HTML(paste0(
@@ -115,8 +116,8 @@ mod_spectra_curation_ui <- function(id){
                           "whether a spectrum passes spectra curation."
                         ))
                       )),
-                      trigger = "focus",
-                      placement = "right",
+                      trigger = "hover",
+                      placement = "left",
                       html = "true",
                       container = "body")
                 ),
