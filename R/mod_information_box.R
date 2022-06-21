@@ -87,10 +87,22 @@ mod_information_box_server <- function(id, info, cluster){
     output$table <- DT::renderDT(server = FALSE, expr = {
       req(info_table()) 
       
+      charge_columns <- stringr::str_subset(colnames(info_table())[-1],
+                                            "Include",
+                                            negate = TRUE)
+      
+      new_charge_column_names <- purrr::map(charge_columns,
+                                            ~ paste(.x,
+                                                    "charge state passed curation?"))
+      
+      name_pairs <- rlang::set_names(charge_columns,
+                                     new_charge_column_names)
+      
       DT::datatable(
         info_table(),
         escape = FALSE,
         selection = "none",
+        colnames = name_pairs,
         options = list(searching = FALSE,
                        paging = FALSE,
                        preDrawCallback = DT::JS('function() {
