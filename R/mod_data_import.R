@@ -112,6 +112,8 @@ mod_data_import_server <- function(id){
     return(list(
       summary = to_return,
       Ig_data = summary$Ig_data,
+      keyword_specific = summary$keyword_specific,
+      keyword_total = summary$keyword_total,
       lacytools_summary = reactive({input$lacytools_summary$name}),
       plate_design = list(reactive({input$plate_design$name}),
                           reactive({input$plate_design_specific$name}),

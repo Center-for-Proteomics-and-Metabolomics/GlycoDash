@@ -16,18 +16,20 @@ mod_spectra_curation_ui <- function(id){
         h1("Spectra curation") 
       ),
       fluidRow(
-          column(
-            width = 9,
-            tags$style(HTML(paste0("#",
-                                   ns("popover_cut_off"),
-                                   " .popover{width: 400px !important;}"))),
-            div(
-              id = ns("popover_cut_off"),
-              shinydashboard::box(
-                title = "Spectra curation cut-offs",
-                width = NULL,
-                status = "primary",
-                solidHeader = TRUE,
+        column(
+          width = 9,
+          tags$style(HTML(paste0("#",
+                                 ns("popover_cut_off"),
+                                 " .popover{width: 400px !important;}"))),
+          div(
+            id = ns("popover_cut_off"),
+            shinydashboard::box(
+              title = "Spectra curation cut-offs",
+              width = NULL,
+              status = "primary",
+              solidHeader = TRUE,
+              column(
+                width = 12,
                 selectizeInput(ns("cut_off_basis"),
                                "Base the spectra curation cut-off on:",
                                choices = c(""),
@@ -53,10 +55,77 @@ mod_spectra_curation_ui <- function(id){
                     )),
                     trigger = "hover",
                     placement = "right",
-                    html = "true"),
-                selectInput(ns("central_tendency_measure"),
-                            "Choose whether the cut-off values should be calculated with the mean or with the median:",
-                            choices = c("Mean", "Median")),
+                    html = "true")
+              ),
+              div(id = ns("cut_off_basis_Ig_data"),
+                  column(
+                    width = 6,
+                    selectizeInput(ns("cut_off_basis_specific"),
+                                   "Base the spectra curation cut-off for the specific Ig samples on:",
+                                   choices = c(""),
+                                   selected = NULL,
+                                   multiple = TRUE,
+                                   options = list(placeholder = "select which samples to use as a basis for cut-off")
+                    ) %>% 
+                      bsplus::bs_embed_popover(
+                        title = "Explanation",
+                        content = HTML(paste0(
+                          tags$p(paste(
+                            "Choose a group of samples that should not pass curation",
+                            "(e.g. Specific Ig negative control samples)."
+                          )),
+                          tags$p(paste(
+                            "The average proportion of passing analytes and average sum intensity",
+                            "in this group of samples will be used as cut-off values;"
+                          )),
+                          tags$p(paste(
+                            "All spectra that have a proportion of passing analytes and a sum intensity",
+                            "higher than these cut-off values will pass spectra curation."
+                          ))
+                        )),
+                        trigger = "hover",
+                        placement = "right",
+                        html = "true")
+                  ),
+                  column(
+                    width = 6,
+                    selectizeInput(ns("cut_off_basis_total"),
+                                   "Base the spectra curation cut-off for the total Ig samples on:",
+                                   choices = c(""),
+                                   selected = NULL,
+                                   multiple = TRUE,
+                                   options = list(placeholder = "select which samples to use as a basis for cut-off")
+                    ) %>% 
+                      bsplus::bs_embed_popover(
+                        title = "Explanation",
+                        content = HTML(paste0(
+                          tags$p(paste(
+                            "Choose a group of samples that should not pass curation",
+                            "(e.g. Specific Ig negative control samples)."
+                          )),
+                          tags$p(paste(
+                            "The average proportion of passing analytes and average sum intensity",
+                            "in this group of samples will be used as cut-off values;"
+                          )),
+                          tags$p(paste(
+                            "All spectra that have a proportion of passing analytes and a sum intensity",
+                            "higher than these cut-off values will pass spectra curation."
+                          ))
+                        )),
+                        trigger = "hover",
+                        placement = "right",
+                        html = "true")
+                  )
+              ),
+              column(
+                width = 12,
+                tags$style(HTML(paste0("#",
+                                       ns("div_central_tendency_measure"),
+                  " .selectize-control{max-width: 200px;}"))),
+                div(id = ns("div_central_tendency_measure"),
+                    selectInput(ns("central_tendency_measure"),
+                                "Choose whether the cut-off values should be calculated with the mean or with the median:",
+                                choices = c("Mean", "Median"))),
                 numericInput(ns("sd_factor"),
                              "Choose what factor the standard deviation should be multiplied with:",
                              value = 3,
@@ -65,6 +134,24 @@ mod_spectra_curation_ui <- function(id){
                                              "Choose cut-off values manually instead",
                                              right = TRUE,
                                              status = "primary"),
+                column(
+                  width = 6,
+                  numericInput(ns("cut_off_sum_intensity_specific"),
+                               "Choose a cut-off value for the sum intensity in the specific Ig samples:",
+                               value = ""),
+                  numericInput(ns("cut_off_passing_proportion_specific"),
+                               "Choose a cut-off value for the percentage of passing analytes in the specific Ig samples:",
+                               value = ""),
+                ),
+                column(
+                  width = 6,
+                  numericInput(ns("cut_off_sum_intensity_total"),
+                               "Choose a cut-off value for the sum intensity in the total Ig samples:",
+                               value = ""),
+                  numericInput(ns("cut_off_passing_proportion_total"),
+                               "Choose a cut-off value for the percentage of passing analytes in the total Ig samples:",
+                               value = ""),
+                ),
                 numericInput(ns("cut_off_sum_intensity"),
                              "Choose a cut-off value for the sum intensity:",
                              value = ""),
@@ -77,25 +164,26 @@ mod_spectra_curation_ui <- function(id){
                              "Perform spectra curation")
               )
             )
-          ),
-          column(
-            width = 3,
-            div(
-              id = ns("qc"),
-              shinydashboard::box(
-                tags$style(
-                  HTML(paste0("#",
-                              ns("qc"),
-                              " .fa {float: right; margin-top: 3px}",
-                              "#",
-                              ns("qc"),
-                              " .box-title {width: 100%}"))
-                ),
-                title = span(
-                  "Analyte quality criteria",
-                  icon("info-circle",
-                       class = "ml",
-                       #tabindex = "0" #only needed for trigger = "focus"
+          )
+        ),
+        column(
+          width = 3,
+          div(
+            id = ns("qc"),
+            shinydashboard::box(
+              tags$style(
+                HTML(paste0("#",
+                            ns("qc"),
+                            " .fa {float: right; margin-top: 3px}",
+                            "#",
+                            ns("qc"),
+                            " .box-title {width: 100%}"))
+              ),
+              title = span(
+                "Analyte quality criteria",
+                icon("info-circle",
+                     class = "ml",
+                     #tabindex = "0" #only needed for trigger = "focus"
                        ) %>% 
                     bsplus::bs_embed_popover(
                       title = "Explanation",
@@ -189,11 +277,35 @@ mod_spectra_curation_server <- function(id, results_data_import){
     # Hide the cut_off_basis selectInput when manual_cut_off is chosen:
     observe({
       shinyjs::toggle("cut_off_sum_intensity",
-                      condition = is_truthy(input$switch_to_manual))
+                      condition = all(is_truthy(input$switch_to_manual),
+                                      results_data_import$Ig_data() == "No"))
       shinyjs::toggle("cut_off_passing_proportion",
-                      condition = is_truthy(input$switch_to_manual))
+                      condition = all(is_truthy(input$switch_to_manual),
+                                      results_data_import$Ig_data() == "No"))
+      
+      shinyjs::toggle("cut_off_sum_intensity_specific",
+                      condition = all(is_truthy(input$switch_to_manual),
+                                      results_data_import$Ig_data() == "Yes"))
+      
+      shinyjs::toggle("cut_off_passing_proportion_specific",
+                      condition = all(is_truthy(input$switch_to_manual),
+                                      results_data_import$Ig_data() == "Yes"))
+      
+      shinyjs::toggle("cut_off_sum_intensity_total",
+                      condition = all(is_truthy(input$switch_to_manual),
+                                      results_data_import$Ig_data() == "Yes"))
+      
+      shinyjs::toggle("cut_off_passing_proportion_total",
+                      condition = all(is_truthy(input$switch_to_manual),
+                                      results_data_import$Ig_data() == "Yes"))
     })
     
+    observe({
+      shinyjs::toggle("cut_off_basis_Ig_data",
+                      condition = results_data_import$Ig_data() == "Yes")
+      shinyjs::toggle("cut_off_basis",
+                      condition = results_data_import$Ig_data() == "No")
+    })
     
     clusters <- reactive({
       req(summary())
@@ -220,24 +332,116 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     cut_offs_based_on_samples <- reactive({
       req(summarized_checks(),
-          input$cut_off_basis,
-          input$sd_factor)
+          input$sd_factor,
+          any(all(results_data_import$Ig_data() == "No",
+                  is_truthy(input$cut_off_basis)),
+              all(results_data_import$Ig_data() == "Yes",
+                  is_truthy(input$cut_off_basis_specific),
+                  is_truthy(input$cut_off_basis_total))))
       
-      calculate_cut_offs(summarized_checks(),
-                         input$cut_off_basis,
-                         sd_factor = input$sd_factor,
-                         central_tendency_measure = input$central_tendency_measure) %>% 
-        dplyr::select(cluster,
-                      cut_off_prop,
-                      cut_off_sum_int)
+      if (results_data_import$Ig_data() == "Yes") {
+        
+        cut_offs_specific <- calculate_cut_offs(
+          summarized_checks(),
+          input$cut_off_basis_specific,
+          sd_factor = input$sd_factor,
+          central_tendency_measure = input$central_tendency_measure
+        )
+        
+        cut_offs_total <- calculate_cut_offs(
+          summarized_checks(),
+          input$cut_off_basis_total,
+          sd_factor = input$sd_factor,
+          central_tendency_measure = input$central_tendency_measure
+        )
+        
+        dplyr::full_join(cut_offs_specific,
+                         cut_offs_total)
+        
+      } else {
+        calculate_cut_offs(summarized_checks(),
+                           input$cut_off_basis,
+                           sd_factor = input$sd_factor,
+                           central_tendency_measure = input$central_tendency_measure)
+      }
     })
     
     manual_cut_offs <- reactive({
-      req(input$cut_off_sum_intensity,
-          input$cut_off_passing_proportion)
-      data.frame(cut_off_sum_int = input$cut_off_sum_intensity,
-                 cut_off_prop = input$cut_off_passing_proportion)
+      
+      if (results_data_import$Ig_data() == "Yes") {
+        req(input$cut_off_sum_intensity_specific,
+            input$cut_off_sum_intensity_total,
+            input$cut_off_passing_proportion_specific,
+            input$cut_off_passing_proportion_total)
+        
+        specific <- tibble::tibble(
+          cut_off_sum_int = input$cut_off_sum_intensity_specific,
+          cut_off_prop = input$cut_off_passing_proportion_specific,
+          group = results_data_import$keyword_specific(),
+          type = "manual"
+        )
+        
+        total <- tibble::tibble(
+          cut_off_sum_int = input$cut_off_sum_intensity_total,
+          cut_off_prop = input$cut_off_passing_proportion_total,
+          group = results_data_import$keyword_total(),
+          type = "manual"
+        )
+        
+        combined <- dplyr::full_join(specific, total)
+        
+        # Multiply rows of combined to get one row for each cluster
+        cut_offs <- purrr::map_dfr(clusters(),
+                                   function(this_cluster) {
+                                     combined %>% 
+                                       dplyr::mutate(cluster = this_cluster)
+                                   })
+        
+      } else {
+        req(input$cut_off_sum_intensity,
+            input$cut_off_passing_proportion)
+        
+        cut_offs_wo_cluster <- data.frame(cut_off_sum_int = input$cut_off_sum_intensity,
+                               cut_off_prop = input$cut_off_passing_proportion,
+                               type = "manual")
+        
+        cut_offs <- purrr::map_dfr(clusters(),
+                                   function(this_cluster) {
+                                     cut_offs_wo_cluster %>% 
+                                       dplyr::mutate(cluster = this_cluster)
+                                   })
+        
+      }
+      
+      return(cut_offs)
     })
+    
+    # all_cut_offs <- reactive({
+    #   
+    #   cut_offs <- NULL
+    #   
+    #   if(all(is_truthy(manual_cut_offs()),
+    #          is_truthy(cut_offs_based_on_samples()))) {
+    #     cut_offs <- dplyr::full_join(manual_cut_offs(), 
+    #                      cut_offs_based_on_samples())
+    #   } else {
+    #     if (is_truthy(cut_offs_based_on_samples())) {
+    #       cut_offs <- cut_offs_based_on_samples()
+    #     }
+    #     
+    #     if (is_truthy(manual_cut_offs())) {
+    #       cut_offs <- manual_cut_offs()
+    #     }
+    #   }
+    #   
+    #   return(cut_offs)
+    # })
+    # 
+    # observe({
+    #   req(all_cut_offs())
+    #   print("all_cut_offs():")
+    #   print(all_cut_offs())
+    # })
     
     cut_offs_to_use <- reactive({
       if (all(is_truthy(input$switch_to_manual),
@@ -249,6 +453,16 @@ mod_spectra_curation_server <- function(id, results_data_import){
       }
     })
     
+    # summarized_checks_with_cut_offs <- reactive({
+    #   req(summarized_checks(),
+    #       cut_offs_to_use())
+    #   
+    #   dplyr::full_join(
+    #     summarized_checks(),
+    #     cut_offs_to_use()
+    #   )
+    # })
+    
     observeEvent(clusters(), {
       # Remove tabs in case they have been created before. Still not ideal cause
       # if cluster names are changed then the old tabs won't be removed
@@ -257,7 +471,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                    removeTab("tabs",
                              target = cluster)
                  })
-      
+
       # Create one tab for each cluster:
       purrr::map(clusters(),
                  function(cluster) {
@@ -272,20 +486,31 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     observe({
       req(clusters())
-      req(summarized_checks())
+      req(is_truthy(summarized_checks()))
       purrr::map(
         clusters(),
         function(current_cluster) {
-          summarized_checks_filtered <- summarized_checks() %>% 
-            dplyr::filter(cluster == current_cluster)
-          
+
           mod_tab_cut_offs_server(id = current_cluster,
                                   selected_cluster = current_cluster,
-                                  summarized_checks = reactive({summarized_checks_filtered}),
-                                  cut_offs_based_on_samples = cut_offs_based_on_samples,
-                                  cut_off_basis = reactive({input$cut_off_basis}),
-                                  manual_cut_offs = manual_cut_offs,
-                                  switch_to_manual = reactive({input$switch_to_manual}))
+                                  summarized_checks = reactive({
+                                    summarized_checks() %>%
+                                      dplyr::filter(cluster == current_cluster
+                                                    )}),
+                                  switch_to_manual = reactive({input$switch_to_manual}),
+                                  Ig_data = results_data_import$Ig_data,
+                                  cut_offs_to_use = reactive({
+                                    cut_offs_to_use() %>% 
+                                      dplyr::filter(cluster == current_cluster)
+                                  }),
+                                  cut_offs_based_on_samples = reactive({
+                                    cut_offs_based_on_samples() %>% 
+                                      dplyr::filter(cluster == current_cluster)
+                                    }),
+                                  manual_cut_offs = reactive({
+                                    manual_cut_offs() %>% 
+                                      dplyr::filter(cluster == current_cluster)
+                                    }))
         })
     })
     
@@ -295,28 +520,32 @@ mod_spectra_curation_server <- function(id, results_data_import){
     # data.
     observe({
       req(summary())
-      if (results_data_import$Ig_data() == "Yes") {
-        combinations <- expand.grid(sample_type = unique(summary()$sample_type),
-                                    group = unique(summary()$group))
-        options <- purrr::pmap_chr(combinations,
-                                   function(sample_type, group) {
-                                     paste(group,
-                                           sample_type,
-                                           "samples")
-                                   })
+      if (results_data_import$Ig_data() == "No") {
+        options <- paste(unique(summary()$sample_type), "samples")
+        
+        updateSelectizeInput(inputId = "cut_off_basis",
+                             choices = c("", options))
+        
       } else {
-        options <- paste("all", unique(summary()$sample_type), "samples")
+        options_specific <- paste(results_data_import$keyword_specific(),
+                                  unique(summary()$sample_type),
+                                  "samples")
+        updateSelectizeInput(inputId = "cut_off_basis_specific",
+                             choices = c("", options_specific))
+        
+        options_total <- paste(results_data_import$keyword_total(),
+                               unique(summary()$sample_type),
+                               "samples")
+        updateSelectizeInput(inputId = "cut_off_basis_total",
+                             choices = c("", options_total))
       }
-      
-      updateSelectizeInput(inputId = "cut_off_basis",
-                           choices = c("", options))
     })
     
-    cut_offs_table <- reactive({
-      req(summarized_checks())
-      
-      calculate_cut_offs_per_type(summarized_checks())
-    })
+    # cut_offs_table <- reactive({
+    #   req(summarized_checks())
+    #   
+    #   calculate_cut_offs_per_type(summarized_checks())
+    # })
     
     # Perform spectra curation:
     curated_data <- reactive({
@@ -326,11 +555,11 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
       spectra_curated_data <- tryCatch(
         expr = { 
-          print("check1")
           curate_spectra(checked_data = checked_data(),
                          summarized_checks = summarized_checks(),
                          cut_offs = cut_offs_to_use())
         })
+      
       return(spectra_curated_data)
     }) %>% bindEvent(input$button)
     
@@ -355,13 +584,19 @@ mod_spectra_curation_server <- function(id, results_data_import){
       # to be shown in the legend, because plotly ignores legend labels that are
       # set with scale_ functions:
       my_data <- curated_data() %>% 
-        dplyr::distinct(dplyr::across(!(analyte:exact_mass)), .keep_all = TRUE) %>% 
+        dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
+                                                           "sample_type", 
+                                                           "cluster", 
+                                                           "sample_name", 
+                                                           "passed_spectra_curation")))) %>% 
         dplyr::mutate(
           `Passed curation?` = dplyr::case_when(
             passed_spectra_curation == "TRUE" ~ "Yes",
             passed_spectra_curation == "FALSE" ~ "No"
           )) %>% 
-        dplyr::group_by(dplyr::across(tidyselect::any_of(c("sample_type", "cluster", "group")))) %>% 
+        dplyr::group_by(dplyr::across(tidyselect::any_of(c("group",
+                                                           "cluster",
+                                                           "sample_type")))) %>% 
         dplyr::mutate(
           number_true = length(passed_spectra_curation[passed_spectra_curation == "TRUE"]),
           number_false = length(passed_spectra_curation[passed_spectra_curation == "FALSE"]),
@@ -371,7 +606,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
             TRUE ~ as.integer(NA)
           ),
           percentage = scales::label_percent(accuracy = 0.01)(number / dplyr::n())
-        ) 
+        )
       
       plot <- my_data %>% 
         ggplot2::ggplot() +

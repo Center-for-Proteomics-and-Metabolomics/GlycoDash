@@ -200,7 +200,18 @@ calculate_cut_offs <- function(spectra_check, cut_off_basis, sd_factor, central_
                      sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
                      cut_off_sum_int = dplyr::if_else(central_tendency_measure == "Mean", 
                                                       av_sum_int + (sd_factor * sd_sum_int),
-                                                      med_sum_int + (sd_factor * sd_sum_int)))
+                                                      med_sum_int + (sd_factor * sd_sum_int)),
+                     across(tidyselect::any_of(c("group", "sample_type")))) %>% 
+    dplyr::mutate(type = "based_on_samples") %>% 
+    dplyr::distinct() %>% 
+    dplyr::select(tidyselect::any_of(c("cluster",
+                                     "sample_type",
+                                     "group",
+                                     "cut_off_prop",
+                                     "cut_off_sum_int",
+                                     "type"))) %>% 
+    tidyr::nest(., "sample_type_list" = sample_type)
+  
   return(cut_offs)
 }
 
@@ -241,16 +252,19 @@ calculate_cut_offs <- function(spectra_check, cut_off_basis, sd_factor, central_
 #'                cut_off_basis = c("Spike PBS", "Total PBS"))
 curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
   
-  if ("cluster" %in% colnames(cut_offs)) {
-    summarized_checks <- dplyr::left_join(summarized_checks, 
-                                          cut_offs, 
-                                          by = "cluster") %>% 
-      dplyr::ungroup(.)
-  } else {
-    summarized_checks <- summarized_checks %>% 
-      dplyr::mutate(cut_off_sum_int = cut_offs$cut_off_sum_int,
-                    cut_off_prop = cut_offs$cut_off_prop)
-  }
+  # if ("cluster" %in% colnames(cut_offs)) {
+  #   summarized_checks <- dplyr::left_join(summarized_checks, 
+  #                                         cut_offs) %>% 
+  #     dplyr::ungroup(.)
+  # } else {
+  #   summarized_checks <- summarized_checks %>% 
+  #     dplyr::mutate(cut_off_sum_int = cut_offs$cut_off_sum_int,
+  #                   cut_off_prop = cut_offs$cut_off_prop)
+  # }
+  
+  summarized_checks <- dplyr::left_join(summarized_checks, 
+                                        cut_offs) %>% 
+    dplyr::ungroup(.)
   
   passing_spectra <- summarized_checks %>% 
     dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int)) %>%
@@ -259,7 +273,13 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
   curated_data <- dplyr::full_join(passing_spectra, 
                                    checked_data) %>% 
     dplyr::mutate(passed_spectra_curation = tidyr::replace_na(passed_spectra_curation, 
-                                                              FALSE))
+                                                              FALSE)) %>% 
+    dplyr::select(-tidyselect::any_of(c("type", 
+                                        "sample_type_list",
+                                        "cut_off_prop",
+                                        "cut_off_sum_int",
+                                        "sum_intensity",
+                                        "passing_proportion")))
   
   no_NAs <- curated_data %>% 
     dplyr::filter(dplyr::if_all(.cols = c(mass_accuracy_ppm,
@@ -384,7 +404,7 @@ filter_cut_off_basis <- function(cut_off_basis, data) {
 #' 
 #' create_cut_off_plot(spectra_check = spectra_curation$spectra_check,
 #'                     cut_off_basis = c("Spike PBS", "Total PBS"))
-create_cut_off_plot <- function(spectra_check, cut_off_basis) {
+create_cut_off_plot <- function(spectra_check) {
   
   n_colors <- length(unique(spectra_check$sample_type))
   my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
