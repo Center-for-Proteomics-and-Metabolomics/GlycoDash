@@ -385,7 +385,6 @@ filter_cut_off_basis <- function(cut_off_basis, data) {
 #'   \code{curate_spectra} returns two dataframes in a list. The dataframe that
 #'   should be passed as the \code{spectra_check} argument to
 #'   \code{create_cut_off_plot} is named "spectra_check".
-#' @inheritParams calculate_cut_offs
 #'
 #' @return This function returns a ggplot object.
 #' @export

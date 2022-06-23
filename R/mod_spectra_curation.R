@@ -17,7 +17,69 @@ mod_spectra_curation_ui <- function(id){
       ),
       fluidRow(
         column(
-          width = 9,
+          width = 4,
+          div(
+            id = ns("qc"),
+            shinydashboard::box(
+              tags$style(
+                HTML(paste0("#",
+                            ns("qc"),
+                            " .fa {float: right; margin-top: 3px}",
+                            "#",
+                            ns("qc"),
+                            " .box-title {width: 100%}"))
+              ),
+              title = span(
+                "Analyte quality criteria",
+                icon("info-circle",
+                     class = "ml",
+                     #tabindex = "0" #only needed for trigger = "focus"
+                ) %>% 
+                  bsplus::bs_embed_popover(
+                    title = "Explanation",
+                    content = HTML(paste0(
+                      tags$p(paste(
+                        "For each spectrum, analytes are curated based on",
+                        "the chosen criteria for the mass accuracy, the",
+                        "isotopic pattern quality (IPQ) and the signal-to-noise",
+                        "ratio (S/N)."
+                      )),
+                      tags$p(paste(
+                        "Next, the proportion of passing analytes and the sum intensity",
+                        "of the passing analytes within each spectrum are calculated."
+                      )),
+                      tags$p(paste(
+                        "This proportion and this sum intensity are then compared",
+                        "to the spectra curation cut-off values (see below) to decide",
+                        "whether a spectrum passes spectra curation."
+                      ))
+                    )),
+                    trigger = "hover",
+                    placement = "left",
+                    html = "true",
+                    container = "body")
+              ),
+              width = NULL,
+              status = "primary",
+              solidHeader = TRUE,
+              sliderInput(ns("mass_accuracy"), 
+                          "Acceptable mass accuracy range:",
+                          min = -50,
+                          max = 50,
+                          value = c(-20, 20)
+              ),
+              numericInput(ns("ipq"),
+                           "Max. IPQ value:",
+                           value = 0.2,
+                           step = 0.1),
+              numericInput(ns("sn"),
+                           "Min. S/N ratio:",
+                           value = 9)
+            )
+          )
+        ),
+        column(
+          width = 8,
           tags$style(HTML(paste0("#",
                                  ns("popover_cut_off"),
                                  " .popover{width: 400px !important;}"))),
@@ -58,8 +120,11 @@ mod_spectra_curation_ui <- function(id){
                     html = "true")
               ),
               div(id = ns("cut_off_basis_Ig_data"),
-                  column(
+                  shinydashboardPlus::box(
+                    title = "Specific Ig samples",
                     width = 6,
+                    status = "primary",
+                    solidHeader = TRUE,
                     selectizeInput(ns("cut_off_basis_specific"),
                                    "Base the spectra curation cut-off for the specific Ig samples on:",
                                    choices = c(""),
@@ -85,10 +150,19 @@ mod_spectra_curation_ui <- function(id){
                         )),
                         trigger = "hover",
                         placement = "right",
-                        html = "true")
+                        html = "true"),
+                    numericInput(ns("cut_off_sum_intensity_specific"),
+                                 "Enter a cut-off value for the sum intensity in the specific Ig samples:",
+                                 value = ""),
+                    numericInput(ns("cut_off_passing_proportion_specific"),
+                                 "Enter a cut-off value for the percentage of passing analytes in the specific Ig samples:",
+                                 value = "")
                   ),
-                  column(
+                  shinydashboardPlus::box(
+                    title = "Total Ig samples",
                     width = 6,
+                    status = "primary",
+                    solidHeader = TRUE,
                     selectizeInput(ns("cut_off_basis_total"),
                                    "Base the spectra curation cut-off for the total Ig samples on:",
                                    choices = c(""),
@@ -114,7 +188,13 @@ mod_spectra_curation_ui <- function(id){
                         )),
                         trigger = "hover",
                         placement = "right",
-                        html = "true")
+                        html = "true"),
+                    numericInput(ns("cut_off_sum_intensity_total"),
+                                 "Enter a cut-off value for the sum intensity in the total Ig samples:",
+                                 value = ""),
+                    numericInput(ns("cut_off_passing_proportion_total"),
+                                 "Enter a cut-off value for the percentage of passing analytes in the total Ig samples:",
+                                 value = "")
                   )
               ),
               column(
@@ -134,29 +214,11 @@ mod_spectra_curation_ui <- function(id){
                                              "Choose cut-off values manually instead",
                                              right = TRUE,
                                              status = "primary"),
-                column(
-                  width = 6,
-                  numericInput(ns("cut_off_sum_intensity_specific"),
-                               "Choose a cut-off value for the sum intensity in the specific Ig samples:",
-                               value = ""),
-                  numericInput(ns("cut_off_passing_proportion_specific"),
-                               "Choose a cut-off value for the percentage of passing analytes in the specific Ig samples:",
-                               value = ""),
-                ),
-                column(
-                  width = 6,
-                  numericInput(ns("cut_off_sum_intensity_total"),
-                               "Choose a cut-off value for the sum intensity in the total Ig samples:",
-                               value = ""),
-                  numericInput(ns("cut_off_passing_proportion_total"),
-                               "Choose a cut-off value for the percentage of passing analytes in the total Ig samples:",
-                               value = ""),
-                ),
                 numericInput(ns("cut_off_sum_intensity"),
-                             "Choose a cut-off value for the sum intensity:",
+                             "Enter a cut-off value for the sum intensity:",
                              value = ""),
                 numericInput(ns("cut_off_passing_proportion"),
-                             "Choose a cut-off value for the percentage of passing analytes:",
+                             "Enter a cut-off value for the percentage of passing analytes:",
                              value = ""),
                 tabsetPanel(id = ns("tabs")),
                 br(),
@@ -165,69 +227,7 @@ mod_spectra_curation_ui <- function(id){
               )
             )
           )
-        ),
-        column(
-          width = 3,
-          div(
-            id = ns("qc"),
-            shinydashboard::box(
-              tags$style(
-                HTML(paste0("#",
-                            ns("qc"),
-                            " .fa {float: right; margin-top: 3px}",
-                            "#",
-                            ns("qc"),
-                            " .box-title {width: 100%}"))
-              ),
-              title = span(
-                "Analyte quality criteria",
-                icon("info-circle",
-                     class = "ml",
-                     #tabindex = "0" #only needed for trigger = "focus"
-                       ) %>% 
-                    bsplus::bs_embed_popover(
-                      title = "Explanation",
-                      content = HTML(paste0(
-                        tags$p(paste(
-                          "For each spectrum, analytes are curated based on",
-                          "the chosen criteria for the mass accuracy, the",
-                          "isotopic pattern quality (IPQ) and the signal-to-noise",
-                          "ratio (S/N)."
-                        )),
-                        tags$p(paste(
-                          "Next, the proportion of passing analytes and the sum intensity",
-                          "of the passing analytes within each spectrum are calculated."
-                        )),
-                        tags$p(paste(
-                          "This proportion and this sum intensity are then compared",
-                          "to the spectra curation cut-off values (see below) to decide",
-                          "whether a spectrum passes spectra curation."
-                        ))
-                      )),
-                      trigger = "hover",
-                      placement = "left",
-                      html = "true",
-                      container = "body")
-                ),
-                width = NULL,
-                status = "primary",
-                solidHeader = TRUE,
-                sliderInput(ns("mass_accuracy"), 
-                            "Acceptable mass accuracy range:",
-                            min = -50,
-                            max = 50,
-                            value = c(-20, 20)
-                ),
-                numericInput(ns("ipq"),
-                             "Max. IPQ value:",
-                             value = 0.2,
-                             step = 0.1),
-                numericInput(ns("sn"),
-                             "Min. S/N ratio:",
-                             value = 9)
-              )
-            )
-          )
+        )
       ),
       fluidRow(
         column(
@@ -416,33 +416,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
       return(cut_offs)
     })
     
-    # all_cut_offs <- reactive({
-    #   
-    #   cut_offs <- NULL
-    #   
-    #   if(all(is_truthy(manual_cut_offs()),
-    #          is_truthy(cut_offs_based_on_samples()))) {
-    #     cut_offs <- dplyr::full_join(manual_cut_offs(), 
-    #                      cut_offs_based_on_samples())
-    #   } else {
-    #     if (is_truthy(cut_offs_based_on_samples())) {
-    #       cut_offs <- cut_offs_based_on_samples()
-    #     }
-    #     
-    #     if (is_truthy(manual_cut_offs())) {
-    #       cut_offs <- manual_cut_offs()
-    #     }
-    #   }
-    #   
-    #   return(cut_offs)
-    # })
-    # 
-    # observe({
-    #   req(all_cut_offs())
-    #   print("all_cut_offs():")
-    #   print(all_cut_offs())
-    # })
-    
     cut_offs_to_use <- reactive({
       if (all(is_truthy(input$switch_to_manual),
               is_truthy(manual_cut_offs()))) {
@@ -452,16 +425,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
         cut_offs_based_on_samples()
       }
     })
-    
-    # summarized_checks_with_cut_offs <- reactive({
-    #   req(summarized_checks(),
-    #       cut_offs_to_use())
-    #   
-    #   dplyr::full_join(
-    #     summarized_checks(),
-    #     cut_offs_to_use()
-    #   )
-    # })
     
     observeEvent(clusters(), {
       # Remove tabs in case they have been created before. Still not ideal cause
