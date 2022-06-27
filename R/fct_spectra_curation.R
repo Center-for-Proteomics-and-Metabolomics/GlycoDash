@@ -50,16 +50,25 @@ do_criteria_check <- function(data,
     stop("The data doesn't contain the required columns with the quality criteria.")
   }
   
-  mass_acc_check <- dplyr::between(data$mass_accuracy_ppm, 
-                                   min_ppm_deviation, 
-                                   max_ppm_deviation)
-  IPQ_check <- data$isotopic_pattern_quality < max_ipq
-  sn_check <- data$sn > min_sn
-  all_checks <- (mass_acc_check & IPQ_check & sn_check) %>% 
-    tidyr::replace_na(., FALSE)
-  
   data_checked <- data %>% 
-    dplyr::mutate(criteria_check = all_checks)
+    dplyr::mutate(`mass accuracy` = dplyr::between(data_complete$mass_accuracy_ppm, 
+                                            min_ppm_deviation, 
+                                            max_ppm_deviation),
+                  IPQ = data_complete$isotopic_pattern_quality < max_ipq,
+                  `S/N` = data_complete$sn > min_sn,
+                  criteria_check = (`mass accuracy` & IPQ & `S/N`) %>% 
+                    tidyr::replace_na(., FALSE)) %>% 
+    tidyr::pivot_longer(cols = c(`mass accuracy`, IPQ, `S/N`),
+                        names_to = "criterium",
+                        values_to = "passed") %>% 
+    dplyr::mutate(failed_criteria = ifelse(passed == FALSE, criterium, NA)) %>% 
+    dplyr::select(-c(criterium, passed)) %>% 
+    dplyr::group_by(sample_name, analyte, charge) %>% 
+    dplyr::summarise(failed_criteria = dplyr::if_else(all(is.na(failed_criteria)),
+                                                      "none",
+                                                      comma_and(unique(failed_criteria[!is.na(failed_criteria)]))),
+    across()) %>% 
+    dplyr::distinct()
   
   return(data_checked)
 }
@@ -267,19 +276,35 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
     dplyr::ungroup(.)
   
   passing_spectra <- summarized_checks %>% 
-    dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int)) %>%
-    dplyr::mutate(passed_spectra_curation = TRUE)
+    dplyr::mutate(passed_spectra_curation = ifelse((passing_proportion > cut_off_prop) &
+                                                     (sum_intensity > cut_off_sum_int),
+                                                   TRUE,
+                                                   FALSE),
+                  reason_for_failure = dplyr::case_when(
+                    passing_proportion < cut_off_prop & sum_intensity < cut_off_sum_int ~ "Proportion of passing analytes and sum intensity below cut-offs",
+                    passing_proportion < cut_off_prop ~ "Proportion of passing analytes below cut-off",
+                    sum_intensity < cut_off_sum_int ~ "Sum intensity below cut-off",
+                    TRUE ~ ""
+                  )) %>%
+    dplyr::select(-tidyselect::any_of(c("type", 
+                                        "sample_type_list")))
   
   curated_data <- dplyr::full_join(passing_spectra, 
                                    checked_data) %>% 
-    dplyr::mutate(passed_spectra_curation = tidyr::replace_na(passed_spectra_curation, 
-                                                              FALSE)) %>% 
-    dplyr::select(-tidyselect::any_of(c("type", 
-                                        "sample_type_list",
-                                        "cut_off_prop",
-                                        "cut_off_sum_int",
-                                        "sum_intensity",
-                                        "passing_proportion")))
+    dplyr::mutate(reason_for_failure = dplyr::case_when(
+      is.na(absolute_intensity_background_subtracted) &
+        is.na(mass_accuracy_ppm) &
+        is.na(isotopic_pattern_quality) &
+        is.na(sn) ~ "Empty line in LacyTools summary file",
+      TRUE ~ reason_for_failure
+    )) %>% 
+    dplyr::relocate(c(passed_spectra_curation, reason_for_failure), 
+                    .after = sample_name) %>% 
+    dplyr::relocate(c(criteria_check,
+                      failed_criteria),
+                    .after = charge) %>% 
+    dplyr::relocate(c(sample_id, plate_well),
+                    .after = sample_name)
   
   no_NAs <- curated_data %>% 
     dplyr::filter(dplyr::if_all(.cols = c(mass_accuracy_ppm,
