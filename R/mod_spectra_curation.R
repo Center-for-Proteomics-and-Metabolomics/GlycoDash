@@ -285,8 +285,17 @@ mod_spectra_curation_ui <- function(id){
             status = "primary",
             plotly::plotlyOutput(ns("curated_spectra_plot")),
             br(),
-            DT::dataTableOutput(ns("failed_spectra_table"))
+            tabsetPanel(
+              tabPanel(title = "Overview of failed spectra",
+                       column(width = 12,
+                              br(),
+                              DT::dataTableOutput(ns("failed_spectra_table")))),
+              tabPanel(title = "Details of failed spectra per analyte",
+                       column(width = 12,
+                              br(),
+                              DT::dataTableOutput(ns("failed_spectra_details"))))
             )
+          )
         ),
         column(
           width = 4,
@@ -306,7 +315,7 @@ mod_spectra_curation_ui <- function(id){
     )
   )
 }
-    
+
 #' spectra_curation Server Functions
 #'
 #' @noRd 
@@ -591,6 +600,19 @@ mod_spectra_curation_server <- function(id, results_data_import){
                       dplyr::filter(passed_spectra_curation == FALSE),
                     options = list(scrollX = TRUE,
                                    filter = "top"))
+      
+    })
+    
+    output$failed_spectra_details <- DT::renderDataTable({
+      
+      req(curated_data())
+      
+      DT::datatable(curated_data()%>% 
+                      dplyr::select(-(passing_proportion:cut_off_sum_int)) %>% 
+                      dplyr::distinct() %>% 
+                      dplyr::filter(passed_spectra_curation == FALSE),
+                    options = list(scrollX = TRUE,
+                                   searching = TRUE))
       
     })
     
