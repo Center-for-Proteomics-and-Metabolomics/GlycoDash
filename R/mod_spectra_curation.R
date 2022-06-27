@@ -17,68 +17,6 @@ mod_spectra_curation_ui <- function(id){
       ),
       fluidRow(
         column(
-          width = 4,
-          div(
-            id = ns("qc"),
-            shinydashboard::box(
-              tags$style(
-                HTML(paste0("#",
-                            ns("qc"),
-                            " .fa {float: right; margin-top: 3px}",
-                            "#",
-                            ns("qc"),
-                            " .box-title {width: 100%}"))
-              ),
-              title = span(
-                "Analyte quality criteria",
-                icon("info-circle",
-                     class = "ml",
-                     #tabindex = "0" #only needed for trigger = "focus"
-                ) %>% 
-                  bsplus::bs_embed_popover(
-                    title = "Explanation",
-                    content = HTML(paste0(
-                      tags$p(paste(
-                        "For each spectrum, analytes are curated based on",
-                        "the chosen criteria for the mass accuracy, the",
-                        "isotopic pattern quality (IPQ) and the signal-to-noise",
-                        "ratio (S/N)."
-                      )),
-                      tags$p(paste(
-                        "Next, the proportion of passing analytes and the sum intensity",
-                        "of the passing analytes within each spectrum are calculated."
-                      )),
-                      tags$p(paste(
-                        "This proportion and this sum intensity are then compared",
-                        "to the spectra curation cut-off values (see below) to decide",
-                        "whether a spectrum passes spectra curation."
-                      ))
-                    )),
-                    trigger = "hover",
-                    placement = "left",
-                    html = "true",
-                    container = "body")
-              ),
-              width = NULL,
-              status = "primary",
-              solidHeader = TRUE,
-              sliderInput(ns("mass_accuracy"), 
-                          "Acceptable mass accuracy range:",
-                          min = -50,
-                          max = 50,
-                          value = c(-20, 20)
-              ),
-              numericInput(ns("ipq"),
-                           "Max. IPQ value:",
-                           value = 0.2,
-                           step = 0.1),
-              numericInput(ns("sn"),
-                           "Min. S/N ratio:",
-                           value = 9)
-            )
-          )
-        ),
-        column(
           width = 8,
           tags$style(HTML(paste0("#",
                                  ns("popover_cut_off"),
@@ -103,13 +41,13 @@ mod_spectra_curation_ui <- function(id){
               " .direct-chat-contacts {right: 0; background: #222d32!important}",
               "#",
               ns("box_header"),
-              " .btn {float: right; border-width: 0px; margin-right: 10px}",
+              " .btn {float: right; border-width: 0px; margin-right: 0px}",
               "#",
               ns("popover_cut_off"),
               " .dropdown {display: inline-block; float: right; width: 330px}",
               "#",
               ns("box_header"),
-              " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+              " .dropdown-menu {background: #333; right: -10px; left: auto; top: 28px;}"
             ))
             ),
             shinydashboard::box(
@@ -256,17 +194,6 @@ mod_spectra_curation_ui <- function(id){
               ),
               column(
                 width = 12,
-                # tags$style(HTML(paste0("#",
-                #                        ns("div_central_tendency_measure"),
-                #   " .selectize-control{max-width: 200px;}"))),
-                # div(id = ns("div_central_tendency_measure"),
-                #     selectInput(ns("central_tendency_measure"),
-                #                 "Choose whether the cut-off values should be calculated with the mean or with the median:",
-                #                 choices = c("Mean", "Median"))),
-                # numericInput(ns("sd_factor"),
-                #              "Choose what factor the standard deviation should be multiplied with:",
-                #              value = 3,
-                #              step = 1),
                 shinyWidgets::materialSwitch(ns("switch_to_manual"),
                                              "Choose cut-off values manually instead",
                                              right = TRUE,
@@ -284,22 +211,85 @@ mod_spectra_curation_ui <- function(id){
               )
             )
           )
+        ),
+        column(
+          width = 4,
+          div(
+            id = ns("qc"),
+            shinydashboard::box(
+              tags$style(
+                HTML(paste0("#",
+                            ns("qc"),
+                            " .fa {float: right; margin-top: 3px}",
+                            "#",
+                            ns("qc"),
+                            " .box-title {width: 100%}"))
+              ),
+              title = span(
+                "Analyte quality criteria",
+                icon("info-circle",
+                     class = "ml",
+                     #tabindex = "0" #only needed for trigger = "focus"
+                ) %>% 
+                  bsplus::bs_embed_popover(
+                    title = "Explanation",
+                    content = HTML(paste0(
+                      tags$p(paste(
+                        "For each spectrum, analytes are curated based on",
+                        "the chosen criteria for the mass accuracy, the",
+                        "isotopic pattern quality (IPQ) and the signal-to-noise",
+                        "ratio (S/N)."
+                      )),
+                      tags$p(paste(
+                        "Next, the proportion of passing analytes and the sum intensity",
+                        "of the passing analytes within each spectrum are calculated."
+                      )),
+                      tags$p(paste(
+                        "This proportion and this sum intensity are then compared",
+                        "to the spectra curation cut-off values (see below) to decide",
+                        "whether a spectrum passes spectra curation."
+                      ))
+                    )),
+                    trigger = "hover",
+                    placement = "left",
+                    html = "true",
+                    container = "body")
+              ),
+              width = NULL,
+              status = "primary",
+              solidHeader = TRUE,
+              sliderInput(ns("mass_accuracy"), 
+                          "Acceptable mass accuracy range:",
+                          min = -50,
+                          max = 50,
+                          value = c(-20, 20)
+              ),
+              numericInput(ns("ipq"),
+                           "Max. IPQ value:",
+                           value = 0.2,
+                           step = 0.1),
+              numericInput(ns("sn"),
+                           "Min. S/N ratio:",
+                           value = 9)
+            )
+          )
         )
       ),
       fluidRow(
         column(
-          width = 9,
+          width = 8,
           shinydashboard::box(
             title = "Information on spectra curation",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            plotly::plotlyOutput(ns("curated_spectra_plot"))#,
-            #DT::dataTableOutput(ns( ))
+            plotly::plotlyOutput(ns("curated_spectra_plot")),
+            br(),
+            DT::dataTableOutput(ns("failed_spectra_table"))
             )
         ),
         column(
-          width = 3,
+          width = 4,
           shinydashboard::box(
             title = "Export results",
             width = NULL,
@@ -561,12 +551,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
       }
     })
     
-    # cut_offs_table <- reactive({
-    #   req(summarized_checks())
-    #   
-    #   calculate_cut_offs_per_type(summarized_checks())
-    # })
-    
     # Perform spectra curation:
     curated_data <- reactive({
       req(summary(),
@@ -595,6 +579,21 @@ mod_spectra_curation_server <- function(id, results_data_import){
         dplyr::filter(passed_spectra_curation == TRUE) %>% 
         dplyr::select(-passed_spectra_curation)
     })
+    
+    
+    output$failed_spectra_table <- DT::renderDataTable({
+      
+      req(curated_data())
+      
+      DT::datatable(curated_data()%>% 
+                      dplyr::select(group:cut_off_sum_int) %>% 
+                      dplyr::distinct() %>% 
+                      dplyr::filter(passed_spectra_curation == FALSE),
+                    options = list(scrollX = TRUE,
+                                   filter = "top"))
+      
+    })
+    
     
     curated_spectra_plot <- reactive({
       req(curated_data())
