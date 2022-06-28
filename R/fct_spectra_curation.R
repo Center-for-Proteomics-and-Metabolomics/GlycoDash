@@ -51,11 +51,11 @@ do_criteria_check <- function(data,
   }
   
   data_checked <- data %>% 
-    dplyr::mutate(`mass accuracy` = dplyr::between(data_complete$mass_accuracy_ppm, 
+    dplyr::mutate(`mass accuracy` = dplyr::between(data$mass_accuracy_ppm, 
                                             min_ppm_deviation, 
                                             max_ppm_deviation),
-                  IPQ = data_complete$isotopic_pattern_quality < max_ipq,
-                  `S/N` = data_complete$sn > min_sn,
+                  IPQ = data$isotopic_pattern_quality < max_ipq,
+                  `S/N` = data$sn > min_sn,
                   criteria_check = (`mass accuracy` & IPQ & `S/N`) %>% 
                     tidyr::replace_na(., FALSE)) %>% 
     tidyr::pivot_longer(cols = c(`mass accuracy`, IPQ, `S/N`),
