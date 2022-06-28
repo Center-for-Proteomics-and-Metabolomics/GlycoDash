@@ -83,10 +83,14 @@ mod_data_import_server <- function(id){
           if (is_truthy(data_incl_sample_types())) {
             show_in_table <- data_incl_sample_types()
           } else { 
-            if (is_truthy(data_incl_sample_ids())) {
-              show_in_table <- data_incl_sample_ids()
+            if (is_truthy(data_incl_sample_ids$data())) {
+              show_in_table <- data_incl_sample_ids$data()
+              showNotification("The sample ID's were added to the data",
+                               type = "message")
             } else {
               show_in_table <- summary$data()
+              showNotification("The LacyTools summary has been loaded.",
+                               type = "message")
             } 
           }
         }
@@ -95,7 +99,7 @@ mod_data_import_server <- function(id){
       DT::datatable(show_in_table,
                     options = list(scrollX = TRUE),
                     filter = "top")
-    })
+    }) %>% bindEvent(summary$button(), data_incl_sample_ids$button())
     
     to_return <- reactive({
       if (is_truthy(data_incl_metadata())) {

@@ -48,9 +48,11 @@ mod_process_plate_design_ui <- function(id,
 #' process_plate_design Server Functions
 #'
 #' @noRd 
-mod_process_plate_design_server <- function(id, allowed, with_info_icon){
+mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    r <- reactiveValues()
     
     observe({
       shinyjs::toggle("info_icon_div",
@@ -73,13 +75,17 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon){
                                     text = wrong_extension_warning)
     })
     
-    plate_design <- reactive({
-      #req(input$file)
+    observe({
+      shinyjs::reset("file")
+      r$plate_design <- NULL
+    }) %>% bindEvent(reset$resetter > 0)
+    
+    observe({
       req(extension() %in% allowed)
       
       shinyFeedback::hideFeedback("file")
       
-      plate_design <- tryCatch(
+      r$plate_design <- tryCatch(
         expr = {
           read_and_process_plate_design(input$file$datapath)
         },
@@ -110,9 +116,10 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon){
           )
         }
       )
-    })
+      
+    }) %>% bindEvent(input$file$datapath)
     
-    return(plate_design)
+    return(reactive({r$plate_design}))
     
   })
 }

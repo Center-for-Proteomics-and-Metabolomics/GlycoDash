@@ -43,7 +43,7 @@ mod_read_lacytools_ui <- function(id){
             trigger = "hover",
             placement = "right")
     ),
-    actionButton(ns("read_summary"),
+    actionButton(ns("button"),
                  "Load the LacyTools summary file")
   )
 }
@@ -212,7 +212,7 @@ mod_read_lacytools_server <- function(id){
       return(summary)
     })
     
-    to_return <- eventReactive(input$read_summary, {
+    to_return <- reactive({
       req(lacytools_summary())
       summary <- tryCatch(lacytools_summary_Ig_data(),
                           error = function(e) {
@@ -221,13 +221,9 @@ mod_read_lacytools_server <- function(id){
       return(summary)
     })
     
-    observe({
-      showNotification("The LacyTools summary has been loaded.",
-                       type = "message")
-    }) %>% bindEvent(to_return())
-    
     return(list(
       data = to_return,
+      button = reactive({input$button}),
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
       Ig_data = reactive({input$Ig_data})

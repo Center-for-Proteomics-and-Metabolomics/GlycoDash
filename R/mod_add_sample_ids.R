@@ -196,7 +196,7 @@ mod_add_sample_ids_ui <- function(id){
       fluidRow(
         column(
           width = 12,
-          actionButton(ns("add_sample_ids"), 
+          actionButton(ns("button"), 
                        "Add sample ID's to the data")
         ))
       ),
@@ -230,16 +230,24 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
                       ))
     })
     
+    r <- reactiveValues(resetter = 0)
+    
+    observe({
+      r$resetter <- isolate(r$resetter) + 1
+    }) %>% bindEvent(summary())
+    
     plate_design <- mod_process_plate_design_server(
       id = "plate_design",
       allowed = c("xlsx", "xls"),
-      with_info_icon = TRUE
+      with_info_icon = TRUE,
+      reset = r
     )
     
     plate_design_specific <- mod_process_plate_design_server(
       id = "plate_design_specific",
       allowed = c("xlsx", "xls"),
-      with_info_icon = TRUE
+      with_info_icon = TRUE,
+      reset = r
     )
     
     plate_design_specific_with_group <- reactive({
@@ -253,7 +261,8 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     plate_design_total <- mod_process_plate_design_server(
       id = "plate_design_total",
       allowed = c("xlsx", "xls"),
-      with_info_icon = FALSE
+      with_info_icon = FALSE,
+      reset = r
     )
     
     plate_design_total_with_group <- reactive({
@@ -308,15 +317,6 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
                            condition = is_truthy(data_with_sample_ids()))
     })
     
-    to_return <- eventReactive(input$add_sample_ids, {
-      data_with_sample_ids()
-    })
-    
-    observe({
-      showNotification("The sample ID's were added to the data",
-                       type = "message")
-    }) %>% bindEvent(to_return())
-    
     output$download_ex_plate_design <- downloadHandler(
       filename = "Example plate design file.xlsx",
       content = function(file) {
@@ -339,7 +339,10 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
       }
     )
     
-    return(to_return)
+    return(list(
+      data = data_with_sample_ids,
+      button = reactive({ input$button })
+    ))
     
   })
 }
