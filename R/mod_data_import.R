@@ -60,8 +60,14 @@ mod_data_import_server <- function(id){
                                                       Ig_data = summary$Ig_data,
                                                       summary = summary$data)
     
+    observe({
+      print("data_incl_sampled_ids$data()")
+      print(is_truthy(data_incl_sample_ids$data()))
+      print(req(data_incl_sample_ids$data()))
+    })
+    
     data_incl_sample_types <- mod_add_sample_types_server("add_sample_types_ui_1",
-                                                          summary = data_incl_sample_ids)
+                                                          summary = data_incl_sample_ids$data)
     
     data_incl_clusters <- mod_clusters_server("clusters_ui_1",
                                               summary = data_incl_sample_types)
@@ -80,8 +86,10 @@ mod_data_import_server <- function(id){
         if (is_truthy(data_incl_clusters())) {
           show_in_table <- data_incl_clusters()
         } else {
-          if (is_truthy(data_incl_sample_types())) {
-            show_in_table <- data_incl_sample_types()
+          if (is_truthy(data_incl_sample_types$data())) {
+            show_in_table <- data_incl_sample_types$data()
+            showNotification("The sample types were added to the data",
+                             type = "message")
           } else { 
             if (is_truthy(data_incl_sample_ids$data())) {
               show_in_table <- data_incl_sample_ids$data()
@@ -99,7 +107,10 @@ mod_data_import_server <- function(id){
       DT::datatable(show_in_table,
                     options = list(scrollX = TRUE),
                     filter = "top")
-    }) %>% bindEvent(summary$button(), data_incl_sample_ids$button())
+    }) %>% bindEvent(summary$button(), 
+                     data_incl_sample_ids$button(),
+                     data_incl_sample_types$button(),
+                     data_incl_sample_types$popup())
     
     to_return <- reactive({
       if (is_truthy(data_incl_metadata())) {

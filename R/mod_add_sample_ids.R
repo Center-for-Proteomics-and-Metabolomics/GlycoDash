@@ -283,7 +283,8 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     
     sample_list <- mod_process_sample_list_server(
       id = "sample_list",
-      allowed = c("xlsx", "xls")
+      allowed = c("xlsx", "xls"),
+      reset = r
     )
     
     data_with_sample_ids <- reactive({
@@ -313,7 +314,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     # This observe call ensures that the add_sample_ids actionButton is only
     # enabled under the right circumstances
     observe({
-      shinyjs::toggleState("add_sample_ids",
+      shinyjs::toggleState("button",
                            condition = is_truthy(data_with_sample_ids()))
     })
     

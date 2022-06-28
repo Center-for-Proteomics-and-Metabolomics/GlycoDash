@@ -74,7 +74,7 @@ mod_read_lacytools_server <- function(id){
     # provided all required inputs:
     observe({
       shinyjs::toggleState(
-        id = "read_summary",
+        id = "button",
         condition = any(
           all(
             input$Ig_data == "No",

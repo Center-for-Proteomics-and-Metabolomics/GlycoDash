@@ -47,7 +47,7 @@ mod_process_sample_list_ui <- function(id,
 #' process_sample_list Server Functions
 #'
 #' @noRd 
-mod_process_sample_list_server <- function(id, allowed){
+mod_process_sample_list_server <- function(id, allowed, reset){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -67,12 +67,20 @@ mod_process_sample_list_server <- function(id, allowed){
                                     text = wrong_extension_warning)
     })
     
-    sample_list <- reactive({
+    r <- reactiveValues()
+    
+    observe({
+      shinyjs::reset("file")
+      r$sample_list <- NULL
+    }) %>% bindEvent(reset$resetter > 0)
+    
+    
+    observe({
       req(input$file)
       
       shinyFeedback::hideFeedback("file")
       
-      sample_list <- tryCatch(
+      r$sample_list <- tryCatch(
         expr = {
           process_sample_list(input$file$datapath)
         },
@@ -93,12 +101,12 @@ mod_process_sample_list_server <- function(id, allowed){
             duration = NULL
           )
           
-        })  
-      
-      return(sample_list)
+          NULL
+          
+        })
     })
     
-    return(sample_list)
+    return(reactive({r$sample_list}))
     
   })
 }

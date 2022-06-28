@@ -158,16 +158,36 @@ mod_add_sample_types_server <- function(id, summary){
                            ))
     })
     
-    with_auto_sample_types <- reactive({
+    r <- reactiveValues()
+    
+    observe({
+      r$with_auto_sample_types <- NULL
+      shinyjs::reset("popup")
+      print("r$with_auto_sample_types was reset")
+    }) %>% bindEvent(!is_truthy(summary()))
+    
+    
+    observe({
       req(summary(),
           input$method == "Automatically determine sample types based on sample ID's")
       
-      summary() %>% 
+      r$with_auto_sample_types <- summary() %>% 
         tidyr::extract(col = sample_id,
                        into = c("sample_type"),
                        regex = "([[:alpha:]]+)",
                        remove = FALSE)
     })
+    
+    # with_auto_sample_types <- reactive({
+    #   req(summary(),
+    #       input$method == "Automatically determine sample types based on sample ID's")
+    #   
+    #   summary() %>% 
+    #     tidyr::extract(col = sample_id,
+    #                    into = c("sample_type"),
+    #                    regex = "([[:alpha:]]+)",
+    #                    remove = FALSE)
+    # })
     
     manual_sample_types <- mod_process_sample_type_file_server("process_sample_type_file_ui_1",
                                                                allowed = c("rds", "xlsx", "xls"))
@@ -184,14 +204,14 @@ mod_add_sample_types_server <- function(id, summary){
     # Show popup with automatically determined sample types if automatic method
     # is chosen and button is clicked:
     observe({
-      req(with_auto_sample_types())
+      req(r$with_auto_sample_types)
       
       shinyalert::shinyalert(
         inputId = "popup",
         html = TRUE,
         text = tagList(
           paste("Based on the sample IDs the following",
-                length(unique(with_auto_sample_types()$sample_type)),
+                length(unique(r$with_auto_sample_types$sample_type)),
                 "sample types were defined:"),
           DT::dataTableOutput(ns("popup_table"))
         ),
@@ -206,7 +226,7 @@ mod_add_sample_types_server <- function(id, summary){
     # This datatable with the automatically determined sample_types is shown in
     # the pop-up:
     output$popup_table <- DT::renderDataTable({
-      sample_types <- data.frame(unique(isolate(with_auto_sample_types()$sample_type)))
+      sample_types <- data.frame(unique(isolate(r$with_auto_sample_types$sample_type)))
       DT::datatable(sample_types,
                     options = list(
                       scrollY = "150px",
@@ -233,19 +253,21 @@ mod_add_sample_types_server <- function(id, summary){
     to_return <- reactive({
       if (input$method == "Automatically determine sample types based on sample ID's") {
         req(input$popup)
-        with_auto_sample_types()
+        r$with_auto_sample_types
         
       } else {
         req(with_manual_sample_types())
         with_manual_sample_types()
       }
-    }) %>% bindEvent(input$button,
-                     input$popup)
+    }) #%>% bindEvent(input$button,
+    #                  input$popup)
     
     observe({
-      showNotification("The sample types were added to the data",
-                       type = "message")
-    }) %>% bindEvent(to_return())
+      print("to_return():")
+      print(is_truthy(to_return()))
+      print(req(to_return()))
+    })
+    
     
     output$download_ex_sample_types <- downloadHandler(
       filename = "Example sample types file.xlsx",
@@ -258,7 +280,11 @@ mod_add_sample_types_server <- function(id, summary){
       }
     )
     
-    return(to_return)
+    return(list(
+      data = to_return,
+      button = reactive({input$button}),
+      popup = reactive({input$popup})
+      ))
     
   })
 }

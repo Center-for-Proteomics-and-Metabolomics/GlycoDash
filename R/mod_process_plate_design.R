@@ -101,6 +101,8 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
             type = "error",
             duration = NULL
           )
+          
+          NULL
         },
         incorrect_formatting = function(c) {
           shinyFeedback::feedbackDanger("file",
@@ -114,10 +116,12 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
             type = "error",
             duration = NULL
           )
+          
+          NULL
         }
       )
       
-    }) %>% bindEvent(input$file$datapath)
+    }) #%>% bindEvent(input$file$datapath)
     
     return(reactive({r$plate_design}))
     
