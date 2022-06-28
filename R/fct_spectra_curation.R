@@ -123,7 +123,7 @@ summarize_spectra_checks <- function(data_checked) {
                 "."))
   }
   
-  grouping_variables <- c("group", "sample_type", "cluster", "sample_name")
+  grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
   
   spectra_check <- data_checked %>% 
     # I'm using across() and any_of() because if the data is not Ig data, the
@@ -439,72 +439,10 @@ create_cut_off_plot <- function(spectra_check) {
                                       x = passing_proportion,
                                       y = sum_intensity,
                                       text = paste0("Sample name: ", 
-                                                   sample_name,
-                                                   "\n",
-                                                   "Passing proportion: ",
-                                                   passing_proportion,
-                                                   "\n",
-                                                   "Sum intensity: ",
-                                                   sum_intensity)),
-                         size = 1) +
-    ggplot2::theme_classic() +
-    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
-                   #text = ggplot2::element_text(size = 16),
-                   strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
-    ggplot2::geom_hline(ggplot2::aes(yintercept = cut_off_sum_int),
-                        linetype = "dashed") +
-    ggplot2::geom_vline(ggplot2::aes(xintercept = cut_off_prop),
-                        linetype = "dashed") +
-    ggplot2::scale_color_manual(values = my_palette,
-                                name = "Sample type") +
-    ggplot2::labs(y = "Sum intensity of passing analytes") +
-    ggplot2::scale_x_continuous(labels = function(x) paste0(x * 100, "%"), 
-                                name = "Proportion of analytes that passed curation (%)")
-  
-  if ("group" %in% colnames(spectra_check)) {
-    p <- p +
-      ggplot2::facet_wrap(cluster ~ group)
-  } else {
-    p <- p +
-      ggplot2::facet_wrap(~ cluster)
-  }
-  
-  # cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
-  #                                               data = spectra_check)
-  # 
-  # distinct_data_points <- cut_off_basis_samples %>%
-  #   dplyr::distinct(passing_proportion,
-  #                   sum_intensity,
-  #                   .keep_all = TRUE) %>%
-  #   dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>%
-  #   dplyr::summarise(n = dplyr::n())
-  # 
-  # ellipse_possible <- all(distinct_data_points$n >= 3)
-  # 
-  # if (ellipse_possible) {
-  #   p <- p +
-  #     ggplot2::stat_ellipse(data = cut_off_basis_samples)
-  # } else {
-  #   p <- p +
-  #     ggplot2::geom_point(data = cut_off_basis_samples,
-  #                         shape = 1, size = 2.5)
-  # }
-  
-  return(p)
-}
-
-create_cut_off_plot2 <- function(spectra_check) {
-  
-  n_colors <- length(unique(spectra_check$sample_type))
-  my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
-  
-  p <- spectra_check %>% 
-    ggplot2::ggplot() +
-    ggplot2::geom_jitter(ggplot2::aes(color = sample_type,
-                                      x = passing_proportion,
-                                      y = sum_intensity,
-                                      text = paste0("Sample name: ", 
                                                     sample_name,
+                                                    "\n",
+                                                    "Sample ID: ",
+                                                    sample_id,
                                                     "\n",
                                                     "Passing proportion: ",
                                                     passing_proportion,

@@ -39,7 +39,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     
     my_plot <- reactive({
       req(summarized_checks())
-      plot <- create_cut_off_plot2(summarized_checks())
+      plot <- create_cut_off_plot(summarized_checks())
       
       if (is_truthy(summarized_checks_with_cut_offs())) {
         plot <- plot +
