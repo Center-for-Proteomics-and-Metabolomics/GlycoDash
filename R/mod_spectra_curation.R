@@ -586,7 +586,16 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
       curated_data() %>% 
         dplyr::filter(passed_spectra_curation == TRUE) %>% 
-        dplyr::select(-passed_spectra_curation)
+        dplyr::select(-c(passed_spectra_curation, 
+                         reason_for_failure,
+                         failed_criteria,
+                         passing_proportion, 
+                         cut_off_prop,
+                         cut_off_sum_int
+                         # Leave 'sum_intensity' for the relative abundance
+                         # calculation and leave 'criteria_check' for the
+                         # analyte curation.
+                         ))
     })
     
     
