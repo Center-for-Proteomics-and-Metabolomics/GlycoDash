@@ -161,9 +161,10 @@ mod_clusters_server <- function(id, summary){
     r <- reactiveValues()
     
     observe({
-      if (!is_truthy(summary())) {
+      if (!is_truthy(summary()) & is_truthy(r$with_clusters)) {
         r$with_clusters <- NULL
-        print("r$with_clusters was reset")
+        showNotification("Clusters have to be readded to the data.",
+                         type = "warning")
       }
     }) 
     
