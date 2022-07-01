@@ -63,13 +63,15 @@ mod_clusters_server <- function(id, summary){
     cluster_keywords_found <- reactive({
       req(cluster_inputIds())
       
+      unique_analytes_in_data <- unique(summary()$analyte)
+      
       keywords_found <- purrr::map_lgl(
         cluster_inputIds(),
         function(cluster_inputId) {
           req(!is.null(input[[cluster_inputId]]))
           
           if (input[[cluster_inputId]] != "") {
-            find_cluster_keyword_match(data = summary(),
+            find_cluster_keyword_match(unique_analytes = unique_analytes_in_data,
                                        cluster_keyword = input[[cluster_inputId]])
           } else {
             TRUE

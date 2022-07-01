@@ -37,8 +37,8 @@ define_clusters <- function(data, cluster_keywords) {
   return(clusters)
 }
 
-find_cluster_keyword_match <- function(data, cluster_keyword) {
-  keyword_found <- any(stringr::str_detect(string = data$analyte,
+find_cluster_keyword_match <- function(unique_analytes, cluster_keyword) {
+  keyword_found <- any(stringr::str_detect(string = unique_analytes,
                                            pattern = stringr::fixed(cluster_keyword)))
   return(keyword_found)
 }
