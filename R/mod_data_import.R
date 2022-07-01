@@ -103,8 +103,6 @@ mod_data_import_server <- function(id){
         }
       }
       
-      req(show_in_table)
-      
       DT::datatable(show_in_table,
                     options = list(scrollX = TRUE),
                     filter = "top")

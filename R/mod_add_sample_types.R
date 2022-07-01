@@ -161,10 +161,11 @@ mod_add_sample_types_server <- function(id, summary){
     r <- reactiveValues()
     
     observe({
-      if (!is_truthy(summary())) {
+      if (!is_truthy(summary()) & is_truthy(r$with_auto_sample_types)) {
         r$with_auto_sample_types <- NULL
         r$response <- NULL
-        print("r$with_auto_sample_types was reset")
+        showNotification("The sample types need to be readded to the data.",
+                         type = "warning")
       }
     })
     
@@ -179,17 +180,6 @@ mod_add_sample_types_server <- function(id, summary){
                        regex = "([[:alpha:]]+)",
                        remove = FALSE)
     })
-    
-    # with_auto_sample_types <- reactive({
-    #   req(summary(),
-    #       input$method == "Automatically determine sample types based on sample ID's")
-    #   
-    #   summary() %>% 
-    #     tidyr::extract(col = sample_id,
-    #                    into = c("sample_type"),
-    #                    regex = "([[:alpha:]]+)",
-    #                    remove = FALSE)
-    # })
     
     manual_sample_types <- mod_process_sample_type_file_server("process_sample_type_file_ui_1",
                                                                allowed = c("rds", "xlsx", "xls"))
