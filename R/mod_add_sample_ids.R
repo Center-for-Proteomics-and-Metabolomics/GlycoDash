@@ -206,7 +206,8 @@ mod_add_sample_ids_ui <- function(id){
 #' add_sample_ids Server Functions
 #'
 #' @noRd 
-mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_data, summary){
+mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_data, summary,
+                                      lacytools_fileInput, read_lacytools_button){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -230,11 +231,37 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
                       ))
     })
     
-    r <- reactiveValues(resetter = 0)
+    r <- reactiveValues(resetter = 0,
+                        show_reset_warning = FALSE)
+    
+    # Whenever a new (correct) LacyTools summary file is uploaded and sample
+    # ID's had already been added to the old summary, the resetter counter is
+    # increased with 1 and show_reset_warning is set to TRUE:
+    observe({
+      if (is_truthy(summary()) & is_truthy(data_with_sample_ids())) {
+        r$resetter <- isolate(r$resetter) + 1
+        r$show_reset_warning <- TRUE
+      }
+    }) %>% bindEvent(lacytools_fileInput()) # I use the lacytools fileInput 
+    # instead of summary(), because summary() also changes when total and 
+    # specific keywords are entered/changed.
     
     observe({
-      r$resetter <- isolate(r$resetter) + 1
-    }) %>% bindEvent(summary())
+      if (r$show_reset_warning == TRUE) {
+        showNotification("The sample ID's need to be readded to the data.",
+                         type = "warning")
+      }
+    }) %>% bindEvent(read_lacytools_button())
+    
+    observe({
+      # When sample ID's have been readded to the data (r$show_reset_warning is TRUE and
+      # data_with_sample_ids() exists) r$show_reset_warning should be reset to FALSE, so
+      # that the warning is not shown again when the 'load lacytools summary'
+      # button is clicked but no new lacytools file has been uploaded:
+      if (is_truthy(data_with_sample_ids()) & r$show_reset_warning == TRUE) {
+        r$show_reset_warning <- FALSE
+      }
+    })
     
     plate_design <- mod_process_plate_design_server(
       id = "plate_design",

@@ -161,10 +161,12 @@ mod_add_sample_types_server <- function(id, summary){
     r <- reactiveValues()
     
     observe({
-      r$with_auto_sample_types <- NULL
-      shinyjs::reset("popup")
-      print("r$with_auto_sample_types was reset")
-    }) %>% bindEvent(!is_truthy(summary()))
+      if (!is_truthy(summary())) {
+        r$with_auto_sample_types <- NULL
+        r$response <- NULL
+        print("r$with_auto_sample_types was reset")
+      }
+    })
     
     
     observe({
@@ -204,7 +206,8 @@ mod_add_sample_types_server <- function(id, summary){
     # Show popup with automatically determined sample types if automatic method
     # is chosen and button is clicked:
     observe({
-      req(r$with_auto_sample_types)
+      req(r$with_auto_sample_types,
+          input$method == "Automatically determine sample types based on sample ID's")
       
       shinyalert::shinyalert(
         inputId = "popup",
@@ -219,7 +222,10 @@ mod_add_sample_types_server <- function(id, summary){
         confirmButtonText = "Accept these sample types",
         showCancelButton = TRUE,
         cancelButtonText = "Cancel",
-        confirmButtonCol = "#3c8dbc"
+        confirmButtonCol = "#3c8dbc",
+        callbackR = function(response) {
+          r$response <- response
+        }
       )
     }) %>% bindEvent(input$button)
     
@@ -242,8 +248,8 @@ mod_add_sample_types_server <- function(id, summary){
     })
     
     observe({
-      req(!is.null(input$popup))
-      if(!is_truthy(input$popup)) {
+      req(!is.null(r$response))
+      if(!is_truthy(r$response)) {
         updateSelectInput("method",
                           session = session,
                           selected = "Upload a list with sample ID's and corresponding sample types")
@@ -252,22 +258,26 @@ mod_add_sample_types_server <- function(id, summary){
     
     to_return <- reactive({
       if (input$method == "Automatically determine sample types based on sample ID's") {
-        req(input$popup)
+        req(r$response)
         r$with_auto_sample_types
         
       } else {
         req(with_manual_sample_types())
         with_manual_sample_types()
       }
-    }) #%>% bindEvent(input$button,
-    #                  input$popup)
-    
-    observe({
-      print("to_return():")
-      print(is_truthy(to_return()))
-      print(req(to_return()))
     })
     
+    r$master_button <- 0
+    
+    observe({
+      if (is_truthy(r$response) & isolate(input$method) == "Automatically determine sample types based on sample ID's") {
+        r$master_button <- isolate(r$master_button) + 1
+      } else {
+        if (is_truthy(input$button) & isolate(input$method) == "Upload a list with sample ID's and corresponding sample types") {
+          r$master_button <- isolate(r$master_button) + 1
+        }
+      }
+    })
     
     output$download_ex_sample_types <- downloadHandler(
       filename = "Example sample types file.xlsx",
@@ -282,8 +292,8 @@ mod_add_sample_types_server <- function(id, summary){
     
     return(list(
       data = to_return,
-      button = reactive({input$button}),
-      popup = reactive({input$popup})
+      button = reactive({r$master_button}),
+      popup = reactive({r$response})
       ))
     
   })

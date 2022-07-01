@@ -94,8 +94,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
                              sample_type_list,
                              type)) %>% 
             dplyr::rename("Sum intensity cut-off" = cut_off_sum_int,
-                          "Percentage of passing analytes cut-off" = cut_off_prop,
-                          "Group" = group)
+                          "Percentage of passing analytes cut-off" = cut_off_prop)
           
         },
         error = function(e) {
@@ -111,8 +110,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
                                sample_type_list,
                                type)) %>% 
               dplyr::rename("Cut-off sum intensity" = cut_off_sum_int,
-                            "Cut-off percentage of passing analytes" = cut_off_prop,
-                            "Group" = group)
+                            "Cut-off percentage of passing analytes" = cut_off_prop)
             
           } else {
             

@@ -51,29 +51,24 @@ mod_data_import_server <- function(id){
     # (reactiveVals are often easier to work with than reactive expressions for some reason)
     x <- reactiveValues()
     
-    
     summary <- mod_read_lacytools_server("read_lacytools_ui_1")
     
     data_incl_sample_ids <- mod_add_sample_ids_server("add_sample_ids_ui_1",
                                                       keyword_specific = summary$keyword_specific,
                                                       keyword_total = summary$keyword_total,
                                                       Ig_data = summary$Ig_data,
-                                                      summary = summary$data)
-    
-    observe({
-      print("data_incl_sampled_ids$data()")
-      print(is_truthy(data_incl_sample_ids$data()))
-      print(req(data_incl_sample_ids$data()))
-    })
+                                                      summary = summary$data,
+                                                      lacytools_fileInput = summary$lacytools_fileInput,
+                                                      read_lacytools_button = summary$button)
     
     data_incl_sample_types <- mod_add_sample_types_server("add_sample_types_ui_1",
                                                           summary = data_incl_sample_ids$data)
     
     data_incl_clusters <- mod_clusters_server("clusters_ui_1",
-                                              summary = data_incl_sample_types)
+                                              summary = data_incl_sample_types$data)
     
     data_incl_metadata <- mod_add_metadata_server("add_metadata_ui_1",
-                                                  summary = data_incl_clusters)
+                                                  summary = data_incl_clusters$data)
     
     # When the lacytools summary has been read in, the converted data is shown
     # in the data table
@@ -83,8 +78,10 @@ mod_data_import_server <- function(id){
       if (is_truthy(data_incl_metadata())) {
         show_in_table <- data_incl_metadata()
       } else {
-        if (is_truthy(data_incl_clusters())) {
-          show_in_table <- data_incl_clusters()
+        if (is_truthy(data_incl_clusters$data())) {
+          show_in_table <- data_incl_clusters$data()
+          showNotification("The clusters have been added to the data.",
+                           type = "message")
         } else {
           if (is_truthy(data_incl_sample_types$data())) {
             show_in_table <- data_incl_sample_types$data()
@@ -96,13 +93,17 @@ mod_data_import_server <- function(id){
               showNotification("The sample ID's were added to the data",
                                type = "message")
             } else {
-              show_in_table <- summary$data()
-              showNotification("The LacyTools summary has been loaded.",
-                               type = "message")
+              if (is_truthy(summary$data())) {
+                show_in_table <- summary$data()
+                showNotification("The LacyTools summary has been loaded.",
+                                 type = "message")
+              }
             } 
           }
         }
       }
+      
+      req(show_in_table)
       
       DT::datatable(show_in_table,
                     options = list(scrollX = TRUE),
@@ -110,14 +111,15 @@ mod_data_import_server <- function(id){
     }) %>% bindEvent(summary$button(), 
                      data_incl_sample_ids$button(),
                      data_incl_sample_types$button(),
-                     data_incl_sample_types$popup())
+                     data_incl_clusters$button(),
+                     is_truthy(data_incl_metadata()))
     
     to_return <- reactive({
       if (is_truthy(data_incl_metadata())) {
         data_incl_metadata()
       } else {
-        if (is_truthy(data_incl_clusters())) {
-          data_incl_clusters()
+        if (is_truthy(data_incl_clusters$data())) {
+          data_incl_clusters$data()
         } else { 
           NULL
         }

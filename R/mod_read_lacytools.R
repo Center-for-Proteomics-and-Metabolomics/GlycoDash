@@ -219,14 +219,17 @@ mod_read_lacytools_server <- function(id){
                             lacytools_summary()
                           })
       return(summary)
-    })
+    }) # can't use bindEvent(input$button), because then re-adding sample ID's 
+    # to a newly uploaded summary is faster then resetting the plate_design to NULL,
+    # which results in an empty sample_id column added to the new summary
     
     return(list(
       data = to_return,
       button = reactive({input$button}),
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
-      Ig_data = reactive({input$Ig_data})
+      Ig_data = reactive({input$Ig_data}),
+      lacytools_fileInput = reactive({input$lacytools_summary})
     ))
     
   })

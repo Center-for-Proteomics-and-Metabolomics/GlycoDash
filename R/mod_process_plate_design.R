@@ -76,9 +76,11 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
     })
     
     observe({
-      shinyjs::reset("file")
-      r$plate_design <- NULL
-    }) %>% bindEvent(reset$resetter > 0)
+      if (is_truthy(r$plate_design)) {
+        shinyjs::reset("file")
+        r$plate_design <- NULL
+      }
+    }) %>% bindEvent(reset$resetter)
     
     observe({
       req(extension() %in% allowed)
@@ -121,9 +123,9 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
         }
       )
       
-    }) #%>% bindEvent(input$file$datapath)
+    }) %>% bindEvent(input$file$datapath)
     
-    return(reactive({r$plate_design}))
+    return(reactive({ r$plate_design }))
     
   })
 }

@@ -158,9 +158,26 @@ mod_clusters_server <- function(id, summary){
                            ))
     })
     
+    r <- reactiveValues()
     
-    with_clusters <- reactive({
-      tryCatch(
+    observe({
+      if (!is_truthy(summary())) {
+        r$with_clusters <- NULL
+        print("r$with_clusters was reset")
+      }
+    }) 
+    
+    observe({
+      print("r$with_clusters:")
+      print(r$with_clusters)
+    })
+    
+    observe({
+      req(summary(),
+          keywords())
+      req(all(keywords() != ""))
+      
+      r$with_clusters <- tryCatch(
         expr = {
           define_clusters(data = summary(),
                           cluster_keywords = keywords())
@@ -173,12 +190,29 @@ mod_clusters_server <- function(id, summary){
         })
     }) %>% bindEvent(input$button)
     
-    observe({
-      showNotification("The clusters have been added to the data.",
-                       type = "message")
-    }) %>% bindEvent(with_clusters())
+    # with_clusters <- reactive({
+    #   tryCatch(
+    #     expr = {
+    #       define_clusters(data = summary(),
+    #                       cluster_keywords = keywords())
+    #     },
+    #     unmatched_analytes = function(c) {
+    #       showNotification(c$message,
+    #                        type = "error",
+    #                        duration = NULL)
+    #       NULL
+    #     })
+    # }) %>% bindEvent(input$button)
     
-    return(with_clusters)
+    # observe({
+    #   showNotification("The clusters have been added to the data.",
+    #                    type = "message")
+    # }) %>% bindEvent(with_clusters())
+    
+    return(list(
+      data = reactive({ r$with_clusters }),
+      button = reactive({ input$button })
+      ))
     
   })
 }
