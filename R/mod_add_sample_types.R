@@ -135,7 +135,7 @@ mod_add_sample_types_ui <- function(id){
 #' add_sample_types Server Functions
 #'
 #' @noRd 
-mod_add_sample_types_server <- function(id, summary){
+mod_add_sample_types_server <- function(id, summary, read_lacytools_button, sample_ids_button){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -161,13 +161,38 @@ mod_add_sample_types_server <- function(id, summary){
     r <- reactiveValues()
     
     observe({
-      if (!is_truthy(summary()) & is_truthy(r$with_auto_sample_types)) {
+      if (#!is_truthy(summary()) & 
+          is_truthy(r$with_auto_sample_types)) {
+        print("it's running")
         r$with_auto_sample_types <- NULL
         r$response <- NULL
+        r$show_reset_warning <- TRUE
+      }
+    }) %>% bindEvent(summary())
+    
+    observe({
+      print("r$with_auto_sample_types")
+      print(r$with_auto_sample_types)
+    })
+    
+    observe({
+      if (is_truthy(r$show_reset_warning)) {
         showNotification("The sample types need to be readded to the data.",
                          type = "warning")
+        r$show_reset_warning <- FALSE
       }
-    })
+    }) %>% bindEvent(read_lacytools_button(),
+                     sample_ids_button())
+    
+    # observe({
+    #   # When sample ID's have been readded to the data (r$show_reset_warning is TRUE and
+    #   # data_with_sample_ids() exists) r$show_reset_warning should be reset to FALSE, so
+    #   # that the warning is not shown again when the 'load lacytools summary'
+    #   # button is clicked but no new lacytools file has been uploaded:
+    #   if (is_truthy(r$with_auto_sample_types) & is_truthy(r$show_reset_warning)) {
+    #     r$show_reset_warning <- FALSE
+    #   }
+    # })
     
     
     observe({
@@ -222,7 +247,7 @@ mod_add_sample_types_server <- function(id, summary){
     # This datatable with the automatically determined sample_types is shown in
     # the pop-up:
     output$popup_table <- DT::renderDataTable({
-      sample_types <- data.frame(unique(isolate(r$with_auto_sample_types$sample_type)))
+      sample_types <- data.frame(unique(r$with_auto_sample_types$sample_type))
       DT::datatable(sample_types,
                     options = list(
                       scrollY = "150px",

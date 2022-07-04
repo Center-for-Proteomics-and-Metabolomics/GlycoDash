@@ -258,7 +258,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
       # data_with_sample_ids() exists) r$show_reset_warning should be reset to FALSE, so
       # that the warning is not shown again when the 'load lacytools summary'
       # button is clicked but no new lacytools file has been uploaded:
-      if (is_truthy(data_with_sample_ids()) & r$show_reset_warning == TRUE) {
+      if (is_truthy(data_with_sample_ids()) & is_truthy(r$show_reset_warning)) {
         r$show_reset_warning <- FALSE
       }
     })
