@@ -207,7 +207,7 @@ mod_add_metadata_server <- function(id, summary){
     
     # If there are unmatched sample ID's a pop-up is shown.
     observe({
-      if (isFALSE(all.equal(unmatched_ids(), "none"))) {
+      if (!isTRUE(all.equal(unmatched_ids(), "none"))) {
         shinyalert::shinyalert(
           inputId = "popup",
           html = TRUE,
@@ -224,10 +224,25 @@ mod_add_metadata_server <- function(id, summary){
           confirmButtonCol = "#3c8dbc",
           showCancelButton = TRUE,
           cancelButtonText = "Don't add the metadata now",
-          type = ifelse(length(unmatched_ids()) > 20, "warning", "")
+          type = ifelse(length(unmatched_ids()) > 20, "warning", ""),
+          callbackR = function(response) {
+            r$response <- response
+          }
         )
       }
     })
+    
+    r <- reactiveValues(master_button = 0)
+    
+    observe({
+      if (!isTRUE(all.equal(unmatched_ids(), "none")) & is_truthy(r$response)) {
+        r$master_button <- isolate(r$master_button) + 1
+      } else {
+        if (isTRUE(all.equal(unmatched_ids(), "none"))) {
+          r$master_button <- isolate(r$master_button) + 1
+        }
+      }
+    }) %>% bindEvent(input$button)
     
     with_metadata <- reactive({
       req(unmatched_ids())
@@ -265,7 +280,10 @@ mod_add_metadata_server <- function(id, summary){
       return(table)
     })
     
-    return(with_metadata)
+    return(list(
+      data = with_metadata,
+      button = reactive({r$master_button})
+      ))
     
   })
 }

@@ -62,7 +62,9 @@ mod_data_import_server <- function(id){
                                                       read_lacytools_button = summary$button)
     
     data_incl_sample_types <- mod_add_sample_types_server("add_sample_types_ui_1",
-                                                          summary = data_incl_sample_ids$data)
+                                                          summary = data_incl_sample_ids$data,
+                                                          read_lacytools_button = summary$button,
+                                                          sample_ids_button = data_incl_sample_ids$button)
     
     data_incl_clusters <- mod_clusters_server("clusters_ui_1",
                                               summary = data_incl_sample_types$data)
@@ -75,8 +77,8 @@ mod_data_import_server <- function(id){
     output$data_table <- DT::renderDT({
       req(summary$data())
       
-      if (is_truthy(data_incl_metadata())) {
-        show_in_table <- data_incl_metadata()
+      if (is_truthy(data_incl_metadata$data())) {
+        show_in_table <- data_incl_metadata$data()
       } else {
         if (is_truthy(data_incl_clusters$data())) {
           show_in_table <- data_incl_clusters$data()
@@ -110,11 +112,11 @@ mod_data_import_server <- function(id){
                      data_incl_sample_ids$button(),
                      data_incl_sample_types$button(),
                      data_incl_clusters$button(),
-                     is_truthy(data_incl_metadata()))
+                     data_incl_metadata$button())
     
     to_return <- reactive({
-      if (is_truthy(data_incl_metadata())) {
-        data_incl_metadata()
+      if (is_truthy(data_incl_metadata$data())) {
+        data_incl_metadata$data()
       } else {
         if (is_truthy(data_incl_clusters$data())) {
           data_incl_clusters$data()
