@@ -710,7 +710,7 @@ process_plate_design <- function (plate_design) {
     # in the plate design Excel file)
     tidyr::replace_na(list(
       #sample_type = "unknown",
-      sample_id = "unknown"
+      sample_id = "empty cell in plate design"
     ))
   # dplyr::filter(dplyr::if_all(.cols = c(sample_type),
   #                             .fns = ~ !is.na(.x)))

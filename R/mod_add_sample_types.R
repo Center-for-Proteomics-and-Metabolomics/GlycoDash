@@ -203,7 +203,10 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
         tidyr::extract(col = sample_id,
                        into = c("sample_type"),
                        regex = "([[:alpha:]]+)",
-                       remove = FALSE)
+                       remove = FALSE) %>% 
+        dplyr::mutate(sample_type = ifelse(sample_id == "empty cell in plate design",
+                                           "unknown",
+                                           sample_type))
     })
     
     manual_sample_types <- mod_process_sample_type_file_server("process_sample_type_file_ui_1",

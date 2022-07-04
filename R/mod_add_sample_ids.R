@@ -334,6 +334,20 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
                                             sample_list())
       }
       
+      replicates <- with_sample_ids %>% 
+        dplyr::select(tidyselect::any_of(c("sample_name", "sample_id", "group"))) %>% 
+        dplyr::distinct() %>% 
+        dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
+        dplyr::add_count(sample_id, name = "number_of_replicates") %>% 
+        dplyr::mutate(number_of_replicates = ifelse(sample_id == "empty cell in plate design",
+                                                    1,
+                                                    number_of_replicates)) %>% 
+        dplyr::mutate(replicates = ifelse(number_of_replicates > 1, 
+                                          TRUE, 
+                                          FALSE))
+      
+      with_sample_ids <- dplyr::full_join(replicates, with_sample_ids)
+      
       return(with_sample_ids)
       
     })
