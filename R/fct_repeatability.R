@@ -22,11 +22,11 @@ visualize_repeatability <- function(repeatability_data) {
     ggplot2::ggplot() +
     ggplot2::geom_col(ggplot2::aes(x = analyte, 
                                    y = average_abundance, 
-                                   fill = plate),
-                      position = "dodge",
-                      text = paste("Average relative abundance:",
-                                   signif(average_abundance, 3),
-                                   "%")) +
+                                   fill = plate,
+                                   text = paste("Average relative abundance:",
+                                                signif(average_abundance, 3),
+                                                "%")),
+                      position = "dodge") +
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
                                                        hjust = 1),
@@ -36,8 +36,9 @@ visualize_repeatability <- function(repeatability_data) {
                                      y = RSD,
                                      group = plate,
                                      fill = plate,
-                                     text = paste0("RSD:",
-                                                   RSD)),
+                                     text = paste("RSD:",
+                                                   signif(RSD, 3),
+                                                   "%")),
                         shape = 21,
                         stroke = 0.5,
                         position = ggplot2::position_dodge(width = .9),
