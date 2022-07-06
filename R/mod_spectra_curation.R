@@ -373,11 +373,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
       req(summary(),
           input$sn,
           input$ipq)
-      do_criteria_check(data = summary(),
+      
+     do_criteria_check(data = summary(),
                         min_ppm_deviation = input$mass_accuracy[1],
                         max_ppm_deviation = input$mass_accuracy[2],
                         max_ipq = input$ipq,
                         min_sn = input$sn)
+      
     })
     
     # Analyte quality criteria checks summarized per cluster per sample: 
