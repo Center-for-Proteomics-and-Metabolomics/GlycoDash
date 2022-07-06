@@ -39,7 +39,7 @@ mod_tab_repeatability_ui <- function(id){
             status = "primary",
             column(
               width = 9,
-              plotOutput(ns("plot"))
+              plotly::plotlyOutput(ns("plot"))
             ),
             column(
               width = 3,
@@ -107,6 +107,7 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
       
       # Calculate the intra-plate variations to show in the table:
       x$variation_table <- x$repeatability %>% 
+        dplyr::group_by(plate) %>% 
         dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
     })
     
@@ -115,8 +116,22 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
       visualize_repeatability(x$repeatability)
     })
     
-    output$plot <- renderPlot({
-      plot()
+    output$plot <- plotly::renderPlotly({
+      req(plot())
+      
+      # ay <- list(
+      #   overlaying = "y",
+      #   side = "right",
+      #   title = "RSD (%)"
+      # )
+      
+      plotly_object <- plotly::ggplotly(plot(), tooltip = "text") #%>%
+        # plotly::add_lines(x = ~2:4, y = ~1:3, 
+        #                   color = "transparent", 
+        #                   name = "", yaxis = "y2", hoverinfo='skip', showlegend=FALSE) %>%
+        # plotly::layout(yaxis2 = ay)
+      
+      plotly_object
     })
     
     for_table <- reactive({

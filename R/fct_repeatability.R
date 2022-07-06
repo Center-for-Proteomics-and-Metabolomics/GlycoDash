@@ -23,20 +23,26 @@ visualize_repeatability <- function(repeatability_data) {
     ggplot2::geom_col(ggplot2::aes(x = analyte, 
                                    y = average_abundance, 
                                    fill = plate),
-                      position = "dodge") +
+                      position = "dodge",
+                      text = paste("Average relative abundance:",
+                                   signif(average_abundance, 3),
+                                   "%")) +
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
                                                        hjust = 1),
-                   text = ggplot2::element_text(size = 16),
+                   #text = ggplot2::element_text(size = 16),
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
     ggplot2::geom_point(ggplot2::aes(x = analyte, 
                                      y = RSD,
                                      group = plate,
-                                     fill = plate),
+                                     fill = plate,
+                                     text = paste0("RSD:",
+                                                   RSD)),
                         shape = 21,
-                        stroke = 1,
+                        stroke = 0.5,
                         position = ggplot2::position_dodge(width = .9),
-                        show.legend = FALSE) +
+                        #show.legend = FALSE
+                        ) +
     ggplot2::scale_y_continuous(name = "Relative abundance (%)",
                                 labels = function(x) paste0(x, "%"),
                                 sec.axis = ggplot2::sec_axis(~ . / rescale_RSD_with, 
@@ -45,7 +51,8 @@ visualize_repeatability <- function(repeatability_data) {
                                                                                          "%"))) +
     ggplot2::scale_x_discrete(name = "Analyte") +
     ggplot2::scale_fill_brewer(palette = "Set2", 
-                               name = "Plate")
+                               name = "Plate") +
+    ggplot2::facet_wrap(~cluster)
   
   return(plot)
 }
@@ -83,10 +90,10 @@ calculate_repeatability_stats <- function(data,
   
   repeatability <- repeatability %>% 
     dplyr::mutate(plate = stringr::str_extract(plate_well, "^[A-Z]|\\d+")) %>% 
-    dplyr::group_by(plate, analyte)
-  
-  repeatability <- repeatability %>% 
+    dplyr::group_by(plate, analyte) %>% 
     dplyr::summarise(average_abundance = mean(relative_abundance * 100),
-                     RSD = sd(relative_abundance * 100) / average_abundance * 100)
+                     RSD = sd(relative_abundance * 100) / average_abundance * 100,
+                     across(cluster)) %>% 
+    dplyr::ungroup(.)
   
 }
