@@ -277,7 +277,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
         na.omit(.)
       
       if (!is.null(group_to_ignore)) { 
-        if (!(group_to_ignore %in% data$group)) {
+        if (!(group_to_ignore %in% summary()$group)) {
           rlang::abort(class =  "wrong_group",
                        message = paste("The group_to_ignore",
                                        group_to_ignore,
@@ -286,19 +286,20 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       }
       
       if (!is.null(sample_types_to_ignore)) {
-        if (any(!(sample_types_to_ignore %in% data$sample_type))) {
+        if (any(!(sample_types_to_ignore %in% summary()$sample_type))) {
           rlang::abort(class =  "wrong_sample_type",
                        message = "One or more of sample_types_to_ignore is not present in the \"sample_type\" column of the data.")
         }
         
         if (is.null(group_to_ignore)) {
-          curated_analytes <- data %>% 
+          filtered <- summary() %>% 
             dplyr::filter(!(sample_type %in% sample_types_to_ignore))
         } else {
-          curated_analytes <- data %>% 
+          filtered <- summary() %>% 
             dplyr::filter(!(group %in% group_to_ignore) & !(sample_type %in% sample_types_to_ignore))
         }
       }
+      return(filtered)
       
     })
     
