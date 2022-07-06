@@ -344,7 +344,8 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
                                                     number_of_replicates)) %>% 
         dplyr::mutate(replicates = ifelse(number_of_replicates > 1, 
                                           TRUE, 
-                                          FALSE))
+                                          FALSE)) %>% 
+        dplyr::ungroup(.)
       
       with_sample_ids <- dplyr::full_join(replicates, with_sample_ids)
       
