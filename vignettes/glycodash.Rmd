@@ -195,23 +195,47 @@ data_for_norm <- dplyr::left_join(analytes_to_include,
 ```{r normalization}
 
 total_intensities <- calculate_total_intensity(data = data_for_norm)
-normalized_data <- normalize_data(data = total_intensities) #%>% 
+normalized_data <- normalize_data(data = total_intensities) 
+normalized_data_wide <- normalized_data %>% 
+        # removing columns with values that differ between clusters:
+        dplyr::select(-tidyselect::any_of(c("passing_proportion", 
+                                            "cut_off_prop", 
+                                            "cut_off_sum_int"))) %>% 
         tidyr::pivot_wider(names_from = c(cluster, analyte),
                            names_sep = "_",
                            values_from = relative_abundance)
-        
-        
-repeatability <- normalized_data %>% 
-      dplyr::filter(sample_type %in% "Visucon" & group == "Total")
 
-repeatability <- repeatability %>% 
-    dplyr::mutate(plate = stringr::str_extract(plate_well, "^[A-Z]|\\d+")) %>% 
-    dplyr::group_by(plate, analyte)
-  
-  repeatability <- repeatability %>% 
-    dplyr::summarise(average_abundance = mean(relative_abundance * 100),
-                     RSD = sd(relative_abundance * 100) / average_abundance * 100,
-                     across(cluster))
+#normalized_data_wide <- normalized_data_wide %>% dplyr::select(-group)
+
+menu <- normalized_data_wide %>% 
+  dplyr::select(tidyselect::any_of(c("sample_name", "group", "sample_id"))) %>%
+  dplyr::distinct() %>%
+  dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
+  dplyr::add_count(sample_id, name = "number_of_replicates_after_curation") %>% 
+  dplyr::mutate(number_of_replicates_after_curation = ifelse(sample_id == "empty cell in plate design",
+                                              1,
+                                              number_of_replicates_after_curation)) %>% 
+  dplyr::mutate(replicates_after_curation = number_of_replicates_after_curation > 1) %>% 
+  dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", "sample_id")))) %>% 
+  purrr::pmap_chr(.,
+                  paste)
+
+selected_sample_type <- stringr::str_extract(menu[2],
+                                             unique(normalized_data_wide$sample_type)) %>% 
+  na.omit()
+
+
+
+repeatability <- calculate_repeatability_stats(normalized_data,
+                                               "Visucon",
+                                               "Total")
+        
+plot <- visualize_repeatability2(repeatability)
+
+pl <- plotly::ggplotly(plot, tooltip = "text")
+
+pl
+
 
 ```
 
