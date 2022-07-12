@@ -62,25 +62,47 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
     
     x <- reactiveValues()
     
+    # change the renderUI to just updating a selectInput (because now I use only
+    # one input regardless of the group being there or not)
+    
     output$standards_menu <- renderUI({
       req(data())
-      req(Ig_data())
+      #req(Ig_data())
       
-      sample_type_menu <- selectInput(ns("standard_sample_type"),
-                                      label = "Choose which standard you want to assess:",
-                                      choices = unique(data()$sample_type))
+      menu <- data() %>% 
+        dplyr::ungroup() %>% 
+        dplyr::select(tidyselect::any_of(c("sample_name", "group", "sample_id"))) %>%
+        dplyr::distinct() %>%
+        dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
+        dplyr::add_count(sample_id, name = "number_of_replicates_after_curation") %>% 
+        dplyr::mutate(number_of_replicates_after_curation = ifelse(sample_id == "empty cell in plate design",
+                                                                   1,
+                                                                   number_of_replicates_after_curation)) %>% 
+        dplyr::mutate(replicates_after_curation = number_of_replicates_after_curation > 1) %>% 
+        dplyr::filter(replicates_after_curation == TRUE) %>% 
+        dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", "sample_id")))) %>% 
+        purrr::pmap_chr(.,
+                        paste)
       
-      if (Ig_data() == "Yes") {
-        groups_menu <- selectInput(ns("standard_group"),
-                                   label = "Choose if you want to look at total or specific Ig samples:",
-                                   choices = unique(data()$group))
-      }
+      selectInput(ns("sample_menu"),
+                  label = "Choose which samples you want to assess:",
+                  choices = menu)
       
-      menu <- list(sample_type_menu, 
-                   get0("groups_menu"))
-      menu[sapply(menu, is.null)] <- NULL
-      
-      return(menu)
+      # sample_type_menu <- selectInput(ns("standard_sample_type"),
+      #                                 label = "Choose which standard you want to assess:",
+      #                                 choices = unique(data()$sample_type))
+      # 
+      # if (Ig_data() == "Yes") {
+      #   groups_menu <- selectInput(ns("standard_group"),
+      #                              label = "Choose if you want to look at total or specific Ig samples:",
+      #                              choices = unique(data()$group))
+      # }
+      # 
+      # menu <- list(sample_type_menu, 
+      #              get0("groups_menu"))
+      # menu[sapply(menu, is.null)] <- NULL
+      # 
+      # return(menu)
     })
     
     observeEvent(input$assess_repeatability, {
@@ -88,14 +110,30 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
       x$repeatability <- NULL
       x$variation_table <- NULL
       
+      # Rewrite this so that the correct sample types and groups are filtered
+      # with the new selectInput!
+      
+      selected_sample_type <- stringr::str_extract(input$sample_menu,
+                                                   unique(data()$sample_type)) %>% 
+        na.omit()
+      
+      if ("group" %in% colnames(data())) {
+        selected_group <- stringr::str_extract(
+          string = input$sample_menu,
+          pattern = unique(data()$group)) %>% 
+          na.omit(.)
+      } else {
+        selected_group <- NULL
+      }
+      
       # Try to calculate the repeatability stats, but show a notification if
       # there are no samples of the selected sample type and group combination:
       tryCatch(
         expr = {
           x$repeatability <- calculate_repeatability_stats(
             data = data(),
-            standard_sample_type = input$standard_sample_type,
-            standard_group = input$standard_group)
+            standard_sample_type = selected_sample_type,
+            standard_group = selected_group)
         },
         no_samples = function(c) {
           showNotification(c$message, type = "error")
@@ -113,23 +151,24 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
     
     plot <- reactive({
       req(x$repeatability)
-      visualize_repeatability(x$repeatability)
+      visualize_repeatability2(x$repeatability)
     })
     
     output$plot <- plotly::renderPlotly({
       req(plot())
       
-      # ay <- list(
-      #   overlaying = "y",
-      #   side = "right",
-      #   title = "RSD (%)"
-      # )
+      # ggplot2::geom_point(ggplot2::aes(x = analyte, 
+      #                                  y = RSD,
+      #                                  group = plate,
+      #                                  fill = plate,
+      #                                  text = paste("RSD:",
+      #                                               signif(RSD, 3),
+      #                                               "%")),
+      #                     shape = 21,
+      #                     stroke = 0.5,
+      #                     position = ggplot2::position_dodge(width = .9))
       
-      plotly_object <- plotly::ggplotly(plot(), tooltip = "text") #%>%
-        # plotly::add_lines(x = ~2:4, y = ~1:3, 
-        #                   color = "transparent", 
-        #                   name = "", yaxis = "y2", hoverinfo='skip', showlegend=FALSE) %>%
-        # plotly::layout(yaxis2 = ay)
+      plotly_object <- plotly::ggplotly(plot(), tooltip = "text")
       
       plotly_object
     })
