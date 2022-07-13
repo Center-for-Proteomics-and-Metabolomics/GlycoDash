@@ -55,15 +55,6 @@ mod_normalization_server <- function(id, results_analyte_curation){
     })
     
     observe({
-      req(x$data)
-      print("x$data looks like this:")
-      print(x$data)
-      
-      print("colnames(x$data) looks like this:")
-      print(colnames(x$data))
-    })
-    
-    observe({
       shinyjs::toggleState("do_normalization", 
                            condition = !is.null(input$method))
     })
