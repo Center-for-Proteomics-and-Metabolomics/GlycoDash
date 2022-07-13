@@ -156,7 +156,7 @@ visualize_repeatability2 <- function(repeatability_data) {
     ggplot2::scale_x_discrete(name = "Analyte") +
     ggplot2::scale_fill_brewer(palette = "Set2", 
                                name = "Plate") +
-    ggplot2::facet_wrap(~cluster)
+    ggplot2::facet_wrap(~cluster, scales = "free_x")
   
   return(plot)
 }
