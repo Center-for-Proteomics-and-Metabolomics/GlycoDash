@@ -605,10 +605,17 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
       req(curated_data())
       
-      DT::datatable(curated_data()%>% 
-                      dplyr::select(group:cut_off_sum_int) %>% 
-                      dplyr::distinct() %>% 
-                      dplyr::filter(passed_spectra_curation == FALSE),
+      # for_table <- curated_data()%>% 
+      #   dplyr::select(group:cut_off_sum_int) %>% 
+      #   dplyr::distinct() %>% 
+      #   dplyr::filter(passed_spectra_curation == FALSE)
+      
+      for_table <- curated_data()%>% 
+        dplyr::select(1:cut_off_sum_int) %>% 
+        dplyr::distinct() %>% 
+        dplyr::filter(passed_spectra_curation == FALSE)
+      
+      DT::datatable(for_table,
                     options = list(scrollX = TRUE,
                                    filter = "top"))
       
