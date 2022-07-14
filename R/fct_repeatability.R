@@ -95,6 +95,7 @@ calculate_repeatability_stats <- function(data,
     dplyr::group_by(plate, analyte) %>% 
     dplyr::summarise(average_abundance = mean(relative_abundance * 100),
                      RSD = sd(relative_abundance * 100) / average_abundance * 100,
+                     n = dplyr::n(),
                      across(cluster)) %>% 
     dplyr::ungroup(.)
   
@@ -122,7 +123,9 @@ visualize_repeatability2 <- function(repeatability_data) {
                                                 plate,
                                                 "\nAverage relative abundance:",
                                                 signif(average_abundance, 3),
-                                                "%")),
+                                                "%",
+                                                "\nNumber of samples (n):",
+                                                n)),
                       position = "dodge") +
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
