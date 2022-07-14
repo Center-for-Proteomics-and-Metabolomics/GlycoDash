@@ -265,7 +265,8 @@ visualize_repeatability_mean_bars <- function(data,
                                         x = analyte,
                                         text = paste("Standard deviation:",
                                                      signif(sd_rel_ab * 100, 3),
-                                                     "%"))) +
+                                                     "%")),
+                           width = 0.6) +
     ggplot2::geom_point(ggplot2::aes(x = analyte, 
                                      y = rsd,
                                      fill = analyte,
