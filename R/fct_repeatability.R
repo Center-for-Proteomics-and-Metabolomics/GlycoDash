@@ -169,8 +169,14 @@ visualize_repeatability_dogded_bars <- function(data,
                                                 selected_group) {
   
   to_plot <- data %>% 
-    dplyr::filter(sample_id == selected_sample_id,
-                  group == selected_group) %>% 
+    dplyr::filter(sample_id == selected_sample_id)
+  
+  if (!is.null(selected_group)) {
+    to_plot <- to_plot %>% 
+      dplyr::filter(group == selected_group)
+  }
+  
+  to_plot <- to_plot %>% 
     dplyr::group_by(analyte) %>% 
     dplyr::summarize(mean_rel_ab = mean(relative_abundance),
                      sd_rel_ab = sd(relative_abundance),
@@ -222,8 +228,14 @@ visualize_repeatability_mean_bars <- function(data,
                                               selected_sample_id,
                                               selected_group) {
   to_plot <- data %>% 
-    dplyr::filter(sample_id == selected_sample_id,
-                  group == selected_group) %>% 
+    dplyr::filter(sample_id == selected_sample_id)
+  
+  if (!is.null(selected_group)) {
+    to_plot <- to_plot %>% 
+      dplyr::filter(group == selected_group)
+  }
+  
+  to_plot <- to_plot %>% 
     dplyr::group_by(analyte) %>% 
     dplyr::summarize(mean_rel_ab = mean(relative_abundance),
                      sd_rel_ab = sd(relative_abundance),
