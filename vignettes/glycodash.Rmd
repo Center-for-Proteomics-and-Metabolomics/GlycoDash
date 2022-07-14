@@ -253,8 +253,9 @@ plot <- visualize_repeatability2(repeatability)
 
 pl <- plotly::ggplotly(plot, tooltip = "text")
 
-pl
+pl <- change_axis_title_distance(pl, y_distance = 90)
 
+pl
 
 ```
 

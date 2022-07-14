@@ -182,18 +182,10 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
     output$plot <- plotly::renderPlotly({
       req(plot())
       
-      # ggplot2::geom_point(ggplot2::aes(x = analyte, 
-      #                                  y = RSD,
-      #                                  group = plate,
-      #                                  fill = plate,
-      #                                  text = paste("RSD:",
-      #                                               signif(RSD, 3),
-      #                                               "%")),
-      #                     shape = 21,
-      #                     stroke = 0.5,
-      #                     position = ggplot2::position_dodge(width = .9))
-      
       plotly_object <- plotly::ggplotly(plot(), tooltip = "text")
+      
+      plotly_object <- change_axis_title_distance(plotly_object, 
+                                                  y_distance = 90)
       
       plotly_object
     })
