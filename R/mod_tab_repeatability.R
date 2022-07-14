@@ -113,8 +113,8 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
       # Rewrite this so that the correct sample types and groups are filtered
       # with the new selectInput!
       
-      selected_sample_type <- stringr::str_extract(input$sample_menu,
-                                                   unique(data()$sample_type)) %>% 
+      selected_sample_id <- stringr::str_extract(input$sample_menu,
+                                                   unique(data()$sample_id)) %>% 
         na.omit()
       
       if ("group" %in% colnames(data())) {
@@ -132,7 +132,7 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
         expr = {
           x$repeatability <- calculate_repeatability_stats(
             data = data(),
-            standard_sample_type = selected_sample_type,
+            standard_sample_id = selected_sample_id,
             standard_group = selected_group)
         },
         no_samples = function(c) {

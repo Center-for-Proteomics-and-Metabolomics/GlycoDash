@@ -62,7 +62,7 @@ visualize_repeatability <- function(repeatability_data) {
 #' Calculate the RSD of standards across a plate.
 #'
 #' @param data A dataframe with the curated (and normalized) data.
-#' @param standard_sample_type The sample type of the standards that the RSD's
+#' @param standard_sample_id The sample type of the standards that the RSD's
 #'   should be calculated for.
 #' @param standard_group The group (total or specific Ig) that the RSD's should
 #'   be calculated for.
@@ -72,19 +72,19 @@ visualize_repeatability <- function(repeatability_data) {
 #'
 #' @examples
 calculate_repeatability_stats <- function(data,
-                                          standard_sample_type,
+                                          standard_sample_id,
                                           standard_group) {
   if (is.null(standard_group)) {
     repeatability <- data %>% 
-      dplyr::filter(sample_type %in% standard_sample_type)
+      dplyr::filter(sample_id %in% standard_sample_id)
   } else {
     repeatability <- data %>% 
-      dplyr::filter(sample_type %in% standard_sample_type & group == standard_group)
+      dplyr::filter(sample_id %in% standard_sample_id & group == standard_group)
   }
   
   if (all(purrr::map_lgl(repeatability, rlang::is_empty))) {
     rlang::abort(class = "no_samples",
-                 message = paste("There are no samples of this sample_type",
+                 message = paste("There are no samples of this sample_id",
                                  ifelse(is.null(standard_group), "", "and group"),
                                  "that passed curation. Please choose a different", 
                                  "standard to assess."))
