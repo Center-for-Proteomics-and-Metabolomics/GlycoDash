@@ -104,7 +104,7 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
     selected_group <- reactive({
       req(input$sample_menu)
       req(my_data())
-      if ("group" %in% colnames(my_data())) {
+      if (Ig_data() == "Yes") {
         group <- stringr::str_extract(
           string = input$sample_menu,
           pattern = unique(my_data()$group)) %>% 
