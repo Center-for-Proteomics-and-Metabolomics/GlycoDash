@@ -17,19 +17,20 @@ mod_repeatability_ui <- function(id){
       fluidRow(
         tags$style(
           HTML(paste0("#",
-                      ns("tabbed_box"),
+                      ns("box_title"),
                       " .btn {float: right; padding-top: 2px; border-color: #fff; border: 1.5px solid; padding-bottom: 2px}",
                       "#",
                       ns("tabbed_box"),
                       " .box-title {width: 100%;}",
                       "#",
-                      ns("tabbed_box"),
+                      ns("box_title"),
                       " .fa {float: right; margin-top: 3px; margin-left: 5px; font-size: 12px;}"))
         ),
         div(
           id = ns("tabbed_box"),
           shinydashboard::box(
             title = span(
+              id = ns("box_title"),
               "Assess repeatability",
               actionButton(ns("add_tab"),
                            "Add a tab",
