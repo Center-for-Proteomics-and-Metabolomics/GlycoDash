@@ -69,16 +69,31 @@ mod_data_exploration_server <- function(id, results_derived_traits){
       results_derived_traits$data_with_derived_traits()
     })
     
-    tab_results <- reactiveValues()
+    # Creating a trigger to track when UI of the first tab is rendered. This is
+    # needed to prevent the server of the module from trying to update
+    # selectizeInputs that don't exist yet. 
+    r <- reactiveValues(trigger = FALSE)
     
     output$first_tab <- renderUI({
+      # The trigger is set to true when the UI of the first tab is being
+      # rendered:
+      r$trigger <- TRUE
       mod_tab_data_exploration_ui(ns("tab1"))
-    }) %>% bindEvent(my_data())
+    })
     
+    # Creating a reactiveValues list to store the plots that are created in the
+    # tabs:
+    tab_results <- reactiveValues()
+    
+    # The server part of the first tab receives the trigger as an argument, so
+    # that the observer where the selectizeInputs are updated is only ran after
+    # the trigger has become TRUE:
     observe({
+    req(my_data())
     tab_results$tab1 <- mod_tab_data_exploration_server("tab1",
-                                                        my_data = my_data)
-    }) %>% bindEvent(my_data())
+                                                        my_data = my_data,
+                                                        trigger = reactive({ r$trigger }))
+    })
     
     observe({
       req(input$add_tab > 0)
@@ -95,10 +110,12 @@ mod_data_exploration_server <- function(id, results_derived_traits){
       
       tab_results[[tab_id]] <- mod_tab_data_exploration_server(
         id = tab_id,
-        my_data = my_data
+        my_data = my_data,
+        trigger = reactive({ r$trigger })
       )
       
-    }) %>% bindEvent(input$add_tab)
+    }) %>% bindEvent(input$add_tab,
+                     ignoreInit = TRUE)
     
     # r <- reactiveValues(all_boxes = list(),
     #                     all_plots = list())

@@ -54,7 +54,7 @@ mod_tab_data_exploration_ui <- function(id){
 #' tab_data_exploration Server Functions
 #'
 #' @noRd 
-mod_tab_data_exploration_server <- function(id, my_data){
+mod_tab_data_exploration_server <- function(id, my_data, trigger){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -70,7 +70,9 @@ mod_tab_data_exploration_server <- function(id, my_data){
                            choices = c("", colnames(my_data())))
       updateSelectizeInput(inputId = "filter",
                            choices = c("", unique(my_data()$sample_type)))
-    })
+    }) %>% bindEvent(trigger()) # Only once the trigger has become TRUE (and 
+    # thus when the selectizeInputs have been rendered) are the selectizeInputs
+    # updated.
     
     filtered_data <- reactive({
       req(my_data())
