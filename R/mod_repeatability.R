@@ -33,7 +33,8 @@ mod_repeatability_ui <- function(id){
               "Assess repeatability",
               actionButton(ns("add_tab"),
                            "Add a tab",
-                           icon = icon("plus"))),
+                           icon = icon("plus"))
+            ),
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
@@ -56,7 +57,7 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    x <- reactiveValues()
+    tab_results <- reactiveValues()
     
     data <- reactive({
       results_normalization$normalized_data()
@@ -69,31 +70,33 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
     output$first_tab <- renderUI({
       mod_tab_repeatability_ui(ns("tab1"))
     })
-
-    observe({
-      x$results_first_tab <- mod_tab_repeatability_server("tab1",
-                                                        data = data,
-                                                        Ig_data = Ig_data)
-    })
+    
+    tab_results$tab1 <- mod_tab_repeatability_server("tab1",
+                                                     my_data = data,
+                                                     Ig_data = Ig_data)
     
     observeEvent(input$add_tab, {
+      tab_id <- paste0("tab", (input$add_tab + 1))
+      
       appendTab(inputId = "tabs",
                 tabPanel(title = paste("Standard",
                                        input$add_tab + 1),
-                         mod_tab_repeatability_ui(ns("tab2")))
+                         mod_tab_repeatability_ui(
+                           ns(tab_id)
+                         )
+                )
       )
       
-      x$results_second_tab <-mod_tab_repeatability_server("tab2",
-                                                        data = data,
-                                                        Ig_data = Ig_data)
-      
-      shinyjs::disable("add_tab")
+      tab_results[[tab_id]] <- mod_tab_repeatability_server(
+        id = tab_id,
+        my_data = data,
+        Ig_data = Ig_data
+      )
       
     })
     
     return(list(
-      first_tab = reactive({x$results_first_tab}),
-      second_tab = reactive({x$results_second_tab})
+      tab_results = reactive({ tab_results })
     ))
     
   })
