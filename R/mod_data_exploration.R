@@ -14,19 +14,20 @@ mod_data_exploration_ui <- function(id){
       fluidRow(
         tags$style(
           HTML(paste0("#",
-                      ns("tabbed_box"),
+                      ns("box_title"),
                       " .btn {float: right; padding-top: 2px; border-color: #fff; border: 1.5px solid; padding-bottom: 2px}",
                       "#",
                       ns("tabbed_box"),
                       " .box-title {width: 100%;}",
                       "#",
-                      ns("tabbed_box"),
+                      ns("box_title"),
                       " .fa {float: right; margin-top: 3px; margin-left: 5px; font-size: 12px;}"))
         ),
         div(
           id = ns("tabbed_box"),
           shinydashboard::box(
             title = span(
+              id = ns("box_title"),
               "Data exploration",
               actionButton(ns("add_tab"),
                            "Add a tab",
@@ -77,7 +78,7 @@ mod_data_exploration_server <- function(id, results_derived_traits){
     tab_results$tab1 <- mod_tab_data_exploration_server("tab1",
                                                         my_data = my_data)
     
-    observeEvent(input$add_tab, {
+    observe({
       tab_id <- paste0("tab", (input$add_tab + 1))
       
       appendTab(inputId = "tabs",
@@ -94,7 +95,8 @@ mod_data_exploration_server <- function(id, results_derived_traits){
         my_data = my_data
       )
       
-    })
+    }) %>% bindEvent(input$add_tab, 
+                     ignoreInit = TRUE)
     
     # r <- reactiveValues(all_boxes = list(),
     #                     all_plots = list())
