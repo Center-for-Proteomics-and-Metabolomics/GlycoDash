@@ -4,22 +4,13 @@
 \alias{create_cut_off_plot}
 \title{Create a plot to show the cut_offs for spectra curation}
 \usage{
-create_cut_off_plot(spectra_check, cut_off_basis)
+create_cut_off_plot(spectra_check)
 }
 \arguments{
 \item{spectra_check}{The dataframe returned by \code{\link{curate_spectra}}.
 \code{curate_spectra} returns two dataframes in a list. The dataframe that
 should be passed as the \code{spectra_check} argument to
 \code{create_cut_off_plot} is named "spectra_check".}
-
-\item{cut_off_basis}{A character vector or a single character string
-specifying which sample types (and optionally which group (Specific or
-Total Ig)) the spectra curation cut-offs should be based on. For each
-sample type or sample type-group combination that you want to base the
-cut-offs on you should add a character string. For example. if you want to
-base the cut-offs on all PBS samples and on the Specific negative_control
-samples, \code{cut_off_basis} should be \code{c("PBS", "Specific
-negative_control")}}
 }
 \value{
 This function returns a ggplot object.

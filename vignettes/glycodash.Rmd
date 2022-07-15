@@ -16,7 +16,8 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 
-library(glycodash)
+#library(glycodash)
+devtools::load_all()
 
 ```
 
@@ -32,10 +33,12 @@ lacytools_file <- system.file("extdata",
                               "LacyTools_summary_example.txt", 
                               package = "glycodash")
 
-data <- read_lacytools_summary(lacytools_file,
-                               Ig_data = "Yes",
-                               keyword_total = "Total",
-                               keyword_specific = "Spike")
+raw_data <- read_non_rectangular(lacytools_file)
+
+data <- read_lacytools_summary(raw_data) %>% 
+  detect_group(.,
+               keyword_specific = "Spike",
+               keyword_total = "Total")
 
 data
 
@@ -49,26 +52,50 @@ plate_design_file <- system.file("extdata",
                                  "Plate_design_example.xlsx",
                                  package = "glycodash")
 
+
+
 plate_design <- read_and_process_plate_design(plate_design_file)
 
-plate_design
+data_with_platewell <- detect_plate_and_well(data)
 
-data <- dplyr::left_join(data,
-                         plate_design)
+data_complete <- dplyr::left_join(data_with_platewell,
+                                  plate_design) %>% 
+  tidyr::extract(col = sample_id,
+                 into = c("sample_type"),
+                 regex = "([[:alpha:]]+)",
+                 remove = FALSE) %>% 
+  define_clusters(.,
+                  cluster_keywords = "IgGI1")
 
-data
+replicates <- data_complete %>% 
+        dplyr::select(tidyselect::any_of(c("sample_name", "sample_id", "group"))) %>% 
+        dplyr::distinct() %>% 
+        dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
+        dplyr::add_count(sample_id, name = "number_of_replicates") %>% 
+        dplyr::mutate(number_of_replicates = ifelse(sample_id == "empty cell in plate design",
+                                                    1,
+                                                    number_of_replicates)) %>% 
+        dplyr::mutate(replicates = ifelse(number_of_replicates > 1, 
+                                          TRUE, 
+                                          FALSE))
+      
+data_complete <- dplyr::full_join(replicates, data_complete) %>% 
+  dplyr::ungroup(.)
+
+data_complete
 
 ```
 
 Finally, metadata can be added to the data.
 
-```{r adding-metadata}
+```{r adding-metadata, eval=FALSE}
 
 metadata_file <- system.file("extdata",
                             "Metadata_example.xlsx",
                             package = "glycodash")
 
-metadata <- read_metadata(metadata_file)
+metadata <- read_metadata(metadata_file,
+                          "Metadata_example.xlsx")
 
 metadata
 
@@ -76,7 +103,12 @@ data <- dplyr::left_join(data,
                          metadata,
                          by = c(sample_id = "sample_id"))
 
-data
+x <- data %>% 
+  dplyr::group_by(sample_name) %>% 
+  dplyr::filter(!all(is.na(absolute_intensity_background_subtracted))) %>% 
+  dplyr::filter(sample_id == "PBS")
+
+unique(x$sample_name)
 
 ```
 
@@ -92,21 +124,28 @@ deviations in a chosen group of spectra that should not pass curation (cut_off_b
 
 ```{r spectra-curation}
 
-spectra_curation <- curate_spectra(data = data,
-                                  clusters_regex = "IgGI1",
-                                  min_ppm_deviation = -20,
-                                  max_ppm_deviation = 20,
-                                  max_ipq = 0.2,
-                                  min_sn = 9,
-                                  cut_off_basis = c("Spike PBS", "Total PBS"))
+checked_data <- do_criteria_check(data_complete,
+                       min_ppm_deviation = -20,
+                       max_ppm_deviation = 20,
+                       max_ipq = 0.2,
+                       min_sn = 9)
 
-spectra_curation
+summarized_checks <- check_spectra(data = data_complete,
+                                 min_ppm_deviation = -20,
+                                 max_ppm_deviation = 20,
+                                 max_ipq = 0.2,
+                                 min_sn = 9)
 
-data <- spectra_curation$curated_data %>% 
-  dplyr::filter(passed_spectra_curation == TRUE) %>% 
-  dplyr::select(-passed_spectra_curation)
+cut_offs <- calculate_cut_offs(summarized_checks,
+                               c("Spike PBS", "Total PBS"),
+                               3,
+                               "Mean")
 
-data
+
+data_curated <- curate_spectra(checked_data,
+                       summarized_checks,
+                       cut_offs) %>% 
+  dplyr::filter(passed_spectra_curation == TRUE)
 
 ```
 
@@ -114,31 +153,109 @@ data
 
 ```{r analyte-curation}
 
-curated_analytes <- curate_analytes(data = data,
-                                    group_to_ignore = "Total",
-                                    sample_types_to_ignore = c("Visucon", 
-                                                               "PBS"),
+curated_analytes <- curate_analytes(data = data_curated,
                                     cut_off_percentage = 25)
 
-passing_analytes <- curated_analytes %>% 
-  dplyr::filter(passed_curation == TRUE) %>% 
-  dplyr::select(-passed_curation)
-
-data <- dplyr::left_join(passing_analytes, 
-                         data)
-
-data
+analyte_curated_data <- dplyr::left_join(curated_analytes, 
+                                         data_curated)
 
 plot_analyte_curation(curated_analytes = curated_analytes,
                       cut_off_percentage = 25,
                       selected_cluster = "IgGI1") 
 
 dataframe_for_table <- prepare_analyte_curation_table(
-  analyte_curated_data = data,
+  analyte_curated_data = analyte_curated_data,
   selected_cluster = "IgGI1")
 
 dataframe_for_table
 
+charge_columns <- colnames(dataframe_for_table)[-1]
+
+analytes_to_include <- rlang::set_names(charge_columns) %>% 
+  purrr::map_dfc(.,
+                 function(charge_column) {
+                   print(charge_column)
+                   ifelse(dataframe_for_table[[charge_column]] == "Yes",
+                          dataframe_for_table$analyte,
+                          NA)
+                 }) %>% 
+  tidyr::pivot_longer(
+    tidyselect::everything(),
+    names_to = "charge",
+    values_to = "analyte"
+  ) %>% 
+  dplyr::filter(!is.na(analyte)) %>% 
+  dplyr::mutate(dplyr::across(analyte, as.character))
+
+data_for_norm <- dplyr::left_join(analytes_to_include,
+                 data_curated)
+
 ```
 
+```{r normalization}
+
+total_intensities <- calculate_total_intensity(data = data_for_norm)
+normalized_data <- normalize_data(data = total_intensities) 
+normalized_data_wide <- normalized_data %>% 
+        # removing columns with values that differ between clusters:
+        dplyr::select(-tidyselect::any_of(c("passing_proportion", 
+                                            "cut_off_prop", 
+                                            "cut_off_sum_int"))) %>% 
+        tidyr::pivot_wider(names_from = c(cluster, analyte),
+                           names_sep = "_",
+                           values_from = relative_abundance)
+
+#normalized_data_wide <- normalized_data_wide %>% dplyr::select(-group)
+
+menu <- normalized_data %>% 
+  dplyr::select(tidyselect::any_of(c("sample_name", "group", "sample_id"))) %>%
+  dplyr::distinct() %>%
+  dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
+  dplyr::add_count(sample_id, name = "number_of_replicates_after_curation") %>% 
+  dplyr::mutate(number_of_replicates_after_curation = ifelse(sample_id == "empty cell in plate design",
+                                              1,
+                                              number_of_replicates_after_curation)) %>% 
+  dplyr::mutate(replicates_after_curation = number_of_replicates_after_curation > 1) %>% 
+  dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", "sample_id")))) %>% 
+  purrr::pmap_chr(.,
+                  paste)
+
+selected_sample_id <- stringr::str_extract(menu[2],
+                                             unique(normalized_data$sample_id)) %>% 
+  na.omit()
+
+if ("group" %in% colnames(normalized_data)) {
+  selected_group <- stringr::str_extract(
+    string = menu[2],
+    pattern = unique(normalized_data$group)) %>% 
+    na.omit(.)
+} else {
+  selected_group <- NULL
+}
+
+repeatability <- calculate_repeatability_stats(normalized_data,
+                                               selected_sample_id,
+                                               selected_group)
+
+dodged_barplot <- visualize_repeatability_dogded_bars(normalized_data,
+                                    selected_sample_id,
+                                    selected_group)
+
+mean_barplot <- visualize_repeatability_mean_bars(normalized_data,
+                                    selected_sample_id,
+                                    selected_group)
+
+plotly::ggplotly(dodged_barplot, tooltip = "text")
+plotly::ggplotly(mean_barplot, tooltip = "text")
+
+        
+plot <- visualize_repeatability2(repeatability)
+
+pl <- plotly::ggplotly(plot, tooltip = "text")
+
+pl <- change_axis_title_distance(pl, y_distance = 90)
+
+pl
+
+```
 

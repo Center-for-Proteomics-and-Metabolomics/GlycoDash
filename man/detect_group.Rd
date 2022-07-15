@@ -4,16 +4,16 @@
 \alias{detect_group}
 \title{Detect whether a sample is Specific or Total Ig based on the sample name.}
 \usage{
-detect_group(block, keyword_specific, keyword_total)
+detect_group(data, keyword_specific, keyword_total)
 }
 \arguments{
-\item{block}{A dataframe containing a block from a LacyTools summary file.}
-
 \item{keyword_specific}{The word(s)/characters within the sample name used to
 refer to Specific samples.}
 
 \item{keyword_total}{The word(s)/characters within the sample name used to
 refer to Total samples.}
+
+\item{block}{A dataframe containing a block from a LacyTools summary file.}
 }
 \value{
 The dataframe containing a block from a LacyTools summary file, with

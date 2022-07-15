@@ -5,16 +5,15 @@
 \title{Read a LacyTools summary file and convert it to a 'tidy' dataframe}
 \usage{
 read_lacytools_summary(
-  summary_file,
+  data,
   Ig_data,
   keyword_total = NULL,
   keyword_specific = NULL
 )
 }
 \arguments{
-\item{summary_file}{The path to the LacyTools summary file. This file should
-be a tab-delimited .txt file. This function can process the output summary
-file of LacyTools without any changes needed.}
+\item{data}{A dataframe with the LacyTools summary (the result of
+\code{\link{read_non_rectangular}}).}
 
 \item{Ig_data}{A character string. Is your data immunoglobulin data that
 contains both total Ig and specific Ig samples? If yes then \code{Ig_data}
@@ -25,6 +24,10 @@ refer to Total samples.}
 
 \item{keyword_specific}{The word(s)/characters within the sample name used to
 refer to Specific samples.}
+
+\item{summary_file}{The path to the LacyTools summary file. This file should
+be a tab-delimited .txt file. This function can process the output summary
+file of LacyTools without any changes needed.}
 }
 \value{
 This function returns a dataframe with the following columns:

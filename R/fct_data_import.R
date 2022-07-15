@@ -135,11 +135,14 @@ find_next_na <- function(data, row) {
 #'
 #' @examples
 #'  data("LacyTools_summary")
+#'  find_block(data = LacyTools_summary, variable = "S/N (2+)")
 find_block <- function(data, variable) {
   first_row <- which(data[ , 1] == variable)
   if (rlang::is_empty(first_row)) {
-   stop(paste("Error: LacyTools output format",
-              variable, "is not present in the first column of the input file."))
+    rlang::abort(
+      class = "lacytools_output_not_found",
+      message = paste("Error: LacyTools output format",
+                      variable, "is not present in the first column of the input file."))
   } else {
     next_na <- find_next_na(data, first_row)
     if (rlang::is_empty(next_na)) { 
@@ -168,19 +171,32 @@ find_block <- function(data, variable) {
 #'block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"),
 #'                             values = c(13.56, 738.34, 4.56))
 #'detect_group(block = block_example, keyword_specific = "Specific", keyword_total = "Total")
-detect_group <- function(block, keyword_specific, keyword_total) {
-  block <- block %>% 
+detect_group <- function(data, keyword_specific, keyword_total) {
+  data <- data %>% 
     tidyr::extract(col = sample_name,
                    into = "group",
                    regex = paste0("(", keyword_specific, "|", 
                                   keyword_total, ")"),
                    remove = FALSE)
-  if (any(is.na(block$group))) {
+  
+  if (all(!sapply(data$group, identical, keyword_specific))) {
+    rlang::abort(class = "unmatched_keyword_specific",
+                 message = paste("This keyword for specific samples did not match", 
+                                 "any sample names in your data. Please choose a different keyword."))
+  }
+  
+  if (all(!sapply(data$group, identical, keyword_total))) {
+    rlang::abort(class = "unmatched_keyword_total",
+                 message = paste("This keyword for total samples did not match", 
+                                 "any sample names in your data. Please choose a different keyword."))
+  }
+  
+  if (any(is.na(data$group))) {
     rlang::warn(class = "NAs",
                 message = paste("Some sample_names could not be classified as total or specific.",
                                 "Please reconsider your keywords (keyword_specific and keyword_total)."))
   }
-  return(block)
+  return(data)
 }
 
 #' Create a subset containing one block from a LacyTools summary.
@@ -202,7 +218,7 @@ detect_group <- function(block, keyword_specific, keyword_total) {
 #'           keyword_specific = "Spike", 
 #'           keyword_total = "Total")
 #'           
-get_block <- function(data, variable, Ig_data, keyword_specific = NULL, keyword_total= NULL) {
+get_block <- function(data, variable, Ig_data = NULL, keyword_specific = NULL, keyword_total= NULL) {
   rows <- find_block(data, variable)
   block <- data[rows, ]
   # The first row of the block contains the column names for the block:
@@ -223,9 +239,7 @@ get_block <- function(data, variable, Ig_data, keyword_specific = NULL, keyword_
                                 paste(duplicated_analytes, collapse = " "),
                                 "are present more than once. The names of the", 
                                 "duplicated analytes are given a suffix", 
-                                "('..columnnumber') to differentiate between them."),
-                .frequency = "once",
-                .frequency_id = "duplicated_analytes")
+                                "('..columnnumber') to differentiate between them."))
   }
   
   block <- suppressMessages(tibble::tibble(block,
@@ -235,10 +249,10 @@ get_block <- function(data, variable, Ig_data, keyword_specific = NULL, keyword_
     dplyr::mutate(lacytools_output = better_name_output) %>% 
     dplyr::mutate(dplyr::across(-c(sample_name, lacytools_output), as.numeric)) %>% 
     dplyr::select(-tidyselect::vars_select_helpers$where(function(x) all(is.na(x))))
-  block <- detect_plate_and_well(block)
-  if (Ig_data == "Yes") {
-    block <- detect_group(block, keyword_specific, keyword_total)
-  }
+  #block <- detect_plate_and_well(block)
+  # if (Ig_data == "Yes") {
+  #   block <- detect_group(block, keyword_specific, keyword_total)
+  # }
   return(block)
 }
 
@@ -534,28 +548,23 @@ create_long_data <- function(block, metadata = NULL) {
 #'                        Ig_data = "Yes",
 #'                        keyword_specific = "Spike",
 #'                        keyword_total = "Total")
-read_lacytools_summary <- function(summary_file, Ig_data, keyword_total = NULL, keyword_specific = NULL) {
+read_lacytools_summary <- function(data, Ig_data, keyword_total = NULL, keyword_specific = NULL) {
   
-  data <- read_non_rectangular(summary_file)
+  #data <- read_non_rectangular(summary_file)
   
   all_blocks <- purrr::map(outputs,
                            function(output) {
                              tryCatch(expr = {
-                               withCallingHandlers(expr = {
+                               suppressWarnings(
                                  get_block(data = data, 
                                            variable = output, 
                                            Ig_data = Ig_data,
                                            keyword_specific = keyword_specific,
                                            keyword_total = keyword_total)
-                               },
-                               duplicated_analytes = function(c) {
-                                 c$message
-                               })
+                               )
                              },
                              error = function(e) { })
                            })
-  
-  #all_blocks <- all_blocks[which(purrr::map_lgl(all_blocks, is.data.frame))]
   
   all_blocks <- all_blocks[!sapply(all_blocks, is.null)]
   
@@ -693,16 +702,18 @@ process_plate_design <- function (plate_design) {
     dplyr::mutate(plate_well = paste(plate, well, sep = "_")) %>% 
     dplyr::arrange(plate_well) %>% 
     dplyr::select(-c(plate, well)) %>% 
-    tidyr::extract(col = sample_id, 
-                   into = c("sample_type"), 
-                   regex = "([[:alpha:]]+)",
-                   remove = FALSE) %>% 
+    # tidyr::extract(col = sample_id, 
+    #                into = c("sample_type"), 
+    #                regex = "([[:alpha:]]+)",
+    #                remove = FALSE) %>% 
     # Remove rows where sample_type is NA (these were empty cells
     # in the plate design Excel file)
-    tidyr::replace_na(list(sample_type = "unknown",
-                           sample_id = "unknown"))
-    # dplyr::filter(dplyr::if_all(.cols = c(sample_type),
-    #                             .fns = ~ !is.na(.x)))
+    tidyr::replace_na(list(
+      #sample_type = "unknown",
+      sample_id = "empty cell in plate design"
+    ))
+  # dplyr::filter(dplyr::if_all(.cols = c(sample_type),
+  #                             .fns = ~ !is.na(.x)))
   
   return(plate_design)
 }
@@ -831,22 +842,22 @@ read_and_process_plate_design <- function(plate_design_file) {
   tryCatch(expr = {
     plate_design <- read_plate_design(plate_design_file)
   },
-  error = function(e) { 
-    rlang::abort(class = e$class,
-                 message = e$message)
-    })
+  incorrect_formatting = function(cnd) {
+    rlang::abort(message = cnd$message,
+                 class = "incorrect_formatting")
+  })
   
   plate_design <- process_plate_design(plate_design)
   
   # Pass along any errors (if applicable) from handle_duplicates. Warnings are
   # passed along automatically.
-  tryCatch(expr = {
-    plate_design <- handle_duplicates(plate_design)
-  },
-  error = function(e) {
-    rlang::abort(class = e$class,
-                 message = e$message)
-  })
+  # tryCatch(expr = {
+  #   plate_design <- handle_duplicates(plate_design)
+  # },
+  # error = function(e) {
+  #   rlang::abort(class = e$class,
+  #                message = e$message)
+  # })
   
   return(plate_design)
 }
@@ -870,15 +881,15 @@ read_and_process_plate_design <- function(plate_design_file) {
 #'                     package = "glycodash")
 #'                     
 #' read_metadata(path)
-read_metadata <- function (metadata_file) {
-  metadata <- readxl::read_excel(metadata_file,
-                                 col_types = "text", 
-                                 na = c("", "NA"))
-  metadata <- metadata %>% 
-    dplyr::rename_with(.cols = tidyselect::everything(), 
-                       .fn = snakecase::to_snake_case) 
-  return(metadata)
-}
+# read_metadata <- function (metadata_file) {
+#   metadata <- readxl::read_excel(metadata_file,
+#                                  col_types = "text", 
+#                                  na = c("", "NA"))
+#   metadata <- metadata %>% 
+#     dplyr::rename_with(.cols = tidyselect::everything(), 
+#                        .fn = snakecase::to_snake_case) 
+#   return(metadata)
+# }
 
 #'Convert serial dates with comments to dates
 #'
@@ -1005,10 +1016,11 @@ date_with_text <- function(date_text_values, origin = "1899-12-30"){
   if(anyNA(test)){
     dates <- as.character(dates)
     dates[is.na(num)] <- as.character(date_text_values[is.na(num)])
-    message(paste("Some date entries in", 
-                  tryCatch(dplyr::cur_column(),
-                           error = function(e) {}), 
-                  "contain text. Output will have class character."))
+    rlang::warn(class = "text_in_dates",
+                message = paste("Some date entries in", 
+                                tryCatch(dplyr::cur_column(),
+                                         error = function(e) {}), 
+                                "contain text. Output will have class character."))
   }
   return(dates)
 }
@@ -1059,4 +1071,36 @@ load_and_assign <- function(file_path){
                  "load_and_assign only works with objects saved with the function save()"))
       })
   get(ls()[ls() != "file_path"])
+}
+
+comma_and <- function(string_components) {
+  comma_string <- paste(string_components, collapse = ", ")
+  comma_and_string <- sub(pattern = ",\\s([^,]+)$", 
+                          replacement = " and \\1",
+                          x = comma_string)
+  return(comma_and_string)
+}
+
+comma_or <- function(string_components) {
+  comma_string <- paste(string_components, collapse = ", ")
+  comma_and_string <- sub(pattern = ",\\s([^,]+)$", 
+                          replacement = " or \\1",
+                          x = comma_string)
+  return(comma_and_string)
+}
+
+is_truthy <- function(x) {
+  valid <- tryCatch(
+    expr = {
+      x
+      TRUE
+    },
+    error = function(e) {
+      FALSE
+    })
+  if (valid) {
+    return(isTruthy(x))
+  } else {
+    return(FALSE)
+  }
 }

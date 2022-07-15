@@ -1,75 +1,4 @@
-#'Define clusters based on analyte names
-#'
-#'This function determines which cluster an analyte belongs to based on the
-#'analyte name.
-#'
-#'@inheritParams do_criteria_check
-#'@param clusters_regex A vector containing character strings. These strings are
-#'  used as regular expressions to classify analytes into clusters.
-#'  \code{clusters_regex} should contain one character string per cluster in the
-#'  data.
-#'
-#'@return The function returns the original dataframe given as the data
-#'  argument, but with an additional column named "cluster". This character
-#'  column indicates to what cluster the analyte belongs.
-#'@export
-#'
-#' @examples
-#' data("example_data")
-#' define_clusters(data = example_data,
-#'                 clusters_regex = "IgGI1")
-define_clusters <- function(data, clusters_regex) {
-  
-  regex_found <- purrr::map_lgl(
-    clusters_regex,
-    function(regex) {
-      any(stringr::str_detect(string = data$analyte,
-                              pattern = stringr::fixed(regex)))
-                 })
-  
-  if (any(regex_found == FALSE)) {
-    rlang::abort(class = "unmatched_regex",
-                 message = paste("The regular expression(s)",
-                                 paste0(clusters_regex[!regex_found],
-                                        collapse = " and "),
-                                 "matched no analytes in the \"analyte\" column of the data."))
-  }
-  
-  if (length(clusters_regex) > 1) {
-    regex_overlap <- purrr::imap_lgl(
-      clusters_regex,
-      function(regex, i) {
-        other_regexes <- unlist(clusters_regex)[-i]
-        any(purrr::map_lgl(other_regexes,
-                       function(other_regex) {
-                         stringr::str_detect(string = other_regex,
-                                             pattern = stringr::fixed(regex))
-                       }))
-      })
-    
-    if(any(regex_overlap == TRUE)) {
-      rlang::abort(class = "regex_overlap",
-                   message = paste("There is overlap between the cluster keywords.",
-                                   "Please make sure that each analyte matches only one cluster keyword."))
-    }
-  }
-  
-  clusters <- data %>% 
-    tidyr::extract(col = analyte,
-                   into = "cluster",
-                   regex = paste0("(",
-                                  paste0(clusters_regex, 
-                                         collapse = "|"),
-                                  ")"),
-                   remove = FALSE)
-  
-  if (anyNA(clusters$cluster)) {
-    rlang::abort(class = "unmatched_analytes",
-                 message = paste("Some analytes could not be assigned into a cluster.",
-                                 "Please reconsider the regular expressions you gave as clusters_regex."))
-  }
-  return(clusters)
-}
+
 
 #' Perform an analyte quality criteria check for every spectrum in the data.
 #'
@@ -121,16 +50,25 @@ do_criteria_check <- function(data,
     stop("The data doesn't contain the required columns with the quality criteria.")
   }
   
-  mass_acc_check <- dplyr::between(data$mass_accuracy_ppm, 
-                                   min_ppm_deviation, 
-                                   max_ppm_deviation)
-  IPQ_check <- data$isotopic_pattern_quality < max_ipq
-  sn_check <- data$sn > min_sn
-  all_checks <- (mass_acc_check & IPQ_check & sn_check) %>% 
-    tidyr::replace_na(., FALSE)
-  
   data_checked <- data %>% 
-    dplyr::mutate(criteria_check = all_checks)
+    dplyr::mutate(`mass accuracy` = dplyr::between(data$mass_accuracy_ppm, 
+                                            min_ppm_deviation, 
+                                            max_ppm_deviation),
+                  IPQ = data$isotopic_pattern_quality < max_ipq,
+                  `S/N` = data$sn > min_sn,
+                  criteria_check = (`mass accuracy` & IPQ & `S/N`) %>% 
+                    tidyr::replace_na(., FALSE)) %>% 
+    tidyr::pivot_longer(cols = c(`mass accuracy`, IPQ, `S/N`),
+                        names_to = "criterium",
+                        values_to = "passed") %>% 
+    dplyr::mutate(failed_criteria = ifelse(passed == FALSE, criterium, NA)) %>% 
+    dplyr::select(-c(criterium, passed)) %>% 
+    dplyr::group_by(sample_name, analyte, charge) %>% 
+    dplyr::summarise(failed_criteria = dplyr::if_else(all(is.na(failed_criteria)),
+                                                      "none",
+                                                      comma_and(unique(failed_criteria[!is.na(failed_criteria)]))),
+    across()) %>% 
+    dplyr::distinct()
   
   return(data_checked)
 }
@@ -185,7 +123,7 @@ summarize_spectra_checks <- function(data_checked) {
                 "."))
   }
   
-  grouping_variables <- c("group", "sample_type", "cluster", "sample_name")
+  grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
   
   spectra_check <- data_checked %>% 
     # I'm using across() and any_of() because if the data is not Ig data, the
@@ -253,7 +191,7 @@ sd_p <- function(x, na.rm = FALSE) {
 #' calculate_cut_offs(spectra_check = spectra_check,
 #'                    cut_off_basis = c("Spike PBS", "Total PBS"))
 #'                    
-calculate_cut_offs <- function(spectra_check, cut_off_basis) {
+calculate_cut_offs <- function(spectra_check, cut_off_basis, sd_factor, central_tendency_measure) {
   
   cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
                                                 data = spectra_check)
@@ -261,11 +199,28 @@ calculate_cut_offs <- function(spectra_check, cut_off_basis) {
   cut_offs <- cut_off_basis_samples %>%  
     dplyr::group_by(cluster) %>% 
     dplyr::summarise(av_prop = mean(passing_proportion, na.rm = FALSE),
+                     med_prop = median(passing_proportion, na.rm = FALSE),
                      sd_prop = sd_p(passing_proportion, na.rm = FALSE),
-                     cut_off_prop = av_prop + (3 * sd_prop),
+                     cut_off_prop = dplyr::if_else(central_tendency_measure == "Mean", 
+                                           av_prop + (sd_factor * sd_prop),
+                                           med_prop + (sd_factor * sd_prop)),
                      av_sum_int = mean(sum_intensity, na.rm = FALSE),
+                     med_sum_int = median(sum_intensity, na.rm = FALSE),
                      sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
-                     cut_off_sum_int = av_sum_int + (3 * sd_sum_int))
+                     cut_off_sum_int = dplyr::if_else(central_tendency_measure == "Mean", 
+                                                      av_sum_int + (sd_factor * sd_sum_int),
+                                                      med_sum_int + (sd_factor * sd_sum_int)),
+                     across(tidyselect::any_of(c("group", "sample_type")))) %>% 
+    dplyr::mutate(type = "based_on_samples") %>% 
+    dplyr::distinct() %>% 
+    dplyr::select(tidyselect::any_of(c("cluster",
+                                     "sample_type",
+                                     "group",
+                                     "cut_off_prop",
+                                     "cut_off_sum_int",
+                                     "type"))) %>% 
+    tidyr::nest(., "sample_type_list" = sample_type)
+  
   return(cut_offs)
 }
 
@@ -304,31 +259,52 @@ calculate_cut_offs <- function(spectra_check, cut_off_basis) {
 #'                max_ipq = 0.2,
 #'                min_sn = 9,
 #'                cut_off_basis = c("Spike PBS", "Total PBS"))
-curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_deviation, 
-                           max_ipq, min_sn, cut_off_basis) {
-  data <- define_clusters(data = data,
-                          clusters_regex = clusters_regex)
-  checked_data <- do_criteria_check(data = data, 
-                                    min_ppm_deviation = min_ppm_deviation,
-                                    max_ppm_deviation = max_ppm_deviation,
-                                    max_ipq = max_ipq,
-                                    min_sn = min_sn)
-  spectra_check <- summarize_spectra_checks(checked_data)
-  cut_offs <- calculate_cut_offs(spectra_check = spectra_check,
-                                 cut_off_basis = cut_off_basis) %>% 
+curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
+  
+  # if ("cluster" %in% colnames(cut_offs)) {
+  #   summarized_checks <- dplyr::left_join(summarized_checks, 
+  #                                         cut_offs) %>% 
+  #     dplyr::ungroup(.)
+  # } else {
+  #   summarized_checks <- summarized_checks %>% 
+  #     dplyr::mutate(cut_off_sum_int = cut_offs$cut_off_sum_int,
+  #                   cut_off_prop = cut_offs$cut_off_prop)
+  # }
+  
+  summarized_checks <- dplyr::left_join(summarized_checks, 
+                                        cut_offs) %>% 
     dplyr::ungroup(.)
   
-  spectra_check <- dplyr::left_join(spectra_check, cut_offs, by = "cluster") %>% 
-    dplyr::ungroup(.)
+  passing_spectra <- summarized_checks %>% 
+    dplyr::mutate(passed_spectra_curation = ifelse((passing_proportion > cut_off_prop) &
+                                                     (sum_intensity > cut_off_sum_int),
+                                                   TRUE,
+                                                   FALSE),
+                  reason_for_failure = dplyr::case_when(
+                    passing_proportion < cut_off_prop & sum_intensity < cut_off_sum_int ~ "Proportion of passing analytes and sum intensity below cut-offs",
+                    passing_proportion < cut_off_prop ~ "Proportion of passing analytes below cut-off",
+                    sum_intensity < cut_off_sum_int ~ "Sum intensity below cut-off",
+                    TRUE ~ ""
+                  )) %>%
+    dplyr::select(-tidyselect::any_of(c("type", 
+                                        "sample_type_list")))
   
-  passing_spectra <- spectra_check %>% 
-    dplyr::filter((passing_proportion > cut_off_prop) & (sum_intensity > cut_off_sum_int)) %>% 
-    dplyr::select(sample_name, cluster) %>% 
-    dplyr::mutate(passed_spectra_curation = TRUE)
-  
-  curated_data <- dplyr::full_join(passing_spectra, checked_data) %>% 
-    dplyr::mutate(passed_spectra_curation = tidyr::replace_na(passed_spectra_curation, 
-                                                              FALSE))
+  curated_data <- dplyr::full_join(passing_spectra, 
+                                   checked_data) %>% 
+    dplyr::mutate(reason_for_failure = dplyr::case_when(
+      is.na(absolute_intensity_background_subtracted) &
+        is.na(mass_accuracy_ppm) &
+        is.na(isotopic_pattern_quality) &
+        is.na(sn) ~ "Empty line in LacyTools summary file",
+      TRUE ~ reason_for_failure
+    )) %>% 
+    dplyr::relocate(c(passed_spectra_curation, reason_for_failure), 
+                    .after = sample_name) %>% 
+    dplyr::relocate(c(criteria_check,
+                      failed_criteria),
+                    .after = charge) %>% 
+    dplyr::relocate(c(sample_id, plate_well),
+                    .after = sample_name)
   
   no_NAs <- curated_data %>% 
     dplyr::filter(dplyr::if_all(.cols = c(mass_accuracy_ppm,
@@ -344,8 +320,34 @@ curate_spectra <- function(data, clusters_regex, min_ppm_deviation, max_ppm_devi
     }
   }
   
-  return(list(curated_data = curated_data,
-              spectra_check = spectra_check))
+  return(curated_data)
+}
+
+check_spectra <- function(data, min_ppm_deviation, max_ppm_deviation, 
+                            max_ipq, min_sn) {
+  checked_data <- do_criteria_check(data = data, 
+                                    min_ppm_deviation = min_ppm_deviation,
+                                    max_ppm_deviation = max_ppm_deviation,
+                                    max_ipq = max_ipq,
+                                    min_sn = min_sn)
+  spectra_check <- summarize_spectra_checks(checked_data)
+    
+  return(spectra_check)
+}
+
+calculate_cut_offs_per_type <- function(checked_spectra) {
+  
+  grouping_variables <- c("group", "cluster", "sample_type")
+  
+  cut_offs <- checked_spectra %>%  
+    dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
+    dplyr::summarise(av_prop = mean(passing_proportion, na.rm = FALSE),
+                     sd_prop = sd_p(passing_proportion, na.rm = FALSE),
+                     cut_off_prop = av_prop + (3 * sd_prop),
+                     av_sum_int = mean(sum_intensity, na.rm = FALSE),
+                     sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
+                     cut_off_sum_int = av_sum_int + (3 * sd_sum_int))
+  return(cut_offs)
 }
 
 filter_cut_off_basis <- function(cut_off_basis, data) {
@@ -408,7 +410,6 @@ filter_cut_off_basis <- function(cut_off_basis, data) {
 #'   \code{curate_spectra} returns two dataframes in a list. The dataframe that
 #'   should be passed as the \code{spectra_check} argument to
 #'   \code{create_cut_off_plot} is named "spectra_check".
-#' @inheritParams calculate_cut_offs
 #'
 #' @return This function returns a ggplot object.
 #' @export
@@ -427,7 +428,7 @@ filter_cut_off_basis <- function(cut_off_basis, data) {
 #' 
 #' create_cut_off_plot(spectra_check = spectra_curation$spectra_check,
 #'                     cut_off_basis = c("Spike PBS", "Total PBS"))
-create_cut_off_plot <- function(spectra_check, cut_off_basis) {
+create_cut_off_plot <- function(spectra_check) {
   
   n_colors <- length(unique(spectra_check$sample_type))
   my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
@@ -436,16 +437,23 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
     ggplot2::ggplot() +
     ggplot2::geom_jitter(ggplot2::aes(color = sample_type,
                                       x = passing_proportion,
-                                      y = sum_intensity),
+                                      y = sum_intensity,
+                                      text = paste0("Sample name: ", 
+                                                    sample_name,
+                                                    "\n",
+                                                    "Sample ID: ",
+                                                    sample_id,
+                                                    "\n",
+                                                    "Passing proportion: ",
+                                                    passing_proportion,
+                                                    "\n",
+                                                    "Sum intensity: ",
+                                                    sum_intensity)),
                          size = 1) +
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
-                   text = ggplot2::element_text(size = 16),
+                   #text = ggplot2::element_text(size = 16),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
-    ggplot2::geom_hline(ggplot2::aes(yintercept = cut_off_sum_int),
-                        linetype = "dashed") +
-    ggplot2::geom_vline(ggplot2::aes(xintercept = cut_off_prop),
-                        linetype = "dashed") +
     ggplot2::scale_color_manual(values = my_palette,
                                 name = "Sample type") +
     ggplot2::labs(y = "Sum intensity of passing analytes") +
@@ -459,27 +467,5 @@ create_cut_off_plot <- function(spectra_check, cut_off_basis) {
     p <- p +
       ggplot2::facet_wrap(~ cluster)
   }
-  
-  # cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
-  #                                               data = spectra_check)
-  # 
-  # distinct_data_points <- cut_off_basis_samples %>%
-  #   dplyr::distinct(passing_proportion,
-  #                   sum_intensity,
-  #                   .keep_all = TRUE) %>%
-  #   dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>%
-  #   dplyr::summarise(n = dplyr::n())
-  # 
-  # ellipse_possible <- all(distinct_data_points$n >= 3)
-  # 
-  # if (ellipse_possible) {
-  #   p <- p +
-  #     ggplot2::stat_ellipse(data = cut_off_basis_samples)
-  # } else {
-  #   p <- p +
-  #     ggplot2::geom_point(data = cut_off_basis_samples,
-  #                         shape = 1, size = 2.5)
-  # }
-  
-  return(p)
 }
+

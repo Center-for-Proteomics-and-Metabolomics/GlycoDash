@@ -144,9 +144,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     
     x <- reactiveValues()
     
-    observe({
+    summary <- reactive({
       req(results_spectra_curation$curated_spectra())
-      x$data <- results_spectra_curation$curated_spectra()
+      results_spectra_curation$curated_spectra()
+    })
+    
+    observe({
+      req(summary())
+      print(summary())
     })
     
     observe({
@@ -158,12 +163,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                            condition = 
                              (input$method == "Supply an analyte list" & 
                              !is.null(input$analyte_list)) | 
-                             (input$method == "Curate analytes based on data") &
-                             !is.null(input$ignore_samples))
+                             (input$method == "Curate analytes based on data") #&
+                             #!is.null(input$ignore_samples)
+                           )
     })
     
     clusters <- reactive({
-      unique(x$data$cluster)
+      unique(summary()$cluster)
     })
     
     info <- list(
@@ -212,13 +218,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     
     # The selection menu for input$ignore_samples is updated so that the choices
     # are sample_types and groups that are present in the data.
-    observeEvent(x$data, {
+    observeEvent(summary(), {
       
-      if ("group" %in% colnames(x$data)) {
-        options <- c(paste(unique(x$data$sample_type), "samples"), 
-                     paste(unique(x$data$group), "samples"))
+      if ("group" %in% colnames(summary())) {
+        options <- c(paste(unique(summary()$sample_type), "samples"), 
+                     paste(unique(summary()$group), "samples"))
       } else {
-        options <- c(paste(unique(x$data$sample_type), "samples"))
+        options <- c(paste(unique(summary()$sample_type), "samples"))
       }
       
       updateSelectizeInput(inputId = "ignore_samples",
@@ -249,42 +255,82 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                      text = "Please upload a .xlsx, .xls or .rds file.")
     })
     
+    without_samples_to_ignore <- reactive({
+      req(summary())
+      req(input$ignore_samples)
+      req(input$method == "Curate analytes based on data")
+      
+      if ("group" %in% colnames(summary())) {
+        group_to_ignore <- stringr::str_extract(
+          string = input$ignore_samples,
+          pattern = paste0(unique(summary()$group),
+                           collapse = "|")) %>% 
+          na.omit(.)
+      } else {
+        group_to_ignore <- NULL
+      }
+      
+      sample_types_to_ignore <- stringr::str_extract(
+        string = input$ignore_samples,
+        pattern = paste0(unique(summary()$sample_type),
+                         collapse = "|")) %>% 
+        na.omit(.)
+      
+      if (!is.null(group_to_ignore)) { 
+        if (!(group_to_ignore %in% summary()$group)) {
+          rlang::abort(class =  "wrong_group",
+                       message = paste("The group_to_ignore",
+                                       group_to_ignore,
+                                       "is not present in the group column of the data."))
+        } 
+      }
+      
+      if (!is.null(sample_types_to_ignore)) {
+        if (any(!(sample_types_to_ignore %in% summary()$sample_type))) {
+          rlang::abort(class =  "wrong_sample_type",
+                       message = "One or more of sample_types_to_ignore is not present in the \"sample_type\" column of the data.")
+        }
+        
+        if (is.null(group_to_ignore)) {
+          filtered <- summary() %>% 
+            dplyr::filter(!(sample_type %in% sample_types_to_ignore))
+        } else {
+          filtered <- summary() %>% 
+            dplyr::filter(!(group %in% group_to_ignore) & !(sample_type %in% sample_types_to_ignore))
+        }
+      }
+      return(filtered)
+      
+    })
+    
+    observe({
+      req(x$analyte_curated_data)
+      print("x$analyte_curated_data looks like this:")
+      print(x$analyte_curated_data)
+    })
+    
     observeEvent(input$curate_analytes, {
       # Reset x$curated_analytes and x$analyte_curated data so that the plot is
       # no longer shown if curation based on data had already been performed
       x$curated_analytes <- NULL
       x$analyte_curated_data <- NULL
       if (input$method == "Curate analytes based on data") {
-        
-        if ("group" %in% colnames(x$data)) {
-          group_to_ignore <- stringr::str_extract(
-            string = input$ignore_samples,
-            pattern = paste0(unique(x$data$group),
-                             collapse = "|")) %>% 
-            na.omit(.)
+        if (is_truthy(without_samples_to_ignore())) {
+          data_to_use <- without_samples_to_ignore()
         } else {
-          group_to_ignore <- NULL
+          data_to_use <- summary()
         }
-        
-        sample_types_to_ignore <- stringr::str_extract(
-          string = input$ignore_samples,
-          pattern = paste0(unique(x$data$sample_type),
-                           collapse = "|")) %>% 
-          na.omit(.)
-        
         # Perform analyte curation:
         x$curated_analytes <- curate_analytes(
-          data = x$data,
-          group_to_ignore = group_to_ignore,
-          sample_types_to_ignore = sample_types_to_ignore,
+          data = data_to_use,
           cut_off_percentage = input$cut_off)
+        # 
+        # passing_analytes <- x$curated_analytes %>% 
+        #   dplyr::filter(passed_curation == TRUE) %>% 
+        #   dplyr::select(-passed_curation)
         
-        passing_analytes <- x$curated_analytes %>% 
-          dplyr::filter(passed_curation == TRUE) %>% 
-          dplyr::select(-passed_curation)
-        
-        x$analyte_curated_data <- dplyr::left_join(passing_analytes, 
-                                                   x$data)
+        x$analyte_curated_data <- dplyr::left_join(x$curated_analytes, 
+                                                   summary())
         
         showNotification("Analyte curation has been performed based on the data.", 
                          type = "message")
@@ -295,7 +341,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
         
         tryCatch(expr = {
           x$analyte_curated_data <- curate_analytes_with_list(
-            data = x$data,
+            data = summary(),
             analyte_list = x$analyte_list)
           
           print(unique(x$analyte_curated_data$analyte))
@@ -315,11 +361,35 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                              type = "warning")
             x$analyte_curated_data <- suppressWarnings(
               curate_analytes_with_list(
-                data = x$data,
+                data = summary(),
                 analyte_list = x$analyte_list))
           })
       }
       
+    })
+    
+    with_analytes_to_include <- reactive({
+      req(summary(),
+          purrr::map(x$mod_results,
+                     ~ is_truthy(.x$analytes_to_include())))
+      
+      purrr::imap(x$mod_results,
+                  function(results, current_cluster) {
+                    data_current_cluster <- summary() %>% 
+                      dplyr::filter(cluster == current_cluster)
+                    
+                    dplyr::left_join(results$analytes_to_include(),
+                                     data_current_cluster)
+                      
+                  }) %>% 
+        purrr::reduce(dplyr::full_join)
+      
+    })
+    
+    observe({
+      req(with_analytes_to_include()) 
+      print("with_analytes_to_include() looks like this:")
+      print(with_analytes_to_include())
     })
     
     # Make downloading analyte_curated_data possible:
@@ -333,7 +403,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                "Excel file" = paste0(todays_date, "_curated_analytes.xlsx"))
       },
       content = function(file) {
-        data_to_download <- x$analyte_curated_data
+        data_to_download <- with_analytes_to_include()
         switch(input$download_format,
                "R object" = save(data_to_download, 
                                  file = file),
@@ -343,7 +413,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     )
     
     return(list(
-      analyte_curated_data = reactive({x$analyte_curated_data}),
+      analyte_curated_data = with_analytes_to_include,
       method = reactive({input$method}),
       ignore_samples = reactive({input$ignore_samples}),
       cut_off_percentage = reactive({input$cut_off}),
