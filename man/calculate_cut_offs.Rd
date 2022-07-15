@@ -4,7 +4,12 @@
 \alias{calculate_cut_offs}
 \title{Calculate cut-off values for spectra curation}
 \usage{
-calculate_cut_offs(spectra_check, cut_off_basis)
+calculate_cut_offs(
+  spectra_check,
+  cut_off_basis,
+  sd_factor,
+  central_tendency_measure
+)
 }
 \arguments{
 \item{spectra_check}{The dataframe returned by

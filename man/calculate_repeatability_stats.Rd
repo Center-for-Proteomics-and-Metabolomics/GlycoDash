@@ -4,12 +4,12 @@
 \alias{calculate_repeatability_stats}
 \title{Calculate the RSD of standards across a plate.}
 \usage{
-calculate_repeatability_stats(data, standard_sample_type, standard_group)
+calculate_repeatability_stats(data, standard_sample_id, standard_group)
 }
 \arguments{
 \item{data}{A dataframe with the curated (and normalized) data.}
 
-\item{standard_sample_type}{The sample type of the standards that the RSD's
+\item{standard_sample_id}{The sample type of the standards that the RSD's
 should be calculated for.}
 
 \item{standard_group}{The group (total or specific Ig) that the RSD's should

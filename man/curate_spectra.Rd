@@ -4,45 +4,7 @@
 \alias{curate_spectra}
 \title{Perform spectra curation}
 \usage{
-curate_spectra(
-  data,
-  clusters_regex,
-  min_ppm_deviation,
-  max_ppm_deviation,
-  max_ipq,
-  min_sn,
-  cut_off_basis
-)
-}
-\arguments{
-\item{data}{A dataframe in long format (one row for each analyte + sample
-combination).}
-
-\item{clusters_regex}{A vector containing character strings. These strings are
-used as regular expressions to classify analytes into clusters.
-\code{clusters_regex} should contain one character string per cluster in the
-data.}
-
-\item{min_ppm_deviation}{The lowest allowed value for the mass accuracy (in
-ppm).}
-
-\item{max_ppm_deviation}{The highest allowed value for the mass accuracy (in
-ppm).}
-
-\item{max_ipq}{The highest allowed value for the Isotopic Pattern Quality
-(IPQ). The IPQ indicates how much the isotopic pattern deviates from the
-theoretic isotopic pattern.}
-
-\item{min_sn}{The lowest allowed value for the signal to noise ratio (S/N).}
-
-\item{cut_off_basis}{A character vector or a single character string
-specifying which sample types (and optionally which group (Specific or
-Total Ig)) the spectra curation cut-offs should be based on. For each
-sample type or sample type-group combination that you want to base the
-cut-offs on you should add a character string. For example. if you want to
-base the cut-offs on all PBS samples and on the Specific negative_control
-samples, \code{cut_off_basis} should be \code{c("PBS", "Specific
-negative_control")}}
+curate_spectra(checked_data, summarized_checks, cut_offs)
 }
 \value{
 The function returns the original dataframe given as the data

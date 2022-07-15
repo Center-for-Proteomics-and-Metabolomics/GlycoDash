@@ -25,6 +25,10 @@ mod_tab_repeatability_ui <- function(id){
           solidHeader = TRUE,
           status = "primary",
           uiOutput(ns("standards_menu")),
+          shinyWidgets::materialSwitch(ns("by_plate"),
+                                       "Group samples by plate.",
+                                       right = TRUE,
+                                       status = "primary"),
           actionButton(ns("assess_repeatability"),
                        label = "Assess repeatability")
         )
@@ -39,7 +43,7 @@ mod_tab_repeatability_ui <- function(id){
             status = "primary",
             column(
               width = 9,
-              plotOutput(ns("plot"))
+              plotly::plotlyOutput(ns("plot"))
             ),
             column(
               width = 3,
@@ -56,67 +60,118 @@ mod_tab_repeatability_ui <- function(id){
 #' tab_repeatability Server Functions
 #'
 #' @noRd 
-mod_tab_repeatability_server <- function(id, data, Ig_data){
+mod_tab_repeatability_server <- function(id, my_data, Ig_data){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
     x <- reactiveValues()
     
+    # change the renderUI to just updating a selectInput (because now I use only
+    # one input regardless of the group being there or not)
+    
     output$standards_menu <- renderUI({
-      req(data())
-      req(Ig_data())
+      req(my_data())
+      #req(Ig_data())
       
-      sample_type_menu <- selectInput(ns("standard_sample_type"),
-                                      label = "Choose which standard you want to assess:",
-                                      choices = unique(data()$sample_type))
+      menu <- my_data() %>% 
+        dplyr::ungroup() %>% 
+        dplyr::select(tidyselect::any_of(c("sample_name", "group", "sample_id"))) %>%
+        dplyr::distinct() %>%
+        dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
+        dplyr::add_count(sample_id, name = "number_of_replicates_after_curation") %>% 
+        dplyr::mutate(number_of_replicates_after_curation = ifelse(sample_id == "empty cell in plate design",
+                                                                   1,
+                                                                   number_of_replicates_after_curation)) %>% 
+        dplyr::mutate(replicates_after_curation = number_of_replicates_after_curation > 1) %>% 
+        dplyr::filter(replicates_after_curation == TRUE) %>% 
+        dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", "sample_id")))) %>% 
+        purrr::pmap_chr(.,
+                        paste)
       
-      if (Ig_data() == "Yes") {
-        groups_menu <- selectInput(ns("standard_group"),
-                                   label = "Choose if you want to look at total or specific Ig samples:",
-                                   choices = unique(data()$group))
-      }
-      
-      menu <- list(sample_type_menu, 
-                   get0("groups_menu"))
-      menu[sapply(menu, is.null)] <- NULL
-      
-      return(menu)
+      selectInput(ns("sample_menu"),
+                  label = "Choose which samples you want to assess:",
+                  choices = menu)
     })
+    
+    selected_sample_id <- reactive({
+      req(input$sample_menu)
+      req(my_data())
+      stringr::str_extract(input$sample_menu,
+                           unique(my_data()$sample_id)) %>% 
+        na.omit()
+    }) %>% bindEvent(input$assess_repeatability)
+    
+    selected_group <- reactive({
+      req(input$sample_menu)
+      req(my_data())
+      if (Ig_data() == "Yes") {
+        group <- stringr::str_extract(
+          string = input$sample_menu,
+          pattern = unique(my_data()$group)) %>% 
+          na.omit(.)
+      } else {
+        group <- NULL
+      }
+      return(group)
+    }) %>% bindEvent(input$assess_repeatability)
+    
     
     observeEvent(input$assess_repeatability, {
       # Reset x$repeatability and x$variation_table:
       x$repeatability <- NULL
       x$variation_table <- NULL
       
-      # Try to calculate the repeatability stats, but show a notification if
-      # there are no samples of the selected sample type and group combination:
-      tryCatch(
-        expr = {
-          x$repeatability <- calculate_repeatability_stats(
-            data = data(),
-            standard_sample_type = input$standard_sample_type,
-            standard_group = input$standard_group)
-        },
-        no_samples = function(c) {
-          showNotification(c$message, type = "error")
-        }
-      )
-      
-      # Pause until x$repeatability has been calculated:
-      req(x$repeatability)
-      
-      # Calculate the intra-plate variations to show in the table:
-      x$variation_table <- x$repeatability %>% 
-        dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
+      if (is_truthy(input$by_plate)) {
+        # Try to calculate the repeatability stats, but show a notification if
+        # there are no samples of the selected sample type and group combination:
+        tryCatch(
+          expr = {
+            x$repeatability <- calculate_repeatability_stats(
+              data = my_data(),
+              standard_sample_id = selected_sample_id(),
+              standard_group = selected_group())
+          },
+          no_samples = function(c) {
+            showNotification(c$message, type = "error")
+          }
+        )
+        
+        # Pause until x$repeatability has been calculated:
+        req(x$repeatability)
+        
+        # Calculate the intra-plate variations to show in the table:
+        x$variation_table <- x$repeatability %>% 
+          dplyr::group_by(plate) %>% 
+          dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
+      }
     })
     
     plot <- reactive({
-      req(x$repeatability)
-      visualize_repeatability(x$repeatability)
+      if (is_truthy(input$by_plate)) {
+        req(x$repeatability)
+        plot <- visualize_repeatability2(x$repeatability)
+      } else {
+        req(my_data())
+        req(selected_sample_id())
+        plot <- visualize_repeatability_mean_bars(
+          my_data(),
+          selected_sample_id = selected_sample_id(),
+          selected_group = selected_group()
+        )
+      }
+      
+      return(plot)
     })
     
-    output$plot <- renderPlot({
-      plot()
+    output$plot <- plotly::renderPlotly({
+      req(plot())
+      
+      plotly_object <- plotly::ggplotly(plot(), tooltip = "text")
+      
+      plotly_object <- change_axis_title_distance(plotly_object, 
+                                                  y_distance = 90)
+      
+      plotly_object
     })
     
     for_table <- reactive({
@@ -144,15 +199,15 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
                                    paging = FALSE))
     })
     
-    title_for_report <- reactive({
-      paste(input$standard_sample_type,
-            ifelse(is.null(input$standard_group), "", input$standard_group))
-    })
+    # title_for_report <- reactive({
+    #   paste(input$standard_sample_type,
+    #         ifelse(is.null(input$standard_group), "", input$standard_group))
+    # })
     
     return(list(
       plot = plot,
-      for_table = for_table,
-      title_for_report = title_for_report
+      for_table = for_table#,
+      #title_for_report = title_for_report
     ))
     
   })

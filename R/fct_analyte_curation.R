@@ -54,29 +54,34 @@
 #'                                            "PBS"),
 #'                 cut_off_percentage = 25)
 #'                 
-curate_analytes <- function(data, group_to_ignore, sample_types_to_ignore, cut_off_percentage) {
+curate_analytes <- function(data, cut_off_percentage) {
   
-  if (!is.null(group_to_ignore)) { 
-    if (!(group_to_ignore %in% data$group)) {
-      rlang::abort(class =  "wrong_group",
-                   message = paste("The group_to_ignore",
-                                   group_to_ignore,
-                                   "is not present in the group column of the data."))
-    } 
-  }
+  # if (!is.null(group_to_ignore)) { 
+  #   if (!(group_to_ignore %in% data$group)) {
+  #     rlang::abort(class =  "wrong_group",
+  #                  message = paste("The group_to_ignore",
+  #                                  group_to_ignore,
+  #                                  "is not present in the group column of the data."))
+  #   } 
+  # }
+  # 
+  # if (!is.null(sample_types_to_ignore)) {
+  #   if (any(!(sample_types_to_ignore %in% data$sample_type))) {
+  #     rlang::abort(class =  "wrong_sample_type",
+  #                  message = "One or more of sample_types_to_ignore is not present in the \"sample_type\" column of the data.")
+  #   }
+  #   
+  #   if (is.null(group_to_ignore)) {
+  #     curated_analytes <- data %>% 
+  #       dplyr::filter(!(sample_type %in% sample_types_to_ignore))
+  #   } else {
+  #     curated_analytes <- data %>% 
+  #       dplyr::filter(!(group %in% group_to_ignore) & !(sample_type %in% sample_types_to_ignore))
+  #   }
+  # } else {
+  #   curated_analytes <- data
+  # }
   
-  if (any(!(sample_types_to_ignore %in% data$sample_type))) {
-    rlang::abort(class =  "wrong_sample_type",
-                 message = "One or more of sample_types_to_ignore is not present in the \"sample_type\" column of the data.")
-  }
-  
-  if (is.null(group_to_ignore)) {
-    curated_analytes <- data %>% 
-      dplyr::filter(!(sample_type %in% sample_types_to_ignore))
-  } else {
-    curated_analytes <- data %>% 
-      dplyr::filter(!(group %in% group_to_ignore) & !(sample_type %in% sample_types_to_ignore))
-  }
   
   required_columns <- c("cluster", 
                         "charge", 
@@ -92,7 +97,7 @@ curate_analytes <- function(data, group_to_ignore, sample_types_to_ignore, cut_o
                                  "Attention: curate_analytes() can only be used after spectra curation has been performed with curate_spectra()"))
   }
   
-  curated_analytes <- curated_analytes %>% 
+  curated_analytes <- data %>% 
     dplyr::group_by(cluster, charge, analyte) %>% 
     dplyr::summarise(passing_percentage = sum(criteria_check) / dplyr::n() * 100) %>% 
     dplyr::mutate(passed_curation = dplyr::if_else(passing_percentage > cut_off_percentage, 
@@ -232,21 +237,27 @@ plot_analyte_curation <- function(curated_analytes,
                                   selected_cluster) {
   
   data_to_plot <- curated_analytes %>% 
-    dplyr::filter(cluster == selected_cluster)
+    dplyr::filter(cluster == selected_cluster) %>% 
+    dplyr::mutate(
+      `Passed curation?` = dplyr::case_when(
+        passed_curation == "TRUE" ~ "Yes",
+        passed_curation == "FALSE" ~ "No"
+      ))
   
   plot <- ggplot2::ggplot(data_to_plot) + 
     ggplot2::geom_col(ggplot2::aes(x = analyte, 
                                    y = passing_percentage,
-                                   fill = passed_curation)) +
-    ggplot2::scale_fill_discrete(name = "Passed curation?",
-                                 labels = c(`TRUE`= "Yes",
-                                            `FALSE` = "No"),
-                                 type = c(`TRUE` = "#3498DB",
-                                          `FALSE` = "#E74C3C")) +
-    # ggplot2::scale_fill_brewer(name = "Passed curation?", 
-    #                            labels = c(`TRUE`= "Yes",
-    #                                       `FALSE` = "No"),
-    #                            palette = "Set2") +
+                                   fill = `Passed curation?`,
+                                   text = paste(
+                                     "Analyte:",
+                                     analyte,
+                                     "\nPercentage of passing spectra:",
+                                     paste0(signif(passing_percentage,
+                                                   4), 
+                                            "%")
+                                   ))) +
+    ggplot2::scale_fill_discrete(type = c("Yes" = "#3498DB",
+                                          "No" = "#E74C3C")) +
     ggplot2::geom_hline(yintercept = cut_off_percentage, 
                         linetype = "dashed",
                         color = "#E74C3C", 
@@ -257,7 +268,7 @@ plot_analyte_curation <- function(curated_analytes,
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, 
                                                        hjust = 1),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                   text = ggplot2::element_text(size = 16),
+                   #text = ggplot2::element_text(size = 16),
                    legend.position = "top",
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
     ggplot2::xlab("Analyte") +
@@ -315,10 +326,18 @@ plot_analyte_curation <- function(curated_analytes,
 #' 
 create_analyte_curation_table <- function(dataframe_for_table) {
   
-  analyte_curation_table <- DT::datatable(dataframe_for_table,
-                                          options = list(searching = FALSE)) %>% 
+  analyte_curation_table <- DT::datatable(
+    dataframe_for_table,
+    server = FALSE, 
+    escape = FALSE, 
+    options = list(searching = FALSE,
+                   preDrawCallback = JS('function() {
+Shiny.unbindAll(this.api().table().node()); }'),
+drawCallback = JS('function() {
+Shiny.bindAll(this.api().table().node()); } ')
+    )) %>% 
     DT::formatStyle(columns = 2:ncol(dataframe_for_table),
-                    color = DT::styleEqual(levels = c("Yes", 
+                  color = DT::styleEqual(levels = c("Yes", 
                                                       "No"), 
                                            values = c("#3498DB", 
                                                       "#E74C3C")))
@@ -376,12 +395,12 @@ prepare_analyte_curation_table <- function(analyte_curated_data, selected_cluste
   analyte_curation_dataframe <- analyte_curated_data %>% 
     dplyr::ungroup() %>% 
     dplyr::filter(cluster == selected_cluster) %>% 
-    dplyr::select(analyte, charge) %>% 
+    dplyr::select(analyte, charge, passed_curation) %>% 
     dplyr::distinct() %>% 
-    tidyr::pivot_wider(names_from = charge, 
-                       values_from = charge,
-                       values_fn = function(value) dplyr::if_else(!is.na(value), 
-                                                                  "Yes", 
+    tidyr::pivot_wider(names_from = charge,
+                       values_from = passed_curation,
+                       values_fn = function(value) dplyr::if_else(isTRUE(value),
+                                                                  "Yes",
                                                                   "No"),
                        values_fill = "No")
   

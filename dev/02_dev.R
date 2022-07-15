@@ -43,7 +43,16 @@ usethis::use_pipe()
 ## Add modules ----
 ## Create a module infrastructure in R/
 golem::add_module( name = "data_import" ) 
+golem::add_module( name = "fileInput_with_info" )
+golem::add_module( name = "read_lacytools" )
+golem::add_module( name = "add_sample_ids" )
+golem::add_module( name = "process_sample_list" )
+golem::add_module( name = "add_sample_types" )
+golem::add_module( name = "process_sample_type_file" )
+golem::add_module( name = "add_metadata" )
+golem::add_module( name = "clusters" )
 golem::add_module( name = "spectra_curation" ) 
+golem::add_module( name = "tab_cut_offs" )
 golem::add_module( name = "analyte_curation" ) 
 golem::add_module( name = "normalization" ) 
 golem::add_module( name = "derived_traits" ) 
@@ -56,11 +65,16 @@ golem::add_module( name = "export" )
 ## Add helper functions ----
 ## Creates fct_* and utils_*
 golem::add_fct( "data_import" ) 
+golem::add_fct( "add_sample_ids" )
+golem::add_fct( "add_sample_types" )
+golem::add_fct( "add_metadata" )
+golem::add_fct( "clusters" )
 golem::add_fct( "spectra_curation" )
 golem::add_fct( "analyte_curation" )
 golem::add_fct( "normalization" )
 golem::add_fct( "derived_traits" )
 golem::add_fct( "repeatability" )
+golem::add_utils( "general" )
 
 ## External resources
 ## Creates .js and .css files at inst/app/www

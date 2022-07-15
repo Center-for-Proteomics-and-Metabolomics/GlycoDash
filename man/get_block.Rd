@@ -7,7 +7,7 @@
 get_block(
   data,
   variable,
-  Ig_data,
+  Ig_data = NULL,
   keyword_specific = NULL,
   keyword_total = NULL
 )
