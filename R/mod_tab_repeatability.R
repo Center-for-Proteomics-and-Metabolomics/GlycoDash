@@ -60,7 +60,7 @@ mod_tab_repeatability_ui <- function(id){
 #' tab_repeatability Server Functions
 #'
 #' @noRd 
-mod_tab_repeatability_server <- function(id, data, Ig_data){
+mod_tab_repeatability_server <- function(id, my_data, Ig_data){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -70,10 +70,10 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
     # one input regardless of the group being there or not)
     
     output$standards_menu <- renderUI({
-      req(data())
+      req(my_data())
       #req(Ig_data())
       
-      menu <- data() %>% 
+      menu <- my_data() %>% 
         dplyr::ungroup() %>% 
         dplyr::select(tidyselect::any_of(c("sample_name", "group", "sample_id"))) %>%
         dplyr::distinct() %>%
@@ -91,39 +91,23 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
       selectInput(ns("sample_menu"),
                   label = "Choose which samples you want to assess:",
                   choices = menu)
-      
-      # sample_type_menu <- selectInput(ns("standard_sample_type"),
-      #                                 label = "Choose which standard you want to assess:",
-      #                                 choices = unique(data()$sample_type))
-      # 
-      # if (Ig_data() == "Yes") {
-      #   groups_menu <- selectInput(ns("standard_group"),
-      #                              label = "Choose if you want to look at total or specific Ig samples:",
-      #                              choices = unique(data()$group))
-      # }
-      # 
-      # menu <- list(sample_type_menu, 
-      #              get0("groups_menu"))
-      # menu[sapply(menu, is.null)] <- NULL
-      # 
-      # return(menu)
     })
     
     selected_sample_id <- reactive({
       req(input$sample_menu)
-      req(data())
+      req(my_data())
       stringr::str_extract(input$sample_menu,
-                           unique(data()$sample_id)) %>% 
+                           unique(my_data()$sample_id)) %>% 
         na.omit()
     }) %>% bindEvent(input$assess_repeatability)
     
     selected_group <- reactive({
       req(input$sample_menu)
-      req(data())
-      if ("group" %in% colnames(data())) {
+      req(my_data())
+      if ("group" %in% colnames(my_data())) {
         group <- stringr::str_extract(
           string = input$sample_menu,
-          pattern = unique(data()$group)) %>% 
+          pattern = unique(my_data()$group)) %>% 
           na.omit(.)
       } else {
         group <- NULL
@@ -143,7 +127,7 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
         tryCatch(
           expr = {
             x$repeatability <- calculate_repeatability_stats(
-              data = data(),
+              data = my_data(),
               standard_sample_id = selected_sample_id(),
               standard_group = selected_group())
           },
@@ -163,14 +147,14 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
     })
     
     plot <- reactive({
-      if (isTRUE(input$by_plate)) {
+      if (is_truthy(input$by_plate)) {
         req(x$repeatability)
         plot <- visualize_repeatability2(x$repeatability)
       } else {
-        req(data())
+        req(my_data())
         req(selected_sample_id())
         plot <- visualize_repeatability_mean_bars(
-          data(),
+          my_data(),
           selected_sample_id = selected_sample_id(),
           selected_group = selected_group()
         )
@@ -215,15 +199,15 @@ mod_tab_repeatability_server <- function(id, data, Ig_data){
                                    paging = FALSE))
     })
     
-    title_for_report <- reactive({
-      paste(input$standard_sample_type,
-            ifelse(is.null(input$standard_group), "", input$standard_group))
-    })
+    # title_for_report <- reactive({
+    #   paste(input$standard_sample_type,
+    #         ifelse(is.null(input$standard_group), "", input$standard_group))
+    # })
     
     return(list(
       plot = plot,
-      for_table = for_table,
-      title_for_report = title_for_report
+      for_table = for_table#,
+      #title_for_report = title_for_report
     ))
     
   })
