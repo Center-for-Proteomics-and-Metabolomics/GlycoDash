@@ -73,12 +73,15 @@ mod_data_exploration_server <- function(id, results_derived_traits){
     
     output$first_tab <- renderUI({
       mod_tab_data_exploration_ui(ns("tab1"))
-    })
-    
-    tab_results$tab1 <- mod_tab_data_exploration_server("tab1",
-                                                        my_data = my_data)
+    }) %>% bindEvent(my_data())
     
     observe({
+    tab_results$tab1 <- mod_tab_data_exploration_server("tab1",
+                                                        my_data = my_data)
+    }) %>% bindEvent(my_data())
+    
+    observe({
+      req(input$add_tab > 0)
       tab_id <- paste0("tab", (input$add_tab + 1))
       
       appendTab(inputId = "tabs",
@@ -95,8 +98,7 @@ mod_data_exploration_server <- function(id, results_derived_traits){
         my_data = my_data
       )
       
-    }) %>% bindEvent(input$add_tab, 
-                     ignoreInit = TRUE)
+    }) %>% bindEvent(input$add_tab)
     
     # r <- reactiveValues(all_boxes = list(),
     #                     all_plots = list())

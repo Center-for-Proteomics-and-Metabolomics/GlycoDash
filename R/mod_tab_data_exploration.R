@@ -11,42 +11,43 @@ mod_tab_data_exploration_ui <- function(id){
   ns <- NS(id)
   tagList(
     br(),
-    shinydashboardPlus::box(
-      title = "Settings",
-      width = 12,
-      solidHeader = FALSE,
-      status = "primary",
-      collapsible = TRUE,
-      selectizeInput(ns("filter"),
-                     choices = "",
-                     selected = NULL,
-                     multiple = TRUE,
-                     label = "Choose which sample types should be excluded from the plot:",
-                     options = list(placeholder = "select one or more sample type(s)")),
-      selectizeInput(ns("yvar"),
-                     choices = "",
-                     selected = NULL,
-                     label = "Choose what variable should be on the y-axis:",
-                     options = list(placeholder = "select a continuous variable")),
-      selectizeInput(ns("xvar"),
-                     choices = "",
-                     selected = NULL,
-                     label = "Choose what variable should be on the x-axis:",
-                     options = list(placeholder = "select a discrete variable")),
-      selectizeInput(ns("facets"),
-                     choices = "",
-                     selected = NULL,
-                     label = "Choose what variable to facet by:",
-                     options = list(placeholder = "select a discrete variable",
-                                    maxItems = 2)),
-      selectizeInput(ns("color"),
-                     choices = "",
-                     selected = NULL,
-                     label = "Choose what variable to color by:",
-                     options = list(placeholder = "select a discrete variable"))
-    ),
-    br(),
-    plotOutput(ns("boxplot"))
+    fluidPage(
+      fluidRow(
+        shinydashboardPlus::box(
+          title = "Settings",
+          width = 12,
+          solidHeader = FALSE,
+          status = "primary",
+          collapsible = TRUE,
+          selectizeInput(ns("filter"),
+                         choices = "",
+                         selected = NULL,
+                         multiple = TRUE,
+                         label = "Choose which sample types should be excluded from the plot:"),
+          selectizeInput(ns("yvar"),
+                         choices = "",
+                         selected = NULL,
+                         label = "Choose what variable should be on the y-axis:"),
+          selectizeInput(ns("xvar"),
+                         choices = "",
+                         selected = NULL,
+                         label = "Choose what variable should be on the x-axis:"),
+          selectizeInput(ns("facets"),
+                         choices = "",
+                         selected = NULL,
+                         label = "Choose what variable to facet by:"),
+          selectizeInput(ns("color"),
+                         choices = "",
+                         selected = NULL,
+                         label = "Choose what variable to color by:")
+        )
+      ),
+      br(),
+      fluidRow(
+        width = 12,
+        plotOutput(ns("boxplot"))
+      )
+    )
   )
 }
     
