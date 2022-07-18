@@ -119,6 +119,14 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
                           yvar = input$yvar,
                           color = color,
                           facets = facets)
+        } else {
+          if (input$plot_type == "Histogram") {
+            my_histogram(filtered_data(),
+                         xvar = input$xvar,
+                         yvar = input$yvar,
+                         color = color,
+                         facets = facets)
+          }
         }
       }
       
