@@ -106,11 +106,21 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
         facets <- input$facets
       } else { facets <- NULL }
       
-      my_boxplot(filtered_data(),
-                 xvar = input$xvar,
-                 yvar = input$yvar,
-                 color = color,
-                 facets = facets)
+      if (input$plot_type == "Boxplot") {
+        my_boxplot(filtered_data(),
+                   xvar = input$xvar,
+                   yvar = input$yvar,
+                   color = color,
+                   facets = facets)
+      } else {
+        if (input$plot_type == "Scatter plot") {
+          my_scatter_plot(filtered_data(),
+                          xvar = input$xvar,
+                          yvar = input$yvar,
+                          color = color,
+                          facets = facets)
+        }
+      }
       
     })
     
