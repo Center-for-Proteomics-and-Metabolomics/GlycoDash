@@ -19,6 +19,11 @@ mod_tab_data_exploration_ui <- function(id){
           solidHeader = FALSE,
           status = "primary",
           collapsible = TRUE,
+          selectizeInput(ns("plot_type"),
+                         choices = c("Boxplot",
+                                     "Scatter plot",
+                                     "Histogram"),
+                         label = "What type of plot do you want?"),
           selectizeInput(ns("filter"),
                          choices = "",
                          selected = NULL,
@@ -93,34 +98,20 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
           input$xvar,
           input$yvar)
       
-      plot <- filtered_data() %>% 
-        ggplot2::ggplot() +
-        ggplot2::geom_boxplot(ggplot2::aes(x = .data[[input$xvar]],
-                                           y = .data[[input$yvar]]),
-                              outlier.shape = NA) +
-        ggplot2::theme_classic() +
-        ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
-                                                           hjust = 1),
-                       text = ggplot2::element_text(size = 16))
+      if (is_truthy(input$color)) {
+        color <- input$color
+      } else { color <- NULL }
       
-      if (isTruthy(input$color)) {
-        plot <- plot +
-          ggplot2::geom_jitter(ggplot2::aes(x = .data[[input$xvar]],
-                                            y = .data[[input$yvar]],
-                                            color = .data[[input$color]]))
-      } else {
-        plot <- plot +
-          ggplot2::geom_jitter(ggplot2::aes(x = .data[[input$xvar]],
-                                            y = .data[[input$yvar]]),
-                               color = "red")
-      }
+      if (is_truthy(input$facets)) {
+        facets <- input$facets
+      } else { facets <- NULL }
       
-      if (isTruthy(input$facets)) {
-        plot <- plot +
-          ggplot2::facet_wrap(input$facets)
-      }
-      return(plot)
+      my_boxplot(filtered_data(),
+                 xvar = input$xvar,
+                 yvar = input$yvar,
+                 color = color,
+                 facets = facets)
+      
     })
     
     output$boxplot <- renderPlot({

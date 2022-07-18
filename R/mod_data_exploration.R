@@ -115,7 +115,8 @@ mod_data_exploration_server <- function(id, results_derived_traits){
       )
       
     }) %>% bindEvent(input$add_tab,
-                     ignoreInit = TRUE)
+                     ignoreInit = TRUE) # Maybe unnecessary? according to 
+    # documentation of actionButton they are 'falsy' after initial load.
     
     # r <- reactiveValues(all_boxes = list(),
     #                     all_plots = list())

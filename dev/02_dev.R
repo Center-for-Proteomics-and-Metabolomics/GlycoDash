@@ -76,6 +76,7 @@ golem::add_fct( "analyte_curation" )
 golem::add_fct( "normalization" )
 golem::add_fct( "derived_traits" )
 golem::add_fct( "repeatability" )
+golem::add_fct( "data_exploration" )
 golem::add_utils( "general" )
 
 ## External resources

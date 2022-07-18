@@ -200,7 +200,8 @@ normalized_data_wide <- normalized_data %>%
         # removing columns with values that differ between clusters:
         dplyr::select(-tidyselect::any_of(c("passing_proportion", 
                                             "cut_off_prop", 
-                                            "cut_off_sum_int"))) %>% 
+                                            "cut_off_sum_int",
+                                            "failed_criteria"))) %>% 
         tidyr::pivot_wider(names_from = c(cluster, analyte),
                            names_sep = "_",
                            values_from = relative_abundance)
@@ -256,6 +257,13 @@ pl <- plotly::ggplotly(plot, tooltip = "text")
 pl <- change_axis_title_distance(pl, y_distance = 90)
 
 pl
+
+```
+
+```{r exploration}
+
+my_boxplot(normalized_data_wide, "sample_type", "IgGI1_IgGI1H3N4F1", facets = c("group"))
+
 
 ```
 
