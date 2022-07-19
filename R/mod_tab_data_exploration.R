@@ -50,7 +50,7 @@ mod_tab_data_exploration_ui <- function(id){
       br(),
       fluidRow(
         width = 12,
-        plotly::plotlyOutput(ns("plot"))
+        shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot")))
       )
     )
   )
@@ -94,9 +94,7 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
     })
     
     my_plot <- reactive({
-      req(filtered_data(),
-          input$xvar,
-          input$yvar)
+      req(filtered_data())
       
       if (is_truthy(input$color)) {
         color <- input$color
@@ -107,6 +105,8 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
       } else { facets <- NULL }
       
       if (input$plot_type == "Boxplot") {
+        req(input$xvar,
+            input$yvar)
         my_boxplot(filtered_data(),
                    xvar = input$xvar,
                    yvar = input$yvar,
@@ -114,6 +114,8 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
                    facets = facets)
       } else {
         if (input$plot_type == "Scatter plot") {
+          req(input$xvar,
+              input$yvar)
           my_scatter_plot(filtered_data(),
                           xvar = input$xvar,
                           yvar = input$yvar,
@@ -121,9 +123,10 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
                           facets = facets)
         } else {
           if (input$plot_type == "Histogram") {
+            req(input$xvar)
+            
             my_histogram(filtered_data(),
                          xvar = input$xvar,
-                         yvar = input$yvar,
                          color = color,
                          facets = facets)
           }
@@ -134,16 +137,22 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
     
     output$plot <- plotly::renderPlotly({
       
-      # Determine the number of facets n, the first n traces will correspond to
-      # the boxplot traces in the ggplotly object:
-      boxplot_traces <- 1:nfacets(my_plot())
+      plotly_object <- plotly::ggplotly(my_plot(), 
+                                        tooltip = "text") 
       
-      plotly::ggplotly(my_plot(), 
-                       tooltip = "text") %>% # Use "text" as hoverinfo for the points,
-        # but use the default hoverinfo for the boxplot traces:
-        plotly::style(hoverinfo = "y", traces = boxplot_traces) %>% 
-        # Hide the outliers (needed because plotly ignores "outlier.shape = NA"):
-        hide_outliers(.)
+      if (input$plot_type == "Boxplot") {
+        # Determine the number of facets n, the first n traces will correspond to
+        # the boxplot traces in the ggplotly object:
+        boxplot_traces <- 1:nfacets(my_plot())
+        
+        plotly_object <- plotly_object %>% # Use "text" as hoverinfo for the points,
+          # but use the default hoverinfo for the boxplot traces:
+          plotly::style(hoverinfo = "y", traces = boxplot_traces) %>% 
+          # Hide the outliers (needed because plotly ignores "outlier.shape = NA"):
+          hide_outliers(.) 
+      }
+      
+      return(plotly_object)
       
     })
     

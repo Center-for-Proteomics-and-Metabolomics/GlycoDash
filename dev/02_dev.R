@@ -38,6 +38,7 @@ usethis::use_package( "kableExtra" )
 usethis::use_package( "readxl" )
 usethis::use_package( "RColorBrewer")
 usethis::use_package( "htmltools" )
+usethis::use_package( "shinyjqui" )
 usethis::use_pipe()
 
 ## Add modules ----

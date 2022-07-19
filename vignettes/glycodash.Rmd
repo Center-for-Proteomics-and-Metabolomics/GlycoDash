@@ -273,13 +273,18 @@ data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
 pl <- my_boxplot(data_with_derived_traits, 
                  "sample_type", 
                  "IgGI1_Fucosylation", 
-                 facets = c("group", "sample_type"))
+                 facets = c("group", "sample_type")) 
+
+pl <- my_histogram(data_with_derived_traits,
+                   "IgGI1_Fucosylation",
+                   color = "sample_type")
 
 boxplot_traces <- 1:nfacets(pl)
 
-plotly::ggplotly(pl, tooltip = "text") %>% 
-  hide_outliers(.) %>% 
-  plotly::style(hoverinfo = "y", traces = boxplot_traces)
+plotly::ggplotly(pl, tooltip = "text") #%>% 
+  plotly::style(hoverinfo = "y", traces = boxplot_traces) %>% 
+  hide_outliers(.)
+
 
 
 

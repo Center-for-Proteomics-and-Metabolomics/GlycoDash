@@ -28,6 +28,7 @@ Imports:
     shinyBS,
     shinydashboard,
     shinyFeedback,
+    shinyjqui,
     shinyjs,
     shinyWidgets,
     snakecase,
