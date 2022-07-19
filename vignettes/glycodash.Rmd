@@ -262,7 +262,26 @@ pl
 
 ```{r exploration}
 
-my_boxplot(normalized_data_wide, "sample_type", "IgGI1_IgGI1H3N4F1", facets = c("group"))
+derived_traits <- calculate_derived_traits(normalized_data, "Fucosylation") %>% 
+        tidyr::pivot_wider(names_from = cluster,
+                           values_from = "Fucosylation",
+                           names_glue = "{cluster}_{.value}")
+      
+data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
+                                                     derived_traits)
+
+pl <- my_boxplot(data_with_derived_traits, 
+                 "sample_type", 
+                 "IgGI1_Fucosylation", 
+                 facets = c("group", "sample_type"))
+
+boxplot_traces <- 1:nfacets(pl)
+
+plotly::ggplotly(pl, tooltip = "text") %>% 
+  hide_outliers(.) %>% 
+  plotly::style(hoverinfo = "y", traces = boxplot_traces)
+
+
 
 
 ```

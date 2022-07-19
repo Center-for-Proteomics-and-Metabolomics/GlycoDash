@@ -50,7 +50,7 @@ mod_tab_data_exploration_ui <- function(id){
       br(),
       fluidRow(
         width = 12,
-        plotOutput(ns("boxplot"))
+        plotly::plotlyOutput(ns("plot"))
       )
     )
   )
@@ -132,8 +132,19 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
       
     })
     
-    output$boxplot <- renderPlot({
-      my_plot()
+    output$plot <- plotly::renderPlotly({
+      
+      # Determine the number of facets n, the first n traces will correspond to
+      # the boxplot traces in the ggplotly object:
+      boxplot_traces <- 1:nfacets(my_plot())
+      
+      plotly::ggplotly(my_plot(), 
+                       tooltip = "text") %>% # Use "text" as hoverinfo for the points,
+        # but use the default hoverinfo for the boxplot traces:
+        plotly::style(hoverinfo = "y", traces = boxplot_traces) %>% 
+        # Hide the outliers (needed because plotly ignores "outlier.shape = NA"):
+        hide_outliers(.)
+      
     })
     
     return(list(
