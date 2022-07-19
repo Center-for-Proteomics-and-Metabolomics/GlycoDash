@@ -79,6 +79,8 @@ mod_data_import_server <- function(id){
       
       if (is_truthy(data_incl_metadata$data())) {
         show_in_table <- data_incl_metadata$data()
+        showNotification("The metadata was added to the data.",
+                         type = "message")
       } else {
         if (is_truthy(data_incl_clusters$data())) {
           show_in_table <- data_incl_clusters$data()

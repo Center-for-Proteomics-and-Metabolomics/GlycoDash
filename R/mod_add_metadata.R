@@ -242,7 +242,7 @@ mod_add_metadata_server <- function(id, summary){
           r$master_button <- isolate(r$master_button) + 1
         }
       }
-    }) %>% bindEvent(input$button)
+    }) %>% bindEvent(input$button, r$response)
     
     with_metadata <- reactive({
       req(unmatched_ids())
@@ -254,11 +254,6 @@ mod_add_metadata_server <- function(id, summary){
                          merged_metadata())
       }
     })
-    
-    observe({
-      showNotification("The metadata was added to the data.",
-                       type = "message")
-    }) %>% bindEvent(with_metadata())
     
     
     # This is the datatable containing the unmatched sample ID's that is shown 
