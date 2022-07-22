@@ -199,8 +199,7 @@ hide_outliers <- function(plotly_object) {
     plotly_object[["x"]][["data"]], 
     function(x) {
       if (x$hoverinfo == 'y') {  
-        x$marker = list(opacity = 0)
-        #x$hoverinfo = NA    
+        x$marker = list(opacity = 0) 
       }  
       return(x) 
     })

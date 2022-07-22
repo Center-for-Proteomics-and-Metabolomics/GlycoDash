@@ -192,19 +192,13 @@ mod_add_metadata_server <- function(id, summary){
     }) %>% bindEvent(input$button)
     
     observe({
-      print("merged_metadata():")
-      print(req(merged_metadata()))
+      print("with_metadata is_truthy:")
+      print(paste(is_truthy(with_metadata()), Sys.time()))
     })
     
     observe({
-      req(unmatched_ids())
-      print("!isTRUE(all.equal(unmatched_ids(), \"none\"))")
-      print(!isTRUE(all.equal(unmatched_ids(), "none")))
-    })
-    
-    observe({
-      print("r$response")
-      print(r$response)
+      print("input$popup")
+      print(paste(input$popup, Sys.time()))
     })
     
     unmatched_ids <- reactive({
@@ -224,7 +218,7 @@ mod_add_metadata_server <- function(id, summary){
     # If there are unmatched sample ID's a pop-up is shown.
     observe({
       req(!isTRUE(all.equal(unmatched_ids(), "none")))
-      print("Starting the popup")
+      print(paste("Starting the popup", Sys.time()))
       shinyalert::shinyalert(
         inputId = "popup",
         html = TRUE,
@@ -241,29 +235,29 @@ mod_add_metadata_server <- function(id, summary){
         confirmButtonCol = "#3c8dbc",
         showCancelButton = TRUE,
         cancelButtonText = "Don't add the metadata now",
-        type = ifelse(length(unmatched_ids()) > 20, "warning", ""),
-        callbackR = function(response) {
-          r$response <- response
-        }
+        type = ifelse(length(unmatched_ids()) > 20, "warning", "")
       )
     })
     
-    r <- reactiveValues(master_button = 0,
-                        response = FALSE)
+    
+    r <- reactiveValues(master_button = 0)
     
     observe({
-      if (!isTRUE(all.equal(unmatched_ids(), "none")) & is_truthy(r$response)) {
+      print(paste("The observer is running", Sys.time()))
+      if (!isTRUE(all.equal(unmatched_ids(), "none")) & is_truthy(input$popup)) {
+        print(paste("r$master_button will be updated", Sys.time()))
         r$master_button <- isolate(r$master_button) + 1
+        print(paste("r$master_button has been updated", Sys.time()))
       } else {
         if (isTRUE(all.equal(unmatched_ids(), "none"))) {
           r$master_button <- isolate(r$master_button) + 1
         }
       }
-    })
+    }) %>% bindEvent(input$popup, input$button)
     
     observe({
       print("r$master_button is:")
-      print(r$master_button)
+      print(paste(r$master_button, Sys.time()))
     })
     
     with_metadata <- reactive({
@@ -272,15 +266,27 @@ mod_add_metadata_server <- function(id, summary){
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
       )) {
-        dplyr::left_join(summary(),
+        to_return <- dplyr::left_join(summary(),
                          merged_metadata())
+      } else {
+        to_return <- NULL
       }
+      
+      print(paste("check", Sys.time()))
+      return(to_return)
+      
     })
+    
+    observe({
+      showNotification("The metadata is being added to the data. This may take a while",
+                       type = "message")
+    }) %>% bindEvent(with_metadata())
     
     
     # This is the datatable containing the unmatched sample ID's that is shown 
     # in the pop-up:
     output$unmatched_ids_table <- DT::renderDataTable({
+      req(!isTRUE(all.equal(unmatched_ids(), "none")))
       unmatched <- matrix(unmatched_ids())
       table <- DT::datatable(unmatched,
                              options = list(
