@@ -132,10 +132,8 @@ mod_data_import_server <- function(id){
       Ig_data = summary$Ig_data,
       keyword_specific = summary$keyword_specific,
       keyword_total = summary$keyword_total,
-      lacytools_summary = reactive({input$lacytools_summary$name}),
-      plate_design = list(reactive({input$plate_design$name}),
-                          reactive({input$plate_design_specific$name}),
-                          reactive({input$plate_design_total$name})),
+      filename_summary = reactive({ summary$lacytools_fileInput()$name }),
+      filenames_plate_design = data_incl_sample_ids$filenames_plate_design,
       metadata = reactive({input$metadata$name}),
       manual_sample_types = reactive({!x$response}),
       sample_types_file = reactive({input$groups_file$name})
