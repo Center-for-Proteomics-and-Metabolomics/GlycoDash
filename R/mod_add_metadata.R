@@ -56,6 +56,10 @@ mod_add_metadata_server <- function(id, summary){
       return(metadata_list)
     })
     
+    filenames_metadata <- reactive({
+      req(input$file)
+      comma_and(input$file$name)
+    })
     
     # Create inputIds for the sample_id_column selectizeInputs based on the 
     # number of metadata files that were uploaded:
@@ -306,7 +310,8 @@ mod_add_metadata_server <- function(id, summary){
     
     return(list(
       data = with_metadata,
-      button = reactive({r$master_button})
+      button = reactive({r$master_button}),
+      filenames_metadata = filenames_metadata # pass the filenames along for the report
       ))
     
   })
