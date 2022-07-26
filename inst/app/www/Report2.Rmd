@@ -14,6 +14,7 @@ params:
   ipq: NA
   sn: NA
   spectra_curation_tab_contents: NA
+  curated_spectra_plot: NA
   
 ---
 
@@ -54,15 +55,14 @@ if (params$sample_types_method != "Automatically determine sample types based on
   - Max. IPQ value: `r params$ipq`
   - Min. S/N ratio: `r params$sn`
 
-Show if manual cut-offs were used instead, show separately for specific and total if Ig_data is TRUE
-For each cluster: show the plot and table with cut-offs
+### Cut-offs
 
-```{r spectra-curation-plot, results='asis'}
+```{r spectra-curation-cut-offs, results='asis'}
 
 purrr::iwalk(params$spectra_curation_tab_contents, 
              function(objects_list,
                       name) {
-               cat("###",
+               cat("####",
                    name,
                    "\n")
                
@@ -85,6 +85,23 @@ purrr::iwalk(params$spectra_curation_tab_contents,
                
                print(htmltools::tagList(p))
              })
+
+```
+
+### Results
+
+```{r spectra-curation-results, results='asis'}
+
+p <- params$curated_spectra_plot %>% 
+  plotly::ggplotly(., tooltip = "text")
+
+p <- facet_strip_bigger(p)
+
+p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
+
+p[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -50
+
+print(htmltools::tagList(p))
 
 ```
 

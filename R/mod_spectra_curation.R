@@ -750,7 +750,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       sn = reactive({ input$sn }),
       cut_off = reactive({input$cut_off_basis}),
       tab_contents = reactive({ r$tab_contents }),
-      plot = reactive({curated_spectra_plot()})
+      plot = curated_spectra_plot
     ))
     
   })
