@@ -20,6 +20,7 @@ params:
   cut_off_percentage: NA
   analyte_list: NA
   analyte_curation_tab_contents: NA
+  derived_traits: NA
   
 ---
 
@@ -176,3 +177,17 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
                }
 
 ```
+
+## Derived traits
+
+```{r derived-traits, results='asis'}
+
+if (is.null(params$derived_traits)) {
+  cat("No derived traits were calculated")
+} else {
+  cat("The following derived traits were calculated:\n\n- ",
+      paste(params$derived_traits, collapse = "\n- "))
+}
+
+```
+

@@ -156,13 +156,6 @@ mod_export_server <- function(id,
         #     NULL
         #   })
         # 
-        # derived_traits <- tryCatch(
-        #   expr = {
-        #     results_derived_traits$derived_traits()
-        #   },
-        #   error = function(e){
-        #     NULL
-        #   })
         
         # plate_design <- purrr::map(results_data_import$plate_design,
         #                            ~ do.call(.x,
@@ -191,8 +184,14 @@ mod_export_server <- function(id,
                        ignore_samples = results_analyte_curation$ignore_samples(),
                        cut_off_percentage = results_analyte_curation$cut_off(),
                        analyte_list = results_analyte_curation$analyte_list(),
-                       analyte_curation_tab_contents = analyte_curation_tab_contents
-                       # derived_traits = derived_traits,
+                       analyte_curation_tab_contents = analyte_curation_tab_contents,
+                       derived_traits = tryCatch(
+                         expr = {
+                           results_derived_traits$derived_traits()
+                         },
+                         error = function(e){
+                           NULL
+                         })
                        # repeatability_1 = rep1_plot_table,
                        # repeatability_2 = rep2_plot_table,
                        # data_exploration_plot = data_exploration_plot
