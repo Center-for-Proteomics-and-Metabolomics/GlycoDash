@@ -206,7 +206,7 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
     
     return(list(
       plot = plot,
-      for_table = for_table#,
+      table = for_table#,
       #title_for_report = title_for_report
     ))
     

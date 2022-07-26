@@ -21,6 +21,7 @@ params:
   analyte_list: NA
   analyte_curation_tab_contents: NA
   derived_traits: NA
+  repeatability: NA
   
 ---
 
@@ -65,12 +66,8 @@ if (params$sample_types_method != "Automatically determine sample types based on
 
 ```{r spectra-curation-cut-offs, results='asis'}
 
-purrr::iwalk(params$spectra_curation_tab_contents, 
-             function(objects_list,
-                      name) {
-               cat("####",
-                   name,
-                   "\n")
+purrr::walk(params$spectra_curation_tab_contents, 
+             function(objects_list) {
                
                objects_list$table %>%
                  kableExtra::kbl() %>%
@@ -191,3 +188,35 @@ if (is.null(params$derived_traits)) {
 
 ```
 
+## Repeatability
+
+```{r repeatability, results='asis', warning=FALSE}
+
+purrr::iwalk(params$repeatability, 
+             function(objects_list,
+                      name) {
+               cat("###",
+                   name,
+                   "\n")
+               
+               p <- objects_list$plot %>% 
+                 plotly::ggplotly(., tooltip = "text")
+               
+               p <- change_axis_title_distance(p,
+                                               y_distance = 90)
+               
+               print(htmltools::tagList(p))
+               
+               if (!is.null(objects_list$table)) {
+                 objects_list$table %>%
+                 kableExtra::kbl() %>%
+                 kableExtra::kable_styling(bootstrap_options = "striped",
+                                           full_width = F,
+                                           position = "left") %>%
+                 htmltools::HTML() %>%
+                 print()
+               }
+               
+             })
+
+```

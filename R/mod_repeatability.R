@@ -97,7 +97,7 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
     })
     
     return(list(
-      tab_results = reactive({ tab_results })
+      tab_results = tab_results
     ))
     
   })
