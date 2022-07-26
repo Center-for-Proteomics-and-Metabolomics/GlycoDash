@@ -153,7 +153,6 @@ Shiny.bindAll(this.api().table().node()); } ')
     })
     
     return(list(plot = info_plot,
-                table = info_table,
                 analytes_to_include = analytes_to_include))
     
   })

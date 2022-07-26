@@ -109,20 +109,20 @@ mod_export_server <- function(id,
           }
         )
         
-        # called_analyte_curation_objects <- tryCatch(
-        #   expr = {
-        #     purrr::map(results_analyte_curation$objects(),
-        #                function(list_of_objects) {
-        #                  purrr::map(
-        #                    list_of_objects,
-        #                    ~ do.call(.x,
-        #                              args = list()))
-        #                })
-        #   },
-        #   error = function(e) {
-        #     NULL
-        #   }
-        # )
+        analyte_curation_tab_contents <- tryCatch(
+          expr = {
+            purrr::map(results_analyte_curation$objects(),
+                       function(list_of_objects) {
+                         purrr::map(
+                           list_of_objects,
+                           ~ do.call(.x,
+                                     args = list()))
+                       })
+          },
+          error = function(e) {
+            NULL
+          }
+        )
         #                                         
         # rep1_plot_table <- tryCatch(
         #   expr = {
@@ -186,12 +186,12 @@ mod_export_server <- function(id,
                        ipq = results_spectra_curation$ipq(),
                        sn = results_spectra_curation$sn(),
                        spectra_curation_tab_contents = spectra_curation_tab_contents,
-                       curated_spectra_plot = results_spectra_curation$plot()
-                       # analyte_curation_method = results_analyte_curation$method(),
-                       # ignore_samples = results_analyte_curation$ignore_samples(),
-                       # cut_off_percentage = results_analyte_curation$cut_off(),
-                       # analyte_list = results_analyte_curation$analyte_list(),
-                       # analyte_curation_objects = called_analyte_curation_objects,
+                       curated_spectra_plot = results_spectra_curation$plot(),
+                       analyte_curation_method = results_analyte_curation$method(),
+                       ignore_samples = results_analyte_curation$ignore_samples(),
+                       cut_off_percentage = results_analyte_curation$cut_off(),
+                       analyte_list = results_analyte_curation$analyte_list(),
+                       analyte_curation_tab_contents = analyte_curation_tab_contents
                        # derived_traits = derived_traits,
                        # repeatability_1 = rep1_plot_table,
                        # repeatability_2 = rep2_plot_table,

@@ -414,11 +414,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     
     return(list(
       analyte_curated_data = with_analytes_to_include,
-      method = reactive({input$method}),
-      ignore_samples = reactive({input$ignore_samples}),
-      cut_off_percentage = reactive({input$cut_off}),
-      analyte_list = reactive({input$analyte_list$name}),
-      objects = reactive({x$mod_results})
+      method = reactive({ input$method }),
+      ignore_samples = reactive({ input$ignore_samples }),
+      cut_off_percentage = reactive({ input$cut_off }),
+      analyte_list = reactive({ input$analyte_list$name }),
+      objects = reactive({ x$mod_results })
     ))
  
   })

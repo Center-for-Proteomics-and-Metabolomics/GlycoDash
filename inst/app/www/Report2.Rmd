@@ -15,6 +15,11 @@ params:
   sn: NA
   spectra_curation_tab_contents: NA
   curated_spectra_plot: NA
+  analyte_curation_method: NA
+  ignore_samples: NA
+  cut_off_percentage: NA
+  analyte_list: NA
+  analyte_curation_tab_contents: NA
   
 ---
 
@@ -55,7 +60,7 @@ if (params$sample_types_method != "Automatically determine sample types based on
   - Max. IPQ value: `r params$ipq`
   - Min. S/N ratio: `r params$sn`
 
-### Cut-offs
+### Spectra curation cut-offs
 
 ```{r spectra-curation-cut-offs, results='asis'}
 
@@ -88,7 +93,7 @@ purrr::iwalk(params$spectra_curation_tab_contents,
 
 ```
 
-### Results
+### Spectra curation results
 
 ```{r spectra-curation-results, results='asis'}
 
@@ -105,3 +110,69 @@ print(htmltools::tagList(p))
 
 ```
 
+## Analyte curation
+
+```{r analyte-curation, results='asis'}
+
+if (params$analyte_curation_method == "Curate analytes based on data") {
+  text <- paste0(params$ignore_samples, collapse = ", ")
+  cat(
+      "- Method: based on data\n",
+      "- Samples excluded from analyte curation:",
+      text,
+      "\n- Cut-off percentage:",
+      params$cut_off,
+      "%")
+}
+
+if (params$analyte_curation_method == "Supply an analyte list") {
+  cat(
+    "- Method: based on analyte list\n",
+    "- Analyte list file: \"",
+    params$analyte_list,
+    "\""
+  )
+}
+
+```
+
+
+```{r analyte-curation-plot-table, results='asis'}
+
+if (params$analyte_curation_method == "Curate analytes based on data") {
+  
+  purrr::iwalk(params$analyte_curation_tab_contents, 
+               function(objects_list,
+                        name) {
+                 cat("###",
+                     name,
+                     "\n")
+                 
+                 p <- objects_list$plot %>% 
+                   plotly::ggplotly(., tooltip = "text")
+                 
+                 p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
+                 
+                 p[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -90
+                 
+                 print(htmltools::tagList(p))
+                 
+                 objects_list$analytes_to_include %>% 
+                   tidyr::pivot_wider(names_from = "charge",
+                                      names_glue = "{charge} charge state included?",
+                                      values_from = "charge",
+                                      values_fn = function(value) { "Yes" },
+                                      values_fill = "No") %>%
+                   kableExtra::kbl() %>%
+                   kableExtra::kable_styling(bootstrap_options = "striped",
+                                             full_width = F,
+                                             position = "left") %>%
+                   kableExtra::scroll_box(height = "500px", width = "100%") %>% 
+                   htmltools::HTML() %>%
+                   print()
+                 
+               })
+               
+               }
+
+```
