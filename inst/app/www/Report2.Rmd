@@ -1,0 +1,74 @@
+---
+title: "Report"
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+params: 
+  lacytools_summary: NA
+  plate_design: NA
+  metadata: NA
+  sample_types_method: NA
+  filename_sample_types: NA
+  mass_acc: NA
+  ipq: NA
+  sn: NA
+  spectra_curation_tab_contents: NA
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(magrittr)
+```
+
+## Data import
+
+- LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
+- Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
+- Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
+
+Sample types were added `r ifelse(params$sample_types_method == "Automatically determine sample types based on sample ID's", "automatically", "manually")`.
+
+```{r results='asis'}
+
+if (params$sample_types_method != "Automatically determine sample types based on sample ID's") {
+  cat(paste0("Sample types file: \"",
+             params$filename_sample_types,
+             "\""))
+}
+
+```
+
+## Spectra curation
+
+- Analyte quality criteria:
+  - Acceptable mass accuracy range: `r min(params$mass_acc)` - `r max(params$mass_acc)`
+  - Max. IPQ value: `r params$ipq`
+  - Min. S/N ratio: `r params$sn`
+
+Show if manual cut-offs were used instead, show separately for specific and total if Ig_data is TRUE
+For each cluster: show the plot and table with cut-offs
+
+
+```{r spectra-curation-plot, results='asis'}
+
+silent_map <- purrr::imap(params$spectra_curation_tab_contents, 
+                            function(objects_list,
+                                     name) {
+                              cat("###",
+                                  name,
+                                  "\n")
+                              
+                              objects_list$table %>% 
+                                kableExtra::kbl() %>% 
+                                kableExtra::kable_styling(bootstrap_options = "striped", 
+                                                          full_width = F, 
+                                                          position = "left") %>% 
+                                htmltools::HTML() %>% 
+                                print()
+                              
+                              print(objects_list$plot)
+                            })
+
+```

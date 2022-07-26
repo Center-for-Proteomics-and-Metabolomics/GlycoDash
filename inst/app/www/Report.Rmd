@@ -56,7 +56,10 @@ if (params$sample_types_method == "Automatically determine sample types based on
   - Acceptable mass accuracy range: `r min(params$mass_acc)` - `r max(params$mass_acc)`
   - Max. IPQ value: `r params$ipq`
   - Min. S/N ratio: `r params$sn`
-- Basis for spectra curation cut-off: `r params$spectra_curation_cut_off`  
+- Basis for spectra curation cut-off: `r params$spectra_curation_cut_off` 
+
+Show if manual cut-offs were used instead, show separately for specific and total if Ig_data is TRUE
+For each cluster: show the plot and table with cut-offs
 
 
 ```{r spectra-curation-plot, results='markup'}

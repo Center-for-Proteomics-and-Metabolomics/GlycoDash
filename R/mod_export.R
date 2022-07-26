@@ -94,9 +94,9 @@ mod_export_server <- function(id,
       },
       content = function(file) {
         
-        called_analyte_curation_objects <- tryCatch(
+        spectra_curation_tab_contents <- tryCatch(
           expr = {
-            purrr::map(results_analyte_curation$objects(),
+            purrr::map(results_spectra_curation$tab_contents(),
                        function(list_of_objects) {
                          purrr::map(
                            list_of_objects,
@@ -108,46 +108,61 @@ mod_export_server <- function(id,
             NULL
           }
         )
-                                                
-        rep1_plot_table <- tryCatch(
-          expr = {
-            purrr::map(results_repeatability$first_tab(),
-                       ~ do.call(.x,
-                                 args = list()))
-          },
-          error = function(e) {
-            NULL
-          })
         
-        if (!is.null(results_repeatability$second_tab())) {
-          rep2_plot_table <- tryCatch(
-            expr = {
-              purrr::map(results_repeatability$second_tab(),
-                         ~ do.call(.x,
-                                   args = list()))
-            },
-            error = function(e) {
-              NULL
-            })
-        } else {
-          rep2_plot_table <- NULL
-        }
-        
-        data_exploration_plot <- tryCatch(
-          expr = {
-          results_data_exploration$plot()
-            },
-          error = function(e){
-            NULL
-          })
-        
-        derived_traits <- tryCatch(
-          expr = {
-            results_derived_traits$derived_traits()
-          },
-          error = function(e){
-            NULL
-          })
+        # called_analyte_curation_objects <- tryCatch(
+        #   expr = {
+        #     purrr::map(results_analyte_curation$objects(),
+        #                function(list_of_objects) {
+        #                  purrr::map(
+        #                    list_of_objects,
+        #                    ~ do.call(.x,
+        #                              args = list()))
+        #                })
+        #   },
+        #   error = function(e) {
+        #     NULL
+        #   }
+        # )
+        #                                         
+        # rep1_plot_table <- tryCatch(
+        #   expr = {
+        #     purrr::map(results_repeatability$first_tab(),
+        #                ~ do.call(.x,
+        #                          args = list()))
+        #   },
+        #   error = function(e) {
+        #     NULL
+        #   })
+        # 
+        # if (!is.null(results_repeatability$second_tab())) {
+        #   rep2_plot_table <- tryCatch(
+        #     expr = {
+        #       purrr::map(results_repeatability$second_tab(),
+        #                  ~ do.call(.x,
+        #                            args = list()))
+        #     },
+        #     error = function(e) {
+        #       NULL
+        #     })
+        # } else {
+        #   rep2_plot_table <- NULL
+        # }
+        # 
+        # data_exploration_plot <- tryCatch(
+        #   expr = {
+        #   results_data_exploration$plot()
+        #     },
+        #   error = function(e){
+        #     NULL
+        #   })
+        # 
+        # derived_traits <- tryCatch(
+        #   expr = {
+        #     results_derived_traits$derived_traits()
+        #   },
+        #   error = function(e){
+        #     NULL
+        #   })
         
         # plate_design <- purrr::map(results_data_import$plate_design,
         #                            ~ do.call(.x,
@@ -157,30 +172,38 @@ mod_export_server <- function(id,
       
         params <- list(lacytools_summary = results_data_import$filename_summary(),
                        plate_design = results_data_import$filenames_plate_design(),
-                       metadata = results_data_import$metadata(),
+                       metadata = tryCatch(results_data_import$metadata(),
+                                           error = function(e) { NULL }),
                        sample_types_method = results_data_import$sample_types_method(),
-                       filename_sample_types = results_data_import$filename_sample_types(),
+                       filename_sample_types = tryCatch(
+                         expr = {
+                           results_data_import$filename_sample_types()
+                           },
+                         error = function(e) {
+                           NULL
+                         }),
                        mass_acc = results_spectra_curation$mass_acc(),
                        ipq = results_spectra_curation$ipq(),
                        sn = results_spectra_curation$sn(),
-                       spectra_curation_cut_off = results_spectra_curation$cut_off(),
-                       spectra_curation_plot = results_spectra_curation$plot(),
-                       analyte_curation_method = results_analyte_curation$method(),
-                       ignore_samples = results_analyte_curation$ignore_samples(),
-                       cut_off_percentage = results_analyte_curation$cut_off(),
-                       analyte_list = results_analyte_curation$analyte_list(),
-                       analyte_curation_objects = called_analyte_curation_objects,
-                       derived_traits = derived_traits,
-                       repeatability_1 = rep1_plot_table,
-                       repeatability_2 = rep2_plot_table,
-                       data_exploration_plot = data_exploration_plot
+                       spectra_curation_tab_contents = spectra_curation_tab_contents#,
+                       # spectra_curation_cut_off = results_spectra_curation$cut_off(),
+                       # spectra_curation_plot = results_spectra_curation$plot(),
+                       # analyte_curation_method = results_analyte_curation$method(),
+                       # ignore_samples = results_analyte_curation$ignore_samples(),
+                       # cut_off_percentage = results_analyte_curation$cut_off(),
+                       # analyte_list = results_analyte_curation$analyte_list(),
+                       # analyte_curation_objects = called_analyte_curation_objects,
+                       # derived_traits = derived_traits,
+                       # repeatability_1 = rep1_plot_table,
+                       # repeatability_2 = rep2_plot_table,
+                       # data_exploration_plot = data_exploration_plot
                        )
         
         temp_report <- file.path(tempdir(), paste0(session$token, 
                                                    "Report.Rmd"))
         report_file <- system.file("app",
                                    "www", 
-                                   "Report.Rmd",
+                                   "Report2.Rmd",
                                    package = "glycodash")
         
         file.copy(report_file, 

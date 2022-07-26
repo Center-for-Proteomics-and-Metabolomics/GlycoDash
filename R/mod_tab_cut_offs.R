@@ -76,7 +76,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       return(plotly)
     })
     
-    output$table <- DT::renderDT({
+    cut_off_table <- reactive({
       req(any(is_truthy(cut_offs_based_on_samples()),
               is_truthy(manual_cut_offs())))
       
@@ -127,12 +127,23 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
         }
       )
       
-      DT::datatable(cut_off_table,
+      return(cut_off_table)
+    })
+    
+    output$table <- DT::renderDT({
+      req(cut_off_table())
+      
+      DT::datatable(cut_off_table(),
                     rownames = FALSE,
                     options = list(searching = FALSE,
                                    paging = FALSE))
       
     })
+    
+    return(list(
+      plot = my_plot,
+      table = cut_off_table
+    ))
     
   })
 }
