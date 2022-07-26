@@ -22,6 +22,13 @@ knitr::opts_chunk$set(echo = FALSE)
 library(magrittr)
 ```
 
+
+```{r, include=FALSE}
+# Init Step to make sure that the dependencies are loaded
+htmltools::tagList(DT::datatable(cars))
+htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
+```
+
 ## Data import
 
 - LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
@@ -50,25 +57,34 @@ if (params$sample_types_method != "Automatically determine sample types based on
 Show if manual cut-offs were used instead, show separately for specific and total if Ig_data is TRUE
 For each cluster: show the plot and table with cut-offs
 
-
 ```{r spectra-curation-plot, results='asis'}
 
-silent_map <- purrr::imap(params$spectra_curation_tab_contents, 
-                            function(objects_list,
-                                     name) {
-                              cat("###",
-                                  name,
-                                  "\n")
-                              
-                              objects_list$table %>% 
-                                kableExtra::kbl() %>% 
-                                kableExtra::kable_styling(bootstrap_options = "striped", 
-                                                          full_width = F, 
-                                                          position = "left") %>% 
-                                htmltools::HTML() %>% 
-                                print()
-                              
-                              print(objects_list$plot)
-                            })
+purrr::iwalk(params$spectra_curation_tab_contents, 
+             function(objects_list,
+                      name) {
+               cat("###",
+                   name,
+                   "\n")
+               
+               objects_list$table %>%
+                 kableExtra::kbl() %>%
+                 kableExtra::kable_styling(bootstrap_options = "striped",
+                                           full_width = F,
+                                           position = "left") %>%
+                 htmltools::HTML() %>%
+                 print()
+               
+               p <- objects_list$plot %>% 
+                 plotly::ggplotly(., tooltip = "text")
+               
+               p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -70
+               
+               p[["x"]][["layout"]][["margin"]][["l"]] <- 90
+               
+               p <- facet_strip_bigger(p)
+               
+               print(htmltools::tagList(p))
+             })
 
 ```
+
