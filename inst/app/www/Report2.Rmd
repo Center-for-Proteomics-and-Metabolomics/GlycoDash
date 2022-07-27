@@ -66,8 +66,13 @@ if (params$sample_types_method != "Automatically determine sample types based on
 
 ```{r spectra-curation-cut-offs, results='asis'}
 
-purrr::walk(params$spectra_curation_tab_contents, 
-             function(objects_list) {
+purrr::iwalk(params$spectra_curation_tab_contents, 
+             function(objects_list,
+                      name) {
+               
+               cat("####",
+                     name,
+                     "\n")
                
                objects_list$table %>%
                  kableExtra::kbl() %>%
@@ -192,13 +197,10 @@ if (is.null(params$derived_traits)) {
 
 ```{r repeatability, results='asis', warning=FALSE}
 
-purrr::iwalk(params$repeatability, 
-             function(objects_list,
-                      name) {
-               cat("### Figure ",
-                   gsub(".*([[:digit:]])",
-                        "\\1",
-                        name),
+purrr::walk(params$repeatability, 
+             function(objects_list) {
+               cat("### ",
+                   objects_list$title_for_report,
                    "\n")
                
                p <- objects_list$plot %>% 
