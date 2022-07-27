@@ -242,10 +242,12 @@ mod_export_server <- function(id,
                   temp_report, 
                   overwrite = TRUE)
         
-        rmarkdown::render(input = temp_report,
-                          output_file = file,
-                          envir = new.env(parent = globalenv()),
-                          params = params
+        rmarkdown::render(
+          input = temp_report,
+          output_format = "pdf_document",
+          output_file = file,
+          envir = new.env(parent = globalenv()),
+          params = params
         )
       }
     )
