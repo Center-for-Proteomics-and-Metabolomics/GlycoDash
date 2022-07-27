@@ -56,6 +56,10 @@ mod_add_metadata_server <- function(id, summary){
       return(metadata_list)
     })
     
+    filenames_metadata <- reactive({
+      req(input$file)
+      comma_and(input$file$name)
+    })
     
     # Create inputIds for the sample_id_column selectizeInputs based on the 
     # number of metadata files that were uploaded:
@@ -191,6 +195,16 @@ mod_add_metadata_server <- function(id, summary){
       return(merged_metadata)
     }) %>% bindEvent(input$button)
     
+    observe({
+      print("with_metadata is_truthy:")
+      print(paste(is_truthy(with_metadata()), Sys.time()))
+    })
+    
+    observe({
+      print("input$popup")
+      print(paste(input$popup, Sys.time()))
+    })
+    
     unmatched_ids <- reactive({
       req(merged_metadata(),
           summary())
@@ -207,42 +221,48 @@ mod_add_metadata_server <- function(id, summary){
     
     # If there are unmatched sample ID's a pop-up is shown.
     observe({
-      if (!isTRUE(all.equal(unmatched_ids(), "none"))) {
-        shinyalert::shinyalert(
-          inputId = "popup",
-          html = TRUE,
-          text = tagList(
-            paste(length(unmatched_ids()),
-                  "sample ID's in the data had no match in the metadata:"),
-            DT::dataTableOutput(ns("unmatched_ids_table")),
-            br(),
-            "Please check: 1) Does the spelling of sample IDs in your metadata corresponds to the spelling in your plate design?",
-            "and 2) Have you selected the correct sample ID columns?"
-          ),
-          size = "m",
-          confirmButtonText = "Add the metadata despite the unmatched ID's",
-          confirmButtonCol = "#3c8dbc",
-          showCancelButton = TRUE,
-          cancelButtonText = "Don't add the metadata now",
-          type = ifelse(length(unmatched_ids()) > 20, "warning", ""),
-          callbackR = function(response) {
-            r$response <- response
-          }
-        )
-      }
+      req(!isTRUE(all.equal(unmatched_ids(), "none")))
+      print(paste("Starting the popup", Sys.time()))
+      shinyalert::shinyalert(
+        inputId = "popup",
+        html = TRUE,
+        text = tagList(
+          paste(length(unmatched_ids()),
+                "sample ID's in the data had no match in the metadata:"),
+          DT::dataTableOutput(ns("unmatched_ids_table")),
+          br(),
+          "Please check: 1) Does the spelling of sample IDs in your metadata corresponds to the spelling in your plate design?",
+          "and 2) Have you selected the correct sample ID columns?"
+        ),
+        size = "m",
+        confirmButtonText = "Add the metadata despite the unmatched ID's",
+        confirmButtonCol = "#3c8dbc",
+        showCancelButton = TRUE,
+        cancelButtonText = "Don't add the metadata now",
+        type = ifelse(length(unmatched_ids()) > 20, "warning", "")
+      )
     })
+    
     
     r <- reactiveValues(master_button = 0)
     
     observe({
-      if (!isTRUE(all.equal(unmatched_ids(), "none")) & is_truthy(r$response)) {
+      print(paste("The observer is running", Sys.time()))
+      if (!isTRUE(all.equal(unmatched_ids(), "none")) & is_truthy(input$popup)) {
+        print(paste("r$master_button will be updated", Sys.time()))
         r$master_button <- isolate(r$master_button) + 1
+        print(paste("r$master_button has been updated", Sys.time()))
       } else {
         if (isTRUE(all.equal(unmatched_ids(), "none"))) {
           r$master_button <- isolate(r$master_button) + 1
         }
       }
-    }) %>% bindEvent(input$button, r$response)
+    }) %>% bindEvent(input$popup, input$button)
+    
+    observe({
+      print("r$master_button is:")
+      print(paste(r$master_button, Sys.time()))
+    })
     
     with_metadata <- reactive({
       req(unmatched_ids())
@@ -250,17 +270,31 @@ mod_add_metadata_server <- function(id, summary){
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
       )) {
-        dplyr::left_join(summary(),
+        to_return <- dplyr::left_join(summary(),
                          merged_metadata())
+      } else {
+        to_return <- NULL
       }
+      
+      print(paste("check", Sys.time()))
+      return(to_return)
+      
     })
     
+<<<<<<< HEAD
+=======
+    observe({
+      showNotification("The metadata is being added to the data. This may take a while",
+                       type = "message")
+    }) %>% bindEvent(with_metadata())
+    
+>>>>>>> de8d51ab75f4d0bfb2d23e6e363ca9e04e0af11d
     
     # This is the datatable containing the unmatched sample ID's that is shown 
     # in the pop-up:
     output$unmatched_ids_table <- DT::renderDataTable({
-      
-      unmatched <- as.data.frame(unmatched_ids())
+      req(!isTRUE(all.equal(unmatched_ids(), "none")))
+      unmatched <- matrix(unmatched_ids())
       table <- DT::datatable(unmatched,
                              options = list(
                                scrollY = "100px",
@@ -272,12 +306,15 @@ mod_add_metadata_server <- function(id, summary){
                                    targets = "_all"))),
                              colnames = "Sample ID",
                              rownames = FALSE)
+      
       return(table)
-    })
+    },
+    server = FALSE)
     
     return(list(
       data = with_metadata,
-      button = reactive({r$master_button})
+      button = reactive({r$master_button}),
+      filenames_metadata = filenames_metadata # pass the filenames along for the report
       ))
     
   })

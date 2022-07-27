@@ -332,7 +332,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    x <- reactiveValues()
+    r <- reactiveValues()
     
     summary <- reactive({
       req(results_data_import$summary)
@@ -517,33 +517,36 @@ mod_spectra_curation_server <- function(id, results_data_import){
     observe({
       req(clusters())
       req(is_truthy(summarized_checks()))
-      purrr::map(
-        clusters(),
-        function(current_cluster) {
-
-          mod_tab_cut_offs_server(id = current_cluster,
-                                  selected_cluster = current_cluster,
-                                  summarized_checks = reactive({
-                                    summarized_checks() %>%
-                                      dplyr::filter(cluster == current_cluster
-                                                    )}),
-                                  switch_to_manual = reactive({input$switch_to_manual}),
-                                  Ig_data = results_data_import$Ig_data,
-                                  cut_offs_to_use = reactive({
-                                    cut_offs_to_use() %>% 
-                                      dplyr::filter(cluster == current_cluster)
-                                  }),
-                                  cut_offs_based_on_samples = reactive({
-                                    cut_offs_based_on_samples() %>% 
-                                      dplyr::filter(cluster == current_cluster)
-                                    }),
-                                  manual_cut_offs = reactive({
-                                    manual_cut_offs() %>% 
-                                      dplyr::filter(cluster == current_cluster)
-                                    }))
-        })
+      
+      r$tab_contents <- rlang::set_names(clusters()) %>% 
+        purrr::map(
+          .,
+          function(current_cluster) {
+            mod_tab_cut_offs_server(
+                id = current_cluster,
+                selected_cluster = current_cluster,
+                summarized_checks = reactive({
+                  summarized_checks() %>%
+                    dplyr::filter(cluster == current_cluster
+                    )}),
+                switch_to_manual = reactive({ input$switch_to_manual }),
+                Ig_data = results_data_import$Ig_data,
+                cut_offs_to_use = reactive({
+                  cut_offs_to_use() %>% 
+                    dplyr::filter(cluster == current_cluster)
+                }),
+                cut_offs_based_on_samples = reactive({
+                  cut_offs_based_on_samples() %>% 
+                    dplyr::filter(cluster == current_cluster)
+                }),
+                manual_cut_offs = reactive({
+                  manual_cut_offs() %>% 
+                    dplyr::filter(cluster == current_cluster)
+                })
+              )
+            
+          })
     })
-    
     
     # The selection menu for input$cut_off_basis is updated so that the choices
     # are all combinations of sample_types and groups that are present in the
@@ -742,11 +745,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     return(list(
       curated_spectra = passing_spectra,
-      mass_acc = reactive({input$mass_accuracy}),
-      ipq = reactive({input$ipq}),
-      sn = reactive({input$sn}),
+      mass_acc = reactive({ input$mass_accuracy }),
+      ipq = reactive({ input$ipq }),
+      sn = reactive({ input$sn }),
       cut_off = reactive({input$cut_off_basis}),
-      plot = reactive({curated_spectra_plot()})
+      tab_contents = reactive({ r$tab_contents }),
+      plot = curated_spectra_plot
     ))
     
   })

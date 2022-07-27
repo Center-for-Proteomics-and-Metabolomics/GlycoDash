@@ -8,8 +8,8 @@ params:
   lacytools_summary: NA
   plate_design: NA
   metadata: NA
-  manual_sample_types: NA
-  sample_types_file: NA
+  sample_types_method: NA
+  filename_sample_types: NA
   mass_acc: NA
   ipq: NA
   sn: NA
@@ -35,16 +35,16 @@ library(magrittr)
 ## Data import
 
 - LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
-- Plate design file(s): `r paste0("\"", paste(params$plate_design, collapse = "\" and \""), "\"")`
-- Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", paste(params$metadata, collapse = " and "), "\""))`
+- Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
+- Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
 
-Sample types were added `r ifelse(params$manual_sample_types, "manually", "automatically")`.
+Sample types were added `r ifelse(params$sample_types_method == "Automatically determine sample types based on sample ID's", "automatically", "manually")`.
 
 ```{r results='asis'}
 
-if (params$manual_sample_types) {
+if (params$sample_types_method == "Automatically determine sample types based on sample ID's") {
   cat(paste0("Sample types file: \"",
-             params$sample_types_file,
+             params$filename_sample_types,
              "\""))
 }
 
@@ -56,7 +56,10 @@ if (params$manual_sample_types) {
   - Acceptable mass accuracy range: `r min(params$mass_acc)` - `r max(params$mass_acc)`
   - Max. IPQ value: `r params$ipq`
   - Min. S/N ratio: `r params$sn`
-- Basis for spectra curation cut-off: `r params$spectra_curation_cut_off`  
+- Basis for spectra curation cut-off: `r params$spectra_curation_cut_off` 
+
+Show if manual cut-offs were used instead, show separately for specific and total if Ig_data is TRUE
+For each cluster: show the plot and table with cut-offs
 
 
 ```{r spectra-curation-plot, results='markup'}

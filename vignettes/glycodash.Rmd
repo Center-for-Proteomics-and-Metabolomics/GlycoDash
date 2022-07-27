@@ -144,8 +144,108 @@ cut_offs <- calculate_cut_offs(summarized_checks,
 
 data_curated <- curate_spectra(checked_data,
                        summarized_checks,
-                       cut_offs) %>% 
+                       cut_offs) 
+
+passing_spectra <- data_curated %>% 
   dplyr::filter(passed_spectra_curation == TRUE)
+
+for_table <- data_curated %>% 
+        dplyr::select(1:cut_off_sum_int) %>% 
+        dplyr::distinct()
+
+Ig_data <- "Yes"
+
+n_colors <- length(unique(data_curated$reason_for_failure)) - 1
+my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
+                "#3498DB")
+
+# Create nicer labels for reason_fo_failure to use in plot legend:
+reasons <- unique(data_curated$reason_for_failure)
+# Convert first letter to lower case:
+substr(reasons, 1, 1) <- tolower(substr(reasons, 1, 1))
+# Paste "No, " before the reason:
+reason_labels <- paste("No,", reasons) %>% 
+  # Set the names to the 'old' values in the data, so that this named vector can
+  # be used to recode reason_for_failure with nice labels that will appear in
+  # the plot legend. 
+  rlang::set_names(., nm = unique(
+    # The empty value "" needs to be replaced by "none" because a name cannot be
+    # empty:
+    replace(data_curated$reason_for_failure,
+            data_curated$reason_for_failure == "",
+            "none")
+  ))
+reason_labels[reason_labels == "No, "] <- "Yes"
+
+my_data <- data_curated %>% 
+  dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
+                                                     "sample_type", 
+                                                     "cluster", 
+                                                     "sample_name", 
+                                                     "passed_spectra_curation",
+                                                     "reason_for_failure")))) %>% 
+  dplyr::mutate(
+    `Passed curation` = dplyr::case_when(
+      passed_spectra_curation == "TRUE" ~ "Yes",
+      passed_spectra_curation == "FALSE" ~ "No"
+    ),
+    # Replace the empty values "" in reason_for_failure with "none"  to matche
+    # the named vector reason_labels:
+    reason_for_failure = replace(reason_for_failure,
+                                 reason_for_failure == "",
+                                 "None"),
+    # Create a variable with nice name and labels to display in plot:
+    `Passed curation?` = dplyr::recode(reason_for_failure, 
+                                       # recode() cannot take named vectors as
+                                       # an argument, so use !!! to 'unlist' it
+                                       !!!reason_labels)
+    ) %>% 
+  dplyr::group_by(dplyr::across(tidyselect::any_of(c("group",
+                                                     "cluster",
+                                                     "sample_type",
+                                                     "reason_for_failure")))) %>% 
+  dplyr::mutate(
+    number_true = length(passed_spectra_curation[passed_spectra_curation == "TRUE"]),
+    number_false = length(passed_spectra_curation[passed_spectra_curation == "FALSE"])) %>% 
+  dplyr::ungroup(reason_for_failure) %>% 
+  dplyr::mutate(
+    number = dplyr::case_when(
+      passed_spectra_curation == "TRUE" ~ number_true,
+      passed_spectra_curation == "FALSE" ~ number_false,
+      TRUE ~ as.integer(NA)
+    ),
+    percentage = scales::label_percent(accuracy = 0.01)(number / dplyr::n())
+  )
+
+plot <- my_data %>% 
+  ggplot2::ggplot() +
+  ggplot2::geom_bar(ggplot2::aes(x = sample_type,
+                                 fill = `Passed curation?`,
+                                 text = paste(
+                                   "Number of spectra:",
+                                   number,
+                                   "\nPercentage of spectra:",
+                                   percentage
+                                 )), 
+                    position = "fill") +
+  ggplot2::xlab("Sample type") +
+  ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
+                              name = "Proportion of spectra (%)") +
+  ggplot2::scale_fill_manual(values = my_palette) +
+  ggplot2::theme_classic() +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+                 strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+                 panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
+
+if (Ig_data == "Yes") {
+  plot <- plot +
+    ggplot2::facet_wrap(cluster ~ group)
+} else {
+  plot <- plot +
+    ggplot2::facet_wrap(~ cluster)
+}
+
+plotly::ggplotly(plot, tooltip = "text")
 
 ```
 
@@ -159,9 +259,11 @@ curated_analytes <- curate_analytes(data = data_curated,
 analyte_curated_data <- dplyr::left_join(curated_analytes, 
                                          data_curated)
 
-plot_analyte_curation(curated_analytes = curated_analytes,
-                      cut_off_percentage = 25,
-                      selected_cluster = "IgGI1") 
+plot <- plot_analyte_curation(curated_analytes = curated_analytes,
+                              cut_off_percentage = 25,
+                              selected_cluster = "IgGI1") 
+
+plotly::ggplotly(plot, tooltip = "text")
 
 dataframe_for_table <- prepare_analyte_curation_table(
   analyte_curated_data = analyte_curated_data,
@@ -188,7 +290,78 @@ analytes_to_include <- rlang::set_names(charge_columns) %>%
   dplyr::mutate(dplyr::across(analyte, as.character))
 
 data_for_norm <- dplyr::left_join(analytes_to_include,
-                 data_curated)
+                                  data_curated)
+
+# Maybe a plot (faceted by charge) with for each failed analyte the proportion
+# of failed analyte QC's?
+
+to_plot <- analyte_curated_data %>% 
+  dplyr::filter(passed_curation == FALSE)
+
+ggplot2::ggplot(to_plot,
+                ggplot2::aes(x = analyte,
+                    fill = failed_criteria)) +
+  ggplot2::geom_bar(position = "fill") +
+  ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
+                              name = "Proportion of spectra (%)") +
+  #ggplot2::scale_fill_manual() +
+  ggplot2::theme_classic() +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+                 strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+                 panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
+  
+for_upset <- to_plot %>% 
+  tidyr::extract(failed_criteria,
+                 into = c("mass_acc_failed"),
+                 regex = ".*(mass accuracy).*",
+                 remove = FALSE) %>% 
+  tidyr::extract(failed_criteria,
+                 into = "IPQ_failed",
+                 regex = ".*(IPQ).*",
+                 remove = FALSE) %>% 
+  tidyr::extract(failed_criteria,
+                 into = "SN_failed",
+                 regex = ".*(S/N).*",
+                 remove = FALSE) %>% 
+  dplyr::mutate(across(c(mass_acc_failed,
+                         IPQ_failed,
+                         SN_failed),
+                       ~ !is.na(.x))) %>% 
+  dplyr::ungroup() %>% 
+  dplyr::mutate(specific_total = group,
+                .keep = "unused") %>% 
+  dplyr::group_split(analyte)
+
+purrr::map(for_upset,
+           ~ my_upset(.x) %>% 
+             ggpubr::ggpar(., title = unique(.x$analyte)))
+
+my_upset <- function(my_data) {
+  ComplexUpset::upset(my_data,
+                    intersect = c("mass_acc_failed", "IPQ_failed", "SN_failed"),
+                    base_annotations = list(
+                      "Sample types" = list(
+                        aes = ggplot2::aes(x = intersection,
+                                     fill = sample_type),
+                        geom = list(ggplot2::geom_bar(stat = "count", position = "stack"))
+                      )
+                    ),
+                    set_sizes = (
+                      upset_set_size(
+                        geom = ggplot2::geom_bar(
+                          ggplot2::aes(fill = sample_type, x = group),
+                          width = 0.8
+                        ),
+                        position='right'
+                      )
+                    )
+  )
+}
+
+my_venn <- function(my_data) {
+  
+}
+
 
 ```
 
@@ -200,7 +373,8 @@ normalized_data_wide <- normalized_data %>%
         # removing columns with values that differ between clusters:
         dplyr::select(-tidyselect::any_of(c("passing_proportion", 
                                             "cut_off_prop", 
-                                            "cut_off_sum_int"))) %>% 
+                                            "cut_off_sum_int",
+                                            "failed_criteria"))) %>% 
         tidyr::pivot_wider(names_from = c(cluster, analyte),
                            names_sep = "_",
                            values_from = relative_abundance)
@@ -256,6 +430,37 @@ pl <- plotly::ggplotly(plot, tooltip = "text")
 pl <- change_axis_title_distance(pl, y_distance = 90)
 
 pl
+
+```
+
+```{r exploration}
+
+derived_traits <- calculate_derived_traits(normalized_data, "Fucosylation") %>% 
+        tidyr::pivot_wider(names_from = cluster,
+                           values_from = "Fucosylation",
+                           names_glue = "{cluster}_{.value}")
+      
+data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
+                                                     derived_traits)
+
+pl <- my_boxplot(data_with_derived_traits, 
+                 "sample_type", 
+                 "IgGI1_Fucosylation", 
+                 facets = c("group", "sample_type")) 
+
+pl <- my_histogram(data_with_derived_traits,
+                   "IgGI1_Fucosylation",
+                   color = "sample_type")
+
+boxplot_traces <- 1:nfacets(pl)
+
+plotly::ggplotly(pl, tooltip = "text") #%>% 
+  plotly::style(hoverinfo = "y", traces = boxplot_traces) %>% 
+  hide_outliers(.)
+
+
+
+
 
 ```
 

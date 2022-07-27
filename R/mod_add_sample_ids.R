@@ -278,10 +278,10 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     )
     
     plate_design_specific_with_group <- reactive({
-      req(plate_design_specific(),
+      req(plate_design_specific$plate_design(),
           keyword_specific())
       
-      plate_design_specific() %>% 
+      plate_design_specific$plate_design() %>% 
         dplyr::mutate(group = keyword_specific())
     })
     
@@ -293,10 +293,10 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     )
     
     plate_design_total_with_group <- reactive({
-      req(plate_design_total(),
+      req(plate_design_total$plate_design(),
           keyword_total())
       
-      plate_design_total() %>% 
+      plate_design_total$plate_design() %>% 
         dplyr::mutate(group = keyword_total())
     })
     
@@ -306,6 +306,20 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
       
       dplyr::full_join(plate_design_specific_with_group(),
                        plate_design_total_with_group())
+    })
+    
+    plate_design_filenames <- reactive({
+      req(input$sample_id_method == "Upload a plate design")
+      if(is_truthy(input$switch_two_plate_designs)) {
+        comma_and(c(plate_design_specific$filename(), 
+                    plate_design_total$filename()))
+      } else {
+        plate_design$filename()
+      }
+    })
+    
+    observe({
+      print(req(plate_design_filenames()))
     })
     
     sample_list <- mod_process_sample_list_server(
@@ -324,9 +338,9 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
           with_sample_ids <- dplyr::left_join(summary_with_plate_well,
                                               plate_design_combined())
         } else {
-          req(plate_design())
+          req(plate_design$plate_design())
           with_sample_ids <- dplyr::left_join(summary_with_plate_well,
-                                              plate_design())
+                                              plate_design$plate_design())
         }
       } else {
         req(sample_list())
@@ -384,7 +398,8 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     
     return(list(
       data = data_with_sample_ids,
-      button = reactive({ input$button })
+      button = reactive({ input$button }),
+      filenames_plate_design = plate_design_filenames
     ))
     
   })

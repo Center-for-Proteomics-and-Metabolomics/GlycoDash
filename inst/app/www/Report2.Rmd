@@ -1,0 +1,286 @@
+---
+title: "Data processing report"
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+  pdf_document:
+    toc: TRUE
+    keep_tex: TRUE
+always_allow_html: yes
+params: 
+  lacytools_summary: NA
+  plate_design: NA
+  metadata: NA
+  sample_types_method: NA
+  filename_sample_types: NA
+  mass_acc: NA
+  ipq: NA
+  sn: NA
+  spectra_curation_tab_contents: NA
+  curated_spectra_plot: NA
+  analyte_curation_method: NA
+  ignore_samples: NA
+  cut_off_percentage: NA
+  analyte_list: NA
+  analyte_curation_tab_contents: NA
+  derived_traits: NA
+  repeatability: NA
+  data_exploration: NA
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(magrittr)
+```
+
+```{r, include=FALSE}
+options(tinytex.verbose = TRUE)
+```
+
+```{r, include=FALSE}
+# Init Step to make sure that the dependencies are loaded
+htmltools::tagList(DT::datatable(cars))
+htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
+```
+
+## Data import
+
+- LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
+- Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
+- Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
+
+Sample types were added `r ifelse(params$sample_types_method == "Automatically determine sample types based on sample ID's", "automatically", "manually")`.
+
+```{r results='asis'}
+
+if (params$sample_types_method != "Automatically determine sample types based on sample ID's") {
+  cat(paste0("Sample types file: \"",
+             params$filename_sample_types,
+             "\""))
+}
+
+```
+
+## Spectra curation
+
+- Analyte quality criteria:
+  - Acceptable mass accuracy range: `r min(params$mass_acc)` - `r max(params$mass_acc)`
+  - Max. IPQ value: `r params$ipq`
+  - Min. S/N ratio: `r params$sn`
+
+### Spectra curation cut-offs
+
+```{r spectra-curation-cut-offs, results='asis'}
+
+purrr::iwalk(params$spectra_curation_tab_contents, 
+             function(objects_list,
+                      name) {
+               
+               cat("####",
+                     name,
+                     "\n")
+               
+               objects_list$table %>%
+                 kableExtra::kbl() %>%
+                 kableExtra::kable_styling(bootstrap_options = "striped",
+                                           full_width = F,
+                                           position = "left") %>%
+                 htmltools::HTML() %>%
+                 print()
+               
+               p <- objects_list$plot %>% 
+                 plotly::ggplotly(., tooltip = "text")
+               
+               p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -70
+               
+               p[["x"]][["layout"]][["margin"]][["l"]] <- 90
+               
+               p <- facet_strip_bigger(p)
+               
+               print(htmltools::tagList(p))
+             })
+
+```
+
+### Spectra curation results
+
+```{r spectra-curation-results, results='asis'}
+
+p <- params$curated_spectra_plot %>% 
+  plotly::ggplotly(., tooltip = "text")
+
+p <- facet_strip_bigger(p)
+
+p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
+
+p[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -50
+
+print(htmltools::tagList(p))
+
+```
+
+## Analyte curation
+
+```{r analyte-curation, results='asis'}
+
+if (params$analyte_curation_method == "Curate analytes based on data") {
+  text <- paste0(params$ignore_samples, collapse = ", ")
+  cat(
+      "- Method: based on data\n",
+      "- Samples excluded from analyte curation:",
+      text,
+      "\n- Cut-off percentage:",
+      params$cut_off,
+      "%")
+}
+
+if (params$analyte_curation_method == "Supply an analyte list") {
+  cat(
+    "- Method: based on analyte list\n",
+    "- Analyte list file: \"",
+    params$analyte_list,
+    "\""
+  )
+}
+
+```
+
+
+```{r analyte-curation-plot-table, results='asis'}
+
+if (params$analyte_curation_method == "Curate analytes based on data") {
+  
+  purrr::iwalk(params$analyte_curation_tab_contents, 
+               function(objects_list,
+                        name) {
+                 cat("###",
+                     name,
+                     "\n")
+                 
+                 p <- objects_list$plot %>% 
+                   plotly::ggplotly(., tooltip = "text")
+                 
+                 p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
+                 
+                 p[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -90
+                 
+                 print(htmltools::tagList(p))
+                 
+                 objects_list$analytes_to_include %>% 
+                   tidyr::pivot_wider(names_from = "charge",
+                                      names_glue = "{charge} charge state included?",
+                                      values_from = "charge",
+                                      values_fn = function(value) { "Yes" },
+                                      values_fill = "No") %>%
+                   kableExtra::kbl() %>%
+                   kableExtra::kable_styling(bootstrap_options = "striped",
+                                             full_width = F,
+                                             position = "left") %>%
+                   kableExtra::scroll_box(height = "500px", width = "100%") %>% 
+                   htmltools::HTML() %>%
+                   print()
+                 
+               })
+               
+               }
+
+```
+
+## Derived traits
+
+```{r derived-traits, results='asis'}
+
+if (is.null(params$derived_traits)) {
+  cat("No derived traits were calculated")
+} else {
+  cat("The following derived traits were calculated:\n\n- ",
+      paste(params$derived_traits, collapse = "\n- "))
+}
+
+```
+
+## Repeatability
+
+```{r repeatability, results='asis', warning=FALSE}
+
+purrr::walk(params$repeatability, 
+             function(objects_list) {
+               cat("### ",
+                   objects_list$title_for_report,
+                   "\n")
+               
+               p <- objects_list$plot %>% 
+                 plotly::ggplotly(., tooltip = "text")
+               
+               p <- change_axis_title_distance(p,
+                                               y_distance = 90)
+               
+               print(htmltools::tagList(p))
+               
+               if (!is.null(objects_list$table)) {
+                 objects_list$table %>%
+                   dplyr::select(plate, intra_plate_variation) %>% 
+                   dplyr::mutate(
+                     Plate = plate,
+                     `Intra-plate variation (%)` = tidyr::replace_na(
+                       intra_plate_variation, "This plate contained only one sample."),
+                     .keep = "unused") %>% 
+                   kableExtra::kbl() %>%
+                   kableExtra::kable_styling(bootstrap_options = "striped",
+                                             full_width = F,
+                                             position = "left") %>%
+                   htmltools::HTML() %>%
+                   print()
+                 
+                 cat("\nInter-plate variation: ",
+                   signif(mean(objects_list$table$intra_plate_variation, 
+                               na.rm = TRUE),
+                          digits = 3),
+                   " %\n\n")
+               }
+               
+             })
+
+```
+
+## Data exploration
+
+```{r data-exploration, results='asis', message=FALSE}
+
+purrr::iwalk(params$data_exploration, 
+             function(objects_list,
+                      name) {
+               cat("### Figure ",
+                   gsub(".*([[:digit:]])",
+                        "\\1",
+                        name),
+                   "\n")
+               
+               ggplot_object <- objects_list$plot
+               
+               geoms_in_plot <- sapply(ggplot_object$layers, 
+                                       function(x) class(x$geom)[1])
+               
+               plotly_object <- ggplot_object %>% 
+                 plotly::ggplotly(., tooltip = "text")
+               
+               if ("GeomBoxplot" %in% geoms_in_plot) {
+                 # Determine the number of facets n, the first n traces will correspond to
+                 # the boxplot traces in the ggplotly object:
+                 boxplot_traces <- 1:nfacets(ggplot_object)
+                 
+                 plotly_object <- plotly_object %>% # Use "text" as hoverinfo for the points,
+                   # but use the default hoverinfo for the boxplot traces:
+                   plotly::style(hoverinfo = "y", traces = boxplot_traces) %>% 
+                   # Hide the outliers (needed because plotly ignores "outlier.shape = NA"):
+                   hide_outliers(.) 
+               }
+               
+               print(htmltools::tagList(plotly_object))
+               
+             })
+
+```
+
