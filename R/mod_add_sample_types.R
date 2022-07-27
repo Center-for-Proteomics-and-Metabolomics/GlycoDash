@@ -151,7 +151,7 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
                                input$method == "Automatically determine sample types based on sample ID's",
                                all(
                                  input$method == "Upload a list with sample ID's and corresponding sample types",
-                                 is_truthy(manual_sample_types())
+                                 is_truthy(manual_sample_types$list())
                                )
                              ),
                              is_truthy(summary())
@@ -213,12 +213,12 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
                                                                allowed = c("rds", "xlsx", "xls"))
     
     with_manual_sample_types <- reactive({
-      req(manual_sample_types(),
+      req(manual_sample_types$list(),
           summary(),
           input$method == "Upload a list with sample ID's and corresponding sample types")
       
       dplyr::left_join(summary(),
-                       manual_sample_types())
+                       manual_sample_types$list())
     })
     
     # Show popup with automatically determined sample types if automatic method
@@ -310,8 +310,10 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
     
     return(list(
       data = to_return,
-      button = reactive({r$master_button}),
-      popup = reactive({r$response})
+      button = reactive({ r$master_button }),
+      popup = reactive({ r$response }),
+      method = reactive({ input$method }),
+      filename_sample_types = manual_sample_types$filename
       ))
     
   })

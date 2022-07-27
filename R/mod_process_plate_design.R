@@ -125,7 +125,10 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
       
     }) %>% bindEvent(input$file$datapath)
     
-    return(reactive({ r$plate_design }))
+    return(list(
+      plate_design = reactive({ r$plate_design }),
+      filename = reactive({ input$file$name })
+      ))
     
   })
 }

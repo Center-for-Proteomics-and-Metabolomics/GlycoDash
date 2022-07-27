@@ -27,9 +27,19 @@ facet_strip_bigger <- function(ggplotly, size = 38){
   return(ggplotly)
 }
 
+#' Title
+#'
+#' @param plotly_object 
+#' @param x_distance 
+#' @param y_distance 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 change_axis_title_distance <- function(plotly_object, 
-                           x_distance = 50, 
-                           y_distance = 50) {
+                                       x_distance = 50, 
+                                       y_distance = 50) {
   plotly_object[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -x_distance
   
   plotly_object[["x"]][["layout"]][["margin"]][["l"]] <- x_distance + 20

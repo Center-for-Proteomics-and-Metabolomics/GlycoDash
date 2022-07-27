@@ -79,10 +79,11 @@ mod_data_import_server <- function(id){
       
       if (is_truthy(data_incl_metadata$data())) {
         show_in_table <- data_incl_metadata$data()
+        
       } else {
         if (is_truthy(data_incl_clusters$data())) {
           show_in_table <- data_incl_clusters$data()
-          showNotification("The clusters have been added to the data.",
+          showNotification("The clusters are being added to the data. This may take a while",
                            type = "message")
         } else {
           if (is_truthy(data_incl_sample_types$data())) {
@@ -131,13 +132,11 @@ mod_data_import_server <- function(id){
       Ig_data = summary$Ig_data,
       keyword_specific = summary$keyword_specific,
       keyword_total = summary$keyword_total,
-      lacytools_summary = reactive({input$lacytools_summary$name}),
-      plate_design = list(reactive({input$plate_design$name}),
-                          reactive({input$plate_design_specific$name}),
-                          reactive({input$plate_design_total$name})),
-      metadata = reactive({input$metadata$name}),
-      manual_sample_types = reactive({!x$response}),
-      sample_types_file = reactive({input$groups_file$name})
+      filename_summary = reactive({ summary$lacytools_fileInput()$name }),
+      filenames_plate_design = data_incl_sample_ids$filenames_plate_design,
+      filenames_metadata = data_incl_metadata$filenames_metadata,
+      sample_types_method = data_incl_sample_types$method,
+      filename_sample_types = data_incl_sample_types$filename_sample_types
     ))
     
   })

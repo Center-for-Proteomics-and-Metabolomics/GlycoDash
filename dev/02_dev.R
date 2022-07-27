@@ -38,6 +38,7 @@ usethis::use_package( "kableExtra" )
 usethis::use_package( "readxl" )
 usethis::use_package( "RColorBrewer")
 usethis::use_package( "htmltools" )
+usethis::use_package( "shinyjqui" )
 usethis::use_pipe()
 
 ## Add modules ----
@@ -61,6 +62,8 @@ golem::add_module( name = "data_exploration" )
 golem::add_module( name = "information_box" )
 golem::add_module( name = "tab_repeatability" )
 golem::add_module( name = "export" )
+golem::add_module( name = "box_with_plot" )
+golem::add_module( name = "tab_data_exploration" )
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
@@ -74,6 +77,7 @@ golem::add_fct( "analyte_curation" )
 golem::add_fct( "normalization" )
 golem::add_fct( "derived_traits" )
 golem::add_fct( "repeatability" )
+golem::add_fct( "data_exploration" )
 golem::add_utils( "general" )
 
 ## External resources

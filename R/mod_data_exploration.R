@@ -12,50 +12,46 @@ mod_data_exploration_ui <- function(id){
   tagList(
     fluidPage(
       fluidRow(
-        h1("Data exploration")
-      ),
-      fluidRow(
-        shinydashboard::box(
-          title = "Boxplot",
-          width = 12,
-          solidHeader = TRUE,
-          status = "primary",
-          shinyWidgets::dropdownButton(
-            icon = icon("gears",
-                        verify_fa = FALSE),
+        tags$style(
+          HTML(paste0("#",
+                      ns("box_title"),
+                      " .btn {float: right; padding-top: 2px; border-color: #fff; border: 1.5px solid; padding-bottom: 2px}",
+                      "#",
+                      ns("tabbed_box"),
+                      " .box-title {width: 100%;}",
+                      "#",
+                      ns("box_title"),
+                      " .fa {float: right; margin-top: 3px; margin-left: 5px; font-size: 12px;}"))
+        ),
+        div(
+          id = ns("tabbed_box"),
+          shinydashboard::box(
+            title = span(
+              id = ns("box_title"),
+              "Data exploration",
+              actionButton(ns("add_tab"),
+                           "Add a tab",
+                           icon = icon("plus"))
+            ),
+            width = NULL,
+            solidHeader = TRUE,
             status = "primary",
-            size = "sm",
-            selectizeInput(ns("filter"),
-                           choices = "",
-                           selected = NULL,
-                           multiple = TRUE,
-                           label = "Choose which sample types should be excluded from the plot:",
-                           options = list(placeholder = "select one or more sample type(s)")),
-            selectizeInput(ns("yvar"),
-                           choices = "",
-                           selected = NULL,
-                           label = "Choose what variable should be on the y-axis:",
-                           options = list(placeholder = "select a continuous variable")),
-            selectizeInput(ns("xvar"),
-                           choices = "",
-                           selected = NULL,
-                           label = "Choose what variable should be on the x-axis:",
-                           options = list(placeholder = "select a discrete variable")),
-            selectizeInput(ns("facets"),
-                           choices = "",
-                           selected = NULL,
-                           label = "Choose what variable to facet by:",
-                           options = list(placeholder = "select a discrete variable",
-                                          maxItems = 2)),
-            selectizeInput(ns("color"),
-                           choices = "",
-                           selected = NULL,
-                           label = "Choose what variable to color by:",
-                           options = list(placeholder = "select a discrete variable"))
-          ),
-          plotOutput(ns("boxplot"))
+            tabsetPanel(
+              id = ns("tabs"),
+              tabPanel(title = "Figure 1",
+                       uiOutput(ns("first_tab")))
+            )
+          )
         )
       )
+      # fluidRow(
+      #   h1("Data exploration"),
+      #   actionButton(ns("button"),
+      #                "Create a new plot.")
+      # ),
+      # fluidRow(
+      #   uiOutput(ns("boxes"))
+      # )
     )
     
   )
@@ -68,82 +64,87 @@ mod_data_exploration_server <- function(id, results_derived_traits){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    x <- reactiveValues()
-    
-    observe({
+    my_data <- reactive({
       req(results_derived_traits$data_with_derived_traits())
-      x$data <- results_derived_traits$data_with_derived_traits()
+      results_derived_traits$data_with_derived_traits()
+    })
+    
+    # Creating a trigger to track when UI of the first tab is rendered. This is
+    # needed to prevent the server of the module from trying to update
+    # selectizeInputs that don't exist yet. 
+    r <- reactiveValues(trigger = FALSE)
+    
+    output$first_tab <- renderUI({
+      # The trigger is set to true when the UI of the first tab is being
+      # rendered:
+      r$trigger <- TRUE
+      mod_tab_data_exploration_ui(ns("tab1"))
+    })
+    
+    # Creating a reactiveValues list to store the plots that are created in the
+    # tabs:
+    tab_results <- reactiveValues()
+    
+    # The server part of the first tab receives the trigger as an argument, so
+    # that the observer where the selectizeInputs are updated is only ran after
+    # the trigger has become TRUE:
+    observe({
+    req(my_data())
+    tab_results$tab1 <- mod_tab_data_exploration_server("tab1",
+                                                        my_data = my_data,
+                                                        trigger = reactive({ r$trigger }))
     })
     
     observe({
-      req(x$data)
-      updateSelectizeInput(inputId = "yvar",
-                           choices = c("", colnames(x$data)))
-      updateSelectizeInput(inputId = "xvar",
-                           choices = c("", colnames(x$data)))
-      updateSelectizeInput(inputId = "facets",
-                           choices = c("", colnames(x$data)))
-      updateSelectizeInput(inputId = "color",
-                           choices = c("", colnames(x$data)))
-      updateSelectizeInput(inputId = "filter",
-                           choices = c("", unique(x$data$sample_type)))
-    })
+      req(input$add_tab > 0)
+      tab_id <- paste0("tab", (input$add_tab + 1))
+      
+      appendTab(inputId = "tabs",
+                tabPanel(title = paste("Figure",
+                                       input$add_tab + 1),
+                         mod_tab_data_exploration_ui(
+                           ns(tab_id)
+                         )
+                )
+      )
+      
+      tab_results[[tab_id]] <- mod_tab_data_exploration_server(
+        id = tab_id,
+        my_data = my_data,
+        trigger = reactive({ r$trigger })
+      )
+      
+    }) %>% bindEvent(input$add_tab,
+                     ignoreInit = TRUE) # Maybe unnecessary? according to 
+    # documentation of actionButton they are 'falsy' after initial load.
     
-    filtered_data <- reactive({
-      req(x$data)
-      
-      if(isTruthy(input$filter)) {
-        filtered_data <- x$data %>% 
-          dplyr::filter(!(sample_type %in% input$filter))
-      } else {
-        filtered_data <- x$data
-      }
-      
-      return(filtered_data)
-      
-    })
-    
-    my_plot <- reactive({
-      req(filtered_data(),
-          input$xvar,
-          input$yvar)
-      
-      plot <- filtered_data() %>% 
-        ggplot2::ggplot() +
-        ggplot2::geom_boxplot(ggplot2::aes(x = .data[[input$xvar]],
-                                           y = .data[[input$yvar]]),
-                              outlier.shape = NA) +
-        ggplot2::theme_classic() +
-        ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
-                                                           hjust = 1),
-                       text = ggplot2::element_text(size = 16))
-      
-      if (isTruthy(input$color)) {
-        plot <- plot +
-          ggplot2::geom_jitter(ggplot2::aes(x = .data[[input$xvar]],
-                                            y = .data[[input$yvar]],
-                                            color = .data[[input$color]]))
-      } else {
-        plot <- plot +
-          ggplot2::geom_jitter(ggplot2::aes(x = .data[[input$xvar]],
-                                            y = .data[[input$yvar]]),
-                               color = "red")
-      }
-      
-      if (isTruthy(input$facets)) {
-        plot <- plot +
-          ggplot2::facet_wrap(input$facets)
-      }
-      return(plot)
-    })
-    
-    output$boxplot <- renderPlot({
-      my_plot()
-    })
+    # r <- reactiveValues(all_boxes = list(),
+    #                     all_plots = list())
+    # 
+    # observe({
+    #   req(input$button > 0)
+    #   # Run the server part of the module that creates a box with a plot:
+    #   mod_box_with_plot_server(input$button,
+    #                            my_data = my_data)
+    #   
+    #   # Run the UI part of the module that creates a box with a plot and save it
+    #   # in the reactiveValue all_boxes:
+    #   r$all_boxes[[input$button]] <- mod_box_with_plot_ui(ns(input$button))
+    # }) %>% bindEvent(input$button)
+    # 
+    # observe({
+    #   req (input$button > 0)
+    #   for (box in 1:input$button) {
+    #     
+    #   }
+    # })
+    # 
+    # output$boxes <- renderUI(
+    #   tagList(r$all_boxes)
+    # )
     
     return(list(
-      plot = my_plot
+      tab_results = tab_results
     ))
     
   })
