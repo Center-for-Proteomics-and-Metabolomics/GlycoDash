@@ -195,8 +195,10 @@ if (is.null(params$derived_traits)) {
 purrr::iwalk(params$repeatability, 
              function(objects_list,
                       name) {
-               cat("###",
-                   name,
+               cat("### Figure ",
+                   gsub(".*([[:digit:]])",
+                        "\\1",
+                        name),
                    "\n")
                
                p <- objects_list$plot %>% 
@@ -209,12 +211,24 @@ purrr::iwalk(params$repeatability,
                
                if (!is.null(objects_list$table)) {
                  objects_list$table %>%
-                 kableExtra::kbl() %>%
-                 kableExtra::kable_styling(bootstrap_options = "striped",
-                                           full_width = F,
-                                           position = "left") %>%
-                 htmltools::HTML() %>%
-                 print()
+                   dplyr::select(plate, intra_plate_variation) %>% 
+                   dplyr::mutate(
+                     Plate = plate,
+                     `Intra-plate variation (%)` = tidyr::replace_na(
+                       intra_plate_variation, "This plate contained only one sample."),
+                     .keep = "unused") %>% 
+                   kableExtra::kbl() %>%
+                   kableExtra::kable_styling(bootstrap_options = "striped",
+                                             full_width = F,
+                                             position = "left") %>%
+                   htmltools::HTML() %>%
+                   print()
+                 
+                 cat("\nInter-plate variation: ",
+                   signif(mean(objects_list$table$intra_plate_variation, 
+                               na.rm = TRUE),
+                          digits = 3),
+                   " %\n\n")
                }
                
              })
