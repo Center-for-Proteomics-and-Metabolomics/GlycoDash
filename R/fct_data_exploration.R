@@ -170,6 +170,14 @@ my_histogram <- function(data, xvar = NULL, color = NULL, facets = NULL) {
   
 }
 
+#' Title
+#'
+#' @param varname 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 nicer_label <- function(varname) {
   
   firstupper(stringr::str_replace_all(
@@ -183,16 +191,40 @@ nicer_label <- function(varname) {
   
 }
 
+#' Title
+#'
+#' @param string 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 firstupper <- function(string) {
   substr(string, 1, 1) <- toupper(substr(string, 1, 1))
   return(string)
 }
 
+#' Title
+#'
+#' @param ggplot_object 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 nfacets <- function(ggplot_object) {
   build <- ggplot2::ggplot_build(ggplot_object)
   length(levels(build$data[[1]]$PANEL))
 }
 
+#' Title
+#'
+#' @param plotly_object 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 hide_outliers <- function(plotly_object) {
   
   plotly_object[["x"]][["data"]] <- purrr::map(

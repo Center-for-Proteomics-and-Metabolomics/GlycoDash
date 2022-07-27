@@ -145,6 +145,18 @@ mod_export_server <- function(id,
                    })
           })
         
+        data_exploration_tab_contents <- purrr::map(
+          # Mapping (or looping) a reactiveValues list is not possible. You need
+          # to convert it to a regular list first:
+          shiny::reactiveValuesToList(results_data_exploration$tab_results),
+          function(list_of_objects) {
+            lapply(list_of_objects,
+                   function(x) {
+                     do.call(x,
+                             args = list())
+                   })
+          })
+        
         
         #                                         
         # rep1_plot_table <- tryCatch(
@@ -215,9 +227,8 @@ mod_export_server <- function(id,
                          error = function(e){
                            NULL
                          }),
-                       repeatability = repeatability_tab_contents
-                       # repeatability_2 = rep2_plot_table,
-                       # data_exploration_plot = data_exploration_plot
+                       repeatability = repeatability_tab_contents,
+                       data_exploration = data_exploration_tab_contents
                        )
         
         temp_report <- file.path(tempdir(), paste0(session$token, 

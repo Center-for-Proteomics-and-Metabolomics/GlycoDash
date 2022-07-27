@@ -1,5 +1,5 @@
 ---
-title: "Report"
+title: "Data processing report"
 output: 
   html_document:
     toc: TRUE
@@ -22,6 +22,7 @@ params:
   analyte_curation_tab_contents: NA
   derived_traits: NA
   repeatability: NA
+  data_exploration: NA
   
 ---
 
@@ -236,3 +237,43 @@ purrr::walk(params$repeatability,
              })
 
 ```
+
+## Data exploration
+
+```{r data-exploration, results='asis', message=FALSE}
+
+purrr::iwalk(params$data_exploration, 
+             function(objects_list,
+                      name) {
+               cat("### Figure ",
+                   gsub(".*([[:digit:]])",
+                        "\\1",
+                        name),
+                   "\n")
+               
+               ggplot_object <- objects_list$plot
+               
+               geoms_in_plot <- sapply(ggplot_object$layers, 
+                                       function(x) class(x$geom)[1])
+               
+               plotly_object <- ggplot_object %>% 
+                 plotly::ggplotly(., tooltip = "text")
+               
+               if ("GeomBoxplot" %in% geoms_in_plot) {
+                 # Determine the number of facets n, the first n traces will correspond to
+                 # the boxplot traces in the ggplotly object:
+                 boxplot_traces <- 1:nfacets(ggplot_object)
+                 
+                 plotly_object <- plotly_object %>% # Use "text" as hoverinfo for the points,
+                   # but use the default hoverinfo for the boxplot traces:
+                   plotly::style(hoverinfo = "y", traces = boxplot_traces) %>% 
+                   # Hide the outliers (needed because plotly ignores "outlier.shape = NA"):
+                   hide_outliers(.) 
+               }
+               
+               print(htmltools::tagList(plotly_object))
+               
+             })
+
+```
+

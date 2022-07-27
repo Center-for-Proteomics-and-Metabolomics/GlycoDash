@@ -143,6 +143,10 @@ mod_data_exploration_server <- function(id, results_derived_traits){
     #   tagList(r$all_boxes)
     # )
     
+    return(list(
+      tab_results = tab_results
+    ))
+    
   })
 }
 
