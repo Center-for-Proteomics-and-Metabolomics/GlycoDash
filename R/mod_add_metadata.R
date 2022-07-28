@@ -281,14 +281,10 @@ mod_add_metadata_server <- function(id, summary){
       
     })
     
-<<<<<<< HEAD
-=======
     observe({
       showNotification("The metadata is being added to the data. This may take a while",
                        type = "message")
     }) %>% bindEvent(with_metadata())
-    
->>>>>>> de8d51ab75f4d0bfb2d23e6e363ca9e04e0af11d
     
     # This is the datatable containing the unmatched sample ID's that is shown 
     # in the pop-up:

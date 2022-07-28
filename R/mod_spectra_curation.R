@@ -280,13 +280,24 @@ mod_spectra_curation_ui <- function(id){
               numericInput(ns("sn"),
                            "Min. S/N ratio:",
                            value = 9)
+            ),
+            shinydashboard::box(
+              title = "Export results",
+              width = NULL,
+              solidHeader = TRUE,
+              status = "primary",
+              radioButtons(ns("download_format"),
+                           "Choose a file format:",
+                           choices = c("Excel file", "R object")),
+              downloadButton(ns("download"), 
+                             "Download curated spectra")
             )
           )
         )
       ),
       fluidRow(
         column(
-          width = 8,
+          width = 12,
           shinydashboard::box(
             title = "Information on spectra curation",
             width = NULL,
@@ -305,21 +316,11 @@ mod_spectra_curation_ui <- function(id){
                               DT::dataTableOutput(ns("failed_spectra_details"))))
             )
           )
-        ),
-        column(
-          width = 4,
-          shinydashboard::box(
-            title = "Export results",
-            width = NULL,
-            solidHeader = TRUE,
-            status = "primary",
-            radioButtons(ns("download_format"),
-                         "Choose a file format:",
-                         choices = c("Excel file", "R object")),
-            downloadButton(ns("download"), 
-                           "Download curated spectra")
-          )
-        )
+        )#,
+        # column(
+        #   width = 4,
+        #   
+        # )
       )
     )
   )
