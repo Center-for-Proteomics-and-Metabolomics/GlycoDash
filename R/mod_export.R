@@ -94,12 +94,20 @@ mod_export_server <- function(id,
       },
       content = function(file) {
         
+        # The contents of the spectra curation tabs need to be retrieved:
+        # results_spectra_curation$tab_contents() is a reactive expression
+        # containing a list. In that list there is one list for each tab in
+        # which the objects are stored as reactive expressions. 
         spectra_curation_tab_contents <- tryCatch(
           expr = {
+            # We map the list that contains one list for each tab:
             purrr::map(results_spectra_curation$tab_contents(),
                        function(list_of_objects) {
+                         # Then we map each list containing objects:
                          purrr::map(
                            list_of_objects,
+                           # Every reactive expression containing an object in
+                           # the list is called to retrieve the objects:
                            ~ do.call(.x,
                                      args = list()))
                        })
@@ -107,8 +115,11 @@ mod_export_server <- function(id,
           error = function(e) {
             NULL
           }
-        )
+        ) # We end up with the same list as at the start, but now all the 
+        # reactive expressions within it have been called, so the list just
+        # contains normal objects (plots and tables).
         
+        # We do the same thing as above for the analyte curation tabs:
         analyte_curation_tab_contents <- tryCatch(
           expr = {
             purrr::map(results_analyte_curation$objects(),
@@ -157,47 +168,9 @@ mod_export_server <- function(id,
                    })
           })
         
-        
-        #                                         
-        # rep1_plot_table <- tryCatch(
-        #   expr = {
-        #     purrr::map(results_repeatability$first_tab(),
-        #                ~ do.call(.x,
-        #                          args = list()))
-        #   },
-        #   error = function(e) {
-        #     NULL
-        #   })
-        # 
-        # if (!is.null(results_repeatability$second_tab())) {
-        #   rep2_plot_table <- tryCatch(
-        #     expr = {
-        #       purrr::map(results_repeatability$second_tab(),
-        #                  ~ do.call(.x,
-        #                            args = list()))
-        #     },
-        #     error = function(e) {
-        #       NULL
-        #     })
-        # } else {
-        #   rep2_plot_table <- NULL
-        # }
-        # 
-        # data_exploration_plot <- tryCatch(
-        #   expr = {
-        #   results_data_exploration$plot()
-        #     },
-        #   error = function(e){
-        #     NULL
-        #   })
-        # 
-        
-        # plate_design <- purrr::map(results_data_import$plate_design,
-        #                            ~ do.call(.x,
-        #                                      args = list()))
-        
-        #plate_design[sapply(plate_design, is.null)] <- NULL
-      
+        # We prepare a list of parameters with all of the plots, tables and
+        # other information from the dashboard to pass along to the Report.Rmd
+        # markdown file:
         params <- list(lacytools_summary = results_data_import$filename_summary(),
                        plate_design = results_data_import$filenames_plate_design(),
                        metadata = tryCatch(results_data_import$metadata(),
@@ -231,6 +204,8 @@ mod_export_server <- function(id,
                        data_exploration = data_exploration_tab_contents
                        )
         
+        # Create a temporary file with a unique name per session to prevent
+        # overwriting the file when there are simultaneous users:
         temp_report <- file.path(tempdir(), paste0(session$token, 
                                                    "Report.Rmd"))
         report_file <- system.file("app",
@@ -238,16 +213,18 @@ mod_export_server <- function(id,
                                    "Report2.Rmd",
                                    package = "glycodash")
         
+        # Copy the original Report.Rmd file to the temporary file location:
         file.copy(report_file, 
                   temp_report, 
                   overwrite = TRUE)
         
+        # Render the parameterized report:
         rmarkdown::render(
           input = temp_report,
-          output_format = "pdf_document",
+          output_format = "html_document",
           output_file = file,
           envir = new.env(parent = globalenv()),
-          params = params
+          params = params # We're passing along the params that are listed above
         )
       }
     )

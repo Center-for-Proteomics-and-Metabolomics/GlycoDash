@@ -4,10 +4,6 @@ output:
   html_document:
     toc: TRUE
     toc_float: TRUE
-  pdf_document:
-    toc: TRUE
-    keep_tex: TRUE
-always_allow_html: yes
 params: 
   lacytools_summary: NA
   plate_design: NA
@@ -33,10 +29,6 @@ params:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(magrittr)
-```
-
-```{r, include=FALSE}
-options(tinytex.verbose = TRUE)
 ```
 
 ```{r, include=FALSE}
