@@ -29,7 +29,8 @@ my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
                                           nicer_label(yvar),
                                           ": ",
                                           .data[[yvar]]
-                                        ))) +
+                                        )),
+                           alpha = 0.6) +
       ggplot2::scale_color_manual(values = my_palette,
                                   name = nicer_label(color))
     
@@ -47,7 +48,8 @@ my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
                                           ": ",
                                           .data[[yvar]]
                                         )),
-                           color = RColorBrewer::brewer.pal(3, "Set2")[1])
+                           color = RColorBrewer::brewer.pal(3, "Set2")[1],
+                           alpha = 0.6)
   }
   
   if (!is.null(facets)) {
