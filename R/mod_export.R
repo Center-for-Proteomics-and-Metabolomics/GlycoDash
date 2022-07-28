@@ -171,38 +171,27 @@ mod_export_server <- function(id,
         # We prepare a list of parameters with all of the plots, tables and
         # other information from the dashboard to pass along to the Report.Rmd
         # markdown file:
-        params <- list(lacytools_summary = results_data_import$filename_summary(),
-                       plate_design = results_data_import$filenames_plate_design(),
-                       metadata = tryCatch(results_data_import$metadata(),
-                                           error = function(e) { NULL }),
-                       sample_types_method = results_data_import$sample_types_method(),
-                       filename_sample_types = tryCatch(
-                         expr = {
-                           results_data_import$filename_sample_types()
-                           },
-                         error = function(e) {
-                           NULL
-                         }),
-                       mass_acc = results_spectra_curation$mass_acc(),
-                       ipq = results_spectra_curation$ipq(),
-                       sn = results_spectra_curation$sn(),
-                       spectra_curation_tab_contents = spectra_curation_tab_contents,
-                       curated_spectra_plot = results_spectra_curation$plot(),
-                       analyte_curation_method = results_analyte_curation$method(),
-                       ignore_samples = results_analyte_curation$ignore_samples(),
-                       cut_off_percentage = results_analyte_curation$cut_off(),
-                       analyte_list = results_analyte_curation$analyte_list(),
-                       analyte_curation_tab_contents = analyte_curation_tab_contents,
-                       derived_traits = tryCatch(
-                         expr = {
-                           results_derived_traits$derived_traits()
-                         },
-                         error = function(e){
-                           NULL
-                         }),
-                       repeatability = repeatability_tab_contents,
-                       data_exploration = data_exploration_tab_contents
-                       )
+        params <- list(
+          lacytools_summary = results_data_import$filename_summary(),
+          plate_design = try_call(results_data_import$filenames_plate_design), # trycall not needed?
+          sample_list = try_call(results_data_import$filename_sample_list), # trycall not needed?
+          metadata = try_call(results_data_import$metadata), # trycall not needed?
+          sample_types_method = results_data_import$sample_types_method(),
+          filename_sample_types = try_call(results_data_import$filename_sample_types),
+          mass_acc = results_spectra_curation$mass_acc(),
+          ipq = results_spectra_curation$ipq(),
+          sn = results_spectra_curation$sn(),
+          spectra_curation_tab_contents = spectra_curation_tab_contents,
+          curated_spectra_plot = results_spectra_curation$plot(),
+          analyte_curation_method = results_analyte_curation$method(),
+          ignore_samples = results_analyte_curation$ignore_samples(), # test if empty
+          cut_off_percentage = results_analyte_curation$cut_off(),
+          analyte_list = results_analyte_curation$analyte_list(),
+          analyte_curation_tab_contents = analyte_curation_tab_contents,
+          derived_traits = try_call(results_derived_traits$derived_traits),
+          repeatability = repeatability_tab_contents,
+          data_exploration = data_exploration_tab_contents
+        )
         
         # Create a temporary file with a unique name per session to prevent
         # overwriting the file when there are simultaneous users:

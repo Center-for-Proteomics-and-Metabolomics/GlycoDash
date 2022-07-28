@@ -48,3 +48,17 @@ change_axis_title_distance <- function(plotly_object,
   
   return(plotly_object)
 }
+
+try_call <- function(uncalled_reactive_expression) {
+  tryCatch(
+    expr = {
+      # Call the reactive expression:
+      uncalled_reactive_expression()
+    },
+    error = function(e) {
+      # If there is an error, because the reactive expression was never
+      # validated/doesn't exist, return NULL:
+      NULL
+    }
+  )
+}

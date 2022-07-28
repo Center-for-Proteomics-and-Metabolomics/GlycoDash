@@ -199,7 +199,7 @@ mod_add_sample_ids_ui <- function(id){
           actionButton(ns("button"), 
                        "Add sample ID's to the data")
         ))
-      ),
+      )
   )
 }
     
@@ -318,10 +318,6 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
       }
     })
     
-    observe({
-      print(req(plate_design_filenames()))
-    })
-    
     sample_list <- mod_process_sample_list_server(
       id = "sample_list",
       allowed = c("xlsx", "xls"),
@@ -343,9 +339,9 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
                                               plate_design$plate_design())
         }
       } else {
-        req(sample_list())
+        req(sample_list$sample_list())
         with_sample_ids <- dplyr::left_join(summary(),
-                                            sample_list())
+                                            sample_list$sample_list())
       }
       
       replicates <- with_sample_ids %>% 
@@ -399,7 +395,8 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     return(list(
       data = data_with_sample_ids,
       button = reactive({ input$button }),
-      filenames_plate_design = plate_design_filenames
+      filenames_plate_design = plate_design_filenames,
+      filename_sample_list = sample_list$filename
     ))
     
   })

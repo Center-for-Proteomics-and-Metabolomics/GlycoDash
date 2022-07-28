@@ -33,6 +33,17 @@ mod_data_import_ui <- function(id){
             solidHeader = TRUE,
             status = "primary",
             DT::DTOutput(ns("data_table"))
+          ),
+          shinydashboard::box(
+            title = "Export results",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            radioButtons(ns("download_format"),
+                         "Choose a file format:",
+                         choices = c("Excel file", "R object")),
+            downloadButton(ns("download"), 
+                           "Download data")
           )
         )
       )
@@ -72,9 +83,8 @@ mod_data_import_server <- function(id){
     data_incl_metadata <- mod_add_metadata_server("add_metadata_ui_1",
                                                   summary = data_incl_clusters$data)
     
-    # When the lacytools summary has been read in, the converted data is shown
-    # in the data table
-    output$data_table <- DT::renderDT({
+    
+    show_in_table <- reactive({
       req(summary$data())
       
       if (is_truthy(data_incl_metadata$data())) {
@@ -104,15 +114,22 @@ mod_data_import_server <- function(id){
           }
         }
       }
+      return(show_in_table)
+    }) %>% bindEvent(summary$button(), 
+                    data_incl_sample_ids$button(),
+                    data_incl_sample_types$button(),
+                    data_incl_clusters$button(),
+                    data_incl_metadata$button())
+    
+    # When the lacytools summary has been read in, the converted data is shown
+    # in the data table
+    output$data_table <- DT::renderDT({
+      req(show_in_table())
       
-      DT::datatable(show_in_table,
+      DT::datatable(show_in_table(),
                     options = list(scrollX = TRUE),
                     filter = "top")
-    }) %>% bindEvent(summary$button(), 
-                     data_incl_sample_ids$button(),
-                     data_incl_sample_types$button(),
-                     data_incl_clusters$button(),
-                     data_incl_metadata$button())
+    })
     
     to_return <- reactive({
       if (is_truthy(data_incl_metadata$data())) {
@@ -125,6 +142,26 @@ mod_data_import_server <- function(id){
         }
       }
     })
+    
+    output$download <- downloadHandler(
+      filename = function() {
+        todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
+                                                       pattern = "-",
+                                                       replacement = ""))
+        switch(input$download_format,
+               "R object" = paste0(todays_date, "_data.rds"),
+               "Excel file" = paste0(todays_date, "_data.xlsx"))
+      },
+      content = function(file) {
+        data_to_download <- show_in_table()
+        
+        switch(input$download_format,
+               "R object" = save(data_to_download, 
+                                 file = file),
+               "Excel file" = writexl::write_xlsx(data_to_download, 
+                                                  path = file))
+      }
+    )
     
     return(list(
       summary = to_return,

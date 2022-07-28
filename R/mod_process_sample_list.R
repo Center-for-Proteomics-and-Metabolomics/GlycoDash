@@ -106,7 +106,10 @@ mod_process_sample_list_server <- function(id, allowed, reset){
         })
     })
     
-    return(reactive({r$sample_list}))
+    return(list(
+      sample_list = reactive({ r$sample_list }),
+      filename = reactive({ input$file$name })
+      ))
     
   })
 }
