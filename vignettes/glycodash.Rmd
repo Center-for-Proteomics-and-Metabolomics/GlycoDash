@@ -137,7 +137,7 @@ data_checked <- data_complete %>%
                                             max_ppm_deviation),
                   IPQ = isotopic_pattern_quality < max_ipq,
                   `S/N` = sn > min_sn) %>% 
-  # rowwise() allows you to check all the criteria in qcs using c_across per row
+  # rowwise() allows you to check all the criteria in qcs using c_across per row:
   dplyr::rowwise() %>% 
   dplyr::mutate(criteria_check = all(dplyr::c_across(tidyselect::all_of(qcs))) %>% 
                     tidyr::replace_na(., FALSE)) %>% 

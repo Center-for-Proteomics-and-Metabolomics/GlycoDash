@@ -421,7 +421,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
                         min_ppm_deviation = input$mass_accuracy[1],
                         max_ppm_deviation = input$mass_accuracy[2],
                         max_ipq = input$ipq,
-                        min_sn = input$sn)
+                        min_sn = input$sn,
+                       qcs_to_consider = input$qc_to_include)
       
     })
     

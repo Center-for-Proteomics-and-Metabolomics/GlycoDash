@@ -35,7 +35,8 @@ do_criteria_check <- function(data,
                               min_ppm_deviation, 
                               max_ppm_deviation, 
                               max_ipq, 
-                              min_sn) {
+                              min_sn,
+                              qcs_to_consider) {
   
   if (!all(is.numeric(min_ppm_deviation),
            is.numeric(max_ppm_deviation),
@@ -51,14 +52,16 @@ do_criteria_check <- function(data,
   }
   
   data_checked <- data %>% 
-    dplyr::mutate(`mass accuracy` = dplyr::between(data$mass_accuracy_ppm, 
+    dplyr::mutate(`Mass accuracy` = dplyr::between(data$mass_accuracy_ppm, 
                                             min_ppm_deviation, 
                                             max_ppm_deviation),
                   IPQ = data$isotopic_pattern_quality < max_ipq,
-                  `S/N` = data$sn > min_sn,
-                  criteria_check = (`mass accuracy` & IPQ & `S/N`) %>% 
+                  `S/N` = data$sn > min_sn) %>% 
+    # rowwise() allows you to check all the criteria in qcs using c_across per row:
+    dplyr::rowwise() %>% 
+    dplyr::mutate(criteria_check = all(dplyr::c_across(tidyselect::all_of(qcs_to_consider))) %>% 
                     tidyr::replace_na(., FALSE)) %>% 
-    tidyr::pivot_longer(cols = c(`mass accuracy`, IPQ, `S/N`),
+    tidyr::pivot_longer(cols = c(`Mass accuracy`, IPQ, `S/N`),
                         names_to = "criterium",
                         values_to = "passed") %>% 
     dplyr::mutate(failed_criteria = ifelse(passed == FALSE, criterium, NA)) %>% 

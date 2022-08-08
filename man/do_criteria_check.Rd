@@ -4,7 +4,14 @@
 \alias{do_criteria_check}
 \title{Perform an analyte quality criteria check for every spectrum in the data.}
 \usage{
-do_criteria_check(data, min_ppm_deviation, max_ppm_deviation, max_ipq, min_sn)
+do_criteria_check(
+  data,
+  min_ppm_deviation,
+  max_ppm_deviation,
+  max_ipq,
+  min_sn,
+  qcs_to_consider
+)
 }
 \arguments{
 \item{data}{A dataframe in long format (one row for each analyte + sample
