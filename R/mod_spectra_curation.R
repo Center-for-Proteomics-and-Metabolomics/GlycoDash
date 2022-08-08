@@ -225,17 +225,36 @@ mod_spectra_curation_ui <- function(id){
           width = 4,
           div(
             id = ns("qc"),
+            tags$style(HTML(paste0(
+              "#",
+              ns("box_header2"),
+              " .awesome-checkbox {padding-top: 7px}",
+              "#",
+              ns("box_header2"),
+              " .popover {max-width: 400px !important; color: #333}",
+              "#",
+              ns("qc"),
+              " .box-title {width: 100%}",
+              "#",
+              ns("box_header2"),
+              " .fa {float: right; margin-right: 5px; font-size: 18px}",
+              "#",
+              ns("box_header2"),
+              " .direct-chat-contacts {right: 0; background: #222d32!important}",
+              "#",
+              ns("box_header2"),
+              " .btn {float: right; border-width: 0px; margin-right: 2px}",
+              "#",
+              ns("qc"),
+              " .dropdown {display: inline-block; float: right;}",
+              "#",
+              ns("box_header2"),
+              " .dropdown-menu {background: #333; right: -33px; left: auto; top: 28px;}"
+            ))),
             shinydashboard::box(
-              tags$style(
-                HTML(paste0("#",
-                            ns("qc"),
-                            " .fa {float: right; margin-top: 3px}",
-                            "#",
-                            ns("qc"),
-                            " .box-title {width: 100%}"))
-              ),
-              title = span(
+              title = div(
                 "Analyte quality criteria",
+                id = ns("box_header2"),
                 icon("info-circle",
                      class = "ml",
                      #tabindex = "0" #only needed for trigger = "focus"
@@ -262,26 +281,26 @@ mod_spectra_curation_ui <- function(id){
                     trigger = "hover",
                     placement = "left",
                     html = "true",
-                    container = "body")
-              ),
-              shinyWidgets::dropdownButton(
-                shinyWidgets::awesomeCheckboxGroup(
-                  ns("qc_to_include"),
-                  "Which analyte quality criteria should be taken into account during spectra curation?",
-                  choices = c("Mass accuracy",
-                              "IPQ",
-                              "S/N"),
-                  selected = c("Mass accuracy",
-                               "IPQ",
-                               "S/N"),
-                  status = "primary"),
-                icon = icon("gears",
-                            class = "ml"),
-                tooltip = TRUE,
-                width = "400px",
-                size = "xs",
-                label = "Settings"
-              ),
+                    container = "body"),
+                shinyWidgets::dropdownButton(
+                  shinyWidgets::awesomeCheckboxGroup(
+                    ns("qc_to_include"),
+                    "Which analyte quality criteria should be taken into account during spectra curation?",
+                    choices = c("Mass accuracy",
+                                "IPQ",
+                                "S/N"),
+                    selected = c("Mass accuracy",
+                                 "IPQ",
+                                 "S/N"),
+                    status = "primary"),
+                  icon = icon("gears",
+                              class = "ml"),
+                  tooltip = shinyWidgets::tooltipOptions(placement = "top",
+                                                         title = "Settings"),
+                  width = "250px",
+                  size = "xs",
+                  label = "Settings"
+                )),
               width = NULL,
               status = "primary",
               solidHeader = TRUE,
@@ -334,11 +353,7 @@ mod_spectra_curation_ui <- function(id){
                               DT::dataTableOutput(ns("failed_spectra_details"))))
             )
           )
-        )#,
-        # column(
-        #   width = 4,
-        #   
-        # )
+        )
       )
     )
   )
