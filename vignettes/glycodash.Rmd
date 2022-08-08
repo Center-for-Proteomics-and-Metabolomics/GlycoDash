@@ -165,11 +165,11 @@ plotly::ggplotly(p, tooltip = "text")
 
 ```{r analyte-curation}
 
-curated_analytes <- curate_analytes(data = data_curated,
+curated_analytes <- curate_analytes(data = passing_spectra,
                                     cut_off_percentage = 25)
 
 analyte_curated_data <- dplyr::left_join(curated_analytes, 
-                                         data_curated)
+                                         passing_spectra)
 
 plot <- plot_analyte_curation(curated_analytes = curated_analytes,
                               cut_off_percentage = 25,
@@ -242,11 +242,11 @@ for_upset <- to_plot %>%
   dplyr::ungroup() %>% 
   dplyr::mutate(specific_total = group,
                 .keep = "unused") %>% 
-  dplyr::group_split(analyte)
+  dplyr::group_split(analyte, charge)
 
 purrr::map(for_upset,
            ~ my_upset(.x) %>% 
-             ggpubr::ggpar(., title = unique(.x$analyte)))
+             ggpubr::ggpar(., title = paste(unique(.x$analyte), unique(.x$charge))))
 
 my_upset <- function(my_data) {
   ComplexUpset::upset(my_data,
