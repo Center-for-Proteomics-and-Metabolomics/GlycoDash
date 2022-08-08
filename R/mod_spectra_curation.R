@@ -264,6 +264,24 @@ mod_spectra_curation_ui <- function(id){
                     html = "true",
                     container = "body")
               ),
+              shinyWidgets::dropdownButton(
+                shinyWidgets::awesomeCheckboxGroup(
+                  ns("qc_to_include"),
+                  "Which analyte quality criteria should be taken into account during spectra curation?",
+                  choices = c("Mass accuracy",
+                              "IPQ",
+                              "S/N"),
+                  selected = c("Mass accuracy",
+                               "IPQ",
+                               "S/N"),
+                  status = "primary"),
+                icon = icon("gears",
+                            class = "ml"),
+                tooltip = TRUE,
+                width = "400px",
+                size = "xs",
+                label = "Settings"
+              ),
               width = NULL,
               status = "primary",
               solidHeader = TRUE,
