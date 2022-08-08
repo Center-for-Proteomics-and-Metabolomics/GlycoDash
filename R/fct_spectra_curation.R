@@ -469,3 +469,108 @@ create_cut_off_plot <- function(spectra_check) {
   }
 }
 
+
+#' Title
+#'
+#' @param curated_data 
+#' @param Ig_data 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+plot_spectra_curation <- function(curated_data,
+                                  Ig_data) {
+  
+  n_colors <- length(unique(curated_data$reason_for_failure)) - 1
+  my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
+                  "#3498DB")
+  
+  # Create nicer labels for reason_fo_failure to use in plot legend:
+  reasons <- unique(curated_data$reason_for_failure)
+  # Convert first letter to lower case:
+  substr(reasons, 1, 1) <- tolower(substr(reasons, 1, 1))
+  # Paste "No, " before the reason:
+  reason_labels <- paste("No,", reasons) %>% 
+    # Set the names to the 'old' values in the data, so that this named vector can
+    # be used to recode reason_for_failure with nice labels that will appear in
+    # the plot legend. 
+    rlang::set_names(., nm = unique(
+      # The empty value "" needs to be replaced by "none" because a name cannot be
+      # empty:
+      replace(curated_data$reason_for_failure,
+              curated_data$reason_for_failure == "",
+              "none")
+    ))
+  reason_labels[reason_labels == "No, "] <- "Yes"
+  
+  my_data <- curated_data %>% 
+    dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
+                                                       "sample_type", 
+                                                       "cluster", 
+                                                       "sample_name", 
+                                                       "passed_spectra_curation",
+                                                       "reason_for_failure")))) %>% 
+    dplyr::mutate(
+      `Passed curation` = dplyr::case_when(
+        passed_spectra_curation == "TRUE" ~ "Yes",
+        passed_spectra_curation == "FALSE" ~ "No"
+      ),
+      # Replace the empty values "" in reason_for_failure with "none"  to match
+      # the named vector reason_labels:
+      reason_for_failure = replace(reason_for_failure,
+                                   reason_for_failure == "",
+                                   "none"),
+      # Create a variable with nice name and labels to display in plot:
+      `Passed curation?` = dplyr::recode(reason_for_failure, 
+                                         # recode() cannot take named vectors as
+                                         # an argument, so use !!! to 'unlist' it
+                                         !!!reason_labels)
+    ) %>% 
+    dplyr::group_by(dplyr::across(tidyselect::any_of(c("group",
+                                                       "cluster",
+                                                       "sample_type",
+                                                       "reason_for_failure")))) %>% 
+    dplyr::mutate(
+      number_true = length(passed_spectra_curation[passed_spectra_curation == "TRUE"]),
+      number_false = length(passed_spectra_curation[passed_spectra_curation == "FALSE"])) %>% 
+    dplyr::ungroup(reason_for_failure) %>% 
+    dplyr::mutate(
+      number = dplyr::case_when(
+        passed_spectra_curation == "TRUE" ~ number_true,
+        passed_spectra_curation == "FALSE" ~ number_false,
+        TRUE ~ as.integer(NA)
+      ),
+      percentage = scales::label_percent(accuracy = 0.01)(number / dplyr::n())
+    )
+  
+  plot <- my_data %>% 
+    ggplot2::ggplot() +
+    ggplot2::geom_bar(ggplot2::aes(x = sample_type,
+                                   fill = `Passed curation?`,
+                                   text = paste(
+                                     "Number of spectra:",
+                                     number,
+                                     "\nPercentage of spectra:",
+                                     percentage
+                                   )), 
+                      position = "fill") +
+    ggplot2::xlab("Sample type") +
+    ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
+                                name = "Proportion of spectra (%)") +
+    ggplot2::scale_fill_manual(values = my_palette) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+                   strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
+  
+  if (Ig_data == "Yes") {
+    plot <- plot +
+      ggplot2::facet_wrap(cluster ~ group)
+  } else {
+    plot <- plot +
+      ggplot2::facet_wrap(~ cluster)
+  }
+  
+  return(plot)
+}

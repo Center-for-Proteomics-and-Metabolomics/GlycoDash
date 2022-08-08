@@ -650,64 +650,68 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     curated_spectra_plot <- reactive({
       req(curated_data())
-      # Move this code to a function instead?
       
-      # We need to change the values of passed_spectra_curation to what we want
-      # to be shown in the legend, because plotly ignores legend labels that are
-      # set with scale_ functions:
-      my_data <- curated_data() %>% 
-        dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
-                                                           "sample_type", 
-                                                           "cluster", 
-                                                           "sample_name", 
-                                                           "passed_spectra_curation")))) %>% 
-        dplyr::mutate(
-          `Passed curation?` = dplyr::case_when(
-            passed_spectra_curation == "TRUE" ~ "Yes",
-            passed_spectra_curation == "FALSE" ~ "No"
-          )) %>% 
-        dplyr::group_by(dplyr::across(tidyselect::any_of(c("group",
-                                                           "cluster",
-                                                           "sample_type")))) %>% 
-        dplyr::mutate(
-          number_true = length(passed_spectra_curation[passed_spectra_curation == "TRUE"]),
-          number_false = length(passed_spectra_curation[passed_spectra_curation == "FALSE"]),
-          number = dplyr::case_when(
-            passed_spectra_curation == "TRUE" ~ number_true,
-            passed_spectra_curation == "FALSE" ~ number_false,
-            TRUE ~ as.integer(NA)
-          ),
-          percentage = scales::label_percent(accuracy = 0.01)(number / dplyr::n())
-        )
+      plot_spectra_curation(curated_data(),
+                            results_data_import$Ig_data())
       
-      plot <- my_data %>% 
-        ggplot2::ggplot() +
-        ggplot2::geom_bar(ggplot2::aes(x = sample_type, 
-                                       fill = `Passed curation?`,
-                                       text = paste(
-                                         "Number of spectra:",
-                                         number,
-                                         "\nPercentage of spectra:",
-                                         percentage
-                                       )), 
-                          position = "fill") +
-        ggplot2::xlab("Sample type") +
-        ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
-                                    name = "Proportion of spectra (%)") +
-        ggplot2::scale_fill_discrete(type = c("Yes" = "#3498DB",
-                                              "No" = "#E74C3C")) +
-        ggplot2::theme_classic() +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
-                       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                       panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
-      
-      if (results_data_import$Ig_data() == "Yes") {
-        plot +
-          ggplot2::facet_wrap(cluster ~ group)
-      } else {
-        plot +
-          ggplot2::facet_wrap(~ cluster)
-      }
+      # # Move this code to a function instead?
+      # 
+      # # We need to change the values of passed_spectra_curation to what we want
+      # # to be shown in the legend, because plotly ignores legend labels that are
+      # # set with scale_ functions:
+      # my_data <- curated_data() %>% 
+      #   dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
+      #                                                      "sample_type", 
+      #                                                      "cluster", 
+      #                                                      "sample_name", 
+      #                                                      "passed_spectra_curation")))) %>% 
+      #   dplyr::mutate(
+      #     `Passed curation?` = dplyr::case_when(
+      #       passed_spectra_curation == "TRUE" ~ "Yes",
+      #       passed_spectra_curation == "FALSE" ~ "No"
+      #     )) %>% 
+      #   dplyr::group_by(dplyr::across(tidyselect::any_of(c("group",
+      #                                                      "cluster",
+      #                                                      "sample_type")))) %>% 
+      #   dplyr::mutate(
+      #     number_true = length(passed_spectra_curation[passed_spectra_curation == "TRUE"]),
+      #     number_false = length(passed_spectra_curation[passed_spectra_curation == "FALSE"]),
+      #     number = dplyr::case_when(
+      #       passed_spectra_curation == "TRUE" ~ number_true,
+      #       passed_spectra_curation == "FALSE" ~ number_false,
+      #       TRUE ~ as.integer(NA)
+      #     ),
+      #     percentage = scales::label_percent(accuracy = 0.01)(number / dplyr::n())
+      #   )
+      # 
+      # plot <- my_data %>% 
+      #   ggplot2::ggplot() +
+      #   ggplot2::geom_bar(ggplot2::aes(x = sample_type, 
+      #                                  fill = `Passed curation?`,
+      #                                  text = paste(
+      #                                    "Number of spectra:",
+      #                                    number,
+      #                                    "\nPercentage of spectra:",
+      #                                    percentage
+      #                                  )), 
+      #                     position = "fill") +
+      #   ggplot2::xlab("Sample type") +
+      #   ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
+      #                               name = "Proportion of spectra (%)") +
+      #   ggplot2::scale_fill_discrete(type = c("Yes" = "#3498DB",
+      #                                         "No" = "#E74C3C")) +
+      #   ggplot2::theme_classic() +
+      #   ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+      #                  strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+      #                  panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
+      # 
+      # if (results_data_import$Ig_data() == "Yes") {
+      #   plot +
+      #     ggplot2::facet_wrap(cluster ~ group)
+      # } else {
+      #   plot +
+      #     ggplot2::facet_wrap(~ cluster)
+      # }
       
     })
     
