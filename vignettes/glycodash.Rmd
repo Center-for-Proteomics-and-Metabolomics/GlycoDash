@@ -181,6 +181,20 @@ dataframe_for_table <- prepare_analyte_curation_table(
   analyte_curated_data = analyte_curated_data,
   selected_cluster = "IgGI1")
 
+charge_columns <- colnames(dataframe_for_table)[-1]
+
+to_check <- dataframe_for_table %>% 
+        dplyr::filter(dplyr::if_any(tidyselect::all_of(charge_columns),
+                                    ~ .x == "Yes")) %>% 
+        dplyr::pull(analyte)
+      
+to_check_indices <- which(dataframe_for_table$analyte %in% to_check)
+
+ids_to_check <- sapply(paste0("checkbox", charge_columns), 
+                       paste0,
+                       to_check_indices) %>% 
+  c()
+
 dataframe_for_table
 
 charge_columns <- colnames(dataframe_for_table)[-1]

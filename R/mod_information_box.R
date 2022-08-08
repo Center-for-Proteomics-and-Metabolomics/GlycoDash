@@ -13,6 +13,9 @@ mod_information_box_ui <- function(id){
     plotly::plotlyOutput(ns("plot")),
     #plotOutput(ns("plot")),
     br(),
+    actionButton(ns("check_all"),
+                 "If one charge state has passed, also select the other charge state for further analysis."),
+    br(),
     DT::dataTableOutput(ns("table"))
   )
 }
@@ -83,6 +86,33 @@ mod_information_box_server <- function(id, info, cluster){
                       tidyselect::contains(charge_columns))
       return(table_with_checkboxes)
     })
+    
+    observe({
+      req(info_table())
+      charge_columns <- stringr::str_subset(colnames(info_table())[-1],
+                                            "Include",
+                                            negate = TRUE)
+
+      checkbox_ids <- paste0("checkbox", charge_columns)
+      
+      to_check <- info_table() %>% 
+        dplyr::filter(dplyr::if_any(tidyselect::all_of(charge_columns),
+                                    ~ .x == "Yes")) %>% 
+        dplyr::pull(analyte)
+      
+      to_check_indices <- which(info_table()$analyte %in% to_check)
+      
+      ids_to_check <- sapply(paste0("checkbox", charge_columns), 
+                             paste0,
+                             to_check_indices) %>% 
+        c()
+      
+      purrr::map(ids_to_check,
+                 ~ updateCheckboxInput(session = session,
+                                       inputId = .x,
+                                       value = TRUE))
+      
+    }) %>% bindEvent(input$check_all)
       
     output$table <- DT::renderDT(server = FALSE, expr = {
       req(info_table()) 
