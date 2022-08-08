@@ -124,6 +124,38 @@ deviations in a chosen group of spectra that should not pass curation (cut_off_b
 
 ```{r spectra-curation}
 
+
+min_ppm_deviation = -20
+max_ppm_deviation = 20
+max_ipq = 0.2
+min_sn = 9
+qcs <- c("IPQ")
+
+data_checked <- data_complete %>% 
+    dplyr::mutate(`mass accuracy` = dplyr::between(mass_accuracy_ppm, 
+                                            min_ppm_deviation, 
+                                            max_ppm_deviation),
+                  IPQ = isotopic_pattern_quality < max_ipq,
+                  `S/N` = sn > min_sn) %>% 
+  # rowwise() allows you to check all the criteria in qcs using c_across per row
+  dplyr::rowwise() %>% 
+  dplyr::mutate(criteria_check = all(dplyr::c_across(tidyselect::all_of(qcs))) %>% 
+                    tidyr::replace_na(., FALSE)) %>% 
+    tidyr::pivot_longer(cols = c(`mass accuracy`, IPQ, `S/N`),
+                        names_to = "criterium",
+                        values_to = "passed") %>% 
+    dplyr::mutate(failed_criteria = ifelse(passed == FALSE, criterium, NA)) %>% 
+  dplyr::select(-c(criterium, passed)) %>% 
+  dplyr::group_by(sample_name, analyte, charge) %>% 
+  dplyr::summarise(failed_criteria = dplyr::if_else(
+    all(is.na(failed_criteria)),
+    "none",
+    comma_and(unique(failed_criteria[!is.na(failed_criteria)]))
+  ),
+  across()) %>% 
+  dplyr::distinct()
+
+
 checked_data <- do_criteria_check(data_complete,
                        min_ppm_deviation = -20,
                        max_ppm_deviation = 20,
