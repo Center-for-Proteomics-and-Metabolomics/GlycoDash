@@ -143,6 +143,12 @@ mod_data_import_server <- function(id){
       }
     })
     
+    # The download button is disabled until data has been loaded:
+    observe({
+      shinyjs::toggleState("download",
+                           condition = is_truthy(show_in_table()))
+    })
+    
     output$download <- downloadHandler(
       filename = function() {
         todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
