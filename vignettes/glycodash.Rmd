@@ -160,13 +160,15 @@ checked_data <- do_criteria_check(data_complete,
                        min_ppm_deviation = -20,
                        max_ppm_deviation = 20,
                        max_ipq = 0.2,
-                       min_sn = 9)
+                       min_sn = 9,
+                       qcs_to_consider = c("S/N", "IPQ", "Mass accuracy"))
 
 summarized_checks <- check_spectra(data = data_complete,
                                  min_ppm_deviation = -20,
                                  max_ppm_deviation = 20,
                                  max_ipq = 0.2,
-                                 min_sn = 9)
+                                 min_sn = 9,
+                                 qcs_to_consider = c("S/N", "IPQ", "Mass accuracy"))
 
 cut_offs <- calculate_cut_offs(summarized_checks,
                                c("Spike PBS", "Total PBS"),
@@ -393,13 +395,32 @@ pl
 
 ```{r exploration}
 
-derived_traits <- calculate_derived_traits(normalized_data, "Fucosylation") %>% 
-        tidyr::pivot_wider(names_from = cluster,
-                           values_from = "Fucosylation",
-                           names_glue = "{cluster}_{.value}")
+derived_traits <- calculate_derived_traits(normalized_data, c("Fucosylation", "Sialylation", "Bisection", "Galactosylation"))
+
+formulas <- derived_traits %>% 
+  dplyr::ungroup() %>% 
+  dplyr::select(tidyselect::ends_with("formula")) %>% 
+  dplyr::distinct() %>% 
+  tidyr::pivot_longer(cols = tidyselect::everything(),
+                      names_to = "Derived trait",
+                      values_to = "Formula") %>% 
+  dplyr::mutate(`Derived trait` = dplyr::recode(`Derived trait`,
+                                                fuc_formula = "Fucosylation",
+                                                gal_formula = "Galactosylation",
+                                                sial_formula = "Sialylation",
+                                                bis_formula = "Bisection"))
+
+DT::datatable(formulas)
       
-data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
-                                                     derived_traits)
+data_with_derived_traits <- dplyr::full_join(
+  normalized_data_wide,
+  derived_traits %>% dplyr::select(-tidyselect::ends_with("formula"))) %>% 
+  tidyr::pivot_wider(names_from = cluster,
+                     values_from = dplyr::any_of(c("Fucosylation",
+                                                   "Galactosylation",
+                                                   "Bisection",
+                                                   "Sialylation")),
+                     names_glue = "{cluster}_{.value}")
 
 pl <- my_boxplot(data_with_derived_traits, 
                  "sample_type", 

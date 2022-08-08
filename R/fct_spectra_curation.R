@@ -327,12 +327,13 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
 }
 
 check_spectra <- function(data, min_ppm_deviation, max_ppm_deviation, 
-                            max_ipq, min_sn) {
+                            max_ipq, min_sn, qcs_to_consider) {
   checked_data <- do_criteria_check(data = data, 
                                     min_ppm_deviation = min_ppm_deviation,
                                     max_ppm_deviation = max_ppm_deviation,
                                     max_ipq = max_ipq,
-                                    min_sn = min_sn)
+                                    min_sn = min_sn,
+                                    qcs_to_consider = qcs_to_consider)
   spectra_check <- summarize_spectra_checks(checked_data)
     
   return(spectra_check)

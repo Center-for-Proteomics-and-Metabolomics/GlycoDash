@@ -22,10 +22,18 @@ calculate_fucosylation <- function(.data) {
   
   fucosylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                               pattern = "F\\d")
+  
+  formula <- paste0("(",
+                    paste(fucosylated_analytes, collapse = " + "), 
+                    ") / (", 
+                    paste(unique(.data$analyte), collapse = " + "),
+                    ")")
+  
   .data %>% 
     dplyr::summarise(
       Fucosylation = sum(relative_abundance[analyte %in% fucosylated_analytes]) / sum_all_analytes) %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::mutate(fuc_formula = formula)
   
 }
 
@@ -54,12 +62,21 @@ calculate_sialylation <- function(.data) {
   disialylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                                pattern = "S2")
   
+  formula <- paste0("((",
+                   paste(monosialylated_analytes, collapse = " + "),
+                   ") * 1/2 + ",
+                   paste(disialylated_analytes, collapse = " + "),
+                   ") / (", 
+                   paste(unique(.data$analyte), collapse = " + "),
+                   ")")
+  
   .data %>% 
     dplyr::summarise(monosialylation = sum(relative_abundance[analyte %in% monosialylated_analytes]),
                      disialylation = sum(relative_abundance[analyte %in% disialylated_analytes]),
                      Sialylation = (monosialylation * 1/2 + disialylation) / sum_all_analytes) %>% 
     dplyr::select(-c(monosialylation, disialylation)) %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::mutate(sial_formula = formula)
   
 }
 
@@ -89,12 +106,21 @@ calculate_galactosylation <- function(.data) {
   digalactosylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                                    pattern = "H5")
   
+  formula <- paste0("((",
+                    paste(monogalactosylated_analytes, collapse = " + "),
+                    ") * 1/2 + ",
+                    paste(digalactosylated_analytes, collapse = " + "),
+                    ") / (", 
+                    paste(unique(.data$analyte), collapse = " + "),
+                    ")")
+  
   .data %>% 
     dplyr::summarise(monogalactosylation = sum(relative_abundance[analyte %in% monogalactosylated_analytes]),
                      digalactosylation = sum(relative_abundance[analyte %in% digalactosylated_analytes]),
                      Galactosylation = (monogalactosylation * 1/2 + digalactosylation) / sum_all_analytes) %>% 
     dplyr::select(-c(monogalactosylation, digalactosylation)) %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::mutate(gal_formula = formula)
 }
 
 #' Calculate bisection
@@ -120,9 +146,16 @@ calculate_bisection <- function(.data) {
   
   bisected_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                            pattern = "N5")
+  
+  formula <- paste0("(",
+                    paste(bisected_analytes, collapse = " + "), 
+                    ") / (", 
+                    paste(unique(.data$analyte), collapse = " + "),
+                    ")")
   .data %>% 
     dplyr::summarise(Bisection = sum(relative_abundance[analyte %in% bisected_analytes]) / sum_all_analytes) %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::mutate(bis_formula = formula)
   
 }
 
