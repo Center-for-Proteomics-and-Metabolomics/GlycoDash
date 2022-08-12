@@ -369,7 +369,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     r <- reactiveValues()
     
     summary <- reactive({
-      req(results_data_import$summary)
+      req(results_data_import$summary())
       results_data_import$summary()
     })
     
