@@ -176,6 +176,7 @@ mod_data_import_server <- function(id){
       keyword_total = summary$keyword_total,
       filename_summary = reactive({ summary$lacytools_fileInput()$name }),
       filenames_plate_design = data_incl_sample_ids$filenames_plate_design,
+      filename_sample_list = data_incl_sample_ids$filename_sample_list,
       filenames_metadata = data_incl_metadata$filenames_metadata,
       sample_types_method = data_incl_sample_types$method,
       filename_sample_types = data_incl_sample_types$filename_sample_types

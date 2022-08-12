@@ -7,6 +7,7 @@ output:
 params: 
   lacytools_summary: NA
   plate_design: NA
+  sample_list: NA
   metadata: NA
   sample_types_method: NA
   filename_sample_types: NA
