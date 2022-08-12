@@ -306,7 +306,7 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
     dplyr::relocate(c(criteria_check,
                       failed_criteria),
                     .after = charge) %>% 
-    dplyr::relocate(c(sample_id, plate_well),
+    dplyr::relocate(tidyselect::any_of(c("sample_id", "plate_well")),
                     .after = sample_name)
   
   no_NAs <- curated_data %>% 
