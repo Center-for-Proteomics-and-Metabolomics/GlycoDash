@@ -40,6 +40,9 @@ usethis::use_package( "RColorBrewer")
 usethis::use_package( "htmltools" )
 usethis::use_package( "shinyjqui" )
 usethis::use_package( "shinydashboardPlus" )
+usethis::use_package( "plotly" )
+usethis::use_package( "scales" )
+usethis::use_package( "tibble" )
 usethis::use_pipe()
 
 ## Add modules ----

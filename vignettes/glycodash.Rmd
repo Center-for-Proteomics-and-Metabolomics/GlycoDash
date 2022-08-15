@@ -292,35 +292,35 @@ for_upset <- to_plot %>%
                 .keep = "unused") %>% 
   dplyr::group_split(analyte, charge)
 
-purrr::map(for_upset,
-           ~ my_upset(.x) %>% 
-             ggpubr::ggpar(., title = paste(unique(.x$analyte), unique(.x$charge))))
-
-my_upset <- function(my_data) {
-  ComplexUpset::upset(my_data,
-                    intersect = c("mass_acc_failed", "IPQ_failed", "SN_failed"),
-                    base_annotations = list(
-                      "Sample types" = list(
-                        aes = ggplot2::aes(x = intersection,
-                                     fill = sample_type),
-                        geom = list(ggplot2::geom_bar(stat = "count", position = "stack"))
-                      )
-                    ),
-                    set_sizes = (
-                      upset_set_size(
-                        geom = ggplot2::geom_bar(
-                          ggplot2::aes(fill = sample_type, x = group),
-                          width = 0.8
-                        ),
-                        position='right'
-                      )
-                    )
-  )
-}
-
-my_venn <- function(my_data) {
-  
-}
+# purrr::map(for_upset,
+#            ~ my_upset(.x) %>% 
+#              ggpubr::ggpar(., title = paste(unique(.x$analyte), unique(.x$charge))))
+# 
+# my_upset <- function(my_data) {
+#   ComplexUpset::upset(my_data,
+#                     intersect = c("mass_acc_failed", "IPQ_failed", "SN_failed"),
+#                     base_annotations = list(
+#                       "Sample types" = list(
+#                         aes = ggplot2::aes(x = intersection,
+#                                      fill = sample_type),
+#                         geom = list(ggplot2::geom_bar(stat = "count", position = "stack"))
+#                       )
+#                     ),
+#                     set_sizes = (
+#                       upset_set_size(
+#                         geom = ggplot2::geom_bar(
+#                           ggplot2::aes(fill = sample_type, x = group),
+#                           width = 0.8
+#                         ),
+#                         position='right'
+#                       )
+#                     )
+#   )
+# }
+# 
+# my_venn <- function(my_data) {
+#   
+# }
 
 
 ```
@@ -393,7 +393,7 @@ pl
 
 ```
 
-```{r exploration}
+```{r exploration, eval=FALSE}
 
 derived_traits <- calculate_derived_traits(normalized_data, c("Fucosylation", "Sialylation", "Bisection", "Galactosylation"))
 
