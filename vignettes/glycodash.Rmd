@@ -410,7 +410,9 @@ formulas <- derived_traits %>%
                                                 sial_formula = "Sialylation",
                                                 bis_formula = "Bisection"))
 
-DT::datatable(formulas)
+DT::datatable(formulas, rownames = FALSE, options = list(paging = FALSE,
+                                                         ordering = FALSE,
+                                                         searching = FALSE))
       
 data_with_derived_traits <- dplyr::full_join(
   normalized_data_wide,

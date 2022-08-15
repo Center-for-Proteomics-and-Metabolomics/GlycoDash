@@ -30,6 +30,13 @@ mod_derived_traits_ui <- function(id){
                                                          "Sialylation")),
           actionButton(ns("do_calculation"),
                        "Calculate derived traits")
+        ),
+        shinydashboard::box(
+          title = "Formulas used to calculate the derived traits:",
+          width = 9,
+          solidHeader = TRUE,
+          status = "primary",
+        DT::dataTableOutput(ns("formulas"))
         )
       ),
       fluidRow(
@@ -65,28 +72,71 @@ mod_derived_traits_server <- function(id, results_normalization){
                                            isTruthy(x$data)))
     })
     
-    observeEvent(input$do_calculation, {
-      derived_traits <- calculate_derived_traits(data = x$data,
-                                                 selected_derived_traits = input$traits_menu) %>% 
+    derived_traits <- reactive({
+      req(x$data)
+      
+      calculate_derived_traits(data = x$data,
+                               selected_derived_traits = input$traits_menu)
+    }) %>% bindEvent(input$do_calculation)
+    
+    data_with_derived_traits <- reactive({
+      req(derived_traits())
+      dplyr::full_join(results_normalization$normalized_data_wide(),
+                       derived_traits()) %>% 
+        dplyr::select(-tidyselect::ends_with("formula")) %>% 
         tidyr::pivot_wider(names_from = cluster,
                            values_from = dplyr::any_of(input$traits_menu),
                            names_glue = "{cluster}_{.value}")
-      
-      x$data_with_derived_traits <- dplyr::full_join(results_normalization$normalized_data_wide(),
-                                                     derived_traits)
-      
     })
+  
+    # observeEvent(input$do_calculation, {
+    #   derived_traits <- calculate_derived_traits(data = x$data,
+    #                                              selected_derived_traits = input$traits_menu) %>% 
+    #     tidyr::pivot_wider(names_from = cluster,
+    #                        values_from = dplyr::any_of(input$traits_menu),
+    #                        names_glue = "{cluster}_{.value}")
+    #   
+    #   x$data_with_derived_traits <- dplyr::full_join(results_normalization$normalized_data_wide(),
+    #                                                  derived_traits)
+    #   
+    # })
     
     output$data_table <- DT::renderDT({
-      req(x$data_with_derived_traits)
+      req(data_with_derived_traits())
       
-      DT::datatable(data = x$data_with_derived_traits,
+      DT::datatable(data = data_with_derived_traits(),
                     options = list(scrollX = TRUE))
+    })
+    
+    formulas <- reactive({
+      req(derived_traits())
+      derived_traits() %>% 
+        dplyr::ungroup() %>% 
+        dplyr::select(tidyselect::ends_with("formula")) %>% 
+        dplyr::distinct() %>% 
+        tidyr::pivot_longer(cols = tidyselect::everything(),
+                            names_to = "Derived trait",
+                            values_to = "Formula") %>% 
+        dplyr::mutate(`Derived trait` = dplyr::recode(`Derived trait`,
+                                                      fuc_formula = "Fucosylation",
+                                                      gal_formula = "Galactosylation",
+                                                      sial_formula = "Sialylation",
+                                                      bis_formula = "Bisection"))
+    })
+    
+    output$formulas <- DT::renderDT({
+      req(formulas())
+      
+      DT::datatable(formulas(),
+                    rownames = FALSE, 
+                    options = list(paging = FALSE,
+                                   ordering = FALSE,
+                                   searching = FALSE))
     })
     
     return(
       list(
-        data_with_derived_traits = reactive({x$data_with_derived_traits}),
+        data_with_derived_traits = data_with_derived_traits,
         normalized_data = reactive({x$data}),
         derived_traits = reactive({input$traits_menu})
       )
