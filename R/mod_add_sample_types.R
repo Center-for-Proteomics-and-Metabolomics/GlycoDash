@@ -96,6 +96,10 @@ mod_add_sample_types_ui <- function(id){
               "\"36_patient_67b\", then the automatically determined sample type",
               "will be \"patient\"."
             )),
+            tags$p(paste(
+              "Sample ID's that don't contain any letters will get the sample type",
+              "\"undetermined\"."
+            )),
             tags$p(tags$b("Upload a list:"),
                    br(),
                    paste(
@@ -206,6 +210,9 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
                        remove = FALSE) %>% 
         dplyr::mutate(sample_type = ifelse(sample_id == "empty cell in plate design",
                                            "unknown",
+                                           sample_type),
+                      sample_type = ifelse(is.na(sample_type),
+                                           "undetermined",
                                            sample_type))
     })
     
