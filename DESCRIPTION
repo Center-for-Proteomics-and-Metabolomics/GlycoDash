@@ -27,6 +27,7 @@ Imports:
     shinyalert,
     shinyBS,
     shinydashboard,
+    shinydashboardPlus,
     shinyFeedback,
     shinyjqui,
     shinyjs,
