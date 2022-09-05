@@ -163,8 +163,14 @@ mod_export_server <- function(id,
           function(list_of_objects) {
             lapply(list_of_objects,
                    function(x) {
-                     do.call(x,
-                             args = list())
+                     tryCatch(
+                       expr = {
+                         do.call(x,
+                                 args = list())
+                       },
+                       error = function(e) {
+                         NULL
+                       })
                    })
           })
         
@@ -189,6 +195,7 @@ mod_export_server <- function(id,
           analyte_list = results_analyte_curation$analyte_list(),
           analyte_curation_tab_contents = analyte_curation_tab_contents,
           derived_traits = try_call(results_derived_traits$derived_traits),
+          formulas = try_call(results_derived_traits$formulas),
           repeatability = repeatability_tab_contents,
           data_exploration = data_exploration_tab_contents
         )
