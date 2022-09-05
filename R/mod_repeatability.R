@@ -76,15 +76,43 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
                                                      my_data = data,
                                                      Ig_data = Ig_data)
     
-    observeEvent(input$add_tab, {
-      tab_id <- paste0("tab", (input$add_tab + 1))
+    tab_counter <- reactiveValues(n = 1)
+    
+    observe({
+      tab_counter$n <- tab_counter$n + 1
+    }) %>% bindEvent(input$add_tab)
+    
+    observe({
+      tab_id <- paste0("tab", (tab_counter$n))
       
       appendTab(inputId = "tabs",
-                tabPanel(title = paste("Standard",
-                                       input$add_tab + 1),
-                         mod_tab_repeatability_ui(
-                           ns(tab_id)
-                         )
+                tabPanel(
+                  value = paste("Standard", 
+                                tab_counter$n),
+                  title = 
+                  # tags$style(HTML(paste0(
+                  #   "#",
+                  #   ns(paste0("tabtitle", tab_id)),
+                  #   " .btn {padding: 0pt; margin-left: 3pt; border-color: #ffffff; background-color: #ffffff; size: 12pt}"
+                  # ))),
+                  tags$span(
+                    paste("Standard",
+                          tab_counter$n),
+                    tags$span(icon("times"),
+                              style = "margin-left: 5px;",
+                              onclick = paste0("Shiny.setInputValue(\"", 
+                                               ns("remove_tab"), 
+                                               "\", \"", 
+                                               paste("Standard",
+                                                      tab_counter$n), 
+                                               "\", {priority: \"event\"})"))
+                ),
+                # actionButton(ns(paste0(tab_id, "button")),
+                #                label = "",
+                #                icon = icon("times"))
+                mod_tab_repeatability_ui(
+                  ns(tab_id)
+                )
                 )
       )
       
@@ -94,7 +122,19 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
         Ig_data = Ig_data
       )
       
-    })
+    }) %>% bindEvent(input$add_tab)
+    
+    ## remove a dataset
+    observe({
+      removeTab(inputId = "tabs", target = input$remove_tab, session = session)
+      
+      tab_counter$n <- tab_counter$n - 1
+      # Problem: when a middle tab is removed and then a new tab is added there
+      # will be a duplicate tab name, Solution maybe: change tab_counter$n only
+      # when the remove_tab is the highest number
+      
+    }) %>% bindEvent(input$remove_tab)
+    
     
     return(list(
       tab_results = tab_results
