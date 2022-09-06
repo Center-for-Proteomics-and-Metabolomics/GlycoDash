@@ -85,37 +85,36 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
     observe({
       tab_id <- paste0("tab", (tab_counter$n))
       
+      # Add a tab:
       appendTab(inputId = "tabs",
                 tabPanel(
-                  value = paste("Standard", 
-                                tab_counter$n),
-                  title = 
-                  # tags$style(HTML(paste0(
-                  #   "#",
-                  #   ns(paste0("tabtitle", tab_id)),
-                  #   " .btn {padding: 0pt; margin-left: 3pt; border-color: #ffffff; background-color: #ffffff; size: 12pt}"
-                  # ))),
-                  tags$span(
+                  value = paste("Standard",
+                                tab_counter$n), # By giving this value as an 
+                  # argument to removeTab() the tab can be closed.
+                  title = tags$span(
                     paste("Standard",
                           tab_counter$n),
+                    # Adding a clickable x-mark icon to close the tab:
                     tags$span(icon("times"),
                               style = "margin-left: 5px;",
+                              # When the x-mark icon is clicked a Shiny input
+                              # named input$remove_tab is created with the value
+                              # being the value argument of the tab on which the
+                              # icon was clicked:
                               onclick = paste0("Shiny.setInputValue(\"", 
                                                ns("remove_tab"), 
                                                "\", \"", 
                                                paste("Standard",
-                                                      tab_counter$n), 
+                                                     tab_counter$n), 
                                                "\", {priority: \"event\"})"))
-                ),
-                # actionButton(ns(paste0(tab_id, "button")),
-                #                label = "",
-                #                icon = icon("times"))
-                mod_tab_repeatability_ui(
-                  ns(tab_id)
-                )
+                  ),
+                  # The content of the tab is created in the tab_repeatability module:
+                  mod_tab_repeatability_ui(ns(tab_id))
                 )
       )
       
+      # The contents of the tab are saved in the reactiveValues list tab_results,
+      # so they can be passed on to the report:
       tab_results[[tab_id]] <- mod_tab_repeatability_server(
         id = tab_id,
         my_data = data,
@@ -124,17 +123,23 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
       
     }) %>% bindEvent(input$add_tab)
     
-    ## remove a dataset
+    # When an x-mark icon is clicked (so when input$remove_tab changes) that tab
+    # is closed:
     observe({
+      # The tab where the cross was clicked is removed:
       removeTab(inputId = "tabs", target = input$remove_tab, session = session)
       
-      tab_counter$n <- tab_counter$n - 1
-      # Problem: when a middle tab is removed and then a new tab is added there
-      # will be a duplicate tab name, Solution maybe: change tab_counter$n only
-      # when the remove_tab is the highest number
+      # If the tab that is removed is the tab with the highest number,
+      # tab_counter$n is reduced with one so that if a new tab is created there
+      # is no gap in numbering:
+      if (as.numeric(stringr::str_extract(
+          input$remove_tab,
+          "[[:digit:]]"
+        )) >= tab_counter$n) {
+        tab_counter$n <- tab_counter$n - 1
+      }
       
     }) %>% bindEvent(input$remove_tab)
-    
     
     return(list(
       tab_results = tab_results
