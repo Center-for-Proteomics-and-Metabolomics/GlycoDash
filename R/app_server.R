@@ -44,6 +44,7 @@ app_server <- function( input, output, session ) {
     results_data_import = results_data_import,
     results_spectra_curation = results_spectra_curation,
     results_analyte_curation = results_analyte_curation,
+    results_normalization = results_normalization,
     results_repeatability = results_repeatability,
     results_data_exploration = results_data_exploration
     )

@@ -47,6 +47,7 @@ mod_export_server <- function(id,
                               results_data_import,
                               results_spectra_curation,
                               results_analyte_curation,
+                              results_normalization,
                               results_repeatability,
                               results_data_exploration){
   moduleServer( id, function(input, output, session){
@@ -57,11 +58,11 @@ mod_export_server <- function(id,
     # If data_with_derived_traits exists it is assigned to x$data, otherwise
     # normalized_data is assigned to x$data:
     observe({
-      if (isTruthy(results_derived_traits$data_with_derived_traits())){
+      if (is_truthy(results_derived_traits$data_with_derived_traits())){
         x$data <- results_derived_traits$data_with_derived_traits()
       } 
-      else { if (isTruthy(results_derived_traits$normalized_data())){
-        x$data <- results_derived_traits$normalized_data()
+      else { if (is_truthy(results_normalization$normalized_data_wide())){
+        x$data <- results_normalization$normalized_data_wide()
       }
       }
     })
