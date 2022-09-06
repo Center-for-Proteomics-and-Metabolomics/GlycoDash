@@ -139,6 +139,10 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
         tab_counter$n <- tab_counter$n - 1
       }
       
+      tab_results[[stringr::str_replace(input$remove_tab,
+                                        "Standard ",
+                                        "tab")]] <- NULL
+      
     }) %>% bindEvent(input$remove_tab)
     
     return(list(

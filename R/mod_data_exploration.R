@@ -44,14 +44,6 @@ mod_data_exploration_ui <- function(id){
           )
         )
       )
-      # fluidRow(
-      #   h1("Data exploration"),
-      #   actionButton(ns("button"),
-      #                "Create a new plot.")
-      # ),
-      # fluidRow(
-      #   uiOutput(ns("boxes"))
-      # )
     )
     
   )
@@ -95,16 +87,36 @@ mod_data_exploration_server <- function(id, results_derived_traits){
                                                         trigger = reactive({ r$trigger }))
     })
     
+    tab_counter <- reactiveVal(1)
+    
     observe({
-      req(input$add_tab > 0)
-      tab_id <- paste0("tab", (input$add_tab + 1))
+      tab_counter(tab_counter() + 1)
+    }) %>% bindEvent(input$add_tab)
+    
+    observe({
+      #req(tab_counter() > 1)
+      tab_id <- paste0("tab", (tab_counter()))
       
       appendTab(inputId = "tabs",
-                tabPanel(title = paste("Figure",
-                                       input$add_tab + 1),
-                         mod_tab_data_exploration_ui(
-                           ns(tab_id)
-                         )
+                tabPanel(
+                  title = tags$span(
+                    paste("Figure", tab_counter()),
+                    # Adding a clickable x-mark icon to close the tab:
+                    tags$span(icon("times"),
+                              style = "margin-left: 5px;",
+                              # When the x-mark icon is clicked a Shiny input
+                              # named input$remove_tab is created with the value
+                              # being the value argument of the tab on which the
+                              # icon was clicked:
+                              onclick = paste0("Shiny.setInputValue(\"", 
+                                               ns("remove_tab"), 
+                                               "\", \"", 
+                                               paste("Figure", tab_counter()), 
+                                               "\", {priority: \"event\"})"))
+                  ),
+                  value = paste("Figure", tab_counter()), # By giving this value 
+                  # as an argument to removeTab() the tab can be closed.
+                  mod_tab_data_exploration_ui(ns(tab_id))
                 )
       )
       
@@ -114,9 +126,33 @@ mod_data_exploration_server <- function(id, results_derived_traits){
         trigger = reactive({ r$trigger })
       )
       
-    }) %>% bindEvent(input$add_tab,
-                     ignoreInit = TRUE) # Maybe unnecessary? according to 
+    }) %>% bindEvent(input$add_tab#, 
+                     #ignoreInit = TRUE
+                     ) # Maybe unnecessary? according to 
     # documentation of actionButton they are 'falsy' after initial load.
+    
+    
+    # When an x-mark icon is clicked (so when input$remove_tab changes) that tab
+    # is closed:
+    observe({
+      # The tab where the cross was clicked is removed:
+      removeTab(inputId = "tabs", target = input$remove_tab, session = session)
+      
+      # If the tab that is removed is the tab with the highest number,
+      # tab_counter$n is reduced with one so that if a new tab is created there
+      # is no gap in numbering:
+      if (as.numeric(stringr::str_extract(
+        input$remove_tab,
+        "[[:digit:]]"
+      )) >= tab_counter()) {
+        tab_counter(tab_counter() - 1)
+      }
+      
+      tab_results[[stringr::str_replace(input$remove_tab,
+                                        "Figure ",
+                                        "tab")]] <- NULL
+      
+    }) %>% bindEvent(input$remove_tab)
     
     # r <- reactiveValues(all_boxes = list(),
     #                     all_plots = list())
