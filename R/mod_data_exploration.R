@@ -94,7 +94,6 @@ mod_data_exploration_server <- function(id, results_derived_traits){
     }) %>% bindEvent(input$add_tab)
     
     observe({
-      #req(tab_counter() > 1)
       tab_id <- paste0("tab", (tab_counter()))
       
       appendTab(inputId = "tabs",
@@ -153,31 +152,6 @@ mod_data_exploration_server <- function(id, results_derived_traits){
                                         "tab")]] <- NULL
       
     }) %>% bindEvent(input$remove_tab)
-    
-    # r <- reactiveValues(all_boxes = list(),
-    #                     all_plots = list())
-    # 
-    # observe({
-    #   req(input$button > 0)
-    #   # Run the server part of the module that creates a box with a plot:
-    #   mod_box_with_plot_server(input$button,
-    #                            my_data = my_data)
-    #   
-    #   # Run the UI part of the module that creates a box with a plot and save it
-    #   # in the reactiveValue all_boxes:
-    #   r$all_boxes[[input$button]] <- mod_box_with_plot_ui(ns(input$button))
-    # }) %>% bindEvent(input$button)
-    # 
-    # observe({
-    #   req (input$button > 0)
-    #   for (box in 1:input$button) {
-    #     
-    #   }
-    # })
-    # 
-    # output$boxes <- renderUI(
-    #   tagList(r$all_boxes)
-    # )
     
     return(list(
       tab_results = tab_results
