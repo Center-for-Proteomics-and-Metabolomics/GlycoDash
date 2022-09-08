@@ -1,5 +1,7 @@
 # This file contains all functions used in the module mod_read_lacytools.R
 
+# The list 'outputs' with LacyTools outputs is used in the function
+# 'read_lacytools'.
 max_positive_charge <- 20
 output_types <- list(
   "Absolute Intensity (Background Subtracted, ",
@@ -14,17 +16,19 @@ outputs <- as.list(unlist(lapply(output_types,
 
 #' Read in non-rectangular delimited files
 #' 
-#' \code{read_non_rectangular()} can read flat files where the number of fields per line is 
-#' not constant (non-rectangular data). Blank lines in the field are not skipped 
-#' and empty fields "" are interpreted as \code{NA}. This function was created to read
-#' LacyTools summary files (tab-delimited .txt files).
+#' \code{read_non_rectangular()} can read flat files where the number of fields 
+#' per line is not constant (non-rectangular data). Blank lines are not skipped 
+#' and empty fields "" and 0's are interpreted as \code{NA}. This function was 
+#' created to read LacyTools summary files (tab-delimited non-rectangular .txt 
+#' files).
 #'
 #' @param path A path to a file with non-rectangular data.
-#' @param delim The field separator used in the file. 
-#'              For example, use "\\t" for files with tab-separated values 
-#'              and "," or ";" for files with comma-separated values (.csv).
+#' @param delim The field separator used in the file. For example, use "\\t" for 
+#' files with tab-separated values and "," or ";" for files with comma-separated 
+#' values (.csv).
 #'
-#' @return A data frame (\code{\link[base]{data.frame}}) containing the data in the flat file.
+#' @return A data frame (\code{\link[base]{data.frame}}) containing the data in 
+#' the flat file.
 #' @export
 #' 
 #' @importFrom utils read.table
@@ -36,21 +40,38 @@ outputs <- as.list(unlist(lapply(output_types,
 #' read_non_rectangular(path = data_file, delim = "\t")
 #' 
 read_non_rectangular <- function(path, delim = "\t") {
-  tryCatch(lines <- readLines(path, n = -1, ok = TRUE),
-           error = function(e) stop("No such file or directory exists."))
+  
+  lines <- tryCatch(
+    expr = { 
+      readLines(path)
+    },
+    error = function(e) {
+      stop("No such file or directory exists.")
+    })
+  
   columns <- stringr::str_split(lines, pattern = delim)
-  n_columns <- max(purrr::map_int(columns, ~ length(.x)))
-  if (n_columns == 1) {
+  max_n_columns <- max(purrr::map_int(columns, ~ length(.x)))
+  
+  if (max_n_columns == 1) {
     rlang::warn(class = "wrong_delim",
-                message = paste("The file seems to consist of a single column.",
-                                "Are you sure that you chose the correct delimiter for your file?"))
+                message = paste(
+                  "The file seems to consist of a single column.",
+                  "Are you sure that you chose the correct delimiter for your file?"
+                ))
   }
+  
   column_names <- vector()
   for (i in 1:n_columns) {
     column_names[i] <- paste("col", i, sep = "_")
   }
-  data <- read.table(path, fill = TRUE, header = FALSE, col.names = column_names, 
-                     sep = delim, blank.lines.skip = FALSE, na.strings = c("", "0"))
+  
+  data <- read.table(path, 
+                     fill = TRUE, 
+                     header = FALSE, 
+                     col.names = column_names, 
+                     sep = delim, 
+                     blank.lines.skip = FALSE, 
+                     na.strings = c("", "0"))
   return(data)
 }
 
