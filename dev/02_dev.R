@@ -72,6 +72,7 @@ golem::add_module( name = "tab_data_exploration" )
 ## Add helper functions ----
 ## Creates fct_* and utils_*
 golem::add_fct( "data_import" ) 
+golem::add_fct( "read_lacytools" )
 golem::add_fct( "add_sample_ids" )
 golem::add_fct( "add_sample_types" )
 golem::add_fct( "add_metadata" )
