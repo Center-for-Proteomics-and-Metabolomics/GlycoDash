@@ -58,10 +58,6 @@ mod_data_import_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    # Creating a reactiveValues object in which reactiveVals from this module can be saved:
-    # (reactiveVals are often easier to work with than reactive expressions for some reason)
-    x <- reactiveValues()
-    
     summary <- mod_read_lacytools_server("read_lacytools_ui_1")
     
     data_incl_sample_ids <- mod_add_sample_ids_server("add_sample_ids_ui_1",
