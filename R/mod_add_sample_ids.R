@@ -1,6 +1,6 @@
 #' add_sample_ids UI Function
 #'
-#' @description A shiny Module.
+#' @description A shiny Module 
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
@@ -77,11 +77,6 @@ mod_add_sample_ids_ui <- function(id){
           div(id = ns("dropdown_content"),
               downloadButton(ns("download_ex_plate_design"),
                              "Download a plate design example file"),
-              # tags$p(paste(
-              #   "This example plate design contains 179 samples of which 9 samples were", 
-              #   "measured in duplicate. In addition 1 standard and 1 blank (PBS)", "
-              #   were measured on each plate. "
-              # )),
               downloadButton(ns("download_ex_sample_list"),
                              "Download a sample list example file")),
           icon = icon("paperclip",
