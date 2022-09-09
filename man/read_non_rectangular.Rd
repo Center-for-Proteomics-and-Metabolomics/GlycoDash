@@ -9,18 +9,20 @@ read_non_rectangular(path, delim = "\\t")
 \arguments{
 \item{path}{A path to a file with non-rectangular data.}
 
-\item{delim}{The field separator used in the file. 
-For example, use "\\t" for files with tab-separated values 
-and "," or ";" for files with comma-separated values (.csv).}
+\item{delim}{The field separator used in the file. For example, use "\\t" for 
+files with tab-separated values and "," or ";" for files with comma-separated 
+values (.csv).}
 }
 \value{
-A data frame (\code{\link[base]{data.frame}}) containing the data in the flat file.
+A data frame (\code{\link[base]{data.frame}}) containing the data in 
+the flat file.
 }
 \description{
-\code{read_non_rectangular()} can read flat files where the number of fields per line is 
-not constant (non-rectangular data). Blank lines in the field are not skipped 
-and empty fields "" are interpreted as \code{NA}. This function was created to read
-LacyTools summary files (tab-delimited .txt files).
+\code{read_non_rectangular()} can read flat files where the number of fields 
+per line is not constant (non-rectangular data). Blank lines are not skipped 
+and empty fields "" and 0's are interpreted as \code{NA}. This function was 
+created to read LacyTools summary files (tab-delimited non-rectangular .txt 
+files).
 }
 \examples{
 data_file <- system.file("extdata", 

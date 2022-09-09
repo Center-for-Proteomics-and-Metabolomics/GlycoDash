@@ -154,9 +154,9 @@ mod_read_lacytools_server <- function(id){
     
     lacytools_summary <- reactive({
       req(raw_lacytools_summary())
-      summary <- tryCatch(
+      tidy_summary <- tryCatch(
         expr = {
-          read_lacytools_summary(data = raw_lacytools_summary())
+          convert_lacytools_summary(data = raw_lacytools_summary())
         },
         no_outputs_present = function(c) {
           # Show feedback that there are no outputs found in the LacyTools file:
@@ -166,7 +166,7 @@ mod_read_lacytools_server <- function(id){
           # Return NULL to the reactive lacytools_summary()
           NULL
         })
-      return(summary)
+      return(tidy_summary)
     })
     
     lacytools_summary_Ig_data <- reactive({

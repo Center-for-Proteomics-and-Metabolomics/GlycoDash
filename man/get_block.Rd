@@ -4,29 +4,13 @@
 \alias{get_block}
 \title{Create a subset containing one block from a LacyTools summary.}
 \usage{
-get_block(
-  data,
-  variable,
-  Ig_data = NULL,
-  keyword_specific = NULL,
-  keyword_total = NULL
-)
+get_block(data, variable)
 }
 \arguments{
 \item{data}{A dataframe with the LacyTools summary (the result of
 \code{\link{read_non_rectangular}}).}
 
 \item{variable}{The name of a LacyTools output format.}
-
-\item{Ig_data}{A character string. Is your data immunoglobulin data that
-contains both total Ig and specific Ig samples? If yes then \code{Ig_data}
-should be "Yes" if not \code{Ig_data} should be "No".}
-
-\item{keyword_specific}{The word(s)/characters within the sample name used to
-refer to Specific samples.}
-
-\item{keyword_total}{The word(s)/characters within the sample name used to
-refer to Total samples.}
 }
 \value{
 A dataframe that is a subset of the input dataframe.
@@ -37,9 +21,6 @@ Create a subset containing one block from a LacyTools summary.
 \examples{
 data(LacyTools_summary)
 get_block(LacyTools_summary, 
-          variable = "Absolute Intensity (Background Subtracted, 2+)", 
-          Ig_data = "Yes", 
-          keyword_specific = "Spike", 
-          keyword_total = "Total")
+          variable = "Absolute Intensity (Background Subtracted, 2+)")
           
 }

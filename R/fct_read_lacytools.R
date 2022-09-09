@@ -78,10 +78,6 @@ read_non_rectangular <- function(path, delim = "\t") {
 #' Create a subset containing one block from a LacyTools summary.
 #'
 #' @inheritParams find_block
-#' @inheritParams detect_group
-#' @param Ig_data A character string. Is your data immunoglobulin data that
-#'   contains both total Ig and specific Ig samples? If yes then \code{Ig_data}
-#'   should be "Yes" if not \code{Ig_data} should be "No".
 #'
 #' @return A dataframe that is a subset of the input dataframe.
 #' @export
@@ -89,12 +85,9 @@ read_non_rectangular <- function(path, delim = "\t") {
 #' @examples
 #' data(LacyTools_summary)
 #' get_block(LacyTools_summary, 
-#'           variable = "Absolute Intensity (Background Subtracted, 2+)", 
-#'           Ig_data = "Yes", 
-#'           keyword_specific = "Spike", 
-#'           keyword_total = "Total")
+#'           variable = "Absolute Intensity (Background Subtracted, 2+)")
 #'           
-get_block <- function(data, variable, Ig_data = NULL, keyword_specific = NULL, keyword_total= NULL) {
+get_block <- function(data, variable) {
   rows <- find_block(data, variable)
   block <- data[rows, ]
   # The first row of the block contains the column names for the block:
@@ -125,10 +118,6 @@ get_block <- function(data, variable, Ig_data = NULL, keyword_specific = NULL, k
     dplyr::mutate(lacytools_output = better_name_output) %>% 
     dplyr::mutate(dplyr::across(-c(sample_name, lacytools_output), as.numeric)) %>% 
     dplyr::select(-tidyselect::vars_select_helpers$where(function(x) all(is.na(x))))
-  #block <- detect_plate_and_well(block)
-  # if (Ig_data == "Yes") {
-  #   block <- detect_group(block, keyword_specific, keyword_total)
-  # }
   return(block)
 }
 
@@ -166,16 +155,16 @@ find_block <- function(data, variable) {
 #'@param data A dataframe with the LacyTools summary (the result of
 #'  \code{\link{read_non_rectangular}}).
 #'@param row The row used as a starting point from which to search for the next
-#'  line with \code{NA}'s.
+#'  blank line (consisting of only \code{NA}'s).
 #'
 #'@return The row index (integer) for the next line with \code{NA}'s. If there
 #'  are no next lines with \code{NA}'s the function will return an empty integer vector.
 #'@export
 #'
 #'@examples
-#' df <- data.frame(c("John", "Lisa", "Paul", NA, "Pete", NA),
-#'                  c(12, 15, 23, NA, 14, NA),
-#'                  c("apple", "pear", "orange", NA, "pear", NA))
+#' df <- data.frame(c("John", "Lisa", NA, "Pete", NA, "Paul"),
+#'                  c(12, 15, NA, 14, NA, 23),
+#'                  c("apple", "pear", NA, "pear", NA, "orange"))
 #'                  
 #' find_next_na(data = df,
 #'              row = 2)
@@ -193,26 +182,19 @@ find_next_na <- function(data, row) {
   return(next_na)
 }
 
-#'Read a LacyTools summary file and convert it to a 'tidy' dataframe
+#'Convert a LacyTools summary to a 'tidy' dataframe
 #'
-#'The function \code{read_lacytools_summary()} can read in a LacyTools summary
-#'.txt file and convert it to a 'tidy' dataframe in long format.
+#'The function \code{convert_lacytools_summary()} can convert a dataframe 
+#'containing a LacyTools summary to a 'tidy' dataframe in long format. The long 
+#'format means that for each sample there is one row per analyte per charge state.
 #'
-#'@param summary_file The path to the LacyTools summary file. This file should
-#'  be a tab-delimited .txt file. This function can process the output summary
-#'  file of LacyTools without any changes needed.
-#'  
-#'@inheritParams get_block
+#'@param data A dataframe containing a LacyTools summary returned by
+#' \code{\link{read_non_rectangular}}.
 #'
 #'@return This function returns a dataframe with the following columns:
 #'  \describe{ \item{sample_name}{The (unchanged) sample names.}
-#'  \item{plate_well}{The plate and well that the sample was analyzed in. This
-#'  information is deduced from the sample name using the function
-#'  \code{\link{detect_plate_and_well}}} \item{group}{The group (total or
-#'  specific Ig) that the sample belongs to. The groups are deduced from the
-#'  sample name using the function \code{\link{detect_group}}}
 #'  \item{analyte}{The analyte. For each sample, there is one row per analyte
-#'  (per charge state of that analyte).} \item{charge}{The charge state of the
+#'  per charge state of that analyte.} \item{charge}{The charge state of the
 #'  analyte.} \item{LacyTools output formats}{The dataframe will contain one
 #'  column for each LacyTools output format that was present in the LacyTools
 #'  summary file.} \item{fraction}{The fraction of the isotopic pattern that was
@@ -221,27 +203,17 @@ find_next_na <- function(data, row) {
 #'@export
 #'
 #' @examples
-#' path_to_file <- system.file("extdata",
-#'                             "LacyTools_summary_example.txt",
-#'                             package = "glycodash")
-#'                             
-#' read_lacytools_summary(summary_file = path_to_file,
-#'                        Ig_data = "Yes",
-#'                        keyword_specific = "Spike",
-#'                        keyword_total = "Total")
-read_lacytools_summary <- function(data, Ig_data, keyword_total = NULL, keyword_specific = NULL) {
-  
-  #data <- read_non_rectangular(summary_file)
-  
+#' data("LacyTools_summary")
+#'
+#' convert_lacytools_summary(data = LacyTools_summary)
+convert_lacytools_summary <- function(data) {
+
   all_blocks <- purrr::map(outputs,
                            function(output) {
                              tryCatch(expr = {
                                suppressWarnings(
                                  get_block(data = data, 
-                                           variable = output, 
-                                           Ig_data = Ig_data,
-                                           keyword_specific = keyword_specific,
-                                           keyword_total = keyword_total)
+                                           variable = output)
                                )
                              },
                              error = function(e) { })
@@ -256,7 +228,7 @@ read_lacytools_summary <- function(data, Ig_data, keyword_total = NULL, keyword_
                                  "summary file. Did you choose the correct file?"))
   }
   
-  long_data_list <- purrr::map(all_blocks, create_long_data)
+  long_data_list <- purrr::map(all_blocks, lengthen_block)
   charges <- as.factor(purrr::map_chr(long_data_list, function(x) unique(x$charge)))
   charge_sep_list <- split(long_data_list, charges)
   
@@ -269,18 +241,17 @@ read_lacytools_summary <- function(data, Ig_data, keyword_total = NULL, keyword_
   return(long_data)
 }
 
-#' Transform the LacyTools summary data to a long format.
+#' Transform a LacyTools summary block to a long format.
 #'
-#' \code{create_long_data()} transforms a LacyTools summary block from a wide
-#' format (each analyte has it's own column) to a long format (an column named
-#' "analyte" with the analytes has been added and each combination of sample and
-#' analyte has it's own row). In addition, a column is added that contains
-#' the charge of the LacyTools output format.
+#' \code{lengthen_block()} transforms a LacyTools summary block from a wide
+#' format (each analyte has its own column) to a long format. A column named
+#' "analyte" and a column named "charge" have been added and each combination 
+#' of sample, analyte and charge state has its own row.
 #'
 #' @param block A dataframe containing a block from a LacyTools summary file
 #'   (the result of \code{\link{get_block}}).
 #' @param metadata A dataframe containing metadata in case the metadata has
-#'   already been added to the data.Defaults too \code{NULL}.
+#'   already been added to the data. Defaults too \code{NULL}.
 #'
 #' @return A dataframe containing the LacyTools summary block in long format.
 #' @export
@@ -288,17 +259,15 @@ read_lacytools_summary <- function(data, Ig_data, keyword_total = NULL, keyword_
 #' @examples
 #' data("LacyTools_summary")
 #' block <- get_block(LacyTools_summary, 
-#'                    variable = "Absolute Intensity (Background Subtracted, 2+)", 
-#'                    Ig_data = "Yes", 
-#'                    keyword_specific = "Spike", 
-#'                    keyword_total = "Total")
-#' create_long_data(block = block)
-create_long_data <- function(block, metadata = NULL) {
+#'                    variable = "Absolute Intensity (Background Subtracted, 2+)")
+#' lengthen_block(block = block)
+lengthen_block <- function(block, metadata = NULL) {
   charge_value <- stringr::str_extract(block$lacytools_output[1], "\\d+[+\\-]")
+  # The charge needs to be removed from the analyte name:
   new_output_name <- stringr::str_remove(block$lacytools_output[1], "_\\d+[+\\-]")
   cols_not_to_pivot <- c("sample_name", "group", "plate_well", colnames(metadata))
   
-  block <- block %>% 
+  long_block <- block %>% 
     dplyr::select(-lacytools_output) %>%
     tidyr::pivot_longer(cols = -tidyselect::any_of(cols_not_to_pivot),
                         names_to = "analyte",
@@ -306,7 +275,7 @@ create_long_data <- function(block, metadata = NULL) {
     dplyr::mutate(charge = charge_value) %>% 
     dplyr::relocate(charge, .before = all_of(new_output_name))
   
-  return(block)
+  return(long_block)
 }
 
 #' Get the analytes info from a LacyTools summary using a list of output formats
@@ -344,15 +313,12 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
   # Get the analytes_info for each variable and put them in a list:
   analytes_info_list <- purrr::map(list_of_variables,
                                    function(variable) {
-                                     tryCatch({
-                                       analytes_info <- get_analytes_info(data, variable) %>% 
-                                         # add a column that indicates what the charge state is:
-                                         # include this in get_analytes_info()? add an error?
+                                     analytes_info <- tryCatch({
+                                       get_analytes_info(data, variable) %>% 
                                          dplyr::mutate(
                                            charge = stringr::str_extract(variable, 
                                                                          # This doesn't work for charges higher/lower than 9!
                                                                          "\\d+[+\\-]"))
-                                       return(analytes_info)
                                      },
                                      # Ignore list items that result in an error:
                                      error = function(e) { })
@@ -437,7 +403,8 @@ get_analytes_info <- function(data, variable) {
 
 #'Detect whether a sample is Specific or Total Ig based on the sample name.
 #'
-#'@param block A dataframe containing a block from a LacyTools summary file.
+#'@param block A dataframe containing a LacyTools summary with a column 
+#'"sample_name".
 #'@param keyword_specific The word(s)/characters within the sample name used to
 #'  refer to Specific samples.
 #'@param keyword_total The word(s)/characters within the sample name used to

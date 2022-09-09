@@ -35,7 +35,7 @@ lacytools_file <- system.file("extdata",
 
 raw_data <- read_non_rectangular(lacytools_file)
 
-data <- read_lacytools_summary(raw_data) %>% 
+data <- convert_lacytools_summary(raw_data) %>% 
   detect_group(.,
                keyword_specific = "Spike",
                keyword_total = "Total")

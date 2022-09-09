@@ -11,7 +11,7 @@ find_next_na(data, row)
 \code{\link{read_non_rectangular}}).}
 
 \item{row}{The row used as a starting point from which to search for the next
-line with \code{NA}'s.}
+blank line (consisting of only \code{NA}'s).}
 }
 \value{
 The row index (integer) for the next line with \code{NA}'s. If there
@@ -21,9 +21,9 @@ The row index (integer) for the next line with \code{NA}'s. If there
 Find the next empty line from a given line in a LacyTools summary file.
 }
 \examples{
-df <- data.frame(c("John", "Lisa", "Paul", NA, "Pete", NA),
-                 c(12, 15, 23, NA, 14, NA),
-                 c("apple", "pear", "orange", NA, "pear", NA))
+df <- data.frame(c("John", "Lisa", NA, "Pete", NA, "Paul"),
+                 c(12, 15, NA, 14, NA, 23),
+                 c("apple", "pear", NA, "pear", NA, "orange"))
                  
 find_next_na(data = df,
              row = 2)

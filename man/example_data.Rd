@@ -16,7 +16,7 @@ example_data
 }
 \description{
 This dataset is an example of a LacyTools summary file that has been read in
-and processed using \code{link{read_lacytools_summary}}. This LacyTools
+and processed using \code{link{convert_lacytools_summary}}. This LacyTools
 summary contains only measurements of standards and blanks.
 }
 \keyword{datasets}
