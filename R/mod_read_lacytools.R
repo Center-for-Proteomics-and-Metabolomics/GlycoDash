@@ -207,6 +207,12 @@ mod_read_lacytools_server <- function(id){
                          "Please choose a different keyword.")
           )
           NULL
+        },
+        NAs = function(c) {
+          showNotification(c$message,
+                           type = "error",
+                           duration = NULL)
+          NULL
         })
       
       return(summary)

@@ -441,8 +441,8 @@ detect_group <- function(data, keyword_specific, keyword_total) {
   
   if (any(is.na(data$group))) {
     rlang::warn(class = "NAs",
-                message = paste("Some sample_names could not be classified as total or specific.",
-                                "Please reconsider your keywords (keyword_specific and keyword_total)."))
+                message = paste("Some sample names could not be classified as total or specific Ig.",
+                                "Please reconsider your keywords."))
   }
   return(data)
 }
