@@ -3,12 +3,12 @@
 #'
 #' This function detects the plate and well position of a sample, based on it's
 #' sample name. The sample name should be in a column named "sample_name" and
-#' should contain either "P", "p", "Pl" or "PL" followed by the plate number or
-#' a capital letter possibly separated by an underscore (_), a score (-) or a
-#' dot (.). In addition, the sample name should contain a single capital letter
-#' between A and H followed directly by a number between 1 and 12 (numbers
-#' smaller than 10 may be preceded by a zero, e.g. A01 and A1 are both allowed).
-#' This letter-number combination indicates the well.
+#' should contain either "plate" or "pl" (not case-sensitive) followed by the
+#' plate number or a capital letter. Then the well position should be indicated
+#' by a single capital letter between A and H followed directly by a number
+#' between 1 and 12 (numbers smaller than 10 may be preceded by a zero, e.g. A01
+#' and A1 will both be recognized). The plate number and well position should be
+#' separated by an underscore "_".
 #'
 #' @param data A dataframe. Should include a column named "sample_name".
 #'
@@ -17,11 +17,15 @@
 #' @export
 #'
 #' @examples
-#' block_example <- data.frame(sample_name = c("s_0216_Specific_pl_3.A10",
-#'                                             "s_568_Total_P5_H4",
-#'                                             "pl23_B6.s_8759"),
-#'                             values = c(13.56, 738.34, 4.56))
-#' detect_plate_and_well(block_example)
+#' example <- data.frame(sample_name = c("s_0216_Specific_Plate4_A10",
+#'                                       "s_568_Total_pl5_H4",
+#'                                       "plate23_B6.s_8759",
+#'                                       "sample3857_Pl8_D05.568"),
+#'                       values = c(8, 
+#'                                  12, 
+#'                                  3, 
+#'                                  45))
+#' detect_plate_and_well(example)
 detect_plate_and_well <- function(data) {
   
   if (!("sample_name" %in% colnames(data))) {
@@ -29,39 +33,13 @@ detect_plate_and_well <- function(data) {
                  message = "The data doesn't contain the required column \"sample_name\".")
   }
   
-  data <- data %>% 
+  data <- example %>% 
     tidyr::extract(
       col = sample_name, 
       into = c("plate", "well"),
-      # Plate number/letter does not have to be preceded by a P/p, but between
-      # the plate number and well position only a _ - . or space are allowed:
-      regex = "([Pp]?(?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z]))[_\\-.\\s]?([A-H][_\\-.\\s]?(?:0?\\d\\D|0?\\d$|1[012]))",
+      # "\D" in regex is anything but a digit
+      regex = "([Pp][Ll](?:[Aa][Tt][Ee])?\\d+|[A-Z])_([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
       remove = FALSE)
-  
-  if (any(anyNA(data$plate), anyNA(data$well))) {
-    data <- data %>% 
-      dplyr::select(-c(plate, well)) %>% 
-      tidyr::extract(
-        col = sample_name, 
-        into = c("plate", "well"),
-        # Plate number/letter has to be preceded by at least a P/p but there can
-        # be all kinds of characters between the plate number and the well position:
-        regex = "([Pp](?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z])).*([A-H][_\\-.\\s]?(?:0?\\d\\D|0?\\d$|1[012]))",
-        remove = FALSE)
-  }
-  
-  if (any(anyNA(data$plate), anyNA(data$well))) {
-    data <- data %>% 
-      dplyr::select(-c(plate, well)) %>% 
-      tidyr::extract(
-        col = sample_name, 
-        into = c("well", "plate"),
-        # The well position directly precedes the plate number (can only be
-        # separated by a _ - . or space), but the plate number/letter does not
-        # need to be preceded by a P/p:
-        regex = "([A-H][_\\-.\\s]?(?:0?\\d\\D|0?\\d$|1[012]))[_\\-.\\s]?([Pp]?(?:[Ll]?|late)[_\\-.\\s]?(?:\\d+|[A-Z]))",
-        remove = FALSE)
-  }
   
   if (any(anyNA(data$plate), anyNA(data$well))) {
     NA_samples <- data$sample_name[is.na(data$plate) | is.na(data$well)]
@@ -80,9 +58,15 @@ detect_plate_and_well <- function(data) {
   }
   
   data <- data %>% 
-    dplyr::mutate(plate = stringr::str_match(plate, "[Pp]?[Ll]?(?:ate)?[_\\-.\\s]?(\\d+|[A-Z])")[ , 2],
-                  well = stringr::str_extract(well, "[A-H][_\\-.\\s]?\\d{1,2}"),
-                  plate_well = paste(plate, well, sep = "_")) %>% 
+    dplyr::mutate(
+      plate = stringr::str_match(plate, 
+                                 "[Pp][Ll](?:ate|ATE)?(\\d+|[A-Z])")[ , 2],
+      well = stringr::str_extract(well, 
+                                  "[A-H]\\d{1,2}"),
+      plate_well = paste(plate, 
+                         well, 
+                         sep = "_")
+    ) %>% 
     dplyr::select(-c(plate, well)) %>% 
     dplyr::relocate(plate_well, .after = sample_name)
   
