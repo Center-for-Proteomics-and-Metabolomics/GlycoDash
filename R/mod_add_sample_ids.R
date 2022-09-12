@@ -339,6 +339,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
                                             sample_list$sample_list())
       }
       
+      # TODO: convert code below into a function
       replicates <- with_sample_ids %>% 
         dplyr::select(tidyselect::any_of(c("sample_name", "sample_id", "group"))) %>% 
         dplyr::distinct() %>% 
