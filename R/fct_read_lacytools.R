@@ -61,7 +61,7 @@ read_non_rectangular <- function(path, delim = "\t") {
   }
   
   column_names <- vector()
-  for (i in 1:n_columns) {
+  for (i in 1:max_n_columns) {
     column_names[i] <- paste("col", i, sep = "_")
   }
   
