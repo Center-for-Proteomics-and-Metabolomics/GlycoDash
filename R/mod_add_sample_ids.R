@@ -322,21 +322,33 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     data_with_sample_ids <- reactive({
       req(summary())
       
+      shinyFeedback::hideFeedback("sample_id_method")
+      
       if (input$sample_id_method == "Upload a plate design") {
-        summary_with_plate_well <- detect_plate_and_well(summary())
-        # TODO: Make sure the errors from detect_plate_and_well are passed along
-        # to the user.
+        # Option: move this to a separate reactive() as was done in
+        # warn_duplicated_analytes in mod_read_lacytools.R
+        summary_with_plate_well <- tryCatch(
+          expr = {
+            detect_plate_and_well(summary())
+          },
+          plate_well_NAs = function(c) {
+            shinyFeedback::showFeedbackDanger(
+              "sample_id_method",
+              "Incorrect sample name format, please use the sample list method.")
+            NULL
+          })
         if (is_truthy(input$switch_two_plate_designs)) {
-          req(plate_design_combined())
+          req(plate_design_combined(),
+              !is.null(summary_with_plate_well))
           with_sample_ids <- dplyr::left_join(summary_with_plate_well,
                                               plate_design_combined())
         } else {
-          req(plate_design$plate_design())
+          req(plate_design$plate_design(),
+              !is.null(summary_with_plate_well))
           with_sample_ids <- dplyr::left_join(summary_with_plate_well,
                                               plate_design$plate_design())
         }
       } else {
-        req(sample_list$sample_list())
         with_sample_ids <- dplyr::left_join(summary(),
                                             sample_list$sample_list())
       }
@@ -364,8 +376,23 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     # This observe call ensures that the add_sample_ids actionButton is only
     # enabled under the right circumstances
     observe({
+      
+      plate_design_ready <- all(
+        input$sample_id_method == "Upload a plate design",
+        any(is_truthy(plate_design$plate_design()),
+            is_truthy(plate_design_combined()))
+      )
+      
+      sample_list_ready <- all(
+        input$sample_id_method == "Upload a sample list",
+        is_truthy(sample_list$sample_list())
+      )
+      
       shinyjs::toggleState("button",
-                           condition = is_truthy(data_with_sample_ids()))
+                           condition = any(
+                             plate_design_ready,
+                             sample_list_ready
+                           ))
     })
     
     output$download_ex_plate_design <- downloadHandler(

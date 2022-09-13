@@ -44,13 +44,13 @@ detect_plate_and_well <- function(data) {
   if (any(anyNA(data$plate), anyNA(data$well))) {
     NA_samples <- data$sample_name[is.na(data$plate) | is.na(data$well)]
     if (length(NA_samples) > 15) {
-      rlang::abort(class = "plate_well NAs",
+      rlang::abort(class = "plate_well_NAs",
                    message = paste("For",
                                    length(NA_samples),
                                    "samples the plate and well could not be determined.",
                                    "Run `?detect_plate_and_well` and check if your sample names are in a suitable format."))
     } else {
-      rlang::abort(class = "plate_well NAs",
+      rlang::abort(class = "plate_well_NAs",
                    message = paste("For the sample(s)",
                                    paste(NA_samples, collapse = " and "),
                                    "the plate and well could not be determined."))
