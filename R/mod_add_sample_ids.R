@@ -324,6 +324,8 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
       
       if (input$sample_id_method == "Upload a plate design") {
         summary_with_plate_well <- detect_plate_and_well(summary())
+        # TODO: Make sure the errors from detect_plate_and_well are passed along
+        # to the user.
         if (is_truthy(input$switch_two_plate_designs)) {
           req(plate_design_combined())
           with_sample_ids <- dplyr::left_join(summary_with_plate_well,
@@ -357,7 +359,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
       
       return(with_sample_ids)
       
-    })
+    }) %>% bindEvent(input$button)
     
     # This observe call ensures that the add_sample_ids actionButton is only
     # enabled under the right circumstances

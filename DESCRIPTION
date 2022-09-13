@@ -24,6 +24,7 @@ Imports:
     readxl,
     rlang,
     RLumShiny,
+    scales,
     shiny (>= 1.7.1),
     shinyalert,
     shinyBS,
@@ -50,6 +51,6 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Language: en-US
-VignetteBuilder: rmarkdown, knitr
+VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)

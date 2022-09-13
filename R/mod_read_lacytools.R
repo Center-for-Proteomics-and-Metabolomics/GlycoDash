@@ -98,7 +98,6 @@ mod_read_lacytools_server <- function(id){
     
     raw_lacytools_summary <- reactive({
       req(input$lacytools_summary$datapath)
-      
       read_non_rectangular(input$lacytools_summary$datapath)
     })
     
@@ -167,7 +166,7 @@ mod_read_lacytools_server <- function(id){
           # Return NULL to the reactive lacytools_summary()
           NULL
         })
-      print("check tidy summary")
+      
       return(tidy_summary)
     })
     
@@ -176,15 +175,11 @@ mod_read_lacytools_server <- function(id){
       shinyFeedback::hideFeedback("keyword_specific")
       shinyFeedback::hideFeedback("keyword_total")
       
-      browser()
-      
       # Pause here until lacytools_summary() is Truthy, and until the inputs for
       # the keywords are not empty:
-      req(lacytools_summary())
-      req(input$keyword_specific) # weird bug occurs here: Error in UseMethod: 
-      # no applicable method for 'extract' applied to an object of class
-      # "function"
-      req(input$keyword_total)
+      req(lacytools_summary(),
+          input$keyword_specific,
+          input$keyword_total)
       
       summary <- tryCatch(
         expr = {

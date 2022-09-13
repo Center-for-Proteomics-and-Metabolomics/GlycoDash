@@ -33,7 +33,7 @@ detect_plate_and_well <- function(data) {
                  message = "The data doesn't contain the required column \"sample_name\".")
   }
   
-  data <- example %>% 
+  data <- data %>% 
     tidyr::extract(
       col = sample_name, 
       into = c("plate", "well"),
