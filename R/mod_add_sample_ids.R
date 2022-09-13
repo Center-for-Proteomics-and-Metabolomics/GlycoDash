@@ -320,13 +320,14 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
     )
     
     data_with_sample_ids <- reactive({
-      req(summary())
+      req(summary(),
+          read_lacytools_button() > 0) # Showing the plate_well_NAs feedback 
+      # before the "Load LacyTools summary" button has been clicked might be
+      # confusing for the user.
       
       shinyFeedback::hideFeedback("sample_id_method")
       
       if (input$sample_id_method == "Upload a plate design") {
-        # Option: move this to a separate reactive() as was done in
-        # warn_duplicated_analytes in mod_read_lacytools.R
         summary_with_plate_well <- tryCatch(
           expr = {
             detect_plate_and_well(summary())
@@ -349,6 +350,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
                                               plate_design$plate_design())
         }
       } else {
+        req(sample_list$sample_list())
         with_sample_ids <- dplyr::left_join(summary(),
                                             sample_list$sample_list())
       }
@@ -371,28 +373,13 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
       
       return(with_sample_ids)
       
-    }) %>% bindEvent(input$button)
+    })
     
     # This observe call ensures that the add_sample_ids actionButton is only
     # enabled under the right circumstances
     observe({
-      
-      plate_design_ready <- all(
-        input$sample_id_method == "Upload a plate design",
-        any(is_truthy(plate_design$plate_design()),
-            is_truthy(plate_design_combined()))
-      )
-      
-      sample_list_ready <- all(
-        input$sample_id_method == "Upload a sample list",
-        is_truthy(sample_list$sample_list())
-      )
-      
       shinyjs::toggleState("button",
-                           condition = any(
-                             plate_design_ready,
-                             sample_list_ready
-                           ))
+                           condition = is_truthy(data_with_sample_ids()))
     })
     
     output$download_ex_plate_design <- downloadHandler(
