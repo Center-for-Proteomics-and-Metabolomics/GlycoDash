@@ -100,12 +100,6 @@ detect_plate_and_well <- function(data) {
 #'  At the bottom of the plate, leave one row blank and then add the next plate
 #'  in the same format.
 #'
-#'  Duplicate samples should be indicated in the plate design Excel file as
-#'  "duplicate". \code{read_and_process_plate_design} assumes that duplicate 
-#'  samples are always the duplicate of the preceding sample, that is the 
-#'  sample one well to the left or, in case the duplicate is positioned in the 
-#'  left-most column of the plate, the sample in the right-most well one row up.
-#'
 #'@return This function returns a dataframe with four columns:
 #'  \describe{\item{sample_id}{The sample ID's as given in the plate design
 #'  file.} \item{sample_type}{Automatically determined sample types. The
@@ -128,26 +122,133 @@ detect_plate_and_well <- function(data) {
 #' 
 #' read_and_process_plate_design(plate_design_file = path)
 read_and_process_plate_design <- function(plate_design_file) {
-  # Pass along any errors (if applicable) from read_plate_design:
-  tryCatch(expr = {
-    plate_design <- read_plate_design(plate_design_file)
+  plate_design <- tryCatch(
+    expr = {
+    read_plate_design(plate_design_file)
   },
-  incorrect_formatting = function(cnd) {
-    rlang::abort(message = cnd$message,
+  incorrect_formatting = function(c) {
+    rlang::abort(message = c$message,
                  class = "incorrect_formatting")
   })
   
   plate_design <- process_plate_design(plate_design)
   
-  # Pass along any errors (if applicable) from handle_duplicates. Warnings are
-  # passed along automatically.
-  # tryCatch(expr = {
-  #   plate_design <- handle_duplicates(plate_design)
-  # },
-  # error = function(e) {
-  #   rlang::abort(class = e$class,
-  #                message = e$message)
-  # })
+  return(plate_design)
+}
+
+#'Read in a plate design file
+#'
+#'The function \code{read_plate_design} reads in a plate design Excel
+#'file and returns a dataframe. It uses the \code{\link[plater]{read_plate}}
+#'function from the plater package.
+#'
+#'@param plate_design_file The path to the plate design Excel file. The file
+#'  should be in the format described below.
+#'
+#'@return This function returns a dataframe with a column named "well" that
+#'  indicates in which well a sample was analyzed. In addition, there is one
+#'  column for each plate in the plate design file. Each plate column contains
+#'  the sample ID's of the samples on that plate.
+#'@export
+#'
+#'@section Plate design format: 
+#'The top-left cell of the Excel sheet should contain the plate number (e.g. 
+#'"Plate 1"). The cells to the right of the top-left cell need to be labelled 
+#'1-12 (for a 96-well plate), while the cells below the top-left cell need to be
+#'labelled A-H. The cells within the plate should contain the sample ID's.
+#'
+#'\preformatted{
+#'Plate number  1             2            3             ...
+#'A            sample_ID_A1  sample_ID_A2  sample_ID_A3  
+#'B            sample_ID_B1  sample_ID_B2  sample_ID_B3
+#'C            sample_ID_C1  sample_ID_C2  sample_ID_C3
+#'...          ...           ...           ...           ...}
+#'
+#'At the bottom of the plate, leave one row blank and then add the next plate in
+#'the same format.
+#'
+#'
+#' @examples
+#' path <- system.file("extdata",
+#'                     "Plate_design_example.xlsx",
+#'                     package = "glycodash")
+#' read_plate_design(plate_design_file = path)
+read_plate_design <- function(plate_design_file) {
+  
+  plate_design <- readxl::read_excel(plate_design_file,
+                                     .name_repair = "minimal")
+  path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
+  write.csv(plate_design,
+            file = path_to_platedesign_csv, 
+            row.names = FALSE,
+            na = "",
+            quote = FALSE)
+  plate_design <- tryCatch(expr = {
+    plater::read_plate(file = path_to_platedesign_csv, 
+                       well_ids_column = "well")
+  },
+  # Throw custom error when plater::read_plate() throws an error:
+  error = function(e) { 
+    rlang::abort(class = "incorrect_formatting",
+                 message = paste(
+                   "Please check that your plate design file is formatted correctly.",
+                   "Run `?read_and_process_plate_design` to find the required format."))
+  },
+  # Throw custom error when plater::read_plate() throws a warning:
+  warning = function(w) { 
+    rlang::abort(class = "incorrect_formatting",
+                 message = paste(
+                   "Please check that your plate design file is formatted correctly.",
+                   "Run `?read_and_process_plate_design` to find the required format."))
+  })
+  
+  return(plate_design)
+}
+
+#' Process the result of read_plate_design()
+#'
+#' This function takes the result from the \code{\link{read_plate_design}}
+#' function and converts it to a different format.
+#'
+#' @param plate_design The dataframe that is returned by the
+#'   \code{\link{read_plate_design}} function.
+#'
+#' @return A dataframe with two columns: \describe{\item{sample_id}{The sample
+#'   ID's as given in the plate design file.} \item{plate_well}{This column 
+#'   indicated the plate and well that a sample was analyzed in. The format is 
+#'   as follows: the plate number followed by the well ID, separated by an 
+#'   underscore (e.g. plate 1 well A1 is 1_A01).}}
+#' @export
+#'
+#' @examples
+#' path <- system.file("extdata",
+#'                     "Plate_design_example.xlsx",
+#'                     package = "glycodash")
+#'
+#' plate_design <- read_plate_design(path)
+#' process_plate_design(plate_design)
+process_plate_design <- function (plate_design) {
+  plate_design <- plate_design %>%
+    tidyr::pivot_longer(cols = -well,
+                        names_to = "plate",
+                        values_to = "sample_id") %>%
+    dplyr::mutate(plate = stringr::str_match(plate, "[Pp][Ll](?:ate|ATE)?(\\d+|[A-Z])")[ , 2],
+                  well = stringr::str_extract(well, "[A-H]\\d+"))
+  
+  if (any(is.na(plate_design$plate))) {
+    rlang::abort(class = "plate_numbers",
+                 message = paste(
+                   "The plate numbers could not be detected. Please check if",
+                   "your plate design Excel file is in the correct format."))
+  }
+  
+  plate_design <- plate_design %>% 
+    dplyr::mutate(plate_well = paste(plate, well, sep = "_")) %>% 
+    dplyr::arrange(plate_well) %>% 
+    dplyr::select(-c(plate, well)) %>% 
+    tidyr::replace_na(list(
+      sample_id = "empty cell in plate design"
+    ))
   
   return(plate_design)
 }
