@@ -1,4 +1,4 @@
-# This file contains all functions used in the module mod_read_lacytools.R
+# This file contains all functions used in the module mod_read_lacytools.R.
 
 # The list 'outputs' with LacyTools outputs is used in the function
 # 'read_lacytools'.

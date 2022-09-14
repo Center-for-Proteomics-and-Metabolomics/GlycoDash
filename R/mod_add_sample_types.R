@@ -1,6 +1,8 @@
 #' add_sample_types UI Function
 #'
-#' @description A shiny Module.
+#' @description A shiny Module to add sample types to your data either 
+#' automatically based on the sample ID's or by uploading a sample types Excel 
+#' file.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
@@ -165,19 +167,13 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
     r <- reactiveValues()
     
     observe({
-      if (#!is_truthy(summary()) & 
-          is_truthy(r$with_auto_sample_types)) {
+      if (is_truthy(r$with_auto_sample_types)) {
         print("it's running")
         r$with_auto_sample_types <- NULL
         r$response <- NULL
         r$show_reset_warning <- TRUE
       }
     }) %>% bindEvent(summary())
-    
-    observe({
-      print("r$with_auto_sample_types")
-      print(r$with_auto_sample_types)
-    })
     
     observe({
       if (is_truthy(r$show_reset_warning)) {
@@ -188,21 +184,11 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
     }) %>% bindEvent(read_lacytools_button(),
                      sample_ids_button())
     
-    # observe({
-    #   # When sample ID's have been readded to the data (r$show_reset_warning is TRUE and
-    #   # data_with_sample_ids() exists) r$show_reset_warning should be reset to FALSE, so
-    #   # that the warning is not shown again when the 'load lacytools summary'
-    #   # button is clicked but no new lacytools file has been uploaded:
-    #   if (is_truthy(r$with_auto_sample_types) & is_truthy(r$show_reset_warning)) {
-    #     r$show_reset_warning <- FALSE
-    #   }
-    # })
-    
-    
     observe({
       req(summary(),
           input$method == "Automatically determine sample types based on sample ID's")
       
+      #TODO: convert this to a function:
       r$with_auto_sample_types <- summary() %>% 
         tidyr::extract(col = sample_id,
                        into = c("sample_type"),

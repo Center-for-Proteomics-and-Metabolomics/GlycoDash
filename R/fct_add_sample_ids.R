@@ -1,3 +1,6 @@
+# This file contains all functions that are used within the module
+# mod_add_sample_ids.R and within its sub-modules mod_process_plate_design.R and
+# mod_process_sample_list.R.
 
 #' Detect the plate and well of a sample from the sample name.
 #'
