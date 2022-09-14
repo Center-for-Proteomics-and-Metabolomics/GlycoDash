@@ -1,6 +1,7 @@
 #' process_sample_list UI Function
 #'
-#' @description A shiny Module.
+#' @description A shiny Module to upload and process a sample list file. This
+#' module is used within the module mod_add_sample_ids.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'

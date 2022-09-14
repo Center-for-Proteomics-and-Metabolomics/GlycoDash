@@ -1,6 +1,7 @@
 #' add_sample_ids UI Function
 #'
-#' @description A shiny Module 
+#' @description A shiny Module to add sample ID's to the data by uploading 
+#' either a plate design or a sample list. 
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'

@@ -1,7 +1,7 @@
 #' process_plate_design UI Function
 #'
-#' @description This Shiny module creates a fileInput with an info icon to the
-#'   right of it. This info icon shows a popover on hover.
+#' @description This Shiny module lets the user upload and process a plate design
+#' file. This module is used within the module mod_add_sample_ids.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
