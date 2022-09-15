@@ -9,16 +9,11 @@
 #' @importFrom shiny NS tagList 
 mod_tab_repeatability_ui <- function(id){
   ns <- NS(id)
+  
   tagList(
     fluidPage(
       fluidRow(
         br(),
-        tags$style(
-          HTML(paste0("#",
-                      ns("assess_repeatability"),
-                      ".btn {float: left; padding: 6px 12px; border-color: #ddd; border: 1px solid;}"
-          ))
-        ),
         shinydashboard::box(
           title = "Select a standard",
           width = 4,
@@ -65,6 +60,13 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
     ns <- session$ns
     
     x <- reactiveValues()
+    
+    observe({
+      req(!is.null(input$by_plate)) # Needed because otherwise this observer
+      # runs before input$by_plate is rendered.
+      shinyjs::toggle(id = "by_plate",
+                      condition = "plate_well" %in% colnames(my_data()))
+    })
     
     # change the renderUI to just updating a selectInput (because now I use only
     # one input regardless of the group being there or not)
