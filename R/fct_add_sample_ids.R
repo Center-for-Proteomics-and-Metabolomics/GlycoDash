@@ -235,8 +235,10 @@ process_plate_design <- function (plate_design) {
     tidyr::pivot_longer(cols = -well,
                         names_to = "plate",
                         values_to = "sample_id") %>%
-    dplyr::mutate(plate = stringr::str_match(plate, "[Pp][Ll](?:ate|ATE)?(\\d+|[A-Z])")[ , 2],
-                  well = stringr::str_extract(well, "[A-H]\\d+"))
+    dplyr::mutate(plate = stringr::str_match(
+      plate, 
+      "[Pp][Ll](?:[Aa][Tt][Ee])?[\\s_\\-\\.]*(\\d+|[A-Z])")[ , 2],
+      well = stringr::str_extract(well, "[A-H]\\d+"))
   
   if (any(is.na(plate_design$plate))) {
     rlang::abort(class = "plate_numbers",
