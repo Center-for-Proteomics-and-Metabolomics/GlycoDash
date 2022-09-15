@@ -13,7 +13,43 @@ mod_tab_cut_offs_ui <- function(id){
     br(),
     plotly::plotlyOutput(ns("plot")),
     br(),
-    DT::dataTableOutput(ns("table"))
+    DT::dataTableOutput(ns("table")),
+    shinyWidgets::materialSwitch(ns("switch_to_manual"),
+                                 "Choose cut-off values manually instead",
+                                 right = TRUE,
+                                 status = "primary"),
+    numericInput(ns("cut_off_sum_intensity"),
+                 "Enter a cut-off value for the sum intensity:",
+                 value = ""),
+    numericInput(ns("cut_off_passing_proportion"),
+                 "Enter a cut-off value for the percentage of passing analytes:",
+                 value = ""),
+    shinydashboardPlus::box(
+      title = "Specific Ig manual cut-offs",
+      id = ns("spike_manual_cut_offs"),
+      solidHeader = TRUE,
+      status = "primary",
+      width = 6,
+      numericInput(ns("cut_off_sum_intensity_specific"),
+                   "Enter a cut-off value for the sum intensity in the specific Ig samples:",
+                   value = ""),
+      numericInput(ns("cut_off_passing_proportion_specific"),
+                   "Enter a cut-off value for the percentage of passing analytes in the specific Ig samples:",
+                   value = "")
+    ),
+    shinydashboardPlus::box(
+      title = "Total Ig manual cut-offs",
+      id = ns("total_manual_cut_offs"),
+      solidHeader = TRUE,
+      status = "primary",
+      width = 6,
+      numericInput(ns("cut_off_sum_intensity_total"),
+                   "Enter a cut-off value for the sum intensity in the total Ig samples:",
+                   value = ""),
+      numericInput(ns("cut_off_passing_proportion_total"),
+                   "Enter a cut-off value for the percentage of passing analytes in the total Ig samples:",
+                   value = "")
+    )
   )
 }
     
@@ -21,12 +57,90 @@ mod_tab_cut_offs_ui <- function(id){
 #'
 #' @noRd 
 mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
-                                    switch_to_manual, Ig_data, 
-                                    cut_offs_to_use,
-                                    cut_offs_based_on_samples,
-                                    manual_cut_offs){
+                                    #switch_to_manual, cut_offs_to_use, manual_cut_offs,
+                                    Ig_data, cut_offs_based_on_samples,
+                                    keyword_specific, keyword_total){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    
+    # Hide the cut_off_basis selectInput when manual_cut_off is chosen:
+    observe({
+      shinyjs::toggle("cut_off_sum_intensity",
+                      condition = all(is_truthy(input$switch_to_manual),
+                                      Ig_data() == "No"))
+      shinyjs::toggle("cut_off_passing_proportion",
+                      condition = all(is_truthy(input$switch_to_manual),
+                                      Ig_data() == "No"))
+      
+      shinyjs::toggle("spike_manual_cut_offs",
+                      condition = all(is_truthy(input$switch_to_manual),
+                                      Ig_data() == "Yes"))
+      
+      shinyjs::toggle("total_manual_cut_offs",
+                      condition = all(is_truthy(input$switch_to_manual),
+                                      Ig_data() == "Yes"))
+    })
+    
+    manual_cut_offs <- reactive({
+      
+      if (Ig_data() == "Yes") {
+        req(input$cut_off_sum_intensity_specific,
+            input$cut_off_sum_intensity_total,
+            input$cut_off_passing_proportion_specific,
+            input$cut_off_passing_proportion_total)
+        
+        specific <- tibble::tibble(
+          cut_off_sum_int = input$cut_off_sum_intensity_specific,
+          cut_off_prop = input$cut_off_passing_proportion_specific,
+          group = keyword_specific(),
+          type = "manual"
+        )
+        
+        total <- tibble::tibble(
+          cut_off_sum_int = input$cut_off_sum_intensity_total,
+          cut_off_prop = input$cut_off_passing_proportion_total,
+          group = keyword_total(),
+          type = "manual"
+        )
+        
+        cut_offs <- dplyr::full_join(specific, total)
+        
+        # Multiply rows of combined to get one row for each cluster
+        # cut_offs <- purrr::map_dfr(clusters(),
+        #                            function(this_cluster) {
+        #                              combined %>% 
+        #                                dplyr::mutate(cluster = this_cluster)
+        #                            })
+        
+      } else {
+        req(input$cut_off_sum_intensity,
+            input$cut_off_passing_proportion)
+        
+        cut_offs <- data.frame(cut_off_sum_int = input$cut_off_sum_intensity,
+                               cut_off_prop = input$cut_off_passing_proportion,
+                               type = "manual",
+                               cluster = selected_cluster)
+        
+        # cut_offs <- purrr::map_dfr(clusters(),
+        #                            function(this_cluster) {
+        #                              cut_offs_wo_cluster %>% 
+        #                                dplyr::mutate(cluster = this_cluster)
+        #                            })
+        
+      }
+      
+      return(cut_offs)
+    })
+    
+    cut_offs_to_use <- reactive({
+      if (all(is_truthy(input$switch_to_manual),
+              is_truthy(manual_cut_offs()))) {
+        manual_cut_offs()
+      } else {
+        req(cut_offs_based_on_samples())
+        cut_offs_based_on_samples()
+      }
+    })
     
     summarized_checks_with_cut_offs <- reactive({
       req(summarized_checks(),
@@ -142,7 +256,8 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     
     return(list(
       plot = my_plot,
-      table = cut_off_table
+      table = cut_off_table,
+      cut_offs_to_use = cut_offs_to_use
     ))
     
   })
