@@ -6,9 +6,26 @@
 \usage{
 process_sample_list(sample_list_file)
 }
+\arguments{
+\item{sample_list_file}{The path to an Excel file containing the sample list.
+The Excel file should contain only one sheet with two columns named 
+"sample_name" and "sample_id". The sample_name column should contain all
+sample names that are present in your LacyTools summary. The sample_id column
+should contain the sample ID corresponding to that sample name. Standards 
+and blanks should be included.}
+}
 \value{
-
+This function returns a dataframe with the contents of the Excel file.
 }
 \description{
-Process a sample list Excel file
+This function reads and processes a sample list Excel file, so that sample 
+ID's can be linked to your data.
+}
+\examples{
+path <- system.file("inst",
+                    "extdata",
+                    "Sample_list_example.xlsx",
+                    package = "glycodash")
+
+process_sample_list(sample_list_file = path)
 }

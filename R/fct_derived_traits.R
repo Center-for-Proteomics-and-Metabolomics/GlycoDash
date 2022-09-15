@@ -64,9 +64,9 @@ calculate_sialylation <- function(.data) {
   
   formula <- paste0("((",
                    paste(monosialylated_analytes, collapse = " + "),
-                   ") * 1/2 + ",
+                   ") * 1/2 + (",
                    paste(disialylated_analytes, collapse = " + "),
-                   ") / (", 
+                   ")) / (", 
                    paste(unique(.data$analyte), collapse = " + "),
                    ")")
   
@@ -108,9 +108,9 @@ calculate_galactosylation <- function(.data) {
   
   formula <- paste0("((",
                     paste(monogalactosylated_analytes, collapse = " + "),
-                    ") * 1/2 + ",
+                    ") * 1/2 + (",
                     paste(digalactosylated_analytes, collapse = " + "),
-                    ") / (", 
+                    ")) / (", 
                     paste(unique(.data$analyte), collapse = " + "),
                     ")")
   

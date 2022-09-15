@@ -48,12 +48,6 @@ sample.
 
  At the bottom of the plate, leave one row blank and then add the next plate
  in the same format.
-
- Duplicate samples should be indicated in the plate design Excel file as
- "duplicate". \code{read_and_process_plate_design} assumes that duplicate 
- samples are always the duplicate of the preceding sample, that is the 
- sample one well to the left or, in case the duplicate is positioned in the 
- left-most column of the plate, the sample in the right-most well one row up.
 }
 
 \examples{
