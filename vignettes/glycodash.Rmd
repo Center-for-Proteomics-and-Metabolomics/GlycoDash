@@ -38,9 +38,26 @@ raw_data <- read_non_rectangular(lacytools_file)
 data <- convert_lacytools_summary(raw_data) %>% 
   detect_group(.,
                keyword_specific = "Spike",
-               keyword_total = "Total")
+               keyword_total = "Total") %>% 
+  # This might be a faster way of adding clusters since now a factor is used
+  dplyr::mutate(analyte = factor(analyte, 
+                                 levels = unique(data$analyte)))
 
 data
+
+cluster_keywords <- c("IgGI1")
+
+# The str_extract is now only done on each unique analyte instead of on every single one
+clusters <- tibble::tibble(analyte = unique(data$analyte)) %>% 
+  dplyr::mutate(cluster = stringr::str_extract(analyte,
+                     paste0("(",
+                            paste0(cluster_keywords, 
+                                   collapse = "|"),
+                            ")")))
+
+data <- dplyr::left_join(data, clusters) %>% 
+  dplyr::relocate(cluster, .after = analyte)
+
 
 ```
 

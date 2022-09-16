@@ -168,11 +168,6 @@ mod_clusters_server <- function(id, summary){
         showNotification("Clusters have to be readded to the data.",
                          type = "warning")
       }
-    }) 
-    
-    observe({
-      print("r$with_clusters:")
-      print(r$with_clusters)
     })
     
     observe({
