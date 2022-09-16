@@ -96,7 +96,16 @@ mod_analyte_curation_ui <- function(id){
                   )),
                   placement = "right",
                   trigger = "hover",
-                  html = "true")
+                  html = "true"),
+              shinyWidgets::materialSwitch(
+                ns("per_bio_group"),
+                "Perform analyte curation separately per biological group.",
+                status = "primary",
+                right = TRUE
+              ),
+              # selectInput to choose the variable to use for biological groups
+              # needs to be updated to contain all colnames in the data
+              # popup to accept the groups?
             ),
             actionButton(ns("curate_analytes"), 
                          "Perform analyte curation")
