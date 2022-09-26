@@ -112,11 +112,12 @@ mod_derived_traits_server <- function(id, results_normalization){
       req(derived_traits())
       derived_traits() %>% 
         dplyr::ungroup() %>% 
-        dplyr::select(tidyselect::ends_with("formula")) %>% 
+        dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
         dplyr::distinct() %>% 
-        tidyr::pivot_longer(cols = tidyselect::everything(),
+        tidyr::pivot_longer(cols = -cluster,
                             names_to = "Derived trait",
                             values_to = "Formula") %>% 
+        dplyr::rename_with(firstupper, cluster) %>% 
         dplyr::mutate(`Derived trait` = dplyr::recode(`Derived trait`,
                                                       fuc_formula = "Fucosylation",
                                                       gal_formula = "Galactosylation",

@@ -23,17 +23,31 @@ calculate_fucosylation <- function(.data) {
   fucosylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                               pattern = "F\\d")
   
-  formula <- paste0("(",
-                    paste(fucosylated_analytes, collapse = " + "), 
-                    ") / (", 
-                    paste(unique(.data$analyte), collapse = " + "),
-                    ")")
+  formulas_per_cluster <- rlang::set_names(unique(.data$cluster)) %>% 
+    purrr::map(
+      .,
+      function(cluster) {
+        stringr::str_subset(string = fucosylated_analytes,
+                            pattern = cluster)
+      }) %>% 
+    purrr::imap_dfc(
+      .,
+      function(analytes, name) {
+        paste0("(",
+               paste(analytes, collapse = " + "), 
+               ") / (", 
+               paste(unique(.data[.data$cluster == name, ]$analyte), collapse = " + "),
+               ")") 
+      }) %>% 
+    tidyr::pivot_longer(cols = tidyselect::everything(),
+                        names_to = "cluster",
+                        values_to = "fuc_formula")
   
   .data %>% 
     dplyr::summarise(
       Fucosylation = sum(relative_abundance[analyte %in% fucosylated_analytes]) / sum_all_analytes) %>% 
     dplyr::distinct() %>% 
-    dplyr::mutate(fuc_formula = formula)
+    dplyr::full_join(., formulas_per_cluster)
   
 }
 
@@ -62,13 +76,31 @@ calculate_sialylation <- function(.data) {
   disialylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                                pattern = "S2")
   
-  formula <- paste0("((",
-                   paste(monosialylated_analytes, collapse = " + "),
-                   ") * 1/2 + (",
-                   paste(disialylated_analytes, collapse = " + "),
-                   ")) / (", 
-                   paste(unique(.data$analyte), collapse = " + "),
-                   ")")
+  formulas_per_cluster <- rlang::set_names(unique(.data$cluster)) %>% 
+    purrr::map(
+      .,
+      function(cluster) {
+        list(
+          mono = stringr::str_subset(string = monosialylated_analytes,
+                                     pattern = cluster),
+          di = stringr::str_subset(string = disialylated_analytes,
+                                   pattern = cluster)
+        )
+      }) %>% 
+    purrr::imap_dfc(
+      .,
+      function(analytes, name) {
+        paste0("((",
+               paste(analytes$mono, collapse = " + "),
+               ") * 1/2 + (",
+               paste(analytes$di, collapse = " + "),
+               ")) / (", 
+               paste(unique(.data[.data$cluster == name, ]$analyte), collapse = " + "),
+               ")")
+      }) %>% 
+    tidyr::pivot_longer(cols = tidyselect::everything(),
+                        names_to = "cluster",
+                        values_to = "sial_formula")
   
   .data %>% 
     dplyr::summarise(monosialylation = sum(relative_abundance[analyte %in% monosialylated_analytes]),
@@ -76,7 +108,7 @@ calculate_sialylation <- function(.data) {
                      Sialylation = (monosialylation * 1/2 + disialylation) / sum_all_analytes) %>% 
     dplyr::select(-c(monosialylation, disialylation)) %>% 
     dplyr::distinct() %>% 
-    dplyr::mutate(sial_formula = formula)
+    dplyr::full_join(., formulas_per_cluster)
   
 }
 
@@ -106,13 +138,31 @@ calculate_galactosylation <- function(.data) {
   digalactosylated_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                                    pattern = "H5")
   
-  formula <- paste0("((",
-                    paste(monogalactosylated_analytes, collapse = " + "),
-                    ") * 1/2 + (",
-                    paste(digalactosylated_analytes, collapse = " + "),
-                    ")) / (", 
-                    paste(unique(.data$analyte), collapse = " + "),
-                    ")")
+  formulas_per_cluster <- rlang::set_names(unique(.data$cluster)) %>% 
+    purrr::map(
+      .,
+      function(cluster) {
+        list(
+          mono = stringr::str_subset(string = monogalactosylated_analytes,
+                                     pattern = cluster),
+          di = stringr::str_subset(string = digalactosylated_analytes,
+                                   pattern = cluster)
+        )
+      }) %>% 
+    purrr::imap_dfc(
+      .,
+      function(analytes, name) {
+        paste0("((",
+               paste(analytes$mono, collapse = " + "),
+               ") * 1/2 + (",
+               paste(analytes$di, collapse = " + "),
+               ")) / (", 
+               paste(unique(.data[.data$cluster == name, ]$analyte), collapse = " + "),
+               ")")
+      }) %>% 
+    tidyr::pivot_longer(cols = tidyselect::everything(),
+                        names_to = "cluster",
+                        values_to = "gal_formula")
   
   .data %>% 
     dplyr::summarise(monogalactosylation = sum(relative_abundance[analyte %in% monogalactosylated_analytes]),
@@ -120,7 +170,7 @@ calculate_galactosylation <- function(.data) {
                      Galactosylation = (monogalactosylation * 1/2 + digalactosylation) / sum_all_analytes) %>% 
     dplyr::select(-c(monogalactosylation, digalactosylation)) %>% 
     dplyr::distinct() %>% 
-    dplyr::mutate(gal_formula = formula)
+    dplyr::full_join(., formulas_per_cluster)
 }
 
 #' Calculate bisection
@@ -147,15 +197,30 @@ calculate_bisection <- function(.data) {
   bisected_analytes <- stringr::str_subset(string = unique(.data$analyte),
                                            pattern = "N5")
   
-  formula <- paste0("(",
-                    paste(bisected_analytes, collapse = " + "), 
-                    ") / (", 
-                    paste(unique(.data$analyte), collapse = " + "),
-                    ")")
+  formulas_per_cluster <- rlang::set_names(unique(.data$cluster)) %>% 
+    purrr::map(
+      .,
+      function(cluster) {
+        stringr::str_subset(string = bisected_analytes,
+                            pattern = cluster)
+      }) %>% 
+    purrr::imap_dfc(
+      .,
+      function(analytes, name) {
+        paste0("(",
+               paste(analytes, collapse = " + "), 
+               ") / (", 
+               paste(unique(.data[.data$cluster == name, ]$analyte), collapse = " + "),
+               ")") 
+      }) %>% 
+    tidyr::pivot_longer(cols = tidyselect::everything(),
+                        names_to = "cluster",
+                        values_to = "bis_formula")
+  
   .data %>% 
     dplyr::summarise(Bisection = sum(relative_abundance[analyte %in% bisected_analytes]) / sum_all_analytes) %>% 
     dplyr::distinct() %>% 
-    dplyr::mutate(bis_formula = formula)
+    dplyr::full_join(., formulas_per_cluster)
   
 }
 
