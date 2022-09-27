@@ -96,6 +96,15 @@ mod_read_lacytools_server <- function(id){
                       condition = input$Ig_data == "Yes")
     })
     
+    observe({
+      updateTextInput("keyword_specific",
+                      value = "",
+                      session = session)
+      updateTextInput("keyword_total",
+                      value = "",
+                      session = session)
+    }) %>% bindEvent(input$Ig_data == "No")
+    
     raw_lacytools_summary <- reactive({
       req(input$lacytools_summary$datapath)
       read_non_rectangular(input$lacytools_summary$datapath)
