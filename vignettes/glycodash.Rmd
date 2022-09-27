@@ -40,8 +40,7 @@ data <- convert_lacytools_summary(raw_data) %>%
                keyword_specific = "Spike",
                keyword_total = "Total") %>% 
   # This might be a faster way of adding clusters since now a factor is used
-  dplyr::mutate(analyte = factor(analyte, 
-                                 levels = unique(data$analyte)))
+  dplyr::mutate(analyte = factor(analyte))
 
 data
 
@@ -69,20 +68,32 @@ plate_design_file <- system.file("extdata",
                                  "Plate_design_example.xlsx",
                                  package = "glycodash")
 
+sample_list_file <- system.file("extdata",
+                                 "Sample_list_example.xlsx",
+                                 package = "glycodash")
 
+sample_list <- process_sample_list(sample_list_file)
 
-plate_design <- read_and_process_plate_design(plate_design_file)
-
-data_with_platewell <- detect_plate_and_well(data)
-
-data_complete <- dplyr::left_join(data_with_platewell,
-                                  plate_design) %>% 
+data_complete <- dplyr::left_join(data,
+                                    sample_list) %>% 
   tidyr::extract(col = sample_id,
                  into = c("sample_type"),
                  regex = "([[:alpha:]]+)",
-                 remove = FALSE) %>% 
-  define_clusters(.,
-                  cluster_keywords = "IgGI1")
+                 remove = FALSE)
+
+# No longer works with stricter sample name format (sample list should be used instead):
+#plate_design <- read_and_process_plate_design(plate_design_file)
+
+#data_with_platewell <- detect_plate_and_well(data)
+
+# data_complete <- dplyr::left_join(data_with_platewell,
+#                                   plate_design) %>% 
+#   tidyr::extract(col = sample_id,
+#                  into = c("sample_type"),
+#                  regex = "([[:alpha:]]+)",
+#                  remove = FALSE) %>% 
+#   define_clusters(.,
+#                   cluster_keywords = "IgGI1")
 
 replicates <- data_complete %>% 
         dplyr::select(tidyselect::any_of(c("sample_name", "sample_id", "group"))) %>% 
@@ -116,16 +127,9 @@ metadata <- read_metadata(metadata_file,
 
 metadata
 
-data <- dplyr::left_join(data,
-                         metadata,
+data <- dplyr::left_join(data_complete,
+                         metadata$Metadata_example.xlsx,
                          by = c(sample_id = "sample_id"))
-
-x <- data %>% 
-  dplyr::group_by(sample_name) %>% 
-  dplyr::filter(!all(is.na(absolute_intensity_background_subtracted))) %>% 
-  dplyr::filter(sample_id == "PBS")
-
-unique(x$sample_name)
 
 ```
 
@@ -217,7 +221,8 @@ plotly::ggplotly(p, tooltip = "text")
 ```{r analyte-curation}
 
 curated_analytes <- curate_analytes(data = passing_spectra,
-                                    cut_off_percentage = 25)
+                                    cut_off_percentage = 25,
+                                    bio_group = "sample_type")
 
 analyte_curated_data <- dplyr::left_join(curated_analytes, 
                                          passing_spectra)

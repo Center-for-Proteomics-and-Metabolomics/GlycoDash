@@ -361,8 +361,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
       results_data_import$summary()
     })
     
-    
-    
     observe({
       shinyjs::toggle("cut_off_basis_Ig_data",
                       condition = results_data_import$Ig_data() == "Yes")

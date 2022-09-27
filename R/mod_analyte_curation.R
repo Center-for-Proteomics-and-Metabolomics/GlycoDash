@@ -96,13 +96,16 @@ mod_analyte_curation_ui <- function(id){
                   )),
                   placement = "right",
                   trigger = "hover",
-                  html = "true"),
-              shinyWidgets::materialSwitch(
-                ns("per_bio_group"),
-                "Perform analyte curation separately per biological group.",
-                status = "primary",
-                right = TRUE
-              ),
+                  html = "true")#,
+              # shinyWidgets::materialSwitch(
+              #   ns("per_bio_group"),
+              #   "Perform analyte curation separately per biological group.",
+              #   status = "primary",
+              #   right = TRUE
+              # ),
+              # selectInput(ns("bio_group"),
+              #             label = "Choose which variable corresponds to the biological group:",
+              #             choices = "")
               # selectInput to choose the variable to use for biological groups
               # needs to be updated to contain all colnames in the data
               # popup to accept the groups?
@@ -159,11 +162,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     })
     
     observe({
-      req(summary())
-      print(summary())
-    })
-    
-    observe({
       shinyjs::toggle("analyte_list", 
                       condition = input$method == "Supply an analyte list")
       shinyjs::toggle("curation_based_on_data", 
@@ -172,10 +170,23 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                            condition = 
                              (input$method == "Supply an analyte list" & 
                              !is.null(input$analyte_list)) | 
-                             (input$method == "Curate analytes based on data") #&
-                             #!is.null(input$ignore_samples)
-                           )
+                             (input$method == "Curate analytes based on data"))
     })
+    
+    # observe({
+    #   req(summary())
+    #   
+    #   updateSelectInput(
+    #     session = session,
+    #     inputId = "bio_group",
+    #     choices = colnames(summary())
+    #   )
+    # })
+    # 
+    # observe({
+    #   shinyjs::toggle("bio_group",
+    #                   condition = input$per_bio_group)
+    # })
     
     clusters <- reactive({
       unique(summary()$cluster)
@@ -187,6 +198,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       analyte_curated_data = reactive(x$analyte_curated_data),
       method = reactive(input$method)
     )
+    
+    # bio_groups <- reactive({
+    #   req(summary(),
+    #       input$bio_group)
+    #   
+    #   unique(summary()[[input$bio_group]])
+    # })
     
     observeEvent(clusters(), {
       
@@ -215,6 +233,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       req(clusters())
       purrr::map(info,
                  ~ req(.x))
+      
       x$mod_results <- purrr::set_names(clusters()) %>% 
         purrr::map(
           .,
@@ -312,12 +331,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       
     })
     
-    observe({
-      req(x$analyte_curated_data)
-      print("x$analyte_curated_data looks like this:")
-      print(x$analyte_curated_data)
-    })
-    
     observeEvent(input$curate_analytes, {
       # Reset x$curated_analytes and x$analyte_curated data so that the plot is
       # no longer shown if curation based on data had already been performed
@@ -333,10 +346,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
         x$curated_analytes <- curate_analytes(
           data = data_to_use,
           cut_off_percentage = input$cut_off)
-        # 
-        # passing_analytes <- x$curated_analytes %>% 
-        #   dplyr::filter(passed_curation == TRUE) %>% 
-        #   dplyr::select(-passed_curation)
         
         x$analyte_curated_data <- dplyr::left_join(x$curated_analytes, 
                                                    summary())
@@ -352,8 +361,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
           x$analyte_curated_data <- curate_analytes_with_list(
             data = summary(),
             analyte_list = x$analyte_list)
-          
-          print(unique(x$analyte_curated_data$analyte))
           
           showNotification("Analyte curation has been performed based on the analyte list.", 
                            type = "message")
@@ -393,12 +400,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                   }) %>% 
         purrr::reduce(dplyr::full_join)
       
-    })
-    
-    observe({
-      req(with_analytes_to_include()) 
-      print("with_analytes_to_include() looks like this:")
-      print(with_analytes_to_include())
     })
     
     # Make downloading analyte_curated_data possible:

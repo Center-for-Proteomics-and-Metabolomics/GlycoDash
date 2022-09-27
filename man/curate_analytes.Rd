@@ -4,7 +4,7 @@
 \alias{curate_analytes}
 \title{Perform analyte curation}
 \usage{
-curate_analytes(data, cut_off_percentage)
+curate_analytes(data, cut_off_percentage, bio_group = NULL)
 }
 \arguments{
 \item{data}{The result of the \code{\link{curate_spectra}} function, but

@@ -54,7 +54,7 @@
 #'                                            "PBS"),
 #'                 cut_off_percentage = 25)
 #'                 
-curate_analytes <- function(data, cut_off_percentage) {
+curate_analytes <- function(data, cut_off_percentage, bio_group = NULL) {
   
   # if (!is.null(group_to_ignore)) { 
   #   if (!(group_to_ignore %in% data$group)) {
@@ -97,8 +97,15 @@ curate_analytes <- function(data, cut_off_percentage) {
                                  "Attention: curate_analytes() can only be used after spectra curation has been performed with curate_spectra()"))
   }
   
-  curated_analytes <- data %>% 
-    dplyr::group_by(cluster, charge, analyte) %>% 
+  if (!is.null(bio_group)) {
+    grouped_data <- data %>% 
+      dplyr::group_by(cluster, .data[[bio_group]], charge, analyte)
+  } else {
+    grouped_data <- data %>% 
+      dplyr::group_by(cluster, charge, analyte) 
+  }
+  
+  curated_analytes <- grouped_data %>% 
     dplyr::summarise(passing_percentage = sum(criteria_check) / dplyr::n() * 100) %>% 
     dplyr::mutate(passed_curation = dplyr::if_else(passing_percentage > cut_off_percentage, 
                                                    TRUE,
