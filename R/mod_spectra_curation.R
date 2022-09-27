@@ -699,6 +699,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       mass_acc = reactive({ input$mass_accuracy }),
       ipq = reactive({ input$ipq }),
       sn = reactive({ input$sn }),
+      included_qc = reactive({ input$qc_to_include }),
       cut_off = reactive({input$cut_off_basis}),
       tab_contents = reactive({ r$tab_contents }),
       plot = curated_spectra_plot

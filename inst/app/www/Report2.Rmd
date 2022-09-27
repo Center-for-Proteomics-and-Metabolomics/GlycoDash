@@ -14,6 +14,7 @@ params:
   mass_acc: NA
   ipq: NA
   sn: NA
+  included_qc: NA
   spectra_curation_tab_contents: NA
   curated_spectra_plot: NA
   analyte_curation_method: NA
@@ -64,6 +65,9 @@ if (params$sample_types_method != "Automatically determine sample types based on
   - Acceptable mass accuracy range: `r min(params$mass_acc)` - `r max(params$mass_acc)`
   - Max. IPQ value: `r params$ipq`
   - Min. S/N ratio: `r params$sn`
+  
+The following analyte quality criteria were taken into account in the calculation 
+of the cut-off for the percentage of passing analytes: `r params$included_qc`
 
 ### Spectra curation cut-offs
 
