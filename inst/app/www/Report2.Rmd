@@ -43,7 +43,7 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 
 - LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
 - Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
-- Sample list file: `r paste0("\"", params$sample_list, "\"")`
+- Sample list file: `r ifelse(is.null(params$metadata), "none", paste0("\"", params$sample_list, "\""))`
 - Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
 
 Sample types were added `r ifelse(params$sample_types_method == "Automatically determine sample types based on sample ID's", "automatically", "manually")`.
@@ -262,7 +262,9 @@ purrr::walk(params$repeatability,
 
 ```{r data-exploration, results='asis', message=FALSE}
 
-purrr::iwalk(params$data_exploration, 
+reordered_data_exploration <- params$data_exploration[order(names(params$data_exploration))]
+
+purrr::iwalk(reordered_data_exploration, 
              function(objects_list,
                       name) {
                if (!is.null(objects_list$plot)) {
