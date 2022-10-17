@@ -71,11 +71,7 @@ mod_spectra_curation_ui <- function(id){
                                 div(id = ns("div_central_tendency_measure"),
                                     selectInput(ns("central_tendency_measure"),
                                                 "Choose whether the cut-off values should be calculated with the mean or with the median:",
-                                                choices = c("Mean", "Median"))#,
-                                    # selectInput(ns("variation_measure"),
-                                    #             "Do you want to use percentiles instead of the standard deviation?",
-                                    #             choices= c("Yes, use percentiles",
-                                    #                        "No, use standard deviations"))
+                                                choices = c("Mean", "Median"))
                                     ),
                                 numericInput(ns("sd_factor"),
                                              "Choose what factor the standard deviation should be multiplied with:",
