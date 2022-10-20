@@ -194,27 +194,24 @@ sd_p <- function(x, na.rm = FALSE) {
 #' calculate_cut_offs(spectra_check = spectra_check,
 #'                    cut_off_basis = c("Spike PBS", "Total PBS"))
 #'                    
-calculate_cut_offs <- function(spectra_check, cut_off_basis, sd_factor, central_tendency_measure) {
+calculate_cut_offs_with_mean_SD <- function(spectra_check, 
+                                            negative_controls, 
+                                            percentile,
+                                            SD_factor) {
   
-  cut_off_basis_samples <- filter_cut_off_basis(cut_off_basis = cut_off_basis,
+  negative_control_samples <- filter_cut_off_basis(cut_off_basis = negative_controls,
                                                 data = spectra_check)
   
-  cut_offs <- cut_off_basis_samples %>%  
+  cut_offs <- negative_control_samples %>%  
     dplyr::group_by(cluster) %>% 
-    dplyr::summarise(av_prop = mean(passing_proportion, na.rm = FALSE),
-                     med_prop = median(passing_proportion, na.rm = FALSE),
-                     sd_prop = sd_p(passing_proportion, na.rm = FALSE),
-                     cut_off_prop = dplyr::if_else(central_tendency_measure == "Mean", 
-                                           av_prop + (sd_factor * sd_prop),
-                                           med_prop + (sd_factor * sd_prop)),
+    dplyr::summarise(cut_off_prop = quantile(passing_proportion, 
+                                             probs = percentile / 100,
+                                             names = FALSE),
                      av_sum_int = mean(sum_intensity, na.rm = FALSE),
-                     med_sum_int = median(sum_intensity, na.rm = FALSE),
                      sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
-                     cut_off_sum_int = dplyr::if_else(central_tendency_measure == "Mean", 
-                                                      av_sum_int + (sd_factor * sd_sum_int),
-                                                      med_sum_int + (sd_factor * sd_sum_int)),
+                     cut_off_sum_int = av_sum_int + (SD_factor * sd_sum_int),
                      across(tidyselect::any_of(c("group", "sample_type")))) %>% 
-    dplyr::mutate(type = "based_on_samples") %>% 
+    dplyr::mutate(type = "based_on_negative_controls") %>% 
     dplyr::distinct() %>% 
     dplyr::select(tidyselect::any_of(c("cluster",
                                      "sample_type",
@@ -224,6 +221,35 @@ calculate_cut_offs <- function(spectra_check, cut_off_basis, sd_factor, central_
                                      "type"))) %>% 
     tidyr::nest(., "sample_type_list" = sample_type)
   
+  return(cut_offs)
+}
+
+calculate_cut_offs_with_percentile <- function(spectra_check,
+                                               negative_controls,
+                                               percentile) {
+  
+  negative_control_samples <- filter_cut_off_basis(cut_off_basis = negative_controls,
+                                            data = spectra_check)
+  
+  cut_offs <- negative_control_samples %>%  
+    dplyr::group_by(cluster) %>% 
+    dplyr::summarise(cut_off_sum_int = quantile(sum_intensity, 
+                                                probs = percentile / 100,
+                                                names = FALSE),
+                     cut_off_prop = quantile(passing_proportion, 
+                                             probs = percentile / 100,
+                                             names = FALSE),
+                     across(tidyselect::any_of(c("group", "sample_type")))) %>% 
+    dplyr::mutate(type = "based_on_negative_controls") %>% 
+    dplyr::distinct() %>% 
+    dplyr::select(tidyselect::any_of(c("cluster",
+                                       "sample_type",
+                                       "group",
+                                       "cut_off_prop",
+                                       "cut_off_sum_int",
+                                       "type"))) %>% 
+    tidyr::nest(., "sample_type_list" = sample_type)
+    
   return(cut_offs)
 }
 
