@@ -36,12 +36,6 @@ mod_curate_based_on_controls_ui <- function(id){
         trigger = "hover",
         placement = "right",
         html = "true"),
-    numericInput(ns("percentile"),
-                 "At what percentile should the cut-off be set?",
-                 value = 95,
-                 min = 0,
-                 max = 100,
-                 step = 1),
     div(id = ns("cut_off_basis_Ig_data"),
         shinydashboardPlus::box(
           title = "Specific Ig samples",
@@ -108,6 +102,12 @@ mod_curate_based_on_controls_ui <- function(id){
               html = "true")
         )
     ),
+    numericInput(ns("percentile"),
+                 "At what percentile should the cut-off be set?",
+                 value = 95,
+                 min = 0,
+                 max = 100,
+                 step = 1),
     shinyWidgets::awesomeCheckbox(ns("show_advanced_settings"),
                                  "Show advanced settings.",
                                  status = "primary"),
@@ -272,13 +272,21 @@ mod_curate_based_on_controls_server <- function(id,
         )
       }
       
-      
-      
     })
     
-    return(list(
-      cut_offs = cut_offs
-    ))
+    cut_offs_to_return <- reactive({
+      if(input$use_mean_SD) {
+        req(cut_offs_mean_SD())
+        cut_offs_mean_SD()
+      } else {
+        req(cut_offs_percentile())
+        cut_offs_percentile()
+      }
+    })
+    
+    return(
+      cut_offs_to_return
+    )
  
   })
 }

@@ -58,7 +58,7 @@ mod_tab_cut_offs_ui <- function(id){
 #' @noRd 
 mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
                                     #switch_to_manual, cut_offs_to_use, manual_cut_offs,
-                                    Ig_data, cut_offs_based_on_samples,
+                                    Ig_data, calculated_cut_offs,
                                     keyword_specific, keyword_total){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
@@ -133,12 +133,10 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     })
     
     cut_offs_to_use <- reactive({
-      if (all(is_truthy(input$switch_to_manual),
-              is_truthy(manual_cut_offs()))) {
-        manual_cut_offs()
+      if (is_truthy(input$switch_to_manual)) {
+        req(manual_cut_offs())
       } else {
-        req(cut_offs_based_on_samples())
-        cut_offs_based_on_samples()
+        req(calculated_cut_offs())
       }
     })
     
@@ -191,13 +189,12 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     })
     
     cut_off_table <- reactive({
-      req(any(is_truthy(cut_offs_based_on_samples()),
+      req(any(is_truthy(calculated_cut_offs()),
               is_truthy(manual_cut_offs())))
       
       cut_off_table <- tryCatch(
         expr = {
-          
-          dplyr::full_join(cut_offs_based_on_samples(),
+          dplyr::full_join(calculated_cut_offs(),
                            manual_cut_offs()) %>% 
             dplyr::mutate(`Based on samples` = purrr::map_chr(
               sample_type_list,
@@ -212,9 +209,9 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
           
         },
         error = function(e) {
-          if (is_truthy(cut_offs_based_on_samples())) {
+          if (is_truthy(calculated_cut_offs())) {
             
-            cut_offs_based_on_samples() %>% 
+            calculated_cut_offs() %>% 
               dplyr::mutate(`Based on sample types` = purrr::map_chr(
                 sample_type_list,
                 ~ paste("Yes,",

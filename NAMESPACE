@@ -2,7 +2,7 @@
 
 export("%>%")
 export(calculate_bisection)
-export(calculate_cut_offs)
+export(calculate_cut_offs_with_mean_SD)
 export(calculate_derived_traits)
 export(calculate_fucosylation)
 export(calculate_galactosylation)

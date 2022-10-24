@@ -128,7 +128,7 @@ summarize_spectra_checks <- function(data_checked) {
   
   grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
   
-  spectra_check <- data_checked %>% 
+  summarized_checks <- data_checked %>% 
     # I'm using across() and any_of() because if the data is not Ig data, the
     # column "group" doesn't exist:
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
@@ -136,7 +136,7 @@ summarize_spectra_checks <- function(data_checked) {
                      sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE])) %>% 
     dplyr::ungroup(.)
   
-  return(spectra_check)
+  return(summarized_checks)
 }
 
 #' Calculate the population standard deviation.
@@ -194,13 +194,13 @@ sd_p <- function(x, na.rm = FALSE) {
 #' calculate_cut_offs(spectra_check = spectra_check,
 #'                    cut_off_basis = c("Spike PBS", "Total PBS"))
 #'                    
-calculate_cut_offs_with_mean_SD <- function(spectra_check, 
+calculate_cut_offs_with_mean_SD <- function(summarized_checks, 
                                             negative_controls, 
                                             percentile,
                                             SD_factor) {
   
   negative_control_samples <- filter_cut_off_basis(cut_off_basis = negative_controls,
-                                                data = spectra_check)
+                                                data = summarized_checks)
   
   cut_offs <- negative_control_samples %>%  
     dplyr::group_by(cluster) %>% 
@@ -224,22 +224,31 @@ calculate_cut_offs_with_mean_SD <- function(spectra_check,
   return(cut_offs)
 }
 
-calculate_cut_offs_with_percentile <- function(spectra_check,
-                                               negative_controls,
+calculate_cut_offs_with_percentile <- function(summarized_checks,
+                                               negative_control_sample_types = NULL,
                                                percentile) {
   
-  negative_control_samples <- filter_cut_off_basis(cut_off_basis = negative_controls,
-                                            data = spectra_check)
+  if (!is.null(negative_control_sample_types)) {
+    negative_controls <- filter_cut_off_basis(
+      cut_off_basis = negative_control_sample_types,
+      data = summarized_checks
+    )
+    cut_off_basis <- negative_controls
+  } else {
+    cut_off_basis <- summarized_checks
+  }
   
-  cut_offs <- negative_control_samples %>%  
-    dplyr::group_by(cluster) %>% 
+  grouping_variables <- c("group", "cluster")
+  
+  cut_offs <- cut_off_basis %>%  
+    dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
     dplyr::summarise(cut_off_sum_int = quantile(sum_intensity, 
                                                 probs = percentile / 100,
                                                 names = FALSE),
                      cut_off_prop = quantile(passing_proportion, 
                                              probs = percentile / 100,
                                              names = FALSE),
-                     across(tidyselect::any_of(c("group", "sample_type")))) %>% 
+                     dplyr::across(sample_type)) %>% 
     dplyr::mutate(type = "based_on_negative_controls") %>% 
     dplyr::distinct() %>% 
     dplyr::select(tidyselect::any_of(c("cluster",

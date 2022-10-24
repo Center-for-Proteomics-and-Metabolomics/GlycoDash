@@ -10,7 +10,14 @@
 mod_curate_based_on_percentiles_ui <- function(id){
   ns <- NS(id)
   tagList(
- 
+    numericInput(
+      ns("percentile"),
+      "Choose the percentile at which to set the cut-off values:",
+      value = 5,
+      min = 0,
+      max = 100,
+      step = 1
+    )
   )
 }
     
@@ -22,7 +29,18 @@ mod_curate_based_on_percentiles_server <- function(id,
                                                    summarized_checks){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
- 
+    
+    cut_offs <- reactive({
+      req(summarized_checks(),
+          input$percentile)
+      
+      calculate_cut_offs_with_percentile(
+        summarized_checks = summarized_checks(),
+        percentile = input$percentile
+      )
+    })
+    
+    return(cut_offs)
   })
 }
     

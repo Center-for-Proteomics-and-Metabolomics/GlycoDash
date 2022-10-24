@@ -99,8 +99,16 @@ mod_spectra_curation_ui <- function(id){
                                                        "Percentiles",
                                                        "Skip spectra curation"),
                                            selected = "Negative control spectra"),
-                mod_curate_based_on_controls_ui(ns("curate_based_on_controls_ui_1")),
-                mod_curate_based_on_percentiles_ui(ns("curate_based_on_percentiles_ui_1"))
+                # shinyjs::toggle can't be used to directly show/hide a module, 
+                # so I put the modules inside divs:
+                div(
+                  id = ns("controls_module"), 
+                  mod_curate_based_on_controls_ui(ns("curate_based_on_controls_ui_1"))
+                ),
+                div(
+                  id = ns("percentiles_module"),
+                  mod_curate_based_on_percentiles_ui(ns("curate_based_on_percentiles_ui_1"))
+                ),
               ),
               column(
                 width = 12,
@@ -286,24 +294,34 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     observe({
-      shinyjs::toggle("curate_based_on_controls_ui_1",
+      shinyjs::toggle("controls_module",
                       condition = input$curation_method == "Negative control spectra")
       
-      shinyjs::toggle("curate_based_on_percentiles_ui_1",
+      shinyjs::toggle("percentiles_module",
                       condition = input$curation_method == "Percentiles")
     })
     
-    based_on_controls <- mod_curate_based_on_controls_server(
+    cut_offs_based_on_controls <- mod_curate_based_on_controls_server(
       "curate_based_on_controls_ui_1",
       results_data_import = results_data_import,
       summarized_checks = summarized_checks
     )
     
-    based_on_percentiles <- mod_curate_based_on_percentiles_server(
+    cut_offs_based_on_percentiles <- mod_curate_based_on_percentiles_server(
       "curate_based_on_percentiles_ui_1",
       is_Ig_data = results_data_import$Ig_data,
       summarized_checks = summarized_checks
     )
+    
+    calculated_cut_offs <- reactive({
+      if (input$curation_method == "Negative control spectra") {
+        req(cut_offs_based_on_controls()) 
+      } else if (input$curation_method == "Percentiles") {
+        req(cut_offs_based_on_percentiles()) 
+      } else if (input$curation_method == "Skip spectra curation") {
+        NULL
+      }
+    })
     
     clusters <- reactive({
       req(summary())
@@ -332,55 +350,52 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     observe({
-      req(clusters())
-      req(is_truthy(summarized_checks()))
+      req(clusters(),
+          summarized_checks())
       
       r$tab_contents <- rlang::set_names(clusters()) %>% 
         purrr::map(
           .,
           function(current_cluster) {
             mod_tab_cut_offs_server(
-                id = current_cluster,
-                selected_cluster = current_cluster,
-                summarized_checks = reactive({
-                  summarized_checks() %>%
-                    dplyr::filter(cluster == current_cluster
-                    )}),
-                Ig_data = results_data_import$Ig_data,
-                keyword_specific = results_data_import$keyword_specific,
-                keyword_total = results_data_import$keyword_total,
-                cut_offs_based_on_samples = reactive({
-                  cut_offs_based_on_samples() %>% 
-                    dplyr::filter(cluster == current_cluster)
-                })
-              )
+              id = current_cluster,
+              selected_cluster = current_cluster,
+              summarized_checks = reactive({
+                summarized_checks() %>%
+                  dplyr::filter(cluster == current_cluster)
+              }),
+              Ig_data = results_data_import$Ig_data,
+              keyword_specific = results_data_import$keyword_specific,
+              keyword_total = results_data_import$keyword_total,
+              calculated_cut_offs = reactive({
+                calculated_cut_offs() %>% 
+                  dplyr::filter(cluster == current_cluster)
+              })
+            )
           })
     })
     
-    
-    
-    cut_offs_to_use_combined <- reactive({
+    cut_offs_to_use_all_clusters <- reactive({
       purrr::map_dfr(r$tab_contents,
                      function(tab) {
-                       tab[["cut_offs_to_use"]] %>% 
-                         do.call(.,
-                                 args = list())
+                        try_call(tab[["cut_offs_to_use"]])
                      })
+    })
+    
+    observe({
+      shinyjs::toggleState(
+        id = "button",
+        condition = all(is_truthy(checked_data()),
+                        is_truthy(summarized_checks()),
+                        is_truthy(cut_offs_to_use_all_clusters()))
+      )
     })
     
     # Perform spectra curation:
     curated_data <- reactive({
-      req(summary(),
-          summarized_checks())
-      
-      spectra_curated_data <- tryCatch(
-        expr = { 
-          curate_spectra(checked_data = checked_data(),
-                         summarized_checks = summarized_checks(),
-                         cut_offs = cut_offs_to_use_combined())
-        })
-      
-      return(spectra_curated_data)
+      curate_spectra(checked_data = checked_data(),
+                     summarized_checks = summarized_checks(),
+                     cut_offs = cut_offs_to_use_all_clusters())
     }) %>% bindEvent(input$button)
     
     observe({
@@ -407,7 +422,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     
     output$failed_spectra_table <- DT::renderDataTable({
-      
       req(curated_data())
       
       for_table <- curated_data()%>% 
@@ -418,14 +432,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
       DT::datatable(for_table,
                     options = list(scrollX = TRUE,
                                    filter = "top"))
-      
     })
     
     output$failed_spectra_details <- DT::renderDataTable({
-      
       req(curated_data())
       
-      DT::datatable(curated_data()%>% 
+      DT::datatable(curated_data() %>% 
                       dplyr::select(-(passing_proportion:cut_off_sum_int)) %>% 
                       dplyr::distinct() %>% 
                       dplyr::filter(passed_spectra_curation == FALSE),
@@ -457,6 +469,16 @@ mod_spectra_curation_server <- function(id, results_data_import){
       return(plotly_object)
     })
     
+    to_return <- reactive({
+      if (input$curation_method == "Skip spectra curation") {
+        # TODO: check what needs to be changed (columns present) in checked_data(),
+        # before it can be passed on to the analyte curation module
+        req(checked_data())
+      } else {
+        req(passing_spectra())
+      }
+    })
+    
     output$download <- downloadHandler(
       filename = function() {
         todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
@@ -467,7 +489,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                "Excel file" = paste0(todays_date, "_curated_spectra.xlsx"))
       },
       content = function(file) {
-        data_to_download <- passing_spectra()
+        data_to_download <- to_return()
         switch(input$download_format,
                "R object" = save(data_to_download, 
                                  file = file),
@@ -477,7 +499,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     )
     
     return(list(
-      curated_spectra = passing_spectra,
+      curated_spectra = to_return,
       mass_acc = reactive({ input$mass_accuracy }),
       ipq = reactive({ input$ipq }),
       sn = reactive({ input$sn }),
