@@ -471,9 +471,14 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     to_return <- reactive({
       if (input$curation_method == "Skip spectra curation") {
-        # TODO: check what needs to be changed (columns present) in checked_data(),
-        # before it can be passed on to the analyte curation module
-        req(checked_data())
+        dplyr::full_join(req(checked_data()),
+                         req(summarized_checks())) %>% 
+          dplyr::select(-c(failed_criteria,
+                           passing_proportion
+                           # Leave 'sum_intensity' for the relative abundance
+                           # calculation and leave 'criteria_check' for the
+                           # analyte curation.
+          ))
       } else {
         req(passing_spectra())
       }
