@@ -8,7 +8,7 @@ summarize_spectra_checks(data_checked)
 }
 \arguments{
 \item{data_checked}{The dataframe that is returned by
-\code{\link{do_criteria_check}}.}
+\code{\link{check_analyte_quality_criteria}}.}
 }
 \value{
 A dataframe that contains one row per spectrum for each cluster (
@@ -26,7 +26,7 @@ A dataframe that contains one row per spectrum for each cluster (
 \code{summarize_spectra_checks()} calculates the proportion of passing
 analytes per spectrum and the sum intensity of passing analytes per spectrum.
 \code{summarize_spectra_checks()} should be used after
-\code{\link{do_criteria_check}} has been used to perform analyte quality
+\code{\link{check_analyte_quality_criteria}} has been used to perform analyte quality
 criteria checks for every spectrum and analyte combination in the data.
 }
 \examples{
@@ -35,7 +35,7 @@ data("example_data")
 example_data <- define_clusters(data = example_data,
                                 clusters_regex = "IgGI1")
 
-checked_data <- do_criteria_check(data = example_data,
+checked_data <- check_analyte_quality_criteria(data = example_data,
                                   min_ppm_deviation = -20,
                                   max_ppm_deviation = 20,
                                   max_ipq = 0.2,

@@ -146,39 +146,25 @@ min_ppm_deviation = -20
 max_ppm_deviation = 20
 max_ipq = 0.2
 min_sn = 9
-qcs <- c("IPQ", "S/N", "Mass accuracy")
+criteria_to_consider <- c("Mass accuracy", "IPQ", "S/N")
+uncalibrated_as_NA <- TRUE
+
+
+
+data_checked <- data_complete %>% 
+  check_each_criterium(., 
+                       min_ppm_deviation,
+                       max_ppm_deviation,
+                       max_ipq,
+                       min_sn) %>% 
+  apply_chosen_criteria(.,
+                        criteria_to_consider,
+                        uncalibrated_as_NA = uncalibrated_as_NA) %>%
+  report_failed_criteria(.,
+                         criteria_to_consider) 
 
 # Can't reuse same criteria_check column for analyte_curation because here only
 # qcs to consider are taken into account!
-
-data_checked <- data_complete %>% 
-    dplyr::mutate(`Mass accuracy` = dplyr::between(mass_accuracy_ppm, 
-                                            min_ppm_deviation, 
-                                            max_ppm_deviation),
-                  IPQ = isotopic_pattern_quality < max_ipq,
-                  `S/N` = sn > min_sn) %>% 
-    # rowwise() allows you to check all the criteria in qcs using c_across per row:
-    dplyr::rowwise() %>% 
-    dplyr::mutate(criteria_check = all(dplyr::c_across(tidyselect::all_of(qcs))) #%>% 
-                    #tidyr::replace_na(., FALSE)
-                  # If we leave in NA's this means that there are less samples 
-                  # to base the cut-offs on, since uncalibrated spectra are no
-                  # longer interpreted as 0 but instead left out
-                    ) %>% 
-    tidyr::pivot_longer(cols = c(`Mass accuracy`, IPQ, `S/N`),
-                        names_to = "criterium",
-                        values_to = "passed") %>% 
-    dplyr::mutate(failed_criteria = ifelse(passed == FALSE, criterium, NA)) %>% 
-    dplyr::select(-c(criterium, passed)) %>% 
-    dplyr::group_by(sample_name, analyte, charge) %>% 
-      dplyr::summarise(failed_criteria = dplyr::if_else(
-        all(is.na(failed_criteria)),
-        "none",
-        comma_and(unique(failed_criteria[!is.na(failed_criteria)]))),
-        across()) %>% 
-      dplyr::distinct() %>% 
-  dplyr::relocate(failed_criteria,
-                  .after = criteria_check)
 
 grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
   
@@ -193,6 +179,18 @@ summarized_checks <- data_checked %>%
                       #na.rm = TRUE
   )) %>% 
   dplyr::ungroup(.)
+
+grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
+  
+  summarized_checks <- data_checked %>% 
+    # I'm using across() and any_of() because if the data is not Ig data, the
+    # column "group" doesn't exist:
+    dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
+    dplyr::summarise(passing_proportion = sum(analyte_meets_criteria)/dplyr::n(), 
+                     sum_intensity = sum(
+                       absolute_intensity_background_subtracted[analyte_meets_criteria == TRUE]
+                     )) %>% 
+    dplyr::ungroup(.)
 
 
 p <- create_cut_off_plot(summarized_checks)

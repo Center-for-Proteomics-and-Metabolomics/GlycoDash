@@ -11,7 +11,7 @@ The function returns the original dataframe given as the data
   argument, but with two additional columns. One column is named
   "passed_spectra_curation"; This logical column is \code{TRUE} for spectra that have
   passed curation and \code{FALSE} for spectra that did not pass curation.
-  The other column is named "criteria_check" and is \code{TRUE} for analyte +
+  The other column is named "analyte_meets_criteria" and is \code{TRUE} for analyte +
   sample combinations that passed all three quality criteria checks, whereas
   \code{FALSE} indicates that one or more criteria were not fulfilled.
 }

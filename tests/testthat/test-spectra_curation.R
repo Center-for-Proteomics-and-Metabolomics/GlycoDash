@@ -34,8 +34,8 @@ test_that("define_clusters() throws an error when any analytes in the data don't
                "Some analytes could not be assigned into a cluster\\. Please reconsider the regular expressions you gave as clusters_regex\\.")
 })
 
-test_that("do_criteria_check() arguments fulfill the requirements.", {
-  expect_error(do_criteria_check(data = example_data, 
+test_that("check_analyte_quality_criteria() arguments fulfill the requirements.", {
+  expect_error(check_analyte_quality_criteria(data = example_data, 
                                  min_ppm_deviation = "oops",
                                  max_ppm_deviation = "this is not numeric",
                                  max_ipq = 0.2,
@@ -44,7 +44,7 @@ test_that("do_criteria_check() arguments fulfill the requirements.", {
                "One or more quality criteria arguments are non-numeric.")
   wrong_data <- example_data %>% 
     dplyr::select(-sn)
-  expect_error(do_criteria_check(data = wrong_data, 
+  expect_error(check_analyte_quality_criteria(data = wrong_data, 
                                  min_ppm_deviation = -20,
                                  max_ppm_deviation = 20,
                                  max_ipq = 0.2,
@@ -52,8 +52,8 @@ test_that("do_criteria_check() arguments fulfill the requirements.", {
                "The data doesn't contain the required columns with the quality criteria.")
 })
 
-test_that("do_criteria_check() returns the data with an additional column a logical vector without NAs.", {
-  checked_data <- do_criteria_check(data = example_data, 
+test_that("check_analyte_quality_criteria() returns the data with an additional column a logical vector without NAs.", {
+  checked_data <- check_analyte_quality_criteria(data = example_data, 
                                     min_ppm_deviation = -20,
                                     max_ppm_deviation = 20,
                                     max_ipq = 0.2,
@@ -79,7 +79,7 @@ test_that("summarize_spectra_checks() returns one row per cluster per spectrum",
                                   clusters_regex = "IgGI1")
   to_replace <- sample(1:nrow(example_data), nrow(example_data)/2)
   example_data$cluster[to_replace] <- "IgGII1"
-  checked_data <- do_criteria_check(data = example_data,
+  checked_data <- check_analyte_quality_criteria(data = example_data,
                                     min_ppm_deviation = -20,
                                     max_ppm_deviation = 20,
                                     max_ipq = 0.2,

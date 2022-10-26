@@ -3,7 +3,7 @@
 #'This function determines which cluster an analyte belongs to based on the
 #'analyte name.
 #'
-#'@inheritParams do_criteria_check
+#'@inheritParams check_analyte_quality_criteria
 #'@param clusters_regex A vector containing character strings. These strings are
 #'  used as regular expressions to classify analytes into clusters.
 #'  \code{clusters_regex} should contain one character string per cluster in the

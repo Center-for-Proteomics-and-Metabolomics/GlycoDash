@@ -277,12 +277,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
           input$sn,
           input$ipq
       )
-      do_criteria_check(data = summary(),
+      check_analyte_quality_criteria(my_data = summary(),
                         min_ppm_deviation = input$mass_accuracy[1],
                         max_ppm_deviation = input$mass_accuracy[2],
                         max_ipq = input$ipq,
                         min_sn = input$sn,
-                        qcs_to_consider = input$qc_to_include)
+                        criteria_to_consider = input$qc_to_include,
+                        uncalibrated_as_NA = FALSE)
     })
     
     # Analyte quality criteria checks summarized per cluster per sample: 
@@ -378,6 +379,9 @@ mod_spectra_curation_server <- function(id, results_data_import){
     cut_offs_to_use_all_clusters <- reactive({
       purrr::map_dfr(r$tab_contents,
                      function(tab) {
+                       # Use try_call not do.call because if
+                       # input$curation_method == "Skip spectra curation", then
+                       # tab_contents$cut_offs_to_use doesn't exist
                         try_call(tab[["cut_offs_to_use"]])
                      })
     })

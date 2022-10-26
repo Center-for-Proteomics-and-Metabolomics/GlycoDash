@@ -42,12 +42,12 @@ mod_curate_based_on_controls_ui <- function(id){
           width = 6,
           status = "primary",
           solidHeader = TRUE,
-          selectizeInput(ns("cut_off_basis_specific"),
+          selectInput(ns("cut_off_basis_specific"),
                          "Choose which specific Ig spectra to use as negative controls:",
                          choices = c(""),
                          selected = NULL,
-                         multiple = TRUE,
-                         options = list(placeholder = "select which samples to use as a basis for cut-off")
+                         multiple = TRUE#,
+                         #options = list(placeholder = "select which samples to use as a basis for cut-off")
           ) %>% 
             bsplus::bs_embed_popover(
               title = "Explanation",
@@ -182,18 +182,43 @@ mod_curate_based_on_controls_server <- function(id,
                              choices = c("", options))
         
       } else {
-        options_specific <- paste(results_data_import$keyword_specific(),
-                                  unique(summarized_checks()$sample_type),
-                                  "samples")
-        updateSelectizeInput(inputId = "cut_off_basis_specific",
-                             choices = c("", options_specific))
         
-        options_total <- paste(results_data_import$keyword_total(),
-                               unique(summarized_checks()$sample_type),
-                               "samples")
+        is_specific <- summarized_checks()$group == results_data_import$keyword_specific()
+        # Weird tibble behavior: tibble[rows, single_column] results in a
+        # tibble, even though dataframe[rows, single_column] results in a
+        # vector. We need a vector here and summarized_checks() is a tibble so I
+        # have to use $sample_type instead of [is_specific, "sample_type"]:
+        options_specific <- unique(summarized_checks()[is_specific, ]$sample_type)
+        labels_options_specific <- paste(results_data_import$keyword_specific(),
+                                         options_specific,
+                                         "samples")
+        # The names is what will be shown in the selection menu:
+        names(options_specific) <- labels_options_specific
+        
+        updateSelectInput(inputId = "cut_off_basis_specific",
+                          choices = options_specific)
+        
+        options_total <- summarized_checks() %>% 
+          dplyr::filter(group == results_data_import$keyword_total()) %>% 
+          dplyr::pull(sample_type) %>% 
+          unique()
+        
+        # OR:
+        
+        is_total <- summarized_checks()$group == results_data_import$keyword_total()
+        options_total <- unique(summarized_checks()[is_total, ]$sample_type)
+        
+        names(options_total) <- paste(results_data_import$keyword_total(),
+                                      options_total,
+                                      "samples")
+        
         updateSelectizeInput(inputId = "cut_off_basis_total",
                              choices = c("", options_total))
       }
+    })
+    
+    observe({
+      print(req(input$cut_off_basis_specific))
     })
     
     cut_offs_percentile <- reactive({
@@ -209,6 +234,7 @@ mod_curate_based_on_controls_server <- function(id,
       
       if (results_data_import$Ig_data() == "Yes") {
         
+        # Create one function that calculates both total and specific cut-offs?
         cut_offs_specific <- calculate_cut_offs_with_percentile(
           summarized_checks(),
           input$cut_off_basis_specific,

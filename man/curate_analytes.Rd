@@ -36,7 +36,7 @@ A dataframe with one row for each combination of analyte and charge
 Curate analytes based on the percentage of spectra for which the analyte
 passes the quality criteria. These quality criteria are the minimum and
 maximum allowed mass accuracy deviations, the isotopic pattern quality (IPQ)
-and the signal-to-noise ratio (S/N) (see \code{\link{do_criteria_check}}).
+and the signal-to-noise ratio (S/N) (see \code{\link{check_analyte_quality_criteria}}).
 Analyte curation should not be based on spectra for which you don't expect
 any analytes to pass, or for which you expect all analytes to pass. The
 arguments \code{sample_types_to_ignore} and \code{group_to_ignore} should be

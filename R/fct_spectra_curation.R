@@ -2,7 +2,7 @@
 
 #' Perform an analyte quality criteria check for every spectrum in the data.
 #'
-#' \code{do_criteria_check()} performs an analyte quality criteria check for
+#' \code{check_analyte_quality_criteria()} performs an analyte quality criteria check for
 #' every spectrum in the data. This function is used within the function
 #' \code{\link{summarize_spectra_checks}}.
 #'
@@ -18,7 +18,7 @@
 #' @param min_sn The lowest allowed value for the signal to noise ratio (S/N).
 #'
 #' @return The original dataframe given as the data argument, but with an
-#'   additional column named "criteria_check". This column is a logical vector:
+#'   additional column named "analyte_meets_criteria". This column is a logical vector:
 #'   TRUE indicates that the analyte + sample combination passed all three
 #'   quality criteria checks, whereas FALSE indicates one or more criteria were
 #'   not fulfilled.
@@ -26,54 +26,78 @@
 #'
 #' @examples
 #' data(example_data)
-#' do_criteria_check(data = example_data,
+#' check_analyte_quality_criteria(data = example_data,
 #'                   min_ppm_deviation = -20,
 #'                   max_ppm_deviation = 20,
 #'                   max_ipq = 0.2,
 #'                   min_sn = 9)
-do_criteria_check <- function(data, 
-                              min_ppm_deviation, 
-                              max_ppm_deviation, 
-                              max_ipq, 
-                              min_sn,
-                              qcs_to_consider) {
+check_analyte_quality_criteria <- function(my_data, 
+                                           min_ppm_deviation, 
+                                           max_ppm_deviation, 
+                                           max_ipq, 
+                                           min_sn,
+                                           criteria_to_consider,
+                                           uncalibrated_as_NA) {
   
-  if (!all(is.numeric(min_ppm_deviation),
-           is.numeric(max_ppm_deviation),
-           is.numeric(max_ipq),
-           is.numeric(min_sn))) {
-    stop("One or more quality criteria arguments are non-numeric.")
-  }
-  
-  if (!(all(c("mass_accuracy_ppm",
-              "isotopic_pattern_quality",
-              "sn") %in% colnames(data)))) {
-    stop("The data doesn't contain the required columns with the quality criteria.")
-  }
-  
-  data_checked <- data %>% 
-    dplyr::mutate(`Mass accuracy` = dplyr::between(data$mass_accuracy_ppm, 
-                                            min_ppm_deviation, 
-                                            max_ppm_deviation),
-                  IPQ = data$isotopic_pattern_quality < max_ipq,
-                  `S/N` = data$sn > min_sn) %>% 
-    # rowwise() allows you to check all the criteria in qcs using c_across per row:
-    dplyr::rowwise() %>% 
-    dplyr::mutate(criteria_check = all(dplyr::c_across(tidyselect::all_of(qcs_to_consider))) %>% 
-                    tidyr::replace_na(., FALSE)) %>% 
-    tidyr::pivot_longer(cols = c(`Mass accuracy`, IPQ, `S/N`),
-                        names_to = "criterium",
-                        values_to = "passed") %>% 
-    dplyr::mutate(failed_criteria = ifelse(passed == FALSE, criterium, NA)) %>% 
-    dplyr::select(-c(criterium, passed)) %>% 
-    dplyr::group_by(sample_name, analyte, charge) %>% 
-    dplyr::summarise(failed_criteria = dplyr::if_else(all(is.na(failed_criteria)),
-                                                      "none",
-                                                      comma_and(unique(failed_criteria[!is.na(failed_criteria)]))),
-    across()) %>% 
-    dplyr::distinct()
+  data_checked <- my_data %>% 
+    check_each_criterium(., 
+                         min_ppm_deviation,
+                         max_ppm_deviation,
+                         max_ipq,
+                         min_sn) %>% 
+    apply_chosen_criteria(.,
+                          criteria_to_consider,
+                          uncalibrated_as_NA) %>%
+    report_failed_criteria(.,
+                           criteria_to_consider)
   
   return(data_checked)
+}
+
+check_each_criterium <- function(my_data, 
+                                 min_ppm_deviation,
+                                 max_ppm_deviation,
+                                 max_ipq,
+                                 min_sn) {
+  my_data %>% 
+    dplyr::mutate(`Mass accuracy` = dplyr::between(mass_accuracy_ppm, 
+                                                   min_ppm_deviation, 
+                                                   max_ppm_deviation),
+                  IPQ = isotopic_pattern_quality < max_ipq,
+                  `S/N` = sn > min_sn)
+}
+
+apply_chosen_criteria <- function(my_data,
+                                  criteria_to_consider,
+                                  uncalibrated_as_NA) {
+  to_return <- my_data %>% 
+    dplyr::rowwise() %>% 
+    dplyr::mutate(analyte_meets_criteria = all(
+      dplyr::c_across(tidyselect::all_of(criteria_to_consider))
+    ))
+  
+  if (!uncalibrated_as_NA) {
+    dplyr::mutate(to_return,
+                  analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
+                                                             FALSE))
+  }
+  return(to_return)
+}
+
+report_failed_criteria <- function(my_data,
+                                   criteria_to_consider) {
+  
+  failed_criteria_dataframe <- my_data %>% 
+    # Only criteria in criteria_to_consider will be reported as failed criteria:
+    tidyr::pivot_longer(cols = tidyselect::all_of(criteria_to_consider),
+                        names_to = "criterium",
+                        values_to = "passed") %>% 
+    dplyr::filter(!passed) %>% 
+    dplyr::group_by(sample_name, analyte, charge) %>% 
+    dplyr::summarize(failed_criteria = comma_and(criterium))
+  
+  dplyr::full_join(my_data, failed_criteria_dataframe) %>% 
+    dplyr::select(-c(`Mass accuracy`, IPQ, `S/N`))
 }
 
 #' Summarize analyte quality criteria checks
@@ -81,11 +105,11 @@ do_criteria_check <- function(data,
 #' \code{summarize_spectra_checks()} calculates the proportion of passing
 #' analytes per spectrum and the sum intensity of passing analytes per spectrum.
 #' \code{summarize_spectra_checks()} should be used after
-#' \code{\link{do_criteria_check}} has been used to perform analyte quality
+#' \code{\link{check_analyte_quality_criteria}} has been used to perform analyte quality
 #' criteria checks for every spectrum and analyte combination in the data.
 #'
 #' @param data_checked The dataframe that is returned by
-#'   \code{\link{do_criteria_check}}.
+#'   \code{\link{check_analyte_quality_criteria}}.
 #'
 #' @return A dataframe that contains one row per spectrum for each cluster (
 #'   Thus the number of rows is equal to the number of spectra times the number
@@ -105,7 +129,7 @@ do_criteria_check <- function(data,
 #' example_data <- define_clusters(data = example_data,
 #'                                 clusters_regex = "IgGI1")
 #'
-#' checked_data <- do_criteria_check(data = example_data,
+#' checked_data <- check_analyte_quality_criteria(data = example_data,
 #'                                   min_ppm_deviation = -20,
 #'                                   max_ppm_deviation = 20,
 #'                                   max_ipq = 0.2,
@@ -113,18 +137,23 @@ do_criteria_check <- function(data,
 #'
 #' summarize_spectra_checks(data_checked = checked_data)
 summarize_spectra_checks <- function(data_checked) {
-  required_columns <- list("sample_type",
-                           "sample_name",
-                           "cluster",
-                           "criteria_check")
   
-  if(any(!(required_columns %in% colnames(data_checked)))) {
-    missing_columns <- required_columns[!(required_columns %in% colnames(data_checked))]
-    stop(paste0("The data doesn't contain the required column(s) ",
-                paste0(missing_columns,
-                       collapse = " and "),
-                "."))
-  }
+  # Alternative name?: calculate_sum_intensities_and_analyte_passing_percentage
+  
+  # Remove because not relevant in dashboard?
+  
+  # required_columns <- list("sample_type",
+  #                          "sample_name",
+  #                          "cluster",
+  #                          "analyte_meets_criteria")
+  # 
+  # if(any(!(required_columns %in% colnames(data_checked)))) {
+  #   missing_columns <- required_columns[!(required_columns %in% colnames(data_checked))]
+  #   stop(paste0("The data doesn't contain the required column(s) ",
+  #               paste0(missing_columns,
+  #                      collapse = " and "),
+  #               "."))
+  # }
   
   grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
   
@@ -132,8 +161,10 @@ summarize_spectra_checks <- function(data_checked) {
     # I'm using across() and any_of() because if the data is not Ig data, the
     # column "group" doesn't exist:
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-    dplyr::summarise(passing_proportion = sum(criteria_check)/dplyr::n(), 
-                     sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE])) %>% 
+    dplyr::summarise(passing_proportion = sum(analyte_meets_criteria)/dplyr::n(), 
+                     sum_intensity = sum(
+                       absolute_intensity_background_subtracted[analyte_meets_criteria == TRUE]
+                     )) %>% 
     dplyr::ungroup(.)
   
   return(summarized_checks)
@@ -183,7 +214,7 @@ sd_p <- function(x, na.rm = FALSE) {
 #' example_data <- define_clusters(data = example_data,
 #'                                 clusters_regex = "IgGI1")
 #'
-#' checked_data <- do_criteria_check(data = example_data,
+#' checked_data <- check_analyte_quality_criteria(data = example_data,
 #'                                   min_ppm_deviation = -20,
 #'                                   max_ppm_deviation = 20,
 #'                                   max_ipq = 0.2,
@@ -223,6 +254,8 @@ calculate_cut_offs_with_mean_SD <- function(summarized_checks,
   
   return(cut_offs)
 }
+
+# Combine these two cut-off calculations?
 
 calculate_cut_offs_with_percentile <- function(summarized_checks,
                                                negative_control_sample_types = NULL,
@@ -278,7 +311,7 @@ calculate_cut_offs_with_percentile <- function(summarized_checks,
 #' curation are defined (using the function \code{\link{calculate_cut_offs}}).
 #' All spectra with values above those cut-off values pass the spectra curation.
 #'
-#' @inheritParams do_criteria_check
+#' @inheritParams check_analyte_quality_criteria
 #' @inheritParams calculate_cut_offs
 #' @inheritParams define_clusters
 #'
@@ -286,7 +319,7 @@ calculate_cut_offs_with_percentile <- function(summarized_checks,
 #'   argument, but with two additional columns. One column is named
 #'   "passed_spectra_curation"; This logical column is \code{TRUE} for spectra that have
 #'   passed curation and \code{FALSE} for spectra that did not pass curation.
-#'   The other column is named "criteria_check" and is \code{TRUE} for analyte +
+#'   The other column is named "analyte_meets_criteria" and is \code{TRUE} for analyte +
 #'   sample combinations that passed all three quality criteria checks, whereas
 #'   \code{FALSE} indicates that one or more criteria were not fulfilled.
 #' @export
@@ -341,7 +374,7 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
     )) %>% 
     dplyr::relocate(c(passed_spectra_curation, reason_for_failure), 
                     .after = sample_name) %>% 
-    dplyr::relocate(c(criteria_check,
+    dplyr::relocate(c(analyte_meets_criteria,
                       failed_criteria),
                     .after = charge) %>% 
     dplyr::relocate(tidyselect::any_of(c("sample_id", "plate_well")),
@@ -364,33 +397,33 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
   return(curated_data)
 }
 
-check_spectra <- function(data, min_ppm_deviation, max_ppm_deviation, 
-                            max_ipq, min_sn, qcs_to_consider) {
-  checked_data <- do_criteria_check(data = data, 
-                                    min_ppm_deviation = min_ppm_deviation,
-                                    max_ppm_deviation = max_ppm_deviation,
-                                    max_ipq = max_ipq,
-                                    min_sn = min_sn,
-                                    qcs_to_consider = qcs_to_consider)
-  spectra_check <- summarize_spectra_checks(checked_data)
-    
-  return(spectra_check)
-}
+# check_spectra <- function(data, min_ppm_deviation, max_ppm_deviation, 
+#                             max_ipq, min_sn, qcs_to_consider) {
+#   checked_data <- check_analyte_quality_criteria(data = data, 
+#                                     min_ppm_deviation = min_ppm_deviation,
+#                                     max_ppm_deviation = max_ppm_deviation,
+#                                     max_ipq = max_ipq,
+#                                     min_sn = min_sn,
+#                                     qcs_to_consider = qcs_to_consider)
+#   spectra_check <- summarize_spectra_checks(checked_data)
+#     
+#   return(spectra_check)
+# }
 
-calculate_cut_offs_per_type <- function(checked_spectra) {
-  
-  grouping_variables <- c("group", "cluster", "sample_type")
-  
-  cut_offs <- checked_spectra %>%  
-    dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-    dplyr::summarise(av_prop = mean(passing_proportion, na.rm = FALSE),
-                     sd_prop = sd_p(passing_proportion, na.rm = FALSE),
-                     cut_off_prop = av_prop + (3 * sd_prop),
-                     av_sum_int = mean(sum_intensity, na.rm = FALSE),
-                     sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
-                     cut_off_sum_int = av_sum_int + (3 * sd_sum_int))
-  return(cut_offs)
-}
+# calculate_cut_offs_per_type <- function(checked_spectra) {
+#   
+#   grouping_variables <- c("group", "cluster", "sample_type")
+#   
+#   cut_offs <- checked_spectra %>%  
+#     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
+#     dplyr::summarise(av_prop = mean(passing_proportion, na.rm = FALSE),
+#                      sd_prop = sd_p(passing_proportion, na.rm = FALSE),
+#                      cut_off_prop = av_prop + (3 * sd_prop),
+#                      av_sum_int = mean(sum_intensity, na.rm = FALSE),
+#                      sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
+#                      cut_off_sum_int = av_sum_int + (3 * sd_sum_int))
+#   return(cut_offs)
+# }
 
 filter_cut_off_basis <- function(cut_off_basis, data) {
   
@@ -400,9 +433,9 @@ filter_cut_off_basis <- function(cut_off_basis, data) {
                      collapse = "|")) %>% 
     na.omit(.)
   
-  if (any(!(sample_types_to_filter %in% data$sample_type))) {
-    stop("One or more of the sample types in cut_off_basis are not present in the data.")
-  }
+  # if (any(!(sample_types_to_filter %in% data$sample_type))) {
+  #   stop("One or more of the sample types in cut_off_basis are not present in the data.")
+  # }
   
   if ("group" %in% colnames(data)) {
     

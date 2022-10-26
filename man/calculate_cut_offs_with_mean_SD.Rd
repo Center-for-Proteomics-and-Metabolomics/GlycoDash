@@ -38,7 +38,7 @@ data("example_data")
 example_data <- define_clusters(data = example_data,
                                 clusters_regex = "IgGI1")
 
-checked_data <- do_criteria_check(data = example_data,
+checked_data <- check_analyte_quality_criteria(data = example_data,
                                   min_ppm_deviation = -20,
                                   max_ppm_deviation = 20,
                                   max_ipq = 0.2,
