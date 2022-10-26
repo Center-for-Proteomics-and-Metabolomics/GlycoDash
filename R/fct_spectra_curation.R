@@ -226,7 +226,8 @@ calculate_cut_offs_with_mean_SD <- function(summarized_checks,
 
 calculate_cut_offs_with_percentile <- function(summarized_checks,
                                                negative_control_sample_types = NULL,
-                                               percentile) {
+                                               percentile,
+                                               na.rm) {
   
   if (!is.null(negative_control_sample_types)) {
     negative_controls <- filter_cut_off_basis(
@@ -244,10 +245,12 @@ calculate_cut_offs_with_percentile <- function(summarized_checks,
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
     dplyr::summarise(cut_off_sum_int = quantile(sum_intensity, 
                                                 probs = percentile / 100,
-                                                names = FALSE),
+                                                names = FALSE,
+                                                na.rm = na.rm),
                      cut_off_prop = quantile(passing_proportion, 
                                              probs = percentile / 100,
-                                             names = FALSE),
+                                             names = FALSE,
+                                             na.rm = na.rm),
                      dplyr::across(sample_type)) %>% 
     dplyr::mutate(type = "based_on_negative_controls") %>% 
     dplyr::distinct() %>% 
@@ -506,6 +509,8 @@ create_cut_off_plot <- function(spectra_check) {
     p <- p +
       ggplot2::facet_wrap(~ cluster)
   }
+  
+  return(p)
 }
 
 

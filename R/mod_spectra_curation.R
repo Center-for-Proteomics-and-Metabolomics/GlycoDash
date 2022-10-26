@@ -265,8 +265,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    r <- reactiveValues()
-    
     summary <- reactive({
       req(results_data_import$summary())
       results_data_import$summary()
@@ -348,6 +346,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
                              ))
                  })
     })
+    
+    r <- reactiveValues()
     
     observe({
       req(clusters(),
