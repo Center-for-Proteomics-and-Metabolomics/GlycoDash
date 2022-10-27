@@ -93,14 +93,14 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
           cut_off_sum_int = input$cut_off_sum_intensity_specific,
           cut_off_prop = input$cut_off_passing_proportion_specific,
           group = keyword_specific(),
-          type = "manual"
+          curation_method = "manual"
         )
         
         total <- tibble::tibble(
           cut_off_sum_int = input$cut_off_sum_intensity_total,
           cut_off_prop = input$cut_off_passing_proportion_total,
           group = keyword_total(),
-          type = "manual"
+          curation_method = "manual"
         )
         
         cut_offs <- dplyr::full_join(specific, total)
@@ -118,7 +118,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
         
         cut_offs <- data.frame(cut_off_sum_int = input$cut_off_sum_intensity,
                                cut_off_prop = input$cut_off_passing_proportion,
-                               type = "manual",
+                               curation_method = "manual",
                                cluster = selected_cluster)
         
         # cut_offs <- purrr::map_dfr(clusters(),
@@ -203,7 +203,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
             dplyr::ungroup() %>% 
             dplyr::select(-c(cluster,
                              sample_type_list,
-                             type)) %>% 
+                             curation_method)) %>% 
             dplyr::rename("Sum intensity cut-off" = cut_off_sum_int,
                           "Percentage of passing analytes cut-off" = cut_off_prop)
           
@@ -219,7 +219,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
               dplyr::ungroup() %>% 
               dplyr::select(-c(cluster,
                                sample_type_list,
-                               type)) %>% 
+                               curation_method)) %>% 
               dplyr::rename("Cut-off sum intensity" = cut_off_sum_int,
                             "Cut-off percentage of passing analytes" = cut_off_prop)
             
@@ -231,7 +231,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
               dplyr::rename("Cut-off sum intensity" = cut_off_sum_int,
                             "Cut-off percentage of passing analytes" = cut_off_prop) %>% 
               dplyr::select(-c(cluster,
-                               type))
+                               curation_method))
             
           }
           

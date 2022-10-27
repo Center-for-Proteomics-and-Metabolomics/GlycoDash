@@ -77,9 +77,11 @@ apply_chosen_criteria <- function(my_data,
     ))
   
   if (!uncalibrated_as_NA) {
-    dplyr::mutate(to_return,
-                  analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
-                                                             FALSE))
+    to_return <- dplyr::mutate(
+      to_return,
+      analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
+                                                 FALSE)
+    )
   }
   return(to_return)
 }
@@ -188,111 +190,48 @@ sd_p <- function(x, na.rm = FALSE) {
   sd(x, na.rm = na.rm) * sqrt((length(x)-1)/length(x))
 }
 
-#' Calculate cut-off values for spectra curation
-#'
-#' Calculate the cutoffs for the proportion of passing analytes per spectrum and
-#' for the sum intensity of passing analytes per spectrum. This function is used
-#' within the function \code{\link{curate_spectra}}.
-#'
-#' @param spectra_check The dataframe returned by
-#'   \code{\link{summarize_spectra_checks}}.
-#' @param cut_off_basis A character vector or a single character string
-#'   specifying which sample types (and optionally which group (Specific or
-#'   Total Ig)) the spectra curation cut-offs should be based on. For each
-#'   sample type or sample type-group combination that you want to base the
-#'   cut-offs on you should add a character string. For example. if you want to
-#'   base the cut-offs on all PBS samples and on the Specific negative_control
-#'   samples, \code{cut_off_basis} should be \code{c("PBS", "Specific
-#'   negative_control")}
-#'
-#' @return
-#' @export
-#'
-#' @examples
-#' data("example_data")
-#'
-#' example_data <- define_clusters(data = example_data,
-#'                                 clusters_regex = "IgGI1")
-#'
-#' checked_data <- check_analyte_quality_criteria(data = example_data,
-#'                                   min_ppm_deviation = -20,
-#'                                   max_ppm_deviation = 20,
-#'                                   max_ipq = 0.2,
-#'                                   min_sn = 9)
-#'
-#' spectra_check <- summarize_spectra_checks(data_checked = checked_data)
-#'
-#' calculate_cut_offs(spectra_check = spectra_check,
-#'                    cut_off_basis = c("Spike PBS", "Total PBS"))
-#'                    
-calculate_cut_offs_with_mean_SD <- function(summarized_checks, 
-                                            negative_controls, 
-                                            percentile,
-                                            SD_factor) {
-  
-  negative_control_samples <- filter_cut_off_basis(cut_off_basis = negative_controls,
-                                                data = summarized_checks)
-  
-  cut_offs <- negative_control_samples %>%  
-    dplyr::group_by(cluster) %>% 
-    dplyr::summarise(cut_off_prop = quantile(passing_proportion, 
-                                             probs = percentile / 100,
-                                             names = FALSE),
-                     av_sum_int = mean(sum_intensity, na.rm = FALSE),
-                     sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
-                     cut_off_sum_int = av_sum_int + (SD_factor * sd_sum_int),
-                     across(tidyselect::any_of(c("group", "sample_type")))) %>% 
-    dplyr::mutate(type = "based_on_negative_controls") %>% 
-    dplyr::distinct() %>% 
-    dplyr::select(tidyselect::any_of(c("cluster",
-                                     "sample_type",
-                                     "group",
-                                     "cut_off_prop",
-                                     "cut_off_sum_int",
-                                     "type"))) %>% 
-    tidyr::nest(., "sample_type_list" = sample_type)
-  
-  return(cut_offs)
+mean_plus_SD <- function(x, SD_factor, na.rm) {
+  mean_x <- mean(x, na.rm = na.rm)
+  SD_x <- sd_p(x, na.rm = na.rm)
+  mean_x + SD_factor * SD_x
 }
 
-# Combine these two cut-off calculations?
-
-calculate_cut_offs_with_percentile <- function(summarized_checks,
-                                               negative_control_sample_types = NULL,
-                                               percentile,
-                                               na.rm) {
+calculate_cut_offs <- function(summarized_checks,
+                               control_sample_types = NULL,
+                               group_keyword = NULL,
+                               percentile,
+                               use_mean_SD = FALSE,
+                               SD_factor = NULL,
+                               uncalibrated_as_NA = FALSE) {
   
-  if (!is.null(negative_control_sample_types)) {
-    negative_controls <- filter_cut_off_basis(
-      cut_off_basis = negative_control_sample_types,
-      data = summarized_checks
-    )
-    cut_off_basis <- negative_controls
-  } else {
-    cut_off_basis <- summarized_checks
-  }
+  cut_off_basis <- summarized_checks %>% 
+    dplyr::filter(if (!is.null(group_keyword)) group == group_keyword else TRUE) %>% 
+    dplyr::filter(if (!is.null(control_sample_types)) sample_type %in% control_sample_types else TRUE)
   
   grouping_variables <- c("group", "cluster")
   
   cut_offs <- cut_off_basis %>%  
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-    dplyr::summarise(cut_off_sum_int = quantile(sum_intensity, 
-                                                probs = percentile / 100,
-                                                names = FALSE,
-                                                na.rm = na.rm),
-                     cut_off_prop = quantile(passing_proportion, 
-                                             probs = percentile / 100,
-                                             names = FALSE,
-                                             na.rm = na.rm),
-                     dplyr::across(sample_type)) %>% 
-    dplyr::mutate(type = "based_on_negative_controls") %>% 
-    dplyr::distinct() %>% 
-    dplyr::select(tidyselect::any_of(c("cluster",
-                                       "sample_type",
-                                       "group",
-                                       "cut_off_prop",
-                                       "cut_off_sum_int",
-                                       "type"))) %>% 
+    dplyr::summarise(
+      cut_off_sum_int = if (use_mean_SD) { 
+        mean_plus_SD(sum_intensity, SD_factor, uncalibrated_as_NA) } else { 
+          quantile(sum_intensity, 
+                   probs = percentile / 100,
+                   names = FALSE,
+                   na.rm = uncalibrated_as_NA) },
+      cut_off_prop = quantile(passing_proportion, 
+                              probs = percentile / 100,
+                              names = FALSE,
+                              na.rm = uncalibrated_as_NA),
+      sample_type = unique(sample_type),
+      curation_method = "based_on_negative_controls") %>% 
+    # This select was just to change the order, not needed:
+    # dplyr::select(tidyselect::any_of(c("cluster",
+    #                                    "sample_type",
+    #                                    "group",
+    #                                    "cut_off_prop",
+    #                                    "cut_off_sum_int",
+    #                                    "type"))) %>% 
     tidyr::nest(., "sample_type_list" = sample_type)
     
   return(cut_offs)
@@ -334,16 +273,6 @@ calculate_cut_offs_with_percentile <- function(summarized_checks,
 #'                min_sn = 9,
 #'                cut_off_basis = c("Spike PBS", "Total PBS"))
 curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
-  
-  # if ("cluster" %in% colnames(cut_offs)) {
-  #   summarized_checks <- dplyr::left_join(summarized_checks, 
-  #                                         cut_offs) %>% 
-  #     dplyr::ungroup(.)
-  # } else {
-  #   summarized_checks <- summarized_checks %>% 
-  #     dplyr::mutate(cut_off_sum_int = cut_offs$cut_off_sum_int,
-  #                   cut_off_prop = cut_offs$cut_off_prop)
-  # }
   
   summarized_checks <- dplyr::left_join(summarized_checks, 
                                         cut_offs) %>% 

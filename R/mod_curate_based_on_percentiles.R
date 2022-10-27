@@ -34,9 +34,10 @@ mod_curate_based_on_percentiles_server <- function(id,
       req(summarized_checks(),
           input$percentile)
       
-      calculate_cut_offs_with_percentile(
+      calculate_cut_offs(
         summarized_checks = summarized_checks(),
-        percentile = input$percentile
+        percentile = input$percentile,
+        uncalibrated_as_NA = FALSE
       )
     })
     

@@ -189,11 +189,11 @@ mod_curate_based_on_controls_server <- function(id,
         # vector. We need a vector here and summarized_checks() is a tibble so I
         # have to use $sample_type instead of [is_specific, "sample_type"]:
         options_specific <- unique(summarized_checks()[is_specific, ]$sample_type)
-        labels_options_specific <- paste(results_data_import$keyword_specific(),
+        
+        # The names is what will be shown in the selection menu:
+        names(options_specific) <- paste(results_data_import$keyword_specific(),
                                          options_specific,
                                          "samples")
-        # The names is what will be shown in the selection menu:
-        names(options_specific) <- labels_options_specific
         
         updateSelectInput(inputId = "cut_off_basis_specific",
                           choices = options_specific)
@@ -202,11 +202,6 @@ mod_curate_based_on_controls_server <- function(id,
           dplyr::filter(group == results_data_import$keyword_total()) %>% 
           dplyr::pull(sample_type) %>% 
           unique()
-        
-        # OR:
-        
-        is_total <- summarized_checks()$group == results_data_import$keyword_total()
-        options_total <- unique(summarized_checks()[is_total, ]$sample_type)
         
         names(options_total) <- paste(results_data_import$keyword_total(),
                                       options_total,
@@ -217,11 +212,7 @@ mod_curate_based_on_controls_server <- function(id,
       }
     })
     
-    observe({
-      print(req(input$cut_off_basis_specific))
-    })
-    
-    cut_offs_percentile <- reactive({
+    cut_offs <- reactive({
       NULL
       req(summarized_checks(),
           input$percentile,
@@ -229,89 +220,47 @@ mod_curate_based_on_controls_server <- function(id,
                   is_truthy(input$cut_off_basis)),
               all(results_data_import$Ig_data() == "Yes",
                   is_truthy(input$cut_off_basis_specific),
-                  is_truthy(input$cut_off_basis_total))),
-          !input$use_mean_SD)
+                  is_truthy(input$cut_off_basis_total))))
       
       if (results_data_import$Ig_data() == "Yes") {
         
-        # Create one function that calculates both total and specific cut-offs?
-        cut_offs_specific <- calculate_cut_offs_with_percentile(
+        cut_offs_specific <- calculate_cut_offs(
           summarized_checks(),
-          input$cut_off_basis_specific,
-          percentile = input$percentile
+          control_sample_types = input$cut_off_basis_specific,
+          group_keyword = results_data_import$keyword_specific(),
+          percentile = input$percentile,
+          use_mean_SD = input$use_mean_SD,
+          SD_factor = input$factor,
+          uncalibrated_as_NA = FALSE
         )
         
-        cut_offs_total <- calculate_cut_offs_with_percentile(
+        cut_offs_total <- calculate_cut_offs(
           summarized_checks(),
-          input$cut_off_basis_total,
-          percentile = input$percentile
+          control_sample_types = input$cut_off_basis_total,
+          group_keyword = results_data_import$keyword_total(),
+          percentile = input$percentile,
+          use_mean_SD = input$use_mean_SD,
+          SD_factor = input$factor,
+          uncalibrated_as_NA = FALSE
         )
         
         dplyr::full_join(cut_offs_specific,
                          cut_offs_total)
         
       } else {
-        calculate_cut_offs_with_percentile(
+        calculate_cut_offs(
           summarized_checks(),
-          input$cut_off_basis,
-          percentile = input$percentile
-        )
-      }
-    })
-    
-    cut_offs_mean_SD <- reactive({
-      NULL
-      req(summarized_checks(),
-          input$percentile,
-          any(all(results_data_import$Ig_data() == "No",
-                  is_truthy(input$cut_off_basis)),
-              all(results_data_import$Ig_data() == "Yes",
-                  is_truthy(input$cut_off_basis_specific),
-                  is_truthy(input$cut_off_basis_total))),
-          input$use_mean_SD)
-      
-      if (results_data_import$Ig_data() == "Yes") {
-        
-        cut_offs_specific <- calculate_cut_offs_with_mean_SD(
-          summarized_checks(),
-          input$cut_off_basis_specific,
+          control_sample_types = input$cut_off_basis_total,
           percentile = input$percentile,
-          SD_factor = input$factor
+          use_mean_SD = input$use_mean_SD,
+          SD_factor = input$factor,
+          uncalibrated_as_NA = FALSE
         )
-        
-        cut_offs_total <- calculate_cut_offs_with_mean_SD(
-          summarized_checks(),
-          input$cut_off_basis_total,
-          percentile = input$percentile,
-          SD_factor = input$factor
-        )
-        
-        dplyr::full_join(cut_offs_specific,
-                         cut_offs_total)
-        
-      } else {
-        calculate_cut_offs_with_mean_SD(
-          summarized_checks(),
-          input$cut_off_basis,
-          percentile = input$percentile,
-          SD_factor = input$factor
-        )
-      }
-      
-    })
-    
-    cut_offs_to_return <- reactive({
-      if(input$use_mean_SD) {
-        req(cut_offs_mean_SD())
-        cut_offs_mean_SD()
-      } else {
-        req(cut_offs_percentile())
-        cut_offs_percentile()
       }
     })
     
     return(
-      cut_offs_to_return
+      cut_offs
     )
  
   })
