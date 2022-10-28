@@ -196,102 +196,27 @@ passing_spectra <- curated_data %>%
                    cut_off_prop,
                    curation_method,
                    analyte_meets_criteria,
-                   failed_criteria))
+                   failed_criteria,
+                   sample_type_list))
+
+passing_spectra
 
 ```
-
-```{r spectra-curation-uncalibrated-as-zero}
-
-min_ppm_deviation = -20
-max_ppm_deviation = 20
-max_ipq = 0.2
-min_sn = 9
-qcs <- c("IPQ", "S/N", "Mass accuracy")
-
-# Can't reuse same criteria_check column for analyte_curation because here only
-# qcs to consider are taken into account!
-
-data_checked <- data_complete %>% 
-  dplyr::mutate(`Mass accuracy` = dplyr::between(mass_accuracy_ppm, 
-                                                 min_ppm_deviation, 
-                                                 max_ppm_deviation),
-                IPQ = isotopic_pattern_quality < max_ipq,
-                `S/N` = sn > min_sn) %>% 
-  # rowwise() allows you to check all the criteria in qcs using c_across per row:
-  dplyr::rowwise() %>% 
-  dplyr::mutate(criteria_check = all(dplyr::c_across(tidyselect::all_of(qcs))) %>% 
-                  tidyr::replace_na(., FALSE)
-                # If we leave in NA's this means that there are less samples 
-                # to base the cut-offs on, since uncalibrated spectra are no
-                # longer interpreted as 0 but instead left out
-  ) %>% 
-  tidyr::pivot_longer(cols = c(`Mass accuracy`, IPQ, `S/N`),
-                      names_to = "criterium",
-                      values_to = "passed") %>% 
-  dplyr::mutate(failed_criteria = ifelse(passed == FALSE, criterium, NA)) %>% 
-  dplyr::select(-c(criterium, passed)) %>% 
-  dplyr::group_by(sample_name, analyte, charge) %>% 
-  dplyr::summarise(failed_criteria = dplyr::if_else(
-    all(is.na(failed_criteria)),
-    "none",
-    comma_and(unique(failed_criteria[!is.na(failed_criteria)]))),
-    across()) %>% 
-  dplyr::distinct() %>% 
-  dplyr::relocate(failed_criteria,
-                  .after = criteria_check)
-
-grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
-
-summarized_checks <- data_checked %>% 
-  # I'm using across() and any_of() because if the data is not Ig data, the
-  # column "group" doesn't exist:
-  dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-  dplyr::summarise(passing_proportion = sum(criteria_check,
-                                            na.rm = TRUE)/dplyr::n(), 
-                   sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE],
-                                       na.rm = TRUE)) %>% 
-  dplyr::ungroup(.)
-
-
-p <- create_cut_off_plot(summarized_checks)
-
-plotly::ggplotly(p, tooltip = "text")
-
-cut_offs <- calculate_cut_offs_with_percentile(summarized_checks = summarized_checks,
-                                               percentile = 95,
-                                               na.rm = FALSE,
-                                               negative_control_sample_types = "PBS")
-
-summarized_checks_with_cut_offs <- dplyr::left_join(summarized_checks, 
-                                                    cut_offs) %>% 
-  dplyr::select(-tidyselect::any_of(c("type", 
-                                      "sample_type_list"))) %>% 
-  dplyr::ungroup(.)
-
-p_cut_offs <- p +
-  ggplot2::geom_vline(data = summarized_checks_with_cut_offs,
-                      ggplot2::aes(xintercept = cut_off_prop,
-                                   text = paste0("Passing proportion cut-off: ",
-                                                 cut_off_prop)),
-                      linetype = "dotted") +
-  ggplot2::geom_hline(data = summarized_checks_with_cut_offs,
-                      ggplot2::aes(yintercept = cut_off_sum_int,
-                                   text = paste0("Sum intensity cut-off: ",
-                                                 cut_off_sum_int)),
-                      linetype = "dotted")
-
-plotly::ggplotly(p_cut_offs, tooltip = "text")
-
-```
-
 
 ## Analyte curation
 
 ```{r analyte-curation}
 
-curated_analytes <- curate_analytes(data = passing_spectra,
-                                    cut_off_percentage = 25,
-                                    bio_group = "sample_type")
+checked_analytes <- check_analyte_quality_criteria(passing_spectra,
+                                                   min_ppm_deviation = min_ppm_deviation,
+                                                   max_ppm_deviation = max_ppm_deviation,
+                                                   max_ipq = max_ipq,
+                                                   min_sn = min_sn,
+                                                   criteria_to_consider = c("IPQ", "S/N", "Mass accuracy"),
+                                                   uncalibrated_as_NA = uncalibrated_as_NA)
+
+curated_analytes <- curate_analytes(checked_analytes,
+                                    cut_off_percentage = 25)
 
 analyte_curated_data <- dplyr::left_join(curated_analytes, 
                                          passing_spectra)

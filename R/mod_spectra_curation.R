@@ -300,6 +300,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
                       condition = input$curation_method == "Percentiles")
     })
     
+    #TODO: hide results box (and button?) if Skip spectra curation is chosen
+    
     cut_offs_based_on_controls <- mod_curate_based_on_controls_server(
       "curate_based_on_controls_ui_1",
       results_data_import = results_data_import,
@@ -379,7 +381,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     cut_offs_to_use_all_clusters <- reactive({
       purrr::map_dfr(r$tab_contents,
                      function(tab) {
-                       # Use try_call not do.call because if
+                       # Use try_call not do.call, because if
                        # input$curation_method == "Skip spectra curation", then
                        # tab_contents$cut_offs_to_use doesn't exist
                         try_call(tab[["cut_offs_to_use"]])
@@ -413,18 +415,21 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
       curated_data() %>% 
         dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
-        dplyr::select(-c(has_passed_spectra_curation, 
-                         reason_for_failure,
-                         failed_criteria,
-                         passing_proportion, 
+        dplyr::select(-c(reason_for_failure,
+                         passing_proportion,
+                         cut_off_sum_int,
                          cut_off_prop,
-                         cut_off_sum_int
+                         curation_method,
+                         analyte_meets_criteria,
+                         failed_criteria,
+                         sample_type_list
                          # Leave 'sum_intensity' for the relative abundance
                          # calculation and leave 'criteria_check' for the
                          # analyte curation.
                          ))
     })
     
+    # TODO: fix which columns are shown in the tables
     
     output$failed_spectra_table <- DT::renderDataTable({
       req(curated_data())
@@ -475,7 +480,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
         dplyr::full_join(req(checked_data()),
                          req(summarized_checks())) %>% 
           dplyr::select(-c(failed_criteria,
-                           passing_proportion
+                           passing_proportion,
+                           analyte_meets_criteria
                            # Leave 'sum_intensity' for the relative abundance
                            # calculation and leave 'criteria_check' for the
                            # analyte curation.

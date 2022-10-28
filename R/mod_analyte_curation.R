@@ -342,9 +342,20 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
         } else {
           data_to_use <- summary()
         }
+        
+        checked_analytes <- check_analyte_quality_criteria(
+          data_to_use,
+          min_ppm_deviation = results_spectra_curation$mass_acc()[1],
+          max_ppm_deviation = results_spectra_curation$mass_acc()[2],
+          max_ipq = results_spectra_curation$ipq(),
+          min_sn = results_spectra_curation$sn(),
+          criteria_to_consider = c("IPQ", "S/N", "Mass accuracy"),
+          uncalibrated_as_NA = FALSE
+        )
+        
         # Perform analyte curation:
         x$curated_analytes <- curate_analytes(
-          data = data_to_use,
+          checked_analytes = checked_analytes,
           cut_off_percentage = input$cut_off)
         
         x$analyte_curated_data <- dplyr::left_join(x$curated_analytes, 

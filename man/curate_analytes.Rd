@@ -4,16 +4,16 @@
 \alias{curate_analytes}
 \title{Perform analyte curation}
 \usage{
-curate_analytes(data, cut_off_percentage, bio_group = NULL)
+curate_analytes(checked_analytes, cut_off_percentage)
 }
 \arguments{
-\item{data}{The result of the \code{\link{curate_spectra}} function, but
-filtered so that only spectra that passed curation remain (see example
-below).}
-
 \item{cut_off_percentage}{The minimum percentage of spectra in which an
 analyte needs to fulfill the quality criteria in order for that analyte to
 pass curation.}
+
+\item{data}{The result of the \code{\link{curate_spectra}} function, but
+filtered so that only spectra that passed curation remain (see example
+below).}
 
 \item{group_to_ignore}{A character string with the keyword for total Ig
 samples or the keyword for specific Ig samples. These samples will not be

@@ -54,7 +54,7 @@
 #'                                            "PBS"),
 #'                 cut_off_percentage = 25)
 #'                 
-curate_analytes <- function(data, cut_off_percentage, bio_group = NULL) {
+curate_analytes <- function(checked_analytes, cut_off_percentage) {
   
   # if (!is.null(group_to_ignore)) { 
   #   if (!(group_to_ignore %in% data$group)) {
@@ -86,9 +86,9 @@ curate_analytes <- function(data, cut_off_percentage, bio_group = NULL) {
   required_columns <- c("cluster", 
                         "charge", 
                         "analyte", 
-                        "criteria_check")
+                        "analyte_meets_criteria")
   
-  missing_columns <- required_columns[!(required_columns %in% colnames(data))] 
+  missing_columns <- required_columns[!(required_columns %in% colnames(checked_analytes))] 
   if(!rlang::is_empty(missing_columns)) {
     rlang::abort(class = "missing_columns",
                  message = paste("The required column(s)",
@@ -96,17 +96,18 @@ curate_analytes <- function(data, cut_off_percentage, bio_group = NULL) {
                                  "are not present in the data.",
                                  "Attention: curate_analytes() can only be used after spectra curation has been performed with curate_spectra()"))
   }
+  # 
+  # if (!is.null(bio_group)) {
+  #   grouped_data <- data %>% 
+  #     dplyr::group_by(cluster, .data[[bio_group]], charge, analyte)
+  # } else {
+  #   grouped_data <- data %>% 
+  #     dplyr::group_by(cluster, charge, analyte) 
+  # }
   
-  if (!is.null(bio_group)) {
-    grouped_data <- data %>% 
-      dplyr::group_by(cluster, .data[[bio_group]], charge, analyte)
-  } else {
-    grouped_data <- data %>% 
-      dplyr::group_by(cluster, charge, analyte) 
-  }
-  
-  curated_analytes <- grouped_data %>% 
-    dplyr::summarise(passing_percentage = sum(criteria_check) / dplyr::n() * 100) %>% 
+  curated_analytes <- checked_analytes %>% 
+    dplyr::group_by(cluster, charge, analyte) %>% 
+    dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>% 
     dplyr::mutate(passed_curation = dplyr::if_else(passing_percentage > cut_off_percentage, 
                                                    TRUE,
                                                    FALSE))
