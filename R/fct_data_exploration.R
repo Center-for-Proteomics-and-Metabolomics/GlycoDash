@@ -208,6 +208,19 @@ firstupper <- function(string) {
 
 #' Title
 #'
+#' @param string 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+firstlower <- function(string) {
+  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
+  return(string)
+}
+
+#' Title
+#'
 #' @param ggplot_object 
 #'
 #' @return

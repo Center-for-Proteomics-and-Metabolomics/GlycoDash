@@ -45,8 +45,8 @@
 #'                             cut_off_basis = c("Spike PBS", "Total PBS"))
 #'
 #' curated_spectra <- example_data$curated_data %>%
-#'    dplyr::filter(passed_spectra_curation == TRUE) %>% 
-#'    dplyr::select(-passed_spectra_curation)
+#'    dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
+#'    dplyr::select(-has_passed_spectra_curation)
 #'
 #' curate_analytes(data = curated_spectra,
 #'                 group_to_ignore = "Total",
@@ -138,8 +138,8 @@ curate_analytes <- function(data, cut_off_percentage, bio_group = NULL) {
 #'                             cut_off_basis = c("Spike PBS", "Total PBS"))
 #'
 #' curated_spectra <- example_data$curated_data %>%
-#'    dplyr::filter(passed_spectra_curation == TRUE) %>% 
-#'    dplyr::select(-passed_spectra_curation)
+#'    dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
+#'    dplyr::select(-has_passed_spectra_curation)
 #'
 #' analyte_list_file <- system.file("extdata",
 #'                                  "Analyte_list.xlsx",
@@ -226,8 +226,8 @@ curate_analytes_with_list <- function(data,
 #'                             cut_off_basis = c("Spike PBS", "Total PBS"))
 #'
 #' curated_spectra <- example_data$curated_data %>%
-#'    dplyr::filter(passed_spectra_curation == TRUE) %>% 
-#'    dplyr::select(-passed_spectra_curation)
+#'    dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
+#'    dplyr::select(-has_passed_spectra_curation)
 #'
 #' curated_analytes <- curate_analytes(
 #'                 data = curated_spectra,
@@ -310,8 +310,8 @@ plot_analyte_curation <- function(curated_analytes,
 #'                             cut_off_basis = c("Spike PBS", "Total PBS"))
 #'
 #' curated_spectra <- example_data$curated_data %>%
-#'    dplyr::filter(passed_spectra_curation == TRUE) %>% 
-#'    dplyr::select(-passed_spectra_curation)
+#'    dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
+#'    dplyr::select(-has_passed_spectra_curation)
 #'
 #' curated_analytes <- curate_analytes(
 #'                 data = curated_spectra,
@@ -378,8 +378,8 @@ Shiny.bindAll(this.api().table().node()); } ')
 #'                             cut_off_basis = c("Spike PBS", "Total PBS"))
 #'
 #' curated_spectra <- example_data$curated_data %>%
-#'    dplyr::filter(passed_spectra_curation == TRUE) %>% 
-#'    dplyr::select(-passed_spectra_curation)
+#'    dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
+#'    dplyr::select(-has_passed_spectra_curation)
 #'
 #' curated_analytes <- curate_analytes(
 #'                 data = curated_spectra,

@@ -399,7 +399,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
     curated_data <- reactive({
       curate_spectra(checked_data = checked_data(),
                      summarized_checks = summarized_checks(),
-                     cut_offs = cut_offs_to_use_all_clusters())
+                     cut_offs = cut_offs_to_use_all_clusters(),
+                     uncalibrated_as_NA = FALSE)
     }) %>% bindEvent(input$button)
     
     observe({
@@ -411,8 +412,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
       req(curated_data())
       
       curated_data() %>% 
-        dplyr::filter(passed_spectra_curation == TRUE) %>% 
-        dplyr::select(-c(passed_spectra_curation, 
+        dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
+        dplyr::select(-c(has_passed_spectra_curation, 
                          reason_for_failure,
                          failed_criteria,
                          passing_proportion, 
@@ -431,7 +432,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       for_table <- curated_data()%>% 
         dplyr::select(1:cut_off_sum_int) %>% 
         dplyr::distinct() %>% 
-        dplyr::filter(passed_spectra_curation == FALSE)
+        dplyr::filter(has_passed_spectra_curation == FALSE)
       
       DT::datatable(for_table,
                     options = list(scrollX = TRUE,
@@ -444,7 +445,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       DT::datatable(curated_data() %>% 
                       dplyr::select(-(passing_proportion:cut_off_sum_int)) %>% 
                       dplyr::distinct() %>% 
-                      dplyr::filter(passed_spectra_curation == FALSE),
+                      dplyr::filter(has_passed_spectra_curation == FALSE),
                     options = list(scrollX = TRUE,
                                    searching = TRUE))
       
@@ -454,8 +455,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
     curated_spectra_plot <- reactive({
       req(curated_data())
       
-      plot_spectra_curation(curated_data(),
-                            results_data_import$Ig_data())
+      plot_spectra_curation_results(curated_data(),
+                                    results_data_import$Ig_data())
       
     })
     
@@ -463,12 +464,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
       req(curated_spectra_plot())
       
       plotly_object <- plotly::ggplotly(curated_spectra_plot(), tooltip = "text")
-      
       plotly_object <- facet_strip_bigger(plotly_object)
-      
-      plotly_object[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
-      
-      plotly_object[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -50
+      plotly_object <- change_axis_title_distance(plotly_object)
       
       return(plotly_object)
     })

@@ -35,8 +35,8 @@ example_data <- curate_spectra(data = example_data,
 
 # Only the spectra that passed curation are kept:
 curated_spectra <- example_data$curated_data \%>\%
-   dplyr::filter(passed_spectra_curation == TRUE) \%>\% 
-   dplyr::select(-passed_spectra_curation)
+   dplyr::filter(has_passed_spectra_curation == TRUE) \%>\% 
+   dplyr::select(-has_passed_spectra_curation)
 
 # Then analyte curation is performed:
 curated_analytes <- curate_analytes(data = curated_spectra,

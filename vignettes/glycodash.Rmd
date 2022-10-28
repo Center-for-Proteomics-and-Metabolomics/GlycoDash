@@ -159,159 +159,44 @@ checked_data <- check_analyte_quality_criteria(data_complete,
 
 summarized_checks <- summarize_spectra_checks(checked_data)
 
-group_keyword = NULL
-control_sample_types = c("PBS", "Visucon")
+group_keyword = "Spike"
+control_sample_types = c("PBS")
 percentile = 95
-use_mean_SD = TRUE
+use_mean_SD = FALSE
 SD_factor = 3
 
+cut_offs <- calculate_cut_offs(summarized_checks,
+                               control_sample_types,
+                               percentile = 95,
+                               uncalibrated_as_NA = uncalibrated_as_NA)
 
-cut_off_basis <- summarized_checks %>% 
-  dplyr::filter(if (!is.null(group_keyword)) group == group_keyword else TRUE) %>% 
-  dplyr::filter(if (!is.null(control_sample_types)) sample_type %in% control_sample_types else TRUE)
+curated_data <- curate_spectra(checked_data = checked_data,
+                               summarized_checks = summarized_checks,
+                               cut_offs = cut_offs,
+                               uncalibrated_as_NA = uncalibrated_as_NA)
 
-grouping_variables <- c("group", "cluster")
+Ig_data <- "Yes"
 
-cut_offs <- cut_off_basis %>%  
-  dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-  dplyr::summarise(
-    cut_off_sum_int = if (use_mean_SD) { 
-      mean_plus_SD(sum_intensity, SD_factor, uncalibrated_as_NA) } else { 
-        quantile(sum_intensity, 
-                 probs = percentile / 100,
-                 names = FALSE,
-                 na.rm = uncalibrated_as_NA) },
-    cut_off_prop = quantile(passing_proportion, 
-                            probs = percentile / 100,
-                            names = FALSE,
-                            na.rm = uncalibrated_as_NA),
-    sample_type = unique(sample_type),
-    type = "based_on_negative_controls") %>% 
-  #dplyr::mutate(type = "based_on_negative_controls") %>% 
-  #dplyr::distinct() %>% 
-  # dplyr::select(tidyselect::any_of(c("cluster",
-  #                                    "sample_type",
-  #                                    "group",
-  #                                    "cut_off_prop",
-  #                                    "cut_off_sum_int",
-  #                                    "type"))) %>%
-  tidyr::nest(., "sample_type_list" = sample_type)
+plot <- plot_spectra_curation_results(curated_data = curated_data,
+                                      Ig_data = Ig_data)
 
-cut_offs_specific3 <- calculate_cut_offs_with_percentile(summarized_checks,
-                                                         control_sample_types = c("PBS", "Visucon"),
-                                                         group_keyword = "Spike",
-                                                         percentile = 95,
-                                                         use_mean_SD = TRUE,
-                                                         SD_factor = 3,
-                                                         na.rm = FALSE)
+plotly_object <- plotly::ggplotly(plot, tooltip = "text")
 
-data_checked <- data_complete %>% 
-  check_each_criterium(., 
-                       min_ppm_deviation,
-                       max_ppm_deviation,
-                       max_ipq,
-                       min_sn) %>% 
-  apply_chosen_criteria(.,
-                        criteria_to_consider,
-                        uncalibrated_as_NA = uncalibrated_as_NA) %>%
-  report_failed_criteria(.,
-                         criteria_to_consider) 
+plotly_object <- facet_strip_bigger(plotly_object)
 
-# Can't reuse same criteria_check column for analyte_curation because here only
-# qcs to consider are taken into account!
+plotly_object <- change_axis_title_distance(plotly_object)
 
-grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
-  
-summarized_checks <- data_checked %>% 
-  # I'm using across() and any_of() because if the data is not Ig data, the
-  # column "group" doesn't exist:
-  dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-  dplyr::summarise(passing_proportion = sum(criteria_check#,
-                                            #na.rm = TRUE if NAs are removed they wont propogate
-  )/dplyr::n(), 
-  sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE]#,
-                      #na.rm = TRUE
-  )) %>% 
-  dplyr::ungroup(.)
+plotly_object
 
-grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
-  
-  summarized_checks <- data_checked %>% 
-    # I'm using across() and any_of() because if the data is not Ig data, the
-    # column "group" doesn't exist:
-    dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-    dplyr::summarise(passing_proportion = sum(analyte_meets_criteria)/dplyr::n(), 
-                     sum_intensity = sum(
-                       absolute_intensity_background_subtracted[analyte_meets_criteria == TRUE]
-                     )) %>% 
-    dplyr::ungroup(.)
-
-
-p <- create_cut_off_plot(summarized_checks)
-
-plotly::ggplotly(p, tooltip = "text")
-
-cut_offs <- calculate_cut_offs_with_percentile(summarized_checks = summarized_checks,
-                                               percentile = 95,
-                                               na.rm = TRUE,
-                                               negative_control_sample_types = "PBS")
-
-summarized_checks_with_cut_offs <- dplyr::left_join(summarized_checks, 
-                                                    cut_offs) %>% 
-  dplyr::select(-tidyselect::any_of(c("type", 
-                                      "sample_type_list"))) %>% 
-  dplyr::ungroup(.)
-
-p_cut_offs <- p +
-          ggplot2::geom_vline(data = summarized_checks_with_cut_offs,
-                              ggplot2::aes(xintercept = cut_off_prop,
-                                           text = paste0("Passing proportion cut-off: ",
-                                                         cut_off_prop)),
-                              linetype = "dotted") +
-          ggplot2::geom_hline(data = summarized_checks_with_cut_offs,
-                              ggplot2::aes(yintercept = cut_off_sum_int,
-                                           text = paste0("Sum intensity cut-off: ",
-                                                         cut_off_sum_int)),
-                              linetype = "dotted")
-
-plotly::ggplotly(p_cut_offs, tooltip = "text")
-
-determine_reason_for_failure <- function(data) {
-  data %>% 
-    dplyr::mutate(reason_for_failure = dplyr::na_if(
-                  dplyr::case_when(
-                  passing_proportion <= cut_off_prop & sum_intensity <= cut_off_sum_int ~ "Proportion of passing analytes and sum intensity below cut-offs",
-                  passing_proportion <= cut_off_prop ~ "Proportion of passing analytes below cut-off",
-                  sum_intensity <= cut_off_sum_int ~ "Sum intensity below cut-off",
-                  is.na(has_passed_spectra_curation) ~ "Empty line in LacyTools summary file",
-                  TRUE ~ "" # will be replaced with NA
-                ),
-                ""))
-}
-
-passing_spectra <- summarized_checks_with_cut_offs %>%
-  # Can't use all() instead of & because all() is not vectorized
-  dplyr::mutate(has_passed_spectra_curation = passing_proportion > cut_off_prop &
-                  sum_intensity > cut_off_sum_int) %>% 
-  determine_reason_for_failure()
-  
-
-curated_data <- dplyr::full_join(passing_spectra, 
-                                 data_checked) %>% 
-    dplyr::relocate(c(has_passed_spectra_curation, reason_for_failure), 
-                    .after = sample_name) %>% 
-    dplyr::relocate(c(criteria_check,
-                      failed_criteria),
-                    .after = charge) %>% 
-    dplyr::relocate(tidyselect::any_of(c("sample_id", "plate_well")),
-                    .after = sample_name)
-
-passing_spectra_data <- curated_data %>% 
-  dplyr::filter(has_passed_spectra_curation == TRUE)
-
-
-# zeros we see here are because all analytes failed the criteria_check,
-# not because of failed calibration
+passing_spectra <- curated_data %>% 
+  dplyr::filter(has_passed_spectra_curation) %>% 
+  dplyr::select(-c(reason_for_failure,
+                   passing_proportion,
+                   cut_off_sum_int,
+                   cut_off_prop,
+                   curation_method,
+                   analyte_meets_criteria,
+                   failed_criteria))
 
 ```
 
@@ -327,44 +212,44 @@ qcs <- c("IPQ", "S/N", "Mass accuracy")
 # qcs to consider are taken into account!
 
 data_checked <- data_complete %>% 
-    dplyr::mutate(`Mass accuracy` = dplyr::between(mass_accuracy_ppm, 
-                                            min_ppm_deviation, 
-                                            max_ppm_deviation),
-                  IPQ = isotopic_pattern_quality < max_ipq,
-                  `S/N` = sn > min_sn) %>% 
-    # rowwise() allows you to check all the criteria in qcs using c_across per row:
-    dplyr::rowwise() %>% 
-    dplyr::mutate(criteria_check = all(dplyr::c_across(tidyselect::all_of(qcs))) %>% 
-                    tidyr::replace_na(., FALSE)
-                  # If we leave in NA's this means that there are less samples 
-                  # to base the cut-offs on, since uncalibrated spectra are no
-                  # longer interpreted as 0 but instead left out
-                    ) %>% 
-    tidyr::pivot_longer(cols = c(`Mass accuracy`, IPQ, `S/N`),
-                        names_to = "criterium",
-                        values_to = "passed") %>% 
-    dplyr::mutate(failed_criteria = ifelse(passed == FALSE, criterium, NA)) %>% 
-    dplyr::select(-c(criterium, passed)) %>% 
-    dplyr::group_by(sample_name, analyte, charge) %>% 
-      dplyr::summarise(failed_criteria = dplyr::if_else(
-        all(is.na(failed_criteria)),
-        "none",
-        comma_and(unique(failed_criteria[!is.na(failed_criteria)]))),
-        across()) %>% 
-      dplyr::distinct() %>% 
+  dplyr::mutate(`Mass accuracy` = dplyr::between(mass_accuracy_ppm, 
+                                                 min_ppm_deviation, 
+                                                 max_ppm_deviation),
+                IPQ = isotopic_pattern_quality < max_ipq,
+                `S/N` = sn > min_sn) %>% 
+  # rowwise() allows you to check all the criteria in qcs using c_across per row:
+  dplyr::rowwise() %>% 
+  dplyr::mutate(criteria_check = all(dplyr::c_across(tidyselect::all_of(qcs))) %>% 
+                  tidyr::replace_na(., FALSE)
+                # If we leave in NA's this means that there are less samples 
+                # to base the cut-offs on, since uncalibrated spectra are no
+                # longer interpreted as 0 but instead left out
+  ) %>% 
+  tidyr::pivot_longer(cols = c(`Mass accuracy`, IPQ, `S/N`),
+                      names_to = "criterium",
+                      values_to = "passed") %>% 
+  dplyr::mutate(failed_criteria = ifelse(passed == FALSE, criterium, NA)) %>% 
+  dplyr::select(-c(criterium, passed)) %>% 
+  dplyr::group_by(sample_name, analyte, charge) %>% 
+  dplyr::summarise(failed_criteria = dplyr::if_else(
+    all(is.na(failed_criteria)),
+    "none",
+    comma_and(unique(failed_criteria[!is.na(failed_criteria)]))),
+    across()) %>% 
+  dplyr::distinct() %>% 
   dplyr::relocate(failed_criteria,
                   .after = criteria_check)
 
 grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
-  
+
 summarized_checks <- data_checked %>% 
   # I'm using across() and any_of() because if the data is not Ig data, the
   # column "group" doesn't exist:
   dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
   dplyr::summarise(passing_proportion = sum(criteria_check,
                                             na.rm = TRUE)/dplyr::n(), 
-  sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE],
-                      na.rm = TRUE)) %>% 
+                   sum_intensity = sum(absolute_intensity_background_subtracted[criteria_check == TRUE],
+                                       na.rm = TRUE)) %>% 
   dplyr::ungroup(.)
 
 
@@ -384,52 +269,18 @@ summarized_checks_with_cut_offs <- dplyr::left_join(summarized_checks,
   dplyr::ungroup(.)
 
 p_cut_offs <- p +
-          ggplot2::geom_vline(data = summarized_checks_with_cut_offs,
-                              ggplot2::aes(xintercept = cut_off_prop,
-                                           text = paste0("Passing proportion cut-off: ",
-                                                         cut_off_prop)),
-                              linetype = "dotted") +
-          ggplot2::geom_hline(data = summarized_checks_with_cut_offs,
-                              ggplot2::aes(yintercept = cut_off_sum_int,
-                                           text = paste0("Sum intensity cut-off: ",
-                                                         cut_off_sum_int)),
-                              linetype = "dotted")
+  ggplot2::geom_vline(data = summarized_checks_with_cut_offs,
+                      ggplot2::aes(xintercept = cut_off_prop,
+                                   text = paste0("Passing proportion cut-off: ",
+                                                 cut_off_prop)),
+                      linetype = "dotted") +
+  ggplot2::geom_hline(data = summarized_checks_with_cut_offs,
+                      ggplot2::aes(yintercept = cut_off_sum_int,
+                                   text = paste0("Sum intensity cut-off: ",
+                                                 cut_off_sum_int)),
+                      linetype = "dotted")
 
 plotly::ggplotly(p_cut_offs, tooltip = "text")
-
-determine_reason_for_failure <- function(data) {
-  data %>% 
-    dplyr::mutate(reason_for_failure = dplyr::na_if(
-                  dplyr::case_when(
-                  passing_proportion <= cut_off_prop & sum_intensity <= cut_off_sum_int ~ "Proportion of passing analytes and sum intensity below cut-offs",
-                  passing_proportion <= cut_off_prop ~ "Proportion of passing analytes below cut-off",
-                  sum_intensity <= cut_off_sum_int ~ "Sum intensity below cut-off",
-                  is.na(has_passed_spectra_curation) ~ "Empty line in LacyTools summary file",
-                  TRUE ~ "" # will be replaced with NA
-                ),
-                ""))
-}
-
-passing_spectra <- summarized_checks_with_cut_offs %>%
-  # Can't use all() instead of & because all() is not vectorized
-  dplyr::mutate(has_passed_spectra_curation = passing_proportion > cut_off_prop &
-                  sum_intensity > cut_off_sum_int) %>% 
-  determine_reason_for_failure()
-  
-
-curated_data <- dplyr::full_join(passing_spectra, 
-                                 data_checked) %>% 
-    dplyr::relocate(c(has_passed_spectra_curation, reason_for_failure), 
-                    .after = sample_name) %>% 
-    dplyr::relocate(c(criteria_check,
-                      failed_criteria),
-                    .after = charge) %>% 
-    dplyr::relocate(tidyselect::any_of(c("sample_id", "plate_well")),
-                    .after = sample_name)
-
-passing_spectra_data <- curated_data %>% 
-  dplyr::filter(has_passed_spectra_curation == TRUE)
-
 
 ```
 
@@ -458,10 +309,10 @@ dataframe_for_table <- prepare_analyte_curation_table(
 charge_columns <- colnames(dataframe_for_table)[-1]
 
 to_check <- dataframe_for_table %>% 
-        dplyr::filter(dplyr::if_any(tidyselect::all_of(charge_columns),
-                                    ~ .x == "Yes")) %>% 
-        dplyr::pull(analyte)
-      
+  dplyr::filter(dplyr::if_any(tidyselect::all_of(charge_columns),
+                              ~ .x == "Yes")) %>% 
+  dplyr::pull(analyte)
+
 to_check_indices <- which(dataframe_for_table$analyte %in% to_check)
 
 ids_to_check <- sapply(paste0("checkbox", charge_columns), 
@@ -500,7 +351,7 @@ to_plot <- analyte_curated_data %>%
 
 ggplot2::ggplot(to_plot,
                 ggplot2::aes(x = analyte,
-                    fill = failed_criteria)) +
+                             fill = failed_criteria)) +
   ggplot2::geom_bar(position = "fill") +
   ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
                               name = "Proportion of spectra (%)") +

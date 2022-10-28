@@ -4,12 +4,12 @@
 \alias{curate_spectra}
 \title{Perform spectra curation}
 \usage{
-curate_spectra(checked_data, summarized_checks, cut_offs)
+curate_spectra(checked_data, summarized_checks, cut_offs, uncalibrated_as_NA)
 }
 \value{
 The function returns the original dataframe given as the data
   argument, but with two additional columns. One column is named
-  "passed_spectra_curation"; This logical column is \code{TRUE} for spectra that have
+  "has_passed_spectra_curation"; This logical column is \code{TRUE} for spectra that have
   passed curation and \code{FALSE} for spectra that did not pass curation.
   The other column is named "analyte_meets_criteria" and is \code{TRUE} for analyte +
   sample combinations that passed all three quality criteria checks, whereas

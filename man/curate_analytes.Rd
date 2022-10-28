@@ -56,8 +56,8 @@ example_data <- curate_spectra(data = example_data,
                             cut_off_basis = c("Spike PBS", "Total PBS"))
 
 curated_spectra <- example_data$curated_data \%>\%
-   dplyr::filter(passed_spectra_curation == TRUE) \%>\% 
-   dplyr::select(-passed_spectra_curation)
+   dplyr::filter(has_passed_spectra_curation == TRUE) \%>\% 
+   dplyr::select(-has_passed_spectra_curation)
 
 curate_analytes(data = curated_spectra,
                 group_to_ignore = "Total",

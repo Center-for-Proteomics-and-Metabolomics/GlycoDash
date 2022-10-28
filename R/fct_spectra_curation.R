@@ -142,30 +142,16 @@ summarize_spectra_checks <- function(data_checked) {
   
   # Alternative name?: calculate_sum_intensities_and_analyte_passing_percentage
   
-  # Remove because not relevant in dashboard?
-  
-  # required_columns <- list("sample_type",
-  #                          "sample_name",
-  #                          "cluster",
-  #                          "analyte_meets_criteria")
-  # 
-  # if(any(!(required_columns %in% colnames(data_checked)))) {
-  #   missing_columns <- required_columns[!(required_columns %in% colnames(data_checked))]
-  #   stop(paste0("The data doesn't contain the required column(s) ",
-  #               paste0(missing_columns,
-  #                      collapse = " and "),
-  #               "."))
-  # }
-  
   grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
   
   summarized_checks <- data_checked %>% 
+    dplyr::mutate(intensity_times_fraction = absolute_intensity_background_subtracted * fraction) %>% 
     # I'm using across() and any_of() because if the data is not Ig data, the
     # column "group" doesn't exist:
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
     dplyr::summarise(passing_proportion = sum(analyte_meets_criteria)/dplyr::n(), 
                      sum_intensity = sum(
-                       absolute_intensity_background_subtracted[analyte_meets_criteria == TRUE]
+                       intensity_times_fraction[analyte_meets_criteria == TRUE]
                      )) %>% 
     dplyr::ungroup(.)
   
@@ -225,13 +211,6 @@ calculate_cut_offs <- function(summarized_checks,
                               na.rm = uncalibrated_as_NA),
       sample_type = unique(sample_type),
       curation_method = "based_on_negative_controls") %>% 
-    # This select was just to change the order, not needed:
-    # dplyr::select(tidyselect::any_of(c("cluster",
-    #                                    "sample_type",
-    #                                    "group",
-    #                                    "cut_off_prop",
-    #                                    "cut_off_sum_int",
-    #                                    "type"))) %>% 
     tidyr::nest(., "sample_type_list" = sample_type)
     
   return(cut_offs)
@@ -256,7 +235,7 @@ calculate_cut_offs <- function(summarized_checks,
 #'
 #' @return The function returns the original dataframe given as the data
 #'   argument, but with two additional columns. One column is named
-#'   "passed_spectra_curation"; This logical column is \code{TRUE} for spectra that have
+#'   "has_passed_spectra_curation"; This logical column is \code{TRUE} for spectra that have
 #'   passed curation and \code{FALSE} for spectra that did not pass curation.
 #'   The other column is named "analyte_meets_criteria" and is \code{TRUE} for analyte +
 #'   sample combinations that passed all three quality criteria checks, whereas
@@ -272,140 +251,70 @@ calculate_cut_offs <- function(summarized_checks,
 #'                max_ipq = 0.2,
 #'                min_sn = 9,
 #'                cut_off_basis = c("Spike PBS", "Total PBS"))
-curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
+curate_spectra <- function(checked_data, summarized_checks, cut_offs,
+                           uncalibrated_as_NA) {
   
-  summarized_checks <- dplyr::left_join(summarized_checks, 
-                                        cut_offs) %>% 
+  summarized_checks_with_cut_offs <- dplyr::left_join(summarized_checks, 
+                                                      cut_offs) %>% 
     dplyr::ungroup(.)
   
-  passing_spectra <- summarized_checks %>% 
-    dplyr::mutate(passed_spectra_curation = ifelse((passing_proportion > cut_off_prop) &
-                                                     (sum_intensity > cut_off_sum_int),
-                                                   TRUE,
-                                                   FALSE),
-                  reason_for_failure = dplyr::case_when(
-                    passing_proportion < cut_off_prop & sum_intensity < cut_off_sum_int ~ "Proportion of passing analytes and sum intensity below cut-offs",
-                    passing_proportion < cut_off_prop ~ "Proportion of passing analytes below cut-off",
-                    sum_intensity < cut_off_sum_int ~ "Sum intensity below cut-off",
-                    TRUE ~ ""
-                  )) %>%
-    dplyr::select(-tidyselect::any_of(c("type", 
-                                        "sample_type_list")))
+  curated_spectra <- summarized_checks_with_cut_offs %>% 
+    # Can't use all() instead of & because all() is not vectorized
+    dplyr::mutate(has_passed_spectra_curation = passing_proportion > cut_off_prop &
+                    sum_intensity > cut_off_sum_int) %>% 
+    determine_reason_for_failure()
   
-  curated_data <- dplyr::full_join(passing_spectra, 
+  curated_data <- dplyr::full_join(curated_spectra, 
                                    checked_data) %>% 
-    dplyr::mutate(reason_for_failure = dplyr::case_when(
-      is.na(absolute_intensity_background_subtracted) &
-        is.na(mass_accuracy_ppm) &
-        is.na(isotopic_pattern_quality) &
-        is.na(sn) ~ "Empty line in LacyTools summary file",
-      TRUE ~ reason_for_failure
-    )) %>% 
-    dplyr::relocate(c(passed_spectra_curation, reason_for_failure), 
+    dplyr::relocate(c(has_passed_spectra_curation, reason_for_failure), 
                     .after = sample_name) %>% 
     dplyr::relocate(c(analyte_meets_criteria,
                       failed_criteria),
                     .after = charge) %>% 
+    # any_of() because if sample_list was used to add sample ID's the plate_well
+    # column doesn't exist:
     dplyr::relocate(tidyselect::any_of(c("sample_id", "plate_well")),
                     .after = sample_name)
   
-  no_NAs <- curated_data %>% 
-    dplyr::filter(dplyr::if_all(.cols = c(mass_accuracy_ppm,
-                                          isotopic_pattern_quality,
-                                          sn),
-                                .fns = ~ !is.na(.x)))
+  if (!uncalibrated_as_NA) {
+    curated_data <- curated_data %>% 
+      dplyr::mutate(reason_for_failure = ifelse(
+        is.na(absolute_intensity_background_subtracted) &
+          is.na(mass_accuracy_ppm) &
+          is.na(isotopic_pattern_quality) &
+          is.na(sn), 
+        "Calibration failed.", 
+        reason_for_failure
+      ))
+  }
   
-  if (all(no_NAs$passed_spectra_curation == FALSE)) {
-    warning("None of the spectra passed curation.")
-  } else {
-    if (all(no_NAs$passed_spectra_curation == TRUE)) {
-      warning("All spectra passed curation.")
-    }
+  without_uncalibrated <- curated_data %>% 
+    dplyr::filter(reason_for_failure != "Calibration failed." | is.na(reason_for_failure))
+  
+  if (all(!without_uncalibrated$has_passed_spectra_curation)) {
+    rlang::warn("None of the spectra passed curation.")
+  } else if (all(without_uncalibrated$has_passed_spectra_curation)) {
+    rlang::warn("All spectra passed curation.")
   }
   
   return(curated_data)
 }
 
-# check_spectra <- function(data, min_ppm_deviation, max_ppm_deviation, 
-#                             max_ipq, min_sn, qcs_to_consider) {
-#   checked_data <- check_analyte_quality_criteria(data = data, 
-#                                     min_ppm_deviation = min_ppm_deviation,
-#                                     max_ppm_deviation = max_ppm_deviation,
-#                                     max_ipq = max_ipq,
-#                                     min_sn = min_sn,
-#                                     qcs_to_consider = qcs_to_consider)
-#   spectra_check <- summarize_spectra_checks(checked_data)
-#     
-#   return(spectra_check)
-# }
-
-# calculate_cut_offs_per_type <- function(checked_spectra) {
-#   
-#   grouping_variables <- c("group", "cluster", "sample_type")
-#   
-#   cut_offs <- checked_spectra %>%  
-#     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-#     dplyr::summarise(av_prop = mean(passing_proportion, na.rm = FALSE),
-#                      sd_prop = sd_p(passing_proportion, na.rm = FALSE),
-#                      cut_off_prop = av_prop + (3 * sd_prop),
-#                      av_sum_int = mean(sum_intensity, na.rm = FALSE),
-#                      sd_sum_int = sd_p(sum_intensity, na.rm = FALSE),
-#                      cut_off_sum_int = av_sum_int + (3 * sd_sum_int))
-#   return(cut_offs)
-# }
-
-filter_cut_off_basis <- function(cut_off_basis, data) {
+determine_reason_for_failure <- function(data) {
+  with_reasons <- data %>% 
+    dplyr::mutate(reason_for_failure = dplyr::na_if(
+      dplyr::case_when(
+        passing_proportion <= cut_off_prop & sum_intensity <= cut_off_sum_int ~ "Proportion of passing analytes and sum intensity below cut-offs.",
+        passing_proportion <= cut_off_prop ~ "Proportion of passing analytes below cut-off.",
+        sum_intensity <= cut_off_sum_int ~ "Sum intensity below cut-off.",
+        # When uncalibrated_as_NA is TRUE:
+        is.na(has_passed_spectra_curation) ~ "Calibration failed.",
+        TRUE ~ "" # Cannot be NA, because case_When requires that all possible 
+        # values are of the same type (in this case string)
+      ),
+      "")) # Replace with NA outside of the case_When call
   
-  sample_types_to_filter <- stringr::str_extract(
-    string = cut_off_basis,
-    pattern = paste0(unique(data$sample_type),
-                     collapse = "|")) %>% 
-    na.omit(.)
-  
-  # if (any(!(sample_types_to_filter %in% data$sample_type))) {
-  #   stop("One or more of the sample types in cut_off_basis are not present in the data.")
-  # }
-  
-  if ("group" %in% colnames(data)) {
-    
-    groups_to_filter <- stringr::str_extract(
-      string = cut_off_basis,
-      pattern = paste0(unique(data$group),
-                       collapse = "|")) %>% 
-      na.omit(.)
-    
-    if (any(!(groups_to_filter %in% data$group))) {
-      stop("One or more of the groups in cut_off_basis are not present in the data.")
-    } 
-    
-    if (!rlang::is_empty(groups_to_filter)) {
-      
-      cut_off_basis_samples <- purrr::map2_dfr(
-        groups_to_filter,
-        sample_types_to_filter,
-        function(group_to_filter, sample_type_to_filter) {
-          data %>% 
-            dplyr::filter(group == group_to_filter & sample_type == sample_type_to_filter)
-        })
-      
-    } else {
-      
-      cut_off_basis_samples <- purrr::map_dfr(sample_types_to_filter,
-                                              function(sample_type_to_filter) {
-                                                data %>% 
-                                                  dplyr::filter(sample_type == sample_type_to_filter)
-                                              })
-    }
-  } else {
-    
-    cut_off_basis_samples <- purrr::map_dfr(sample_types_to_filter,
-                                            function(sample_type_to_filter) {
-                                              data %>% 
-                                                dplyr::filter(sample_type == sample_type_to_filter)
-                                            })
-  }
-  
-  return(cut_off_basis_samples)
+  return(with_reasons)
 }
 
 #' Create a plot to show the cut_offs for spectra curation
@@ -485,70 +394,22 @@ create_cut_off_plot <- function(spectra_check) {
 #' @export
 #'
 #' @examples
-plot_spectra_curation <- function(curated_data,
-                                  Ig_data) {
+plot_spectra_curation_results <- function(curated_data,
+                                          Ig_data) {
   
   n_colors <- length(unique(curated_data$reason_for_failure)) - 1
   my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
                   "#3498DB")
-  
-  # Create nicer labels for reason_fo_failure to use in plot legend:
-  reasons <- unique(curated_data$reason_for_failure)
-  # Convert first letter to lower case:
-  substr(reasons, 1, 1) <- tolower(substr(reasons, 1, 1))
-  # Paste "No, " before the reason:
-  reason_labels <- paste("No,", reasons) %>% 
-    # Set the names to the 'old' values in the data, so that this named vector can
-    # be used to recode reason_for_failure with nice labels that will appear in
-    # the plot legend. 
-    rlang::set_names(., nm = unique(
-      # The empty value "" needs to be replaced by "none" because a name cannot be
-      # empty:
-      replace(curated_data$reason_for_failure,
-              curated_data$reason_for_failure == "",
-              "none")
-    ))
-  reason_labels[reason_labels == "No, "] <- "Yes"
   
   my_data <- curated_data %>% 
     dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
                                                        "sample_type", 
                                                        "cluster", 
                                                        "sample_name", 
-                                                       "passed_spectra_curation",
+                                                       "has_passed_spectra_curation",
                                                        "reason_for_failure")))) %>% 
-    dplyr::mutate(
-      `Passed curation` = dplyr::case_when(
-        passed_spectra_curation == "TRUE" ~ "Yes",
-        passed_spectra_curation == "FALSE" ~ "No"
-      ),
-      # Replace the empty values "" in reason_for_failure with "none"  to match
-      # the named vector reason_labels:
-      reason_for_failure = replace(reason_for_failure,
-                                   reason_for_failure == "",
-                                   "none"),
-      # Create a variable with nice name and labels to display in plot:
-      `Passed curation?` = dplyr::recode(reason_for_failure, 
-                                         # recode() cannot take named vectors as
-                                         # an argument, so use !!! to 'unlist' it
-                                         !!!reason_labels)
-    ) %>% 
-    dplyr::group_by(dplyr::across(tidyselect::any_of(c("group",
-                                                       "cluster",
-                                                       "sample_type",
-                                                       "reason_for_failure")))) %>% 
-    dplyr::mutate(
-      number_true = length(passed_spectra_curation[passed_spectra_curation == "TRUE"]),
-      number_false = length(passed_spectra_curation[passed_spectra_curation == "FALSE"])) %>% 
-    dplyr::ungroup(reason_for_failure) %>% 
-    dplyr::mutate(
-      number = dplyr::case_when(
-        passed_spectra_curation == "TRUE" ~ number_true,
-        passed_spectra_curation == "FALSE" ~ number_false,
-        TRUE ~ as.integer(NA)
-      ),
-      percentage = scales::label_percent(accuracy = 0.01)(number / dplyr::n())
-    )
+    create_nicer_reason_labels() %>%
+    calculate_number_and_percentage_per_reason()
   
   plot <- my_data %>% 
     ggplot2::ggplot() +
@@ -579,4 +440,47 @@ plot_spectra_curation <- function(curated_data,
   }
   
   return(plot)
+}
+
+create_nicer_reason_labels <- function(curated_data) {
+  
+  reasons <- unique(curated_data$reason_for_failure)
+  reason_labels <- firstlower(reasons) %>% 
+    tidyr::replace_na(., "Yes")
+  
+  reason_labels[reason_labels != "Yes"] <- paste("No,", reason_labels[reason_labels != "Yes"])
+  
+  # Set the names to the 'old' values in the data, so that this named vector can
+  # be used to recode reason_for_failure with nice:
+  names(reason_labels) <- paste(reasons) # paste() converts NA to "NA"
+  
+  curated_data %>% 
+    dplyr::mutate(
+      `Passed curation?` = dplyr::recode(
+        paste(reason_for_failure), # to convert NA to "NA"
+        !!!reason_labels
+      ) # recode() can't take a named vector as an argument, use !!! to 'unlist' it
+    )
+}
+
+calculate_number_and_percentage_per_reason <- function(curated_data) {
+  
+  curated_data %>% 
+    dplyr::group_by(dplyr::across(tidyselect::any_of(c("group",
+                                                       "cluster",
+                                                       "sample_type",
+                                                       "reason_for_failure")))) %>% 
+    dplyr::mutate(
+      number_true = sum(has_passed_spectra_curation),
+      number_false = sum(!has_passed_spectra_curation)) %>% 
+    dplyr::ungroup(reason_for_failure) %>% # so that n() can be used later
+    dplyr::mutate(
+      number = dplyr::case_when(
+        has_passed_spectra_curation ~ number_true,
+        !has_passed_spectra_curation ~ number_false,
+        TRUE ~ as.integer(NA)
+      ),
+      percentage = scales::label_percent(accuracy = 0.01)(number / dplyr::n())
+    )
+  
 }

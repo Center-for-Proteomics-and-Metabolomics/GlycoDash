@@ -9,7 +9,7 @@ test_that("curate_analytes() returns a dataframe with one row for each analyte +
                                  cut_off_basis = "PBS")
   
   curated_spectra <- example_data$curated_data %>%
-    dplyr::filter(passed_spectra_curation == TRUE)
+    dplyr::filter(has_passed_spectra_curation == TRUE)
   
   curated_analytes <- curate_analytes(data = curated_spectra,
                                       group_to_ignore = "Total",
