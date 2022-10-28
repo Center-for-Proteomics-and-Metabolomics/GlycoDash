@@ -94,29 +94,6 @@ mod_clusters_server <- function(id, summary){
     })
     
     
-    cluster_keywords_overlap <- reactive({
-      req(keywords())
-      req(all(keywords() != ""))
-      
-      # Convert to function:
-      if (length(keywords()) > 1) {
-        overlap <- purrr::imap_lgl(
-          keywords(),
-          function(keyword, i) {
-            other_keywords <- unlist(keywords())[-i]
-            any(purrr::map_lgl(other_keywords,
-                               function(other_keyword) {
-                                 stringr::str_detect(string = other_keyword,
-                                                     pattern = stringr::fixed(keyword))
-                               }))
-          })
-      } else {
-        return(FALSE)
-      }
-      return(any(overlap))
-    })
-    
-    
     # Display feedback based on the checks that were performed:
     observe({
       req(!is.null(cluster_keywords_found()))
@@ -135,17 +112,7 @@ mod_clusters_server <- function(id, summary){
                                      "Please choose a different keyword.")
                       )
                     })
-      } else {
-        if (is_truthy(cluster_keywords_overlap())) {
-          purrr::map(cluster_inputIds(),
-                     ~ shinyFeedback::feedbackDanger(
-                       .x,
-                       show = TRUE,
-                       text = paste("Overlap between the cluster keywords is not allowed,",
-                                    "as each analyte should match only one cluster keyword.")
-                     ))
-        }
-      } 
+      }
     })
     
 
@@ -155,8 +122,7 @@ mod_clusters_server <- function(id, summary){
       shinyjs::toggleState("button",
                            condition = all(
                              is_truthy(summary()),
-                             is_truthy(cluster_keywords_found()),
-                             is_truthy(isFALSE(cluster_keywords_overlap()))
+                             is_truthy(cluster_keywords_found())
                            ))
     })
     
@@ -187,25 +153,6 @@ mod_clusters_server <- function(id, summary){
           NULL
         })
     }) %>% bindEvent(input$button)
-    
-    # with_clusters <- reactive({
-    #   tryCatch(
-    #     expr = {
-    #       define_clusters(data = summary(),
-    #                       cluster_keywords = keywords())
-    #     },
-    #     unmatched_analytes = function(c) {
-    #       showNotification(c$message,
-    #                        type = "error",
-    #                        duration = NULL)
-    #       NULL
-    #     })
-    # }) %>% bindEvent(input$button)
-    
-    # observe({
-    #   showNotification("The clusters have been added to the data.",
-    #                    type = "message")
-    # }) %>% bindEvent(with_clusters())
     
     return(list(
       data = reactive({ r$with_clusters }),

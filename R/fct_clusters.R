@@ -20,11 +20,18 @@
 #'                 clusters_regex = "IgGI1")
 define_clusters <- function(data, cluster_keywords) {
   
+  # By ordering from longest to shortest keyword, the longest matching keyword
+  # will be preferred if an analyte matches more than one keyword. This can
+  # occur when one keyword is a substring of another keyword (e.g. IgGI and
+  # IgGII):
+  ordered_keywords <- cluster_keywords[order(nchar(cluster_keywords), 
+                                             decreasing = TRUE)]
+  
   clusters <- data %>% 
     tidyr::extract(col = analyte,
                    into = "cluster",
                    regex = paste0("(",
-                                  paste0(cluster_keywords, 
+                                  paste0(ordered_keywords, 
                                          collapse = "|"),
                                   ")"),
                    remove = FALSE)
