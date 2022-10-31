@@ -24,8 +24,8 @@ mod_analyte_curation_ui <- function(id){
             status = "primary",
             selectInput(ns("method"), 
                         "Choose method for analyte curation:",
-                        choices = c("Supply an analyte list", 
-                                    "Curate analytes based on data")),
+                        choices = c("Curate analytes based on data",
+                                    "Supply an analyte list")),
             tags$style(
               HTML(paste0("#",
                           ns("analyte_list_div"),
