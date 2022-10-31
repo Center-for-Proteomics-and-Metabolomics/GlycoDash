@@ -14,8 +14,8 @@ mod_curate_based_on_controls_ui <- function(id){
                    "Choose which spectra to use as negative controls:",
                    choices = c(""),
                    selected = NULL,
-                   multiple = TRUE,
-                   options = list(placeholder = "Select which samples to use as a basis for cut-off.")
+                   multiple = TRUE#,
+                   #options = list(placeholder = "Select which samples to use as a basis for cut-off.")
     ) %>% 
       bsplus::bs_embed_popover(
         title = "Explanation",
@@ -37,80 +37,87 @@ mod_curate_based_on_controls_ui <- function(id){
         placement = "right",
         html = "true"),
     div(id = ns("cut_off_basis_Ig_data"),
-        shinydashboardPlus::box(
-          title = "Specific Ig samples",
+        # shinydashboardPlus::box(
+        #   title = "Specific Ig samples",
+        #   width = 6,
+        #   status = "primary",
+        #   solidHeader = TRUE,
+        column(
           width = 6,
-          status = "primary",
-          solidHeader = TRUE,
           selectInput(ns("cut_off_basis_specific"),
-                         "Choose which specific Ig spectra to use as negative controls:",
+                      "Choose which specific Ig spectra should be used as negative controls:",
+                      choices = c(""),
+                      selected = NULL,
+                      multiple = TRUE#,
+                      #options = list(placeholder = "select which samples to use as a basis for cut-off")
+          ) #%>%
+          #   bsplus::bs_embed_popover(
+          #     title = "Explanation",
+          #     content = HTML(paste0(
+          #       tags$p(paste(
+          #         "Choose a group of samples that should not pass curation",
+          #         "(e.g. Specific Ig negative control samples)."
+          #       )),
+          #       tags$p(paste(
+          #         "The average proportion of passing analytes and average sum intensity",
+          #         "in this group of samples will be used as cut-off values;"
+          #       )),
+          #       tags$p(paste(
+          #         "All spectra that have a proportion of passing analytes and a sum intensity",
+          #         "higher than these cut-off values will pass spectra curation."
+          #       ))
+          #     )),
+          #     trigger = "hover",
+          #     placement = "right",
+          #     html = "true")
+        ),
+        # ),
+        # shinydashboardPlus::box(
+        #   title = "Total Ig samples",
+        #   width = 6,
+        #   status = "primary",
+        #   solidHeader = TRUE,
+        column(
+          width = 6,
+          selectizeInput(ns("cut_off_basis_total"),
+                         "Choose which total Ig spectra should be used as negative controls:",
                          choices = c(""),
                          selected = NULL,
                          multiple = TRUE#,
                          #options = list(placeholder = "select which samples to use as a basis for cut-off")
-          ) %>% 
-            bsplus::bs_embed_popover(
-              title = "Explanation",
-              content = HTML(paste0(
-                tags$p(paste(
-                  "Choose a group of samples that should not pass curation",
-                  "(e.g. Specific Ig negative control samples)."
-                )),
-                tags$p(paste(
-                  "The average proportion of passing analytes and average sum intensity",
-                  "in this group of samples will be used as cut-off values;"
-                )),
-                tags$p(paste(
-                  "All spectra that have a proportion of passing analytes and a sum intensity",
-                  "higher than these cut-off values will pass spectra curation."
-                ))
-              )),
-              trigger = "hover",
-              placement = "right",
-              html = "true")
-        ),
-        shinydashboardPlus::box(
-          title = "Total Ig samples",
-          width = 6,
-          status = "primary",
-          solidHeader = TRUE,
-          selectizeInput(ns("cut_off_basis_total"),
-                         "Choose which total Ig spectra to use as negative controls:",
-                         choices = c(""),
-                         selected = NULL,
-                         multiple = TRUE,
-                         options = list(placeholder = "select which samples to use as a basis for cut-off")
-          ) %>% 
-            bsplus::bs_embed_popover(
-              title = "Explanation",
-              content = HTML(paste0(
-                tags$p(paste(
-                  "Choose a group of samples that should not pass curation",
-                  "(e.g. Specific Ig negative control samples)."
-                )),
-                tags$p(paste(
-                  "The average proportion of passing analytes and average sum intensity",
-                  "in this group of samples will be used as cut-off values;"
-                )),
-                tags$p(paste(
-                  "All spectra that have a proportion of passing analytes and a sum intensity",
-                  "higher than these cut-off values will pass spectra curation."
-                ))
-              )),
-              trigger = "hover",
-              placement = "right",
-              html = "true")
-        )
+          ) #%>% 
+        #     bsplus::bs_embed_popover(
+        #       title = "Explanation",
+        #       content = HTML(paste0(
+        #         tags$p(paste(
+        #           "Choose a group of samples that should not pass curation",
+        #           "(e.g. Specific Ig negative control samples)."
+        #         )),
+        #         tags$p(paste(
+        #           "The average proportion of passing analytes and average sum intensity",
+        #           "in this group of samples will be used as cut-off values;"
+        #         )),
+        #         tags$p(paste(
+        #           "All spectra that have a proportion of passing analytes and a sum intensity",
+        #           "higher than these cut-off values will pass spectra curation."
+        #         ))
+        #       )),
+        #       trigger = "hover",
+        #       placement = "right",
+        #       html = "true")
+        #   # )
+        # )
+    )
     ),
     numericInput(ns("percentile"),
-                 "At what percentile should the cut-off be set?",
+                 "At what percentile of the negative controls should the cut-offs be set?",
                  value = 95,
                  min = 0,
                  max = 100,
                  step = 1),
     shinyWidgets::awesomeCheckbox(ns("show_advanced_settings"),
-                                 "Show advanced settings.",
-                                 status = "primary"),
+                                  "Show advanced settings.",
+                                  status = "primary"),
     div(id = ns("advanced_settings"),
         shinyWidgets::materialSwitch(
           ns("use_mean_SD"),
@@ -122,13 +129,13 @@ mod_curate_based_on_controls_ui <- function(id){
           status = "primary"),
         div(id = ns("mean_sd_settings"),
             tags$p(icon("warning"), "Using this method at low sample sizes can", 
-                 "lead to inflated cut-offs."),
+                   "lead to inflated cut-offs."),
             tags$p(paste(
               "The cut-off for the percentage of passing analytes will still be", 
               "calculated using the percentile chosen above."),
               br(),
               paste("The cut-off for the sum intensity will be calculated using", 
-              "the following formula:")),
+                    "the following formula:")),
             tags$p("cut-off", 
                    tags$sub("sum intensity"), 
                    "= mean", 
@@ -176,10 +183,12 @@ mod_curate_based_on_controls_server <- function(id,
     observe({
       req(summarized_checks())
       if (results_data_import$Ig_data() == "No") {
-        options <- paste(unique(summarized_checks()$sample_type), "samples")
+        options <- unique(summarized_checks()$sample_type)
+        
+        names(options) <- paste(options, "samples")
         
         updateSelectizeInput(inputId = "cut_off_basis",
-                             choices = c("", options))
+                             choices = options)
         
       } else {
         
@@ -250,7 +259,7 @@ mod_curate_based_on_controls_server <- function(id,
       } else {
         calculate_cut_offs(
           summarized_checks(),
-          control_sample_types = input$cut_off_basis_total,
+          control_sample_types = input$cut_off_basis,
           percentile = input$percentile,
           use_mean_SD = input$use_mean_SD,
           SD_factor = input$factor,

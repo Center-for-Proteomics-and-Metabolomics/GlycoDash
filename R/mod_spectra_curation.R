@@ -17,6 +17,100 @@ mod_spectra_curation_ui <- function(id){
       ),
       fluidRow(
         column(
+          width = 4,
+          div(
+            id = ns("qc"),
+            tags$style(HTML(paste0(
+              "#",
+              ns("box_header2"),
+              " .awesome-checkbox {padding-top: 7px}",
+              "#",
+              ns("box_header2"),
+              " .popover {max-width: 400px !important; color: #333}",
+              "#",
+              ns("qc"),
+              " .box-title {width: 100%}",
+              "#",
+              ns("box_header2"),
+              " .fa {float: right; margin-right: 5px; font-size: 18px}",
+              "#",
+              ns("box_header2"),
+              " .direct-chat-contacts {right: 0; background: #222d32!important}",
+              "#",
+              ns("box_header2"),
+              " .btn {float: right; border-width: 0px; margin-right: 2px}",
+              "#",
+              ns("qc"),
+              " .dropdown {display: inline-block; float: right;}",
+              "#",
+              ns("box_header2"),
+              " .dropdown-menu {background: #333; right: -33px; left: auto; top: 28px;}"
+            ))),
+            shinydashboard::box(
+              title = div(
+                "Choose analyte quality criteria",
+                id = ns("box_header2"),
+                icon("info-circle",
+                     class = "ml",
+                     #tabindex = "0" #only needed for trigger = "focus"
+                ) %>% 
+                  bsplus::bs_embed_popover(
+                    title = "Explanation",
+                    content = HTML(paste0(
+                      tags$p(paste(
+                        "The analyte quality criteria are used to curate the analytes",
+                        "within each spectrum. To pass, an analyte needs to meet all",
+                        "three criteria (for the mass accuracy, for the isotopic pattern", 
+                        "quality (IPQ) and for the signal-to-noise ratio (S/N))."
+                      )),
+                      tags$p(paste(
+                        "Within each spectrum, the sum intensity of all passing",
+                        "analytes as well as the percentage of passing analytes",
+                        "are calculated."
+                      ))
+                    )),
+                    trigger = "hover",
+                    placement = "right",
+                    html = "true",
+                    container = "body"),
+                shinyWidgets::dropdownButton(
+                  shinyWidgets::awesomeCheckboxGroup(
+                    ns("qc_to_include"),
+                    "Which analyte quality criteria should be taken into account during spectra curation?",
+                    choices = c("Mass accuracy",
+                                "IPQ",
+                                "S/N"),
+                    selected = c("Mass accuracy",
+                                 "IPQ",
+                                 "S/N"),
+                    status = "primary"),
+                  icon = icon("gears",
+                              class = "ml"),
+                  tooltip = shinyWidgets::tooltipOptions(placement = "top",
+                                                         title = "Advanced settings"),
+                  width = "250px",
+                  size = "xs"
+                )),
+              status = "primary",
+              solidHeader = TRUE,
+              width = NULL,
+              sliderInput(ns("mass_accuracy"), 
+                          "Acceptable mass accuracy range:",
+                          min = -50,
+                          max = 50,
+                          value = c(-20, 20)
+              ),
+              numericInput(ns("ipq"),
+                           "Max. IPQ value:",
+                           value = 0.2,
+                           step = 0.1),
+              numericInput(ns("sn"),
+                           "Min. S/N ratio:",
+                           value = 9)
+            )
+          )
+        ),
+        column(
           width = 8,
           tags$style(HTML(paste0("#",
                                  ns("popover_cut_off"),
@@ -51,8 +145,42 @@ mod_spectra_curation_ui <- function(id){
             ))
             ),
             shinydashboard::box(
-              title = div("Spectra curation cut-offs",
+              title = div("Calculate spectra curation cut-offs",
                           id = ns("box_header"),
+                          icon("info-circle",
+                               class = "ml",
+                               #tabindex = "0" #only needed for trigger = "focus"
+                          ) %>% 
+                            bsplus::bs_embed_popover(
+                              title = "Spectra curation methods",
+                              content = HTML(paste0(
+                                tags$p(
+                                  tags$b("Negative control spectra:"),
+                                  br(),
+                                  paste(
+                                    "Choose a group of samples that should not pass spectra",
+                                    "curation (negative controls). The spectra curation", 
+                                    "cut-offs will be set at a chosen percentile", 
+                                    "of the sum intensities and percentages of passing", 
+                                    "analytes in those negative control samples."
+                                  )
+                                ),
+                                tags$p(
+                                  tags$b("Percentiles"),
+                                  br(),
+                                  paste(
+                                    "The cut-offs will be set at a chosen percentile", 
+                                    "of the sum intensities and percentages of passing",
+                                    "analytes in all spectra. For example, if the chosen",
+                                    "percentile is 5, then the lowest 5% of all spectra will fail",
+                                    "curation."
+                                  )
+                                )
+                              )),
+                              trigger = "hover",
+                              placement = "left",
+                              html = "true",
+                              container = "body")
                           # shinyWidgets::dropdownButton(
                           #   tags$style(HTML(paste0(
                           #     "#",
@@ -91,151 +219,58 @@ mod_spectra_curation_ui <- function(id){
               width = NULL,
               status = "primary",
               solidHeader = TRUE,
-              column(
-                width = 12,
-                shinyWidgets::awesomeRadio(ns("curation_method"),
-                                           "Curate spectra based on:",
-                                           choices = c("Negative control spectra",
-                                                       "Percentiles",
-                                                       "Skip spectra curation"),
-                                           selected = "Negative control spectra"),
-                # shinyjs::toggle can't be used to directly show/hide a module, 
-                # so I put the modules inside divs:
-                div(
-                  id = ns("controls_module"), 
-                  mod_curate_based_on_controls_ui(ns("curate_based_on_controls_ui_1"))
-                ),
-                div(
-                  id = ns("percentiles_module"),
-                  mod_curate_based_on_percentiles_ui(ns("curate_based_on_percentiles_ui_1"))
-                ),
-              ),
-              column(
-                width = 12,
-                tabsetPanel(id = ns("tabs")),
-                br(),
-                actionButton(ns("button"),
-                             "Perform spectra curation")
+              fluidRow(
+                column(
+                  width = 12,
+                  tags$p(paste(
+                    "Each spectrum will be curated based on its sum intensity",
+                    "and its percentage of passing analytes. Cut-off values",
+                    "are calculated for both of these parameters.",
+                    "The way this calculation is performed depends on the chosen",
+                    "spectra curation method:"
+                  )),
+                  shinyWidgets::awesomeRadio(ns("curation_method"),
+                                             "Curate spectra based on:",
+                                             choices = c("Negative control spectra",
+                                                         "Percentiles",
+                                                         "Skip spectra curation"),
+                                             selected = "Negative control spectra"),
+                  # shinyjs::toggle can't be used to directly show/hide a module, 
+                  # so I put the modules inside divs:
+                  div(
+                    id = ns("controls_module"), 
+                    mod_curate_based_on_controls_ui(ns("curate_based_on_controls_ui_1"))
+                  ),
+                  div(
+                    id = ns("percentiles_module"),
+                    mod_curate_based_on_percentiles_ui(ns("curate_based_on_percentiles_ui_1"))
+                  )
+                )
               )
+            )
             )
           )
         ),
+      fluidRow(
         column(
-          width = 4,
-          div(
-            id = ns("qc"),
-            tags$style(HTML(paste0(
-              "#",
-              ns("box_header2"),
-              " .awesome-checkbox {padding-top: 7px}",
-              "#",
-              ns("box_header2"),
-              " .popover {max-width: 400px !important; color: #333}",
-              "#",
-              ns("qc"),
-              " .box-title {width: 100%}",
-              "#",
-              ns("box_header2"),
-              " .fa {float: right; margin-right: 5px; font-size: 18px}",
-              "#",
-              ns("box_header2"),
-              " .direct-chat-contacts {right: 0; background: #222d32!important}",
-              "#",
-              ns("box_header2"),
-              " .btn {float: right; border-width: 0px; margin-right: 2px}",
-              "#",
-              ns("qc"),
-              " .dropdown {display: inline-block; float: right;}",
-              "#",
-              ns("box_header2"),
-              " .dropdown-menu {background: #333; right: -33px; left: auto; top: 28px;}"
-            ))),
-            shinydashboard::box(
-              title = div(
-                "Analyte quality criteria",
-                id = ns("box_header2"),
-                icon("info-circle",
-                     class = "ml",
-                     #tabindex = "0" #only needed for trigger = "focus"
-                ) %>% 
-                  bsplus::bs_embed_popover(
-                    title = "Explanation",
-                    content = HTML(paste0(
-                      tags$p(paste(
-                        "For each spectrum, analytes are curated based on",
-                        "the chosen criteria for the mass accuracy, the",
-                        "isotopic pattern quality (IPQ) and the signal-to-noise",
-                        "ratio (S/N)."
-                      )),
-                      tags$p(paste(
-                        "Next, the proportion of passing analytes and the sum intensity",
-                        "of the passing analytes within each spectrum are calculated."
-                      )),
-                      tags$p(paste(
-                        "This proportion and this sum intensity are then compared",
-                        "to the spectra curation cut-off values (see below) to decide",
-                        "whether a spectrum passes spectra curation."
-                      ))
-                    )),
-                    trigger = "hover",
-                    placement = "left",
-                    html = "true",
-                    container = "body"),
-                shinyWidgets::dropdownButton(
-                  shinyWidgets::awesomeCheckboxGroup(
-                    ns("qc_to_include"),
-                    "Which analyte quality criteria should be taken into account during spectra curation?",
-                    choices = c("Mass accuracy",
-                                "IPQ",
-                                "S/N"),
-                    selected = c("Mass accuracy",
-                                 "IPQ",
-                                 "S/N"),
-                    status = "primary"),
-                  icon = icon("gears",
-                              class = "ml"),
-                  tooltip = shinyWidgets::tooltipOptions(placement = "top",
-                                                         title = "Settings"),
-                  width = "250px",
-                  size = "xs",
-                  label = "Settings"
-                )),
-              width = NULL,
-              status = "primary",
-              solidHeader = TRUE,
-              sliderInput(ns("mass_accuracy"), 
-                          "Acceptable mass accuracy range:",
-                          min = -50,
-                          max = 50,
-                          value = c(-20, 20)
-              ),
-              numericInput(ns("ipq"),
-                           "Max. IPQ value:",
-                           value = 0.2,
-                           step = 0.1),
-              numericInput(ns("sn"),
-                           "Min. S/N ratio:",
-                           value = 9)
-            ),
-            shinydashboard::box(
-              title = "Export results",
-              width = NULL,
-              solidHeader = TRUE,
-              status = "primary",
-              radioButtons(ns("download_format"),
-                           "Choose a file format:",
-                           choices = c("Excel file", "R object")),
-              downloadButton(ns("download"), 
-                             "Download curated spectra")
-            )
+          width = 12,
+          shinydashboard::box(
+            title = "Perform spectra curation",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            tabsetPanel(id = ns("tabs")),
+            br(),
+            actionButton(ns("button"),
+                         "Perform spectra curation")
           )
-        )
+        ) 
       ),
       fluidRow(
         column(
           width = 12,
           shinydashboard::box(
-            title = "Information on spectra curation",
+            title = "View spectra curation results",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
@@ -251,6 +286,22 @@ mod_spectra_curation_ui <- function(id){
                               br(),
                               DT::dataTableOutput(ns("failed_spectra_details"))))
             )
+          )
+        )
+      ),
+      fluidRow(
+        column(
+          width = 12,
+          shinydashboard::box(
+            title = "4) Export results",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            radioButtons(ns("download_format"),
+                         "Choose a file format:",
+                         choices = c("Excel file", "R object")),
+            downloadButton(ns("download"), 
+                           "Download curated spectra")
           )
         )
       )

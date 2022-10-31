@@ -14,6 +14,7 @@ mod_tab_cut_offs_ui <- function(id){
     plotly::plotlyOutput(ns("plot")),
     br(),
     DT::dataTableOutput(ns("table")),
+    br(),
     shinyWidgets::materialSwitch(ns("switch_to_manual"),
                                  "Choose cut-off values manually instead",
                                  right = TRUE,
@@ -28,7 +29,7 @@ mod_tab_cut_offs_ui <- function(id){
       title = "Specific Ig manual cut-offs",
       id = ns("spike_manual_cut_offs"),
       solidHeader = TRUE,
-      status = "primary",
+      #status = "primary",
       width = 6,
       numericInput(ns("cut_off_sum_intensity_specific"),
                    "Enter a cut-off value for the sum intensity in the specific Ig samples:",
@@ -41,7 +42,7 @@ mod_tab_cut_offs_ui <- function(id){
       title = "Total Ig manual cut-offs",
       id = ns("total_manual_cut_offs"),
       solidHeader = TRUE,
-      status = "primary",
+      #status = "primary",
       width = 6,
       numericInput(ns("cut_off_sum_intensity_total"),
                    "Enter a cut-off value for the sum intensity in the total Ig samples:",
@@ -247,7 +248,8 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       DT::datatable(cut_off_table(),
                     rownames = FALSE,
                     options = list(searching = FALSE,
-                                   paging = FALSE))
+                                   paging = FALSE,
+                                   info = FALSE))
       
     })
     
