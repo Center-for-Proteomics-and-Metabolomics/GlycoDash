@@ -15,17 +15,17 @@ mod_normalization_ui <- function(id){
         h1("Normalization")
       ),
       fluidRow(
-        shinydashboard::box(
-          title = "Normalization",
-          width = 3,
-          solidHeader = TRUE,
-          status = "primary",
-          selectInput(ns("method"),
-                      "Choose method for normalization",
-                      choices = c("Total area normalization")),
-          actionButton(ns("do_normalization"),
-                       "Perform normalization")
-        )   
+        
+        # shinydashboard::box(
+        #   title = "Normalization",
+        #   width = 3,
+        #   solidHeader = TRUE,
+        #   status = "primary",
+        #   # selectInput(ns("method"),
+        #   #             "Choose method for normalization",
+        #   #             choices = c("Total area normalization")),
+        #   
+        # )   
       ),
       fluidRow(
         shinydashboard::box(
@@ -33,6 +33,10 @@ mod_normalization_ui <- function(id){
           width = 12,
           solidHeader = TRUE,
           status = "primary",
+          actionButton(ns("do_normalization"),
+                       "Perform total area normalization"),
+          br(),
+          br(),
           DT::dataTableOutput(ns("data_table"))
         )
       )
@@ -54,17 +58,17 @@ mod_normalization_server <- function(id, results_analyte_curation){
       x$data <- results_analyte_curation$analyte_curated_data()
     })
     
-    observe({
-      shinyjs::toggleState("do_normalization", 
-                           condition = !is.null(input$method))
-    })
+    # observe({
+    #   shinyjs::toggleState("do_normalization", 
+    #                        condition = !is.null(input$method))
+    # })
     
     observeEvent(input$do_normalization, {
-      if (input$method == "Total area normalization") {
+      #if (input$method == "Total area normalization") {
         
         total_intensities <- calculate_total_intensity(data = x$data)
         x$normalized_data <- normalize_data(data = total_intensities)
-      }
+      #}
       
     })
     
