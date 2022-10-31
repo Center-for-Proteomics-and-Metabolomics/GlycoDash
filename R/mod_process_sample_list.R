@@ -77,7 +77,7 @@ mod_process_sample_list_server <- function(id, allowed, reset){
     
     
     observe({
-      req(input$file)
+      req(extension() %in% allowed)
       
       shinyFeedback::hideFeedback("file")
       
