@@ -521,7 +521,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
       plotly_object <- plotly::ggplotly(curated_spectra_plot(), tooltip = "text")
       plotly_object <- facet_strip_bigger(plotly_object)
-      plotly_object <- change_axis_title_distance(plotly_object)
+      plotly_object <- change_axis_title_distance(plotly_object,
+                                                  x_distance = 80)
       
       return(plotly_object)
     })
