@@ -13,6 +13,11 @@ mod_tab_cut_offs_ui <- function(id){
     br(),
     plotly::plotlyOutput(ns("plot")),
     br(),
+    tags$style(HTML(paste0(
+      "#",
+      ns("table"),
+      ".datatables {width: 50%; margin: auto}"
+    ))),
     DT::dataTableOutput(ns("table")),
     br(),
     shinyWidgets::materialSwitch(ns("switch_to_manual"),
@@ -247,6 +252,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       
       DT::datatable(cut_off_table(),
                     rownames = FALSE,
+                    width = "600px",
                     options = list(searching = FALSE,
                                    paging = FALSE,
                                    info = FALSE))
