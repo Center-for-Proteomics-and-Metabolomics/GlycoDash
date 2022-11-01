@@ -159,7 +159,7 @@ checked_data <- check_analyte_quality_criteria(data_complete,
 
 summarized_checks <- summarize_spectra_checks(checked_data)
 
-group_keyword = "Spike"
+group_keyword = NULL
 control_sample_types = c("PBS")
 percentile = 95
 use_mean_SD = FALSE
@@ -175,10 +175,78 @@ curated_data <- curate_spectra(checked_data = checked_data,
                                cut_offs = cut_offs,
                                uncalibrated_as_NA = uncalibrated_as_NA)
 
-Ig_data <- "Yes"
+my_data <- curated_data %>% 
+    dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
+                                                       "sample_type", 
+                                                       "cluster", 
+                                                       "sample_name", 
+                                                       "has_passed_spectra_curation",
+                                                       "reason_for_failure")))) 
 
-plot <- plot_spectra_curation_results(curated_data = curated_data,
-                                      Ig_data = Ig_data)
+reasons <- unique(my_data$reason_for_failure)
+reason_labels <- firstlower(reasons) %>% 
+  tidyr::replace_na(., "Yes")
+reason_labels[reason_labels != "Yes"] <- paste("No,", reason_labels[reason_labels != "Yes"])
+
+reason_labels <- purrr::map_chr(
+  reason_labels,
+  function(label) {
+    if (nchar(label) > 20) {
+      last_20_chars <- substr(label, 20, nchar(label))
+      replacement <- stringr::str_replace(last_20_chars, 
+                                          " ",
+                                          "\n")
+      substr(label, 20, nchar(label)) <- replacement
+    }
+    return(label)
+  })
+
+# Set the names to the 'old' values in the data, so that this named vector can
+# be used to recode reason_for_failure with nice:
+names(reason_labels) <- paste(reasons) # paste() converts NA to "NA"
+
+
+my_data <- my_data %>% 
+    dplyr::mutate(
+      `Passed curation?` = dplyr::recode(
+        paste(reason_for_failure), # to convert NA to "NA"
+        !!!reason_labels
+      ) # recode() can't take a named vector as an argument, use !!! to 'unlist' it
+    ) %>% 
+  calculate_number_and_percentage_per_reason()
+
+n_colors <- length(unique(my_data$reason_for_failure)) - 1
+  my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
+                  "#3498DB")
+
+plot <- my_data %>% 
+    ggplot2::ggplot() +
+    ggplot2::geom_bar(ggplot2::aes(x = sample_type,
+                                   fill = `Passed curation?`,
+                                   text = paste(
+                                     "Number of spectra:",
+                                     number,
+                                     "\nPercentage of spectra:",
+                                     percentage
+                                   )), 
+                      position = "fill") +
+    ggplot2::xlab("Sample type") +
+    ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
+                                name = "Proportion of spectra (%)") +
+    ggplot2::scale_fill_manual(values = my_palette) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+                   strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
+  
+  if (Ig_data == "Yes") {
+    plot <- plot +
+      ggplot2::facet_wrap(cluster ~ group)
+  } else {
+    plot <- plot +
+      ggplot2::facet_wrap(~ cluster)
+  }
+
 
 plotly_object <- plotly::ggplotly(plot, tooltip = "text")
 
@@ -191,9 +259,9 @@ plotly_object
 passing_spectra <- curated_data %>% 
   dplyr::filter(has_passed_spectra_curation) %>% 
   dplyr::select(-c(reason_for_failure,
-                   passing_proportion,
-                   cut_off_sum_int,
-                   cut_off_prop,
+                   passing_analyte_percentage,
+                   cut_off_sum_intensity,
+                   cut_off_passing_analyte_percentage,
                    curation_method,
                    analyte_meets_criteria,
                    failed_criteria,
@@ -347,9 +415,9 @@ total_intensities <- calculate_total_intensity(data = data_for_norm)
 normalized_data <- normalize_data(data = total_intensities) 
 normalized_data_wide <- normalized_data %>% 
         # removing columns with values that differ between clusters:
-        dplyr::select(-tidyselect::any_of(c("passing_proportion", 
-                                            "cut_off_prop", 
-                                            "cut_off_sum_int",
+        dplyr::select(-tidyselect::any_of(c("passing_analyte_percentage", 
+                                            "cut_off_passing_analyte_percentage", 
+                                            "cut_off_sum_intensity",
                                             "failed_criteria"))) %>% 
         tidyr::pivot_wider(names_from = c(cluster, analyte),
                            names_sep = "_",

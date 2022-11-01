@@ -326,7 +326,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
     # Data with criteria checks for each analyte in each sample:
     checked_data <- reactive({
       req(summary(),
-          # TODO: Change this so that only input$qcs_to_include are required
           input$sn,
           input$ipq
       )
@@ -469,9 +468,9 @@ mod_spectra_curation_server <- function(id, results_data_import){
       curated_data() %>% 
         dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
         dplyr::select(-c(reason_for_failure,
-                         passing_proportion,
-                         cut_off_sum_int,
-                         cut_off_prop,
+                         passing_analyte_percentage,
+                         cut_off_sum_intensity,
+                         cut_off_passing_analyte_percentage,
                          curation_method,
                          analyte_meets_criteria,
                          failed_criteria,
@@ -488,7 +487,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       req(curated_data())
       
       for_table <- curated_data()%>% 
-        dplyr::select(1:cut_off_sum_int) %>% 
+        dplyr::select(1:cut_off_passing_analyte_percentage) %>% 
         dplyr::distinct() %>% 
         dplyr::filter(has_passed_spectra_curation == FALSE)
       
@@ -501,7 +500,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       req(curated_data())
       
       DT::datatable(curated_data() %>% 
-                      dplyr::select(-(passing_proportion:cut_off_sum_int)) %>% 
+                      dplyr::select(-(passing_analyte_percentage:replicates)) %>% 
                       dplyr::distinct() %>% 
                       dplyr::filter(has_passed_spectra_curation == FALSE),
                     options = list(scrollX = TRUE,
@@ -533,7 +532,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
         dplyr::full_join(req(checked_data()),
                          req(summarized_checks())) %>% 
           dplyr::select(-c(failed_criteria,
-                           passing_proportion,
+                           passing_analyte_percentage,
                            analyte_meets_criteria
                            # Leave 'sum_intensity' for the relative abundance
                            # calculation and leave 'criteria_check' for the

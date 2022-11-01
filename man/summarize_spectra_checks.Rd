@@ -18,7 +18,7 @@ A dataframe that contains one row per spectrum for each cluster (
   recorded.} \item{sample_type}{The type of sample (e.g. negative control,
   blank etc.).} \item{group}{The group (Total or Specific) that this sample
   belongs to.} \item{cluster}{The cluster that the analyte belongs to.}
-  \item{passing_proportion}{The proportion of analytes that passed the
+  \item{passing_analyte_percentage}{The proportion of analytes that passed the
   criteria checks in this spectrum.} \item{sum_intensity}{The sum intensity
   of all passing analytes in this spectrum} }
 }

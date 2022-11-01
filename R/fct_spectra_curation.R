@@ -120,7 +120,7 @@ report_failed_criteria <- function(my_data,
 #'   recorded.} \item{sample_type}{The type of sample (e.g. negative control,
 #'   blank etc.).} \item{group}{The group (Total or Specific) that this sample
 #'   belongs to.} \item{cluster}{The cluster that the analyte belongs to.}
-#'   \item{passing_proportion}{The proportion of analytes that passed the
+#'   \item{passing_analyte_percentage}{The proportion of analytes that passed the
 #'   criteria checks in this spectrum.} \item{sum_intensity}{The sum intensity
 #'   of all passing analytes in this spectrum} }
 #' @export
@@ -149,7 +149,7 @@ summarize_spectra_checks <- function(data_checked) {
     # I'm using across() and any_of() because if the data is not Ig data, the
     # column "group" doesn't exist:
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-    dplyr::summarise(passing_proportion = sum(analyte_meets_criteria)/dplyr::n(), 
+    dplyr::summarise(passing_analyte_percentage = sum(analyte_meets_criteria)/dplyr::n(), 
                      sum_intensity = sum(
                        intensity_times_fraction[analyte_meets_criteria == TRUE]
                      )) %>% 
@@ -201,13 +201,13 @@ calculate_cut_offs <- function(summarized_checks,
   cut_offs <- cut_off_basis %>%  
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
     dplyr::summarise(
-      cut_off_sum_int = if (use_mean_SD) { 
+      cut_off_sum_intensity = if (use_mean_SD) { 
         mean_plus_SD(sum_intensity, SD_factor, uncalibrated_as_NA) } else { 
           quantile(sum_intensity, 
                    probs = percentile / 100,
                    names = FALSE,
                    na.rm = uncalibrated_as_NA) },
-      cut_off_prop = quantile(passing_proportion, 
+      cut_off_passing_analyte_percentage = quantile(passing_analyte_percentage, 
                               probs = percentile / 100,
                               names = FALSE,
                               na.rm = uncalibrated_as_NA),
@@ -262,8 +262,8 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs,
   
   curated_spectra <- summarized_checks_with_cut_offs %>% 
     # Can't use all() instead of & because all() is not vectorized
-    dplyr::mutate(has_passed_spectra_curation = passing_proportion > cut_off_prop &
-                    sum_intensity > cut_off_sum_int) %>% 
+    dplyr::mutate(has_passed_spectra_curation = passing_analyte_percentage > cut_off_passing_analyte_percentage &
+                    sum_intensity > cut_off_sum_intensity) %>% 
     determine_reason_for_failure()
   
   curated_data <- dplyr::full_join(curated_spectra, 
@@ -306,9 +306,9 @@ determine_reason_for_failure <- function(data) {
   with_reasons <- data %>% 
     dplyr::mutate(reason_for_failure = dplyr::na_if(
       dplyr::case_when(
-        passing_proportion <= cut_off_prop & sum_intensity <= cut_off_sum_int ~ "Proportion of passing analytes and sum intensity below cut-offs.",
-        passing_proportion <= cut_off_prop ~ "Proportion of passing analytes below cut-off.",
-        sum_intensity <= cut_off_sum_int ~ "Sum intensity below cut-off.",
+        passing_analyte_percentage <= cut_off_passing_analyte_percentage & sum_intensity <= cut_off_sum_intensity ~ "Percentage of passing analytes and sum intensity below cut-offs.",
+        passing_analyte_percentage <= cut_off_passing_analyte_percentage ~ "Percentage of passing analytes below cut-off.",
+        sum_intensity <= cut_off_sum_intensity ~ "Sum intensity below cut-off.",
         # When uncalibrated_as_NA is TRUE:
         is.na(has_passed_spectra_curation) ~ "Calibration failed.",
         TRUE ~ "" # Cannot be NA, because case_When requires that all possible 
@@ -351,7 +351,7 @@ create_cut_off_plot <- function(spectra_check) {
   p <- spectra_check %>% 
     ggplot2::ggplot() +
     ggplot2::geom_jitter(ggplot2::aes(color = sample_type,
-                                      x = passing_proportion,
+                                      x = passing_analyte_percentage,
                                       y = sum_intensity,
                                       text = paste0("Sample name: ", 
                                                     sample_name,
@@ -359,8 +359,8 @@ create_cut_off_plot <- function(spectra_check) {
                                                     "Sample ID: ",
                                                     sample_id,
                                                     "\n",
-                                                    "Passing proportion: ",
-                                                    passing_proportion,
+                                                    "Passing analyte percentage: ",
+                                                    passing_analyte_percentage,
                                                     "\n",
                                                     "Sum intensity: ",
                                                     sum_intensity)),
@@ -426,7 +426,7 @@ plot_spectra_curation_results <- function(curated_data,
                       position = "fill") +
     ggplot2::xlab("Sample type") +
     ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
-                                name = "Proportion of spectra (%)") +
+                                name = "Percentage of spectra") +
     ggplot2::scale_fill_manual(values = my_palette) +
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
@@ -451,6 +451,27 @@ create_nicer_reason_labels <- function(curated_data) {
     tidyr::replace_na(., "Yes")
   
   reason_labels[reason_labels != "Yes"] <- paste("No,", reason_labels[reason_labels != "Yes"])
+  
+  # Insert a linebreak after 20 characters
+  reason_labels <- purrr::map_chr(
+    reason_labels,
+    function(label) {
+      if (nchar(label) > 20) {
+        from_char_20 <- substr(label, 20, nchar(label))
+        replacement <- stringr::str_replace(from_char_20, 
+                                            " ",
+                                            "\n")
+        substr(label, 20, nchar(label)) <- replacement
+      }
+      if (nchar(label) > 40) {
+        from_char_40 <- substr(label, 40, nchar(label))
+        replacement <- stringr::str_replace(from_char_40, 
+                                            " ",
+                                            "\n")
+        substr(label, 40, nchar(label)) <- replacement
+      }
+      return(label)
+    })
   
   # Set the names to the 'old' values in the data, so that this named vector can
   # be used to recode reason_for_failure with nice:
