@@ -64,9 +64,10 @@ mod_spectra_curation_ui <- function(id){
                         "quality (IPQ) and for the signal-to-noise ratio (S/N))."
                       )),
                       tags$p(paste(
-                        "Within each spectrum, the sum intensity of all passing",
+                        "For each spectrum, the sum intensity of all passing",
                         "analytes as well as the percentage of passing analytes",
-                        "are calculated."
+                        "are calculated. These values are shown in the", 
+                        "interactive plot below."
                       ))
                     )),
                     trigger = "hover",
@@ -171,7 +172,8 @@ mod_spectra_curation_ui <- function(id){
                                   paste(
                                     "The cut-offs will be set at a chosen percentile", 
                                     "of the sum intensities and percentages of passing",
-                                    "analytes in all spectra. For example, if the chosen",
+                                    "analytes in all spectra (except for in the sample",
+                                    "types to exclude). For example, if the chosen",
                                     "percentile is 5, then the lowest 5% of all spectra will fail",
                                     "curation."
                                   )

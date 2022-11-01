@@ -17,6 +17,12 @@ mod_curate_based_on_percentiles_ui <- function(id){
       min = 0,
       max = 100,
       step = 1
+    ),
+    selectInput(
+      ns("exclude_sample_types"),
+      "Select sample types to exclude from the cut-off calculation:",
+      choices = "",
+      multiple = TRUE
     )
   )
 }
@@ -30,6 +36,14 @@ mod_curate_based_on_percentiles_server <- function(id,
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    observe({
+      req(summarized_checks())
+      updateSelectInput(
+        inputId = "exclude_sample_types",
+        choices = unique(summarized_checks()$sample_type)
+      )
+    })
+    
     cut_offs <- reactive({
       req(summarized_checks(),
           input$percentile)
@@ -37,6 +51,7 @@ mod_curate_based_on_percentiles_server <- function(id,
       calculate_cut_offs(
         summarized_checks = summarized_checks(),
         percentile = input$percentile,
+        exclude_sample_types = input$exclude_sample_types,
         uncalibrated_as_NA = FALSE
       )
     })

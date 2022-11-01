@@ -184,6 +184,7 @@ mean_plus_SD <- function(x, SD_factor, na.rm) {
 
 calculate_cut_offs <- function(summarized_checks,
                                control_sample_types = NULL,
+                               exclude_sample_types = NULL,
                                group_keyword = NULL,
                                percentile,
                                use_mean_SD = FALSE,
@@ -192,7 +193,8 @@ calculate_cut_offs <- function(summarized_checks,
   
   cut_off_basis <- summarized_checks %>% 
     dplyr::filter(if (!is.null(group_keyword)) group == group_keyword else TRUE) %>% 
-    dplyr::filter(if (!is.null(control_sample_types)) sample_type %in% control_sample_types else TRUE)
+    dplyr::filter(if (!is.null(control_sample_types)) sample_type %in% control_sample_types else TRUE) %>% 
+    dplyr::filter(if (!is.null(exclude_sample_types)) !(sample_type %in% exclude_sample_types) else TRUE)
   
   grouping_variables <- c("group", "cluster")
   
