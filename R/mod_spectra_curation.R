@@ -295,7 +295,7 @@ mod_spectra_curation_ui <- function(id){
         column(
           width = 12,
           shinydashboard::box(
-            title = "4) Export results",
+            title = "Export results",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
