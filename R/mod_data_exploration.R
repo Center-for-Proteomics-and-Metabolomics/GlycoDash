@@ -21,7 +21,7 @@ mod_data_exploration_ui <- function(id){
                       " .box-title {width: 100%;}",
                       "#",
                       ns("box_title"),
-                      " .fa {float: right; margin-top: 3px; margin-left: 5px; font-size: 12px;}"))
+                      " .fas {float: right; margin-top: 3px; margin-left: 5px; font-size: 12px;}"))
         ),
         div(
           id = ns("tabbed_box"),

@@ -23,7 +23,8 @@ mod_add_sample_ids_ui <- function(id){
       " .box-title {width: 100%}",
       "#",
       ns("box_header"),
-      " .fa {float: right; margin-right: 5px; font-size: 18px}",
+      # change all .fa to .fas  because of fontawesome version update
+      " .fas {float: right; margin-right: 5px; font-size: 18px}",
       "#",
       ns("box_header"),
       " .direct-chat-contacts {right: 0; background: #222d32!important}",
@@ -70,7 +71,7 @@ mod_add_sample_ids_ui <- function(id){
           tags$style(HTML(paste0(
             "#",
             ns("dropdown_content"),
-            " .fa {float: left}",
+            " .fas {float: left}",
             "#",
             ns("dropdown_content"),
             " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"

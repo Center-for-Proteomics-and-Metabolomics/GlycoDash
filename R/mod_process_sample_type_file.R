@@ -24,7 +24,7 @@ mod_process_sample_type_file_ui <- function(id,
         HTML(paste0(
           "#",
           ns("info_icon_div"),
-          " .fa {margin-top:28px; color: #3c8dbc;}",
+          " .fas {margin-top:28px; color: #3c8dbc;}",
           " .popover {width: ",
           popover_width,
           "}",
