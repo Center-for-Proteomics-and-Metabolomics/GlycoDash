@@ -235,9 +235,11 @@ process_plate_design <- function (plate_design) {
     tidyr::pivot_longer(cols = -well,
                         names_to = "plate",
                         values_to = "sample_id") %>%
-    dplyr::mutate(plate = stringr::str_match(
-      plate, 
-      "[Pp][Ll](?:[Aa][Tt][Ee])?[\\s_\\-\\.]*(\\d+|[A-Z])")[ , 2],
+    dplyr::mutate(
+      sample_id = as.character(sample_id),
+      plate = stringr::str_match(
+        plate, 
+        "[Pp][Ll](?:[Aa][Tt][Ee])?[\\s_\\-\\.]*(\\d+|[A-Z])")[ , 2],
       well = stringr::str_extract(well, "[A-H]\\d+"))
   
   if (any(is.na(plate_design$plate))) {
@@ -283,7 +285,7 @@ process_plate_design <- function (plate_design) {
 process_sample_list <- function(sample_list_file) {
   
   sample_list <- readxl::read_excel(sample_list_file,
-                     col_names = TRUE)
+                                    col_names = TRUE)
   
   required_columns <- c("sample_name", "sample_id")
   missing_columns <- required_columns[!(required_columns %in% colnames(sample_list))]
@@ -296,6 +298,9 @@ process_sample_list <- function(sample_list_file) {
                                  "\"sample_name\" and \"sample_id\"."
                  ))
   }
+  
+  sample_list <- sample_list %>% 
+    dplyr::mutate(sample_id = as.character(sample_id))
   
   return(sample_list)
 }
