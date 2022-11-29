@@ -237,12 +237,27 @@ visualize_repeatability_mean_bars <- function(data,
   
   to_plot <- to_plot %>% 
     dplyr::group_by(analyte) %>% 
+    na.omit(cols = "relative_abundance") %>% 
     dplyr::summarize(mean_rel_ab = mean(relative_abundance),
                      sd_rel_ab = sd(relative_abundance),
                      rsd = sd_rel_ab / mean_rel_ab,
                      n = dplyr::n(),
                      dplyr::across()) %>% 
     dplyr::ungroup()
+  
+  if (nrow(to_plot) == 0) {
+    rlang::abort(
+      class = "all_NAs",
+      message = paste0("For all",
+                       ifelse(!is.null(selected_group),
+                              paste0(" ", selected_group),
+                              ""),
+                       " samples with sample ID ",
+                       selected_sample_id,
+                       " calibration in LacyTools has failed, ",
+                       "so there is no data to show.")
+    )
+  }
   
   n_colors <- length(unique(to_plot$analyte))
   my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)

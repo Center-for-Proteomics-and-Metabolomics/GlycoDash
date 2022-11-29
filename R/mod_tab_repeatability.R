@@ -38,7 +38,7 @@ mod_tab_repeatability_ui <- function(id){
             status = "primary",
             column(
               width = 9,
-              plotly::plotlyOutput(ns("plot"))
+              shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot")))
             ),
             column(
               width = 3,
@@ -98,6 +98,7 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
     selected_sample_id <- reactive({
       req(input$sample_menu)
       req(my_data())
+      
       stringr::str_extract(input$sample_menu,
                            unique(my_data()$sample_id)) %>% 
         na.omit()
@@ -155,11 +156,21 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
       } else {
         req(my_data())
         req(selected_sample_id())
-        plot <- visualize_repeatability_mean_bars(
-          my_data(),
-          selected_sample_id = selected_sample_id(),
-          selected_group = selected_group()
-        )
+        
+        plot <- tryCatch(
+          expr = {
+            visualize_repeatability_mean_bars(
+              my_data(),
+              selected_sample_id = selected_sample_id(),
+              selected_group = selected_group()
+            ) 
+          },
+          all_NAs = function(c) {
+            showNotification(c$message,
+                             type = "error",
+                             duration = NULL)
+            NULL
+          })
       }
       
       return(plot)
