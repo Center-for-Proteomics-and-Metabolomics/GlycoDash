@@ -9,9 +9,6 @@ firstupper(string)
 \arguments{
 \item{string}{}
 }
-\value{
-
-}
 \description{
 Title
 }

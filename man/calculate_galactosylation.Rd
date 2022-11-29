@@ -10,9 +10,6 @@ calculate_galactosylation(.data)
 \item{.data}{A data frame. Can be passed to the function via a pipe (%>%)
 (see Examples below).}
 }
-\value{
-
-}
 \description{
 This function calculates the derived trait galactosylation based on the
 relative abundances of glycans. This function is used in the function

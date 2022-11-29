@@ -11,9 +11,6 @@ plot_spectra_curation_results(curated_data, Ig_data)
 
 \item{Ig_data}{}
 }
-\value{
-
-}
 \description{
 Title
 }

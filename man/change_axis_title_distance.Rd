@@ -13,9 +13,6 @@ change_axis_title_distance(plotly_object, x_distance = 50, y_distance = 50)
 
 \item{y_distance}{}
 }
-\value{
-
-}
 \description{
 Title
 }

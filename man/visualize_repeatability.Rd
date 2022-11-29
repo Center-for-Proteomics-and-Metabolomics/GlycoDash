@@ -10,9 +10,6 @@ visualize_repeatability(repeatability_data)
 \item{repeatability_data}{The dataframe that is returned by the
 \code{\link{calculate_repeatability_stats}} function.}
 }
-\value{
-
-}
 \description{
 Create a plot that visualizes the repeatability
 }

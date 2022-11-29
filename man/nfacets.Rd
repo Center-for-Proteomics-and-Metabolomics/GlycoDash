@@ -9,9 +9,6 @@ nfacets(ggplot_object)
 \arguments{
 \item{ggplot_object}{}
 }
-\value{
-
-}
 \description{
 Title
 }

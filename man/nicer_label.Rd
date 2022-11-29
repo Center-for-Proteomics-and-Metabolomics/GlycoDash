@@ -9,9 +9,6 @@ nicer_label(varname)
 \arguments{
 \item{varname}{}
 }
-\value{
-
-}
 \description{
 Title
 }

@@ -9,9 +9,6 @@ hide_outliers(plotly_object)
 \arguments{
 \item{plotly_object}{}
 }
-\value{
-
-}
 \description{
 Title
 }

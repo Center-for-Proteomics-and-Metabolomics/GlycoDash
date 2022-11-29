@@ -11,9 +11,6 @@ facet_strip_bigger(ggplotly, size = 38)
 
 \item{gp}{}
 }
-\value{
-
-}
 \description{
 Title
 }

@@ -14,9 +14,6 @@ the form of character strings.}
 1899-12-30 (year-month-day) which is the origin used in Excel on Windows for
 all dates from 1900-01-01 and on.}
 }
-\value{
-
-}
 \description{
 \code{date_with_text()} tries to convert a vector with serial dates (given as
 character strings) to objects of the class "Date". In Excel dates are stored

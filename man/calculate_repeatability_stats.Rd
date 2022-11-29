@@ -15,9 +15,6 @@ should be calculated for.}
 \item{standard_group}{The group (total or specific Ig) that the RSD's should
 be calculated for.}
 }
-\value{
-
-}
 \description{
 Calculate the RSD of standards across a plate.
 }
