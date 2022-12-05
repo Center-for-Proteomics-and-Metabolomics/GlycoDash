@@ -41,7 +41,9 @@ detect_plate_and_well <- function(data) {
       col = sample_name, 
       into = c("plate", "well"),
       # "\D" in regex is anything but a digit
-      regex = "([Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z]))_([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
+      # Plate number has to be followed by: " ", "_", "-" or "." but then there 
+      # can be other characters before the well follows.
+      regex = "([Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z]))[\\s_\\-\\.].*([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
       remove = FALSE)
   
   if (all(is.na(data$plate) & is.na(data$well))) {
@@ -75,7 +77,7 @@ detect_plate_and_well <- function(data) {
   data <- data %>% 
     dplyr::mutate(
       plate = stringr::str_match(plate, 
-                                 "[Pp][Ll](?:ate|ATE)?(\\d+|[A-Z])")[ , 2],
+                                 "[Pp][Ll](?:ate|ATE)?((?:\\d+|[A-Z]))")[ , 2],
       well = stringr::str_extract(well, 
                                   "[A-H]\\d{1,2}"),
       plate_well = paste(plate, 
@@ -261,7 +263,7 @@ process_plate_design <- function (plate_design) {
         sample_id = as.character(sample_id),
         plate = stringr::str_match(
           plate, 
-          "[Pp][Ll](?:[Aa][Tt][Ee])?[\\s_\\-\\.]*(\\d+|[A-Z])")[ , 2],
+          "[Pp][Ll](?:[Aa][Tt][Ee])?[\\s_\\-\\.]+.*(\\d+|[A-Z])")[ , 2],
         well = stringr::str_extract(well, "[A-H]\\d+"))
   }
   
