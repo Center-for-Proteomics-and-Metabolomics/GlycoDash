@@ -243,21 +243,26 @@ read_plate_design <- function(plate_design_file) {
 #' plate_design <- read_plate_design(path)
 #' process_plate_design(plate_design)
 process_plate_design <- function (plate_design) {
-  plate_design <- plate_design %>%
-    tidyr::pivot_longer(cols = -well,
-                        names_to = "plate",
-                        values_to = "sample_id") %>%
-    dplyr::mutate(
-      sample_id = as.character(sample_id),
-      plate = stringr::str_match(
-        plate, 
-        "[Pp][Ll](?:[Aa][Tt][Ee])?[\\s_\\-\\.]*(\\d+|[A-Z])")[ , 2],
-      well = stringr::str_extract(well, "[A-H]\\d+"))
+  plate_design_contains_just_1_plate <- ncol(plate_design) == 2
   
-  if (all(is.na(plate_design$plate) & nrow(plate_design) <= 96)) {
-    plate_design <- plate_design %>% 
-      dplyr::mutate(plate = "1") 
-    # Issue a warning here that the assumption that there is only one plate was made?
+  if (plate_design_contains_just_1_plate) {
+    plate_design <- plate_design %>%
+      tidyr::pivot_longer(cols = -well,
+                          names_to = "plate",
+                          values_to = "sample_id") %>%
+      dplyr::mutate(plate = "1",
+                    sample_id = as.character(sample_id))
+  } else {
+    plate_design <- plate_design %>%
+      tidyr::pivot_longer(cols = -well,
+                          names_to = "plate",
+                          values_to = "sample_id") %>%
+      dplyr::mutate(
+        sample_id = as.character(sample_id),
+        plate = stringr::str_match(
+          plate, 
+          "[Pp][Ll](?:[Aa][Tt][Ee])?[\\s_\\-\\.]*(\\d+|[A-Z])")[ , 2],
+        well = stringr::str_extract(well, "[A-H]\\d+"))
   }
   
   if (any(is.na(plate_design$plate))) {
