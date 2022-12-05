@@ -27,21 +27,26 @@ define_clusters <- function(data, cluster_keywords) {
   ordered_keywords <- cluster_keywords[order(nchar(cluster_keywords), 
                                              decreasing = TRUE)]
   
-  clusters <- data %>% 
-    tidyr::extract(col = analyte,
-                   into = "cluster",
-                   regex = paste0("(",
-                                  paste0(ordered_keywords, 
-                                         collapse = "|"),
-                                  ")"),
-                   remove = FALSE)
+  data <- data %>% 
+    dplyr::mutate(analyte = factor(analyte)) 
+  
+  clusters <- tibble::tibble(analyte = levels(data$analyte)) %>% 
+    dplyr::mutate(cluster = stringr::str_extract(analyte,
+                                                 paste0("(",
+                                                        paste0(ordered_keywords, 
+                                                               collapse = "|"),
+                                                        ")")))
   
   if (anyNA(clusters$cluster)) {
     rlang::abort(class = "unmatched_analytes",
                  message = paste("Some analytes could not be assigned into a cluster.",
                                  "Please reconsider your clusters keywords."))
   }
-  return(clusters)
+  
+  data_with_clusters <- dplyr::left_join(data, clusters) %>% 
+    dplyr::relocate(cluster, .after = analyte)
+  
+  return(data_with_clusters)
 }
 
 find_cluster_keyword_match <- function(unique_analytes, cluster_keyword) {
