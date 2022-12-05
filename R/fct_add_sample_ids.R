@@ -41,8 +41,20 @@ detect_plate_and_well <- function(data) {
       col = sample_name, 
       into = c("plate", "well"),
       # "\D" in regex is anything but a digit
-      regex = "([Pp][Ll](?:[Aa][Tt][Ee])?\\d+|[A-Z])_([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
+      regex = "([Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z]))_([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
       remove = FALSE)
+  
+  if (all(is.na(data$plate) & is.na(data$well))) {
+    data <- data %>% 
+      tidyr::extract(
+        col = sample_name, 
+        into = "well",
+        # "\D" in regex is anything but a digit
+        regex = "([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
+        remove = FALSE
+      ) %>% 
+      dplyr::mutate(plate = "plate1")
+  }
   
   if (any(anyNA(data$plate), anyNA(data$well))) {
     NA_samples <- data$sample_name[is.na(data$plate) | is.na(data$well)]
@@ -241,6 +253,12 @@ process_plate_design <- function (plate_design) {
         plate, 
         "[Pp][Ll](?:[Aa][Tt][Ee])?[\\s_\\-\\.]*(\\d+|[A-Z])")[ , 2],
       well = stringr::str_extract(well, "[A-H]\\d+"))
+  
+  if (all(is.na(plate_design$plate) & nrow(plate_design) <= 96)) {
+    plate_design <- plate_design %>% 
+      dplyr::mutate(plate = "1") 
+    # Issue a warning here that the assumption that there is only one plate was made?
+  }
   
   if (any(is.na(plate_design$plate))) {
     rlang::abort(class = "plate_numbers",
