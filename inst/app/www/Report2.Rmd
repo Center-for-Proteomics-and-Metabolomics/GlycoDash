@@ -242,7 +242,7 @@ purrr::walk(params$repeatability,
                     dplyr::mutate(
                       Plate = plate,
                       `Intra-plate variation (%)` = tidyr::replace_na(
-                        intra_plate_variation, "This plate contained only one sample."),
+                        as.character(intra_plate_variation), "This plate contained only one sample."),
                       .keep = "unused") %>% 
                     kableExtra::kbl() %>%
                     kableExtra::kable_styling(bootstrap_options = "striped",
