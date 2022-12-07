@@ -175,6 +175,79 @@ curated_data <- curate_spectra(checked_data = checked_data,
                                cut_offs = cut_offs,
                                uncalibrated_as_NA = uncalibrated_as_NA)
 
+for_plot <- summarized_checks %>% 
+  dplyr::mutate(uncalibrated = ifelse(is.na(sum_intensity) & is.na(passing_analyte_percentage),
+                                      TRUE,
+                                      FALSE),
+                dplyr::across(.cols = c(sum_intensity, passing_analyte_percentage),
+                              .fns = ~ tidyr::replace_na(.x, 0)))
+
+n_colors <- length(unique(for_plot$sample_type))
+  my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
+  
+  p <- for_plot %>% 
+    ggplot2::ggplot() +
+    ggplot2::geom_jitter(data = for_plot[!for_plot$uncalibrated, ],
+                         ggplot2::aes(color = sample_type,
+                                      x = passing_analyte_percentage,
+                                      y = sum_intensity,
+                                      text = paste0("Sample name: ", 
+                                                    sample_name,
+                                                    "\n",
+                                                    "Sample ID: ",
+                                                    sample_id,
+                                                    "\n",
+                                                    "Passing analyte percentage: ",
+                                                    passing_analyte_percentage,
+                                                    "\n",
+                                                    "Sum intensity: ",
+                                                    sum_intensity,
+                                                    "\nUncalibrated: ",
+                                                    uncalibrated)),
+                         size = 1,
+                         alpha = 0.7) +
+    ggplot2::geom_jitter(data = for_plot[for_plot$uncalibrated, ],
+                         ggplot2::aes(color = sample_type,
+                                      x = passing_analyte_percentage,
+                                      y = sum_intensity,
+                                      text = paste0("Sample name: ", 
+                                                    sample_name,
+                                                    "\n",
+                                                    "Sample ID: ",
+                                                    sample_id,
+                                                    "\n",
+                                                    "Passing analyte percentage: ",
+                                                    passing_analyte_percentage,
+                                                    "\n",
+                                                    "Sum intensity: ",
+                                                    sum_intensity,
+                                                    "\nUncalibrated: ",
+                                                    uncalibrated)),
+                         shape = 15,
+                         size = 1,
+                         alpha = 0.7,
+                         width = 0.01) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
+                   strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
+    ggplot2::scale_color_manual(values = my_palette,
+                                name = "Sample type") +
+    ggplot2::labs(y = "Sum intensity of passing analytes") +
+    ggplot2::scale_x_continuous(labels = function(x) paste0(x * 100, "%"), 
+                                name = "Percentage of passing analytes")
+  
+  if ("group" %in% colnames(for_plot)) {
+    p <- p +
+      ggplot2::facet_wrap(cluster ~ group)
+  } else {
+    p <- p +
+      ggplot2::facet_wrap(~ cluster)
+  }
+
+pl <- plotly::ggplotly(p, tooltip = "text")
+
+pl
+
 my_data <- curated_data %>% 
     dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
                                                        "sample_type", 
