@@ -10,8 +10,7 @@ check_analyte_quality_criteria(
   max_ppm_deviation,
   max_ipq,
   min_sn,
-  criteria_to_consider,
-  uncalibrated_as_NA
+  criteria_to_consider
 )
 }
 \arguments{

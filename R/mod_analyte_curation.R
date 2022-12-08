@@ -349,9 +349,17 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
           max_ppm_deviation = results_spectra_curation$mass_acc()[2],
           max_ipq = results_spectra_curation$ipq(),
           min_sn = results_spectra_curation$sn(),
-          criteria_to_consider = c("IPQ", "S/N", "Mass accuracy"),
-          uncalibrated_as_NA = FALSE
+          criteria_to_consider = c("IPQ", "S/N", "Mass accuracy")#,
+          #uncalibrated_as_NA = FALSE
         )
+        
+        if (!results_spectra_curation$uncalibrated_as_NA()) {
+          checked_analytes <- dplyr::mutate(
+            checked_analytes,
+            analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
+                                                       FALSE)
+          )
+        }
         
         # Perform analyte curation:
         x$curated_analytes <- curate_analytes(
@@ -363,8 +371,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
         
         showNotification("Analyte curation has been performed based on the data.", 
                          type = "message")
-        
-      } 
+      }
       
       if (input$method == "Supply an analyte list") {
         
@@ -392,7 +399,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                 analyte_list = x$analyte_list))
           })
       }
-      
     })
     
     with_analytes_to_include <- reactive({

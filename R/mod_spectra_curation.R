@@ -246,6 +246,11 @@ mod_spectra_curation_ui <- function(id){
                   div(
                     id = ns("percentiles_module"),
                     mod_curate_based_on_percentiles_ui(ns("curate_based_on_percentiles_ui_1"))
+                  ),
+                  shinyWidgets::awesomeCheckbox(
+                    ns("uncalibrated_as_na"),
+                    label = "Treat uncalibrated spectra as missing values, not zeroes.",
+                    value = TRUE
                   )
                 )
               )
@@ -334,14 +339,29 @@ mod_spectra_curation_server <- function(id, results_data_import){
                         max_ppm_deviation = input$mass_accuracy[2],
                         max_ipq = input$ipq,
                         min_sn = input$sn,
-                        criteria_to_consider = input$qc_to_include,
-                        uncalibrated_as_NA = FALSE)
+                        criteria_to_consider = input$qc_to_include#,
+                        #uncalibrated_as_NA = input$uncalibrated_as_na
+                        )
+    })
+    
+    checked_data_uncalibrated <- reactive({
+      req(checked_data())
+      
+      if (!input$uncalibrated_as_na) {
+        dplyr::mutate(
+          checked_data(),
+          analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
+                                                     FALSE)
+        )
+      } else {
+        checked_data()
+      }
     })
     
     # Analyte quality criteria checks summarized per cluster per sample: 
     summarized_checks <- reactive({
-      req(checked_data())
-      summarize_spectra_checks(checked_data())
+      req(checked_data_uncalibrated())
+      summarize_spectra_checks(checked_data_uncalibrated())
     })
     
     observe({
@@ -357,13 +377,15 @@ mod_spectra_curation_server <- function(id, results_data_import){
     cut_offs_based_on_controls <- mod_curate_based_on_controls_server(
       "curate_based_on_controls_ui_1",
       results_data_import = results_data_import,
-      summarized_checks = summarized_checks
+      summarized_checks = summarized_checks,
+      uncalibrated_as_NA = reactive({ input$uncalibrated_as_na })  
     )
     
     cut_offs_based_on_percentiles <- mod_curate_based_on_percentiles_server(
       "curate_based_on_percentiles_ui_1",
       is_Ig_data = results_data_import$Ig_data,
-      summarized_checks = summarized_checks
+      summarized_checks = summarized_checks,
+      uncalibrated_as_NA = reactive({ input$uncalibrated_as_na })
     )
     
     calculated_cut_offs <- reactive({
@@ -454,7 +476,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       curate_spectra(checked_data = checked_data(),
                      summarized_checks = summarized_checks(),
                      cut_offs = cut_offs_to_use_all_clusters(),
-                     uncalibrated_as_NA = FALSE)
+                     uncalibrated_as_NA = input$uncalibrated_as_na)
     }) %>% bindEvent(input$button)
     
     observe({
@@ -568,6 +590,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       ipq = reactive({ input$ipq }),
       sn = reactive({ input$sn }),
       included_qc = reactive({ input$qc_to_include }),
+      uncalibrated_as_NA = reactive({ input$uncalibrated_as_na }),
       cut_off = reactive({input$cut_off_basis}),
       tab_contents = reactive({ r$tab_contents }),
       plot = curated_spectra_plot

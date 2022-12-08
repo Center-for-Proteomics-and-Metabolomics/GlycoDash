@@ -4,7 +4,7 @@
 \alias{create_cut_off_plot}
 \title{Create a plot to show the cut_offs for spectra curation}
 \usage{
-create_cut_off_plot(spectra_check)
+create_cut_off_plot(summarized_checks)
 }
 \arguments{
 \item{spectra_check}{The dataframe returned by \code{\link{curate_spectra}}.

@@ -36,8 +36,9 @@ check_analyte_quality_criteria <- function(my_data,
                                            max_ppm_deviation, 
                                            max_ipq, 
                                            min_sn,
-                                           criteria_to_consider,
-                                           uncalibrated_as_NA) {
+                                           criteria_to_consider#,
+                                           #uncalibrated_as_NA
+                                           ) {
   
   data_checked <- my_data %>% 
     check_each_criterium(., 
@@ -46,8 +47,9 @@ check_analyte_quality_criteria <- function(my_data,
                          max_ipq,
                          min_sn) %>% 
     apply_chosen_criteria(.,
-                          criteria_to_consider,
-                          uncalibrated_as_NA) %>%
+                          criteria_to_consider#,
+                          #uncalibrated_as_NA
+                          ) %>%
     report_failed_criteria(.,
                            criteria_to_consider)
   
@@ -68,21 +70,24 @@ check_each_criterium <- function(my_data,
 }
 
 apply_chosen_criteria <- function(my_data,
-                                  criteria_to_consider,
-                                  uncalibrated_as_NA) {
+                                  criteria_to_consider#,
+                                  #uncalibrated_as_NA
+                                  ) {
   to_return <- my_data %>% 
     dplyr::rowwise() %>% 
     dplyr::mutate(analyte_meets_criteria = all(
       dplyr::c_across(tidyselect::all_of(criteria_to_consider))
-    ))
+    ),
+    uncalibrated = is.na(analyte_meets_criteria))
   
-  if (!uncalibrated_as_NA) {
-    to_return <- dplyr::mutate(
-      to_return,
-      analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
-                                                 FALSE)
-    )
-  }
+  # # Move this to separate funcion?
+  # if (!uncalibrated_as_NA) {
+  #   to_return <- dplyr::mutate(
+  #     to_return,
+  #     analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
+  #                                                FALSE)
+  #   )
+  # }
   return(to_return)
 }
 
@@ -145,14 +150,15 @@ summarize_spectra_checks <- function(data_checked) {
   grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
   
   summarized_checks <- data_checked %>% 
-    dplyr::mutate(intensity_times_fraction = absolute_intensity_background_subtracted * fraction) %>% 
+    dplyr::mutate(intensity_divided_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
     # I'm using across() and any_of() because if the data is not Ig data, the
     # column "group" doesn't exist:
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
     dplyr::summarise(passing_analyte_percentage = sum(analyte_meets_criteria)/dplyr::n(), 
                      sum_intensity = sum(
-                       intensity_times_fraction[analyte_meets_criteria == TRUE]
-                     )) %>% 
+                       intensity_divided_by_fraction[analyte_meets_criteria == TRUE]
+                     ),
+                     uncalibrated = unique(uncalibrated)) %>% 
     dplyr::ungroup(.)
   
   return(summarized_checks)
@@ -343,14 +349,20 @@ determine_reason_for_failure <- function(data) {
 #' 
 #' create_cut_off_plot(spectra_check = spectra_curation$spectra_check,
 #'                     cut_off_basis = c("Spike PBS", "Total PBS"))
-create_cut_off_plot <- function(spectra_check) {
+create_cut_off_plot <- function(summarized_checks) {
   
-  n_colors <- length(unique(spectra_check$sample_type))
+  for_plot <- summarized_checks %>% 
+    # in case there are NAs when uncalibrated_as_NA is TRUE:
+    tidyr::replace_na(replace = list(sum_intensity = 0,
+                                     passing_analyte_percentage = 0))
+  
+  n_colors <- length(unique(for_plot$sample_type))
   my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
   
-  p <- spectra_check %>% 
+  p <- for_plot %>% 
     ggplot2::ggplot() +
-    ggplot2::geom_jitter(ggplot2::aes(color = sample_type,
+    ggplot2::geom_jitter(data = for_plot[!for_plot$uncalibrated, ],
+                         ggplot2::aes(color = sample_type,
                                       x = passing_analyte_percentage,
                                       y = sum_intensity,
                                       text = paste0("Sample name: ", 
@@ -363,11 +375,34 @@ create_cut_off_plot <- function(spectra_check) {
                                                     passing_analyte_percentage,
                                                     "\n",
                                                     "Sum intensity: ",
-                                                    sum_intensity)),
-                         size = 1) +
+                                                    sum_intensity,
+                                                    "\nUncalibrated: ",
+                                                    uncalibrated)),
+                         size = 1,
+                         alpha = 0.7) +
+    ggplot2::geom_jitter(data = for_plot[for_plot$uncalibrated, ],
+                         ggplot2::aes(color = sample_type,
+                                      x = passing_analyte_percentage,
+                                      y = sum_intensity,
+                                      text = paste0("Sample name: ", 
+                                                    sample_name,
+                                                    "\n",
+                                                    "Sample ID: ",
+                                                    sample_id,
+                                                    "\n",
+                                                    "Passing analyte percentage: ",
+                                                    passing_analyte_percentage,
+                                                    "\n",
+                                                    "Sum intensity: ",
+                                                    sum_intensity,
+                                                    "\nUncalibrated: ",
+                                                    uncalibrated)),
+                         shape = 15,
+                         size = 1,
+                         alpha = 0.7,
+                         width = 0.01) +
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
-                   #text = ggplot2::element_text(size = 16),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
     ggplot2::scale_color_manual(values = my_palette,
                                 name = "Sample type") +
@@ -375,7 +410,7 @@ create_cut_off_plot <- function(spectra_check) {
     ggplot2::scale_x_continuous(labels = function(x) paste0(x * 100, "%"), 
                                 name = "Percentage of passing analytes")
   
-  if ("group" %in% colnames(spectra_check)) {
+  if ("group" %in% colnames(for_plot)) {
     p <- p +
       ggplot2::facet_wrap(cluster ~ group)
   } else {

@@ -32,7 +32,8 @@ mod_curate_based_on_percentiles_ui <- function(id){
 #' @noRd 
 mod_curate_based_on_percentiles_server <- function(id,
                                                    is_Ig_data,
-                                                   summarized_checks){
+                                                   summarized_checks,
+                                                   uncalibrated_as_NA){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -52,7 +53,7 @@ mod_curate_based_on_percentiles_server <- function(id,
         summarized_checks = summarized_checks(),
         percentile = input$percentile,
         exclude_sample_types = input$exclude_sample_types,
-        uncalibrated_as_NA = FALSE
+        uncalibrated_as_NA = uncalibrated_as_NA()
       )
     })
     

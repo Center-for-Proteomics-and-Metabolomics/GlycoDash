@@ -175,12 +175,17 @@ curated_data <- curate_spectra(checked_data = checked_data,
                                cut_offs = cut_offs,
                                uncalibrated_as_NA = uncalibrated_as_NA)
 
+plotly::ggplotly(create_cut_off_plot(summarized_checks))
+
 for_plot <- summarized_checks %>% 
   dplyr::mutate(uncalibrated = ifelse(is.na(sum_intensity) & is.na(passing_analyte_percentage),
                                       TRUE,
-                                      FALSE),
-                dplyr::across(.cols = c(sum_intensity, passing_analyte_percentage),
-                              .fns = ~ tidyr::replace_na(.x, 0)))
+                                      FALSE)#,
+                # dplyr::across(.cols = c(sum_intensity, passing_analyte_percentage),
+                #               .fns = ~ tidyr::replace_na(.x, 0))
+                ) %>% 
+  tidyr::replace_na(replace = list(sum_intensity = 0,
+                                   passing_analyte_percentage = 0))
 
 n_colors <- length(unique(for_plot$sample_type))
   my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)

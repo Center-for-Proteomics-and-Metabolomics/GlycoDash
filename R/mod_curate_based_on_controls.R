@@ -156,7 +156,8 @@ mod_curate_based_on_controls_ui <- function(id){
 #' @noRd 
 mod_curate_based_on_controls_server <- function(id, 
                                                 results_data_import,
-                                                summarized_checks){
+                                                summarized_checks,
+                                                uncalibrated_as_NA){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -240,7 +241,7 @@ mod_curate_based_on_controls_server <- function(id,
           percentile = input$percentile,
           use_mean_SD = input$use_mean_SD,
           SD_factor = input$factor,
-          uncalibrated_as_NA = FALSE
+          uncalibrated_as_NA = uncalibrated_as_NA()
         )
         
         cut_offs_total <- calculate_cut_offs(
@@ -250,7 +251,7 @@ mod_curate_based_on_controls_server <- function(id,
           percentile = input$percentile,
           use_mean_SD = input$use_mean_SD,
           SD_factor = input$factor,
-          uncalibrated_as_NA = FALSE
+          uncalibrated_as_NA = uncalibrated_as_NA()
         )
         
         dplyr::full_join(cut_offs_specific,
@@ -263,7 +264,7 @@ mod_curate_based_on_controls_server <- function(id,
           percentile = input$percentile,
           use_mean_SD = input$use_mean_SD,
           SD_factor = input$factor,
-          uncalibrated_as_NA = FALSE
+          uncalibrated_as_NA = uncalibrated_as_NA()
         )
       }
     })
