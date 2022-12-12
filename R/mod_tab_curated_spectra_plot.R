@@ -45,6 +45,7 @@ mod_tab_curated_spectra_plot_server <- function(id,
       return(plotly_object)
     })
     
+    return(curated_spectra_plot)
   })
 }
     

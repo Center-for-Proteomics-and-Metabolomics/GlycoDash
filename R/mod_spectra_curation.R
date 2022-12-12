@@ -533,7 +533,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     
     curated_spectra_plot <- reactive({
-      req(curated_data())
+      req(curated_data(),
+          length(unique(clusters())) <= 4)
       
       plot_spectra_curation_results(curated_data(),
                                     results_data_import$Ig_data())
@@ -555,7 +556,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       purrr::map(clusters(),
                  function(current_cluster) {
                    appendTab("more_than_4_clusters",
-                             #select = TRUE,
+                             #select = TRUE, #leads to some plotlys being too narrow
                              tabPanel(
                                title = current_cluster,
                                mod_tab_curated_spectra_plot_ui(
@@ -572,7 +573,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
       req(length(clusters()) > 4,
           curated_data())
       
-      browser()
       r$curated_spectra_plots <- rlang::set_names(clusters()) %>% 
         purrr::map(
         .,
@@ -583,7 +583,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
               curated_data() %>% 
                 dplyr::filter(cluster == current_cluster) 
             }),
-                                           is_Ig_data = results_data_import$Ig_data)
+            is_Ig_data = results_data_import$Ig_data)
         })
     })
     
@@ -642,6 +642,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       uncalibrated_as_NA = reactive({ input$uncalibrated_as_na }),
       cut_off = reactive({input$cut_off_basis}),
       tab_contents = reactive({ r$tab_contents }),
+      curated_spectra_plots = reactive({ r$curated_spectra_plots }),
       plot = curated_spectra_plot
     ))
     

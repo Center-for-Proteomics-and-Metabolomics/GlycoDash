@@ -17,6 +17,7 @@ params:
   included_qc: NA
   spectra_curation_tab_contents: NA
   curated_spectra_plot: NA
+  curated_spectra_plots: NA
   analyte_curation_method: NA
   ignore_samples: NA
   cut_off_percentage: NA
@@ -107,16 +108,41 @@ purrr::iwalk(params$spectra_curation_tab_contents,
 
 ```{r spectra-curation-results, results='asis'}
 
-p <- params$curated_spectra_plot %>% 
-  plotly::ggplotly(., tooltip = "text")
+#TODO: add titles
 
-p <- facet_strip_bigger(p)
+if (!is.null(params$curated_spectra_plot)) {
+  p <- params$curated_spectra_plot %>% 
+    plotly::ggplotly(., tooltip = "text")
+  
+  p <- facet_strip_bigger(p)
+  
+  p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
+  
+  p[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -50
+  
+  print(htmltools::tagList(p))
+} else {
+  purrr::iwalk(params$curated_spectra_plots,
+             function(curated_spectra_plot,
+                      name) {
+               
+               cat("####",
+                     name,
+                     "\n")
+               
+               p <- curated_spectra_plot %>% 
+                 plotly::ggplotly(., tooltip = "text")
+               
+               p <- facet_strip_bigger(p)
+               
+               p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
+               
+               p[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -50
+               
+               print(htmltools::tagList(p))
+             })
+}
 
-p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
-
-p[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -50
-
-print(htmltools::tagList(p))
 
 ```
 
