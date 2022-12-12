@@ -10,15 +10,17 @@
 mod_information_box_ui <- function(id){
   ns <- NS(id)
   tagList(
-    plotly::plotlyOutput(ns("plot")),
-    #plotOutput(ns("plot")),
-    br(),
-    shinyWidgets::materialSwitch(ns("check_all"),
-                 "If one charge state has passed curation, also select all other charge states for further analysis.",
-                 right = TRUE,
-                 status = "primary"),
-    br(),
-    DT::dataTableOutput(ns("table"))
+    column(
+      width= 12,
+      plotly::plotlyOutput(ns("plot")),
+      br(),
+      shinyWidgets::materialSwitch(ns("check_all"),
+                                   "If one charge state has passed curation, also select all other charge states for further analysis.",
+                                   right = TRUE,
+                                   status = "primary"),
+      br(),
+      DT::dataTableOutput(ns("table"))
+    )
   )
 }
     

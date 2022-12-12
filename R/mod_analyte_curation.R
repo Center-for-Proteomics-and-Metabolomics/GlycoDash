@@ -403,8 +403,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     
     with_analytes_to_include <- reactive({
       req(summary(),
-          purrr::map(x$mod_results,
-                     ~ is_truthy(.x$analytes_to_include())))
+          all(purrr::map_lgl(x$mod_results,
+                         ~ is_truthy(.x$analytes_to_include()))))
       
       purrr::imap(x$mod_results,
                   function(results, current_cluster) {

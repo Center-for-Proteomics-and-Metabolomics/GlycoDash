@@ -282,6 +282,7 @@ mod_spectra_curation_ui <- function(id){
             solidHeader = TRUE,
             status = "primary",
             plotly::plotlyOutput(ns("curated_spectra_plot")),
+            tabsetPanel(id = ns("more_than_4_clusters")),
             br(),
             tabsetPanel(
               tabPanel(title = "Overview of failed spectra",
@@ -538,6 +539,54 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                     results_data_import$Ig_data())
       
     })
+    
+    observe({
+      req(clusters())
+      shinyjs::toggle(id = "more_than_4_clusters",
+                      condition = length(clusters()) > 4)
+      shinyjs::toggle(id = "curated_spectra_plot",
+                      condition = length(clusters()) <= 4)
+    })
+    
+    observe({
+      req(length(clusters()) > 4,
+          curated_data())
+      
+      purrr::map(clusters(),
+                 function(current_cluster) {
+                   appendTab("more_than_4_clusters",
+                             #select = TRUE,
+                             tabPanel(
+                               title = current_cluster,
+                               mod_tab_curated_spectra_plot_ui(
+                                 # I already use ns(cluster) somewhere else in
+                                 # mod_spectra_curation, so I need to use a
+                                 # different namespace here:
+                                 ns(paste0(current_cluster, "_results")))
+                             )
+                   )
+                 })
+    })
+    
+    observe({
+      req(length(clusters()) > 4,
+          curated_data())
+      
+      browser()
+      r$curated_spectra_plots <- rlang::set_names(clusters()) %>% 
+        purrr::map(
+        .,
+        function(current_cluster) {
+          mod_tab_curated_spectra_plot_server(
+            id = paste0(current_cluster, "_results"), 
+            curated_data = reactive({ 
+              curated_data() %>% 
+                dplyr::filter(cluster == current_cluster) 
+            }),
+                                           is_Ig_data = results_data_import$Ig_data)
+        })
+    })
+    
     
     output$curated_spectra_plot <- plotly::renderPlotly({
       req(curated_spectra_plot())

@@ -70,6 +70,7 @@ golem::add_module( name = "tab_repeatability" )
 golem::add_module( name = "export" )
 golem::add_module( name = "box_with_plot" )
 golem::add_module( name = "tab_data_exploration" )
+golem::add_module( name = "tab_curated_spectra_plot" )
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
