@@ -553,6 +553,14 @@ mod_spectra_curation_server <- function(id, results_data_import){
       req(length(clusters()) > 4,
           curated_data())
       
+      # Remove tabs in case they have been created before. Still not ideal cause
+      # if cluster names are changed then the old tabs won't be removed
+      purrr::map(clusters(),
+                 function(current_cluster) {
+                   removeTab("more_than_4_clusters",
+                             target = current_cluster)
+                 })
+      
       purrr::map(clusters(),
                  function(current_cluster) {
                    appendTab("more_than_4_clusters",
