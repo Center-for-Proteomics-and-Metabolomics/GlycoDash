@@ -335,34 +335,34 @@ mod_spectra_curation_server <- function(id, results_data_import){
           input$sn,
           input$ipq
       )
+      
       check_analyte_quality_criteria(my_data = summary(),
                         min_ppm_deviation = input$mass_accuracy[1],
                         max_ppm_deviation = input$mass_accuracy[2],
                         max_ipq = input$ipq,
                         min_sn = input$sn,
-                        criteria_to_consider = input$qc_to_include#,
-                        #uncalibrated_as_NA = input$uncalibrated_as_na
-                        )
+                        criteria_to_consider = input$qc_to_include)
+      
     })
     
-    checked_data_uncalibrated <- reactive({
-      req(checked_data())
-      
-      if (!input$uncalibrated_as_na) {
-        dplyr::mutate(
-          checked_data(),
-          analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
-                                                     FALSE)
-        )
-      } else {
-        checked_data()
-      }
-    })
+    # checked_data_uncalibrated <- reactive({
+    #   req(checked_data())
+    #   
+    #   if (!input$uncalibrated_as_na) {
+    #     dplyr::mutate(
+    #       checked_data(),
+    #       analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
+    #                                                  FALSE)
+    #     )
+    #   } else {
+    #     checked_data()
+    #   }
+    # })
     
     # Analyte quality criteria checks summarized per cluster per sample: 
     summarized_checks <- reactive({
-      req(checked_data_uncalibrated())
-      summarize_spectra_checks(checked_data_uncalibrated())
+      req(checked_data)
+      summarize_spectra_checks(checked_data())
     })
     
     observe({
@@ -476,8 +476,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     curated_data <- reactive({
       curate_spectra(checked_data = checked_data(),
                      summarized_checks = summarized_checks(),
-                     cut_offs = cut_offs_to_use_all_clusters(),
-                     uncalibrated_as_NA = input$uncalibrated_as_na)
+                     cut_offs = cut_offs_to_use_all_clusters())
     }) %>% bindEvent(input$button)
     
     observe({
@@ -535,9 +534,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
     curated_spectra_plot <- reactive({
       req(curated_data(),
           length(unique(clusters())) <= 4)
-      
-      plot_spectra_curation_results(curated_data(),
+      browser()
+      p <- plot_spectra_curation_results(curated_data(),
                                     results_data_import$Ig_data())
+      
+      print("stop")
+      return(p)
       
     })
     
@@ -594,7 +596,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
             is_Ig_data = results_data_import$Ig_data)
         })
     })
-    
     
     output$curated_spectra_plot <- plotly::renderPlotly({
       req(curated_spectra_plot())

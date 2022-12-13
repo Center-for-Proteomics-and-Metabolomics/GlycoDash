@@ -54,6 +54,7 @@ clusters <- tibble::tibble(analyte = levels(data$analyte)) %>%
 
 data <- dplyr::left_join(data, clusters) %>% 
   dplyr::relocate(cluster, .after = analyte)
+  
 
 ```
 
@@ -140,6 +141,53 @@ to the cut-off values for both. The cut-off values are the average
 proportion of passing analytes and average sum intensity + 3 times the standard 
 deviations in a chosen group of spectra that should not pass curation (cut_off_basis). 
 
+```{r}
+
+checked_data <- check_analyte_quality_criteria(my_data = data_complete,
+                        min_ppm_deviation = -20,
+                        max_ppm_deviation = 20,
+                        max_ipq = 0.2,
+                        min_sn = 9,
+                        criteria_to_consider = c("S/N", "IPQ", "Mass accuracy"))
+
+summarized_checks <- summarize_spectra_checks(checked_data)
+
+cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+                               #exclude_sample_types = c("PBS", "Visucon", "IVIGg"),
+                               percentile = 2,
+                               uncalibrated_as_NA = FALSE)
+
+summarized_checks_with_cut_offs <- dplyr::left_join(summarized_checks,
+                                                    cut_offs)
+
+pc <- create_cut_off_plot(summarized_checks_with_cut_offs)
+pc <- pc +
+          ggplot2::geom_vline(data = summarized_checks_with_cut_offs,
+                              ggplot2::aes(xintercept = cut_off_passing_analyte_percentage,
+                                           text = paste0("Passing analyte percentage cut-off: ",
+                                                         cut_off_passing_analyte_percentage)),
+                              linetype = "dotted") +
+          ggplot2::geom_hline(data = summarized_checks_with_cut_offs,
+                              ggplot2::aes(yintercept = cut_off_sum_intensity,
+                                           text = paste0("Sum intensity cut-off: ",
+                                                         cut_off_sum_intensity)),
+                              linetype = "dotted")
+plotly::ggplotly(pc, tooltip = "text")
+
+curated_data <- curate_spectra(checked_data = checked_data,
+                               summarized_checks = summarized_checks,
+                               cut_offs = cut_offs,
+                               uncalibrated_as_NA = FALSE)
+
+p <- plot_spectra_curation_results(curated_data = curated_data,
+                                   Ig_data = "Yes")
+
+plotly::ggplotly(p, tooltip = "text")
+
+
+```
+
+
 ```{r spectra-curation-uncalibrated-as-NA}
 
 min_ppm_deviation = -20
@@ -147,15 +195,21 @@ max_ppm_deviation = 20
 max_ipq = 0.2
 min_sn = 9
 criteria_to_consider <- c("Mass accuracy", "IPQ", "S/N")
-uncalibrated_as_NA <- FALSE
+uncalibrated_as_NA <- TRUE
 
 checked_data <- check_analyte_quality_criteria(data_complete,
                                                min_ppm_deviation,
                                                max_ppm_deviation,
                                                max_ipq,
                                                min_sn,
-                                               criteria_to_consider,
-                                               uncalibrated_as_NA)
+                                               criteria_to_consider)
+if (!uncalibrated_as_NA) {
+  checked_data <- dplyr::mutate(
+    checked_data,
+    analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
+                                               FALSE)
+  )
+}
 
 summarized_checks <- summarize_spectra_checks(checked_data)
 
@@ -169,6 +223,25 @@ cut_offs <- calculate_cut_offs(summarized_checks,
                                control_sample_types,
                                percentile = 95,
                                uncalibrated_as_NA = uncalibrated_as_NA)
+
+summarized_checks_with_cut_offs <- dplyr::left_join(summarized_checks, 
+                                                      cut_offs) %>% 
+    dplyr::ungroup(.)
+
+curated_spectra <- summarized_checks_with_cut_offs %>% 
+    # Can't use all() instead of & because all() is not vectorized
+    dplyr::mutate(has_passed_spectra_curation = passing_analyte_percentage > cut_off_passing_analyte_percentage &
+                    sum_intensity > cut_off_sum_intensity) 
+
+with_reasons <- curated_spectra %>% 
+    dplyr::mutate(reason_for_failure = dplyr::case_when(
+      uncalibrated ~ "Calibration failed.",
+        passing_analyte_percentage <= cut_off_passing_analyte_percentage & sum_intensity <= cut_off_sum_intensity ~ "Percentage of passing analytes and sum intensity below cut-offs.",
+        passing_analyte_percentage <= cut_off_passing_analyte_percentage ~ "Percentage of passing analytes below cut-off.",
+        sum_intensity <= cut_off_sum_intensity ~ "Sum intensity below cut-off.",
+        TRUE ~ as.character(NA) # Cannot be NA, because case_When requires that all possible 
+        # values are of the same type (in this case string)
+      ))
 
 curated_data <- curate_spectra(checked_data = checked_data,
                                summarized_checks = summarized_checks,

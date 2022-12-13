@@ -36,20 +36,24 @@ check_analyte_quality_criteria <- function(my_data,
                                            max_ppm_deviation, 
                                            max_ipq, 
                                            min_sn,
-                                           criteria_to_consider#,
-                                           #uncalibrated_as_NA
-                                           ) {
+                                           criteria_to_consider) {
   
   data_checked <- my_data %>% 
+    dplyr::group_by(sample_name) %>% 
+    dplyr::mutate(uncalibrated = all(
+      all(is.na(absolute_intensity_background_subtracted)),
+      all(is.na(mass_accuracy_ppm)),
+      all(is.na(isotopic_pattern_quality)),
+      all(is.na(sn))
+    )) %>% 
+    dplyr::ungroup() %>% 
     check_each_criterium(., 
                          min_ppm_deviation,
                          max_ppm_deviation,
                          max_ipq,
                          min_sn) %>% 
     apply_chosen_criteria(.,
-                          criteria_to_consider#,
-                          #uncalibrated_as_NA
-                          ) %>%
+                          criteria_to_consider) %>%
     report_failed_criteria(.,
                            criteria_to_consider)
   
@@ -66,7 +70,10 @@ check_each_criterium <- function(my_data,
                                                    min_ppm_deviation, 
                                                    max_ppm_deviation),
                   IPQ = isotopic_pattern_quality < max_ipq,
-                  `S/N` = sn > min_sn)
+                  `S/N` = sn > min_sn,
+                  dplyr::across(c(`Mass accuracy`, IPQ, `S/N`),
+                                ~ tidyr::replace_na(.x, FALSE))
+    )
 }
 
 apply_chosen_criteria <- function(my_data,
@@ -77,8 +84,11 @@ apply_chosen_criteria <- function(my_data,
     dplyr::rowwise() %>% 
     dplyr::mutate(analyte_meets_criteria = all(
       dplyr::c_across(tidyselect::all_of(criteria_to_consider))
-    ),
-    uncalibrated = is.na(analyte_meets_criteria))
+    )#,
+    # analyte_meets_criteria = ifelse(uncalibrated,
+    #                                 NA,
+    #                                 analyte_meets_criteria))
+    )
   
   # # Move this to separate funcion?
   # if (!uncalibrated_as_NA) {
@@ -156,7 +166,9 @@ summarize_spectra_checks <- function(data_checked) {
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
     dplyr::summarise(passing_analyte_percentage = sum(analyte_meets_criteria)/dplyr::n(), 
                      sum_intensity = sum(
-                       intensity_divided_by_fraction[analyte_meets_criteria == TRUE]
+                       intensity_divided_by_fraction[analyte_meets_criteria == TRUE],
+                       na.rm = TRUE # needed for spectra that did calibrate but where 
+                       # absolute_intensity still has one or more NAs 
                      ),
                      uncalibrated = unique(uncalibrated)) %>% 
     dplyr::ungroup(.)
@@ -200,7 +212,8 @@ calculate_cut_offs <- function(summarized_checks,
   cut_off_basis <- summarized_checks %>% 
     dplyr::filter(if (!is.null(group_keyword)) group == group_keyword else TRUE) %>% 
     dplyr::filter(if (!is.null(control_sample_types)) sample_type %in% control_sample_types else TRUE) %>% 
-    dplyr::filter(if (!is.null(exclude_sample_types)) !(sample_type %in% exclude_sample_types) else TRUE)
+    dplyr::filter(if (!is.null(exclude_sample_types)) !(sample_type %in% exclude_sample_types) else TRUE) %>% 
+    dplyr::filter(if (uncalibrated_as_NA) !uncalibrated else TRUE)
   
   grouping_variables <- c("group", "cluster")
   
@@ -218,6 +231,7 @@ calculate_cut_offs <- function(summarized_checks,
                               names = FALSE,
                               na.rm = uncalibrated_as_NA),
       sample_type = unique(sample_type),
+      #TODO: fix this: could be other methods!
       curation_method = "based_on_negative_controls") %>% 
     tidyr::nest(., "sample_type_list" = sample_type)
     
@@ -259,8 +273,7 @@ calculate_cut_offs <- function(summarized_checks,
 #'                max_ipq = 0.2,
 #'                min_sn = 9,
 #'                cut_off_basis = c("Spike PBS", "Total PBS"))
-curate_spectra <- function(checked_data, summarized_checks, cut_offs,
-                           uncalibrated_as_NA) {
+curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
   
   summarized_checks_with_cut_offs <- dplyr::left_join(summarized_checks, 
                                                       cut_offs) %>% 
@@ -269,7 +282,10 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs,
   curated_spectra <- summarized_checks_with_cut_offs %>% 
     # Can't use all() instead of & because all() is not vectorized
     dplyr::mutate(has_passed_spectra_curation = passing_analyte_percentage > cut_off_passing_analyte_percentage &
-                    sum_intensity > cut_off_sum_intensity) %>% 
+                    sum_intensity > cut_off_sum_intensity,
+                  has_passed_spectra_curation = ifelse(uncalibrated, 
+                                                       FALSE,
+                                                       has_passed_spectra_curation)) %>% 
     determine_reason_for_failure()
   
   curated_data <- dplyr::full_join(curated_spectra, 
@@ -284,20 +300,8 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs,
     dplyr::relocate(tidyselect::any_of(c("sample_id", "plate_well")),
                     .after = sample_name)
   
-  if (!uncalibrated_as_NA) {
-    curated_data <- curated_data %>% 
-      dplyr::mutate(reason_for_failure = ifelse(
-        is.na(absolute_intensity_background_subtracted) &
-          is.na(mass_accuracy_ppm) &
-          is.na(isotopic_pattern_quality) &
-          is.na(sn), 
-        "Calibration failed.", 
-        reason_for_failure
-      ))
-  }
-  
   without_uncalibrated <- curated_data %>% 
-    dplyr::filter(reason_for_failure != "Calibration failed." | is.na(reason_for_failure))
+    dplyr::filter(!uncalibrated)
   
   if (all(!without_uncalibrated$has_passed_spectra_curation)) {
     rlang::warn("None of the spectra passed curation.")
@@ -310,17 +314,14 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs,
 
 determine_reason_for_failure <- function(data) {
   with_reasons <- data %>% 
-    dplyr::mutate(reason_for_failure = dplyr::na_if(
-      dplyr::case_when(
-        passing_analyte_percentage <= cut_off_passing_analyte_percentage & sum_intensity <= cut_off_sum_intensity ~ "Percentage of passing analytes and sum intensity below cut-offs.",
-        passing_analyte_percentage <= cut_off_passing_analyte_percentage ~ "Percentage of passing analytes below cut-off.",
-        sum_intensity <= cut_off_sum_intensity ~ "Sum intensity below cut-off.",
-        # When uncalibrated_as_NA is TRUE:
-        is.na(has_passed_spectra_curation) ~ "Calibration failed.",
-        TRUE ~ "" # Cannot be NA, because case_When requires that all possible 
-        # values are of the same type (in this case string)
-      ),
-      "")) # Replace with NA outside of the case_When call
+    dplyr::mutate(reason_for_failure = dplyr::case_when(
+      uncalibrated ~ "Calibration failed.",
+      passing_analyte_percentage <= cut_off_passing_analyte_percentage & sum_intensity <= cut_off_sum_intensity ~ "Percentage of passing analytes and sum intensity below cut-offs.",
+      passing_analyte_percentage <= cut_off_passing_analyte_percentage ~ "Percentage of passing analytes below cut-off.",
+      sum_intensity <= cut_off_sum_intensity ~ "Sum intensity below cut-off.",
+      TRUE ~ as.character(NA) # as.character(), because case_When requires that 
+      # all possible values are of the same data type
+    ))
   
   return(with_reasons)
 }

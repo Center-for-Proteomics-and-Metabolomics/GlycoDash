@@ -4,7 +4,7 @@
 \alias{curate_spectra}
 \title{Perform spectra curation}
 \usage{
-curate_spectra(checked_data, summarized_checks, cut_offs, uncalibrated_as_NA)
+curate_spectra(checked_data, summarized_checks, cut_offs)
 }
 \value{
 The function returns the original dataframe given as the data
