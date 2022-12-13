@@ -155,20 +155,18 @@ mod_export_server <- function(id,
           # to convert it to a regular list first:
           shiny::reactiveValuesToList(results_repeatability$tab_results),
           function(list_of_objects) {
-            lapply(list_of_objects,
-                   function(x) {
-                     # When samples are not grouped by plate there is no table
-                     # and trying to call it results in an error, so I'm using
-                     # tryCatch:
-                     tryCatch(
-                       expr = {
-                         do.call(x,
-                                 args = list())
-                       },
-                       error = function(e) {
-                         NULL
-                       })
-                   })
+            plot <- try_call(list_of_objects$plot)
+            plots <- purrr::map(list_of_objects$plots(),
+                                ~ try_call(.x))
+            table <- try_call(list_of_objects$table)
+            title <- do.call(list_of_objects$title_for_report,
+                             args = list())
+            return(list(
+              plot = plot,
+              plots = plots,
+              table = table,
+              title = title
+            ))
           })
         
         data_exploration_tab_contents <- purrr::map(

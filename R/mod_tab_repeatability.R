@@ -13,7 +13,6 @@ mod_tab_repeatability_ui <- function(id){
   tagList(
     fluidPage(
       fluidRow(
-        #test
         br(),
         shinydashboard::box(
           title = "Select a standard",
@@ -39,7 +38,8 @@ mod_tab_repeatability_ui <- function(id){
             status = "primary",
             column(
               width = 9,
-              shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot")))
+              shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot"))),
+              tabsetPanel(id = ns("plot_tabs"))
             ),
             column(
               width = 3,
@@ -151,6 +151,7 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
     })
     
     plot <- reactive({
+      req(length(clusters()) <= 4)
       if (is_truthy(input$by_plate)) {
         req(x$repeatability)
         plot <- visualize_repeatability2(x$repeatability)
@@ -176,6 +177,58 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
       
       return(plot)
     })
+    
+    observe({
+      req(!is.null(input$by_plate))
+      shinyjs::toggle(id = "plot_tabs",
+                      condition = length(clusters()) > 4)
+      shinyjs::toggle(id = "plot",
+                      condition = length(clusters()) <= 4)
+    })
+    
+    clusters <- reactive({
+      req(my_data())
+      unique(my_data()$cluster)
+    })
+    
+    observe({
+      req(clusters())
+      req(length(clusters()) > 4)
+      req(!is.null(input$by_plate))
+      
+      purrr::map(clusters(),
+                 function(current_cluster) {
+                   removeTab(inputId = "plot_tabs",
+                             target = current_cluster)
+                 })
+      
+      purrr::map(clusters(),
+                 function(current_cluster) {
+                   appendTab(inputId = "plot_tabs",
+                             tabPanel(
+                               title = current_cluster,
+                               mod_tab_repeatability_plot_ui(ns(paste0(current_cluster,
+                                                                      "repeatability_plot")))
+                             ))
+                 })
+      
+      x$plots <- rlang::set_names(clusters()) %>% 
+        purrr::map(.,
+                   function(current_cluster) {
+                     mod_tab_repeatability_plot_server(
+                       id = paste0(current_cluster,
+                                   "repeatability_plot"),
+                       by_plate = reactive({ input$by_plate }),
+                       repeatability = reactive({ x$repeatability %>% 
+                           dplyr::filter(cluster == current_cluster) }),
+                       my_data = reactive({ my_data() %>% 
+                           dplyr::filter(cluster == current_cluster) }),
+                       selected_sample_id = selected_sample_id,
+                       selected_group = selected_group
+                     )
+                   })
+      
+    }) %>% bindEvent(input$assess_repeatability)
     
     output$plot <- plotly::renderPlotly({
       req(plot())
@@ -215,6 +268,7 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
     
     return(list(
       plot = plot,
+      plots = reactive({ x$plots }),
       table = for_table,
       title_for_report = reactive({ input$sample_menu })
     ))

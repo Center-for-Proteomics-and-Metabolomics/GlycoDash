@@ -251,7 +251,7 @@ purrr::walk(params$repeatability,
             function(objects_list) {
               if (!is.null(objects_list$plot)) {
                 cat("### ",
-                    objects_list$title_for_report,
+                    objects_list$title,
                     "\n")
                 
                 p <- objects_list$plot %>% 
@@ -261,28 +261,46 @@ purrr::walk(params$repeatability,
                                                 y_distance = 90)
                 
                 print(htmltools::tagList(p))
+              }
+              
+              if (all(purrr::map(objects_list$plots,
+                                 ~ !is.null(.x)))) {
+                cat("### ",
+                    objects_list$title,
+                    "\n")
                 
-                if (!is.null(objects_list$table)) {
-                  objects_list$table %>%
-                    dplyr::select(plate, intra_plate_variation) %>% 
-                    dplyr::mutate(
-                      Plate = plate,
-                      `Intra-plate variation (%)` = tidyr::replace_na(
-                        as.character(intra_plate_variation), "This plate contained only one sample."),
-                      .keep = "unused") %>% 
-                    kableExtra::kbl() %>%
-                    kableExtra::kable_styling(bootstrap_options = "striped",
-                                              full_width = F,
-                                              position = "left") %>%
-                    htmltools::HTML() %>%
-                    print()
-                  
-                  cat("\nInter-plate variation: ",
-                      signif(mean(objects_list$table$intra_plate_variation, 
-                                  na.rm = TRUE),
-                             digits = 3),
-                      " %\n\n")
-                }
+                purrr::walk(objects_list$plots,
+                            function(my_plot) {
+                              p <- my_plot %>% 
+                                plotly::ggplotly(., tooltip = "text")
+                              
+                              p <- change_axis_title_distance(p,
+                                                              y_distance = 90)
+                              
+                              print(htmltools::tagList(p))
+                            })
+              }
+              
+              if (!is.null(objects_list$table)) {
+                objects_list$table %>%
+                  dplyr::select(plate, intra_plate_variation) %>% 
+                  dplyr::mutate(
+                    Plate = plate,
+                    `Intra-plate variation (%)` = tidyr::replace_na(
+                      as.character(intra_plate_variation), "This plate contained only one sample."),
+                    .keep = "unused") %>% 
+                  kableExtra::kbl() %>%
+                  kableExtra::kable_styling(bootstrap_options = "striped",
+                                            full_width = F,
+                                            position = "left") %>%
+                  htmltools::HTML() %>%
+                  print()
+                
+                cat("\nInter-plate variation: ",
+                    signif(mean(objects_list$table$intra_plate_variation, 
+                                na.rm = TRUE),
+                           digits = 3),
+                    " %\n\n")
               }
             })
 
