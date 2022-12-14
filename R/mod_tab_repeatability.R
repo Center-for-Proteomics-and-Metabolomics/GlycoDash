@@ -76,7 +76,7 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
       req(my_data())
       #req(Ig_data())
       
-      menu <- my_data() %>% 
+      menu_df <- my_data() %>% 
         dplyr::ungroup() %>% 
         dplyr::select(tidyselect::any_of(c("sample_name", "group", "sample_id"))) %>%
         dplyr::distinct() %>%
@@ -87,9 +87,16 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
                                                                    number_of_replicates_after_curation)) %>% 
         dplyr::mutate(replicates_after_curation = number_of_replicates_after_curation > 1) %>% 
         dplyr::filter(replicates_after_curation == TRUE) %>% 
-        dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", "sample_id")))) %>% 
-        purrr::pmap_chr(.,
-                        paste)
+        dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", "sample_id")))) 
+      
+      if ("group" %in% colnames(menu_df)) {
+        menu <- purrr::pmap(menu_df,
+                            function(group, sample_id) {
+                              paste("group:", group, "sample_id:", sample_id)
+                            })
+      } else {
+        menu <- paste("sample_id:", menu_df$sample_id)
+      }
       
       selectInput(ns("sample_menu"),
                   label = "Choose which samples you want to assess:",
@@ -101,7 +108,7 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
       req(my_data())
       
       stringr::str_extract(input$sample_menu,
-                           unique(my_data()$sample_id)) %>% 
+                           "(?<=sample_id: ).+$") %>% 
         na.omit()
     }) %>% bindEvent(input$assess_repeatability)
     
@@ -111,7 +118,7 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
       if (Ig_data() == "Yes") {
         group <- stringr::str_extract(
           string = input$sample_menu,
-          pattern = unique(my_data()$group)) %>% 
+          pattern = "(?<=group: ).+(?= sample_id: .+)") %>% 
           na.omit(.)
       } else {
         group <- NULL

@@ -166,7 +166,7 @@ visualize_repeatability2 <- function(repeatability_data) {
 
 visualize_repeatability_dogded_bars <- function(data,
                                                 selected_sample_id,
-                                                selected_group) {
+                                                selected_group = NULL) {
   
   to_plot <- data %>% 
     dplyr::filter(sample_id == selected_sample_id)
@@ -226,7 +226,7 @@ visualize_repeatability_dogded_bars <- function(data,
 
 visualize_repeatability_mean_bars <- function(data,
                                               selected_sample_id,
-                                              selected_group) {
+                                              selected_group = NULL) {
   to_plot <- data %>% 
     dplyr::filter(sample_id == selected_sample_id)
   
