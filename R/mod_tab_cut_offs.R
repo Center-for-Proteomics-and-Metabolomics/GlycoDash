@@ -24,7 +24,7 @@ mod_tab_cut_offs_ui <- function(id){
                                  "Choose cut-off values manually instead",
                                  right = TRUE,
                                  status = "primary"),
-    numericInput(ns("cut_off_sum_intensityensity"),
+    numericInput(ns("cut_off_sum_intensity"),
                  "Enter a cut-off value for the sum intensity:",
                  value = ""),
     numericInput(ns("cut_off_passing_analyte_percentage"),
@@ -36,7 +36,7 @@ mod_tab_cut_offs_ui <- function(id){
       solidHeader = TRUE,
       #status = "primary",
       width = 6,
-      numericInput(ns("cut_off_sum_intensityensity_specific"),
+      numericInput(ns("cut_off_sum_intensity_specific"),
                    "Enter a cut-off value for the sum intensity in the specific Ig samples:",
                    value = ""),
       numericInput(ns("cut_off_passing_analyte_percentage_specific"),
@@ -49,7 +49,7 @@ mod_tab_cut_offs_ui <- function(id){
       solidHeader = TRUE,
       #status = "primary",
       width = 6,
-      numericInput(ns("cut_off_sum_intensityensity_total"),
+      numericInput(ns("cut_off_sum_intensity_total"),
                    "Enter a cut-off value for the sum intensity in the total Ig samples:",
                    value = ""),
       numericInput(ns("cut_off_passing_analyte_percentage_total"),
@@ -65,13 +65,14 @@ mod_tab_cut_offs_ui <- function(id){
 mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
                                     #switch_to_manual, cut_offs_to_use, manual_cut_offs,
                                     Ig_data, calculated_cut_offs,
-                                    keyword_specific, keyword_total){
+                                    keyword_specific, keyword_total,
+                                    curation_method){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     # Hide the cut_off_basis selectInput when manual_cut_off is chosen:
     observe({
-      shinyjs::toggle("cut_off_sum_intensityensity",
+      shinyjs::toggle("cut_off_sum_intensity",
                       condition = all(is_truthy(input$switch_to_manual),
                                       Ig_data() == "No"))
       shinyjs::toggle("cut_off_passing_analyte_percentage",
@@ -87,23 +88,28 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
                                       Ig_data() == "Yes"))
     })
     
+    observe({
+      shinyjs::toggle("switch_to_manual",
+                      condition = curation_method() != "Skip spectra curation")
+    })
+    
     manual_cut_offs <- reactive({
       
       if (Ig_data() == "Yes") {
-        req(input$cut_off_sum_intensityensity_specific,
-            input$cut_off_sum_intensityensity_total,
+        req(input$cut_off_sum_intensity_specific,
+            input$cut_off_sum_intensity_total,
             input$cut_off_passing_analyte_percentage_specific,
             input$cut_off_passing_analyte_percentage_total)
         
         specific <- tibble::tibble(
-          cut_off_sum_intensity = input$cut_off_sum_intensityensity_specific,
+          cut_off_sum_intensity = input$cut_off_sum_intensity_specific,
           cut_off_passing_analyte_percentage = input$cut_off_passing_analyte_percentage_specific,
           group = keyword_specific(),
           curation_method = "manual"
         )
         
         total <- tibble::tibble(
-          cut_off_sum_intensity = input$cut_off_sum_intensityensity_total,
+          cut_off_sum_intensity = input$cut_off_sum_intensity_total,
           cut_off_passing_analyte_percentage = input$cut_off_passing_analyte_percentage_total,
           group = keyword_total(),
           curation_method = "manual"
@@ -119,10 +125,10 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
         #                            })
         
       } else {
-        req(input$cut_off_sum_intensityensity,
+        req(input$cut_off_sum_intensity,
             input$cut_off_passing_analyte_percentage)
         
-        cut_offs <- data.frame(cut_off_sum_intensity = input$cut_off_sum_intensityensity,
+        cut_offs <- data.frame(cut_off_sum_intensity = input$cut_off_sum_intensity,
                                cut_off_passing_analyte_percentage = input$cut_off_passing_analyte_percentage,
                                curation_method = "manual",
                                cluster = selected_cluster)

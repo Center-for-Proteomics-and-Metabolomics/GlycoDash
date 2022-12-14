@@ -276,7 +276,8 @@ mod_spectra_curation_ui <- function(id){
       fluidRow(
         column(
           width = 12,
-          shinydashboard::box(
+          shinydashboardPlus::box(
+            id = ns("results_box"),
             title = "View spectra curation results",
             width = NULL,
             solidHeader = TRUE,
@@ -371,6 +372,16 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
       shinyjs::toggle("percentiles_module",
                       condition = input$curation_method == "Percentiles")
+      
+      shinyjs::toggle("button",
+                      condition = input$curation_method != "Skip spectra curation")
+      
+      shinyjs::toggle("results_box",
+                      condition = input$curation_method != "Skip spectra curation")
+      
+      shinyjs::toggle("uncalibrated_as_na",
+                      condition = input$curation_method != "Skip spectra curation")
+      
     })
     
     #TODO: hide results box (and button?) if Skip spectra curation is chosen
@@ -448,7 +459,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
               calculated_cut_offs = reactive({
                 calculated_cut_offs() %>% 
                   dplyr::filter(cluster == current_cluster)
-              })
+              }),
+              curation_method = reactive({ input$curation_method })
             )
           })
     })
