@@ -52,13 +52,19 @@ mod_data_exploration_ui <- function(id){
 #' data_exploration Server Functions
 #'
 #' @noRd 
-mod_data_exploration_server <- function(id, results_derived_traits){
+mod_data_exploration_server <- function(id, 
+                                        results_derived_traits,
+                                        results_normalization){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
     my_data <- reactive({
-      req(results_derived_traits$data_with_derived_traits())
-      results_derived_traits$data_with_derived_traits()
+      req(results_normalization$normalized_data_wide)
+      if (is_truthy(results_derived_traits$data_with_derived_traits())) {
+        results_derived_traits$data_with_derived_traits()
+      } else {
+        results_normalization$normalized_data_wide()
+      }
     })
     
     # Creating a trigger to track when UI of the first tab is rendered. This is

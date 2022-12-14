@@ -36,7 +36,8 @@ app_server <- function( input, output, session ) {
   
   results_data_exploration <- mod_data_exploration_server(
     id = "data_exploration_ui_1",
-    results_derived_traits = results_derived_traits)
+    results_derived_traits = results_derived_traits,
+    results_normalization = results_normalization)
   
   mod_export_server(
     id = "export_ui_1",
