@@ -39,7 +39,7 @@ check_analyte_quality_criteria <- function(my_data,
                                            criteria_to_consider) {
   
   data_checked <- my_data %>% 
-    dplyr::group_by(sample_name) %>% 
+    dplyr::group_by(sample_name,  cluster) %>% 
     dplyr::mutate(uncalibrated = all(
       all(is.na(absolute_intensity_background_subtracted)),
       all(is.na(mass_accuracy_ppm)),
