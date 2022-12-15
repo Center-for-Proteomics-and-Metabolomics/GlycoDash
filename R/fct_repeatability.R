@@ -101,7 +101,9 @@ calculate_repeatability_stats <- function(data,
   
 }
 
-visualize_repeatability2 <- function(repeatability_data) {
+visualize_repeatability2 <- function(repeatability_data,
+                                     selected_group = NULL,
+                                     selected_sample_id) {
   
   # range_av_abundance <- max(repeatability_data$average_abundance,
   #                           na.rm = TRUE) - min(repeatability_data$average_abundance,
@@ -110,6 +112,20 @@ visualize_repeatability2 <- function(repeatability_data) {
   #                  na.rm = TRUE) - min(repeatability_data$RSD,
   #                                      na.rm = TRUE)
   # rescale_RSD_with <- range_av_abundance / range_RSD
+  
+  if (nrow(repeatability_data) == 0) {
+    rlang::abort(
+      class = "all_NAs",
+      message = paste0("For all",
+                       ifelse(!is.null(selected_group),
+                              paste0(" ", selected_group),
+                              ""),
+                       " samples with sample ID ",
+                       selected_sample_id,
+                       " spectra curation or calibration for this cluster ",
+                       "has failed, so there is no data to show.")
+    )
+  }
   
   plot <- repeatability_data %>% 
     #dplyr::mutate(RSD = RSD * rescale_RSD_with) %>% 
@@ -254,7 +270,7 @@ visualize_repeatability_mean_bars <- function(data,
                               ""),
                        " samples with sample ID ",
                        selected_sample_id,
-                       " calibration in LacyTools has failed, ",
+                       " spectra curation or calibration has failed for this cluster, ",
                        "so there is no data to show.")
     )
   }

@@ -29,7 +29,20 @@ mod_tab_repeatability_plot_server <- function(id,
     repeatability_plot <- reactive({
       if (is_truthy(by_plate())) {
         req(repeatability())
-        plot <- visualize_repeatability2(repeatability())
+        req(selected_sample_id())
+        
+        plot <- tryCatch(
+          expr = {
+            visualize_repeatability2(repeatability(),
+                                     selected_group = selected_group(),
+                                     selected_sample_id = selected_sample_id())
+          },
+          all_NAs = function(c) {
+            showNotification(c$message,
+                             type = "error",
+                             duration = NULL)
+            NULL
+          })
       } else {
         req(my_data())
         req(selected_sample_id())
@@ -49,6 +62,8 @@ mod_tab_repeatability_plot_server <- function(id,
             NULL
           })
       }
+      
+      return(plot)
     })
     
     output$plot <- plotly::renderPlotly({
