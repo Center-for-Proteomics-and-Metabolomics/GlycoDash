@@ -127,6 +127,9 @@ visualize_repeatability2 <- function(repeatability_data,
     )
   }
   
+  n_colors <- length(unique(repeatability_data$plate))
+  my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
+  
   plot <- repeatability_data %>% 
     #dplyr::mutate(RSD = RSD * rescale_RSD_with) %>% 
     ggplot2::ggplot() +
@@ -173,7 +176,7 @@ visualize_repeatability2 <- function(repeatability_data,
                               #                                                          "%"))
   ) +
     ggplot2::scale_x_discrete(name = "Analyte") +
-    ggplot2::scale_fill_brewer(palette = "Set2", 
+    ggplot2::scale_fill_manual(values = my_palette, 
                                name = "Plate") +
     ggplot2::facet_wrap(~cluster, scales = "free_x")
   
