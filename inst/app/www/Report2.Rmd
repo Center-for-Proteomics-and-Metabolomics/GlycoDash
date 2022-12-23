@@ -97,7 +97,7 @@ purrr::iwalk(params$spectra_curation_tab_contents,
                
                p[["x"]][["layout"]][["margin"]][["l"]] <- 90
                
-               p <- facet_strip_bigger(p)
+               p <- glycodash::facet_strip_bigger(p)
                
                print(htmltools::tagList(p))
              })
@@ -114,7 +114,7 @@ if (!is.null(params$curated_spectra_plot)) {
   p <- params$curated_spectra_plot %>% 
     plotly::ggplotly(., tooltip = "text")
   
-  p <- facet_strip_bigger(p)
+  p <- glycodash::facet_strip_bigger(p)
   
   p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
   
@@ -133,7 +133,7 @@ if (!is.null(params$curated_spectra_plot)) {
                p <- curated_spectra_plot %>% 
                  plotly::ggplotly(., tooltip = "text")
                
-               p <- facet_strip_bigger(p)
+               p <- glycodash::facet_strip_bigger(p)
                
                p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
                

@@ -46,11 +46,14 @@ read_non_rectangular <- function(path, delim = "\t") {
       readLines(path)
     },
     error = function(e) {
-      stop("No such file or directory exists.")
+      rlang::abort(
+        class = "wrong_path",
+        message = "No such file or directory exists.")
     })
   
   columns <- stringr::str_split(lines, pattern = delim)
-  max_n_columns <- max(purrr::map_int(columns, ~ length(.x)))
+  max_n_columns <- max(purrr::map_int(columns, 
+                                      ~ length(.x)))
   
   if (max_n_columns == 1) {
     rlang::warn(class = "wrong_delim",
@@ -155,7 +158,7 @@ find_block <- function(data, variable) {
 #'@param data A dataframe with the LacyTools summary (the result of
 #'  \code{\link{read_non_rectangular}}).
 #'@param row The row used as a starting point from which to search for the next
-#'  blank line (consisting of only \code{NA}'s).
+#'  blank line (blank meaning consisting of only \code{NA}'s).
 #'
 #'@return The row index (integer) for the next line with \code{NA}'s. If there
 #'  are no next lines with \code{NA}'s the function will return an empty integer vector.
@@ -208,7 +211,7 @@ find_next_na <- function(data, row) {
 #' convert_lacytools_summary(data = LacyTools_summary)
 convert_lacytools_summary <- function(data) {
 
-  all_blocks <- purrr::map(outputs,
+  all_blocks <- purrr::map(outputs, # outputs is a list created at the top of fct_read_lacytools.R
                            function(output) {
                              tryCatch(expr = {
                                suppressWarnings(
