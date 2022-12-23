@@ -335,13 +335,13 @@ purrr::iwalk(reordered_data_exploration,
                  if ("GeomBoxplot" %in% geoms_in_plot) {
                    # Determine the number of facets n, the first n traces will correspond to
                    # the boxplot traces in the ggplotly object:
-                   boxplot_traces <- 1:nfacets(ggplot_object)
+                   boxplot_traces <- 1:glycodash::nfacets(ggplot_object)
                    
                    plotly_object <- plotly_object %>% # Use "text" as hoverinfo for the points,
                      # but use the default hoverinfo for the boxplot traces:
                      plotly::style(hoverinfo = "y", traces = boxplot_traces) %>% 
                      # Hide the outliers (needed because plotly ignores "outlier.shape = NA"):
-                     hide_outliers(.) 
+                     glycodash::hide_outliers(.) 
                  }
                  
                  print(htmltools::tagList(plotly_object))
