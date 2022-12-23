@@ -257,7 +257,7 @@ purrr::walk(params$repeatability,
                 p <- objects_list$plot %>% 
                   plotly::ggplotly(., tooltip = "text")
                 
-                p <- change_axis_title_distance(p,
+                p <- glycodash::change_axis_title_distance(p,
                                                 y_distance = 90)
                 
                 print(htmltools::tagList(p))
@@ -275,7 +275,7 @@ purrr::walk(params$repeatability,
                                 p <- my_plot %>% 
                                 plotly::ggplotly(., tooltip = "text")
                               
-                              p <- change_axis_title_distance(p,
+                              p <- glycodash::change_axis_title_distance(p,
                                                               y_distance = 90)
                               
                               print(htmltools::tagList(p))
