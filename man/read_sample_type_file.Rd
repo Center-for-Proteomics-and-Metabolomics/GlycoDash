@@ -7,25 +7,28 @@
 read_sample_type_file(filepath, filename)
 }
 \arguments{
-\item{filepath}{The path to the Excel file containing a list of sample types.
-  The file should contain only one sheet with two columns named 
+\item{filepath}{The path to the Excel or .rds file containing a list of sample types.
+ If it is an Excel file it should contain only one sheet. If it's a .rds file
+ it should be a dataframe or tibble. In both cases there should be two columns named 
 "sample_id" and "sample_type". The sample_id column should contain all
 sample ID's that are present in your LacyTools summary. The sample_type column
 should contain the sample type corresponding to that sample ID. Standards 
 and blanks should be included.}
 
-\item{filename}{The name of the Excel file containing a list of sample types.}
+\item{filename}{The name of the Excel or .rds file including the file extension.}
+}
+\value{
+A tibble with the sample ID's and sample types.
 }
 \description{
 Read a sample type Excel or .rds file
 }
 \examples{
-path <- system.file("inst",
-                    "extdata",
+path <- system.file("extdata",
                     "Sample_types_example.xlsx",
                     package = "glycodash")
 
-process_sample_list(filepath = path, 
-                    filename = "Sample_types_example.xlsx")
+read_sample_type_file(filepath = path, 
+                      filename = "Sample_types_example.xlsx")
 
 }

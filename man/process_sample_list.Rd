@@ -22,8 +22,7 @@ This function reads and processes a sample list Excel file, so that sample
 ID's can be linked to your data.
 }
 \examples{
-path <- system.file("inst",
-                    "extdata",
+path <- system.file("extdata",
                     "Sample_list_example.xlsx",
                     package = "glycodash")
 

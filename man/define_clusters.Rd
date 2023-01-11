@@ -10,10 +10,10 @@ define_clusters(data, cluster_keywords)
 \item{data}{A dataframe in long format (one row for each analyte + sample
 combination).}
 
-\item{clusters_regex}{A vector containing character strings. These strings are
+\item{cluster_keywords}{A character vector with keywords
 used as regular expressions to classify analytes into clusters.
-\code{clusters_regex} should contain one character string per cluster in the
-data.}
+\code{cluster_keywords} should have the same length as the number of clusters
+in the data.}
 }
 \value{
 The function returns the original dataframe given as the data
@@ -21,11 +21,11 @@ The function returns the original dataframe given as the data
  column indicates to what cluster the analyte belongs.
 }
 \description{
-This function determines which cluster an analyte belongs to based on the
+This function determines to which cluster an analyte belongs based on the
 analyte name.
 }
 \examples{
 data("example_data")
 define_clusters(data = example_data,
-                clusters_regex = "IgGI1")
+                cluster_keywords = "IgGI")
 }

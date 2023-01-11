@@ -161,9 +161,3 @@ mod_clusters_server <- function(id, summary){
     
   })
 }
-    
-## To be copied in the UI
-# mod_clusters_ui("clusters_ui_1")
-    
-## To be copied in the server
-# mod_clusters_server("clusters_ui_1")
