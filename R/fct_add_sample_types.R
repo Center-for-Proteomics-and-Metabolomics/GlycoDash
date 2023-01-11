@@ -1,4 +1,29 @@
+# This file contains all functions that are used within the module
+# mod_add_sample_types.R and within its sub-module
+# mod_process_sample_type_file.R.
 
+#' Read a sample type Excel or .rds file
+#'
+#' @param filepath The path to the Excel or .rds file containing a list of sample types.
+#'  If it is an Excel file it should contain only one sheet. If it's a .rds file
+#'  it should be a dataframe or tibble. In both cases there should be two columns named 
+#' "sample_id" and "sample_type". The sample_id column should contain all
+#' sample ID's that are present in your LacyTools summary. The sample_type column
+#' should contain the sample type corresponding to that sample ID. Standards 
+#' and blanks should be included.
+#' @param filename The name of the Excel or .rds file including the file extension.
+#'
+#' @return A tibble with the sample ID's and sample types.
+#' @export
+#'
+#' @examples
+#' path <- system.file("extdata",
+#'                     "Sample_types_example.xlsx",
+#'                     package = "glycodash")
+#' 
+#' read_sample_type_file(filepath = path, 
+#'                       filename = "Sample_types_example.xlsx")
+#' 
 read_sample_type_file <- function(filepath, filename) {
   
   extension <- tools::file_ext(filename)

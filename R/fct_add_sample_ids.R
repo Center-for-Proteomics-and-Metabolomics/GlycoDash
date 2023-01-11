@@ -317,8 +317,7 @@ process_plate_design <- function (plate_design) {
 #' @export
 #'
 #' @examples
-#' path <- system.file("inst",
-#'                     "extdata",
+#' path <- system.file("extdata",
 #'                     "Sample_list_example.xlsx",
 #'                     package = "glycodash")
 #' 
