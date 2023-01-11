@@ -58,7 +58,7 @@ if (params$sample_types_method == "Automatically determine sample types based on
   - Min. S/N ratio: `r params$sn`
 - Basis for spectra curation cut-off: `r params$spectra_curation_cut_off` 
 
-Show if manual cut-offs were used instead, show separately for specific and total if Ig_data is TRUE
+Show if manual cut-offs were used instead, show separately for specific and total if contains_total_and_specific_samples is TRUE
 For each cluster: show the plot and table with cut-offs
 
 

@@ -4,12 +4,12 @@
 \alias{plot_spectra_curation_results}
 \title{Title}
 \usage{
-plot_spectra_curation_results(curated_data, Ig_data)
+plot_spectra_curation_results(curated_data, total_and_specific)
 }
 \arguments{
 \item{curated_data}{}
 
-\item{Ig_data}{}
+\item{total_and_specific}{}
 }
 \description{
 Title

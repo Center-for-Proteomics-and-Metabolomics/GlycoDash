@@ -395,7 +395,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     cut_offs_based_on_percentiles <- mod_curate_based_on_percentiles_server(
       "curate_based_on_percentiles_ui_1",
-      is_Ig_data = results_data_import$Ig_data,
       summarized_checks = summarized_checks,
       uncalibrated_as_NA = reactive({ input$uncalibrated_as_na })
     )
@@ -453,7 +452,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                 summarized_checks() %>%
                   dplyr::filter(cluster == current_cluster)
               }),
-              Ig_data = results_data_import$Ig_data,
+              contains_total_and_specific_samples = results_data_import$contains_total_and_specific_samples,
               keyword_specific = results_data_import$keyword_specific,
               keyword_total = results_data_import$keyword_total,
               calculated_cut_offs = reactive({
@@ -548,7 +547,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
           length(unique(clusters())) <= 4)
       browser()
       p <- plot_spectra_curation_results(curated_data(),
-                                    results_data_import$Ig_data())
+                                    results_data_import$contains_total_and_specific_samples())
       
       print("stop")
       return(p)
@@ -605,7 +604,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
               curated_data() %>% 
                 dplyr::filter(cluster == current_cluster) 
             }),
-            is_Ig_data = results_data_import$Ig_data)
+            contains_total_and_specific_samples = results_data_import$contains_total_and_specific_samples)
         })
     })
     

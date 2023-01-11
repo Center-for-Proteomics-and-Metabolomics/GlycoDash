@@ -31,7 +31,6 @@ mod_curate_based_on_percentiles_ui <- function(id){
 #'
 #' @noRd 
 mod_curate_based_on_percentiles_server <- function(id,
-                                                   is_Ig_data,
                                                    summarized_checks,
                                                    uncalibrated_as_NA){
   moduleServer( id, function(input, output, session){

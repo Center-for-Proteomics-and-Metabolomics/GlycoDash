@@ -56,7 +56,7 @@ mod_tab_repeatability_ui <- function(id){
 #' tab_repeatability Server Functions
 #'
 #' @noRd 
-mod_tab_repeatability_server <- function(id, my_data, Ig_data){
+mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specific_samples){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -74,7 +74,7 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
     
     output$standards_menu <- renderUI({
       req(my_data())
-      #req(Ig_data())
+      #req(contains_total_and_specific_samples())
       
       menu_df <- my_data() %>% 
         dplyr::ungroup() %>% 
@@ -115,7 +115,7 @@ mod_tab_repeatability_server <- function(id, my_data, Ig_data){
     selected_group <- reactive({
       req(input$sample_menu)
       req(my_data())
-      if (Ig_data() == "Yes") {
+      if (contains_total_and_specific_samples() == "Yes") {
         group <- stringr::str_extract(
           string = input$sample_menu,
           pattern = "(?<=group: ).+(?= sample_id: .+)") %>% 

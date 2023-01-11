@@ -36,7 +36,7 @@ mod_curate_based_on_controls_ui <- function(id){
     #     trigger = "hover",
     #     placement = "right",
     #     html = "true"),
-    div(id = ns("cut_off_basis_Ig_data"),
+    div(id = ns("cut_off_basis_total_and_specific"),
         # shinydashboardPlus::box(
         #   title = "Specific Ig samples",
         #   width = 6,
@@ -162,10 +162,10 @@ mod_curate_based_on_controls_server <- function(id,
     ns <- session$ns
     
     observe({
-      shinyjs::toggle("cut_off_basis_Ig_data",
-                      condition = results_data_import$Ig_data() == "Yes")
+      shinyjs::toggle("cut_off_basis_total_and_specific",
+                      condition = results_data_import$contains_total_and_specific_samples() == "Yes")
       shinyjs::toggle("cut_off_basis",
-                      condition = results_data_import$Ig_data() == "No")
+                      condition = results_data_import$contains_total_and_specific_samples() == "No")
     })
     
     observe({
@@ -183,7 +183,7 @@ mod_curate_based_on_controls_server <- function(id,
     # data.
     observe({
       req(summarized_checks())
-      if (results_data_import$Ig_data() == "No") {
+      if (results_data_import$contains_total_and_specific_samples() == "No") {
         options <- unique(summarized_checks()$sample_type)
         
         names(options) <- paste(options, "samples")
@@ -226,13 +226,13 @@ mod_curate_based_on_controls_server <- function(id,
       NULL
       req(summarized_checks(),
           input$percentile,
-          any(all(results_data_import$Ig_data() == "No",
+          any(all(results_data_import$contains_total_and_specific_samples() == "No",
                   is_truthy(input$cut_off_basis)),
-              all(results_data_import$Ig_data() == "Yes",
+              all(results_data_import$contains_total_and_specific_samples() == "Yes",
                   is_truthy(input$cut_off_basis_specific),
                   is_truthy(input$cut_off_basis_total))))
       
-      if (results_data_import$Ig_data() == "Yes") {
+      if (results_data_import$contains_total_and_specific_samples() == "Yes") {
         
         cut_offs_specific <- calculate_cut_offs(
           summarized_checks(),

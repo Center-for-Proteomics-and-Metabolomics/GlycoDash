@@ -64,7 +64,7 @@ mod_tab_cut_offs_ui <- function(id){
 #' @noRd 
 mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
                                     #switch_to_manual, cut_offs_to_use, manual_cut_offs,
-                                    Ig_data, calculated_cut_offs,
+                                    contains_total_and_specific_samples, calculated_cut_offs,
                                     keyword_specific, keyword_total,
                                     curation_method){
   moduleServer(id, function(input, output, session){
@@ -74,18 +74,18 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     observe({
       shinyjs::toggle("cut_off_sum_intensity",
                       condition = all(is_truthy(input$switch_to_manual),
-                                      Ig_data() == "No"))
+                                      contains_total_and_specific_samples() == "No"))
       shinyjs::toggle("cut_off_passing_analyte_percentage",
                       condition = all(is_truthy(input$switch_to_manual),
-                                      Ig_data() == "No"))
+                                      contains_total_and_specific_samples() == "No"))
       
       shinyjs::toggle("spike_manual_cut_offs",
                       condition = all(is_truthy(input$switch_to_manual),
-                                      Ig_data() == "Yes"))
+                                      contains_total_and_specific_samples() == "Yes"))
       
       shinyjs::toggle("total_manual_cut_offs",
                       condition = all(is_truthy(input$switch_to_manual),
-                                      Ig_data() == "Yes"))
+                                      contains_total_and_specific_samples() == "Yes"))
     })
     
     observe({
@@ -95,7 +95,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     
     manual_cut_offs <- reactive({
       
-      if (Ig_data() == "Yes") {
+      if (contains_total_and_specific_samples() == "Yes") {
         req(input$cut_off_sum_intensity_specific,
             input$cut_off_sum_intensity_total,
             input$cut_off_passing_analyte_percentage_specific,

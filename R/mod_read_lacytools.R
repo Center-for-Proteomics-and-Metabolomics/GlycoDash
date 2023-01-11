@@ -17,7 +17,7 @@ mod_read_lacytools_ui <- function(id){
     status = "primary",
     fileInput(ns("lacytools_summary"), 
               "Upload LacyTools summary.txt file:"),
-    shinyWidgets::awesomeRadio(ns("Ig_data"),
+    shinyWidgets::awesomeRadio(ns("contains_total_and_specific_samples"),
                                "Does your data contain total and specific immunoglobulin samples?",
                                choices = c("Yes", "No"),
                                selected = "No"),
@@ -77,23 +77,23 @@ mod_read_lacytools_server <- function(id){
         id = "button",
         condition = any(
           all(
-            input$Ig_data == "No",
+            input$contains_total_and_specific_samples == "No",
             is_truthy(lacytools_summary())
           ),
           all(
-            input$Ig_data == "Yes",
-            is_truthy(lacytools_summary_Ig_data())
+            input$contains_total_and_specific_samples == "Yes",
+            is_truthy(lacytools_summary_total_and_specific())
           )
         )
       )
     })
     
-    # If the user indicates (via input$Ig_data) that the data contains total and
+    # If the user indicates (via input$contains_total_and_specific_samples) that the data contains total and
     # specific Ig samples, the textInputs for the specific and total keywords
     # are shown.
     observe({
       shinyjs::toggle("keywords_specific_total",
-                      condition = input$Ig_data == "Yes")
+                      condition = input$contains_total_and_specific_samples == "Yes")
     })
     
     observe({
@@ -103,7 +103,7 @@ mod_read_lacytools_server <- function(id){
       updateTextInput("keyword_total",
                       value = "",
                       session = session)
-    }) %>% bindEvent(input$Ig_data == "No")
+    }) %>% bindEvent(input$contains_total_and_specific_samples == "No")
     
     raw_lacytools_summary <- reactive({
       req(input$lacytools_summary$datapath)
@@ -179,7 +179,7 @@ mod_read_lacytools_server <- function(id){
       return(tidy_summary)
     })
     
-    lacytools_summary_Ig_data <- reactive({
+    lacytools_summary_total_and_specific <- reactive({
       
       shinyFeedback::hideFeedback("keyword_specific")
       shinyFeedback::hideFeedback("keyword_total")
@@ -228,7 +228,7 @@ mod_read_lacytools_server <- function(id){
     
     to_return <- reactive({
       req(lacytools_summary())
-      summary <- tryCatch(lacytools_summary_Ig_data(),
+      summary <- tryCatch(lacytools_summary_total_and_specific(),
                           error = function(e) {
                             lacytools_summary()
                           })
@@ -242,7 +242,7 @@ mod_read_lacytools_server <- function(id){
       button = reactive({input$button}),
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
-      Ig_data = reactive({input$Ig_data}),
+      contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
       lacytools_fileInput = reactive({input$lacytools_summary})
     ))
     

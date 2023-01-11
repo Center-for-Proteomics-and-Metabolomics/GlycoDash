@@ -203,7 +203,7 @@ mod_add_sample_ids_ui <- function(id){
 #' add_sample_ids Server Functions
 #'
 #' @noRd 
-mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_data, summary,
+mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, contains_total_and_specific_samples, summary,
                                       lacytools_fileInput, read_lacytools_button){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -223,7 +223,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, Ig_da
                       ))
       shinyjs::toggle("switch_two_plate_designs",
                       condition = all(
-                        Ig_data() == "Yes",
+                        contains_total_and_specific_samples() == "Yes",
                         input$sample_id_method == "Upload a plate design"
                       ))
     })

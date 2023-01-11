@@ -1,6 +1,6 @@
 #' data_import UI Function
 #'
-#' @description A shiny Module.
+#' @description This module contains the first tab 'Data Import' of the Glycodash app.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
@@ -10,8 +10,8 @@
 mod_data_import_ui <- function(id){
   ns <- NS(id)
   tagList(
-    shinyFeedback::useShinyFeedback(),
-    bsplus::use_bs_popover(),
+    shinyFeedback::useShinyFeedback(), # Needed to use the shinyFeedback package.
+    bsplus::use_bs_popover(), # Needed to use the popovers from the bsplus package.
     fluidPage(
       fluidRow(
         h1("Data Import")
@@ -63,7 +63,7 @@ mod_data_import_server <- function(id){
     data_incl_sample_ids <- mod_add_sample_ids_server("add_sample_ids_ui_1",
                                                       keyword_specific = summary$keyword_specific,
                                                       keyword_total = summary$keyword_total,
-                                                      Ig_data = summary$Ig_data,
+                                                      contains_total_and_specific_samples = summary$contains_total_and_specific_samples,
                                                       summary = summary$data,
                                                       lacytools_fileInput = summary$lacytools_fileInput,
                                                       read_lacytools_button = summary$button)
@@ -79,7 +79,8 @@ mod_data_import_server <- function(id){
     data_incl_metadata <- mod_add_metadata_server("add_metadata_ui_1",
                                                   summary = data_incl_clusters$data)
     
-    
+    # Update the data shown in the datatable according to the steps that have
+    # been completed by the user:
     show_in_table <- reactive({
       req(summary$data())
       
@@ -127,6 +128,7 @@ mod_data_import_server <- function(id){
                     filter = "top")
     })
     
+    # The data to pass along to the next module:
     to_return <- reactive({
       if (is_truthy(data_incl_metadata$data())) {
         data_incl_metadata$data()
@@ -167,7 +169,7 @@ mod_data_import_server <- function(id){
     
     return(list(
       summary = to_return,
-      Ig_data = summary$Ig_data,
+      contains_total_and_specific_samples = summary$contains_total_and_specific_samples,
       keyword_specific = summary$keyword_specific,
       keyword_total = summary$keyword_total,
       filename_summary = reactive({ summary$lacytools_fileInput()$name }),
@@ -180,9 +182,3 @@ mod_data_import_server <- function(id){
     
   })
 }
-
-## To be copied in the UI
-# mod_data_import_ui("data_import_ui_1")
-
-## To be copied in the server
-# mod_data_import_server("data_import_ui_1")

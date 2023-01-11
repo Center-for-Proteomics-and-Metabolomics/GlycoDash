@@ -64,8 +64,8 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
       results_normalization$normalized_data()
     })
 
-    Ig_data <- reactive({
-      results_data_import$Ig_data()
+    contains_total_and_specific_samples <- reactive({
+      results_data_import$contains_total_and_specific_samples()
     })
 
     output$first_tab <- renderUI({
@@ -74,7 +74,7 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
     
     tab_results$tab1 <- mod_tab_repeatability_server("tab1",
                                                      my_data = data,
-                                                     Ig_data = Ig_data)
+                                                     contains_total_and_specific_samples = contains_total_and_specific_samples)
     
     tab_counter <- reactiveValues(n = 1)
     
@@ -118,7 +118,7 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
       tab_results[[tab_id]] <- mod_tab_repeatability_server(
         id = tab_id,
         my_data = data,
-        Ig_data = Ig_data
+        contains_total_and_specific_samples = contains_total_and_specific_samples
       )
       
     }) %>% bindEvent(input$add_tab)

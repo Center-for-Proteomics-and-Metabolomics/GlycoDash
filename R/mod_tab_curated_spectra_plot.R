@@ -22,8 +22,8 @@ mod_tab_curated_spectra_plot_ui <- function(id){
 #'
 #' @noRd 
 mod_tab_curated_spectra_plot_server <- function(id,
-                                             curated_data,
-                                             is_Ig_data){
+                                                curated_data,
+                                                contains_total_and_specific_samples){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -31,7 +31,7 @@ mod_tab_curated_spectra_plot_server <- function(id,
       req(curated_data())
       plot_spectra_curation_results(
         curated_data = curated_data(),
-        Ig_data = is_Ig_data()
+        total_and_specific = contains_total_and_specific_samples()
       )
     })
     

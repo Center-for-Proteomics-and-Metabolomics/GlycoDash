@@ -426,14 +426,14 @@ create_cut_off_plot <- function(summarized_checks) {
 #' Title
 #'
 #' @param curated_data 
-#' @param Ig_data 
+#' @param total_and_specific 
 #'
 #' @return
 #' @export
 #'
 #' @examples
 plot_spectra_curation_results <- function(curated_data,
-                                          Ig_data) {
+                                          total_and_specific) {
   
   n_colors <- length(unique(curated_data$reason_for_failure)) - 1
   my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
@@ -471,10 +471,10 @@ plot_spectra_curation_results <- function(curated_data,
   
   more_than_4_clusters <- length(unique(curated_data$cluster)) > 4
   
-  if (Ig_data == "Yes" & !more_than_4_clusters) {
+  if (total_and_specific == "Yes" & !more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(cluster ~ group)
-  } else if (Ig_data == "Yes" & more_than_4_clusters) {
+  } else if (total_and_specific == "Yes" & more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(~ group)
   } else {
