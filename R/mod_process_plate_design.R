@@ -132,9 +132,3 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
     
   })
 }
-    
-## To be copied in the UI
-# mod_fileInput_with_info_ui("fileInput_with_info_ui_1")
-    
-## To be copied in the server
-# mod_fileInput_with_info_server("fileInput_with_info_ui_1")

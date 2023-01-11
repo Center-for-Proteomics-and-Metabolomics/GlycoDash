@@ -11,7 +11,7 @@ find_next_na(data, row)
 \code{\link{read_non_rectangular}}).}
 
 \item{row}{The row used as a starting point from which to search for the next
-blank line (consisting of only \code{NA}'s).}
+blank line (blank meaning consisting of only \code{NA}'s).}
 }
 \value{
 The row index (integer) for the next line with \code{NA}'s. If there
