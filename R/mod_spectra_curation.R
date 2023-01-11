@@ -183,40 +183,6 @@ mod_spectra_curation_ui <- function(id){
                               placement = "left",
                               html = "true",
                               container = "body")
-                          # shinyWidgets::dropdownButton(
-                          #   tags$style(HTML(paste0(
-                          #     "#",
-                          #     ns("dropdown_content"),
-                          #     " .fas {float: left}",
-                          #     "#",
-                          #     ns("dropdown_content"),
-                          #     " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
-                          #   ))),
-                          #   div(id = ns("dropdown_content"),
-                          #       tags$style(HTML(paste0("#",
-                          #                              ns("div_central_tendency_measure"),
-                          #                              " .selectize-control{max-width: 200px;}"))),
-                          #       p("The cut-off values are calculated using the following formula:"),
-                          #       p("cut-off = mean (or median) + factor * standard-deviation"),
-                          #       div(id = ns("div_central_tendency_measure"),
-                          #           selectInput(ns("central_tendency_measure"),
-                          #                       "Choose whether the cut-off values should be calculated with the mean or with the median:",
-                          #                       choices = c("Mean", "Median"))
-                          #           ),
-                          #       numericInput(ns("sd_factor"),
-                          #                    "Choose what factor the standard deviation should be multiplied with:",
-                          #                    value = 3,
-                          #                    step = 1,
-                          #                    min = 1,
-                          #                    max = 3)
-                          #       ),
-                          #   icon = icon("gears",
-                          #               class = "ml"),
-                          #   tooltip = shinyWidgets::tooltipOptions(placement = "top",
-                          #                                          title = "Settings"),
-                          #   width = "330px",
-                          #   size = "xs"
-                          # )
                           ),
               width = NULL,
               status = "primary",
@@ -545,12 +511,9 @@ mod_spectra_curation_server <- function(id, results_data_import){
     curated_spectra_plot <- reactive({
       req(curated_data(),
           length(unique(clusters())) <= 4)
-      browser()
-      p <- plot_spectra_curation_results(curated_data(),
-                                    results_data_import$contains_total_and_specific_samples())
       
-      print("stop")
-      return(p)
+      plot_spectra_curation_results(curated_data(),
+                                    results_data_import$contains_total_and_specific_samples())
       
     })
     

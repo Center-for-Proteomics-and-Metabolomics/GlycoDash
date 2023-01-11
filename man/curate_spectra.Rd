@@ -6,6 +6,10 @@
 \usage{
 curate_spectra(checked_data, summarized_checks, cut_offs)
 }
+\arguments{
+\item{summarized_checks}{The return value of the function
+\code{\link{summarize_spectra_checks}}.}
+}
 \value{
 The function returns the original dataframe given as the data
   argument, but with two additional columns. One column is named

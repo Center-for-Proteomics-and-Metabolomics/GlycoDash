@@ -14,6 +14,9 @@ check_analyte_quality_criteria(
 )
 }
 \arguments{
+\item{my_data}{A dataframe in long format (one row for each analyte + sample
++ charge combination).}
+
 \item{min_ppm_deviation}{The lowest allowed value for the mass accuracy (in
 ppm).}
 
@@ -26,26 +29,37 @@ theoretic isotopic pattern.}
 
 \item{min_sn}{The lowest allowed value for the signal to noise ratio (S/N).}
 
-\item{data}{A dataframe in long format (one row for each analyte + sample
-combination).}
+\item{criteria_to_consider}{A character vector that indicates which quality
+criteria should be taken into account during spectra curation. The analyte 
+quality criteria that can be included are "Mass accuracy", "S/N" and "IPQ".}
 }
 \value{
-The original dataframe given as the data argument, but with an
-  additional column named "analyte_meets_criteria". This column is a logical vector:
-  TRUE indicates that the analyte + sample combination passed all three
-  quality criteria checks, whereas FALSE indicates one or more criteria were
-  not fulfilled.
+The original dataframe given as the my_data argument, but with 3
+  additional columns: \describe{\item{analyte_meets_criteria}{A Boolean:
+  \code{TRUE} indicates that the analyte + charge combination in that sample fulfilled
+  the quality criteria in criteria_to_consider, whereas \code{FALSE} indicates that 
+  one or more criteria were not fulfilled.}\item{uncalibrated}{A Boolean:
+  \code{TRUE} if the combination of cluster and sample failed calibration in LacyTools}
+  \item{failed_criteria}{A character string describing which criteria in 
+  criteria_to_consider were not fulfilled. If all criteria were fulfilled 
+  failed_criteria is \code{NA}}}
 }
 \description{
 \code{check_analyte_quality_criteria()} performs an analyte quality criteria check for
-every spectrum in the data. This function is used within the function
-\code{\link{summarize_spectra_checks}}.
+every spectrum in the data.
 }
 \examples{
 data(example_data)
-check_analyte_quality_criteria(data = example_data,
-                  min_ppm_deviation = -20,
-                  max_ppm_deviation = 20,
-                  max_ipq = 0.2,
-                  min_sn = 9)
+
+with_clusters <- define_clusters(data = example_data,
+                                 cluster_keywords = "IgGI")
+
+check_analyte_quality_criteria(my_data = with_clusters,
+                               min_ppm_deviation = -20,
+                               max_ppm_deviation = 20,
+                               max_ipq = 0.2,
+                               min_sn = 9,
+                               criteria_to_consider = c("Mass accuracy",
+                                                        "S/N",
+                                                        "IPQ"))
 }

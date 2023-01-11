@@ -1,13 +1,15 @@
+# This file contains all functions that are used within the module
+# mod_spectra_curation.R and within its sub-modules mod_curate_based_on_controls.R,
+# mod_curate_based_on_percentiles.R, mod_tab_cut_offs.R and mod_tab_curated_spectra_plot.R.
 
 
 #' Perform an analyte quality criteria check for every spectrum in the data.
 #'
 #' \code{check_analyte_quality_criteria()} performs an analyte quality criteria check for
-#' every spectrum in the data. This function is used within the function
-#' \code{\link{summarize_spectra_checks}}.
+#' every spectrum in the data.
 #'
-#' @param data A dataframe in long format (one row for each analyte + sample
-#'   combination).
+#' @param my_data A dataframe in long format (one row for each analyte + sample
+#'   + charge combination).
 #' @param min_ppm_deviation The lowest allowed value for the mass accuracy (in
 #'   ppm).
 #' @param max_ppm_deviation The highest allowed value for the mass accuracy (in
@@ -16,21 +18,35 @@
 #'   (IPQ). The IPQ indicates how much the isotopic pattern deviates from the
 #'   theoretic isotopic pattern.
 #' @param min_sn The lowest allowed value for the signal to noise ratio (S/N).
+#' @param criteria_to_consider A character vector that indicates which quality
+#'  criteria should be taken into account during spectra curation. The analyte 
+#'  quality criteria that can be included are "Mass accuracy", "S/N" and "IPQ".
 #'
-#' @return The original dataframe given as the data argument, but with an
-#'   additional column named "analyte_meets_criteria". This column is a logical vector:
-#'   TRUE indicates that the analyte + sample combination passed all three
-#'   quality criteria checks, whereas FALSE indicates one or more criteria were
-#'   not fulfilled.
+#' @return The original dataframe given as the my_data argument, but with 3
+#'   additional columns: \describe{\item{analyte_meets_criteria}{A Boolean:
+#'   \code{TRUE} indicates that the analyte + charge combination in that sample fulfilled
+#'   the quality criteria in criteria_to_consider, whereas \code{FALSE} indicates that 
+#'   one or more criteria were not fulfilled.}\item{uncalibrated}{A Boolean:
+#'   \code{TRUE} if the combination of cluster and sample failed calibration in LacyTools}
+#'   \item{failed_criteria}{A character string describing which criteria in 
+#'   criteria_to_consider were not fulfilled. If all criteria were fulfilled 
+#'   failed_criteria is \code{NA}}}
 #' @export
 #'
 #' @examples
 #' data(example_data)
-#' check_analyte_quality_criteria(data = example_data,
-#'                   min_ppm_deviation = -20,
-#'                   max_ppm_deviation = 20,
-#'                   max_ipq = 0.2,
-#'                   min_sn = 9)
+#' 
+#' with_clusters <- define_clusters(data = example_data,
+#'                                  cluster_keywords = "IgGI")
+#' 
+#' check_analyte_quality_criteria(my_data = with_clusters,
+#'                                min_ppm_deviation = -20,
+#'                                max_ppm_deviation = 20,
+#'                                max_ipq = 0.2,
+#'                                min_sn = 9,
+#'                                criteria_to_consider = c("Mass accuracy",
+#'                                                         "S/N",
+#'                                                         "IPQ"))
 check_analyte_quality_criteria <- function(my_data, 
                                            min_ppm_deviation, 
                                            max_ppm_deviation, 
@@ -60,6 +76,30 @@ check_analyte_quality_criteria <- function(my_data,
   return(data_checked)
 }
 
+#' Check all analyte quality criteria
+#'
+#' \code{check_each_criterium()} checks for each analyte quality criterium
+#' separately if it is fulfilled, and is used in the function
+#' \code{\link{check_analyte_quality_criteria}}.
+#'
+#' @inheritParams check_analyte_quality_criteria
+#'
+#' @return The original dataframe, but with an extra column for each quality
+#'   criterium that is \code{TRUE} or \code{FALSE}.
+#' @export
+#'
+#' @examples
+#' data(example_data)
+#' 
+#' with_clusters <- define_clusters(data = example_data,
+#'                                  cluster_keywords = "IgGI")
+#' 
+#' check_each_criterium(my_data = with_clusters,
+#'                      min_ppm_deviation = -20,
+#'                      max_ppm_deviation = 20,
+#'                      max_ipq = 0.2,
+#'                      min_sn = 9)
+#' 
 check_each_criterium <- function(my_data, 
                                  min_ppm_deviation,
                                  max_ppm_deviation,
@@ -76,31 +116,82 @@ check_each_criterium <- function(my_data,
     )
 }
 
+#' Apply chosen analyte quality criteria
+#'
+#' \code{apply_chosen_criteria()} determines if the analyte quality criteria in
+#' criteria to consider were all fulfilled and is used inside the function
+#' \code{\link{check_analyte_quality_criteria}}.
+#'
+#' @param my_data The return value of the function
+#'   \code{\link{check_each_criterium}}.
+#' @inheritParams check_analyte_quality_criteria
+#'
+#' @return The original dataframe my_data with an additional column
+#'   \code{analyte_meets_criteria} that is \code{TRUE} if the analyte fulfills
+#'   all criteria in \code{criteria_to_consider} and otherwise is \code{FALSE}.
+#'
+#' @export
+#'
+#' @examples
+#' data(example_data)
+#' 
+#' with_clusters <- define_clusters(data = example_data,
+#'                                  cluster_keywords = "IgGI")
+#' 
+#' checked <- check_each_criterium(my_data = with_clusters,
+#'                      min_ppm_deviation = -20,
+#'                      max_ppm_deviation = 20,
+#'                      max_ipq = 0.2,
+#'                      min_sn = 9)
+#' 
+#' apply_chosen_criteria(my_data = checked,
+#'                       criteria_to_consider = c("Mass accuracy",
+#'                                                "S/N",
+#'                                                "IPQ"))
+#' 
 apply_chosen_criteria <- function(my_data,
-                                  criteria_to_consider#,
-                                  #uncalibrated_as_NA
-                                  ) {
+                                  criteria_to_consider) {
   to_return <- my_data %>% 
     dplyr::rowwise() %>% 
     dplyr::mutate(analyte_meets_criteria = all(
       dplyr::c_across(tidyselect::all_of(criteria_to_consider))
-    )#,
-    # analyte_meets_criteria = ifelse(uncalibrated,
-    #                                 NA,
-    #                                 analyte_meets_criteria))
-    )
+    ))
   
-  # # Move this to separate funcion?
-  # if (!uncalibrated_as_NA) {
-  #   to_return <- dplyr::mutate(
-  #     to_return,
-  #     analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
-  #                                                FALSE)
-  #   )
-  # }
   return(to_return)
 }
 
+#' Report which analyte quality criteria were not met
+#'
+#' @param my_data The return value of the function
+#'   \code{\link{apply_chosen_criteria}}.
+#' @inheritParams check_analyte_quality_criteria
+#'
+#' @return The original dataframe my_data with an additional column
+#'   \code{failed_criteria} that describes which criteria from criteria_to_consider
+#'   were not fulfilled. If all criteria were met the value will be \code{NA}.
+#' @export
+#'
+#' @examples
+#' data(example_data)
+#' 
+#' with_clusters <- define_clusters(data = example_data,
+#'                                  cluster_keywords = "IgGI")
+#' 
+#' checked <- check_each_criterium(my_data = with_clusters,
+#'                      min_ppm_deviation = -20,
+#'                      max_ppm_deviation = 20,
+#'                      max_ipq = 0.2,
+#'                      min_sn = 9)
+#' 
+#' applied <- apply_chosen_criteria(my_data = checked,
+#'                                  criteria_to_consider = c("Mass accuracy",
+#'                                                           "S/N",
+#'                                                           "IPQ"))
+#' 
+#' report_failed_criteria(my_data = applied,
+#'                        criteria_to_consider = c("Mass accuracy",
+#'                                                "S/N",
+#'                                                "IPQ"))
 report_failed_criteria <- function(my_data,
                                    criteria_to_consider) {
   
@@ -119,13 +210,13 @@ report_failed_criteria <- function(my_data,
 
 #' Summarize analyte quality criteria checks
 #'
-#' \code{summarize_spectra_checks()} calculates the proportion of passing
+#' \code{summarize_spectra_checks()} calculates the percentage of passing
 #' analytes per spectrum and the sum intensity of passing analytes per spectrum.
 #' \code{summarize_spectra_checks()} should be used after
 #' \code{\link{check_analyte_quality_criteria}} has been used to perform analyte quality
 #' criteria checks for every spectrum and analyte combination in the data.
 #'
-#' @param data_checked The dataframe that is returned by
+#' @param checked_data The dataframe that is returned by
 #'   \code{\link{check_analyte_quality_criteria}}.
 #'
 #' @return A dataframe that contains one row per spectrum for each cluster (
@@ -134,8 +225,8 @@ report_failed_criteria <- function(my_data,
 #'   \item{sample_name}{The name of the sample for which this spectrum was
 #'   recorded.} \item{sample_type}{The type of sample (e.g. negative control,
 #'   blank etc.).} \item{group}{The group (Total or Specific) that this sample
-#'   belongs to.} \item{cluster}{The cluster that the analyte belongs to.}
-#'   \item{passing_analyte_percentage}{The proportion of analytes that passed the
+#'   belongs to.} \item{cluster}{The cluster for which the metrics were calculated.}
+#'   \item{passing_analyte_percentage}{The percentage of analytes that passed the
 #'   criteria checks in this spectrum.} \item{sum_intensity}{The sum intensity
 #'   of all passing analytes in this spectrum} }
 #' @export
@@ -144,27 +235,31 @@ report_failed_criteria <- function(my_data,
 #' data("example_data")
 #'
 #' example_data <- define_clusters(data = example_data,
-#'                                 clusters_regex = "IgGI1")
+#'                                 cluster_keywords = "IgGI")
 #'
-#' checked_data <- check_analyte_quality_criteria(data = example_data,
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                   min_ppm_deviation = -20,
 #'                                   max_ppm_deviation = 20,
 #'                                   max_ipq = 0.2,
-#'                                   min_sn = 9)
+#'                                   min_sn = 9,
+#'                                   criteria_to_consider = c("Mass accuracy",
+#'                                                           "S/N",
+#'                                                           "IPQ"))
 #'
-#' summarize_spectra_checks(data_checked = checked_data)
-summarize_spectra_checks <- function(data_checked) {
+#' summarize_spectra_checks(checked_data = checked_data)
+summarize_spectra_checks <- function(checked_data) {
   
   # Alternative name?: calculate_sum_intensities_and_analyte_passing_percentage
+  # or calculate_spectra_curation_metrics
   
   grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
   
-  summarized_checks <- data_checked %>% 
+  summarized_checks <- checked_data %>% 
     dplyr::mutate(intensity_divided_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
-    # I'm using across() and any_of() because if the data is not Ig data, the
-    # column "group" doesn't exist:
+    # I'm using across() and any_of() because if the data does not contain total
+    # and specific samples, the column "group" doesn't exist:
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-    dplyr::summarise(passing_analyte_percentage = sum(analyte_meets_criteria)/dplyr::n(), 
+    dplyr::summarise(passing_analyte_percentage = sum(analyte_meets_criteria)/dplyr::n() * 100, 
                      sum_intensity = sum(
                        intensity_divided_by_fraction[analyte_meets_criteria == TRUE],
                        na.rm = TRUE # needed for spectra that did calibrate but where 
@@ -200,6 +295,44 @@ mean_plus_SD <- function(x, SD_factor, na.rm) {
   mean_x + SD_factor * SD_x
 }
 
+#' Calculate cut-off values
+#'
+#' \code{calculate_cut_offs()} calculates the cut-off values for the sum
+#' intensity and percentage of passing analytes during spectra curation.
+#'
+#' @param summarized_checks The return value of the function
+#'   \code{\link{summarize_spectra_checks}}.
+#' @param control_sample_types The sample type(s) that should be used as
+#'   negative control samples to base the cut-offs on. This argument is only
+#'   relevant if the method "Based on negative controls" is chosen, otherwise
+#'   this argument should be NULL (default).
+#' @param exclude_sample_types The sample type(s) that should not be taken into
+#'   account in the calculation of the cut-off values. This argument is only
+#'   relevant when the method "Based on percentiles" is chosen, otherwise this
+#'   argument should be NULL (default).
+#' @param group_keyword If the data contains total and specific Ig samples, the
+#'   group_keyword indicates for which group (total or specific) cut-offs are
+#'   being calculated. The cut-offs need to be calculated separately because the
+#'   control_sample_types can differ between total and specific.
+#' @param percentile When control_sample_types is not NULL, this is the
+#'   percentile of the negative control samples' sum intensity and percentage of
+#'   passing analytes that will be used as cut-off values. When
+#'   control_sample_types is NULL, this is the percentile of all samples (except
+#'   exclude_sample_types)' sum intensity and percentage of passing analytes
+#'   that will be used as cut-off values.
+#' @param use_mean_SD TRUE or FALSE, if TRUE then the mean and standard
+#'   deviation (SD) instead of a percentile will be used to calculate the
+#'   cut-off value for the sum intensity. The cut-off for the percentage of
+#'   passing analytes will still be calculated with a percentile.
+#' @param SD_factor Only relevant when use_mean_SD is TRUE. The cut-off value
+#'   will be calculated as mean + SD_factor * SD.
+#' @param uncalibrated_as_NA Should uncalibrated spectra be regarded as missing
+#'   values (TRUE) or as zeroes (FALSE)?
+#'
+#' @return
+#' @export
+#'
+#' @examples
 calculate_cut_offs <- function(summarized_checks,
                                control_sample_types = NULL,
                                exclude_sample_types = NULL,
@@ -231,8 +364,9 @@ calculate_cut_offs <- function(summarized_checks,
                               names = FALSE,
                               na.rm = uncalibrated_as_NA),
       sample_type = unique(sample_type),
-      #TODO: fix this: could be other methods!
-      curation_method = "based_on_negative_controls") %>% 
+      curation_method = ifelse(is.null(control_sample_types), 
+                               "based_on_percentiles",
+                               "based_on_negative_controls")) %>% 
     tidyr::nest(., "sample_type_list" = sample_type)
     
   return(cut_offs)
@@ -477,7 +611,7 @@ plot_spectra_curation_results <- function(curated_data,
   } else if (total_and_specific == "Yes" & more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(~ group)
-  } else {
+  } else if (total_and_specific == "No" & !more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(~ cluster)
   }
@@ -486,6 +620,8 @@ plot_spectra_curation_results <- function(curated_data,
 }
 
 create_nicer_reason_labels <- function(curated_data) {
+  
+  #TODO: this function is overcomplicated, hardcode the nicer labels instead.
   
   reasons <- unique(curated_data$reason_for_failure)
   reason_labels <- firstlower(reasons) %>% 
@@ -515,7 +651,7 @@ create_nicer_reason_labels <- function(curated_data) {
     })
   
   # Set the names to the 'old' values in the data, so that this named vector can
-  # be used to recode reason_for_failure with nice:
+  # be used to recode reason_for_failure with nicer labels:
   names(reason_labels) <- paste(reasons) # paste() converts NA to "NA"
   
   curated_data %>% 
@@ -537,7 +673,9 @@ calculate_number_and_percentage_per_reason <- function(curated_data) {
     dplyr::mutate(
       number_true = sum(has_passed_spectra_curation),
       number_false = sum(!has_passed_spectra_curation)) %>% 
-    dplyr::ungroup(reason_for_failure) %>% # so that n() can be used later
+    dplyr::ungroup(reason_for_failure) %>% # grouping by group, cluster and 
+    # sample_type will remain, so that n() can be used later to calculate the
+    # percentages
     dplyr::mutate(
       number = dplyr::case_when(
         has_passed_spectra_curation ~ number_true,
