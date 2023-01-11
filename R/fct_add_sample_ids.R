@@ -10,8 +10,11 @@
 #' plate number or a capital letter. Then the well position should be indicated
 #' by a single capital letter between A and H followed directly by a number
 #' between 1 and 12 (numbers smaller than 10 may be preceded by a zero, e.g. A01
-#' and A1 will both be recognized). The plate number and well position should be
-#' separated by an underscore "_".
+#' and A1 will both be recognized). The plate number has to precede the well position,
+#' but they can be separated by other characters.
+#' 
+#' If there are no plate numbers in the sample names, this function will assume
+#' that there was only one plate.
 #'
 #' @param data A dataframe. Should include a column named "sample_name".
 #'
@@ -23,12 +26,16 @@
 #' example <- data.frame(sample_name = c("s_0216_Specific_Plate4_A10",
 #'                                       "s_568_Total_pl5_H4",
 #'                                       "plate23_B6.s_8759",
-#'                                       "sample3857_Pl8_D05.568"),
-#'                       values = c(8, 
-#'                                  12, 
-#'                                  3, 
-#'                                  45))
+#'                                       "sample3857_Pl8_D05.568"))
+#' 
 #' detect_plate_and_well(example)
+#' 
+#' example_no_plate_numbers <- data.frame(sample_name = c("s_0216_Specific_A10",
+#'                                                        "s_568_Total_H4",
+#'                                                        "specific_B6.s_8759",
+#'                                                        "sample3857_D05.568"))
+#' 
+#' detect_plate_and_well(example_no_plate_numbers)
 detect_plate_and_well <- function(data) {
   
   if (!("sample_name" %in% colnames(data))) {
@@ -41,24 +48,32 @@ detect_plate_and_well <- function(data) {
       col = sample_name, 
       into = c("plate", "well"),
       # "\D" in regex is anything but a digit
-      # Plate number has to be followed by: " ", "_", "-" or "." but then there 
-      # can be other characters before the well follows.
-      regex = "([Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z]))[\\s_\\-\\.].*([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
+      # 0?\\d\\D matches 01 up to and including 09 or 1 up to and including 9 followed by a non-digit character
+      # 0?\\d$ matches 01 up until 09 or 1 up until 9 at the end of a string
+      # 1[012] matches 10, 11 and 12
+      regex = "([Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z])).*([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
       remove = FALSE)
   
-  if (all(is.na(data$plate) & is.na(data$well))) {
+  no_plate_and_wells_could_be_determined <- all(is.na(data$plate) & is.na(data$well))
+  
+  # If there are no plate numbers in the sample_name, it will be assumed that
+  # there is only one plate:
+  if (no_plate_and_wells_could_be_determined) {
     data <- data %>% 
       tidyr::extract(
         col = sample_name, 
         into = "well",
-        # "\D" in regex is anything but a digit
         regex = "([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
         remove = FALSE
       ) %>% 
       dplyr::mutate(plate = "plate1")
   }
   
-  if (any(anyNA(data$plate), anyNA(data$well))) {
+  some_plate_and_wells_could_not_be_determined <- any(anyNA(data$plate), 
+                                                      anyNA(data$well))
+  
+  # If for some samples the plate or well could not be determined, issue a warning:
+  if (some_plate_and_wells_could_not_be_determined) {
     NA_samples <- data$sample_name[is.na(data$plate) | is.na(data$well)]
     if (length(NA_samples) > 15) {
       rlang::abort(class = "plate_well_NAs",
@@ -74,6 +89,7 @@ detect_plate_and_well <- function(data) {
     }
   }
   
+  # Combine the plate and well columns into one plate_well column:
   data <- data %>% 
     dplyr::mutate(
       plate = stringr::str_match(plate, 
@@ -93,11 +109,7 @@ detect_plate_and_well <- function(data) {
 #'Read and process a plate design file
 #'
 #' The function \code{read_and_process_plate_design} reads in a plate design
-#' Excel file and processes it. It automatically determines sample types based
-#' on the sample ID's and finds the samples on a plate design that are specified
-#' as duplicate samples. The sample ID's and sample types of these duplicate
-#' samples are determined by copying the sample ID and type of the preceding
-#' sample.
+#' Excel file for a 96-wells plate and processes it.
 #' 
 #'@inheritParams read_plate_design
 #'
@@ -117,18 +129,11 @@ detect_plate_and_well <- function(data) {
 #'  At the bottom of the plate, leave one row blank and then add the next plate
 #'  in the same format.
 #'
-#'@return This function returns a dataframe with four columns:
+#'@return This function returns a dataframe with two columns:
 #'  \describe{\item{sample_id}{The sample ID's as given in the plate design
-#'  file.} \item{sample_type}{Automatically determined sample types. The
-#'  function takes the first string of letters within the sample ID as the
-#'  sample type. This might not work for your sample ID's so you may need to
-#'  alter the sample types manually after using this function.}
-#'  \item{plate_well}{This column indicated the plate and well that a sample was
+#'  file.} \item{plate_well}{The plate and well that a sample was
 #'  analyzed in. The format is as follows: the plate number followed by the well
-#'  ID, separated by an underscore (e.g. plate 1 well A1 is 1_A01).}
-#'  \item{duplicate}{This column is \code{TRUE} for samples that were specified
-#'  on the plate design as duplicate samples and \code{FALSE} for the remaining
-#'  samples.}}
+#'  ID, separated by an underscore (e.g. plate 1 well A1 is 1_A01).}}
 #'
 #'@export
 #'
@@ -155,9 +160,11 @@ read_and_process_plate_design <- function(plate_design_file) {
 
 #'Read in a plate design file
 #'
-#'The function \code{read_plate_design} reads in a plate design Excel
-#'file and returns a dataframe. It uses the \code{\link[plater]{read_plate}}
-#'function from the plater package.
+#'The function \code{read_plate_design} reads in a plate design Excel file of a
+#'96-wells plate and returns a dataframe. It uses the
+#'\code{\link[plater]{read_plate}} function from the plater package.
+#'\code{read_plate_design} is used in the
+#'\code{\link{read_and_process_plate_design}} function.
 #'
 #'@param plate_design_file The path to the plate design Excel file. The file
 #'  should be in the format described below.
@@ -169,10 +176,13 @@ read_and_process_plate_design <- function(plate_design_file) {
 #'@export
 #'
 #'@section Plate design format: 
-#'The top-left cell of the Excel sheet should contain the plate number (e.g. 
-#'"Plate 1"). The cells to the right of the top-left cell need to be labelled 
-#'1-12 (for a 96-well plate), while the cells below the top-left cell need to be
-#'labelled A-H. The cells within the plate should contain the sample ID's.
+#'The file should contain only one sheet. The top-left cell of the Excel sheet
+#'should contain the plate number (e.g. "Plate 1"). The cells to the right of
+#'the top-left cell need to be labelled 1-12, while the cells below the top-left
+#'cell need to be labelled A-H. The cells within the plate should contain the
+#'sample ID's. Exception: If there is only one plate in the plate design, the
+#'plate number does not have to be indicated in the top left cell of the Excel
+#'file.
 #'
 #'\preformatted{
 #'Plate number  1             2            3             ...
@@ -191,7 +201,8 @@ read_and_process_plate_design <- function(plate_design_file) {
 #'                     package = "glycodash")
 #' read_plate_design(plate_design_file = path)
 read_plate_design <- function(plate_design_file) {
-  
+  # The plater package can only read .csv files, so we convert the Excel file to
+  # .csv:
   plate_design <- readxl::read_excel(plate_design_file,
                                      .name_repair = "minimal")
   path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
@@ -226,6 +237,7 @@ read_plate_design <- function(plate_design_file) {
 #'
 #' This function takes the result from the \code{\link{read_plate_design}}
 #' function and converts it to a different format.
+#' 
 #'
 #' @param plate_design The dataframe that is returned by the
 #'   \code{\link{read_plate_design}} function.
@@ -245,8 +257,12 @@ read_plate_design <- function(plate_design_file) {
 #' plate_design <- read_plate_design(path)
 #' process_plate_design(plate_design)
 process_plate_design <- function (plate_design) {
+  # TODO: test what happens when there are symbols or newlines within the sample ID's.
+  
   plate_design_contains_just_1_plate <- ncol(plate_design) == 2
   
+  # If there is only one plate, give this plate the number 1 (in case the plate
+  # number) was not indicated in the Excel file:
   if (plate_design_contains_just_1_plate) {
     plate_design <- plate_design %>%
       tidyr::pivot_longer(cols = -well,
@@ -263,7 +279,7 @@ process_plate_design <- function (plate_design) {
         sample_id = as.character(sample_id),
         plate = stringr::str_match(
           plate, 
-          "[Pp][Ll](?:[Aa][Tt][Ee])?[\\s_\\-\\.]+.*(\\d+|[A-Z])")[ , 2],
+          "[Pp][Ll](?:[Aa][Tt][Ee])?.*(\\d+|[A-Z])")[ , 2],
         well = stringr::str_extract(well, "[A-H]\\d+"))
   }
   
@@ -325,7 +341,9 @@ process_sample_list <- function(sample_list_file) {
   }
   
   sample_list <- sample_list %>% 
-    dplyr::mutate(sample_id = as.character(sample_id))
+    dplyr::mutate(sample_id = as.character(sample_id)) # If the sample ID's are 
+  # numbers readxl::read_excel will make them type numeric, but they should be
+  # type character.
   
   return(sample_list)
 }

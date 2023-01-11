@@ -23,7 +23,7 @@ mod_add_sample_ids_ui <- function(id){
       " .box-title {width: 100%}",
       "#",
       ns("box_header"),
-      # change all .fa to .fas  because of fontawesome version update
+      # changed all .fa to .fas  because of fontawesome version update
       " .fas {float: right; margin-right: 5px; font-size: 18px}",
       "#",
       ns("box_header"),

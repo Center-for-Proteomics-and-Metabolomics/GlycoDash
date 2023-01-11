@@ -17,16 +17,21 @@ This function returns a dataframe with a column named "well" that
  the sample ID's of the samples on that plate.
 }
 \description{
-The function \code{read_plate_design} reads in a plate design Excel
-file and returns a dataframe. It uses the \code{\link[plater]{read_plate}}
-function from the plater package.
+The function \code{read_plate_design} reads in a plate design Excel file of a
+96-wells plate and returns a dataframe. It uses the
+\code{\link[plater]{read_plate}} function from the plater package.
+\code{read_plate_design} is used in the
+\code{\link{read_and_process_plate_design}} function.
 }
 \section{Plate design format}{
  
-The top-left cell of the Excel sheet should contain the plate number (e.g. 
-"Plate 1"). The cells to the right of the top-left cell need to be labelled 
-1-12 (for a 96-well plate), while the cells below the top-left cell need to be
-labelled A-H. The cells within the plate should contain the sample ID's.
+The file should contain only one sheet. The top-left cell of the Excel sheet
+should contain the plate number (e.g. "Plate 1"). The cells to the right of
+the top-left cell need to be labelled 1-12, while the cells below the top-left
+cell need to be labelled A-H. The cells within the plate should contain the
+sample ID's. Exception: If there is only one plate in the plate design, the
+plate number does not have to be indicated in the top left cell of the Excel
+file.
 
 \preformatted{
 Plate number  1             2            3             ...

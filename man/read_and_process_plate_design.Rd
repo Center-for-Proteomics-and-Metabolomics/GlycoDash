@@ -11,26 +11,15 @@ read_and_process_plate_design(plate_design_file)
 should be in the format described below.}
 }
 \value{
-This function returns a dataframe with four columns:
+This function returns a dataframe with two columns:
  \describe{\item{sample_id}{The sample ID's as given in the plate design
- file.} \item{sample_type}{Automatically determined sample types. The
- function takes the first string of letters within the sample ID as the
- sample type. This might not work for your sample ID's so you may need to
- alter the sample types manually after using this function.}
- \item{plate_well}{This column indicated the plate and well that a sample was
+ file.} \item{plate_well}{The plate and well that a sample was
  analyzed in. The format is as follows: the plate number followed by the well
- ID, separated by an underscore (e.g. plate 1 well A1 is 1_A01).}
- \item{duplicate}{This column is \code{TRUE} for samples that were specified
- on the plate design as duplicate samples and \code{FALSE} for the remaining
- samples.}}
+ ID, separated by an underscore (e.g. plate 1 well A1 is 1_A01).}}
 }
 \description{
 The function \code{read_and_process_plate_design} reads in a plate design
-Excel file and processes it. It automatically determines sample types based
-on the sample ID's and finds the samples on a plate design that are specified
-as duplicate samples. The sample ID's and sample types of these duplicate
-samples are determined by copying the sample ID and type of the preceding
-sample.
+Excel file for a 96-wells plate and processes it.
 }
 \section{Plate design format}{
  The top-left cell of the Excel sheet should

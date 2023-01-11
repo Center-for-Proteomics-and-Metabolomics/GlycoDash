@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_read_lacytools.R
 \name{detect_group}
 \alias{detect_group}
-\title{Detect whether a sample is Specific or Total Ig based on the sample name.}
+\title{Detect whether a sample is specific or total Ig based on the sample name.}
 \usage{
 detect_group(data, keyword_specific, keyword_total)
 }
@@ -19,13 +19,13 @@ refer to Total samples.}
 \value{
 The dataframe containing a block from a LacyTools summary file, with
  an additional column named "group" that indicates whether a sample is
- Specific or Total.
+ specific or total.
 }
 \description{
-Detect whether a sample is Specific or Total Ig based on the sample name.
+Detect whether a sample is specific or total Ig based on the sample name.
 }
 \examples{
 block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"),
-                            values = c(13.56, 738.34, 4.56))
+                           values = c(13.56, 738.34, 4.56))
 detect_group(block = block_example, keyword_specific = "Specific", keyword_total = "Total")
 }
