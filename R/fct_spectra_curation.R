@@ -249,8 +249,7 @@ report_failed_criteria <- function(my_data,
 #' summarize_spectra_checks(checked_data = checked_data)
 summarize_spectra_checks <- function(checked_data) {
   
-  # Alternative name?: calculate_sum_intensities_and_analyte_passing_percentage
-  # or calculate_spectra_curation_metrics
+  # TODO: Change name to calculate_spectra_curation_metrics?
   
   grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
   
@@ -428,7 +427,7 @@ mean_plus_SD <- function(x, SD_factor, na.rm) {
 #'
 #' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
 #'
-#' cut-offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+#' cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
 #'                                control_sample_types = "PBS",
 #'                                exclude_sample_types = NULL,
 #'                                group_keyword = "Total",
@@ -494,34 +493,56 @@ determine_reason_for_failure <- function(data) {
   return(with_reasons)
 }
 
-#' Create a plot to show the cut_offs for spectra curation
+#'Visualize the spectra curation process
 #'
-#' @param spectra_check The dataframe returned by \code{\link{curate_spectra}}.
-#'   \code{curate_spectra} returns two dataframes in a list. The dataframe that
-#'   should be passed as the \code{spectra_check} argument to
-#'   \code{create_cut_off_plot} is named "spectra_check".
+#'This function can be used to visualize spectra curation. It will create a
+#'scatter plot with the sum intensity plotted against the percentage of passing
+#'analytes. Each point represents one sum spectrum (one cluster from one
+#'sample). The points have a horizontal jitter to minimize overlap. Colors
+#'represent sample types. Uncalibrated spectra are shown as squares, while
+#'calibrated spectra are shown as dots. If the data contains total and specific
+#'samples, the plot is faceted by group (total or specific).
 #'
-#' @return This function returns a ggplot object.
-#' @export
+#'The ggplot has a text aesthetic that can be used to show as hover
+#'info if the ggplot object is converted to a ggplotly object (see example).
 #'
-#' @importFrom grDevices colorRampPalette
+#'@inheritParams calculate_cut_offs
+#'
+#'@return A ggplot object.
+#'
+#'@export
+#'
+#'@importFrom grDevices colorRampPalette
 #'
 #' @examples
 #' data("example_data")
-#' spectra_curation <- curate_spectra(data = example_data,
-#'                                    clusters_regex = "IgGI1",
-#'                                    min_ppm_deviation = -20,
-#'                                    max_ppm_deviation = 20,
-#'                                    max_ipq = 0.2,
-#'                                    min_sn = 9,
-#'                                    cut_off_basis = c("Spike PBS", "Total PBS"))
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' plot <- create_cut_off_plot(summarized_checks = summarized_checks)
+#'
+#' # The plot can be made interactive with plotly. Use the "text" aesthetic to
+#' # show hover info:
+#' plotly::ggplotly(plot,
+#'                  tooltip = "text")
 #' 
-#' create_cut_off_plot(spectra_check = spectra_curation$spectra_check,
-#'                     cut_off_basis = c("Spike PBS", "Total PBS"))
 create_cut_off_plot <- function(summarized_checks) {
   
   for_plot <- summarized_checks %>% 
     # in case there are NAs when uncalibrated_as_NA is TRUE:
+    # TODO: check if this is still needed
     tidyr::replace_na(replace = list(sum_intensity = 0,
                                      passing_analyte_percentage = 0))
   
@@ -576,7 +597,7 @@ create_cut_off_plot <- function(summarized_checks) {
     ggplot2::scale_color_manual(values = my_palette,
                                 name = "Sample type") +
     ggplot2::labs(y = "Sum intensity of passing analytes") +
-    ggplot2::scale_x_continuous(labels = function(x) paste0(x * 100, "%"), 
+    ggplot2::scale_x_continuous(labels = function(x) paste0(x, "%"), 
                                 name = "Percentage of passing analytes")
   
   if ("group" %in% colnames(for_plot)) {
@@ -591,15 +612,65 @@ create_cut_off_plot <- function(summarized_checks) {
 }
 
 
-#' Title
+#' Visualize the results of the spectra curation
+#' 
+#' This function can be used to visualize how many spectra per sample type passed
+#' spectra curation and how many failed and why. It will create a bar plot with 
+#' sample types on the x-axis and the percentage of spectra on the y-axis. Colors 
+#' represent if and why the spectrum failed curation. If the data contains total 
+#' and specific samples, the plot is faceted by group (total or specific). If the 
+#' data contains 4 or less clusters the plot is also faceted by cluster.
+#' 
+#' The ggplot has a text aesthetic that can be used to show the number of spectra 
+#' and the percentage of spectra as hover info if the ggplot object is converted 
+#' to a ggplotly object (see example).
 #'
-#' @param curated_data 
-#' @param total_and_specific 
+#' @param curated_data The return value from the function
+#'   \code{\link{curate_spectra}}.
+#' @param total_and_specific Character string, "Yes" or "No". This argument
+#'   indicates whether there are total and specific Ig samples in the data.
 #'
-#' @return
+#' @return A ggplot object.
 #' @export
 #'
 #' @examples
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                control_sample_types = NULL,
+#'                                exclude_sample_types = "PBS",
+#'                                group_keyword = NULL,
+#'                                percentile = 2,
+#'                                use_mean_SD = FALSE,
+#'                                SD_factor = NULL,
+#'                                uncalibrated_as_NA = TRUE)
+#'
+#' curated_data <- curate_spectra(checked_data = checked_data,
+#'                                summarized_checks = summarized_checks,
+#'                                cut_offs = cut_offs)
+#'                                
+#' plot <- plot_spectra_curation_results(curated_data = curated_data,
+#'                                       total_and_specific = "Yes")
+#'                                       
+#' # The plot can be made interactive with plotly. Use the "text" aesthetic to
+#' # show hover info:
+#' plotly::ggplotly(plot,
+#'                  tooltip = "text")
+#' 
 plot_spectra_curation_results <- function(curated_data,
                                           total_and_specific) {
   
@@ -652,6 +723,9 @@ plot_spectra_curation_results <- function(curated_data,
   
   return(plot)
 }
+
+# Below are two helper functions that are used within the function 
+# plot_spectra_curation_results:
 
 create_nicer_reason_labels <- function(curated_data) {
   

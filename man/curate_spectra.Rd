@@ -8,13 +8,13 @@ curate_spectra(checked_data, summarized_checks, cut_offs)
 }
 \arguments{
 \item{checked_data}{The return value of the function
-\code{\link{check_analyte_quality_criteria}}}
+\code{\link{check_analyte_quality_criteria}}.}
 
 \item{summarized_checks}{The return value of the function
 \code{\link{summarize_spectra_checks}}.}
 
 \item{cut_offs}{The return value of the function
-\code{\link{calculate_cut_offs}}}
+\code{\link{calculate_cut_offs}}.}
 }
 \value{
 The function returns the three dataframes given as function arguments
@@ -35,7 +35,7 @@ This function should be used after the functions
 intensities and percentages of passing analytes for each spectrum and after
 cut-off values have been calculated using \code{\link{calculate_cut_offs}}.
 All spectra with sum intensities and percentages of passing analytes above
-those cut-off values pass the spectra curation.
+the cut-off values pass spectra curation.
 }
 \examples{
 data("example_data")
@@ -54,7 +54,7 @@ checked_data <- check_analyte_quality_criteria(my_data = example_data,
 
 summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
 
-cut-offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
                                control_sample_types = "PBS",
                                exclude_sample_types = NULL,
                                group_keyword = "Total",
