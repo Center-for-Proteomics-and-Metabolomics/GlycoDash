@@ -7,37 +7,64 @@
 curate_spectra(checked_data, summarized_checks, cut_offs)
 }
 \arguments{
+\item{checked_data}{The return value of the function
+\code{\link{check_analyte_quality_criteria}}}
+
 \item{summarized_checks}{The return value of the function
 \code{\link{summarize_spectra_checks}}.}
+
+\item{cut_offs}{The return value of the function
+\code{\link{calculate_cut_offs}}}
 }
 \value{
-The function returns the original dataframe given as the data
-  argument, but with two additional columns. One column is named
-  "has_passed_spectra_curation"; This logical column is \code{TRUE} for spectra that have
-  passed curation and \code{FALSE} for spectra that did not pass curation.
-  The other column is named "analyte_meets_criteria" and is \code{TRUE} for analyte +
-  sample combinations that passed all three quality criteria checks, whereas
-  \code{FALSE} indicates that one or more criteria were not fulfilled.
+The function returns the three dataframes given as function arguments
+  joined together, with two additional columns:
+  \describe{\item{has_passed_spectra_curation}{This column is \code{TRUE} if
+  the spectrum passed curation and \code{FALSE} if it did not.}
+  \item{reason_for_failure}{This column describes why the spectrum failed
+  curation. The possible reasons are "Calibration failed.", "Percentage of
+  passing analytes and sum intensity below cut-offs.", "Percentage of passing
+  analytes below cut-off." or "Sum intensity below cut-off.". If the spectrum
+  passed curation, reason_for_failure is \code{NA}.}}
 }
 \description{
 \code{curate_spectra()} performs spectra curation on mass spectrometry data.
-For each spectrum, analytes are curated based on the quality criteria (mass
-accuracy, isotopic pattern quality (IPQ) and signal to noise ratio (S/N)).
-Then the proportion of passing analytes and the sum intensity of passing
-analytes is calculated for each spectrum (using the function
-\code{\link{summarize_spectra_checks}}). Based on the average proportion and
-sum intensity in a chosen group of samples that should not pass curation
-(e.g. Specific Ig negative control samples), cut-off values for spectra
-curation are defined (using the function \code{\link{calculate_cut_offs}}).
-All spectra with values above those cut-off values pass the spectra curation.
+This function should be used after the functions
+\code{\link{check_analyte_quality_criteria}} and
+\code{\link{summarize_spectra_checks}} have been used to calculate the sum
+intensities and percentages of passing analytes for each spectrum and after
+cut-off values have been calculated using \code{\link{calculate_cut_offs}}.
+All spectra with sum intensities and percentages of passing analytes above
+those cut-off values pass the spectra curation.
 }
 \examples{
 data("example_data")
-curate_spectra(data = example_data,
-               clusters_regex = "IgGI1",
-               min_ppm_deviation = -20,
-               max_ppm_deviation = 20,
-               max_ipq = 0.2,
-               min_sn = 9,
-               cut_off_basis = c("Spike PBS", "Total PBS"))
+
+example_data <- define_clusters(data = example_data,
+                                cluster_keywords = "IgGI")
+
+checked_data <- check_analyte_quality_criteria(my_data = example_data,
+                                               min_ppm_deviation = -20,
+                                               max_ppm_deviation = 20,
+                                               max_ipq = 0.2,
+                                               min_sn = 9,
+                                               criteria_to_consider = c("Mass accuracy",
+                                                                        "S/N",
+                                                                        "IPQ"))
+
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+
+cut-offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+                               control_sample_types = "PBS",
+                               exclude_sample_types = NULL,
+                               group_keyword = "Total",
+                               percentile = 97,
+                               use_mean_SD = FALSE,
+                               SD_factor = NULL,
+                               uncalibrated_as_NA = TRUE)
+
+curate_spectra(checked_data = checked_data,
+               summarized_checks = summarized_checks,
+               cut_offs = cut_offs)
+
 }

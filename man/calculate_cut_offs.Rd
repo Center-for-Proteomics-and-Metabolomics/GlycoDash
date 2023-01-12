@@ -56,3 +56,35 @@ values (TRUE) or as zeroes (FALSE)?}
 \code{calculate_cut_offs()} calculates the cut-off values for the sum
 intensity and percentage of passing analytes during spectra curation.
 }
+\examples{
+data("example_data")
+
+example_data <- define_clusters(data = example_data,
+                                cluster_keywords = "IgGI")
+
+checked_data <- check_analyte_quality_criteria(my_data = example_data,
+                                               min_ppm_deviation = -20,
+                                               max_ppm_deviation = 20,
+                                               max_ipq = 0.2,
+                                               min_sn = 9,
+                                               criteria_to_consider = c("Mass accuracy",
+                                                                        "S/N",
+                                                                        "IPQ"))
+
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+
+# In this example we calculate cut-offs for total Ig samples, using PBS 
+# samples as negative controls. Both cut-offs are set at the 97th percentile 
+# of the PBS samples' distributions of the sum intensity and percentage of 
+# passing analytes. Uncalibrated spectra are not included in the cut-off 
+# calculations:
+calculate_cut_offs(summarized_checks = summarized_checks,
+                   control_sample_types = "PBS",
+                   exclude_sample_types = NULL,
+                   group_keyword = "Total",
+                   percentile = 97,
+                   use_mean_SD = FALSE,
+                   SD_factor = NULL,
+                   uncalibrated_as_NA = TRUE)
+                                                                                     
+}
