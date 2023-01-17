@@ -164,7 +164,8 @@ mod_add_metadata_server <- function(id, summary){
                            ~ isTruthy(input[[.x]])))
       )
       
-      # convert this to a function with warnings
+      # TODO: convert this to a function with warnings
+      # TODO: remove date part
       prepped_metadata <- purrr::pmap(
         list(metadata_list(),
              sample_id_inputIds(),
@@ -315,9 +316,3 @@ mod_add_metadata_server <- function(id, summary){
     
   })
 }
-    
-## To be copied in the UI
-# mod_add_metadata_ui("add_metadata_ui_1")
-    
-## To be copied in the server
-# mod_add_metadata_server("add_metadata_ui_1")

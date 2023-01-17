@@ -1,4 +1,28 @@
+# This file contains all functions that are used within the module
+# mod_add_metadata.R.
 
+#' Read in one or more metadata files
+#'
+#' This function can be used to read in a list of metadata files (.xlsx, .xls or
+#' .rds files). In the case of an Excel file empty cells or "NA" cells will be
+#' read in as \code{NA}. All column names will be converted to snake case
+#' (lowercase, words separated by underscores).
+#'
+#' @param filepaths A list of paths to the metadata files.
+#' @param filenames A list of filenames (including file extension) corresponding
+#'   to the filepaths.
+#'
+#' @return A named list of dataframes containing the metadata. The names
+#'   correspond to the filenames.
+#' @export
+#'
+#' @examples
+#' path <- system.file("extdata",
+#'                     "Metadata_example.xlsx",
+#'                     package = "glycodash")
+#'
+#' read_metadata(filepaths = list(path),
+#'               filenames = list("Metadata_example.xlsx"))
 read_metadata <- function(filepaths, filenames) {
   
   metadata_list <- purrr::pmap(
