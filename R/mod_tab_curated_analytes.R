@@ -1,4 +1,4 @@
-#' information_box UI Function
+#' tab_curated_analytes UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_information_box_ui <- function(id){
+mod_tab_curated_analytes_ui <- function(id){
   ns <- NS(id)
   tagList(
     column(
@@ -24,10 +24,10 @@ mod_information_box_ui <- function(id){
   )
 }
     
-#' information_box Server Function
+#' tab_curated_analytes Server Function
 #'
 #' @noRd 
-mod_information_box_server <- function(id, info, cluster){
+mod_tab_curated_analytes_server <- function(id, info, cluster){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -216,7 +216,7 @@ Shiny.bindAll(this.api().table().node()); } ')
 }
     
 ## To be copied in the UI
-# mod_information_box_ui("information_box_ui_1")
+# mod_tab_curated_analytes_ui("tab_curated_analytes_ui_1")
     
 ## To be copied in the server
-# mod_information_box_server("information_box_ui_1")
+# mod_tab_curated_analytes_server("tab_curated_analytes_ui_1")

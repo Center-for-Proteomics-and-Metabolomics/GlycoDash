@@ -223,7 +223,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                              select = TRUE,
                              tabPanel(
                                title = cluster,
-                               mod_information_box_ui(ns(cluster))
+                               mod_tab_curated_analytes_ui(ns(cluster))
                              ))
                  })
       
@@ -238,7 +238,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
         purrr::map(
           .,
           function(cluster) {
-            mod_information_box_server(id = cluster,
+            mod_tab_curated_analytes_server(id = cluster,
                                        info = info,
                                        cluster = cluster)
           })
