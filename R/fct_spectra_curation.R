@@ -553,9 +553,7 @@ return_when_spectra_curation_is_skipped <- function(checked_data,
     dplyr::select(-c(failed_criteria,
                      passing_analyte_percentage,
                      analyte_meets_criteria,
-                     uncalibrated,
-                     has_passed_spectra_curation,
-                     reason_for_failure))
+                     uncalibrated))
   # Leave 'sum_intensity' for the relative abundance
   # calculation 
 }
