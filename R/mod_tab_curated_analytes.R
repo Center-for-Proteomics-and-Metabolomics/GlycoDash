@@ -208,12 +208,6 @@ Shiny.bindAll(this.api().table().node()); } ')
       return(analytes_to_include_per_charge)
     })
     
-    observe({
-      req(info_table())
-      print("info_table() looks like this:")
-      print(info_table())
-    })
-    
     return(list(plot = info_plot,
                 analytes_to_include = analytes_to_include))
     

@@ -168,7 +168,6 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
     
     observe({
       if (is_truthy(r$with_auto_sample_types)) {
-        print("it's running")
         r$with_auto_sample_types <- NULL
         r$response <- NULL
         r$show_reset_warning <- TRUE
