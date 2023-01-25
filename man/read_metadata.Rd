@@ -13,8 +13,8 @@ read_metadata(filepaths, filenames)
 to the filepaths.}
 }
 \value{
-A named list of dataframes containing the metadata in the files. The
-  names correspond to the filenames.
+A named list of dataframes containing the metadata. The names
+  correspond to the filenames.
 }
 \description{
 This function can be used to read in a list of metadata files (.xlsx, .xls or

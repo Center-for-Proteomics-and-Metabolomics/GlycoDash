@@ -304,27 +304,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
       )
       
       check_analyte_quality_criteria(my_data = summary(),
-                        min_ppm_deviation = input$mass_accuracy[1],
-                        max_ppm_deviation = input$mass_accuracy[2],
-                        max_ipq = input$ipq,
-                        min_sn = input$sn,
-                        criteria_to_consider = input$qc_to_include)
+                                     min_ppm_deviation = input$mass_accuracy[1],
+                                     max_ppm_deviation = input$mass_accuracy[2],
+                                     max_ipq = input$ipq,
+                                     min_sn = input$sn,
+                                     criteria_to_consider = input$qc_to_include)
       
     })
-    
-    # checked_data_uncalibrated <- reactive({
-    #   req(checked_data())
-    #   
-    #   if (!input$uncalibrated_as_na) {
-    #     dplyr::mutate(
-    #       checked_data(),
-    #       analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
-    #                                                  FALSE)
-    #     )
-    #   } else {
-    #     checked_data()
-    #   }
-    # })
     
     # Analyte quality criteria checks summarized per cluster per sample: 
     summarized_checks <- reactive({
@@ -349,8 +335,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
                       condition = input$curation_method != "Skip spectra curation")
       
     })
-    
-    #TODO: hide results box (and button?) if Skip spectra curation is chosen
     
     cut_offs_based_on_controls <- mod_curate_based_on_controls_server(
       "curate_based_on_controls_ui_1",
@@ -451,33 +435,36 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     # Perform spectra curation:
     curated_data <- reactive({
+      req(cut_offs_to_use_all_clusters())
       curate_spectra(checked_data = checked_data(),
                      summarized_checks = summarized_checks(),
                      cut_offs = cut_offs_to_use_all_clusters())
     }) %>% bindEvent(input$button)
+    
     
     observe({
       showNotification("Spectra curation has been performed.",
                        type = "message")
     }) %>% bindEvent(curated_data())
     
+    
     passing_spectra <- reactive({
       req(curated_data())
-      
-      curated_data() %>% 
-        dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
-        dplyr::select(-c(reason_for_failure,
-                         passing_analyte_percentage,
-                         cut_off_sum_intensity,
-                         cut_off_passing_analyte_percentage,
-                         curation_method,
-                         analyte_meets_criteria,
-                         failed_criteria,
-                         sample_type_list
-                         # Leave 'sum_intensity' for the relative abundance
-                         # calculation and leave 'criteria_check' for the
-                         # analyte curation.
-                         ))
+      kick_out_spectra(curated_data = curated_data())
+    })
+    
+    to_return <- reactive({
+      if (input$curation_method == "Skip spectra curation") {
+        req(checked_data(),
+            summarized_checks())
+        return_when_spectra_curation_is_skipped(
+          checked_data = checked_data(),
+          summarized_checks = summarized_checks()
+        )
+      } else {
+        req(passing_spectra())
+        remove_unneeded_columns(passing_spectra = passing_spectra())
+      }
     })
     
     # TODO: fix which columns are shown in the tables
@@ -581,22 +568,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
       return(plotly_object)
     })
     
-    to_return <- reactive({
-      if (input$curation_method == "Skip spectra curation") {
-        dplyr::full_join(req(checked_data()),
-                         req(summarized_checks())) %>% 
-          dplyr::select(-c(failed_criteria,
-                           passing_analyte_percentage,
-                           analyte_meets_criteria
-                           # Leave 'sum_intensity' for the relative abundance
-                           # calculation and leave 'criteria_check' for the
-                           # analyte curation.
-          ))
-      } else {
-        req(passing_spectra())
-      }
-    })
-    
     output$download <- downloadHandler(
       filename = function() {
         todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
@@ -617,7 +588,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     )
     
     return(list(
-      curated_spectra = to_return,
+      passing_spectra = to_return,
       mass_acc = reactive({ input$mass_accuracy }),
       ipq = reactive({ input$ipq }),
       sn = reactive({ input$sn }),
@@ -631,9 +602,3 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
   })
 }
-    
-## To be copied in the UI
-# mod_spectra_curation_ui("spectra_curation_ui_1")
-    
-## To be copied in the server
-# mod_spectra_curation_server("spectra_curation_ui_1")

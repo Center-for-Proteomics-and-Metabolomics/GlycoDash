@@ -52,6 +52,20 @@ will be calculated as mean + SD_factor * SD.}
 \item{uncalibrated_as_NA}{Should uncalibrated spectra be regarded as missing
 values (TRUE) or as zeroes (FALSE)?}
 }
+\value{
+A tibble with five or six columns: \describe{\item{group}{This column
+  will only exist if the data contained both total and specific samples,
+  because in that case the cut-offs are calculated separately for total and
+  specific.} \item{cluster}{This column indicates for which cluster the
+  cut-off was calculated.} \item{cut_off_sum_intensity}{This numeric column
+  gives the cut-off value for the sum intensity.}
+  \item{cut_off_passing_analyte_percentage}{This column gives the cut-off
+  value for the percentage of passing analytes.} \item{curation_method}{This
+  character column can be either "based_on_percentiles" or
+  "based_on_negative_controls". It indicates which method for spectra
+  curation was used.} \item{sample_type_list}{This column contains a list
+  with the sample types that were used as a basis for the analyte curation.}}
+}
 \description{
 \code{calculate_cut_offs()} calculates the cut-off values for the sum
 intensity and percentage of passing analytes during spectra curation.
@@ -73,10 +87,10 @@ checked_data <- check_analyte_quality_criteria(my_data = example_data,
 
 summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
 
-# In this example we calculate cut-offs for total Ig samples, using PBS 
-# samples as negative controls. Both cut-offs are set at the 97th percentile 
-# of the PBS samples' distributions of the sum intensity and percentage of 
-# passing analytes. Uncalibrated spectra are not included in the cut-off 
+# In this example we calculate cut-offs for total Ig samples, using PBS
+# samples as negative controls. Both cut-offs are set at the 97th percentile
+# of the PBS samples' distributions of the sum intensity and percentage of
+# passing analytes. Uncalibrated spectra are not included in the cut-off
 # calculations:
 calculate_cut_offs(summarized_checks = summarized_checks,
                    control_sample_types = "PBS",

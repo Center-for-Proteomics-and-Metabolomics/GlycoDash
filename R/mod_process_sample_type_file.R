@@ -88,7 +88,6 @@ mod_process_sample_type_file_server <- function(id, allowed){
           NULL
           
         })
-      print(sample_types)
       
       return(sample_types)
     }) %>% bindEvent(input$file)

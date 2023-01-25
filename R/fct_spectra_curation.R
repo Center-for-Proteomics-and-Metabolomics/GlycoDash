@@ -304,7 +304,18 @@ summarize_spectra_checks <- function(checked_data) {
 #' @param uncalibrated_as_NA Should uncalibrated spectra be regarded as missing
 #'   values (TRUE) or as zeroes (FALSE)?
 #'
-#' @return
+#' @return A tibble with five or six columns: \describe{\item{group}{This column
+#'   will only exist if the data contained both total and specific samples,
+#'   because in that case the cut-offs are calculated separately for total and
+#'   specific.} \item{cluster}{This column indicates for which cluster the
+#'   cut-off was calculated.} \item{cut_off_sum_intensity}{This numeric column
+#'   gives the cut-off value for the sum intensity.}
+#'   \item{cut_off_passing_analyte_percentage}{This column gives the cut-off
+#'   value for the percentage of passing analytes.} \item{curation_method}{This
+#'   character column can be either "based_on_percentiles" or
+#'   "based_on_negative_controls". It indicates which method for spectra
+#'   curation was used.} \item{sample_type_list}{This column contains a list
+#'   with the sample types that were used as a basis for the analyte curation.}}
 #' @export
 #'
 #' @examples
@@ -324,10 +335,10 @@ summarize_spectra_checks <- function(checked_data) {
 #'
 #' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
 #'
-#' # In this example we calculate cut-offs for total Ig samples, using PBS 
-#' # samples as negative controls. Both cut-offs are set at the 97th percentile 
-#' # of the PBS samples' distributions of the sum intensity and percentage of 
-#' # passing analytes. Uncalibrated spectra are not included in the cut-off 
+#' # In this example we calculate cut-offs for total Ig samples, using PBS
+#' # samples as negative controls. Both cut-offs are set at the 97th percentile
+#' # of the PBS samples' distributions of the sum intensity and percentage of
+#' # passing analytes. Uncalibrated spectra are not included in the cut-off
 #' # calculations:
 #' calculate_cut_offs(summarized_checks = summarized_checks,
 #'                    control_sample_types = "PBS",
@@ -346,6 +357,9 @@ calculate_cut_offs <- function(summarized_checks,
                                use_mean_SD = FALSE,
                                SD_factor = NULL,
                                uncalibrated_as_NA = FALSE) {
+  #TODO: rewrite this function so that one of the arguments is
+  #spectra_curation_method and it can also be applied when spectra curation
+  #should be skipped.
   
   cut_off_basis <- summarized_checks %>% 
     dplyr::filter(if (!is.null(group_keyword)) group == group_keyword else TRUE) %>% 
@@ -492,6 +506,77 @@ determine_reason_for_failure <- function(data) {
   
   return(with_reasons)
 }
+
+kick_out_spectra <- function(curated_data) {
+  
+  passing_spectra <- curated_data %>% 
+    dplyr::filter(has_passed_spectra_curation,
+                  !uncalibrated)
+  
+  return(passing_spectra)
+}
+
+remove_unneeded_columns <- function(passing_spectra) {
+  
+  without_extra_columns <- passing_spectra %>% 
+    # During the spectra curation process a number of extra columns are created.
+    # All of these except for sum_intensity can be removed. sum_intensity will
+    # be used in mod_normalization to calculate relative abundances.:
+    dplyr::select(-c(
+      # Created by summarize_spectra_checks:
+      passing_analyte_percentage,
+      
+      # Created by calculate_cut_offs:
+      cut_off_sum_intensity,
+      cut_off_passing_analyte_percentage,
+      curation_method,
+      sample_type_list,
+      
+      # Created by check_analyte_quality_criteria:
+      analyte_meets_criteria,
+      uncalibrated,
+      failed_criteria,
+      
+      # Created by curate_spectra:
+      has_passed_spectra_curation,
+      reason_for_failure
+    ))
+  
+  return(without_extra_columns)
+}
+
+return_when_spectra_curation_is_skipped <- function(checked_data,
+                                                    summarized_checks) {
+  dplyr::full_join(checked_data,
+                   summarized_checks) %>% 
+    dplyr::filter(!uncalibrated) %>% 
+    dplyr::select(-c(failed_criteria,
+                     passing_analyte_percentage,
+                     analyte_meets_criteria,
+                     uncalibrated,
+                     has_passed_spectra_curation,
+                     reason_for_failure))
+  # Leave 'sum_intensity' for the relative abundance
+  # calculation 
+}
+
+get_sample_type_options <- function(summarized_checks,
+                                    total_or_specific_keyword) {
+  
+  is_group <- summarized_checks$group == total_or_specific_keyword
+  # Weird tibble behavior: tibble[rows, single_column] results in a
+  # tibble, even though dataframe[rows, single_column] results in a
+  # vector. We need a vector here and summarized_checks() is a tibble so I
+  # have to use $sample_type instead of [is_specific, "sample_type"]:
+  options_for_group <- unique(summarized_checks[is_group, ]$sample_type)
+  
+  # The names is what will be shown in the selection menu:
+  names(options_for_group) <- paste(total_or_specific_keyword,
+                                   options_for_group,
+                                   "samples")
+  return(options_for_group)
+}
+
 
 #'Visualize the spectra curation process
 #'

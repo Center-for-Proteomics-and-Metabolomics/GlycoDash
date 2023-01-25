@@ -1,26 +1,120 @@
+# This file contains all functions that are used within the module
+# mod_analyte_curation.R and within its sub-module mod_tab_curated_analytes.R.
+
+#' Read an analyte list Excel or .rds file
+#'
+#' @param filepath The path to the Excel or .rds file containing a list of
+#'   analytes. If it is an Excel file it should contain only one sheet. If it's
+#'   a .rds file it should be a dataframe or tibble. In both cases there should
+#'   be one column named "analyte". The analyte column should contain all
+#'   analytes that should pass curation.
+#' @param filename The name of the Excel or .rds file including the file
+#'   extension.
+#'
+#' @return A tibble with one column named "analyte" with the analytes that
+#'   should pass curation.
+#' @export
+#'
+#' @examples
+#' path <- system.file("extdata",
+#'                     "Analyte_list.xlsx",
+#'                     package = "glycodash")
+#'
+#' read_analyte_list_file(filepath = path,
+#'                       filename = "Analyte_list.xlsx")
+#' 
+read_analyte_list_file <- function(filepath, filename) {
+  
+  extension <- tools::file_ext(filename)
+  
+  if (extension == "rds") {
+    analyte_list <- load_and_assign(filepath)
+  } else { if (extension %in% c("xlsx", "xls")) {
+    analyte_list <- readxl::read_excel(filepath, 
+                                       col_names = TRUE)
+  } else {
+    rlang::abort(class = "wrong_extension",
+                 message = "Please upload a .xlsx, .xls or .rds file.")
+  }
+  }
+  
+  required_columns <- c("analyte")
+  
+  missing_columns <- required_columns[!(required_columns %in% colnames(analyte_list))]
+  
+  if (!rlang::is_empty(missing_columns)) {
+    rlang::abort(class = "missing_columns",
+                 message = paste("The column(s)",
+                                 comma_and(missing_columns),
+                                 "could not be found. Please name the column in your Excel file",
+                                 "\"analyte\"."
+                 ))
+  }
+  
+  return(analyte_list)
+}
+
+#' Filter out samples to ignore during analyte curation
+#'
+#' With this function samples you can filter out samples that you don't want to
+#' base the analyte curation on.
+#'
+#' @param passing_spectra The return value from the function
+#'   \code{\link{curate_spectra}}, but filtered so that the dataframe contains
+#'   only the rows for which has_passed_curation == TRUE.
+#' @param samples_to_ignore A character vector in which element is either a
+#'   group (specific or total) or sample_type that is present in the data
+#'   followed by " samples".
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' 
+throw_out_samples <- function(passing_spectra,
+                              samples_to_ignore) {
+  
+  samples_to_ignore <- stringr::str_remove(samples_to_ignore,
+                                           " samples")
+  
+  if (!is.factor(passing_spectra$sample_type)) {
+    rlang::abort(message = "sample_type is not a factor")
+  }
+  
+  sample_types_to_ignore <- samples_to_ignore[samples_to_ignore %in% levels(passing_spectra$sample_type)]
+  
+  if ("group" %in% colnames(passing_spectra)) {
+    if (!is.factor(passing_spectra$group)) {
+      rlang::abort(message = "group is not a factor")
+    }
+    groups_to_ignore <- samples_to_ignore[samples_to_ignore %in% levels(passing_spectra$group)]
+  } else {
+    groups_to_ignore <- vector()
+  }
+  
+  without_samples_to_ignore <- passing_spectra %>% 
+    dplyr::filter(if (!rlang::is_empty(groups_to_ignore)) !(group %in% groups_to_ignore) else TRUE,
+                  if (!rlang::is_empty(sample_types_to_ignore)) !(sample_type %in% sample_types_to_ignore) else TRUE)
+  
+  return(without_samples_to_ignore)
+}
+
 #' Perform analyte curation
 #'
-#' Curate analytes based on the percentage of spectra for which the analyte
-#' passes the quality criteria. These quality criteria are the minimum and
-#' maximum allowed mass accuracy deviations, the isotopic pattern quality (IPQ)
-#' and the signal-to-noise ratio (S/N) (see \code{\link{check_analyte_quality_criteria}}).
-#' Analyte curation should not be based on spectra for which you don't expect
-#' any analytes to pass, or for which you expect all analytes to pass. The
-#' arguments \code{sample_types_to_ignore} and \code{group_to_ignore} should be
-#' used to indicate which spectra should not be used as basis for analyte
-#' curation. This function should be used only after spectra curation has been
-#' performed with \code{\link{curate_spectra}} and after the spectra that did
-#' not pass spectra curation have been filtered out (see example below).
+#' Curate analytes based on the percentage of spectra in which the analyte
+#' passes the quality criteria. Before this function is used, the function
+#' \code{\link{check_analyte_quality_criteria}} should be used to check the
+#' analyte quality criteria for each analyte in each sample. Analyte curation should not be
+#' based on spectra for which you don't expect any analytes to pass, or for
+#' which you expect all analytes to pass. The arguments
+#' \code{sample_types_to_ignore} and \code{group_to_ignore} should be used to
+#' indicate which spectra should not be used as basis for analyte curation. This
+#' function should be used only after spectra curation has been performed with
+#' \code{\link{curate_spectra}} and after the spectra that did not pass spectra
+#' curation have been filtered out (see example below).
 #'
-#' @param data The result of the \code{\link{curate_spectra}} function, but
-#'   filtered so that only spectra that passed curation remain (see example
-#'   below).
-#' @param group_to_ignore A character string with the keyword for total Ig
-#'   samples or the keyword for specific Ig samples. These samples will not be
-#'   used as a basis for analyte curation. Specify \code{NULL} to exclude
-#'   neither total nor specific Ig samples.
-#' @param sample_types_to_ignore A character vector with the sample types that
-#'   you don't want to base analyte curation on (e.g. standards).
+#' @param checked_analytes The result of the
+#'   \code{\link{check_analyte_quality_criteria}} function.
 #' @param cut_off_percentage The minimum percentage of spectra in which an
 #'   analyte needs to fulfill the quality criteria in order for that analyte to
 #'   pass curation.
@@ -45,43 +139,16 @@
 #'                             cut_off_basis = c("Spike PBS", "Total PBS"))
 #'
 #' curated_spectra <- example_data$curated_data %>%
-#'    dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
+#'    dplyr::filter(has_passed_spectra_curation == TRUE) %>%
 #'    dplyr::select(-has_passed_spectra_curation)
 #'
 #' curate_analytes(data = curated_spectra,
 #'                 group_to_ignore = "Total",
-#'                 sample_types_to_ignore = c("Visucon", 
+#'                 sample_types_to_ignore = c("Visucon",
 #'                                            "PBS"),
 #'                 cut_off_percentage = 25)
 #'                 
 curate_analytes <- function(checked_analytes, cut_off_percentage) {
-  
-  # if (!is.null(group_to_ignore)) { 
-  #   if (!(group_to_ignore %in% data$group)) {
-  #     rlang::abort(class =  "wrong_group",
-  #                  message = paste("The group_to_ignore",
-  #                                  group_to_ignore,
-  #                                  "is not present in the group column of the data."))
-  #   } 
-  # }
-  # 
-  # if (!is.null(sample_types_to_ignore)) {
-  #   if (any(!(sample_types_to_ignore %in% data$sample_type))) {
-  #     rlang::abort(class =  "wrong_sample_type",
-  #                  message = "One or more of sample_types_to_ignore is not present in the \"sample_type\" column of the data.")
-  #   }
-  #   
-  #   if (is.null(group_to_ignore)) {
-  #     curated_analytes <- data %>% 
-  #       dplyr::filter(!(sample_type %in% sample_types_to_ignore))
-  #   } else {
-  #     curated_analytes <- data %>% 
-  #       dplyr::filter(!(group %in% group_to_ignore) & !(sample_type %in% sample_types_to_ignore))
-  #   }
-  # } else {
-  #   curated_analytes <- data
-  # }
-  
   
   required_columns <- c("cluster", 
                         "charge", 
@@ -96,14 +163,6 @@ curate_analytes <- function(checked_analytes, cut_off_percentage) {
                                  "are not present in the data.",
                                  "Attention: curate_analytes() can only be used after spectra curation has been performed with curate_spectra()"))
   }
-  # 
-  # if (!is.null(bio_group)) {
-  #   grouped_data <- data %>% 
-  #     dplyr::group_by(cluster, .data[[bio_group]], charge, analyte)
-  # } else {
-  #   grouped_data <- data %>% 
-  #     dplyr::group_by(cluster, charge, analyte) 
-  # }
   
   curated_analytes <- checked_analytes %>% 
     dplyr::group_by(cluster, charge, analyte) %>% 
@@ -162,11 +221,6 @@ curate_analytes_with_list <- function(data,
     analyte_list <- analyte_list[[1]]
   }
   
-  if (!("analyte" %in% colnames(data))) {
-    rlang::abort(class = "missing_column",
-                 message = "The required column \"analyte\" is missing from the data.")
-  }
-  
   missing_analytes <- analyte_list[!(analyte_list %in% data$analyte)]
     
   if (!rlang::is_empty(missing_analytes)) {
@@ -191,7 +245,8 @@ curate_analytes_with_list <- function(data,
     unlist(.)
   
   analyte_curated_data <- data %>% 
-    dplyr::filter(analyte %in% analytes_to_include)
+    dplyr::filter(analyte %in% analytes_to_include) %>% 
+    dplyr::mutate(passed_curation = TRUE)
   
   return(analyte_curated_data)
   

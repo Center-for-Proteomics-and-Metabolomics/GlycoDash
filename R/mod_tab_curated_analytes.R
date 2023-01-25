@@ -52,6 +52,11 @@ mod_tab_curated_analytes_server <- function(id, info, cluster){
       
     })
     
+    observe({
+      shinyjs::toggle(id = "plot",
+                      condition = is_truthy(info_plot()))
+    })
+    
     # create a character vector of shiny inputs
     shinyInput <- function(FUN, len, id, values) {
       inputs <- character(len)

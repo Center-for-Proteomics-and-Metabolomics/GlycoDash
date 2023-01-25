@@ -7,21 +7,12 @@
 curate_analytes(checked_analytes, cut_off_percentage)
 }
 \arguments{
+\item{checked_analytes}{The result of the
+\code{\link{check_analyte_quality_criteria}} function.}
+
 \item{cut_off_percentage}{The minimum percentage of spectra in which an
 analyte needs to fulfill the quality criteria in order for that analyte to
 pass curation.}
-
-\item{data}{The result of the \code{\link{curate_spectra}} function, but
-filtered so that only spectra that passed curation remain (see example
-below).}
-
-\item{group_to_ignore}{A character string with the keyword for total Ig
-samples or the keyword for specific Ig samples. These samples will not be
-used as a basis for analyte curation. Specify \code{NULL} to exclude
-neither total nor specific Ig samples.}
-
-\item{sample_types_to_ignore}{A character vector with the sample types that
-you don't want to base analyte curation on (e.g. standards).}
 }
 \value{
 A dataframe with one row for each combination of analyte and charge
@@ -33,17 +24,17 @@ A dataframe with one row for each combination of analyte and charge
   \code{passing_percentage} under or equal to the \code{cut_off_percentage}.
 }
 \description{
-Curate analytes based on the percentage of spectra for which the analyte
-passes the quality criteria. These quality criteria are the minimum and
-maximum allowed mass accuracy deviations, the isotopic pattern quality (IPQ)
-and the signal-to-noise ratio (S/N) (see \code{\link{check_analyte_quality_criteria}}).
-Analyte curation should not be based on spectra for which you don't expect
-any analytes to pass, or for which you expect all analytes to pass. The
-arguments \code{sample_types_to_ignore} and \code{group_to_ignore} should be
-used to indicate which spectra should not be used as basis for analyte
-curation. This function should be used only after spectra curation has been
-performed with \code{\link{curate_spectra}} and after the spectra that did
-not pass spectra curation have been filtered out (see example below).
+Curate analytes based on the percentage of spectra in which the analyte
+passes the quality criteria. Before this function is used, the function
+\code{\link{check_analyte_quality_criteria}} should be used to check the
+analyte quality criteria for each analyte in each sample. Analyte curation should not be
+based on spectra for which you don't expect any analytes to pass, or for
+which you expect all analytes to pass. The arguments
+\code{sample_types_to_ignore} and \code{group_to_ignore} should be used to
+indicate which spectra should not be used as basis for analyte curation. This
+function should be used only after spectra curation has been performed with
+\code{\link{curate_spectra}} and after the spectra that did not pass spectra
+curation have been filtered out (see example below).
 }
 \examples{
 data("example_data")
@@ -56,12 +47,12 @@ example_data <- curate_spectra(data = example_data,
                             cut_off_basis = c("Spike PBS", "Total PBS"))
 
 curated_spectra <- example_data$curated_data \%>\%
-   dplyr::filter(has_passed_spectra_curation == TRUE) \%>\% 
+   dplyr::filter(has_passed_spectra_curation == TRUE) \%>\%
    dplyr::select(-has_passed_spectra_curation)
 
 curate_analytes(data = curated_spectra,
                 group_to_ignore = "Total",
-                sample_types_to_ignore = c("Visucon", 
+                sample_types_to_ignore = c("Visucon",
                                            "PBS"),
                 cut_off_percentage = 25)
                 

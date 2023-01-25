@@ -59,7 +59,7 @@ mod_analyte_curation_ui <- function(id){
                           " .popover {width: 400px;}"))
             ),
             div(
-              id = ns("curation_based_on_data"),
+              id = ns("curation_based_on_data_div"),
               selectizeInput(ns("ignore_samples"),
                              "Sample types to ignore regarding analyte curation:",
                              choices = c("Total", "Blanks", "Negative controls"),
@@ -96,19 +96,7 @@ mod_analyte_curation_ui <- function(id){
                   )),
                   placement = "right",
                   trigger = "hover",
-                  html = "true")#,
-              # shinyWidgets::materialSwitch(
-              #   ns("per_bio_group"),
-              #   "Perform analyte curation separately per biological group.",
-              #   status = "primary",
-              #   right = TRUE
-              # ),
-              # selectInput(ns("bio_group"),
-              #             label = "Choose which variable corresponds to the biological group:",
-              #             choices = "")
-              # selectInput to choose the variable to use for biological groups
-              # needs to be updated to contain all colnames in the data
-              # popup to accept the groups?
+                  html = "true")
             ),
             actionButton(ns("curate_analytes"), 
                          "Perform analyte curation")
@@ -138,7 +126,6 @@ mod_analyte_curation_ui <- function(id){
             solidHeader = TRUE,
             status = "primary",
             title = "Information on analyte curation per cluster",
-            #uiOutput(ns("information")),
             tabsetPanel(id = ns("tabs"))
           )
         )
@@ -154,17 +141,15 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    x <- reactiveValues()
-    
-    summary <- reactive({
-      req(results_spectra_curation$curated_spectra())
-      results_spectra_curation$curated_spectra()
+    passing_spectra <- reactive({
+      req(results_spectra_curation$passing_spectra())
+      results_spectra_curation$passing_spectra()
     })
     
     observe({
-      shinyjs::toggle("analyte_list", 
+      shinyjs::toggle("analyte_list_div", 
                       condition = input$method == "Supply an analyte list")
-      shinyjs::toggle("curation_based_on_data", 
+      shinyjs::toggle("curation_based_on_data_div", 
                       condition = input$method == "Curate analytes based on data")
       shinyjs::toggleState("curate_analytes", 
                            condition = 
@@ -173,40 +158,144 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                              (input$method == "Curate analytes based on data"))
     })
     
-    # observe({
-    #   req(summary())
-    #   
-    #   updateSelectInput(
-    #     session = session,
-    #     inputId = "bio_group",
-    #     choices = colnames(summary())
-    #   )
-    # })
-    # 
-    # observe({
-    #   shinyjs::toggle("bio_group",
-    #                   condition = input$per_bio_group)
-    # })
-    
-    clusters <- reactive({
-      unique(summary()$cluster)
+    # The selection menu for input$ignore_samples is updated so that the choices
+    # are sample_types and groups that are present in the data.
+    observe({
+      if ("group" %in% colnames(passing_spectra())) {
+        options <- c(paste(unique(passing_spectra()$sample_type), "samples"), 
+                     paste(unique(passing_spectra()$group), "samples"))
+      } else {
+        options <- c(paste(unique(passing_spectra()$sample_type), "samples"))
+      }
+      
+      updateSelectizeInput(inputId = "ignore_samples",
+                           choices = c("", options))
     })
     
-    info <- list(
-      curated_analytes = reactive(x$curated_analytes),
-      cut_off = reactive(input$cut_off),
-      analyte_curated_data = reactive(x$analyte_curated_data),
-      method = reactive(input$method)
-    )
+    # Read in the analyte list when it is uploaded. Show a Warning if
+    # it's the wrong file extension or not formatted correctly:
+    analyte_list <- reactive({
+      req(input$method == "Supply an analyte list")
+      req(input$analyte_list)
+      shinyFeedback::hideFeedback("analyte_list")
+      
+      analytes <- tryCatch(
+        expr = {
+          read_analyte_list_file(input$analyte_list$datapath,
+                                 input$analyte_list$name)
+        
+      },
+      wrong_extension = function(c) {
+        shinyFeedback::feedbackDanger("analyte_list",
+                                      show = TRUE,
+                                      text = c$message)
+        NULL
+      },
+      missing_columns = function(c) {
+        error_message_first_sentence <- stringr::str_replace(c$message,
+                                                             "(.+\\.).+",
+                                                             "\\1")
+        
+        shinyFeedback::feedbackDanger("analyte_list",
+                                      show = TRUE,
+                                      text = error_message_first_sentence)
+        NULL
+      })
+      
+      return(analytes)
+    })
     
-    # bio_groups <- reactive({
-    #   req(summary(),
-    #       input$bio_group)
-    #   
-    #   unique(summary()[[input$bio_group]])
-    # })
+    without_samples_to_ignore <- reactive({
+      req(input$method == "Curate analytes based on data")
+      req(passing_spectra())
+      
+      if (is_truthy(input$ignore_samples)) {
+        throw_out_samples(passing_spectra = passing_spectra(),
+                          samples_to_ignore = input$ignore_samples)
+      } else {
+        passing_spectra()
+      }
+    })
     
-    observeEvent(clusters(), {
+    checked_analytes <- reactive({
+      req(input$method == "Curate analytes based on data")
+      req(without_samples_to_ignore())
+      
+      check_analyte_quality_criteria(
+        without_samples_to_ignore(),
+        min_ppm_deviation = results_spectra_curation$mass_acc()[1],
+        max_ppm_deviation = results_spectra_curation$mass_acc()[2],
+        max_ipq = results_spectra_curation$ipq(),
+        min_sn = results_spectra_curation$sn(),
+        criteria_to_consider = c("IPQ", "S/N", "Mass accuracy")
+      )
+    })
+    
+    curated_analytes <- reactive({
+      req(input$method == "Curate analytes based on data")
+      req(checked_analytes())
+      
+      curate_analytes(
+        checked_analytes = checked_analytes(),
+        cut_off_percentage = input$cut_off
+      )
+    })
+    
+    analyte_curated_data <- reactive({
+      if (input$method == "Curate analytes based on data") {
+        req(curated_analytes())
+        
+        analyte_curated_data <- dplyr::left_join(curated_analytes(), 
+                                                 passing_spectra())
+        
+        showNotification("Analyte curation has been performed based on the data.", 
+                         type = "message")
+        
+        return(analyte_curated_data)
+      } else if (input$method == "Supply an analyte list") {
+        req(analyte_list())
+        req(passing_spectra())
+        analyte_curated_data <- tryCatch(
+          expr = {
+            curate_analytes_with_list(
+              data = passing_spectra(),
+              analyte_list = analyte_list()
+            )
+          },
+          too_many_columns = function(c) {
+            showNotification(c$message, 
+                             type = "error")
+            shinyFeedback::feedbackDanger("analyte_list",
+                                          show = TRUE,
+                                          text = c$message)
+          },
+          missing_analytes = function(c){
+            showNotification(c$message,
+                             type = "warning")
+            suppressWarnings(
+              curate_analytes_with_list(
+                data = passing_spectra(),
+                analyte_list = analyte_list()
+              )
+            )
+          })
+        
+        showNotification("Analyte curation has been performed based on the analyte list.", 
+                         type = "message")
+        
+        return(analyte_curated_data)
+      }
+    }) %>% bindEvent(input$curate_analytes)
+    
+    
+    clusters <- reactive({
+      req(passing_spectra())
+      unique(passing_spectra()$cluster)
+    })
+    
+    
+    observe({
+      req(clusters())
       
       # Remove tabs in case they have been created before. Still not ideal cause
       # if cluster names are changed then the old tabs won't be removed
@@ -226,189 +315,41 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                mod_tab_curated_analytes_ui(ns(cluster))
                              ))
                  })
-      
     })
+    
+    info <- list(
+      curated_analytes = curated_analytes,
+      cut_off = reactive({ input$cut_off }),
+      analyte_curated_data = analyte_curated_data,
+      method = reactive({ input$method })
+    )
+    
+    r <- reactiveValues(mod_results = list())
     
     observe({
       req(clusters())
-      purrr::map(info,
-                 ~ req(.x))
+      req(info$analyte_curated_data())
       
-      x$mod_results <- purrr::set_names(clusters()) %>% 
+      r$mod_results <- purrr::set_names(clusters()) %>% 
         purrr::map(
           .,
           function(cluster) {
             mod_tab_curated_analytes_server(id = cluster,
-                                       info = info,
-                                       cluster = cluster)
+                                            info = info,
+                                            cluster = cluster)
           })
     })
     
-    # The selection menu for input$ignore_samples is updated so that the choices
-    # are sample_types and groups that are present in the data.
-    observeEvent(summary(), {
-      
-      if ("group" %in% colnames(summary())) {
-        options <- c(paste(unique(summary()$sample_type), "samples"), 
-                     paste(unique(summary()$group), "samples"))
-      } else {
-        options <- c(paste(unique(summary()$sample_type), "samples"))
-      }
-      
-      updateSelectizeInput(inputId = "ignore_samples",
-                           choices = c("", options))
-    })
-    
-    ext_analyte_list <- reactive({
-      req(input$analyte_list)
-      ext <- tools::file_ext(input$analyte_list$name)
-      return(ext)
-    })
-    
-    # Read in the analyte list when it is uploaded, or show a feedbackWarning if
-    # it's the wrong filetype:
-    observeEvent(input$analyte_list, {
-      req(ext_analyte_list())
-      shinyFeedback::hideFeedback("analyte_list")
-      if (ext_analyte_list() == "rds") {
-        x$analyte_list <- load_and_assign(input$analyte_list$datapath)
-      } else { if (ext_analyte_list() %in% c("xlsx", "xls")) {
-        x$analyte_list <- readxl::read_excel(input$analyte_list$datapath,
-                                             col_names = FALSE)
-      } 
-      }
-      
-      shinyFeedback::feedbackWarning(inputId = "analyte_list", 
-                                     show = !(ext_analyte_list() %in% c("rds", "xlsx", "xls")),
-                                     text = "Please upload a .xlsx, .xls or .rds file.")
-    })
-    
-    without_samples_to_ignore <- reactive({
-      req(summary())
-      req(input$ignore_samples)
-      req(input$method == "Curate analytes based on data")
-      
-      if ("group" %in% colnames(summary())) {
-        group_to_ignore <- stringr::str_extract(
-          string = input$ignore_samples,
-          pattern = paste0(unique(summary()$group),
-                           collapse = "|")) %>% 
-          na.omit(.)
-      } else {
-        group_to_ignore <- NULL
-      }
-      
-      sample_types_to_ignore <- stringr::str_extract(
-        string = input$ignore_samples,
-        pattern = paste0(unique(summary()$sample_type),
-                         collapse = "|")) %>% 
-        na.omit(.)
-      
-      if (!is.null(group_to_ignore)) { 
-        if (!(group_to_ignore %in% summary()$group)) {
-          rlang::abort(class =  "wrong_group",
-                       message = paste("The group_to_ignore",
-                                       group_to_ignore,
-                                       "is not present in the group column of the data."))
-        } 
-      }
-      
-      if (!is.null(sample_types_to_ignore)) {
-        if (any(!(sample_types_to_ignore %in% summary()$sample_type))) {
-          rlang::abort(class =  "wrong_sample_type",
-                       message = "One or more of sample_types_to_ignore is not present in the \"sample_type\" column of the data.")
-        }
-        
-        if (is.null(group_to_ignore)) {
-          filtered <- summary() %>% 
-            dplyr::filter(!(sample_type %in% sample_types_to_ignore))
-        } else {
-          filtered <- summary() %>% 
-            dplyr::filter(!(group %in% group_to_ignore) & !(sample_type %in% sample_types_to_ignore))
-        }
-      }
-      return(filtered)
-      
-    })
-    
-    observeEvent(input$curate_analytes, {
-      # Reset x$curated_analytes and x$analyte_curated data so that the plot is
-      # no longer shown if curation based on data had already been performed
-      x$curated_analytes <- NULL
-      x$analyte_curated_data <- NULL
-      if (input$method == "Curate analytes based on data") {
-        if (is_truthy(without_samples_to_ignore())) {
-          data_to_use <- without_samples_to_ignore()
-        } else {
-          data_to_use <- summary()
-        }
-        
-        checked_analytes <- check_analyte_quality_criteria(
-          data_to_use,
-          min_ppm_deviation = results_spectra_curation$mass_acc()[1],
-          max_ppm_deviation = results_spectra_curation$mass_acc()[2],
-          max_ipq = results_spectra_curation$ipq(),
-          min_sn = results_spectra_curation$sn(),
-          criteria_to_consider = c("IPQ", "S/N", "Mass accuracy")#,
-          #uncalibrated_as_NA = FALSE
-        )
-        
-        if (!results_spectra_curation$uncalibrated_as_NA()) {
-          checked_analytes <- dplyr::mutate(
-            checked_analytes,
-            analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
-                                                       FALSE)
-          )
-        }
-        
-        # Perform analyte curation:
-        x$curated_analytes <- curate_analytes(
-          checked_analytes = checked_analytes,
-          cut_off_percentage = input$cut_off)
-        
-        x$analyte_curated_data <- dplyr::left_join(x$curated_analytes, 
-                                                   summary())
-        
-        showNotification("Analyte curation has been performed based on the data.", 
-                         type = "message")
-      }
-      
-      if (input$method == "Supply an analyte list") {
-        
-        tryCatch(expr = {
-          x$analyte_curated_data <- curate_analytes_with_list(
-            data = summary(),
-            analyte_list = x$analyte_list)
-          
-          showNotification("Analyte curation has been performed based on the analyte list.", 
-                           type = "message")
-          },
-          too_many_columns = function(c) {
-            showNotification(c$message, 
-                             type = "error")
-            shinyFeedback::feedbackDanger("analyte_list",
-                                          show = TRUE,
-                                          text = c$message)
-          },
-          missing_analytes = function(c){
-            showNotification(c$message,
-                             type = "warning")
-            x$analyte_curated_data <- suppressWarnings(
-              curate_analytes_with_list(
-                data = summary(),
-                analyte_list = x$analyte_list))
-          })
-      }
-    })
     
     with_analytes_to_include <- reactive({
-      req(summary(),
-          all(purrr::map_lgl(x$mod_results,
+      req(passing_spectra(),
+          !rlang::is_empty(r$mod_results),
+          all(purrr::map_lgl(r$mod_results,
                          ~ is_truthy(.x$analytes_to_include()))))
       
-      purrr::imap(x$mod_results,
+      purrr::imap(r$mod_results,
                   function(results, current_cluster) {
-                    data_current_cluster <- summary() %>% 
+                    data_current_cluster <- passing_spectra() %>% 
                       dplyr::filter(cluster == current_cluster)
                     
                     dplyr::left_join(results$analytes_to_include(),
@@ -445,7 +386,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       ignore_samples = reactive({ input$ignore_samples }),
       cut_off_percentage = reactive({ input$cut_off }),
       analyte_list = reactive({ input$analyte_list$name }),
-      objects = reactive({ x$mod_results })
+      objects = reactive({ r$mod_results })
     ))
  
   })

@@ -7,10 +7,6 @@
 curate_analytes_with_list(data, analyte_list)
 }
 \arguments{
-\item{data}{The result of the \code{\link{curate_spectra}} function, but
-filtered so that only spectra that passed curation remain (see example
-below).}
-
 \item{analyte_list}{The list of analytes that should pass the analyte
 curation process. This can be a list with character strings, a character
 vector or a dataframe consisting of a single column with character strings.}
