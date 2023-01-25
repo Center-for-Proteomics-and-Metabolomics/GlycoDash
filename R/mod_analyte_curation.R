@@ -112,10 +112,6 @@ mod_analyte_curation_ui <- function(id){
             downloadButton(ns("download"), 
                            "Download analyte-curated data")
           )
-        ),
-        column(
-          width = 6,
-          
         )
       ),
       fluidRow(
@@ -125,7 +121,7 @@ mod_analyte_curation_ui <- function(id){
             width = 12,
             solidHeader = TRUE,
             status = "primary",
-            title = "Information on analyte curation per cluster",
+            title = "Analyte curation results per cluster",
             tabsetPanel(id = ns("tabs"))
           )
         )
@@ -146,15 +142,17 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       results_spectra_curation$passing_spectra()
     })
     
+    # Show and hide UI based on the chosen method:
     observe({
       shinyjs::toggle("analyte_list_div", 
                       condition = input$method == "Supply an analyte list")
       shinyjs::toggle("curation_based_on_data_div", 
                       condition = input$method == "Curate analytes based on data")
+      # Only enable button under right circumstances:
       shinyjs::toggleState("curate_analytes", 
                            condition = 
                              (input$method == "Supply an analyte list" & 
-                             !is.null(input$analyte_list)) | 
+                             is_truthy(analyte_list())) | 
                              (input$method == "Curate analytes based on data"))
     })
     
@@ -298,7 +296,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       req(clusters())
       
       # Remove tabs in case they have been created before. Still not ideal cause
-      # if cluster names are changed then the old tabs won't be removed
+      # if the user goes back and changes the cluster names then the old tabs
+      # won't be removed.
       purrr::map(clusters(),
                 function(cluster) {
                   removeTab("tabs",
@@ -391,9 +390,3 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
  
   })
 }
-    
-## To be copied in the UI
-# mod_analyte_curation_ui("analyte_curation_ui_1")
-    
-## To be copied in the server
-# mod_analyte_curation_server("analyte_curation_ui_1")
