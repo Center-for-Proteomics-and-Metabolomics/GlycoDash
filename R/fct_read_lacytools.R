@@ -458,15 +458,16 @@ detect_group <- function(data, keyword_specific, keyword_total) {
                    into = "group",
                    regex = paste0("(", keyword_specific, "|", 
                                   keyword_total, ")"),
-                   remove = FALSE)
+                   remove = FALSE) %>% 
+    dplyr::mutate(group = as.factor(group))
   
-  if (all(!sapply(data$group, identical, keyword_specific))) {
+  if (!(keyword_specific %in% levels(data$group))) {
     rlang::abort(class = "unmatched_keyword_specific",
                  message = paste("This keyword for specific samples did not match", 
                                  "any sample names in your data. Please choose a different keyword."))
   }
   
-  if (all(!sapply(data$group, identical, keyword_total))) {
+  if (!(keyword_total %in% levels(data$group))) {
     rlang::abort(class = "unmatched_keyword_total",
                  message = paste("This keyword for total samples did not match", 
                                  "any sample names in your data. Please choose a different keyword."))

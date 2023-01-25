@@ -199,7 +199,8 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
                                            sample_type),
                       sample_type = ifelse(is.na(sample_type),
                                            "undetermined",
-                                           sample_type))
+                                           sample_type),
+                      sample_type = as.factor(sample_type))
     })
     
     manual_sample_types <- mod_process_sample_type_file_server("process_sample_type_file_ui_1",
