@@ -389,23 +389,36 @@ plot_analyte_curation <- function(curated_analytes,
 #' 
 create_analyte_curation_table <- function(dataframe_for_table) {
   
-  analyte_curation_table <- DT::datatable(
+  charge_columns <- stringr::str_subset(colnames(dataframe_for_table)[-1],
+                                        "Include",
+                                        negate = TRUE)
+  
+  new_charge_column_names <- purrr::map(charge_columns,
+                                        ~ paste(.x,
+                                                "charge state passed curation?"))
+  
+  name_pairs <- rlang::set_names(charge_columns,
+                                 new_charge_column_names)
+  
+  DT::datatable(
     dataframe_for_table,
-    server = FALSE, 
-    escape = FALSE, 
-    options = list(searching = FALSE,
-                   preDrawCallback = JS('function() {
+    escape = FALSE,
+    selection = "none",
+    colnames = name_pairs,
+    options = list(
+      searching = FALSE,
+      paging = FALSE,
+      preDrawCallback = DT::JS('function() {
 Shiny.unbindAll(this.api().table().node()); }'),
-drawCallback = JS('function() {
+drawCallback = DT::JS('function() {
 Shiny.bindAll(this.api().table().node()); } ')
-    )) %>% 
+    )
+  ) %>%
     DT::formatStyle(columns = 2:ncol(dataframe_for_table),
-                  color = DT::styleEqual(levels = c("Yes", 
+                    color = DT::styleEqual(levels = c("Yes", 
                                                       "No"), 
                                            values = c("#3498DB", 
                                                       "#E74C3C")))
-  
-  return(analyte_curation_table)
   
 }
 
@@ -469,3 +482,4 @@ prepare_analyte_curation_table <- function(analyte_curated_data, selected_cluste
   
   return(analyte_curation_dataframe)
 }
+
