@@ -507,6 +507,14 @@ determine_reason_for_failure <- function(data) {
   return(with_reasons)
 }
 
+#' Title
+#'
+#' @param curated_data 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 kick_out_spectra <- function(curated_data) {
   
   passing_spectra <- curated_data %>% 
@@ -516,6 +524,14 @@ kick_out_spectra <- function(curated_data) {
   return(passing_spectra)
 }
 
+#' Title
+#'
+#' @param passing_spectra 
+#'
+#' @return
+#' @export
+#'
+#' @examples
 remove_unneeded_columns <- function(passing_spectra) {
   
   without_extra_columns <- passing_spectra %>% 
