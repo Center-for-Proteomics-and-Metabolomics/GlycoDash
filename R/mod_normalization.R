@@ -15,25 +15,12 @@ mod_normalization_ui <- function(id){
         h1("Normalization")
       ),
       fluidRow(
-        
-        # shinydashboard::box(
-        #   title = "Normalization",
-        #   width = 3,
-        #   solidHeader = TRUE,
-        #   status = "primary",
-        #   # selectInput(ns("method"),
-        #   #             "Choose method for normalization",
-        #   #             choices = c("Total area normalization")),
-        #   
-        # )   
-      ),
-      fluidRow(
         shinydashboard::box(
           title = "View normalized data",
           width = 12,
           solidHeader = TRUE,
           status = "primary",
-          actionButton(ns("do_normalization"),
+          actionButton(ns("normalization_button"),
                        "Perform total area normalization"),
           br(),
           br(),
@@ -51,33 +38,34 @@ mod_normalization_server <- function(id, results_analyte_curation){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    x <- reactiveValues()
+    analyte_curated_data <- reactive({
+      # req() considers an empty dataframe Truthy, and because of the way that
+      # results_analyte_curation$analyte_curated_data() is created in
+      # mod_analyte_curation.R there is a moment that it is an empty dataframe.
+      # Solution -> wait until results_analyte_curation$analyte_curated_data()
+      # is not empty:
+      req(!rlang::is_empty(results_analyte_curation$analyte_curated_data()))
+      results_analyte_curation$analyte_curated_data()
+    })
     
     observe({
-      req(results_analyte_curation$analyte_curated_data())
-      x$data <- results_analyte_curation$analyte_curated_data()
+      shinyjs::toggleState(id = "normalization_button",
+                           condition = is_truthy(analyte_curated_data()))
     })
     
-    # observe({
-    #   shinyjs::toggleState("do_normalization", 
-    #                        condition = !is.null(input$method))
-    # })
+    total_intensities <- reactive({
+      req(analyte_curated_data())
+      calculate_total_intensity(data = analyte_curated_data())
+    }) %>% bindEvent(input$normalization_button)
     
-    observeEvent(input$do_normalization, {
-      #if (input$method == "Total area normalization") {
-        
-        total_intensities <- calculate_total_intensity(data = x$data)
-        x$normalized_data <- normalize_data(data = total_intensities)
-      #}
-      
+    normalized_data <- reactive({
+      req(total_intensities())
+      normalize_data(data = total_intensities())
     })
     
-    
-    
-    output$data_table <- DT::renderDT({
-      req(x$normalized_data)
-      
-      x$normalized_data_wide <- x$normalized_data %>% 
+    normalized_data_wide <- reactive({
+      req(normalized_data())
+      normalized_data() %>% 
         # removing columns with values that differ between clusters:
         dplyr::select(-tidyselect::any_of(c("passing_analyte_percentage", 
                                             "cut_off_passing_analyte_percentage", 
@@ -85,21 +73,19 @@ mod_normalization_server <- function(id, results_analyte_curation){
         tidyr::pivot_wider(names_from = c(cluster, analyte),
                            names_sep = "_",
                            values_from = relative_abundance)
+    })
+    
+    output$data_table <- DT::renderDT({
+      req(normalized_data_wide())
       
-      DT::datatable(data = x$normalized_data_wide,
+      DT::datatable(data = normalized_data_wide(),
                     options = list(scrollX = TRUE))
     })
     
     return(list(
-      normalized_data = reactive({x$normalized_data}),
-      normalized_data_wide = reactive({x$normalized_data_wide})
+      normalized_data = normalized_data,
+      normalized_data_wide = normalized_data_wide
     ))
  
   })
 }
-    
-## To be copied in the UI
-# mod_normalization_ui("normalization_ui_1")
-    
-## To be copied in the server
-# mod_normalization_server("normalization_ui_1")

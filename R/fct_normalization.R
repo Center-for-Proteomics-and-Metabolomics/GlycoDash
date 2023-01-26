@@ -18,8 +18,6 @@
 #' @export
 #'
 #' @examples
-#' data("example_data")
-#' calculate_total_intensity(example_data)
 calculate_total_intensity <- function(data) {
   
   required_columns <- c("absolute_intensity_background_subtracted",
@@ -58,15 +56,13 @@ calculate_total_intensity <- function(data) {
                     # Keep all columns:
                     .keep_all = TRUE) %>% 
     # Remove any columns that were charge-state specific:
-    dplyr::select(-any_of(c("charge", 
-                            "passing_percentage", 
+    dplyr::select(-any_of(c("charge",
                             "absolute_intensity_background_subtracted",
                             "mass_accuracy_ppm",
                             "isotopic_pattern_quality",
                             "sn",
                             "fraction",
-                            "exact_mass",
-                            "criteria_check")))
+                            "exact_mass")))
   
   return(data)
 }
