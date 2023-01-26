@@ -169,7 +169,8 @@ curate_analytes <- function(checked_analytes, cut_off_percentage) {
     dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>% 
     dplyr::mutate(passed_curation = dplyr::if_else(passing_percentage > cut_off_percentage, 
                                                    TRUE,
-                                                   FALSE))
+                                                   FALSE)) %>% 
+    dplyr::ungroup()
   
   return(curated_analytes)
 }
