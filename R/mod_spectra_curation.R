@@ -450,7 +450,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     passing_spectra <- reactive({
       req(curated_data())
-      kick_out_spectra(curated_data = curated_data())
+      kick_out_spectra(curated_spectra = curated_data())
     })
     
     to_return <- reactive({
