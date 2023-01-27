@@ -55,7 +55,7 @@ calculate_total_intensity <- function(data) {
                                                     )) %>% 
     dplyr::ungroup()
   
-  return(data)
+  return(total_intensities)
 }
 
 #' Perform total area normalization
@@ -116,7 +116,7 @@ normalize_data <- function(data) {
                     sample_name) %>% 
     dplyr::summarise(sum_intensity = sum(total_absolute_intensity),
                      across()) %>% 
-    dplyr::mutate(relative_abundance = total_absolute_intensity / sum_intensity,
+    dplyr::mutate(relative_abundance = total_absolute_intensity / sum_intensity * 100,
                   .keep = "unused")
   
 }
