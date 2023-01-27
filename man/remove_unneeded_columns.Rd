@@ -2,13 +2,54 @@
 % Please edit documentation in R/fct_spectra_curation.R
 \name{remove_unneeded_columns}
 \alias{remove_unneeded_columns}
-\title{Title}
+\title{Remove columns no longer needed after spectra curation}
 \usage{
 remove_unneeded_columns(passing_spectra)
 }
 \arguments{
-\item{passing_spectra}{}
+\item{passing_spectra}{The return value of \code{\link{kick_out_spectra}}.}
+}
+\value{
+The same dataframe given as \code{passing_spectra}, but without the
+  columns created during the spectra curation process (except for the
+  sum_intensity column).
 }
 \description{
-Title
+The \code{sum_intensity} column is the only column from spectra curation that
+is kept, because it is needed during normalization.
+}
+\examples{
+data("example_data")
+
+example_data <- define_clusters(data = example_data,
+                                cluster_keywords = "IgGI")
+
+checked_data <- check_analyte_quality_criteria(my_data = example_data,
+                                               min_ppm_deviation = -20,
+                                               max_ppm_deviation = 20,
+                                               max_ipq = 0.2,
+                                               min_sn = 9,
+                                               criteria_to_consider = c("Mass accuracy",
+                                                                        "S/N",
+                                                                        "IPQ"))
+
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+
+cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+                               control_sample_types = "PBS",
+                               exclude_sample_types = NULL,
+                               group_keyword = "Total",
+                               percentile = 97,
+                               use_mean_SD = FALSE,
+                               SD_factor = NULL,
+                               uncalibrated_as_NA = TRUE)
+
+curated_spectra <- curate_spectra(checked_data = checked_data,
+                                  summarized_checks = summarized_checks,
+                                  cut_offs = cut_offs)
+                                  
+passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra) 
+
+remove_unneeded_columns(passing_spectra = passing_spectra)
+
 }

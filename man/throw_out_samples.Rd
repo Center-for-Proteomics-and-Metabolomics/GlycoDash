@@ -15,7 +15,49 @@ only the rows for which has_passed_curation == TRUE.}
 group (specific or total) or sample_type that is present in the data
 followed by " samples".}
 }
+\value{
+The same dataframe that is given as the \code{passing_spectra}
+  argument, but without the rows corresponding to the samples indicated in
+  \code{samples_to_ignore}.
+}
 \description{
 With this function samples you can filter out samples that you don't want to
 base the analyte curation on.
+}
+\examples{
+data("example_data")
+
+example_data <- define_clusters(data = example_data,
+                                cluster_keywords = "IgGI")
+
+checked_data <- check_analyte_quality_criteria(my_data = example_data,
+                                               min_ppm_deviation = -20,
+                                               max_ppm_deviation = 20,
+                                               max_ipq = 0.2,
+                                               min_sn = 9,
+                                               criteria_to_consider = c("Mass accuracy",
+                                                                        "S/N",
+                                                                        "IPQ"))
+
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+
+cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+                               control_sample_types = "PBS",
+                               exclude_sample_types = NULL,
+                               group_keyword = "Total",
+                               percentile = 97,
+                               use_mean_SD = FALSE,
+                               SD_factor = NULL,
+                               uncalibrated_as_NA = TRUE)
+
+curated_spectra <- curate_spectra(checked_data = checked_data,
+                                  summarized_checks = summarized_checks,
+                                  cut_offs = cut_offs)
+                                  
+passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra) 
+
+for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+
+throw_out_samples(passing_spectra = for_analyte_curation,
+                  samples_to_ignore = c("PBS", "Visucon", "IVIgG", "Total"))
 }

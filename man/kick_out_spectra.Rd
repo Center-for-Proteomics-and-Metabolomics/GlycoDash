@@ -2,13 +2,49 @@
 % Please edit documentation in R/fct_spectra_curation.R
 \name{kick_out_spectra}
 \alias{kick_out_spectra}
-\title{Title}
+\title{Filter out spectra that failed spectra curation}
 \usage{
-kick_out_spectra(curated_data)
+kick_out_spectra(curated_spectra)
 }
 \arguments{
-\item{curated_data}{}
+\item{curated_data}{The return value of \code{\link{curate_spectra}}.}
+}
+\value{
+The filtered dataframe given as \code{curated_data}.
 }
 \description{
-Title
+This function filters out spectra that failed spectra curation and spectra
+that are uncalibrated.
+}
+\examples{
+data("example_data")
+
+example_data <- define_clusters(data = example_data,
+                                cluster_keywords = "IgGI")
+
+checked_data <- check_analyte_quality_criteria(my_data = example_data,
+                                               min_ppm_deviation = -20,
+                                               max_ppm_deviation = 20,
+                                               max_ipq = 0.2,
+                                               min_sn = 9,
+                                               criteria_to_consider = c("Mass accuracy",
+                                                                        "S/N",
+                                                                        "IPQ"))
+
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+
+cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+                               control_sample_types = "PBS",
+                               exclude_sample_types = NULL,
+                               group_keyword = "Total",
+                               percentile = 97,
+                               use_mean_SD = FALSE,
+                               SD_factor = NULL,
+                               uncalibrated_as_NA = TRUE)
+
+curated_spectra <- curate_spectra(checked_data = checked_data,
+                                  summarized_checks = summarized_checks,
+                                  cut_offs = cut_offs)
+                                  
+kick_out_spectra(curated_spectra)
 }
