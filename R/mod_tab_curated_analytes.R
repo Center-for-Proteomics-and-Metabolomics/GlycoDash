@@ -32,6 +32,7 @@ mod_tab_curated_analytes_server <- function(id, info, cluster){
     ns <- session$ns
     
     curated_analytes_plot <- reactive({
+      req(info$method()  == "Curate analytes based on data")
       req(info$curated_analytes())
       req(info$cut_off())
       

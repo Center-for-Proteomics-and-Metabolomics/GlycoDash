@@ -18,42 +18,75 @@ pass curation.}
 A dataframe with one row for each combination of analyte and charge
   per cluster, a column named \code{passing_percentage} with the percentage
   of spectra that pass the analyte quality criteria for that analyte and a
-  logical column named \code{passed_curation} that is \code{TRUE} for
-  analytes with a \code{passing_percentage} above the
+  logical column named \code{has_passed_analyte_curation} that is \code{TRUE} for
+  analytes with a \code{passing_percentage} equal to or above the
   \code{cut_off_percentage} and \code{FALSE} for analytes with a
-  \code{passing_percentage} under or equal to the \code{cut_off_percentage}.
+  \code{passing_percentage} under the \code{cut_off_percentage}.
 }
 \description{
 Curate analytes based on the percentage of spectra in which the analyte
-passes the quality criteria. Before this function is used, the function
-\code{\link{check_analyte_quality_criteria}} should be used to check the
-analyte quality criteria for each analyte in each sample. Analyte curation should not be
-based on spectra for which you don't expect any analytes to pass, or for
-which you expect all analytes to pass. The arguments
-\code{sample_types_to_ignore} and \code{group_to_ignore} should be used to
-indicate which spectra should not be used as basis for analyte curation. This
-function should be used only after spectra curation has been performed with
-\code{\link{curate_spectra}} and after the spectra that did not pass spectra
-curation have been filtered out (see example below).
+passes the quality criteria. Before this function is used, you should filter
+out samples that you don't want to base the analyte curation on with the
+function \code{\link{throw_out_samples}} and you should use the function
+\code{\link{check_analyte_quality_criteria}} to check the analyte quality
+criteria for each analyte in each sample. The reason we check the analyte
+quality criteria again even though this already happened during spectra
+curation is that during spectra curation one or more criteria could be
+disregarded with advanced settings. During analyte curation all three analyte
+quality criteria should be considered.
 }
 \examples{
+# First spectra curation has to be performed:
 data("example_data")
-example_data <- curate_spectra(data = example_data,
-                            min_ppm_deviation = -20,
-                            max_ppm_deviation = 20,
-                            max_ipq = 0.2,
-                            min_sn = 9,
-                            clusters_regex = "IgGI1",
-                            cut_off_basis = c("Spike PBS", "Total PBS"))
 
-curated_spectra <- example_data$curated_data \%>\%
-   dplyr::filter(has_passed_spectra_curation == TRUE) \%>\%
-   dplyr::select(-has_passed_spectra_curation)
+example_data <- define_clusters(data = example_data,
+                                cluster_keywords = "IgGI")
 
-curate_analytes(data = curated_spectra,
-                group_to_ignore = "Total",
-                sample_types_to_ignore = c("Visucon",
-                                           "PBS"),
-                cut_off_percentage = 25)
-                
+checked_data <- check_analyte_quality_criteria(my_data = example_data,
+                                               min_ppm_deviation = -20,
+                                               max_ppm_deviation = 20,
+                                               max_ipq = 0.2,
+                                               min_sn = 9,
+                                               criteria_to_consider = c("Mass accuracy",
+                                                                        "S/N",
+                                                                        "IPQ"))
+
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+
+cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+                               control_sample_types = "PBS",
+                               exclude_sample_types = NULL,
+                               group_keyword = "Total",
+                               percentile = 97,
+                               use_mean_SD = FALSE,
+                               SD_factor = NULL,
+                               uncalibrated_as_NA = TRUE)
+
+curated_spectra <- curate_spectra(checked_data = checked_data,
+                                  summarized_checks = summarized_checks,
+                                  cut_offs = cut_offs)
+
+passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+
+for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+
+# Then we remove samples that we don't want to base our analyte curation on:
+without_samples_to_ignore <- throw_out_samples(
+   passing_spectra = for_analyte_curation,
+   samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+)
+
+# We check the analyte quality criteria:
+checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+                                                   min_ppm_deviation = -20,
+                                                   max_ppm_deviation = 20,
+                                                   max_ipq = 0.2,
+                                                   min_sn = 9,
+                                                   criteria_to_consider = c("Mass accuracy",
+                                                                            "S/N",
+                                                                            "IPQ"))
+                                                                            
+curate_analytes(checked_analytes = checked_analytes,
+                cut_off_percentage = 25\%)
+
 }

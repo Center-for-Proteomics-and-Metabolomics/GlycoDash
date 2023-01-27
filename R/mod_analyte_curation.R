@@ -198,6 +198,15 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                       show = TRUE,
                                       text = error_message_first_sentence)
         NULL
+      },
+      too_many_columns = function(c) {
+        showNotification(c$message, 
+                         type = "error")
+        
+        shinyFeedback::feedbackDanger("analyte_list",
+                                      show = TRUE,
+                                      text = c$message)
+        NULL
       })
       
       return(analytes)
@@ -230,67 +239,75 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     })
     
     curated_analytes <- reactive({
-      req(input$method == "Curate analytes based on data")
-      req(checked_analytes())
-      
-      curate_analytes(
-        checked_analytes = checked_analytes(),
-        cut_off_percentage = input$cut_off
-      )
-    })
-    
-    analyte_curated_data <- reactive({
       if (input$method == "Curate analytes based on data") {
-        req(curated_analytes())
+        req(checked_analytes())
         
-        analyte_curated_data <- dplyr::left_join(curated_analytes(), 
-                                                 passing_spectra())
-        
-        showNotification("Analyte curation has been performed based on the data.", 
-                         type = "message")
-        
-        return(analyte_curated_data)
+        curated_analytes <- curate_analytes(
+          checked_analytes = checked_analytes(),
+          cut_off_percentage = input$cut_off
+        )
       } else if (input$method == "Supply an analyte list") {
         req(analyte_list())
         req(passing_spectra())
-        analyte_curated_data <- tryCatch(
+        
+        curated_analytes <- tryCatch(
           expr = {
             curate_analytes_with_list(
-              data = passing_spectra(),
+              passing_spectra = passing_spectra(),
               analyte_list = analyte_list()
             )
-          },
-          too_many_columns = function(c) {
-            showNotification(c$message, 
-                             type = "error")
-            shinyFeedback::feedbackDanger("analyte_list",
-                                          show = TRUE,
-                                          text = c$message)
           },
           missing_analytes = function(c){
             showNotification(c$message,
                              type = "warning")
+            
             suppressWarnings(
               curate_analytes_with_list(
                 data = passing_spectra(),
                 analyte_list = analyte_list()
               )
             )
-          })
-        
-        showNotification("Analyte curation has been performed based on the analyte list.", 
-                         type = "message")
-        
-        return(analyte_curated_data)
+            
+          }
+        )
       }
+      
+      return(curated_analytes)
+    })
+    
+    analyte_curated_data <- reactive({
+      req(curated_analytes())
+      
+      dplyr::left_join(curated_analytes(), 
+                       passing_spectra())
     }) %>% bindEvent(input$curate_analytes)
     
+    observe({
+      
+      showNotification(ui = paste("Analyte curation has been performed",
+                                  ifelse(
+                                    input$method == "Curate analytes based on data",
+                                    "based on the data.",
+                                    "based on the analyte list."
+                                  )),
+                       type = "message")
+      # 
+      # if (input$method == "Curate analytes based on data") {
+      #   
+      #   showNotification("Analyte curation has been performed based on the data.", 
+      #                    type = "message")
+      #   
+      # } else if (input$method == "Supply an analyte list") {
+      #   
+      #   showNotification("Analyte curation has been performed based on the analyte list.", 
+      #                    type = "message")
+      # }
+    }) %>% bindEvent(analyte_curated_data())
     
     clusters <- reactive({
       req(passing_spectra())
       unique(passing_spectra()$cluster)
     })
-    
     
     observe({
       req(clusters())

@@ -8,11 +8,11 @@ throw_out_samples(passing_spectra, samples_to_ignore)
 }
 \arguments{
 \item{passing_spectra}{The return value from the function
-\code{\link{curate_spectra}}, but filtered so that the dataframe contains
-only the rows for which has_passed_curation == TRUE.}
+\code{\link{remove_unneeded_columns}} or from the function
+\code{\link{return_when_spectra_curation_is_skipped}}.}
 
-\item{samples_to_ignore}{A character vector in which element is either a
-group (specific or total) or sample_type that is present in the data
+\item{samples_to_ignore}{A character vector in which every element is either
+a group (specific or total) or sample_type that is present in the data
 followed by " samples".}
 }
 \value{
@@ -53,11 +53,11 @@ cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
 curated_spectra <- curate_spectra(checked_data = checked_data,
                                   summarized_checks = summarized_checks,
                                   cut_offs = cut_offs)
-                                  
-passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra) 
+
+passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
 
 for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
 
 throw_out_samples(passing_spectra = for_analyte_curation,
-                  samples_to_ignore = c("PBS", "Visucon", "IVIgG", "Total"))
+                  samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total"))
 }

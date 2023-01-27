@@ -4,12 +4,12 @@
 \alias{curate_analytes_with_list}
 \title{Analyte curation based on a list}
 \usage{
-curate_analytes_with_list(data, analyte_list)
+curate_analytes_with_list(passing_spectra, analyte_list)
 }
 \arguments{
 \item{analyte_list}{The list of analytes that should pass the analyte
-curation process. This can be a list with character strings, a character
-vector or a dataframe consisting of a single column with character strings.}
+curation process. This should be a dataframe or tibble with one column
+named "analyte".}
 }
 \value{
 This function returns the same dataframe that was given as the
@@ -30,7 +30,7 @@ example_data <- curate_spectra(data = example_data,
                             cut_off_basis = c("Spike PBS", "Total PBS"))
 
 curated_spectra <- example_data$curated_data \%>\%
-   dplyr::filter(has_passed_spectra_curation == TRUE) \%>\% 
+   dplyr::filter(has_passed_spectra_curation == TRUE) \%>\%
    dplyr::select(-has_passed_spectra_curation)
 
 analyte_list_file <- system.file("extdata",
