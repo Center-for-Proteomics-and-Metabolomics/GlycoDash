@@ -507,31 +507,102 @@ determine_reason_for_failure <- function(data) {
   return(with_reasons)
 }
 
-#' Title
+#' Filter out spectra that failed spectra curation
 #'
-#' @param curated_data 
+#' This function filters out spectra that failed spectra curation and spectra
+#' that are uncalibrated.
 #'
-#' @return
+#' @param curated_data The return value of \code{\link{curate_spectra}}.
+#'
+#' @return The filtered dataframe given as \code{curated_data}.
 #' @export
 #'
 #' @examples
-kick_out_spectra <- function(curated_data) {
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                control_sample_types = "PBS",
+#'                                exclude_sample_types = NULL,
+#'                                group_keyword = "Total",
+#'                                percentile = 97,
+#'                                use_mean_SD = FALSE,
+#'                                SD_factor = NULL,
+#'                                uncalibrated_as_NA = TRUE)
+#'
+#' curated_spectra <- curate_spectra(checked_data = checked_data,
+#'                                   summarized_checks = summarized_checks,
+#'                                   cut_offs = cut_offs)
+#'                                   
+#' kick_out_spectra(curated_spectra)
+kick_out_spectra <- function(curated_spectra) {
   
-  passing_spectra <- curated_data %>% 
+  passing_spectra <- curated_spectra %>% 
     dplyr::filter(has_passed_spectra_curation,
                   !uncalibrated)
   
   return(passing_spectra)
 }
 
-#' Title
+#' Remove columns no longer needed after spectra curation
 #'
-#' @param passing_spectra 
+#' The \code{sum_intensity} column is the only column from spectra curation that
+#' is kept, because it is needed during normalization.
 #'
-#' @return
+#' @param passing_spectra The return value of \code{\link{kick_out_spectra}}.
+#'
+#' @return The same dataframe given as \code{passing_spectra}, but without the
+#'   columns created during the spectra curation process (except for the
+#'   sum_intensity column).
 #' @export
 #'
 #' @examples
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                control_sample_types = "PBS",
+#'                                exclude_sample_types = NULL,
+#'                                group_keyword = "Total",
+#'                                percentile = 97,
+#'                                use_mean_SD = FALSE,
+#'                                SD_factor = NULL,
+#'                                uncalibrated_as_NA = TRUE)
+#'
+#' curated_spectra <- curate_spectra(checked_data = checked_data,
+#'                                   summarized_checks = summarized_checks,
+#'                                   cut_offs = cut_offs)
+#'                                   
+#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra) 
+#' 
+#' remove_unneeded_columns(passing_spectra = passing_spectra)
+#' 
 remove_unneeded_columns <- function(passing_spectra) {
   
   without_extra_columns <- passing_spectra %>% 
@@ -561,6 +632,35 @@ remove_unneeded_columns <- function(passing_spectra) {
   return(without_extra_columns)
 }
 
+#' Create the dataframe for next steps when spectra curation is skipped
+#'
+#' @inheritParams curate_spectra
+#'
+#' @return The \code{checked_data} and \code{summarized_checks} dataframes
+#'   joined together, with unneeded columns removed and with uncalibrated
+#'   spectra filtered out.
+#' @export
+#'
+#' @examples
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#' 
+#' return_when_spectra_curation_is_skipped(checked_data = checked_data,
+#'                                         summarized_checks = summarized_checks)
+#'                                         
 return_when_spectra_curation_is_skipped <- function(checked_data,
                                                     summarized_checks) {
   dplyr::full_join(checked_data,
@@ -574,6 +674,43 @@ return_when_spectra_curation_is_skipped <- function(checked_data,
   # calculation 
 }
 
+#' Get the sample types to put in the menu for negative control samples
+#'
+#' Find out which sample types are present in the total or in the specific
+#' samples. These sample types can then be shown in the selection menu for the
+#' negative control samples.
+#'
+#' @inheritParams calculate_cut_offs
+#' @param total_or_specific_keyword A character string with the keyword for
+#'   either the total or the specific samples (depending on which menu you are
+#'   creating).
+#'
+#' @return A named character vector. The elements are the sample types and the
+#'   names are the sample types with the \code{total_or_specific_keyword} as
+#'   prefix and "samples" as suffix. The names are what will be shown in the
+#'   selectInput.
+#' @export
+#'
+#' @examples
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#' 
+#' # To get the sample type options for the specific samples:
+#' get_sample_type_options(summarized_checks = summarized_checks,
+#'                         total_or_specific_keyword = "Spike")
 get_sample_type_options <- function(summarized_checks,
                                     total_or_specific_keyword) {
   
