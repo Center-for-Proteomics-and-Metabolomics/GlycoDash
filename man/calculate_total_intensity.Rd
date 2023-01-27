@@ -25,7 +25,3 @@ state. For each charge state, the intensity is divided by the fraction.
 Then these adjusted intensities are summed up to get the total intensity of
 the analyte.
 }
-\examples{
-data("example_data")
-calculate_total_intensity(example_data)
-}

@@ -39,30 +39,21 @@ calculate_total_intensity <- function(data) {
     # For each sample + analyte combination, the intensities for all charge
     # states should be added together:
     dplyr::group_by(sample_name, 
-                    analyte) %>% 
+                    analyte,
+                    # The remaining grouping variables are only there to ensure they
+                    # remain in the dataframe after summarize()
+                    cluster,
+                    group,
+                    sample_type,
+                    sample_id,
+                    plate_well,
+                    sum_intensity,
+                    number_of_replicates,
+                    replicates) %>% 
     dplyr::summarize(total_absolute_intensity = sum(intensity_by_fraction,
-                                                    na.rm = TRUE))
-  
-  data <- dplyr::full_join(data, 
-                           total_intensities,
-                           by = c("sample_name", 
-                                  "analyte")) %>% 
-    # Now there is still multiple rows per sample + analyte combination (one
-    # for each charge state). We only want to keep one row for each sample +
-    # analyte combination:
-    dplyr::ungroup() %>% 
-    dplyr::distinct(sample_name, 
-                    analyte, 
-                    # Keep all columns:
-                    .keep_all = TRUE) %>% 
-    # Remove any columns that were charge-state specific:
-    dplyr::select(-any_of(c("charge",
-                            "absolute_intensity_background_subtracted",
-                            "mass_accuracy_ppm",
-                            "isotopic_pattern_quality",
-                            "sn",
-                            "fraction",
-                            "exact_mass")))
+                                                    na.rm = TRUE # check if this is needed?
+                                                    )) %>% 
+    dplyr::ungroup()
   
   return(data)
 }
