@@ -4,57 +4,98 @@
 \alias{normalize_data}
 \title{Perform total area normalization}
 \usage{
-normalize_data(data)
+normalize_data(total_intensities)
 }
 \arguments{
-\item{data}{The dataframe resulting from the
+\item{total_intensities}{The return value of the
 \code{\link{calculate_total_intensity}} function.}
 }
 \value{
-The dataframe given as the \code{data} argument, but with the column
-  "relative_abundance" instead of "total_absolute_intensity".
+The tibble given as the \code{total_intensities} argument, but with
+  the columns \code{total_absolute_intensity} and \code{sum_intensity}
+  replaced by the column \code{relative_abundance}.
 }
 \description{
 This function performs total area normalization per cluster for each
-spectrum. First, the sum of the total absolute intensities is calculated per
-cluster in each spectrum. Then the total absolute intensity for each analyte
-within that cluster and spectrum is divided by that sum intensity. This
-yields the relative abundance of the analyte in that spectrum.
+spectrum. The total absolute intensity for each analyte per cluster per
+spectrum (\code{total_absolute_intensity}) is divided by the sum absolute
+intensity of all analytes in that cluster and spectrum
+(\code{sum_intensity}). Multiplying this with 100 yields the relative
+abundance of the analyte in that cluster and spectrum in percent.
 }
 \examples{
+# First spectra curation has to be performed:
 data("example_data")
 
-# First spectra curation is performed:
-example_data <- curate_spectra(data = example_data,
-                               min_ppm_deviation = -20,
-                               max_ppm_deviation = 20,
-                               max_ipq = 0.2,
-                               min_sn = 9,
-                               clusters_regex = "IgGI1",
-                               cut_off_basis = c("Spike PBS", "Total PBS"))
+example_data <- define_clusters(data = example_data,
+                                cluster_keywords = "IgGI")
 
-# Only the spectra that passed curation are kept:
-curated_spectra <- example_data$curated_data \%>\%
-   dplyr::filter(has_passed_spectra_curation == TRUE) \%>\% 
-   dplyr::select(-has_passed_spectra_curation)
+checked_data <- check_analyte_quality_criteria(my_data = example_data,
+                                               min_ppm_deviation = -20,
+                                               max_ppm_deviation = 20,
+                                               max_ipq = 0.2,
+                                               min_sn = 9,
+                                               criteria_to_consider = c("Mass accuracy",
+                                                                        "S/N",
+                                                                        "IPQ"))
+
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+
+cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+                                     control_sample_types = "PBS",
+                                     exclude_sample_types = NULL,
+                                     group_keyword = "Total",
+                                     percentile = 97,
+                                     use_mean_SD = FALSE,
+                                     SD_factor = NULL,
+                                     uncalibrated_as_NA = TRUE)
+
+cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+                                        control_sample_types = "PBS",
+                                        exclude_sample_types = NULL,
+                                        group_keyword = "Spike",
+                                        percentile = 97,
+                                        use_mean_SD = FALSE,
+                                        SD_factor = NULL,
+                                        uncalibrated_as_NA = TRUE)
+
+cut_offs <- dplyr::full_join(cut_offs_total,
+                             cut_offs_specific)
+
+curated_spectra <- curate_spectra(checked_data = checked_data,
+                                  summarized_checks = summarized_checks,
+                                  cut_offs = cut_offs)
+
+passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+
+for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
 
 # Then analyte curation is performed:
-curated_analytes <- curate_analytes(data = curated_spectra,
-                                    group_to_ignore = "Total",
-                                    sample_types_to_ignore = c("Visucon", 
-                                                               "PBS"),
+without_samples_to_ignore <- throw_out_samples(
+   passing_spectra = for_analyte_curation,
+   samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+)
+
+checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+                                                   min_ppm_deviation = -20,
+                                                   max_ppm_deviation = 20,
+                                                   max_ipq = 0.2,
+                                                   min_sn = 9,
+                                                   criteria_to_consider = c("Mass accuracy",
+                                                                            "S/N",
+                                                                            "IPQ"))
+
+curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
                                     cut_off_percentage = 25)
 
-# Only the analytes that passed curation are kept:
-passing_analytes <- curated_analytes \%>\% 
-   dplyr::filter(passed_curation == TRUE) \%>\% 
-   dplyr::select(-passed_curation)
-analyte_curated_data <- dplyr::left_join(passing_analytes, curated_spectra)
+analyte_curated_data <- dplyr::full_join(curated_analytes,
+                                         for_analyte_curation) \%>\%
+   dplyr::filter(has_passed_analyte_curation) \%>\%
+   dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
 
-# Then the total absolute intensities are calculated:
-final_data <- calculate_total_intensity(data = analyte_curated_data)
+# Then we calculate the total intensities for each analyte:
+total_intensities <- calculate_total_intensity(analyte_curated_data)
 
-# Finally, total area normalization is performed:
-normalized_data <- normalize_data(data = final_data)
-
+# And then we can perform total area normalization:
+normalize_data(total_intensities)
 }
