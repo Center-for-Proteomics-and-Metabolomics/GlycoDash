@@ -93,8 +93,8 @@ calculate_repeatability_stats <- function(data,
   repeatability <- repeatability %>% 
     dplyr::mutate(plate = stringr::str_extract(plate_well, "^[A-Z]|\\d+")) %>% 
     dplyr::group_by(plate, analyte) %>% 
-    dplyr::summarise(average_abundance = mean(relative_abundance * 100),
-                     RSD = sd(relative_abundance * 100) / average_abundance * 100,
+    dplyr::summarise(average_abundance = mean(relative_abundance),
+                     RSD = sd(relative_abundance) / average_abundance,
                      n = dplyr::n(),
                      across(cluster)) %>% 
     dplyr::ungroup(.)
@@ -216,7 +216,7 @@ visualize_repeatability_dogded_bars <- function(data,
                                                 "\nSample name:",
                                                 sample_name,
                                                 "\nRelative abundance:",
-                                                signif(relative_abundance * 100, 3),
+                                                signif(relative_abundance, 3),
                                                 "%"),),
                       position = "dodge") +
     ggplot2::geom_point(data = to_plot %>% dplyr::distinct(analyte, .keep_all = TRUE),
@@ -224,7 +224,7 @@ visualize_repeatability_dogded_bars <- function(data,
                                      y = rsd,
                                      fill = sample_name,
                                      text = paste("RSD:",
-                                                  signif(rsd * 100, 3),
+                                                  signif(rsd, 3),
                                                   "%")),
                         shape = 21,
                         stroke = 0.5)+
@@ -234,7 +234,7 @@ visualize_repeatability_dogded_bars <- function(data,
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
                    legend.position = "none") +
     ggplot2::scale_y_continuous(name = "Relative abundance (%)",
-                                labels = function(x) paste0(x * 100, "%")) +
+                                labels = function(x) paste0(x, "%")) +
     ggplot2::scale_x_discrete(name = "Analyte") +
     ggplot2::scale_fill_manual(values = my_palette,
                                name = "Sample name") +
@@ -287,7 +287,7 @@ visualize_repeatability_mean_bars <- function(data,
                                    text = paste("Analyte:",
                                                 analyte,
                                                 "\nMean of relative abundance:",
-                                                signif(mean_rel_ab * 100, 3),
+                                                signif(mean_rel_ab, 3),
                                                 "%",
                                                 "\nNumber of samples (n):",
                                                 n),
@@ -298,14 +298,14 @@ visualize_repeatability_mean_bars <- function(data,
                                         ymax = mean_rel_ab + sd_rel_ab,
                                         x = analyte,
                                         text = paste("Standard deviation:",
-                                                     signif(sd_rel_ab * 100, 3),
+                                                     signif(sd_rel_ab, 3),
                                                      "%")),
                            width = 0.6) +
     ggplot2::geom_point(ggplot2::aes(x = analyte, 
                                      y = rsd,
                                      fill = analyte,
                                      text = paste("RSD:",
-                                                  signif(rsd * 100, 3),
+                                                  signif(rsd, 3),
                                                   "%")),
                         shape = 21,
                         stroke = 0.5) +
@@ -316,7 +316,7 @@ visualize_repeatability_mean_bars <- function(data,
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
                    legend.position = "none") +
     ggplot2::scale_y_continuous(name = "Relative abundance (%)",
-                                labels = function(x) paste0(x * 100, "%")) +
+                                labels = function(x) paste0(x, "%")) +
     ggplot2::scale_x_discrete(name = "Analyte") +
     ggplot2::facet_wrap(~ cluster, scales = "free_x")
   
