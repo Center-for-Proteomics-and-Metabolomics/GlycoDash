@@ -7,33 +7,113 @@
 calculate_derived_traits(data, selected_derived_traits)
 }
 \arguments{
-\item{data}{A dataframe that contains at least the columns "sample_name", "cluster",
-"relative_abundance" and "analyte".}
+\item{data}{A dataframe that contains at least the columns "sample_name",
+"cluster", "relative_abundance" and "analyte".}
 
-\item{selected_derived_traits}{A character vector containing the names of the derived
-traits that should be calculated. The derived traits that can be
+\item{selected_derived_traits}{A character vector containing the names of the
+derived traits that should be calculated. The derived traits that can be
 calculated with this function are: \describe{ \item{"Fucosylation"}{The
-proportion of detected glycans that is fucosylated.} \item{"Bisection"}{The
-proportion of detected glycans that contain a bisecting GlcNaC}
-\item{"Galactosylation"}{} \item{"Sialylation"}{}}}
+percentage of detected glycans that is fucosylated.} \item{"Bisection"}{The
+percentage of detected glycans that contain a bisecting GlcNaC}
+\item{"Galactosylation"}{The extent to which the detected glycans are
+galactosylated. Monogalactosylated glycans are considered to be half
+galactosylated, while digalactosylated glycans are fully galactosylated.}
+\item{"Sialylation"}{The extent to which the detected glycans are
+sialylated. Monosialylated glycans are considered to be half sialylated,
+while disialylated glycans are fully sialylated.}}}
 }
 \value{
-A dataframe...
+A tibble with the following columns:
+  \describe{\item{sample_name}{The name of the measured
+  sample.}\item{cluster}{The cluster of analytes that the derived traits were
+  calculated for.}\item{group}{Only when there are both total and specific Ig
+  samples in the data.}} In addition, for each derived trait given in the argument
+  \code{selected_derived_traits} there is one column with the relative
+  abundance of that derived trait (in percent) and one column with the formula used
+  to calculate that derived trait.
 }
 \description{
 With this function derived glycosylation traits of IgG can be calculated
 based on the measured relative abundances of glycans. This function can only
-be used on IgG data, because it assumes that all glycans are diantennary.
+be used on IgG data, because it assumes that all glycans are diantennary. The
+derived traits are calculated per cluster.
 }
 \examples{
-example_data <- data.frame(
-                   sample_name = c("sample01", "sample02", "sample02", "sample04"),
-                   group = c("Spike", "Total", "Spike", "Total"),
-                   cluster = c("C1", "C1", "C1", "C2"),
-                   analyte = c("H5N4F1", "H4N3F1", "H3N4S1", "H3N4F1S1"),
-                   relative_abundance = c(0.3, 0.8, 0.2, 0.3))
-                   
-calculate_derived_traits(data = example_data,
-                         selected_derived_traits = c("Galactosylation",
-                                                     "Bisection"))
+# First spectra curation has to be performed:
+data("example_data")
+
+example_data <- define_clusters(data = example_data,
+                                cluster_keywords = "IgGI")
+
+checked_data <- check_analyte_quality_criteria(my_data = example_data,
+                                               min_ppm_deviation = -20,
+                                               max_ppm_deviation = 20,
+                                               max_ipq = 0.2,
+                                               min_sn = 9,
+                                               criteria_to_consider = c("Mass accuracy",
+                                                                        "S/N",
+                                                                        "IPQ"))
+
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+
+cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+                                     control_sample_types = "PBS",
+                                     exclude_sample_types = NULL,
+                                     group_keyword = "Total",
+                                     percentile = 97,
+                                     use_mean_SD = FALSE,
+                                     SD_factor = NULL,
+                                     uncalibrated_as_NA = TRUE)
+
+cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+                                        control_sample_types = "PBS",
+                                        exclude_sample_types = NULL,
+                                        group_keyword = "Spike",
+                                        percentile = 97,
+                                        use_mean_SD = FALSE,
+                                        SD_factor = NULL,
+                                        uncalibrated_as_NA = TRUE)
+
+cut_offs <- dplyr::full_join(cut_offs_total,
+                             cut_offs_specific)
+
+curated_spectra <- curate_spectra(checked_data = checked_data,
+                                  summarized_checks = summarized_checks,
+                                  cut_offs = cut_offs)
+
+passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+
+for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+
+# Then analyte curation is performed:
+without_samples_to_ignore <- throw_out_samples(
+   passing_spectra = for_analyte_curation,
+   samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+)
+
+checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+                                                   min_ppm_deviation = -20,
+                                                   max_ppm_deviation = 20,
+                                                   max_ipq = 0.2,
+                                                   min_sn = 9,
+                                                   criteria_to_consider = c("Mass accuracy",
+                                                                            "S/N",
+                                                                            "IPQ"))
+
+curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
+                                    cut_off_percentage = 25)
+
+analyte_curated_data <- dplyr::full_join(curated_analytes,
+                                         for_analyte_curation) \%>\%
+   dplyr::filter(has_passed_analyte_curation) \%>\%
+   dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
+
+# Then we calculate the total intensities for each analyte:
+total_intensities <- calculate_total_intensity(analyte_curated_data)
+
+# And then we can perform total area normalization:
+normalized_data <- normalize_data(total_intensities)
+
+calculate_derived_traits(normalized_data,
+                        "Fucosylation")
 }

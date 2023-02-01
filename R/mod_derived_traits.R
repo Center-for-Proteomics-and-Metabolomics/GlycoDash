@@ -59,23 +59,21 @@ mod_derived_traits_server <- function(id, results_normalization){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    x <- reactiveValues()
-    
-    observe({
+    normalized_data <- reactive({
       req(results_normalization$normalized_data())
-      x$data <- results_normalization$normalized_data()
+      results_normalization$normalized_data()
     })
     
     observe({
       shinyjs::toggleState("do_calculation", 
-                           condition = all(isTruthy(input$traits_menu),
-                                           isTruthy(x$data)))
+                           condition = all(is_truthy(input$traits_menu),
+                                           is_truthy(normalized_data())))
     })
     
     derived_traits <- reactive({
-      req(x$data)
+      req(normalized_data())
       
-      calculate_derived_traits(data = x$data,
+      calculate_derived_traits(data = normalized_data(),
                                selected_derived_traits = input$traits_menu)
     }) %>% bindEvent(input$do_calculation)
     
@@ -88,18 +86,6 @@ mod_derived_traits_server <- function(id, results_normalization){
                            values_from = dplyr::any_of(input$traits_menu),
                            names_glue = "{cluster}_{.value}")
     })
-  
-    # observeEvent(input$do_calculation, {
-    #   derived_traits <- calculate_derived_traits(data = x$data,
-    #                                              selected_derived_traits = input$traits_menu) %>% 
-    #     tidyr::pivot_wider(names_from = cluster,
-    #                        values_from = dplyr::any_of(input$traits_menu),
-    #                        names_glue = "{cluster}_{.value}")
-    #   
-    #   x$data_with_derived_traits <- dplyr::full_join(results_normalization$normalized_data_wide(),
-    #                                                  derived_traits)
-    #   
-    # })
     
     output$data_table <- DT::renderDT({
       req(data_with_derived_traits())
@@ -117,7 +103,8 @@ mod_derived_traits_server <- function(id, results_normalization){
         tidyr::pivot_longer(cols = -cluster,
                             names_to = "Derived trait",
                             values_to = "Formula") %>% 
-        dplyr::rename_with(firstupper, cluster) %>% 
+        dplyr::rename_with(.fn = firstupper, 
+                           .cols = cluster) %>% 
         dplyr::mutate(`Derived trait` = dplyr::recode(`Derived trait`,
                                                       fuc_formula = "Fucosylation",
                                                       gal_formula = "Galactosylation",
@@ -138,17 +125,11 @@ mod_derived_traits_server <- function(id, results_normalization){
     return(
       list(
         data_with_derived_traits = data_with_derived_traits,
-        normalized_data = reactive({x$data}),
-        derived_traits = reactive({input$traits_menu}),
+        normalized_data = normalized_data,
+        derived_traits = reactive({ input$traits_menu }),
         formulas = formulas
       )
     )
  
   })
 }
-    
-## To be copied in the UI
-# mod_derived_traits_ui("derived_traits_ui_1")
-    
-## To be copied in the server
-# mod_derived_traits_server("derived_traits_ui_1")

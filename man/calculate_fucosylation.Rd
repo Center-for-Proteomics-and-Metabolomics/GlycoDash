@@ -7,20 +7,15 @@
 calculate_fucosylation(.data)
 }
 \arguments{
-\item{.data}{A data frame. Can be passed to the function via a pipe (%>%)
-(see Examples below).}
+\item{.data}{A data frame / tibble. Can be passed to the function via a pipe
+(\code{\%>\%}) (see Examples below).}
 }
 \description{
 This function calculates the derived trait fucosylation based on the relative
 abundances of glycans. This function is used in the function
-\code{\link{calculate_derived_traits}}.
+\code{\link{calculate_derived_traits}}. It considers every analyte with "F"
+followed by a single digit in its name to be a fucosylated analyte.
 }
 \examples{
-example_data <- data.frame(
-                   relative_abundance = c(0.45, 0.15, 0.03, 0.37),
-                   analyte = c("H5N4F1", "H4N3F1", "H3N4S1", "H3N4F1S1"),
-                   sum_all_analytes = rep(1, 4))
-
-example_data \%>\% calculate_fucosylation(.)
-
+See usage in the function calculate_derived_traits.
 }
