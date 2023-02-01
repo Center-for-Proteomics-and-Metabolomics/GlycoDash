@@ -76,6 +76,7 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
       req(my_data())
       #req(contains_total_and_specific_samples())
       
+      # TODO: convert to function:
       menu_df <- my_data() %>% 
         dplyr::ungroup() %>% 
         dplyr::select(tidyselect::any_of(c("sample_name", "group", "sample_id"))) %>%
@@ -127,41 +128,71 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
     }) %>% bindEvent(input$assess_repeatability)
     
     
-    observeEvent(input$assess_repeatability, {
-      # Reset x$repeatability and x$variation_table:
-      x$repeatability <- NULL
-      x$variation_table <- NULL
+    repeatability <- reactive({
+      req(input$by_plate)
+      # Try to calculate the repeatability stats, but show a notification if
+      # there are no samples of the selected sample type and group combination:
+      repeatability <- tryCatch(
+        expr = {
+          calculate_repeatability_stats(
+            data = my_data(),
+            standard_sample_id = selected_sample_id(),
+            standard_group = selected_group()
+          )
+        },
+        no_samples = function(c) {
+          showNotification(c$message, type = "error")
+          NULL
+        }
+      )
       
-      if (is_truthy(input$by_plate)) {
-        # Try to calculate the repeatability stats, but show a notification if
-        # there are no samples of the selected sample type and group combination:
-        tryCatch(
-          expr = {
-            x$repeatability <- calculate_repeatability_stats(
-              data = my_data(),
-              standard_sample_id = selected_sample_id(),
-              standard_group = selected_group())
-          },
-          no_samples = function(c) {
-            showNotification(c$message, type = "error")
-          }
-        )
-        
-        # Pause until x$repeatability has been calculated:
-        req(x$repeatability)
-        
-        # Calculate the intra-plate variations to show in the table:
-        x$variation_table <- x$repeatability %>% 
-          dplyr::group_by(plate) %>% 
-          dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
-      }
+      return(repeatability)
+    }) %>% bindEvent(input$assess_repeatability)
+    
+    variation_df <- reactive({
+      req(repeatability())
+      
+      # Calculate the intra-plate variations to show in the table:
+      repeatability() %>% 
+        dplyr::group_by(plate) %>% 
+        dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
     })
+    
+    # observeEvent(input$assess_repeatability, {
+    #   # Reset x$repeatability and x$variation_table:
+    #   x$repeatability <- NULL
+    #   x$variation_table <- NULL
+    #   
+    #   if (is_truthy(input$by_plate)) {
+    #     # Try to calculate the repeatability stats, but show a notification if
+    #     # there are no samples of the selected sample type and group combination:
+    #     tryCatch(
+    #       expr = {
+    #         x$repeatability <- calculate_repeatability_stats(
+    #           data = my_data(),
+    #           standard_sample_id = selected_sample_id(),
+    #           standard_group = selected_group())
+    #       },
+    #       no_samples = function(c) {
+    #         showNotification(c$message, type = "error")
+    #       }
+    #     )
+    #     
+    #     # Pause until x$repeatability has been calculated:
+    #     req(x$repeatability)
+    #     
+    #     # Calculate the intra-plate variations to show in the table:
+    #     x$variation_table <- x$repeatability %>% 
+    #       dplyr::group_by(plate) %>% 
+    #       dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
+    #   }
+    # })
     
     plot <- reactive({
       req(length(clusters()) <= 4)
       if (is_truthy(input$by_plate)) {
-        req(x$repeatability)
-        plot <- visualize_repeatability2(x$repeatability)
+        req(repeatability())
+        plot <- visualize_repeatability2(repeatability())
       } else {
         req(my_data())
         req(selected_sample_id())
@@ -203,12 +234,14 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
       req(length(clusters()) > 4)
       req(!is.null(input$by_plate))
       
+      # Remove tabs in case they were already there before:
       purrr::map(clusters(),
                  function(current_cluster) {
                    removeTab(inputId = "plot_tabs",
                              target = current_cluster)
                  })
       
+      # Create a tab with a plot for each cluster:
       purrr::map(clusters(),
                  function(current_cluster) {
                    appendTab(inputId = "plot_tabs",
@@ -219,6 +252,7 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
                              ))
                  })
       
+      # Save the plots on the tabs in the reactiveValues list x in the list plots:
       x$plots <- rlang::set_names(clusters()) %>% 
         purrr::map(.,
                    function(current_cluster) {
@@ -226,7 +260,7 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
                        id = paste0(current_cluster,
                                    "repeatability_plot"),
                        by_plate = reactive({ input$by_plate }),
-                       repeatability = reactive({ x$repeatability %>% 
+                       repeatability = reactive({ repeatability() %>% 
                            dplyr::filter(cluster == current_cluster) }),
                        my_data = reactive({ my_data() %>% 
                            dplyr::filter(cluster == current_cluster) }),
@@ -235,7 +269,7 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
                      )
                    })
       
-    }) %>% bindEvent(input$assess_repeatability)
+    }) %>% bindEvent(input$assess_repeatability) # needed?
     
     output$plot <- plotly::renderPlotly({
       req(plot())
@@ -249,8 +283,8 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
     })
     
     for_table <- reactive({
-      req(x$variation_table)
-      x$variation_table %>% 
+      req(variation_df())
+      variation_df() %>% 
         dplyr::mutate(intra_plate_variation = signif(intra_plate_variation,
                                                      digits = 3))
     })
@@ -282,9 +316,3 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
     
   })
 }
-    
-## To be copied in the UI
-# mod_tab_repeatability_ui("tab_repeatability_ui_1")
-    
-## To be copied in the server
-# mod_tab_repeatability_server("tab_repeatability_ui_1")
