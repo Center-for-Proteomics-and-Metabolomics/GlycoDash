@@ -60,7 +60,7 @@ mod_normalization_server <- function(id, results_analyte_curation){
     
     normalized_data <- reactive({
       req(total_intensities())
-      normalize_data(data = total_intensities())
+      normalize_data(total_intensities = total_intensities())
     })
     
     normalized_data_wide <- reactive({
