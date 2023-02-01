@@ -33,7 +33,7 @@ mod_tab_repeatability_plot_server <- function(id,
         
         plot <- tryCatch(
           expr = {
-            visualize_repeatability2(repeatability(),
+            visualize_repeatability(repeatability(),
                                      selected_group = selected_group(),
                                      selected_sample_id = selected_sample_id())
           },

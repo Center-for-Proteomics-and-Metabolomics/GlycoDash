@@ -192,7 +192,7 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
       req(length(clusters()) <= 4)
       if (is_truthy(input$by_plate)) {
         req(repeatability())
-        plot <- visualize_repeatability2(repeatability())
+        plot <- visualize_repeatability(repeatability())
       } else {
         req(my_data())
         req(selected_sample_id())
