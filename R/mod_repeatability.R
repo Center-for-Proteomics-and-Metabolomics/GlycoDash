@@ -60,7 +60,7 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
     
     tab_results <- reactiveValues()
     
-    data <- reactive({
+    normalized_data <- reactive({
       results_normalization$normalized_data()
     })
 
@@ -73,7 +73,7 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
     })
     
     tab_results$tab1 <- mod_tab_repeatability_server("tab1",
-                                                     my_data = data,
+                                                     my_data = normalized_data,
                                                      contains_total_and_specific_samples = contains_total_and_specific_samples)
     
     tab_counter <- reactiveValues(n = 1)
@@ -117,7 +117,7 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
       # so they can be passed on to the report:
       tab_results[[tab_id]] <- mod_tab_repeatability_server(
         id = tab_id,
-        my_data = data,
+        my_data = normalized_data,
         contains_total_and_specific_samples = contains_total_and_specific_samples
       )
       
@@ -139,6 +139,7 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
         tab_counter$n <- tab_counter$n - 1
       }
       
+      # Remove the contents of the tab that is closed from the tab_results list:
       tab_results[[stringr::str_replace(input$remove_tab,
                                         "Standard ",
                                         "tab")]] <- NULL
