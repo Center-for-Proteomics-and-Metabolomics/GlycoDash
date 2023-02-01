@@ -40,7 +40,7 @@ calculate_fucosylation <- function(.data) {
   
   .data %>% 
     dplyr::summarise(
-      Fucosylation = sum(relative_abundance[analyte %in% fucosylated_analytes]) / 100) %>% 
+      Fucosylation = sum(relative_abundance[analyte %in% fucosylated_analytes])) %>% 
     dplyr::distinct() %>% 
     dplyr::full_join(., formulas_per_cluster)
   
@@ -97,7 +97,7 @@ calculate_sialylation <- function(.data) {
   .data %>% 
     dplyr::summarise(monosialylation = sum(relative_abundance[analyte %in% monosialylated_analytes]),
                      disialylation = sum(relative_abundance[analyte %in% disialylated_analytes]),
-                     Sialylation = (monosialylation * 1/2 + disialylation) / 100) %>% 
+                     Sialylation = (monosialylation * 1/2 + disialylation)) %>% 
     dplyr::select(-c(monosialylation, disialylation)) %>% 
     dplyr::distinct() %>% 
     dplyr::full_join(., formulas_per_cluster)
@@ -155,7 +155,7 @@ calculate_galactosylation <- function(.data) {
   .data %>% 
     dplyr::summarise(monogalactosylation = sum(relative_abundance[analyte %in% monogalactosylated_analytes]),
                      digalactosylation = sum(relative_abundance[analyte %in% digalactosylated_analytes]),
-                     Galactosylation = (monogalactosylation * 1/2 + digalactosylation) / 100) %>% 
+                     Galactosylation = (monogalactosylation * 1/2 + digalactosylation)) %>% 
     dplyr::select(-c(monogalactosylation, digalactosylation)) %>% 
     dplyr::distinct() %>% 
     dplyr::full_join(., formulas_per_cluster)
@@ -201,7 +201,7 @@ calculate_bisection <- function(.data) {
                         values_to = "bis_formula")
   
   .data %>% 
-    dplyr::summarise(Bisection = sum(relative_abundance[analyte %in% bisected_analytes]) / 100) %>% 
+    dplyr::summarise(Bisection = sum(relative_abundance[analyte %in% bisected_analytes])) %>% 
     dplyr::distinct() %>% 
     dplyr::full_join(., formulas_per_cluster)
   
