@@ -10,6 +10,10 @@ calculate_bisection(.data)
 \item{.data}{A data frame / tibble. Can be passed to the function via a pipe
 (\code{\%>\%}) (see Examples below).}
 }
+\value{
+A tibble with the columns \code{sample_name}, \code{cluster},
+  \code{group}, \code{Bisection} and \code{bis_formula}.
+}
 \description{
 This function calculates the derived trait bisection based on the relative
 abundances of glycans. This function is used in the function

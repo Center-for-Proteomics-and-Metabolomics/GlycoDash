@@ -8,7 +8,8 @@
 #' @param .data A data frame / tibble. Can be passed to the function via a pipe
 #'   (\code{\%>\%}) (see Examples below).
 #'
-#' @return
+#' @return A tibble with the columns \code{sample_name}, \code{cluster},
+#'   \code{group}, \code{Fucosylation} and \code{fuc_formula}.
 #' @export
 #'
 #' @examples
@@ -56,7 +57,8 @@ calculate_fucosylation <- function(.data) {
 #'
 #' @inheritParams calculate_fucosylation
 #'
-#' @return
+#' @return A tibble with the columns \code{sample_name}, \code{cluster},
+#'   \code{group}, \code{Sialylation} and \code{sial_formula}.
 #' @export
 #'
 #' @examples
@@ -114,7 +116,8 @@ calculate_sialylation <- function(.data) {
 #'
 #' @inheritParams calculate_fucosylation
 #'
-#' @return
+#' @return A tibble with the columns \code{sample_name}, \code{cluster},
+#'   \code{group}, \code{Galactosylation} and \code{gal_formula}.
 #' @export
 #'
 #' @examples
@@ -170,7 +173,8 @@ calculate_galactosylation <- function(.data) {
 #'
 #' @inheritParams calculate_fucosylation
 #'
-#' @return
+#' @return A tibble with the columns \code{sample_name}, \code{cluster},
+#'   \code{group}, \code{Bisection} and \code{bis_formula}.
 #' @export
 #'
 #' @examples

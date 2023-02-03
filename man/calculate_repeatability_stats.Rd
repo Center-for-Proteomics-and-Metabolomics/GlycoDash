@@ -2,19 +2,107 @@
 % Please edit documentation in R/fct_repeatability.R
 \name{calculate_repeatability_stats}
 \alias{calculate_repeatability_stats}
-\title{Calculate the RSD of standards across a plate.}
+\title{Calculate the RSD and mean of standards across a plate.}
 \usage{
 calculate_repeatability_stats(data, standard_sample_id, standard_group)
 }
 \arguments{
 \item{data}{A dataframe with the curated (and normalized) data.}
 
-\item{standard_sample_id}{The sample type of the standards that the RSD's
+\item{standard_sample_id}{The sample ID of the replicates that the RSD's
 should be calculated for.}
 
 \item{standard_group}{The group (total or specific Ig) that the RSD's should
 be calculated for.}
 }
+\value{
+A tibble with 6 columns: \describe{\item{plate}{The plate number.}
+  \item{analyte}{The analyte.} \item{average_abundance}{The mean relative
+  abundance of that analyte on that plate.} \item{RSD}{The relative standard
+  deviation of the relative abundance of that analyte on that plate.}
+  \item{n}{The number of samples that the mean and RSD were based on.}
+  \item{cluster}{The cluster that the analyte belongs to.}}
+}
 \description{
-Calculate the RSD of standards across a plate.
+Calculate the RSD and mean of standards across a plate.
+}
+\examples{
+# First spectra curation has to be performed:
+data("example_data")
+
+example_data <- define_clusters(data = example_data,
+                                cluster_keywords = "IgGI")
+
+checked_data <- check_analyte_quality_criteria(my_data = example_data,
+                                               min_ppm_deviation = -20,
+                                               max_ppm_deviation = 20,
+                                               max_ipq = 0.2,
+                                               min_sn = 9,
+                                               criteria_to_consider = c("Mass accuracy",
+                                                                        "S/N",
+                                                                        "IPQ"))
+
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+
+cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+                                     control_sample_types = "PBS",
+                                     exclude_sample_types = NULL,
+                                     group_keyword = "Total",
+                                     percentile = 97,
+                                     use_mean_SD = FALSE,
+                                     SD_factor = NULL,
+                                     uncalibrated_as_NA = TRUE)
+
+cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+                                        control_sample_types = "PBS",
+                                        exclude_sample_types = NULL,
+                                        group_keyword = "Spike",
+                                        percentile = 97,
+                                        use_mean_SD = FALSE,
+                                        SD_factor = NULL,
+                                        uncalibrated_as_NA = TRUE)
+
+cut_offs <- dplyr::full_join(cut_offs_total,
+                             cut_offs_specific)
+
+curated_spectra <- curate_spectra(checked_data = checked_data,
+                                  summarized_checks = summarized_checks,
+                                  cut_offs = cut_offs)
+
+passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+
+for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+
+# Then analyte curation is performed:
+without_samples_to_ignore <- throw_out_samples(
+   passing_spectra = for_analyte_curation,
+   samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+)
+
+checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+                                                   min_ppm_deviation = -20,
+                                                   max_ppm_deviation = 20,
+                                                   max_ipq = 0.2,
+                                                   min_sn = 9,
+                                                   criteria_to_consider = c("Mass accuracy",
+                                                                            "S/N",
+                                                                            "IPQ"))
+
+curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
+                                    cut_off_percentage = 25)
+
+analyte_curated_data <- dplyr::full_join(curated_analytes,
+                                         for_analyte_curation) \%>\%
+   dplyr::filter(has_passed_analyte_curation) \%>\%
+   dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
+
+# Then we calculate the total intensities for each analyte:
+total_intensities <- calculate_total_intensity(analyte_curated_data)
+
+# And then we can perform total area normalization:
+normalized_data <- normalize_data(total_intensities)
+
+calculate_repeatability_stats(data = normalized_data,
+                              standard_sample_id = "pool",
+                              standard_group = "Spike")
 }
