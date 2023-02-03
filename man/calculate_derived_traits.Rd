@@ -115,5 +115,5 @@ total_intensities <- calculate_total_intensity(analyte_curated_data)
 normalized_data <- normalize_data(total_intensities)
 
 calculate_derived_traits(normalized_data,
-                        "Fucosylation")
+                        c("Fucosylation", "Bisection"))
 }

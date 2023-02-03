@@ -319,7 +319,7 @@ calculate_bisection <- function(.data) {
 #' normalized_data <- normalize_data(total_intensities)
 #'
 #' calculate_derived_traits(normalized_data,
-#'                         "Fucosylation")
+#'                         c("Fucosylation", "Bisection"))
 calculate_derived_traits <- function(data, selected_derived_traits) {
   
   data <- data %>%
