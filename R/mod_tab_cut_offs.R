@@ -117,13 +117,6 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
         
         cut_offs <- dplyr::full_join(specific, total)
         
-        # Multiply rows of combined to get one row for each cluster
-        # cut_offs <- purrr::map_dfr(clusters(),
-        #                            function(this_cluster) {
-        #                              combined %>% 
-        #                                dplyr::mutate(cluster = this_cluster)
-        #                            })
-        
       } else {
         req(input$cut_off_sum_intensity,
             input$cut_off_passing_analyte_percentage)
@@ -132,12 +125,6 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
                                cut_off_passing_analyte_percentage = input$cut_off_passing_analyte_percentage,
                                curation_method = "manual",
                                cluster = selected_cluster)
-        
-        # cut_offs <- purrr::map_dfr(clusters(),
-        #                            function(this_cluster) {
-        #                              cut_offs_wo_cluster %>% 
-        #                                dplyr::mutate(cluster = this_cluster)
-        #                            })
         
       }
       
@@ -200,6 +187,8 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       return(plotly)
     })
     
+    # TODO: split this up in multiple reactives, because now it recalculates
+    # itself quite often.
     cut_off_table <- reactive({
       req(any(is_truthy(calculated_cut_offs()),
               is_truthy(manual_cut_offs())))
