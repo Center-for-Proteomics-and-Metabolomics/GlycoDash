@@ -617,7 +617,6 @@ remove_unneeded_columns <- function(passing_spectra) {
       cut_off_sum_intensity,
       cut_off_passing_analyte_percentage,
       curation_method,
-      sample_type_list,
       
       # Created by check_analyte_quality_criteria:
       analyte_meets_criteria,
@@ -627,7 +626,11 @@ remove_unneeded_columns <- function(passing_spectra) {
       # Created by curate_spectra:
       has_passed_spectra_curation,
       reason_for_failure
-    ))
+    )) %>% 
+    # If for all clusters manual cut-offs have been used, then the column
+    # sample_type_list doesn't exist, so we have to remove it with across() and
+    # any_off() to prevent an error:
+    dplyr::select(-tidyselect::any_of(c("sample_type_list")))
   
   return(without_extra_columns)
 }
