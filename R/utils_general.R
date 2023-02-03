@@ -1,12 +1,23 @@
-#' Title
+#' Increase the height of the facet strips of a plotly object.
 #'
-#' @param gp 
-#' @param size 
+#' @param ggplotly A plotly object. 
+#' @param size The height that the facet strip should become.
 #'
-#' @return
+#' @return A plotly object with taller facet strips.
 #' @export
 #'
 #' @examples
+#' data(mtcars)
+#' plot <- ggplot2::ggplot(mtcars,
+#'                         ggplot2::aes(x = mpg, y = disp)) +
+#'         ggplot2::geom_point() +
+#'         ggplot2::facet_wrap(~cyl)
+#'         
+#' plotly_object <- plotly::ggplotly(plot)
+#'
+#' plotly_object
+#' 
+#' facet_strip_bigger(plotly_object)
 facet_strip_bigger <- function(ggplotly, size = 38){
   if(missing(ggplotly)){
     rlang::abort(class = "no_ggplotly_object",
@@ -27,16 +38,27 @@ facet_strip_bigger <- function(ggplotly, size = 38){
   return(ggplotly)
 }
 
-#' Title
+#' Increase distance between axis titles and the axis in a plotly object
 #'
-#' @param plotly_object 
-#' @param x_distance 
-#' @param y_distance 
+#' @param plotly_object A plotly object.
+#' @param x_distance Distance between the x-axis title and the x-axis.
+#' @param y_distance Distance between the y-axis title and the y-axis.
 #'
-#' @return
+#' @return A plotly object with changed distances between axis titles and axis.
 #' @export
 #'
 #' @examples
+#' data(mtcars)
+#' plot <- ggplot2::ggplot(mtcars,
+#'                         ggplot2::aes(x = mpg, y = disp)) +
+#'         ggplot2::geom_point() +
+#'         ggplot2::facet_wrap(~cyl)
+#'         
+#' plotly_object <- plotly::ggplotly(plot)
+#'
+#' plotly_object
+#' 
+#' change_axis_title_distance(plotly_object)
 change_axis_title_distance <- function(plotly_object, 
                                        x_distance = 50, 
                                        y_distance = 50) {
@@ -49,6 +71,85 @@ change_axis_title_distance <- function(plotly_object,
   return(plotly_object)
 }
 
+#' Determine the number of facets in a ggplot object.
+#'
+#' @param ggplot_object A ggplot object.
+#'
+#' @return An integer that indicates the number of facets in the ggplot.
+#' @export
+#'
+#' @examples
+#' data(mtcars)
+#' plot <- ggplot2::ggplot(mtcars,
+#'                      ggplot2::aes(x = mpg, y = disp)) +
+#'                      ggplot2::geom_point() +
+#'                      ggplot2::facet_wrap(~ cyl)
+#'                      
+#' nfacets(plot)
+nfacets <- function(ggplot_object) {
+  build <- ggplot2::ggplot_build(ggplot_object)
+  length(levels(build$data[[1]]$PANEL))
+}
+
+#' Hide outliers in a plotly box plot
+#'
+#' Plotly ignores the ggplot argument \code{outlier.shape = NA}. This
+#' function can be used instead to hide the outliers.
+#'
+#' @param plotly_object A plotly object with a box plot.
+#'
+#' @return A plotly object with outliers hidden.
+#' @export
+#'
+#' @examples
+#' data(mtcars)
+#' 
+#' # Introduce an outlier:
+#' mtcars[3, "disp"] <- 400
+#' 
+#' plot <- ggplot2::ggplot(mtcars,
+#'                         ggplot2::aes(x = as.factor(gear), y = disp)) +
+#'   ggplot2::geom_boxplot(outlier.shape = NA) +
+#'   ggplot2::facet_wrap(~ cyl)
+#' 
+#' plotly_object <- plotly::ggplotly(plot)
+#' 
+#' # Outlier is shown, even though we used outlier.shape = NA:
+#' plotly_object
+#' 
+#' # Hide the outlier:
+#' hide_outliers(plotly_object)
+hide_outliers <- function(plotly_object) {
+  
+  plotly_object[["x"]][["data"]] <- purrr::map(
+    plotly_object[["x"]][["data"]], 
+    function(x) {
+      # Only the hover info for the boxplot traces is left as the default "y",
+      # so here only the markers belonging to the boxplot traces will be made
+      # invisible:
+      if (x$hoverinfo == 'y') {  
+        x$marker = list(opacity = 0) 
+      }  
+      return(x) 
+    })
+  
+  return(plotly_object)
+}
+
+#' Try to call a reactive expression
+#'
+#' This functions tries to call a reactive expression and returns NULL when
+#' there is an error.
+#'
+#' @param uncalled_reactive_expression The reactive expression that you want to
+#'   call.
+#'
+#' @return Either the called reactive expression or NULL if the reactive
+#'   expression was invalidated or did not exist.
+#' @export
+#'
+#' @examples
+#' # Can't show an example with reactives outside of a Shiny app.
 try_call <- function(uncalled_reactive_expression) {
   tryCatch(
     expr = {
@@ -79,7 +180,7 @@ try_call <- function(uncalled_reactive_expression) {
 #' 
 #' @param file_path The path to the R-object that you want to load.
 #'
-#' @return
+#' @return The loaded R-object with its assigned name.
 #' @export
 #'
 #' @examples
@@ -112,6 +213,17 @@ load_and_assign <- function(file_path){
 }
 
 
+#' Collapse strings into one string separated by comma's and "and"
+#'
+#' @param string_components A character vector or list with character strings.
+#'
+#' @return The strings in string_components pasted together, separated by
+#'   comma's. The last two strings are separated by "and".
+#' @export
+#'
+#' @examples
+#' some_words <- c("apple", "pear", "peach", "raspberry")
+#' comma_and(string_components = some_words)
 comma_and <- function(string_components) {
   comma_string <- paste(string_components, collapse = ", ")
   comma_and_string <- sub(pattern = ",\\s([^,]+)$", 
@@ -120,6 +232,17 @@ comma_and <- function(string_components) {
   return(comma_and_string)
 }
 
+#' Collapse strings into one string separated by comma's and "or"
+#'
+#' @param string_components A character vector or list with character strings.
+#'
+#' @return The strings in string_components pasted together, separated by
+#'   comma's. The last two strings are separated by "or".
+#' @export
+#'
+#' @examples
+#' some_words <- list("apple", "pear", "peach", "raspberry")
+#' comma_or(string_components = some_words)
 comma_or <- function(string_components) {
   comma_string <- paste(string_components, collapse = ", ")
   comma_and_string <- sub(pattern = ",\\s([^,]+)$", 
@@ -128,7 +251,22 @@ comma_or <- function(string_components) {
   return(comma_and_string)
 }
 
+#' Version of isTruthy that works with non-existing reactive expressions
+#'
+#' When you use isTruthy on a reactive expression but that reactive doesn't
+#' exist (yet) an error occurs. To avoid that, this function first checks if the
+#' expression x can be called before checking its truthiness.
+#'
+#' @param x An expression of which you want to test the truthiness.
+#'
+#' @return If calling the expression x results in an error this function returns
+#'   FALSE. If the expression x can be called this function returns isTruthy(x).
+#' @export
+#'
+#' @examples
+#' # I can't show an example of this outside of a Shiny app.
 is_truthy <- function(x) {
+  
   valid <- tryCatch(
     expr = {
       x
@@ -136,10 +274,58 @@ is_truthy <- function(x) {
     },
     error = function(e) {
       FALSE
-    })
+    }
+  )
+  
   if (valid) {
     return(isTruthy(x))
   } else {
     return(FALSE)
   }
+}
+
+
+#' Convert the first letter of a string to uppercase
+#'
+#' @param string A single character string or a vector with character strings.
+#'
+#' @return The same string or vector of strings but with the first letter(s) in
+#'   uppercase.
+#' @export
+#'
+#' @examples
+#' firstupper(string = "this sentence starts with uppercase.")
+#' 
+#' some_strings <- c("you can also", 
+#'                   "use this function", 
+#'                   "on a vector of strings")
+#' 
+#' firstupper(some_strings)
+#' 
+firstupper <- function(string) {
+  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
+  return(string)
+}
+
+
+#' Convert the first letter of a string to lowercase
+#'
+#' @param string A single character string or a vector with character strings.
+#'
+#' @return The same string or vector of strings but with the first letter(s) in
+#'   lowercase.
+#' @export
+#'
+#' @examples
+#' firstlower("This sentence starts with LOWERcase.")
+#' 
+#' some_strings <- c("You can also", 
+#'                   "Use this FUNCTION", 
+#'                   "On a vector of strings")
+#' 
+#' firstupper(some_strings)
+#' 
+firstlower <- function(string) {
+  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
+  return(string)
 }

@@ -9,6 +9,9 @@ load_and_assign(file_path)
 \arguments{
 \item{file_path}{The path to the R-object that you want to load.}
 }
+\value{
+The loaded R-object with its assigned name.
+}
 \description{
 When you load an R-object with \code{\link[base]{load}} the object keeps the
 name it had at the moment that it was saved. Sometimes it's more convenient

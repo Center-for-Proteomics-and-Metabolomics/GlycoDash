@@ -2,15 +2,31 @@
 % Please edit documentation in R/utils_general.R
 \name{facet_strip_bigger}
 \alias{facet_strip_bigger}
-\title{Title}
+\title{Increase the height of the facet strips of a plotly object.}
 \usage{
 facet_strip_bigger(ggplotly, size = 38)
 }
 \arguments{
-\item{size}{}
+\item{ggplotly}{A plotly object.}
 
-\item{gp}{}
+\item{size}{The height that the facet strip should become.}
+}
+\value{
+A plotly object with taller facet strips.
 }
 \description{
-Title
+Increase the height of the facet strips of a plotly object.
+}
+\examples{
+data(mtcars)
+plot <- ggplot2::ggplot(mtcars,
+                        ggplot2::aes(x = mpg, y = disp)) +
+        ggplot2::geom_point() +
+        ggplot2::facet_wrap(~cyl)
+        
+plotly_object <- plotly::ggplotly(plot)
+
+plotly_object
+
+facet_strip_bigger(plotly_object)
 }

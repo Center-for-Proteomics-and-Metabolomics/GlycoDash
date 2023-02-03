@@ -2,17 +2,33 @@
 % Please edit documentation in R/utils_general.R
 \name{change_axis_title_distance}
 \alias{change_axis_title_distance}
-\title{Title}
+\title{Increase distance between axis titles and the axis in a plotly object}
 \usage{
 change_axis_title_distance(plotly_object, x_distance = 50, y_distance = 50)
 }
 \arguments{
-\item{plotly_object}{}
+\item{plotly_object}{A plotly object.}
 
-\item{x_distance}{}
+\item{x_distance}{Distance between the x-axis title and the x-axis.}
 
-\item{y_distance}{}
+\item{y_distance}{Distance between the y-axis title and the y-axis.}
+}
+\value{
+A plotly object with changed distances between axis titles and axis.
 }
 \description{
-Title
+Increase distance between axis titles and the axis in a plotly object
+}
+\examples{
+data(mtcars)
+plot <- ggplot2::ggplot(mtcars,
+                        ggplot2::aes(x = mpg, y = disp)) +
+        ggplot2::geom_point() +
+        ggplot2::facet_wrap(~cyl)
+        
+plotly_object <- plotly::ggplotly(plot)
+
+plotly_object
+
+change_axis_title_distance(plotly_object)
 }
