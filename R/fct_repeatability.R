@@ -2,15 +2,99 @@
 #' Calculate the RSD and mean of standards across a plate.
 #'
 #' @param data A dataframe with the curated (and normalized) data.
-#' @param standard_sample_id The sample type of the standards that the RSD's
+#' @param standard_sample_id The sample ID of the replicates that the RSD's
 #'   should be calculated for.
 #' @param standard_group The group (total or specific Ig) that the RSD's should
 #'   be calculated for.
 #'
-#' @return
+#' @return A tibble with 6 columns: \describe{\item{plate}{The plate number.}
+#'   \item{analyte}{The analyte.} \item{average_abundance}{The mean relative
+#'   abundance of that analyte on that plate.} \item{RSD}{The relative standard
+#'   deviation of the relative abundance of that analyte on that plate.}
+#'   \item{n}{The number of samples that the mean and RSD were based on.}
+#'   \item{cluster}{The cluster that the analyte belongs to.}}
+#'
 #' @export
 #'
 #' @examples
+#' # First spectra curation has to be performed:
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                      control_sample_types = "PBS",
+#'                                      exclude_sample_types = NULL,
+#'                                      group_keyword = "Total",
+#'                                      percentile = 97,
+#'                                      use_mean_SD = FALSE,
+#'                                      SD_factor = NULL,
+#'                                      uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                         control_sample_types = "PBS",
+#'                                         exclude_sample_types = NULL,
+#'                                         group_keyword = "Spike",
+#'                                         percentile = 97,
+#'                                         use_mean_SD = FALSE,
+#'                                         SD_factor = NULL,
+#'                                         uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs <- dplyr::full_join(cut_offs_total,
+#'                              cut_offs_specific)
+#'
+#' curated_spectra <- curate_spectra(checked_data = checked_data,
+#'                                   summarized_checks = summarized_checks,
+#'                                   cut_offs = cut_offs)
+#'
+#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+#'
+#' for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+#'
+#' # Then analyte curation is performed:
+#' without_samples_to_ignore <- throw_out_samples(
+#'    passing_spectra = for_analyte_curation,
+#'    samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+#' )
+#'
+#' checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+#'                                                    min_ppm_deviation = -20,
+#'                                                    max_ppm_deviation = 20,
+#'                                                    max_ipq = 0.2,
+#'                                                    min_sn = 9,
+#'                                                    criteria_to_consider = c("Mass accuracy",
+#'                                                                             "S/N",
+#'                                                                             "IPQ"))
+#'
+#' curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
+#'                                     cut_off_percentage = 25)
+#'
+#' analyte_curated_data <- dplyr::full_join(curated_analytes,
+#'                                          for_analyte_curation) %>%
+#'    dplyr::filter(has_passed_analyte_curation) %>%
+#'    dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
+#'
+#' # Then we calculate the total intensities for each analyte:
+#' total_intensities <- calculate_total_intensity(analyte_curated_data)
+#'
+#' # And then we can perform total area normalization:
+#' normalized_data <- normalize_data(total_intensities)
+#'
+#' calculate_repeatability_stats(data = normalized_data,
+#'                               standard_sample_id = "pool",
+#'                               standard_group = "Spike")
 calculate_repeatability_stats <- function(data,
                                           standard_sample_id,
                                           standard_group) {
@@ -39,21 +123,112 @@ calculate_repeatability_stats <- function(data,
                      dplyr::across(cluster)) %>% 
     dplyr::ungroup(.)
   
+  return(repeatability)
 }
 
-#' Title
+#' Create a plot showing the repeatability per plate
 #'
-#' @param repeatability_data 
-#' @param selected_group 
-#' @param selected_sample_id 
+#' This function creates a dodged barplot with a bar for each plate, the
+#' relative abundance in percent on the y-axis and the analytes on the x-axis.
+#' The plot is faceted by cluster. On top of each bar a point is shown that
+#' correspond to the relative standard deviation (RSD) in percent.
 #'
-#' @return
+#' @param repeatability_data The return value of
+#'   \code{\link{calculate_repeatability_stats}}.
+#' @param selected_group A character string indicating if the repeatability of
+#'   the total or of the specific samples should be shown. Default is NULL.
+#' @param selected_sample_id A character string indicating what sample type
+#'   should be shown in the plot.
+#'
+#' @return A ggplot object.
 #' @export
 #'
 #' @examples
+#' # First spectra curation has to be performed:
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                      control_sample_types = "PBS",
+#'                                      exclude_sample_types = NULL,
+#'                                      group_keyword = "Total",
+#'                                      percentile = 97,
+#'                                      use_mean_SD = FALSE,
+#'                                      SD_factor = NULL,
+#'                                      uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                         control_sample_types = "PBS",
+#'                                         exclude_sample_types = NULL,
+#'                                         group_keyword = "Spike",
+#'                                         percentile = 97,
+#'                                         use_mean_SD = FALSE,
+#'                                         SD_factor = NULL,
+#'                                         uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs <- dplyr::full_join(cut_offs_total,
+#'                              cut_offs_specific)
+#'
+#' curated_spectra <- curate_spectra(checked_data = checked_data,
+#'                                   summarized_checks = summarized_checks,
+#'                                   cut_offs = cut_offs)
+#'
+#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+#'
+#' for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+#'
+#' # Then analyte curation is performed:
+#' without_samples_to_ignore <- throw_out_samples(
+#'    passing_spectra = for_analyte_curation,
+#'    samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+#' )
+#'
+#' checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+#'                                                    min_ppm_deviation = -20,
+#'                                                    max_ppm_deviation = 20,
+#'                                                    max_ipq = 0.2,
+#'                                                    min_sn = 9,
+#'                                                    criteria_to_consider = c("Mass accuracy",
+#'                                                                             "S/N",
+#'                                                                             "IPQ"))
+#'
+#' curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
+#'                                     cut_off_percentage = 25)
+#'
+#' analyte_curated_data <- dplyr::full_join(curated_analytes,
+#'                                          for_analyte_curation) %>%
+#'    dplyr::filter(has_passed_analyte_curation) %>%
+#'    dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
+#'
+#' # Then we calculate the total intensities for each analyte:
+#' total_intensities <- calculate_total_intensity(analyte_curated_data)
+#'
+#' # And then we can perform total area normalization:
+#' normalized_data <- normalize_data(total_intensities)
+#'
+#' repeatability_stats <- calculate_repeatability_stats(data = normalized_data,
+#'                               standard_sample_id = "pool",
+#'                               standard_group = "Spike")
+#' 
+#' visualize_repeatability(repeatability_data = repeatability_stats,
+#'                         selected_group = "Spike",
+#'                         selected_sample_id = "pool")
 visualize_repeatability <- function(repeatability_data,
-                                     selected_group = NULL,
-                                     selected_sample_id) {
+                                    selected_group = NULL,
+                                    selected_sample_id) {
   # # This code was needed when I made a second axis with the RSD, but because 
   # # plotly didn't work with a second axis it's no longer needed.
   # range_av_abundance <- max(repeatability_data$average_abundance,
@@ -134,16 +309,98 @@ visualize_repeatability <- function(repeatability_data,
   return(plot)
 }
 
-#' Title
+#' Create a plot showing the repeatability for all plates together
 #'
-#' @param data 
-#' @param selected_sample_id 
-#' @param selected_group 
+#' This function creates a bar plot with the relative abundance in percent on
+#' the y-axis and the analytes on the x-axis. On top of the bars points are
+#' shown that correspond to the relative standard deviation (RSD). The plot is
+#' faceted by cluster. Error bars show the standard deviations.
 #'
-#' @return
+#' @inheritParams visualize_repeatability
+#' @param data A dataframe with the curated (and normalized) data.
+#'
+#' @return A ggplot object.
 #' @export
 #'
 #' @examples
+#' # First spectra curation has to be performed:
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                      control_sample_types = "PBS",
+#'                                      exclude_sample_types = NULL,
+#'                                      group_keyword = "Total",
+#'                                      percentile = 97,
+#'                                      use_mean_SD = FALSE,
+#'                                      SD_factor = NULL,
+#'                                      uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                         control_sample_types = "PBS",
+#'                                         exclude_sample_types = NULL,
+#'                                         group_keyword = "Spike",
+#'                                         percentile = 97,
+#'                                         use_mean_SD = FALSE,
+#'                                         SD_factor = NULL,
+#'                                         uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs <- dplyr::full_join(cut_offs_total,
+#'                              cut_offs_specific)
+#'
+#' curated_spectra <- curate_spectra(checked_data = checked_data,
+#'                                   summarized_checks = summarized_checks,
+#'                                   cut_offs = cut_offs)
+#'
+#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+#'
+#' for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+#'
+#' # Then analyte curation is performed:
+#' without_samples_to_ignore <- throw_out_samples(
+#'    passing_spectra = for_analyte_curation,
+#'    samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+#' )
+#'
+#' checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+#'                                                    min_ppm_deviation = -20,
+#'                                                    max_ppm_deviation = 20,
+#'                                                    max_ipq = 0.2,
+#'                                                    min_sn = 9,
+#'                                                    criteria_to_consider = c("Mass accuracy",
+#'                                                                             "S/N",
+#'                                                                             "IPQ"))
+#'
+#' curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
+#'                                     cut_off_percentage = 25)
+#'
+#' analyte_curated_data <- dplyr::full_join(curated_analytes,
+#'                                          for_analyte_curation) %>%
+#'    dplyr::filter(has_passed_analyte_curation) %>%
+#'    dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
+#'
+#' # Then we calculate the total intensities for each analyte:
+#' total_intensities <- calculate_total_intensity(analyte_curated_data)
+#'
+#' # And then we can perform total area normalization:
+#' normalized_data <- normalize_data(total_intensities)
+#'
+#' visualize_repeatability_mean_bars(data = normalized_data,
+#'                                   selected_group = "Spike",
+#'                                   selected_sample_id = "pool")
 visualize_repeatability_mean_bars <- function(data,
                                               selected_sample_id,
                                               selected_group = NULL) {
