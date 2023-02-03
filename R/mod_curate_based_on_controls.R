@@ -91,6 +91,7 @@ mod_curate_based_on_controls_server <- function(id,
     observe({
       shinyjs::toggle("cut_off_basis_total_and_specific",
                       condition = results_data_import$contains_total_and_specific_samples() == "Yes")
+      
       shinyjs::toggle("cut_off_basis",
                       condition = results_data_import$contains_total_and_specific_samples() == "No")
     })
@@ -109,6 +110,9 @@ mod_curate_based_on_controls_server <- function(id,
     # are all combinations of sample_types and groups that are present in the
     # data.
     observe({
+      shinyjs::disable("cut_off_basis")
+      shinyjs::disable("cut_off_basis_specific")
+      shinyjs::disable("cut_off_basis_total")
       req(summarized_checks())
       if (results_data_import$contains_total_and_specific_samples() == "No") {
         options <- unique(summarized_checks()$sample_type)
@@ -117,6 +121,9 @@ mod_curate_based_on_controls_server <- function(id,
         
         updateSelectizeInput(inputId = "cut_off_basis",
                              choices = options)
+        
+        
+        shinyjs::enable("cut_off_basis")
         
       } else {
         
@@ -128,6 +135,8 @@ mod_curate_based_on_controls_server <- function(id,
         updateSelectizeInput(inputId = "cut_off_basis_specific",
                              choices = options_specific)
         
+        shinyjs::enable("cut_off_basis_specific")
+        
         options_total <- get_sample_type_options(
           summarized_checks = summarized_checks(),
           total_or_specific_keyword = results_data_import$keyword_total()
@@ -135,6 +144,8 @@ mod_curate_based_on_controls_server <- function(id,
         
         updateSelectizeInput(inputId = "cut_off_basis_total",
                              choices = options_total)
+        
+        shinyjs::enable("cut_off_basis_total")
       }
     })
     
