@@ -1,3 +1,109 @@
+#' Create a box plot
+#'
+#' This function creates a box plot with points overlaid on top.
+#'
+#' @param data The normalized data in a wide format (every analyte has its own
+#'   column).
+#' @param xvar The variable that should be shown on the x-axis.
+#' @param yvar The variable that should be shown on the y-axis.
+#' @param color The variable that should correspond to the colors in the plot.
+#'   If \code{color} is NULL no variable will be linked to the colors (default).
+#' @param facets The variable that should be used to facet the plot. If
+#'   \code{facets} is NULL the plot will not be faceted (default).
+#'
+#' @return A ggplot object.
+#' @export
+#'
+#' @examples
+#' # First spectra curation has to be performed:
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                      control_sample_types = "PBS",
+#'                                      exclude_sample_types = NULL,
+#'                                      group_keyword = "Total",
+#'                                      percentile = 97,
+#'                                      use_mean_SD = FALSE,
+#'                                      SD_factor = NULL,
+#'                                      uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                         control_sample_types = "PBS",
+#'                                         exclude_sample_types = NULL,
+#'                                         group_keyword = "Spike",
+#'                                         percentile = 97,
+#'                                         use_mean_SD = FALSE,
+#'                                         SD_factor = NULL,
+#'                                         uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs <- dplyr::full_join(cut_offs_total,
+#'                              cut_offs_specific)
+#'
+#' curated_spectra <- curate_spectra(checked_data = checked_data,
+#'                                   summarized_checks = summarized_checks,
+#'                                   cut_offs = cut_offs)
+#'
+#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+#'
+#' for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+#'
+#' # Then analyte curation is performed:
+#' without_samples_to_ignore <- throw_out_samples(
+#'    passing_spectra = for_analyte_curation,
+#'    samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+#' )
+#'
+#' checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+#'                                                    min_ppm_deviation = -20,
+#'                                                    max_ppm_deviation = 20,
+#'                                                    max_ipq = 0.2,
+#'                                                    min_sn = 9,
+#'                                                    criteria_to_consider = c("Mass accuracy",
+#'                                                                             "S/N",
+#'                                                                             "IPQ"))
+#'
+#' curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
+#'                                     cut_off_percentage = 25)
+#'
+#' analyte_curated_data <- dplyr::full_join(curated_analytes,
+#'                                          for_analyte_curation) %>%
+#'    dplyr::filter(has_passed_analyte_curation) %>%
+#'    dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
+#'
+#' # Then we calculate the total intensities for each analyte:
+#' total_intensities <- calculate_total_intensity(analyte_curated_data)
+#'
+#' # And then we can perform total area normalization:
+#' normalized_data <- normalize_data(total_intensities)
+#' 
+#' normalized_data_wide <- normalized_data %>% 
+#' # Removing columns with values that differ between clusters: 
+#'  dplyr::select(-tidyselect::any_of(c("passing_analyte_percentage",
+#'                                      "cut_off_passing_analyte_percentage", 
+#'                                      "cut_off_sum_intensity"))) %>% 
+#'  tidyr::pivot_wider(names_from = c(cluster, analyte),
+#'                     names_sep = "_",
+#'                     values_from = relative_abundance)
+#' 
+#' my_boxplot(data = normalized_data_wide,
+#'            xvar = "sample_type",
+#'            yvar = "IgGI_IgGI1H3N4F1",
+#'            color = "sample_type",
+#'            facets = "group")
 my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
   
   plot <- data %>% 
@@ -59,6 +165,103 @@ my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
   return(plot)
 }
 
+#' Create a scatter plot 
+#'
+#' @inheritParams my_boxplot 
+#'
+#' @return A ggplot object.
+#' @export
+#'
+#' @examples
+#' # First spectra curation has to be performed:
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                      control_sample_types = "PBS",
+#'                                      exclude_sample_types = NULL,
+#'                                      group_keyword = "Total",
+#'                                      percentile = 97,
+#'                                      use_mean_SD = FALSE,
+#'                                      SD_factor = NULL,
+#'                                      uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                         control_sample_types = "PBS",
+#'                                         exclude_sample_types = NULL,
+#'                                         group_keyword = "Spike",
+#'                                         percentile = 97,
+#'                                         use_mean_SD = FALSE,
+#'                                         SD_factor = NULL,
+#'                                         uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs <- dplyr::full_join(cut_offs_total,
+#'                              cut_offs_specific)
+#'
+#' curated_spectra <- curate_spectra(checked_data = checked_data,
+#'                                   summarized_checks = summarized_checks,
+#'                                   cut_offs = cut_offs)
+#'
+#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+#'
+#' for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+#'
+#' # Then analyte curation is performed:
+#' without_samples_to_ignore <- throw_out_samples(
+#'    passing_spectra = for_analyte_curation,
+#'    samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+#' )
+#'
+#' checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+#'                                                    min_ppm_deviation = -20,
+#'                                                    max_ppm_deviation = 20,
+#'                                                    max_ipq = 0.2,
+#'                                                    min_sn = 9,
+#'                                                    criteria_to_consider = c("Mass accuracy",
+#'                                                                             "S/N",
+#'                                                                             "IPQ"))
+#'
+#' curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
+#'                                     cut_off_percentage = 25)
+#'
+#' analyte_curated_data <- dplyr::full_join(curated_analytes,
+#'                                          for_analyte_curation) %>%
+#'    dplyr::filter(has_passed_analyte_curation) %>%
+#'    dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
+#'
+#' # Then we calculate the total intensities for each analyte:
+#' total_intensities <- calculate_total_intensity(analyte_curated_data)
+#'
+#' # And then we can perform total area normalization:
+#' normalized_data <- normalize_data(total_intensities)
+#' 
+#' normalized_data_wide <- normalized_data %>% 
+#' # Removing columns with values that differ between clusters: 
+#'  dplyr::select(-tidyselect::any_of(c("passing_analyte_percentage",
+#'                                      "cut_off_passing_analyte_percentage", 
+#'                                      "cut_off_sum_intensity"))) %>% 
+#'  tidyr::pivot_wider(names_from = c(cluster, analyte),
+#'                     names_sep = "_",
+#'                     values_from = relative_abundance)
+#' 
+#' my_scatter_plot(data = normalized_data_wide,
+#'                 xvar = "IgGI_IgGI1H3N4",
+#'                 yvar = "IgGI_IgGI1H3N4F1",
+#'                 color = "sample_type",
+#'                 facets = "group")
 my_scatter_plot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
   
   plot <- data %>% 
@@ -117,6 +320,102 @@ my_scatter_plot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
   
 }
 
+#' Create a histogram
+#'
+#' @inheritParams my_boxplot
+#'
+#' @return A ggplot object.
+#' @export
+#'
+#' @examples
+#' # First spectra curation has to be performed:
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                      control_sample_types = "PBS",
+#'                                      exclude_sample_types = NULL,
+#'                                      group_keyword = "Total",
+#'                                      percentile = 97,
+#'                                      use_mean_SD = FALSE,
+#'                                      SD_factor = NULL,
+#'                                      uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                         control_sample_types = "PBS",
+#'                                         exclude_sample_types = NULL,
+#'                                         group_keyword = "Spike",
+#'                                         percentile = 97,
+#'                                         use_mean_SD = FALSE,
+#'                                         SD_factor = NULL,
+#'                                         uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs <- dplyr::full_join(cut_offs_total,
+#'                              cut_offs_specific)
+#'
+#' curated_spectra <- curate_spectra(checked_data = checked_data,
+#'                                   summarized_checks = summarized_checks,
+#'                                   cut_offs = cut_offs)
+#'
+#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+#'
+#' for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+#'
+#' # Then analyte curation is performed:
+#' without_samples_to_ignore <- throw_out_samples(
+#'    passing_spectra = for_analyte_curation,
+#'    samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+#' )
+#'
+#' checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+#'                                                    min_ppm_deviation = -20,
+#'                                                    max_ppm_deviation = 20,
+#'                                                    max_ipq = 0.2,
+#'                                                    min_sn = 9,
+#'                                                    criteria_to_consider = c("Mass accuracy",
+#'                                                                             "S/N",
+#'                                                                             "IPQ"))
+#'
+#' curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
+#'                                     cut_off_percentage = 25)
+#'
+#' analyte_curated_data <- dplyr::full_join(curated_analytes,
+#'                                          for_analyte_curation) %>%
+#'    dplyr::filter(has_passed_analyte_curation) %>%
+#'    dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
+#'
+#' # Then we calculate the total intensities for each analyte:
+#' total_intensities <- calculate_total_intensity(analyte_curated_data)
+#'
+#' # And then we can perform total area normalization:
+#' normalized_data <- normalize_data(total_intensities)
+#' 
+#' normalized_data_wide <- normalized_data %>% 
+#' # Removing columns with values that differ between clusters: 
+#'  dplyr::select(-tidyselect::any_of(c("passing_analyte_percentage",
+#'                                      "cut_off_passing_analyte_percentage", 
+#'                                      "cut_off_sum_intensity"))) %>% 
+#'  tidyr::pivot_wider(names_from = c(cluster, analyte),
+#'                     names_sep = "_",
+#'                     values_from = relative_abundance)
+#' 
+#' my_histogram(data = normalized_data_wide,
+#'              xvar = "IgGI_IgGI1H3N4",
+#'              color = "sample_type",
+#'              facets = "group")
 my_histogram <- function(data, xvar = NULL, color = NULL, facets = NULL) {
   
   plot <- data %>% 
@@ -172,14 +471,7 @@ my_histogram <- function(data, xvar = NULL, color = NULL, facets = NULL) {
   
 }
 
-#' Title
-#'
-#' @param varname 
-#'
-#' @return
-#' @export
-#'
-#' @examples
+# nicer_label is a helper function that is used in the plotting functions above:
 nicer_label <- function(varname) {
   
   firstupper(stringr::str_replace_all(
@@ -193,64 +485,5 @@ nicer_label <- function(varname) {
   
 }
 
-#' Title
-#'
-#' @param string 
-#'
-#' @return
-#' @export
-#'
-#' @examples
-firstupper <- function(string) {
-  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
-  return(string)
-}
 
-#' Title
-#'
-#' @param string 
-#'
-#' @return
-#' @export
-#'
-#' @examples
-firstlower <- function(string) {
-  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
-  return(string)
-}
-
-#' Title
-#'
-#' @param ggplot_object 
-#'
-#' @return
-#' @export
-#'
-#' @examples
-nfacets <- function(ggplot_object) {
-  build <- ggplot2::ggplot_build(ggplot_object)
-  length(levels(build$data[[1]]$PANEL))
-}
-
-#' Title
-#'
-#' @param plotly_object 
-#'
-#' @return
-#' @export
-#'
-#' @examples
-hide_outliers <- function(plotly_object) {
-  
-  plotly_object[["x"]][["data"]] <- purrr::map(
-    plotly_object[["x"]][["data"]], 
-    function(x) {
-      if (x$hoverinfo == 'y') {  
-        x$marker = list(opacity = 0) 
-      }  
-      return(x) 
-    })
-  
-  return(plotly_object)
-}
 
