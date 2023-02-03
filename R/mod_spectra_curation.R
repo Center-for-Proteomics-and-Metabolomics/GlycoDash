@@ -314,7 +314,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     # Analyte quality criteria checks summarized per cluster per sample: 
     summarized_checks <- reactive({
-      req(checked_data)
+      req(checked_data())
       summarize_spectra_checks(checked_data())
     })
     
@@ -429,18 +429,20 @@ mod_spectra_curation_server <- function(id, results_data_import){
         id = "button",
         condition = all(is_truthy(checked_data()),
                         is_truthy(summarized_checks()),
-                        is_truthy(cut_offs_to_use_all_clusters()))
+                        is_truthy(cut_offs_to_use_all_clusters()),
+                        !rlang::is_empty(cut_offs_to_use_all_clusters()))
       )
     })
     
     # Perform spectra curation:
     curated_data <- reactive({
-      req(cut_offs_to_use_all_clusters())
+      # req(cut_offs_to_use_all_clusters(),
+      #     !rlang::is_empty(cut_offs_to_use_all_clusters()))
       curate_spectra(checked_data = checked_data(),
                      summarized_checks = summarized_checks(),
                      cut_offs = cut_offs_to_use_all_clusters())
     }) %>% bindEvent(input$button)
-    
+
     
     observe({
       showNotification("Spectra curation has been performed.",
