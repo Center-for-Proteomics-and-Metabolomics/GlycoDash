@@ -35,14 +35,26 @@
 #'
 #' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
 #'
-#' cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
-#'                                control_sample_types = "PBS",
-#'                                exclude_sample_types = NULL,
-#'                                group_keyword = "Total",
-#'                                percentile = 97,
-#'                                use_mean_SD = FALSE,
-#'                                SD_factor = NULL,
-#'                                uncalibrated_as_NA = TRUE)
+#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                      control_sample_types = "PBS",
+#'                                      exclude_sample_types = NULL,
+#'                                      group_keyword = "Total",
+#'                                      percentile = 97,
+#'                                      use_mean_SD = FALSE,
+#'                                      SD_factor = NULL,
+#'                                      uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                         control_sample_types = "PBS",
+#'                                         exclude_sample_types = NULL,
+#'                                         group_keyword = "Spike",
+#'                                         percentile = 97,
+#'                                         use_mean_SD = FALSE,
+#'                                         SD_factor = NULL,
+#'                                         uncalibrated_as_NA = TRUE)
+#' 
+#' cut_offs <- dplyr::full_join(cut_offs_total,
+#'                              cut_offs_specific)
 #'
 #' curated_spectra <- curate_spectra(checked_data = checked_data,
 #'                                   summarized_checks = summarized_checks,
@@ -128,14 +140,14 @@ throw_out_samples <- function(passing_spectra,
 #'
 #' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
 #'
-#'cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
-#'                                     control_sample_types = "PBS",
-#'                                     exclude_sample_types = NULL,
-#'                                     group_keyword = "Total",
-#'                                     percentile = 97,
-#'                                     use_mean_SD = FALSE,
-#'                                     SD_factor = NULL,
-#'                                     uncalibrated_as_NA = TRUE)
+#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                      control_sample_types = "PBS",
+#'                                      exclude_sample_types = NULL,
+#'                                      group_keyword = "Total",
+#'                                      percentile = 97,
+#'                                      use_mean_SD = FALSE,
+#'                                      SD_factor = NULL,
+#'                                      uncalibrated_as_NA = TRUE)
 #'
 #' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
 #'                                         control_sample_types = "PBS",
