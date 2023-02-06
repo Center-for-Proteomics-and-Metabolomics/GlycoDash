@@ -63,8 +63,8 @@ mod_tab_cut_offs_ui <- function(id){
 #'
 #' @noRd 
 mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
-                                    #switch_to_manual, cut_offs_to_use, manual_cut_offs,
-                                    contains_total_and_specific_samples, calculated_cut_offs,
+                                    contains_total_and_specific_samples, 
+                                    calculated_cut_offs,
                                     keyword_specific, keyword_total,
                                     curation_method){
   moduleServer(id, function(input, output, session){
@@ -91,6 +91,62 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     observe({
       shinyjs::toggle("switch_to_manual",
                       condition = curation_method() != "Skip spectra curation")
+    })
+    
+    observe({
+      req(calculated_cut_offs())
+      req(is_truthy(input$switch_to_manual))
+      
+      if (contains_total_and_specific_samples() == "Yes") {
+        calculated_sum_intensity_cut_off_specific <- calculated_cut_offs() %>% 
+          dplyr::filter(group == keyword_specific()) %>% 
+          dplyr::pull(cut_off_sum_intensity)
+        
+        updateNumericInput(session = session,
+                           inputId = "cut_off_sum_intensity_specific",
+                           value = calculated_sum_intensity_cut_off_specific)
+        
+        calculated_sum_intensity_cut_off_total <- calculated_cut_offs() %>% 
+          dplyr::filter(group == keyword_total()) %>% 
+          dplyr::pull(cut_off_sum_intensity)
+        
+        updateNumericInput(session = session,
+                           inputId = "cut_off_sum_intensity_total",
+                           value = calculated_sum_intensity_cut_off_total)
+        
+        calculated_passing_analyte_percentage_cut_off_specific <- calculated_cut_offs() %>% 
+          dplyr::filter(group == keyword_specific()) %>% 
+          dplyr::pull(cut_off_passing_analyte_percentage)
+        
+        updateNumericInput(session = session,
+                           inputId = "cut_off_passing_analyte_percentage_specific",
+                           value = calculated_passing_analyte_percentage_cut_off_specific)
+        
+        calculated_passing_analyte_percentage_cut_off_total <- calculated_cut_offs() %>% 
+          dplyr::filter(group == keyword_total()) %>% 
+          dplyr::pull(cut_off_passing_analyte_percentage)
+        
+        updateNumericInput(session = session,
+                           inputId = "cut_off_passing_analyte_percentage_total",
+                           value = calculated_passing_analyte_percentage_cut_off_total)
+          
+      } else if (contains_total_and_specific_samples() == "No") {
+        
+        calculated_sum_intensity_cut_off <- calculated_cut_offs() %>% 
+          dplyr::pull(cut_off_sum_intensity)
+        
+        updateNumericInput(session = session,
+                           inputId = "cut_off_sum_intensity",
+                           value = calculated_sum_intensity_cut_off)
+        
+        calculated_passing_analyte_percentage_cut_off <- calculated_cut_offs() %>% 
+          dplyr::pull(cut_off_passing_analyte_percentage)
+        
+        updateNumericInput(session = session,
+                           inputId = "cut_off_passing_analyte_percentage",
+                           value = calculated_passing_analyte_percentage_cut_off)
+      }
+      
     })
     
     manual_cut_offs <- reactive({
@@ -197,16 +253,24 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
         expr = {
           dplyr::full_join(calculated_cut_offs(),
                            manual_cut_offs()) %>% 
-            dplyr::mutate(`Based on samples` = purrr::map_chr(
-              sample_type_list,
-              ~ paste(ifelse(rlang::is_empty(.x),"No", "Yes,"),
-                      comma_and(.x$sample_type)))) %>% 
+            dplyr::mutate(
+              `Based on samples` = purrr::map_chr(
+                sample_type_list,
+                ~ paste(ifelse(rlang::is_empty(.x),"No", "Yes,"),
+                        comma_and(.x$sample_type))
+              ),
+              curation_method = firstupper(
+                stringr::str_replace_all(curation_method,
+                                         pattern = "_",
+                                         replacement = " ")
+              )
+            ) %>% 
             dplyr::ungroup() %>% 
             dplyr::select(-c(cluster,
-                             sample_type_list,
-                             curation_method)) %>% 
+                             sample_type_list)) %>% 
             dplyr::rename("Sum intensity cut-off" = cut_off_sum_intensity,
-                          "Percentage of passing analytes cut-off" = cut_off_passing_analyte_percentage) %>% 
+                          "Percentage of passing analytes cut-off" = cut_off_passing_analyte_percentage,
+                          "Curation method" = curation_method) %>% 
             dplyr::rename_with(firstupper)
           
         },
@@ -214,27 +278,33 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
           if (is_truthy(calculated_cut_offs())) {
             
             calculated_cut_offs() %>% 
-              dplyr::mutate(`Based on sample types` = purrr::map_chr(
-                sample_type_list,
-                ~ paste("Yes,",
-                        comma_and(.x$sample_type)))) %>% 
+              dplyr::mutate(
+                `Based on sample types` = purrr::map_chr(
+                  sample_type_list,
+                  ~ paste("Yes,",
+                          comma_and(.x$sample_type))),
+                curation_method = firstupper(
+                  stringr::str_replace_all(curation_method,
+                                           pattern = "_",
+                                           replacement = " "))) %>% 
               dplyr::ungroup() %>% 
               dplyr::select(-c(cluster,
-                               sample_type_list,
-                               curation_method)) %>% 
+                               sample_type_list)) %>% 
               dplyr::rename("Cut-off sum intensity" = cut_off_sum_intensity,
-                            "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage) %>% 
+                            "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage,
+                            "Curation method" = curation_method) %>% 
               dplyr::rename_with(firstupper)
             
           } else {
             
             manual_cut_offs() %>% 
-              dplyr::mutate(`Based on sample types` = "No") %>% 
+              dplyr::mutate(`Based on sample types` = "No",
+                            curation_method = "Manual cut-offs") %>% 
               dplyr::ungroup()%>% 
               dplyr::rename("Cut-off sum intensity" = cut_off_sum_intensity,
-                            "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage) %>% 
-              dplyr::select(-c(cluster,
-                               curation_method)) %>% 
+                            "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage,
+                            "Curation method" = curation_method) %>% 
+              dplyr::select(-c(cluster)) %>% 
               dplyr::rename_with(firstupper)
             
           }
