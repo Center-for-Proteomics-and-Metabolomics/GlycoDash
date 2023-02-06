@@ -425,13 +425,28 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     observe({
-      shinyjs::toggleState(
-        id = "button",
-        condition = all(is_truthy(checked_data()),
-                        is_truthy(summarized_checks()),
-                        is_truthy(cut_offs_to_use_all_clusters()),
-                        !rlang::is_empty(cut_offs_to_use_all_clusters()))
-      )
+      shinyjs::disable(id = "button")
+      
+      req(checked_data(),
+          summarized_checks(),
+          cut_offs_to_use_all_clusters(),
+          !rlang::is_empty(cut_offs_to_use_all_clusters()))
+      
+      shinyjs::enable(id = "button")
+      
+      # shinyjs::toggleState(
+      #   id = "button",
+      #   condition = all(
+      #     is_truthy(checked_data()),
+      #     is_truthy(summarized_checks()),
+      #     is_truthy(cut_offs_to_use_all_clusters()),
+      #     !rlang::is_empty(cut_offs_to_use_all_clusters())
+      #   )
+      # )
+      
+      # This didn't work because when checked_data() did exist but was 
+      # invalidated, is_truthy() would act like req() and pause until checked_data
+      # had been updated. The button would just stay enabled throughout this.
     })
     
     # Perform spectra curation:

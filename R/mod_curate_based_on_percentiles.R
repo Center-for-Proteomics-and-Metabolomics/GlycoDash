@@ -37,11 +37,15 @@ mod_curate_based_on_percentiles_server <- function(id,
     ns <- session$ns
     
     observe({
+      shinyjs::disable("exclude_sample_types")
       req(summarized_checks())
+      
       updateSelectInput(
         inputId = "exclude_sample_types",
         choices = unique(summarized_checks()$sample_type)
       )
+      
+      shinyjs::enable("exclude_sample_types")
     })
     
     cut_offs <- reactive({
