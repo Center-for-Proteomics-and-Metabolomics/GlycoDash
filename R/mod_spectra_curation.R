@@ -303,6 +303,9 @@ mod_spectra_curation_server <- function(id, results_data_import){
           input$ipq
       )
       
+      r$tab_contents <- NULL # Reset the tab contents so that 
+      # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
+      
       check_analyte_quality_criteria(my_data = summary(),
                                      min_ppm_deviation = input$mass_accuracy[1],
                                      max_ppm_deviation = input$mass_accuracy[2],
@@ -405,9 +408,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
               contains_total_and_specific_samples = results_data_import$contains_total_and_specific_samples,
               keyword_specific = results_data_import$keyword_specific,
               keyword_total = results_data_import$keyword_total,
-              calculated_cut_offs = reactive({
-                calculated_cut_offs() %>% 
-                  dplyr::filter(cluster == current_cluster)
+              calculated_cut_offs = reactive({ 
+                if (is.null(calculated_cut_offs())) { # When spectra curation is skipped.
+                  NULL
+                } else {
+                  calculated_cut_offs() %>% 
+                    dplyr::filter(cluster == current_cluster)
+                }       
               }),
               curation_method = reactive({ input$curation_method })
             )
@@ -427,43 +434,26 @@ mod_spectra_curation_server <- function(id, results_data_import){
     observe({
       shinyjs::disable(id = "button")
       
-      req(checked_data(),
-          summarized_checks(),
+      req(summarized_checks(),
           cut_offs_to_use_all_clusters(),
           !rlang::is_empty(cut_offs_to_use_all_clusters()))
       
       shinyjs::enable(id = "button")
-      
-      # shinyjs::toggleState(
-      #   id = "button",
-      #   condition = all(
-      #     is_truthy(checked_data()),
-      #     is_truthy(summarized_checks()),
-      #     is_truthy(cut_offs_to_use_all_clusters()),
-      #     !rlang::is_empty(cut_offs_to_use_all_clusters())
-      #   )
-      # )
-      
-      # This didn't work because when checked_data() did exist but was 
-      # invalidated, is_truthy() would act like req() and pause until checked_data
-      # had been updated. The button would just stay enabled throughout this.
-    })
+    },
+    priority = 10) # Ensure that this observer is executed before others so that 
+    # the button is disabled immediately.
     
-    # Perform spectra curation:
+    # Perform spectra curation when button is clicked:
     curated_data <- reactive({
-      # req(cut_offs_to_use_all_clusters(),
-      #     !rlang::is_empty(cut_offs_to_use_all_clusters()))
       curate_spectra(checked_data = checked_data(),
                      summarized_checks = summarized_checks(),
                      cut_offs = cut_offs_to_use_all_clusters())
     }) %>% bindEvent(input$button)
-
     
     observe({
       showNotification("Spectra curation has been performed.",
                        type = "message")
     }) %>% bindEvent(curated_data())
-    
     
     passing_spectra <- reactive({
       req(curated_data())
@@ -483,8 +473,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
         remove_unneeded_columns(passing_spectra = passing_spectra())
       }
     })
-    
-    # TODO: fix which columns are shown in the tables
     
     output$failed_spectra_table <- DT::renderDataTable({
       req(curated_data())
@@ -508,7 +496,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
                       dplyr::filter(has_passed_spectra_curation == FALSE),
                     options = list(scrollX = TRUE,
                                    searching = TRUE))
-      
     })
     
     
@@ -518,7 +505,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
       plot_spectra_curation_results(curated_data(),
                                     results_data_import$contains_total_and_specific_samples())
-      
     })
     
     observe({
