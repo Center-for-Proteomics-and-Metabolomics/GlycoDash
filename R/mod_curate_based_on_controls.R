@@ -106,46 +106,52 @@ mod_curate_based_on_controls_server <- function(id,
                       condition = input$use_mean_SD)
     })
     
+    # Creating a reactiveValue with the sample type options for the selectInput
+    # menu to choose negative control samples:
+    r <- reactiveValues()
+    
+    observe({
+      req(summarized_checks)
+      r$sample_types <- summarized_checks() %>% 
+        dplyr::select(tidyselect::any_of(c("sample_type", "group"))) %>% 
+        dplyr::distinct()
+    })
+    # I'm using a reactiveValue instead of a reactive expression, because a
+    # reactiveValue is not invalidated if its value stays the same. Using a
+    # reactiveValue here prevents the observer below (where the menus are updated)
+    # from re-executing when it's not needed.
+    
     # The selection menu for input$cut_off_basis is updated so that the choices
     # are all combinations of sample_types and groups that are present in the
     # data.
     observe({
-      shinyjs::disable("cut_off_basis")
-      shinyjs::disable("cut_off_basis_specific")
-      shinyjs::disable("cut_off_basis_total")
-      req(summarized_checks())
+      req(r$sample_types)
       if (results_data_import$contains_total_and_specific_samples() == "No") {
-        options <- unique(summarized_checks()$sample_type)
+        options <- unique(r$sample_types$sample_type)
         
         names(options) <- paste(options, "samples")
         
         updateSelectizeInput(inputId = "cut_off_basis",
                              choices = options)
         
-        
-        shinyjs::enable("cut_off_basis")
-        
       } else {
         
         options_specific <- get_sample_type_options(
-          summarized_checks = summarized_checks(),
+          summarized_checks = r$sample_types,
           total_or_specific_keyword = results_data_import$keyword_specific()
         )
         
         updateSelectizeInput(inputId = "cut_off_basis_specific",
                              choices = options_specific)
         
-        shinyjs::enable("cut_off_basis_specific")
-        
         options_total <- get_sample_type_options(
-          summarized_checks = summarized_checks(),
+          summarized_checks = r$sample_types,
           total_or_specific_keyword = results_data_import$keyword_total()
         )
         
         updateSelectizeInput(inputId = "cut_off_basis_total",
                              choices = options_total)
         
-        shinyjs::enable("cut_off_basis_total")
       }
     })
     
