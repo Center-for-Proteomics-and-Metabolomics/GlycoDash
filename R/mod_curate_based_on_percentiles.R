@@ -36,16 +36,26 @@ mod_curate_based_on_percentiles_server <- function(id,
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    # Creating a reactiveValue with the sample type options for the selectInput
+    # menu to choose samples to exclude:
+    r <- reactiveValues()
+    
     observe({
-      shinyjs::disable("exclude_sample_types")
-      req(summarized_checks())
+      req(summarized_checks)
+      r$sample_types <- unique(summarized_checks()$sample_type)
+    })
+    # I'm using a reactiveValue instead of a reactive expression, because a
+    # reactiveValue is not invalidated if its value stays the same. Using a
+    # reactiveValue here prevents the observer below (where the menu is updated)
+    # from re-executing when it's not needed.
+    
+    observe({
+      req(r$sample_types)
       
       updateSelectInput(
         inputId = "exclude_sample_types",
-        choices = unique(summarized_checks()$sample_type)
+        choices = unique(r$sample_types$sample_type)
       )
-      
-      shinyjs::enable("exclude_sample_types")
     })
     
     cut_offs <- reactive({
@@ -63,9 +73,3 @@ mod_curate_based_on_percentiles_server <- function(id,
     return(cut_offs)
   })
 }
-    
-## To be copied in the UI
-# mod_curate_based_on_percentiles_ui("curate_based_on_percentiles_ui_1")
-    
-## To be copied in the server
-# mod_curate_based_on_percentiles_server("curate_based_on_percentiles_ui_1")
