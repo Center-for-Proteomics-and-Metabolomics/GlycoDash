@@ -347,6 +347,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                  ))
                      })
                    
+                   #TODO: Jasper vragen waarom dit niet werkt
                    shinyjs::runjs(paste0("$('#analyte_curation_ui_1-",
                                          cluster,
                                          "-table datatables').DataTable().draw();"))
