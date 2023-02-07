@@ -54,7 +54,7 @@ mod_curate_based_on_percentiles_server <- function(id,
       
       updateSelectInput(
         inputId = "exclude_sample_types",
-        choices = unique(r$sample_types$sample_type)
+        choices = unique(r$sample_types)
       )
     })
     
