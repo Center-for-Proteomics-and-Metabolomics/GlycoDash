@@ -303,33 +303,54 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       #                    type = "message")
       # }
     }) %>% bindEvent(analyte_curated_data())
-    
+   
     clusters <- reactive({
-      req(passing_spectra())
-      unique(passing_spectra()$cluster)
+      req(analyte_curated_data())
+      unique(analyte_curated_data()$cluster)
+    })
+    
+    r <- reactiveValues(mod_results = list(),
+                        created_cluster_tabs = vector())
+    
+    # Save which tabs have been created in r$created_cluster_tabs so that they
+    # can still be removed after clusters() changes:
+    observe({
+      req(clusters())
+      r$created_cluster_tabs <- union(isolate({ r$created_cluster_tabs }),
+                                      clusters())
     })
     
     observe({
-      req(clusters())
+      req(clusters(),
+          r$created_cluster_tabs)
       
-      # Remove tabs in case they have been created before. Still not ideal cause
-      # if the user goes back and changes the cluster names then the old tabs
-      # won't be removed.
-      purrr::map(clusters(),
+      # Remove tabs that have been created before:
+      purrr::map(r$created_cluster_tabs,
                 function(cluster) {
                   removeTab("tabs",
                             target = cluster)
+                  # Trying to remove a tab that doesn't exist does not result in an error
                 })
       
-      # Create one tab for each cluster:
+      # Create one tab for each cluster in without_samples_to_ignore:
       purrr::map(clusters(),
                  function(cluster) {
-                   appendTab("tabs",
-                             select = TRUE,
-                             tabPanel(
-                               title = cluster,
-                               mod_tab_curated_analytes_ui(ns(cluster))
-                             ))
+                   shinyjs::delay(
+                     ms = 2000,
+                     expr = {
+                       appendTab("tabs",
+                                 select = TRUE,
+                                 session = session,
+                                 tabPanel(
+                                   title = cluster,
+                                   mod_tab_curated_analytes_ui(ns(cluster))
+                                 ))
+                     })
+                   
+                   shinyjs::runjs(paste0("$('#analyte_curation_ui_1-",
+                                         cluster,
+                                         "-table datatables').DataTable().draw();"))
+                   
                  })
     })
     
@@ -339,8 +360,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       analyte_curated_data = analyte_curated_data,
       method = reactive({ input$method })
     )
-    
-    r <- reactiveValues(mod_results = list())
     
     observe({
       req(clusters())
@@ -354,8 +373,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                             info = info,
                                             cluster = cluster)
           })
-    })
-    
+    },
+    priority = 10)
     
     with_analytes_to_include <- reactive({
       req(passing_spectra(),
