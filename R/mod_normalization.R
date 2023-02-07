@@ -24,7 +24,10 @@ mod_normalization_ui <- function(id){
                        "Perform total area normalization"),
           br(),
           br(),
-          DT::dataTableOutput(ns("data_table"))
+          DT::dataTableOutput(ns("data_table")),
+          br(),
+          br(),
+          "To download the normalized data proceed to the 'Export results' tab."
         )
       )
     )
