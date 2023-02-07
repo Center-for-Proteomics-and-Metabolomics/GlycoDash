@@ -21,662 +21,508 @@ devtools::load_all()
 
 ```
 
-This vignette is not yet finished!
+This vignette gives an overview of the steps that are performed within the Glycodash dashboard and the options available to users. For more detailed information check the documentation of the functions.
 
-## Data import
+## 1. Data import tab
 
-The data import functions can be used to convert a LacyTools summary file to a format suitable for R.
+The data import step can be broken down into 5 smaller steps:
 
-```{r reading-the-lacytools-summary}
+1.  Upload a LacyTools summary file.
 
-lacytools_file <- system.file("extdata",
-                              "LacyTools_summary_example.txt", 
-                              package = "glycodash")
+2.  Link sample ID's to your data.
 
-raw_data <- read_non_rectangular(lacytools_file)
+3.  Determine the sample types (e.g. blanks, pools, patient samples)
 
-data <- convert_lacytools_summary(raw_data) %>% 
-  detect_group(.,
-               keyword_specific = "Spike",
-               keyword_total = "Total") %>% 
-  # This might be a faster way of adding clusters since now a factor is used
-  dplyr::mutate(analyte = factor(analyte))
+4.  Divide the analytes into clusters.
 
-cluster_keywords <- c("IgGI1")
+5.  Link metadata (e.g. age and sex of patients) to your data.
 
-# The str_extract is now only done on each unique analyte instead of on every single one
-clusters <- tibble::tibble(analyte = levels(data$analyte)) %>% 
-  dplyr::mutate(cluster = stringr::str_extract(analyte,
-                     paste0("(",
-                            paste0(cluster_keywords, 
-                                   collapse = "|"),
-                            ")")))
+### 1.1 Upload a LacyTools summary file
 
-data <- dplyr::left_join(data, clusters) %>% 
-  dplyr::relocate(cluster, .after = analyte)
-  
+```{r upload-your-data}
+
+path_to_file <- system.file("extdata",
+                            "LacyTools_summary_example.txt",
+                            package = "glycodash")
+
+raw_LacyTools_summary <- read_non_rectangular(path = path_to_file, 
+                                          delim = "\t")
+
+LacyTools_summary <- convert_lacytools_summary(data = raw_LacyTools_summary)
+
+LacyTools_summary <- detect_group(data = LacyTools_summary,
+                                  keyword_specific = "Spike",
+                                  keyword_total = "Total")
 
 ```
 
-In addition, a plate design file can be processed to add sample types and sample ID's to the data.
+### 1.2 Add sample ID's
 
-```{r processing-the-plate-design}
+There are two methods to add sample ID's to your data:
 
-# plate_design_file <- system.file("extdata",
-#                                  "Plate_design_example.xlsx",
-#                                  package = "glycodash")
+1.  Upload a plate design
 
-sample_list_file <- system.file("extdata",
-                                 "Sample_list_example.xlsx",
-                                 package = "glycodash")
+2.  Upload a sample list
 
-sample_list <- process_sample_list(sample_list_file)
+```{r add-sample-IDs-with-plate-design}
 
-data_complete <- dplyr::left_join(data,
-                                    sample_list) %>% 
+path_to_plate_design <- system.file("extdata",
+                                    "Plate_design_example.xlsx",
+                                    package = "glycodash")
+
+plate_design <- read_and_process_plate_design(
+  plate_design_file = path_to_plate_design
+)
+
+summary_with_plate_well <- detect_plate_and_well(data = LacyTools_summary)
+
+with_sample_ids <- dplyr::left_join(summary_with_plate_well,
+                                    plate_design)
+
+```
+
+```{r add-sample-IDs-with-sample-list}
+
+path_to_sample_list <- system.file("extdata",
+                                   "Sample_list_example.xlsx",
+                                   package = "glycodash")
+
+sample_list <- process_sample_list(sample_list_file = path_to_sample_list)
+
+summary_with_plate_well <- detect_plate_and_well(data = LacyTools_summary)
+
+with_sample_ids <- dplyr::left_join(summary_with_plate_well,
+                                    sample_list)
+
+
+```
+
+Based on the sample ID's a column is added to the data which indicates whether a sample has been measured in replicates.
+
+```{r determine-replicates}
+
+replicates <- with_sample_ids %>% 
+  dplyr::select(tidyselect::any_of(c("sample_name", "sample_id", "group"))) %>% 
+  dplyr::distinct() %>% 
+  dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
+  dplyr::add_count(sample_id, name = "number_of_replicates") %>% 
+  dplyr::mutate(number_of_replicates = ifelse(
+    sample_id == "empty cell in plate design",
+    1,
+    number_of_replicates
+  )) %>% 
+  dplyr::mutate(replicates = ifelse(number_of_replicates > 1, 
+                                    TRUE, 
+                                    FALSE)) %>% 
+  dplyr::ungroup(.)
+
+with_sample_ids <- dplyr::full_join(replicates, 
+                                    with_sample_ids)
+
+```
+
+### 1.3 Determine sample types
+
+There are 2 methods to determine the sample types:
+
+1.   Automatically based on the sample ID's.
+
+2.  By uploading a sample types list.
+
+```{r automatically-determine-sample_types}
+
+with_sample_types <- with_sample_ids %>% 
   tidyr::extract(col = sample_id,
                  into = c("sample_type"),
                  regex = "([[:alpha:]]+)",
-                 remove = FALSE)
-
-# No longer works with stricter sample name format (sample list should be used instead):
-#plate_design <- read_and_process_plate_design(plate_design_file)
-
-#data_with_platewell <- detect_plate_and_well(data)
-
-# data_complete <- dplyr::left_join(data_with_platewell,
-#                                   plate_design) %>% 
-#   tidyr::extract(col = sample_id,
-#                  into = c("sample_type"),
-#                  regex = "([[:alpha:]]+)",
-#                  remove = FALSE) %>% 
-#   define_clusters(.,
-#                   cluster_keywords = "IgGI1")
-
-replicates <- data_complete %>% 
-        dplyr::select(tidyselect::any_of(c("sample_name", "sample_id", "group"))) %>% 
-        dplyr::distinct() %>% 
-        dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
-        dplyr::add_count(sample_id, name = "number_of_replicates") %>% 
-        dplyr::mutate(number_of_replicates = ifelse(sample_id == "empty cell in plate design",
-                                                    1,
-                                                    number_of_replicates)) %>% 
-        dplyr::mutate(replicates = ifelse(number_of_replicates > 1, 
-                                          TRUE, 
-                                          FALSE))
-      
-data_complete <- dplyr::full_join(replicates, data_complete) %>% 
-  dplyr::ungroup(.)
-
-data_complete
+                 remove = FALSE) %>% 
+  dplyr::mutate(
+    sample_type = ifelse(
+      sample_id == "empty cell in plate design",
+      "unknown",
+      sample_type
+    ),
+    sample_type = ifelse(is.na(sample_type),
+                         "undetermined",
+                         sample_type),
+    sample_type = as.factor(sample_type)
+  )
 
 ```
 
-Finally, metadata can be added to the data.
+```{r upload-a-sample-types-list}
 
-```{r adding-metadata, eval=FALSE}
+path_to_sample_type_file <- system.file("extdata",
+                                        "Sample_types_example.xlsx",
+                                        package = "glycodash")
 
-metadata_file <- system.file("extdata",
-                            "Metadata_example.xlsx",
-                            package = "glycodash")
+sample_types <- read_sample_type_file(filepath = path_to_sample_type_file,
+                                      filename = "Sample_types_example.xlsx")
 
-metadata <- read_metadata(metadata_file,
-                          "Metadata_example.xlsx")
-
-metadata
-
-data <- dplyr::left_join(data_complete,
-                         metadata$Metadata_example.xlsx,
-                         by = c(sample_id = "sample_id"))
+with_sample_types <- dplyr::left_join(with_sample_ids,
+                                      dplyr::distinct(sample_types)) %>% 
+  dplyr::mutate(sample_type = as.factor(sample_type))
+# TODO: in module make sure sample types based on list is a factor!
 
 ```
 
-## Spectra curation
+### 1.4 Divide analytes into clusters
 
-The spectra curation functions can be used to curate spectra, based on the 
-proportion of analytes within the spectrum that fulfill the analyte quality 
-criteria and based on the sum intensity of those passing analytes within the 
-spectrum. This proportion of passing analytes and this sum intensity are compared
-to the cut-off values for both. The cut-off values are the average 
-proportion of passing analytes and average sum intensity + 3 times the standard 
-deviations in a chosen group of spectra that should not pass curation (cut_off_basis). 
+The user needs to indicate the number of clusters and give a keyword for each cluster.
+
+```{r clusters}
+
+with_clusters <- define_clusters(data = with_sample_types,
+                                 cluster_keywords = c("IgGI"))
+
+```
+
+### 1.5 Link metadata
+
+This step is optional. Users can upload one or more metadata files (Excel or .rds).
+
+```{r link-metadata}
+
+# In this example only one metadata file is uploaded:
+path_to_metadata <- system.file("extdata",
+                                "Metadata_example.xlsx",
+                                package = "glycodash")
+
+metadata_list <- read_metadata(filepaths = list(path_to_metadata),
+                               filenames = list("Metadata_example.xlsx"))
+
+merged_metadata <- purrr::reduce(metadata_list,
+                                 dplyr::full_join,
+                                 by = "sample_id")
+
+with_metadata <- dplyr::left_join(with_clusters,
+                                  merged_metadata)
+
+```
+
+## 2. Spectra curation
+
+There are 3 options for spectra curation:
+
+1.  Curate spectra based on negative controls
+
+2.  Curate spectra based on percentiles
+
+3.  Skip spectra curation
+
+For both option 1 and 2 analyte quality criteria are used to curate analytes within each spectrum. Then the sum intensity and percentage of passing analytes is calculated for each spectrum and shown in the spectra curation cut--off plot.
+
+```{r sum-intenisty-and-percentage-of-passing-analytes}
+
+# The user chooses the analyte quality criteria:
+min_ppm_deviation <- -20
+max_ppm_deviation <- 20
+max_ipq <- 0.2
+min_sn <- 9
+
+# Hidden under 'Advanced settings'  the user can indicate which analyte quality criteria should be taken into account during spectra curation:
+criteria_to_consider <- c("Mass accuracy",
+                          "S/N",
+                          "IPQ")
+
+checked_data <- check_analyte_quality_criteria(
+  my_data = with_metadata,
+  min_ppm_deviation = min_ppm_deviation,
+  max_ppm_deviation = max_ppm_deviation,
+  max_ipq = max_ipq,
+  min_sn = min_sn,
+  criteria_to_consider = criteria_to_consider
+)
+
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+
+# For each cluster in the data a tab is created on which a plot is shown. In this example there is only one cluster (IgGI):
+cut_off_plot <- create_cut_off_plot(summarized_checks = summarized_checks)
+
+plotly::ggplotly(cut_off_plot,
+                 tooltip = "text")
+
+
+```
+
+### 2.1 Curate based on negative controls
+
+The user chooses a group of samples of which the spectra should not pass curation (negative controls). The cut-off values for spectra curation will be set at a chosen percentile of the sum intensity and percentage of passing analytes in those negative control spectra.
+
+```{r curate-spectra-based-on-negative-controls}
+
+cut_offs_specific <- calculate_cut_offs(
+  summarized_checks,
+  control_sample_types = "PBS",
+  group_keyword = "Spike",
+  percentile = 97,
+  use_mean_SD = FALSE,
+  SD_factor = NULL,
+  uncalibrated_as_NA = TRUE
+)
+
+cut_offs_total <- calculate_cut_offs(
+  summarized_checks,
+  control_sample_types = "PBS",
+  group_keyword = "Total",
+  percentile = 97,
+  use_mean_SD = FALSE,
+  SD_factor = NULL,
+  uncalibrated_as_NA = TRUE
+)
+
+cut_offs <- dplyr::full_join(cut_offs_specific,
+                             cut_offs_total)
+
+
+```
+
+When 'Show advanced settings' is checked by the user, the user can choose to use the mean and standard deviation (SD) instead of percentiles to calculate the sum intensity cut-off. The cut-off for the percentage of passing analytes is still calculated using the chosen percentile, but the cut-off for the sum intensity is calculated using the following formula:
+
+cut-off ~sum\ intensity~ = mean ~sum\ intensity\ in\ negative\ controls~ + factor \* SD ~sum\ intensity\ in\ negative\ controls~
+
+The user has to choose the factor to multiply the SD with.
+
+```{r curate-spectra-based-on-negative-controls-with-mean-SD}
+
+cut_offs_specific <- calculate_cut_offs(
+  summarized_checks,
+  control_sample_types = "PBS",
+  group_keyword = "Spike",
+  percentile = 97,
+  use_mean_SD = TRUE,
+  SD_factor = 3,
+  uncalibrated_as_NA = TRUE
+)
+
+cut_offs_total <- calculate_cut_offs(
+  summarized_checks,
+  control_sample_types = "PBS",
+  group_keyword = "Total",
+  percentile = 97,
+  use_mean_SD = TRUE,
+  SD_factor = 3,
+  uncalibrated_as_NA = TRUE
+)
+
+cut_offs_mean_SD <- dplyr::full_join(cut_offs_specific,
+                                     cut_offs_total)
+
+
+```
+
+A final option available is to treat uncalibrated spectra either as missing values (NA) or as 0's.
+
+```{r curate-spectra-based-on-negative-controls-uncalibrated-as-zeroes}
+
+cut_offs_specific <- calculate_cut_offs(
+  summarized_checks,
+  control_sample_types = "PBS",
+  group_keyword = "Spike",
+  percentile = 97,
+  use_mean_SD = FALSE,
+  SD_factor = NULL,
+  uncalibrated_as_NA = FALSE # Treat uncalibrated spectra as zeroes
+)
+
+cut_offs_total <- calculate_cut_offs(
+  summarized_checks,
+  control_sample_types = "PBS",
+  group_keyword = "Total",
+  percentile = 97,
+  use_mean_SD = FALSE,
+  SD_factor = NULL,
+  uncalibrated_as_NA = FALSE # Treat uncalibrated spectra as zeroes
+)
+
+cut_offs_uncalibrated_as_zeroes <- dplyr::full_join(cut_offs_specific,
+                                                    cut_offs_total)
+
+
+```
+
+```{r comparing-cut-offs-with-different options}
+
+waldo::compare(cut_offs,
+              cut_offs_mean_SD)
+
+```
+
+In this example, the cut-offs for the sum intensity are higher when using the mean SD option .
+
+```{r comparing-cut-offs-with-different options}
+
+waldo::compare(cut_offs,
+               cut_offs_uncalibrated_as_zeroes)
+```
+
+The cut-offs for the Spike samples are lower when uncalibrated spectra are treated as zeroes instead of as missing values.
+
+### 2.2 Curate based on percentiles
+
+The user chooses a percentile and the spectra with a sum intensity or passing analyte percentage below that percentile will fail curation. For example, if the chosen percentile is 2, then the "worst" 2 percent of spectra will fail curation.
+
+The user can choose which sample types should not be taken into account when calculating the cut-off values. This way, the cut-offs can be based on only real samples instead of on blanks and standards as well.
+
+The option to treat uncalibrated spectra either as missing values (NA) or as 0's is also available.
+
+```{r curate-spectra-based-on-percentiles}
+
+cut_offs_percentiles <- calculate_cut_offs(
+  summarized_checks = summarized_checks,
+  percentile = 2,
+  exclude_sample_types = c("PBS", "Visucon", "IVIGg"), # These sample types are not taken into consideration when calculating the cut-off values.
+  uncalibrated_as_NA = TRUE
+)
+
+```
+
+After the cut-offs have been calculated with one of the two methods, the cut-offs are shown in the plot from before:
+
+```{r cut-off-plot}
+
+summarized_checks_with_cut_offs <- dplyr::full_join(summarized_checks,
+                                                    cut_offs)
+
+cut_off_plot_with_cut_offs <- cut_off_plot +
+  ggplot2::geom_vline(data = summarized_checks_with_cut_offs,
+                      ggplot2::aes(
+                        xintercept = cut_off_passing_analyte_percentage,
+                        text = paste0("Passing analyte percentage cut-off: ",
+                                      cut_off_passing_analyte_percentage)
+                      ),
+                      linetype = "dotted") +
+  ggplot2::geom_hline(data = summarized_checks_with_cut_offs,
+                      ggplot2::aes(
+                        yintercept = cut_off_sum_intensity,
+                        text = paste0("Sum intensity cut-off: ",
+                                      cut_off_sum_intensity)
+                      ),
+                      linetype = "dotted")
+
+plotly::ggplotly(cut_off_plot_with_cut_offs,
+                 tooltip = "text")
+
+```
+
+The user has the option to change the cut-off values manually.
+
+Cut-off table...
+
+When the user clicks on the perform spectra curation button the cut-offs are used to curate the spectra.
+
+```{r perform-spectra-curation}
+
+curated_spectra <- curate_spectra(checked_data = checked_data,
+                                  summarized_checks = summarized_checks,
+                                  cut_offs = cut_offs)
+
+passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+
+for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+
+```
+
+## 3. Analyte curation
+
+### 3.1 Methods for analyte curation
+
+There are two methods for analyte curation:
+
+1.  Curate based on the data
+
+2.  Upload an analyte list
+
+#### 3.1.1 Curate analytes based on data
+
+Analyte curation is based on the analyte quality criteria that the user has chosen on the 'Spectra curation' tab. In contrast to during spectra curation, all analyte quality criteria have to be taken into account now. Therefore the analyte quality criteria need to be checked again in case the user used the advanced setting criteria_to_consider during spectra curation.
+
+The user can specify which sample types or groups (total or specific samples) should be ignored during analyte curation.
+
+```{r checking-analyte-quality-criteria}
+
+# In this example analyte curation is based only on the Spike pool samples:
+without_samples_to_ignore <- throw_out_samples(
+  passing_spectra = for_analyte_curation,
+  samples_to_ignore = c("PBS", "IVIGg", "Visucon", "Total")
+)
+
+checked_analytes <- check_analyte_quality_criteria(
+  my_data = without_samples_to_ignore,
+  min_ppm_deviation = min_ppm_deviation,
+  max_ppm_deviation = max_ppm_deviation,
+  max_ipq = max_ipq,
+  min_sn = min_sn,
+  criteria_to_consider = c("Mass accuracy",
+                           "IPQ",
+                           "S/N")) # All criteria are taken into account during analyte curation, regardless of the advanced setting in the 'Spectra curation' tab.
+
+```
+
+In addition the user chooses a percentage of spectra (not including the sample types to ignore) in which an analyte needs to fulfill the analyte quality criteria in order to pass analyte curation.
+
+```{r curate-analytes}
+
+cut_off_percentage <- 25
+
+curated_analytes <- curate_analytes(
+  checked_analytes = checked_analytes,
+  cut_off_percentage = cut_off_percentage
+)
+
+```
+
+#### 3.1.2 Upload an analyte list
+
+The user can upload a list with analytes that should pass curation. All analytes not on this list will fail curation.
+
+```{r curate-analytes-with-a-list}
+
+path_to_analyte_list <- system.file("extdata",
+                                    "Analyte_list.xlsx",
+                                    package = "glycodash")
+
+analyte_list <- readxl::read_excel(path_to_analyte_list)
+
+curated_analytes_with_list <- curate_analytes_with_list(
+  passing_spectra = for_analyte_curation,
+  analyte_list = analyte_list
+)
+
+```
 
 ```{r}
 
-checked_data <- check_analyte_quality_criteria(my_data = data_complete,
-                        min_ppm_deviation = -20,
-                        max_ppm_deviation = 20,
-                        max_ipq = 0.2,
-                        min_sn = 9,
-                        criteria_to_consider = c("S/N", "IPQ", "Mass accuracy"))
-
-summarized_checks <- summarize_spectra_checks(checked_data)
-
-cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
-                               #exclude_sample_types = c("PBS", "Visucon", "IVIGg"),
-                               percentile = 2,
-                               uncalibrated_as_NA = FALSE)
-
-summarized_checks_with_cut_offs <- dplyr::left_join(summarized_checks,
-                                                    cut_offs)
-
-pc <- create_cut_off_plot(summarized_checks_with_cut_offs)
-pc <- pc +
-          ggplot2::geom_vline(data = summarized_checks_with_cut_offs,
-                              ggplot2::aes(xintercept = cut_off_passing_analyte_percentage,
-                                           text = paste0("Passing analyte percentage cut-off: ",
-                                                         cut_off_passing_analyte_percentage)),
-                              linetype = "dotted") +
-          ggplot2::geom_hline(data = summarized_checks_with_cut_offs,
-                              ggplot2::aes(yintercept = cut_off_sum_intensity,
-                                           text = paste0("Sum intensity cut-off: ",
-                                                         cut_off_sum_intensity)),
-                              linetype = "dotted")
-plotly::ggplotly(pc, tooltip = "text")
-
-curated_data <- curate_spectra(checked_data = checked_data,
-                               summarized_checks = summarized_checks,
-                               cut_offs = cut_offs,
-                               uncalibrated_as_NA = FALSE)
-
-p <- plot_spectra_curation_results(curated_data = curated_data,
-                                   Ig_data = "Yes")
-
-plotly::ggplotly(p, tooltip = "text")
-
-
-```
-
-
-```{r spectra-curation-uncalibrated-as-NA}
-
-min_ppm_deviation = -20
-max_ppm_deviation = 20
-max_ipq = 0.2
-min_sn = 9
-criteria_to_consider <- c("Mass accuracy", "IPQ", "S/N")
-uncalibrated_as_NA <- TRUE
-
-checked_data <- check_analyte_quality_criteria(data_complete,
-                                               min_ppm_deviation,
-                                               max_ppm_deviation,
-                                               max_ipq,
-                                               min_sn,
-                                               criteria_to_consider)
-if (!uncalibrated_as_NA) {
-  checked_data <- dplyr::mutate(
-    checked_data,
-    analyte_meets_criteria = tidyr::replace_na(analyte_meets_criteria,
-                                               FALSE)
-  )
-}
-
-summarized_checks <- summarize_spectra_checks(checked_data)
-
-group_keyword = NULL
-control_sample_types = c("PBS")
-percentile = 95
-use_mean_SD = FALSE
-SD_factor = 3
-
-cut_offs <- calculate_cut_offs(summarized_checks,
-                               control_sample_types,
-                               percentile = 95,
-                               uncalibrated_as_NA = uncalibrated_as_NA)
-
-summarized_checks_with_cut_offs <- dplyr::left_join(summarized_checks, 
-                                                      cut_offs) %>% 
-    dplyr::ungroup(.)
-
-curated_spectra <- summarized_checks_with_cut_offs %>% 
-    # Can't use all() instead of & because all() is not vectorized
-    dplyr::mutate(has_passed_spectra_curation = passing_analyte_percentage > cut_off_passing_analyte_percentage &
-                    sum_intensity > cut_off_sum_intensity) 
-
-with_reasons <- curated_spectra %>% 
-    dplyr::mutate(reason_for_failure = dplyr::case_when(
-      uncalibrated ~ "Calibration failed.",
-        passing_analyte_percentage <= cut_off_passing_analyte_percentage & sum_intensity <= cut_off_sum_intensity ~ "Percentage of passing analytes and sum intensity below cut-offs.",
-        passing_analyte_percentage <= cut_off_passing_analyte_percentage ~ "Percentage of passing analytes below cut-off.",
-        sum_intensity <= cut_off_sum_intensity ~ "Sum intensity below cut-off.",
-        TRUE ~ as.character(NA) # Cannot be NA, because case_When requires that all possible 
-        # values are of the same type (in this case string)
-      ))
-
-curated_data <- curate_spectra(checked_data = checked_data,
-                               summarized_checks = summarized_checks,
-                               cut_offs = cut_offs,
-                               uncalibrated_as_NA = uncalibrated_as_NA)
-
-plotly::ggplotly(create_cut_off_plot(summarized_checks))
-
-for_plot <- summarized_checks %>% 
-  dplyr::mutate(uncalibrated = ifelse(is.na(sum_intensity) & is.na(passing_analyte_percentage),
-                                      TRUE,
-                                      FALSE)#,
-                # dplyr::across(.cols = c(sum_intensity, passing_analyte_percentage),
-                #               .fns = ~ tidyr::replace_na(.x, 0))
-                ) %>% 
-  tidyr::replace_na(replace = list(sum_intensity = 0,
-                                   passing_analyte_percentage = 0))
-
-n_colors <- length(unique(for_plot$sample_type))
-  my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
-  
-  p <- for_plot %>% 
-    ggplot2::ggplot() +
-    ggplot2::geom_jitter(data = for_plot[!for_plot$uncalibrated, ],
-                         ggplot2::aes(color = sample_type,
-                                      x = passing_analyte_percentage,
-                                      y = sum_intensity,
-                                      text = paste0("Sample name: ", 
-                                                    sample_name,
-                                                    "\n",
-                                                    "Sample ID: ",
-                                                    sample_id,
-                                                    "\n",
-                                                    "Passing analyte percentage: ",
-                                                    passing_analyte_percentage,
-                                                    "\n",
-                                                    "Sum intensity: ",
-                                                    sum_intensity,
-                                                    "\nUncalibrated: ",
-                                                    uncalibrated)),
-                         size = 1,
-                         alpha = 0.7) +
-    ggplot2::geom_jitter(data = for_plot[for_plot$uncalibrated, ],
-                         ggplot2::aes(color = sample_type,
-                                      x = passing_analyte_percentage,
-                                      y = sum_intensity,
-                                      text = paste0("Sample name: ", 
-                                                    sample_name,
-                                                    "\n",
-                                                    "Sample ID: ",
-                                                    sample_id,
-                                                    "\n",
-                                                    "Passing analyte percentage: ",
-                                                    passing_analyte_percentage,
-                                                    "\n",
-                                                    "Sum intensity: ",
-                                                    sum_intensity,
-                                                    "\nUncalibrated: ",
-                                                    uncalibrated)),
-                         shape = 15,
-                         size = 1,
-                         alpha = 0.7,
-                         width = 0.01) +
-    ggplot2::theme_classic() +
-    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
-                   strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
-    ggplot2::scale_color_manual(values = my_palette,
-                                name = "Sample type") +
-    ggplot2::labs(y = "Sum intensity of passing analytes") +
-    ggplot2::scale_x_continuous(labels = function(x) paste0(x * 100, "%"), 
-                                name = "Percentage of passing analytes")
-  
-  if ("group" %in% colnames(for_plot)) {
-    p <- p +
-      ggplot2::facet_wrap(cluster ~ group)
-  } else {
-    p <- p +
-      ggplot2::facet_wrap(~ cluster)
-  }
-
-pl <- plotly::ggplotly(p, tooltip = "text")
-
-pl
-
-my_data <- curated_data %>% 
-    dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
-                                                       "sample_type", 
-                                                       "cluster", 
-                                                       "sample_name", 
-                                                       "has_passed_spectra_curation",
-                                                       "reason_for_failure")))) 
-
-reasons <- unique(my_data$reason_for_failure)
-reason_labels <- firstlower(reasons) %>% 
-  tidyr::replace_na(., "Yes")
-reason_labels[reason_labels != "Yes"] <- paste("No,", reason_labels[reason_labels != "Yes"])
-
-reason_labels <- purrr::map_chr(
-  reason_labels,
-  function(label) {
-    if (nchar(label) > 20) {
-      last_20_chars <- substr(label, 20, nchar(label))
-      replacement <- stringr::str_replace(last_20_chars, 
-                                          " ",
-                                          "\n")
-      substr(label, 20, nchar(label)) <- replacement
-    }
-    return(label)
-  })
-
-# Set the names to the 'old' values in the data, so that this named vector can
-# be used to recode reason_for_failure with nice:
-names(reason_labels) <- paste(reasons) # paste() converts NA to "NA"
-
-
-my_data <- my_data %>% 
-    dplyr::mutate(
-      `Passed curation?` = dplyr::recode(
-        paste(reason_for_failure), # to convert NA to "NA"
-        !!!reason_labels
-      ) # recode() can't take a named vector as an argument, use !!! to 'unlist' it
-    ) %>% 
-  calculate_number_and_percentage_per_reason()
-
-n_colors <- length(unique(my_data$reason_for_failure)) - 1
-  my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
-                  "#3498DB")
-
-plot <- my_data %>% 
-    ggplot2::ggplot() +
-    ggplot2::geom_bar(ggplot2::aes(x = sample_type,
-                                   fill = `Passed curation?`,
-                                   text = paste(
-                                     "Number of spectra:",
-                                     number,
-                                     "\nPercentage of spectra:",
-                                     percentage
-                                   )), 
-                      position = "fill") +
-    ggplot2::xlab("Sample type") +
-    ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
-                                name = "Proportion of spectra (%)") +
-    ggplot2::scale_fill_manual(values = my_palette) +
-    ggplot2::theme_classic() +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
-                   strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
-  
-  if (Ig_data == "Yes") {
-    plot <- plot +
-      ggplot2::facet_wrap(cluster ~ group)
-  } else {
-    plot <- plot +
-      ggplot2::facet_wrap(~ cluster)
-  }
-
-
-plotly_object <- plotly::ggplotly(plot, tooltip = "text")
-
-plotly_object <- facet_strip_bigger(plotly_object)
-
-plotly_object <- change_axis_title_distance(plotly_object)
-
-plotly_object
-
-passing_spectra <- curated_data %>% 
-  dplyr::filter(has_passed_spectra_curation) %>% 
-  dplyr::select(-c(reason_for_failure,
-                   passing_analyte_percentage,
-                   cut_off_sum_intensity,
-                   cut_off_passing_analyte_percentage,
-                   curation_method,
-                   analyte_meets_criteria,
-                   failed_criteria,
-                   sample_type_list))
-
-passing_spectra
-
-```
-
-## Analyte curation
-
-```{r analyte-curation}
-
-checked_analytes <- check_analyte_quality_criteria(passing_spectra,
-                                                   min_ppm_deviation = min_ppm_deviation,
-                                                   max_ppm_deviation = max_ppm_deviation,
-                                                   max_ipq = max_ipq,
-                                                   min_sn = min_sn,
-                                                   criteria_to_consider = c("IPQ", "S/N", "Mass accuracy"),
-                                                   uncalibrated_as_NA = uncalibrated_as_NA)
-
-curated_analytes <- curate_analytes(checked_analytes,
-                                    cut_off_percentage = 25)
-
 analyte_curated_data <- dplyr::left_join(curated_analytes, 
-                                         passing_spectra)
+                                         for_analyte_curation)
 
-plot <- plot_analyte_curation(curated_analytes = curated_analytes,
-                              cut_off_percentage = 25,
-                              selected_cluster = "IgGI1") 
+```
 
-plotly::ggplotly(plot, tooltip = "text")
+### 3.2 Analyte curation results
 
-dataframe_for_table <- prepare_analyte_curation_table(
+For each cluster a tab is created showing the results of the analyte curation. Each tab contains a plot and a table.
+
+```{r plot-analyte-curation-results}
+
+curated_analytes_plot <- plot_analyte_curation(
+  curated_analytes = curated_analytes,
+  cut_off_percentage = cut_off_percentage,
+  selected_cluster = "IgGI"
+)
+
+plotly::ggplotly(p = curated_analytes_plot,
+                 tooltip = "text")
+
+
+```
+
+```{r curated-analytes-table}
+
+table <- prepare_analyte_curation_table(
   analyte_curated_data = analyte_curated_data,
-  selected_cluster = "IgGI1")
+  selected_cluster = "IgGI"
+)
 
-charge_columns <- colnames(dataframe_for_table)[-1]
-
-to_check <- dataframe_for_table %>% 
-  dplyr::filter(dplyr::if_any(tidyselect::all_of(charge_columns),
-                              ~ .x == "Yes")) %>% 
-  dplyr::pull(analyte)
-
-to_check_indices <- which(dataframe_for_table$analyte %in% to_check)
-
-ids_to_check <- sapply(paste0("checkbox", charge_columns), 
-                       paste0,
-                       to_check_indices) %>% 
-  c()
-
-dataframe_for_table
-
-charge_columns <- colnames(dataframe_for_table)[-1]
-
-analytes_to_include <- rlang::set_names(charge_columns) %>% 
-  purrr::map_dfc(.,
-                 function(charge_column) {
-                   print(charge_column)
-                   ifelse(dataframe_for_table[[charge_column]] == "Yes",
-                          dataframe_for_table$analyte,
-                          NA)
-                 }) %>% 
-  tidyr::pivot_longer(
-    tidyselect::everything(),
-    names_to = "charge",
-    values_to = "analyte"
-  ) %>% 
-  dplyr::filter(!is.na(analyte)) %>% 
-  dplyr::mutate(dplyr::across(analyte, as.character))
-
-data_for_norm <- dplyr::left_join(analytes_to_include,
-                                  data_curated)
-
-# Maybe a plot (faceted by charge) with for each failed analyte the proportion
-# of failed analyte QC's?
-
-to_plot <- analyte_curated_data %>% 
-  dplyr::filter(passed_curation == FALSE)
-
-ggplot2::ggplot(to_plot,
-                ggplot2::aes(x = analyte,
-                             fill = failed_criteria)) +
-  ggplot2::geom_bar(position = "fill") +
-  ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
-                              name = "Proportion of spectra (%)") +
-  #ggplot2::scale_fill_manual() +
-  ggplot2::theme_classic() +
-  ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
-                 strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                 panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
-  
-for_upset <- to_plot %>% 
-  tidyr::extract(failed_criteria,
-                 into = c("mass_acc_failed"),
-                 regex = ".*(mass accuracy).*",
-                 remove = FALSE) %>% 
-  tidyr::extract(failed_criteria,
-                 into = "IPQ_failed",
-                 regex = ".*(IPQ).*",
-                 remove = FALSE) %>% 
-  tidyr::extract(failed_criteria,
-                 into = "SN_failed",
-                 regex = ".*(S/N).*",
-                 remove = FALSE) %>% 
-  dplyr::mutate(across(c(mass_acc_failed,
-                         IPQ_failed,
-                         SN_failed),
-                       ~ !is.na(.x))) %>% 
-  dplyr::ungroup() %>% 
-  dplyr::mutate(specific_total = group,
-                .keep = "unused") %>% 
-  dplyr::group_split(analyte, charge)
-
-# purrr::map(for_upset,
-#            ~ my_upset(.x) %>% 
-#              ggpubr::ggpar(., title = paste(unique(.x$analyte), unique(.x$charge))))
-# 
-# my_upset <- function(my_data) {
-#   ComplexUpset::upset(my_data,
-#                     intersect = c("mass_acc_failed", "IPQ_failed", "SN_failed"),
-#                     base_annotations = list(
-#                       "Sample types" = list(
-#                         aes = ggplot2::aes(x = intersection,
-#                                      fill = sample_type),
-#                         geom = list(ggplot2::geom_bar(stat = "count", position = "stack"))
-#                       )
-#                     ),
-#                     set_sizes = (
-#                       upset_set_size(
-#                         geom = ggplot2::geom_bar(
-#                           ggplot2::aes(fill = sample_type, x = group),
-#                           width = 0.8
-#                         ),
-#                         position='right'
-#                       )
-#                     )
-#   )
-# }
-# 
-# my_venn <- function(my_data) {
-#   
-# }
-
+DT::datatable(table)
 
 ```
-
-```{r normalization}
-
-total_intensities <- calculate_total_intensity(data = data_for_norm)
-normalized_data <- normalize_data(data = total_intensities) 
-normalized_data_wide <- normalized_data %>% 
-        # removing columns with values that differ between clusters:
-        dplyr::select(-tidyselect::any_of(c("passing_analyte_percentage", 
-                                            "cut_off_passing_analyte_percentage", 
-                                            "cut_off_sum_intensity",
-                                            "failed_criteria"))) %>% 
-        tidyr::pivot_wider(names_from = c(cluster, analyte),
-                           names_sep = "_",
-                           values_from = relative_abundance)
-
-#normalized_data_wide <- normalized_data_wide %>% dplyr::select(-group)
-
-menu <- normalized_data %>% 
-  dplyr::select(tidyselect::any_of(c("sample_name", "group", "sample_id"))) %>%
-  dplyr::distinct() %>%
-  dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
-  dplyr::add_count(sample_id, name = "number_of_replicates_after_curation") %>% 
-  dplyr::mutate(number_of_replicates_after_curation = ifelse(sample_id == "empty cell in plate design",
-                                              1,
-                                              number_of_replicates_after_curation)) %>% 
-  dplyr::mutate(replicates_after_curation = number_of_replicates_after_curation > 1) %>% 
-  dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", "sample_id")))) %>% 
-  purrr::pmap_chr(.,
-                  paste)
-
-selected_sample_id <- stringr::str_extract(menu[2],
-                                             unique(normalized_data$sample_id)) %>% 
-  na.omit()
-
-if ("group" %in% colnames(normalized_data)) {
-  selected_group <- stringr::str_extract(
-    string = menu[2],
-    pattern = unique(normalized_data$group)) %>% 
-    na.omit(.)
-} else {
-  selected_group <- NULL
-}
-
-repeatability <- calculate_repeatability_stats(normalized_data,
-                                               selected_sample_id,
-                                               selected_group)
-
-dodged_barplot <- visualize_repeatability_dogded_bars(normalized_data,
-                                    selected_sample_id,
-                                    selected_group)
-
-mean_barplot <- visualize_repeatability_mean_bars(normalized_data,
-                                    selected_sample_id,
-                                    selected_group)
-
-plotly::ggplotly(dodged_barplot, tooltip = "text")
-plotly::ggplotly(mean_barplot, tooltip = "text")
-
-        
-plot <- visualize_repeatability2(repeatability)
-
-pl <- plotly::ggplotly(plot, tooltip = "text")
-
-pl <- change_axis_title_distance(pl, y_distance = 90)
-
-pl
-
-```
-
-```{r exploration, eval=FALSE}
-
-derived_traits <- calculate_derived_traits(normalized_data, c("Fucosylation", "Sialylation", "Bisection", "Galactosylation"))
-
-formulas <- derived_traits %>% 
-  dplyr::ungroup() %>% 
-  dplyr::select(tidyselect::ends_with("formula")) %>% 
-  dplyr::distinct() %>% 
-  tidyr::pivot_longer(cols = tidyselect::everything(),
-                      names_to = "Derived trait",
-                      values_to = "Formula") %>% 
-  dplyr::mutate(`Derived trait` = dplyr::recode(`Derived trait`,
-                                                fuc_formula = "Fucosylation",
-                                                gal_formula = "Galactosylation",
-                                                sial_formula = "Sialylation",
-                                                bis_formula = "Bisection"))
-
-DT::datatable(formulas, rownames = FALSE, options = list(paging = FALSE,
-                                                         ordering = FALSE,
-                                                         searching = FALSE))
-      
-data_with_derived_traits <- dplyr::full_join(
-  normalized_data_wide,
-  derived_traits %>% dplyr::select(-tidyselect::ends_with("formula"))) %>% 
-  tidyr::pivot_wider(names_from = cluster,
-                     values_from = dplyr::any_of(c("Fucosylation",
-                                                   "Galactosylation",
-                                                   "Bisection",
-                                                   "Sialylation")),
-                     names_glue = "{cluster}_{.value}")
-
-pl <- my_boxplot(data_with_derived_traits, 
-                 "sample_type", 
-                 "IgGI1_Fucosylation", 
-                 facets = c("group", "sample_type")) 
-
-pl <- my_histogram(data_with_derived_traits,
-                   "IgGI1_Fucosylation",
-                   color = "sample_type")
-
-boxplot_traces <- 1:nfacets(pl)
-
-plotly::ggplotly(pl, tooltip = "text") #%>% 
-  plotly::style(hoverinfo = "y", traces = boxplot_traces) %>% 
-  hide_outliers(.)
-
-
-
-
-
-```
-
