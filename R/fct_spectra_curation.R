@@ -393,7 +393,7 @@ calculate_cut_offs <- function(summarized_checks,
 
 mean_plus_SD <- function(x, SD_factor, na.rm) {
   mean_x <- mean(x, na.rm = na.rm)
-  mean_x + SD_factor * SD(x, na.rm = na.rm)
+  mean_x + SD_factor * sd(x, na.rm = na.rm)
 }
 
 #' Perform spectra curation
