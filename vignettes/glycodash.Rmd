@@ -350,7 +350,7 @@ waldo::compare(cut_offs,
 
 In this example, the cut-offs for the sum intensity are higher when using the mean SD option .
 
-```{r comparing-cut-offs-with-different options}
+```{r comparing-cut-offs-with-different options2}
 
 waldo::compare(cut_offs,
                cut_offs_uncalibrated_as_zeroes)
