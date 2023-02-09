@@ -556,3 +556,56 @@ normalized_data_wide <- normalized_data %>%
                      values_from = relative_abundance)
 
 ```
+
+## 5. Derived traits
+
+Currently derived traits can only be calculated for IgG data. The user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
+
+```{r calculate-derived-traits}
+
+traits_to_calculate <- c("Fucosylation", 
+                         "Sialylation")
+
+# First the derived traits are calculated
+derived_traits <- calculate_derived_traits(
+  data = normalized_data,
+  selected_derived_traits = traits_to_calculate
+)
+
+# Then they are added to the normalized data in wide format:
+data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
+                                             derived_traits) %>% 
+  dplyr::select(-tidyselect::ends_with("formula")) %>% 
+  tidyr::pivot_wider(names_from = cluster,
+                     values_from = dplyr::any_of(traits_to_calculate),
+                     names_glue = "{cluster}_{.value}")
+
+```
+
+The formulas that have been used to calculate the derived traits are shown in a table.
+
+```{r derived_traits-formulas}
+
+formulas <- derived_traits %>% 
+  dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
+  dplyr::distinct() %>% 
+  tidyr::pivot_longer(cols = -cluster,
+                      names_to = "Derived trait",
+                      values_to = "Formula") %>% 
+  dplyr::rename_with(.fn = firstupper, 
+                     .cols = cluster) %>% 
+  dplyr::mutate(`Derived trait` = dplyr::recode(
+    `Derived trait`,
+    fuc_formula = "Fucosylation",
+    gal_formula = "Galactosylation",
+    sial_formula = "Sialylation",
+    bis_formula = "Bisection"
+  ))
+
+DT::datatable(formulas,
+              rownames = FALSE, 
+              options = list(paging = FALSE,
+                             ordering = FALSE,
+                             searching = FALSE))
+
+```
