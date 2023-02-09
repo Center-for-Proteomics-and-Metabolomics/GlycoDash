@@ -68,11 +68,8 @@ mod_normalization_server <- function(id, results_analyte_curation){
     
     normalized_data_wide <- reactive({
       req(normalized_data())
+      
       normalized_data() %>% 
-        # removing columns with values that differ between clusters:
-        dplyr::select(-tidyselect::any_of(c("passing_analyte_percentage", 
-                                            "cut_off_passing_analyte_percentage", 
-                                            "cut_off_sum_intensity"))) %>% 
         tidyr::pivot_wider(names_from = c(cluster, analyte),
                            names_sep = "_",
                            values_from = relative_abundance)
