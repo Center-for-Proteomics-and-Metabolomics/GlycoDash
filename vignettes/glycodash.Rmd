@@ -21,7 +21,7 @@ devtools::load_all()
 
 ```
 
-This vignette gives an overview of the steps that are performed within the Glycodash dashboard and the options available to users. For more detailed information check the documentation of the functions.
+This vignette gives an overview of the steps that are performed within the Glycodash dashboard and the options available to users. For more detailed information check the function documentation and comments in the modules.
 
 ## 1. Data import tab
 
@@ -125,7 +125,7 @@ with_sample_ids <- dplyr::full_join(replicates,
 
 There are 2 methods to determine the sample types:
 
-1.   Automatically based on the sample ID's.
+1.  Automatically based on the sample ID's.
 
 2.  By uploading a sample types list.
 
@@ -279,7 +279,7 @@ cut_offs <- dplyr::full_join(cut_offs_specific,
 
 When 'Show advanced settings' is checked by the user, the user can choose to use the mean and standard deviation (SD) instead of percentiles to calculate the sum intensity cut-off. The cut-off for the percentage of passing analytes is still calculated using the chosen percentile, but the cut-off for the sum intensity is calculated using the following formula:
 
-cut-off ~sum\ intensity~ = mean ~sum\ intensity\ in\ negative\ controls~ + factor \* SD ~sum\ intensity\ in\ negative\ controls~
+cut-off ~sum intensity~ = mean ~sum intensity in negative controls~ + factor \* SD ~sum intensity in negative controls~
 
 The user has to choose the factor to multiply the SD with.
 
@@ -496,6 +496,10 @@ curated_analytes_with_list <- curate_analytes_with_list(
 analyte_curated_data <- dplyr::left_join(curated_analytes, 
                                          for_analyte_curation)
 
+for_normalization <- analyte_curated_data %>%
+   dplyr::filter(has_passed_analyte_curation) %>%
+   dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
+
 ```
 
 ### 3.2 Analyte curation results
@@ -516,6 +520,8 @@ plotly::ggplotly(p = curated_analytes_plot,
 
 ```
 
+In the dashboard the table has an additional column with check-boxes for each charge column. The analytes that are checked in that table are the ones that are included in the further steps. Here a simplified version of the table is shown, because the check-boxes are shiny inputs and I can't use them in this Rmarkdown file.
+
 ```{r curated-analytes-table}
 
 table <- prepare_analyte_curation_table(
@@ -524,5 +530,29 @@ table <- prepare_analyte_curation_table(
 )
 
 DT::datatable(table)
+
+```
+
+## 4. Normalization
+
+Total area normalization is performed per cluster.
+
+```{r total-area-normalization}
+
+# First, for each glycopeptide the total sum intensity of all charge states (divided by their fraction) together is calculated:
+total_intensities <- calculate_total_intensity(for_normalization)
+
+# And then the relative abundance of each glycopeptide is calculated per cluster:
+normalized_data <- normalize_data(total_intensities)
+
+# The normalized data is shown in a wide format (a column for each glycopeptide):
+normalized_data_wide <- normalized_data %>% 
+  # removing columns no longer needed with values that differ between clusters:
+  dplyr::select(-tidyselect::any_of(c("passing_analyte_percentage", 
+                                      "cut_off_passing_analyte_percentage", 
+                                      "cut_off_sum_intensity"))) %>% 
+  tidyr::pivot_wider(names_from = c(cluster, analyte),
+                     names_sep = "_",
+                     values_from = relative_abundance)
 
 ```
