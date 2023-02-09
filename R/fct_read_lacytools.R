@@ -87,6 +87,13 @@ find_widest_row <- function(path, delim) {
         message = "No such file or directory exists.")
     })
   
+  if (lines == "") {
+    rlang::abort(
+      class = "empty_file",
+      message = "The file is empty."
+    )
+  }
+  
   columns <- stringr::str_split(lines, pattern = delim)
   max_n_columns <- max(purrr::map_int(columns, 
                                       ~ length(.x)))

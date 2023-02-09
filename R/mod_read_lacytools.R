@@ -96,6 +96,9 @@ mod_read_lacytools_server <- function(id){
                       condition = input$contains_total_and_specific_samples == "Yes")
     })
     
+    # If the user changes input$contains_total_and_specific_samples to "No"  the
+    # textInputs for the keywords are reset to empty strings "". This is needed
+    # in case the user first fills in keywords but then changes their mind.
     observe({
       updateTextInput("keyword_specific",
                       value = "",
@@ -107,7 +110,20 @@ mod_read_lacytools_server <- function(id){
     
     raw_lacytools_summary <- reactive({
       req(input$lacytools_summary$datapath)
-      read_non_rectangular(input$lacytools_summary$datapath)
+      
+      tryCatch(
+        expr = {
+          read_non_rectangular(input$lacytools_summary$datapath)
+        },
+        empty_file = function(c) {
+          shinyFeedback::feedbackDanger("lacytools_summary",
+                                        show = TRUE,
+                                        text = c$message)
+          NULL
+        }
+      )
+      
+      
     })
     
     warn_duplicated_analytes <- reactive({
