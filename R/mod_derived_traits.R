@@ -97,7 +97,6 @@ mod_derived_traits_server <- function(id, results_normalization){
     formulas <- reactive({
       req(derived_traits())
       derived_traits() %>% 
-        dplyr::ungroup() %>% 
         dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
         dplyr::distinct() %>% 
         tidyr::pivot_longer(cols = -cluster,
