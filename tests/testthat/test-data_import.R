@@ -67,6 +67,22 @@ test_that("read_non_rectangular() throws an error if the resulting dataframe has
                "The file seems to consist of a single column\\. Are you sure that you chose the correct delimiter for your file?" )
 })
 
+test_that("read_non_rectangular() throws an error if an empty file or dummy file is uploaded", {
+  path_to_dummy <- system.file("extdata",
+                               "dummy.txt",
+                               package = "glycodash")
+  
+  expect_error(read_non_rectangular(path_to_dummy, delim = "\t"),
+               class = "embedded_null")
+  
+  path_to_empty <- system.file("extdata",
+                               "empty.txt",
+                               package = "glycodash")
+  
+  expect_error(read_non_rectangular(path_to_empty, delim = "\t"),
+               class = "empty_file")
+})
+
 test_that("find_next_na() returns an empty integer vector if there are no next lines with NA's", {
   df <- data.frame(name = c("John", NA, "Melany", "Bobby"),
                    age = c(56, NA, 34, 26))
@@ -76,16 +92,30 @@ test_that("find_next_na() returns an empty integer vector if there are no next l
 })
 
 test_that("detect_plate_and_well() can identify plate numbers in all allowed formats", {
-  df <- data.frame(sample_name = c("Testname_P-8_well_H5", 
-                                   "Testname_PL_8_well_H5",
-                                   "Testname_p.8_well_H5",
+  df <- data.frame(sample_name = c("Testname_plate8_well_H5", 
                                    "Testname_pl8_well_H5",
+                                   "Testname_Plate8_well_H5",
                                    "Testname_Pl8_well_H5",
-                                   "Testname_pL8_well_H5",
-                                   "Testname_Plate.8_well_H8",
-                                   "Testname_plate.8_well_H8"))
+                                   "Testname_PLATE8_well_H5",
+                                   "Testname_PL8_well_H5",
+                                   "Testname_PL8_well_H05",
+                                   "Testname_PL8H5"))
   expect_error(detect_plate_and_well(df),
                regexp = NA)
+})
+
+test_that("detect_plate_and_well() doesn't interpret a letter and number combination as the well position if it precedes the plate number", {
+  df <- data.frame(sample_name = c("Testname1593E6_plate8_H5",
+                                   "TestnameE71593_plate8_H6"))
+  
+  expect_equal(detect_plate_and_well(df)$plate_well, c("8_H5",
+                                                       "8_H6"))
+  
+  df_well_missing <- data.frame(sample_name = c("Testname1593E6_plate8",
+                                                "TestnameE71593_plate8"))
+  
+  expect_condition(detect_plate_and_well(df_well_missing),
+                   class = "well_precedes_plate")
 })
 
 test_that("detect_plate_and_well() doesn't interpret a number larger than 12 or a letter not A-H as a well", {
@@ -113,26 +143,37 @@ test_that("read_and_process_plate_design() throws an error when plate design fil
                regexp = "Please check that your plate design file is formatted correctly\\. Run `\\?read_and_process_plate_design` to find the required format\\.")
 })
 
-test_that("read_and_process_plate_design() throws a warning when no duplicates are found.", {
-  file_duplicates_wrong <- system.file("extdata",
-                                       "for_tests",
-                                       "Plate_design_duplicates_wrong.xlsx",
-                                       package = "glycodash")
-  
-  expect_warning(read_and_process_plate_design(file_duplicates_wrong),
-                 regexp = "No duplicates were found in your plate design file\\.")
-})
-
 test_that("read_and_process_plate_design() returns a dataframe with the number of plates * 96 as number of rows", {
   plate_design_file <- system.file("extdata",
                                    "Plate_design_example.xlsx",
                                    package = "glycodash")
-  # This test doesn't work if the plate_design contains rows that are completely
-  # empty...
-  suppressWarnings(
+  
     expect_equal(
       object = nrow(read_and_process_plate_design(plate_design_file)),
-      expected = 96 * 7))
+      expected = 96 * 7
+      )
+})
+
+
+test_that("define_clusters() works if cluster_keywords is a list.", {
+  df <- data.frame(analyte = c("IgGI1H5N3", "IgGII1H5N3"),
+                   number = c(1:2))
+  # Using expect_error with regexp = NA means that there should be no errors.
+  expect_error(define_clusters(data = df,
+                               cluster_keywords = list("IgGI1", "IgGII1")),
+               regexp = NA)
+})
+
+test_that("define_clusters() throws an error when any analytes in the data don't match with any of the keywords", {
+  df <- data.frame(analyte = c("IgGI1H5N3", "IgGII1H5N3", "unmatched"),
+                   number = c(1:3))
+  expect_error(define_clusters(data = df,
+                               cluster_keywords = c("IgGI1", "IgGII1")),
+               "Some analytes could not be assigned into a cluster\\. Please reconsider your cluster keywords\\.")
+  # Same test but with cluster_keywords as a list:
+  expect_error(define_clusters(data = df,
+                               cluster_keywords = list("IgGI1", "IgGII1")),
+               "Some analytes could not be assigned into a cluster\\. Please reconsider your cluster keywords\\.")
 })
 
 test_that("load_and_assign() doesn't alter the R-object", {

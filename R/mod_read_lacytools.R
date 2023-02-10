@@ -115,14 +115,25 @@ mod_read_lacytools_server <- function(id){
         expr = {
           read_non_rectangular(input$lacytools_summary$datapath)
         },
+        embedded_null = function(c) {
+          shinyFeedback::feedbackDanger("lacytools_summary",
+                                        show = TRUE,
+                                        text = c$message)
+          NULL
+        },
         empty_file = function(c) {
+          shinyFeedback::feedbackDanger("lacytools_summary",
+                                        show = TRUE,
+                                        text = c$message)
+          NULL
+        },
+        wrong_delim = function(c) {
           shinyFeedback::feedbackDanger("lacytools_summary",
                                         show = TRUE,
                                         text = c$message)
           NULL
         }
       )
-      
       
     })
     
@@ -169,13 +180,13 @@ mod_read_lacytools_server <- function(id){
       return(warning)
     })
     
-    observeEvent(input$read_summary, {
+    observe({
       if (is_truthy(warn_duplicated_analytes())) {
         showNotification(warn_duplicated_analytes(),
                          type = "warning",
                          duration = NULL)
       }
-    })
+    }) %>% bindEvent(input$read_summary)
     
     lacytools_summary <- reactive({
       req(raw_lacytools_summary())
@@ -188,6 +199,11 @@ mod_read_lacytools_server <- function(id){
           shinyFeedback::feedbackDanger("lacytools_summary",
                                         show = TRUE,
                                         text = c$message)
+          
+          showNotification(c$message,
+                           type = "error",
+                           duration = NULL)
+          
           # Return NULL to the reactive lacytools_summary()
           NULL
         })

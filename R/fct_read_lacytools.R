@@ -85,12 +85,18 @@ find_widest_row <- function(path, delim) {
       rlang::abort(
         class = "wrong_path",
         message = "No such file or directory exists.")
+    },
+    warning = function(w) {
+      rlang::abort(
+        class = "embedded_null",
+        message = w$message
+      )  
     })
   
-  if (lines == "") {
+  if (rlang::is_empty(lines)) {
     rlang::abort(
       class = "empty_file",
-      message = "The file is empty."
+      message = "The uploaded file is empty."
     )
   }
   
