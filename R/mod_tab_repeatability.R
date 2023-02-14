@@ -74,34 +74,12 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
     
     output$standards_menu <- renderUI({
       req(my_data())
-      #req(contains_total_and_specific_samples())
       
-      # TODO: convert to function:
-      menu_df <- my_data() %>% 
-        dplyr::ungroup() %>% 
-        dplyr::select(tidyselect::any_of(c("sample_name", "group", "sample_id"))) %>%
-        dplyr::distinct() %>%
-        dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
-        dplyr::add_count(sample_id, name = "number_of_replicates_after_curation") %>% 
-        dplyr::mutate(number_of_replicates_after_curation = ifelse(sample_id == "empty cell in plate design",
-                                                                   1,
-                                                                   number_of_replicates_after_curation)) %>% 
-        dplyr::mutate(replicates_after_curation = number_of_replicates_after_curation > 1) %>% 
-        dplyr::filter(replicates_after_curation == TRUE) %>% 
-        dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", "sample_id")))) 
-      
-      if ("group" %in% colnames(menu_df)) {
-        menu <- purrr::pmap(menu_df,
-                            function(group, sample_id) {
-                              paste("group:", group, "sample_id:", sample_id)
-                            })
-      } else {
-        menu <- paste("sample_id:", menu_df$sample_id)
-      }
+      choices <- find_choices_for_repeatability_menu(normalized_data = my_data())
       
       selectInput(ns("sample_menu"),
                   label = "Choose which samples you want to assess:",
-                  choices = menu)
+                  choices = choices)
     })
     
     selected_sample_id <- reactive({

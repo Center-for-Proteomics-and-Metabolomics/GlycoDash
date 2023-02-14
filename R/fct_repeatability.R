@@ -1,4 +1,123 @@
 
+
+#' Determine the choices for the repeatability sample menu
+#'
+#' This function finds the sample ID's or if applicable the combinations of
+#' sample ID and group (total or specific) for which there are multiple
+#' measurements in the data.
+#'
+#' @param normalized_data
+#'
+#' @return A list of character strings where each string contains "sample id: "
+#'   followed by the sample ID and if applicable "group: " followed by the total
+#'   or specific keyword. This list can be given as the \code{choices} argument
+#'   to the function \code{\link{selectInput}}.
+#' @export
+#'
+#' @examples
+#' # First spectra curation has to be performed:
+#' data("example_data")
+#'
+#' example_data <- define_clusters(data = example_data,
+#'                                 cluster_keywords = "IgGI")
+#'
+#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#'                                                min_ppm_deviation = -20,
+#'                                                max_ppm_deviation = 20,
+#'                                                max_ipq = 0.2,
+#'                                                min_sn = 9,
+#'                                                criteria_to_consider = c("Mass accuracy",
+#'                                                                         "S/N",
+#'                                                                         "IPQ"))
+#'
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#'
+#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                      control_sample_types = "PBS",
+#'                                      exclude_sample_types = NULL,
+#'                                      group_keyword = "Total",
+#'                                      percentile = 97,
+#'                                      use_mean_SD = FALSE,
+#'                                      SD_factor = NULL,
+#'                                      uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
+#'                                         control_sample_types = "PBS",
+#'                                         exclude_sample_types = NULL,
+#'                                         group_keyword = "Spike",
+#'                                         percentile = 97,
+#'                                         use_mean_SD = FALSE,
+#'                                         SD_factor = NULL,
+#'                                         uncalibrated_as_NA = TRUE)
+#'
+#' cut_offs <- dplyr::full_join(cut_offs_total,
+#'                              cut_offs_specific)
+#'
+#' curated_spectra <- curate_spectra(checked_data = checked_data,
+#'                                   summarized_checks = summarized_checks,
+#'                                   cut_offs = cut_offs)
+#'
+#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
+#'
+#' for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+#'
+#' # Then analyte curation is performed:
+#' without_samples_to_ignore <- throw_out_samples(
+#'    passing_spectra = for_analyte_curation,
+#'    samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
+#' )
+#'
+#' checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+#'                                                    min_ppm_deviation = -20,
+#'                                                    max_ppm_deviation = 20,
+#'                                                    max_ipq = 0.2,
+#'                                                    min_sn = 9,
+#'                                                    criteria_to_consider = c("Mass accuracy",
+#'                                                                             "S/N",
+#'                                                                             "IPQ"))
+#'
+#' curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
+#'                                     cut_off_percentage = 25)
+#'
+#' analyte_curated_data <- dplyr::full_join(curated_analytes,
+#'                                          for_analyte_curation) %>%
+#'    dplyr::filter(has_passed_analyte_curation) %>%
+#'    dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
+#'
+#' # Then we calculate the total intensities for each analyte:
+#' total_intensities <- calculate_total_intensity(analyte_curated_data)
+#'
+#' # And then we can perform total area normalization:
+#' normalized_data <- normalize_data(total_intensities)
+#'
+#' find_choices_for_repeatability_menu(normalized_data)
+find_choices_for_repeatability_menu <- function(normalized_data) {
+  
+  menu_df <- normalized_data %>% 
+    dplyr::select(tidyselect::any_of(c("sample_name", "group", "sample_id"))) %>%
+    dplyr::distinct() %>%
+    dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
+    dplyr::add_count(sample_id, name = "number_of_replicates_after_curation") %>% 
+    dplyr::mutate(number_of_replicates_after_curation = ifelse(
+      sample_id == "empty cell in plate design",
+      1,
+      number_of_replicates_after_curation
+    )) %>% 
+    dplyr::filter(number_of_replicates_after_curation > 1) %>% 
+    dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", "sample_id")))) 
+  
+  if ("group" %in% colnames(menu_df)) {
+    choices <- purrr::pmap(menu_df,
+                           function(group, sample_id) {
+                             paste("group:", group, "sample_id:", sample_id)
+                           })
+  } else {
+    choices <- paste("sample_id:", menu_df$sample_id)
+  }
+  
+  return(choices)
+}
+
 #' Calculate the RSD and mean of standards across a plate.
 #'
 #' @param data A dataframe with the curated (and normalized) data.
