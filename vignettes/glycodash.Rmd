@@ -609,3 +609,161 @@ DT::datatable(formulas,
                              searching = FALSE))
 
 ```
+
+## 6. Repeatability
+
+The user can select a sample ID of which replicates have been measured and are still in the data after the spectra curation step.
+
+```{r find-replicates}
+
+# The function below is used to identify all the replicates still in the data after spectra curation:
+choices <- find_choices_for_repeatability_menu(
+  normalized_data = normalized_data
+) 
+
+# These choices are shown to the user in a selectInput menu:
+choices
+
+```
+
+The user can also indicate with the "Group by plate" switch if they want to assess the repeatability grouped by plate or with all plates together. Then when the "assess repeatability" button is clicked a plot is created.
+
+### 6.1 Grouped by plate
+
+If the user has chosen "Group by plate" then the mean relative abundances per plate and the relative standard deviations (RSDs) per plate are calculated for each analyte.
+
+```{r mean-and-RSD-per-plate}
+
+repeatability_stats <- calculate_repeatability_stats(
+  data = normalized_data,
+  standard_sample_id = "pool",
+  standard_group = "Spike"
+)
+
+```
+
+Then for each plate the intra-plate variation (the mean of the RSDs) is calculated. In addition the inter-plate variation (mean of the intra-plate variations) is calculated. These values are shown in a table.
+
+```{r variation-table}
+
+variations <- repeatability_stats %>% 
+        dplyr::group_by(plate) %>% 
+        dplyr::summarise(intra_plate_variation = signif(mean(RSD, na.rm = TRUE),
+                                                        digits = 3))
+
+sketch <- htmltools::withTags(table(
+  DT::tableHeader(c("Plate", "Intra-plate variation (%)")),
+  DT::tableFooter(c("Inter-plate variation (%)", 
+                    signif(mean(variations$intra_plate_variation, 
+                                na.rm = TRUE),
+                           digits = 3)))
+))
+
+DT::datatable(data = variations,
+              container = sketch,
+              rownames = FALSE,
+              filter = "none",
+              options = list(searching = FALSE,
+                             paging = FALSE))
+
+
+```
+
+The means and RSDs per plate are also shown in a bar plot. The bars represent the mean relative abundance and the points represent the RSD. This plot is faceted per cluster.
+
+```{r repeatability-plot-by-plate}
+
+repeatability_plot_by_plate <- visualize_repeatability(
+  repeatability_stats,
+  selected_group = "Spike",
+  selected_sample_id = "pool"
+)
+
+# The "text" aestethic of the ggplot object can be used to show information on hover in the plotly (see function documentation for more info)
+plotly::ggplotly(repeatability_plot_by_plate,
+                 tooltip = "text")
+
+```
+
+### 6.2 All plates together
+
+If the user chooses not to "Group by plate" then the mean relative abundance and RSD of each analyte is calculated for all samples together (regardless of the plate number). These values are then shown in a bar plot.
+
+```{r repeatability-plot-not-by-plate}
+
+repeatability_plot_not_by_plate <- visualize_repeatability_mean_bars(
+  normalized_data,
+  selected_sample_id = "pool",
+  selected_group = "Spike"
+)
+
+plotly::ggplotly(repeatability_plot_not_by_plate,
+                 tooltip = "text")
+
+```
+
+## 7. Data exploration
+
+On the data exploration tab the user can create figures to explore the data. By clicking the "Add a tab +" button the user can create more figures. The types of plots available are:
+
+1.  Box plot
+
+2.  Scatter plot
+
+3.  Histogram
+
+The user can choose which sample types should not be shown in the plot, which variables should be on the x- and y-axes (exception: for histogram only the x-axis variable is chosen), what variable(s) should be used as facets and what variable should be represented with color. The facets and colors are optional.
+
+```{r filtering-data}
+
+filter <- c("PBS", "IVIGg")
+
+filtered_data <- data_with_derived_traits %>% 
+  dplyr::filter(!(sample_type %in% filter))
+
+```
+
+```{r boxplot}
+
+xvar <- "sample_type"
+yvar <- "IgGI_Fucosylation"
+color <- "sample_type"
+facets <- "group"
+
+my_boxplot(filtered_data,
+           xvar = xvar,
+           yvar = yvar,
+           color = color,
+           facets = facets)
+
+```
+
+```{r scatter-plot}
+
+xvar <- "IgGI_Sialylation"
+yvar <- "IgGI_Fucosylation"
+color <- NULL
+facets <- c("group", "sample_type")
+
+my_scatter_plot(filtered_data,
+                xvar = xvar,
+                yvar = yvar,
+                color = color,
+                facets = facets)
+
+
+```
+
+```{r histogram}
+
+xvar <- "IgGI_Sialylation"
+color <- "sample_type"
+facets <- "group"
+
+my_histogram(filtered_data,
+             xvar = xvar,
+             color = color,
+             facets = facets)
+
+
+```
