@@ -43,9 +43,6 @@ read_metadata <- function(filepaths, filenames) {
           )
         }
       }
-      metadata <- metadata %>%
-        dplyr::rename_with(.cols = tidyselect::everything(),
-                           .fn = snakecase::to_snake_case)
       
       return(metadata)
     })
