@@ -136,36 +136,6 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
         dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
     })
     
-    # observeEvent(input$assess_repeatability, {
-    #   # Reset x$repeatability and x$variation_table:
-    #   x$repeatability <- NULL
-    #   x$variation_table <- NULL
-    #   
-    #   if (is_truthy(input$by_plate)) {
-    #     # Try to calculate the repeatability stats, but show a notification if
-    #     # there are no samples of the selected sample type and group combination:
-    #     tryCatch(
-    #       expr = {
-    #         x$repeatability <- calculate_repeatability_stats(
-    #           data = my_data(),
-    #           standard_sample_id = selected_sample_id(),
-    #           standard_group = selected_group())
-    #       },
-    #       no_samples = function(c) {
-    #         showNotification(c$message, type = "error")
-    #       }
-    #     )
-    #     
-    #     # Pause until x$repeatability has been calculated:
-    #     req(x$repeatability)
-    #     
-    #     # Calculate the intra-plate variations to show in the table:
-    #     x$variation_table <- x$repeatability %>% 
-    #       dplyr::group_by(plate) %>% 
-    #       dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
-    #   }
-    # })
-    
     plot <- reactive({
       req(length(clusters()) <= 4)
       if (is_truthy(input$by_plate)) {
