@@ -54,6 +54,17 @@ detect_plate_and_well <- function(data) {
       regex = "([Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z])).*([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
       remove = FALSE)
   
+  if (any(anyNA(data$well))) {
+    well_precedes_plate <- any(stringr::str_detect(
+      string = data$sample_name,
+      pattern = "[A-H](?:0?\\d\\D|0?\\d$|1[012]).*[Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z])"
+    ))
+    if (well_precedes_plate) {
+      rlang::abort(class = "well_precedes_plate",
+                   message = "Within the sample name the well position should not precede the plate number.")
+    }
+  }
+  
   no_plate_and_wells_could_be_determined <- all(is.na(data$plate) & is.na(data$well))
   
   # If there are no plate numbers in the sample_name, it will be assumed that
@@ -205,6 +216,15 @@ read_plate_design <- function(plate_design_file) {
   # .csv:
   plate_design <- readxl::read_excel(plate_design_file,
                                      .name_repair = "minimal")
+  
+  # Replacing the NA's that are due to empty cells on the plates with "Empty cell
+  # in plate design"
+  for (row in 1:nrow(plate_design)) {
+    if (!all(is.na(plate_design[row, ]))) { # but don't replace the NA's from the empty lines separating the plates
+      plate_design[row, which(is.na(plate_design[row, ]))] <- "Empty cell in plate design"
+    }
+  }
+  
   path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
   write.csv(plate_design,
             file = path_to_platedesign_csv, 

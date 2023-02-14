@@ -334,6 +334,12 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
           expr = {
             detect_plate_and_well(summary())
           },
+          well_precedes_plate = function(c) {
+            shinyFeedback::showFeedbackDanger(
+              "sample_id_method",
+              c$message)
+            NULL
+          },
           plate_well_NAs = function(c) {
             shinyFeedback::showFeedbackDanger(
               "sample_id_method",
