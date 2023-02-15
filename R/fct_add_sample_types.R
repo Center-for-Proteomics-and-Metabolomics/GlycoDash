@@ -52,6 +52,10 @@ read_sample_type_file <- function(filepath, filename) {
                  ))
   }
   
+  sample_types <- sample_types %>% 
+    dplyr::mutate(dplyr::across(.cols = tidyselect::everything(),
+                                .fns = as.character))
+  
   return(sample_types)
   
 }

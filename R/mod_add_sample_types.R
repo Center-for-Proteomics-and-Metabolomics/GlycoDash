@@ -210,8 +210,12 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
           summary(),
           input$method == "Upload a list with sample ID's and corresponding sample types")
       
+      sample_types_as_factor <- manual_sample_types$list() %>% 
+        dplyr::mutate(sample_type = as.factor(sample_type)) %>% 
+        dplyr::distinct()
+      
       dplyr::left_join(summary(),
-                       dplyr::distinct(manual_sample_types$list()))
+                       sample_types_as_factor)
     })
     
     # Show popup with automatically determined sample types if automatic method
