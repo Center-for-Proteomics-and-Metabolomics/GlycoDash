@@ -191,12 +191,38 @@ path_to_metadata <- system.file("extdata",
 metadata_list <- read_metadata(filepaths = list(path_to_metadata),
                                filenames = list("Metadata_example.xlsx"))
 
-merged_metadata <- purrr::reduce(metadata_list,
+# For each metadata file, the user needs to select which column contains the sample ID's, in this case the "Sample ID" column:
+sample_id_columns <- list("Sample ID")
+
+# The sample ID column(s) selected by the user are then renamed to "sample_id" so the metadata can be merged (if there were multiple metadata files) and joined with the data:
+prepped_metadata <- purrr::pmap(
+  list(metadata_list,
+       sample_id_columns),
+  function(metadata, 
+           sample_id_column) {
+    renamed <- tryCatch(
+      expr = {
+        rename_sample_id_column(metadata = metadata,
+                                sample_id_column = sample_id_column)
+      },
+      sample_id_conflict = function(c) {
+        showNotification(c$message,
+                         type = "warning",
+                         duration = NULL)
+        
+        rename_sample_id_column(metadata = metadata,
+                                sample_id_column = sample_id_column)
+      })
+    return(renamed)
+  })
+
+merged_metadata <- purrr::reduce(prepped_metadata,
                                  dplyr::full_join,
                                  by = "sample_id")
 
 with_metadata <- dplyr::left_join(with_clusters,
-                                  merged_metadata)
+                                  merged_metadata,
+                                  by = "sample_id")
 
 ```
 

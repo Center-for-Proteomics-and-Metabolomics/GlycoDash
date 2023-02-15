@@ -140,7 +140,7 @@ mod_add_metadata_server <- function(id, summary){
                  sample_id_inputId) {
           sample_id_column <- input[[sample_id_inputId]]
           
-          renamed <- withCallingHandlers(
+          renamed <- tryCatch(
             expr = {
               rename_sample_id_column(metadata = metadata,
                                       sample_id_column = sample_id_column)
@@ -223,7 +223,8 @@ mod_add_metadata_server <- function(id, summary){
         is_truthy(input$popup)
       )) {
         dplyr::left_join(summary(),
-                         merged_metadata())
+                         merged_metadata(),
+                         by = "sample_id")
       } else {
         NULL
       }
