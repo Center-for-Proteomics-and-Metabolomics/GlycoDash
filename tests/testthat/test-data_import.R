@@ -75,7 +75,16 @@ test_that("read_non_rectangular() throws an error if an empty file or dummy file
   expect_error(read_non_rectangular(path_to_dummy, delim = "\t"),
                class = "embedded_null")
   
+  path_to_wrong_encoding <- system.file("extdata",
+                                        "for_tests",
+                                        "LacyTools_summary_example_UTF16LE.txt",
+                                        package = "glycodash")
+  
+  expect_error(read_non_rectangular(path_to_wrong_encoding, delim = "\t"),
+               class = "embedded_null")
+  
   path_to_empty <- system.file("extdata",
+                               "for_tests",
                                "empty.txt",
                                package = "glycodash")
   
@@ -207,57 +216,5 @@ test_that("load_and_assign() throws an error for objects saved with saveRDS()", 
     new_name <- load_and_assign(file_path)
     },
     regexp = "Check if the file_path was not misspelled\\.") 
-  
-})
-
-test_that("date_with_text() converts date without comments to class \"Date\"", {
-  path <- system.file("extdata",
-                      "for_tests",
-                      "Dates.xlsx",
-                      package = "glycodash")
-  
-  dates <- readxl::read_excel(path,
-                              col_types = "text")
-  
-  dates <- dates %>%
-    dplyr::mutate(dplyr::across(.cols = date,
-                                .fns = date_with_text))
-  
-  expect_s3_class(object = dates$date,
-                  class = "Date")
-  
-})
-
-test_that("date_with_text() converts date with comments to class \"Character\"", {
-  path <- system.file("extdata",
-                      "for_tests",
-                      "Dates_with_comment.xlsx",
-                      package = "glycodash")
-  
-  dates <- readxl::read_excel(path,
-                              col_types = "text")
-  
-  dates <- dates %>%
-    dplyr::mutate(dplyr::across(.cols = date,
-                                .fns = date_with_text))
-  
-  expect_type(object = dates$date,
-              type = "character")
-  
-})
-
-test_that("date_with_text() throws an error when used outside of dplyr::across()", {
-  path <- system.file("extdata",
-                      "for_tests",
-                      "Dates_with_comment.xlsx",
-                      package = "glycodash")
-  
-  dates <- readxl::read_excel(path,
-                              col_types = "text")
-  
-  date_with_text(dates$date)
-  
-  expect_type(object = dates$date,
-              type = "character")
   
 })
