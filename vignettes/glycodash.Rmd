@@ -480,7 +480,46 @@ for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectr
 
 ```
 
-failed spectra tables...
+### 2.3 Spectra curation results
+
+The results of the spectra curation are visualized in the "View spectra curation box" where a plot and two tables are shown.
+
+```{r curated-spectra-plot}
+
+curated_spectra_plot <- plot_spectra_curation_results(
+  curated_data = curated_spectra, 
+  total_and_specific = "Yes"
+)
+
+plotly::ggplotly(curated_spectra_plot,
+                 tooltip = "text")
+
+```
+
+```{r overview-of-failed-spectra}
+
+for_table <- curated_spectra %>% 
+  dplyr::select(1:cut_off_passing_analyte_percentage) %>% 
+  dplyr::distinct() %>% 
+  dplyr::filter(!has_passed_spectra_curation)
+
+DT::datatable(for_table,
+              options = list(scrollX = TRUE,
+                             filter = "top"))
+
+
+```
+
+```{r details-of-failed-spectra}
+
+DT::datatable(curated_spectra %>% 
+                dplyr::select(-(passing_analyte_percentage:replicates)) %>% 
+                dplyr::distinct() %>% 
+                dplyr::filter(has_passed_spectra_curation == FALSE),
+              options = list(scrollX = TRUE,
+                             searching = TRUE))
+
+```
 
 ## 3. Analyte curation
 
