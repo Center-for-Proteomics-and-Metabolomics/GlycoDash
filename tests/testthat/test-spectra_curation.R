@@ -242,10 +242,6 @@ test_that("summarize_spectra_checks() calculates the percentage of passing analy
   
 })
 
-test_that("summarize_spectra_checks() ignores NAs in calculating sum intensity", {
-  
-})
-
 test_that("curate_spectra() lets the correct spectra pass and fail.", {
   
   test_checked_data <- tibble::tibble(absolute_intensity_background_subtracted = c(18000,

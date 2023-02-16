@@ -9,13 +9,11 @@ test_that("read_non_rectangular can read in files with different delimiters", {
                              "flatfile.txt",
                              package = "glycodash")
   
-  expect_error(read_non_rectangular(path = path_to_csv,
-                                    delim = ";"),
-               regexp = NA)
+  expect_no_error(read_non_rectangular(path = path_to_csv,
+                                    delim = ";"))
   
-  expect_error(read_non_rectangular(path = path_to_txt,
-                                    delim = "\t"), 
-               regexp = NA)
+  expect_no_error(read_non_rectangular(path = path_to_txt,
+                                    delim = "\t"))
   
   
   
@@ -109,8 +107,7 @@ test_that("detect_plate_and_well() can identify plate numbers in all allowed for
                                    "Testname_PL8_well_H5",
                                    "Testname_PL8_well_H05",
                                    "Testname_PL8H5"))
-  expect_error(detect_plate_and_well(df),
-               regexp = NA)
+  expect_no_error(detect_plate_and_well(df))
 })
 
 test_that("detect_plate_and_well() doesn't interpret a letter and number combination as the well position if it precedes the plate number", {
@@ -167,10 +164,9 @@ test_that("read_and_process_plate_design() returns a dataframe with the number o
 test_that("define_clusters() works if cluster_keywords is a list.", {
   df <- data.frame(analyte = c("IgGI1H5N3", "IgGII1H5N3"),
                    number = c(1:2))
-  # Using expect_error with regexp = NA means that there should be no errors.
-  expect_error(define_clusters(data = df,
-                               cluster_keywords = list("IgGI1", "IgGII1")),
-               regexp = NA)
+  
+  expect_no_error(define_clusters(data = df,
+                               cluster_keywords = list("IgGI1", "IgGII1")))
 })
 
 test_that("define_clusters() throws an error when any analytes in the data don't match with any of the keywords", {
@@ -216,5 +212,17 @@ test_that("load_and_assign() throws an error for objects saved with saveRDS()", 
     new_name <- load_and_assign(file_path)
     },
     regexp = "Check if the file_path was not misspelled\\.") 
+  
+})
+
+test_that("read_metadata() does not throw an error when colnames contain special characters", {
+  
+  path_to_metadata <- system.file("extdata",
+                                  "for_tests",
+                                  "Metadata_example_special_chars.xlsx",
+                                  package = "glycodash")
+  
+  expect_no_error(read_metadata(filepaths = list(path_to_metadata),
+                                filenames = list("Metadata_example_special_chars.xlsx")))
   
 })
