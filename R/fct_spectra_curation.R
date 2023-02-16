@@ -236,7 +236,7 @@ summarize_spectra_checks <- function(checked_data) {
   
   # TODO: Change name to calculate_spectra_curation_metrics?
   
-  grouping_variables <- c("group", "sample_type", "cluster", "sample_name", "sample_id")
+  grouping_variables <- c("sample_name", "group", "sample_type", "cluster", "sample_id")
   
   summarized_checks <- checked_data %>% 
     dplyr::mutate(intensity_divided_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
