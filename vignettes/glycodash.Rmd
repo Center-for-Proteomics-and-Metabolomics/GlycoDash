@@ -561,6 +561,19 @@ normalized_data_wide <- normalized_data %>%
 
 Currently derived traits can only be calculated for IgG data. The user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
 
+```{r}
+path_to_traits_formulas <- system.file("extdata",
+                                       "traits_formulas.xlsx",
+                                       package = "glycodash")
+
+custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas, 
+                                             col_names = FALSE)
+
+
+test <- calculate_custom_traits(normalized_data, custom_traits_formulas)
+
+```
+
 ```{r calculate-derived-traits}
 
 traits_to_calculate <- c("Fucosylation", 

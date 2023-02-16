@@ -360,3 +360,75 @@ calculate_derived_traits <- function(data, selected_derived_traits) {
   
   return(derived_traits)
 }
+
+
+
+#' create_expr_ls
+#' 
+#' Function to transform trait formula string into named list containing the 
+#' expression of the right-hand side of the equation. The name is the left-hand
+#' side of the equation. Used in the "calculate_custrom_trait" function.
+#' Based on:
+#' 
+#' https://stackoverflow.com/questions/70821721/how-to-use-an-expression-in-dplyrmutate-in-r
+create_expr_ls <- function(str_expr) {
+  expr_nm <- stringr::str_extract(str_expr, "^\\w+")
+  expr_code <- stringr::str_replace_all(str_expr, "(^\\w+\\s?=\\s?)(.*)", "\\2")
+  rlang::set_names(list(str2lang(expr_code)), expr_nm)
+}
+
+
+
+#' Calculate custom derived glycosylation traits
+#' 
+#' Calculate custom derived traits of IgG based on formulas provided in an 
+#' Excel file.
+#' 
+#'
+#' @param normalized_data A dataframe that contains at least the columns
+#' "analyte", "plate_well" and "relative_abundance". 
+#' Entries in the column "analyte" must have the form <cluster>1<glycan composition>,
+#' e.g.:
+#' 
+#' IgGII1H3N4F1.
+#' @param custom_traits_formulas An Excel file loaded with the "load_excel" function
+#' from the loadxl package. The Excel file contains formulas for the custom
+#' derived traits. Each formula must be placed on a new row, in the first column. 
+#' A formula must have the name of the trait on the left-hand side, 
+#' and an expression on the right-hand side. E.g.:
+#' 
+#' my_trait = (0.5 * H3N4 + H4N4) / (H3N4F1 + H4N4F1)
+#'
+#' @return
+#' A tibble with a separate row for each sample and cluster. Contains a column
+#' for each glycan and its relative abundance, and a column for each calculated trait. 
+#' 
+#' @export
+#'
+#' @examples
+calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
+  calculated_traits <- normalized_data %>% 
+    # Separate analyte into cluster and glycan
+    dplyr::select(-cluster) %>%   # remove existing cluster column
+    tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), 
+                    extra = "merge", remove = TRUE) %>% 
+    # Create column for each glycan with relative abundance as value
+    tidyr::pivot_wider(names_from = "glycan", values_from = relative_abundance) 
+  
+  
+  # Calculate traits per sample (plate well) and per cluster
+  # Iterate through formulas provided in Excel file
+  for (i in range(1:nrow(custom_traits_formulas))){
+    # Get formula as string
+    formula_string <- as.character(custom_traits_formulas[i, 1])
+    # Convert to expression that can be used in dplyr mutate function
+    formula_expr_ls <- create_expr_ls(formula_string)
+    # Calculate trait per sample (plate well) and per cluster
+    calculated_traits <- calculated_traits %>%
+      dplyr::group_by(plate_well, cluster) %>%
+      dplyr::mutate(!!! formula_expr_ls) %>% 
+      dplyr::ungroup()
+  }
+  
+  return(calculated_traits)
+}
