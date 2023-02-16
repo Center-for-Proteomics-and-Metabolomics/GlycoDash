@@ -29,7 +29,7 @@ mod_clusters_ui <- function(id){
 #' clusters Server Functions
 #'
 #' @noRd 
-mod_clusters_server <- function(id, summary){
+mod_clusters_server <- function(id, LacyTools_summary){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -63,7 +63,7 @@ mod_clusters_server <- function(id, summary){
     cluster_keywords_found <- reactive({
       req(cluster_inputIds())
       
-      unique_analytes_in_data <- unique(summary()$analyte)
+      unique_analytes_in_data <- unique(LacyTools_summary()$analyte)
       
       keywords_found <- purrr::map_lgl(
         cluster_inputIds(),
@@ -121,7 +121,7 @@ mod_clusters_server <- function(id, summary){
     observe({
       shinyjs::toggleState("button",
                            condition = all(
-                             is_truthy(summary()),
+                             is_truthy(LacyTools_summary()),
                              is_truthy(cluster_keywords_found())
                            ))
     })
@@ -129,7 +129,7 @@ mod_clusters_server <- function(id, summary){
     r <- reactiveValues()
     
     observe({
-      if (!is_truthy(summary()) & is_truthy(r$with_clusters)) {
+      if (!is_truthy(LacyTools_summary()) & is_truthy(r$with_clusters)) {
         r$with_clusters <- NULL
         showNotification("Clusters have to be readded to the data.",
                          type = "warning")
@@ -137,13 +137,13 @@ mod_clusters_server <- function(id, summary){
     })
     
     observe({
-      req(summary(),
+      req(LacyTools_summary(),
           keywords())
       req(all(keywords() != ""))
       
       r$with_clusters <- tryCatch(
         expr = {
-          define_clusters(data = summary(),
+          define_clusters(data = LacyTools_summary(),
                           cluster_keywords = keywords())
         },
         unmatched_analytes = function(c) {
