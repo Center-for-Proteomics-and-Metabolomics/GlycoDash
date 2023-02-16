@@ -40,10 +40,7 @@ separately if it is fulfilled, and is used in the function
 \examples{
 data(example_data)
 
-with_clusters <- define_clusters(data = example_data,
-                                 cluster_keywords = "IgGI")
-
-check_each_criterium(my_data = with_clusters,
+check_each_criterium(my_data = example_data,
                      min_ppm_deviation = -20,
                      max_ppm_deviation = 20,
                      max_ipq = 0.2,

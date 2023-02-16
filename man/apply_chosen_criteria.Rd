@@ -27,10 +27,7 @@ criteria to consider were all fulfilled and is used inside the function
 \examples{
 data(example_data)
 
-with_clusters <- define_clusters(data = example_data,
-                                 cluster_keywords = "IgGI")
-
-checked <- check_each_criterium(my_data = with_clusters,
+checked <- check_each_criterium(my_data = example_data,
                      min_ppm_deviation = -20,
                      max_ppm_deviation = 20,
                      max_ipq = 0.2,

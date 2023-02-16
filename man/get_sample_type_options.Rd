@@ -28,9 +28,6 @@ negative control samples.
 \examples{
 data("example_data")
 
-example_data <- define_clusters(data = example_data,
-                                cluster_keywords = "IgGI")
-
 checked_data <- check_analyte_quality_criteria(my_data = example_data,
                                                min_ppm_deviation = -20,
                                                max_ppm_deviation = 20,

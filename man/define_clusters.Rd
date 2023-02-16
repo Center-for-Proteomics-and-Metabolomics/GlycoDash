@@ -25,7 +25,8 @@ This function determines to which cluster an analyte belongs based on the
 analyte name.
 }
 \examples{
-data("example_data")
-define_clusters(data = example_data,
-                cluster_keywords = "IgGI")
+example_df <- data.frame(analyte = c("IgGI1H3N4", "IgGIH3N4F1", "IgGII1H3N4"))
+
+define_clusters(data = example_df,
+                cluster_keywords = c("IgGI", "IgGII"))
 }

@@ -36,10 +36,7 @@
 #' @examples
 #' data(example_data)
 #' 
-#' with_clusters <- define_clusters(data = example_data,
-#'                                  cluster_keywords = "IgGI")
-#' 
-#' check_analyte_quality_criteria(my_data = with_clusters,
+#' check_analyte_quality_criteria(my_data = example_data,
 #'                                min_ppm_deviation = -20,
 #'                                max_ppm_deviation = 20,
 #'                                max_ipq = 0.2,
@@ -91,10 +88,7 @@ check_analyte_quality_criteria <- function(my_data,
 #' @examples
 #' data(example_data)
 #' 
-#' with_clusters <- define_clusters(data = example_data,
-#'                                  cluster_keywords = "IgGI")
-#' 
-#' check_each_criterium(my_data = with_clusters,
+#' check_each_criterium(my_data = example_data,
 #'                      min_ppm_deviation = -20,
 #'                      max_ppm_deviation = 20,
 #'                      max_ipq = 0.2,
@@ -135,10 +129,7 @@ check_each_criterium <- function(my_data,
 #' @examples
 #' data(example_data)
 #' 
-#' with_clusters <- define_clusters(data = example_data,
-#'                                  cluster_keywords = "IgGI")
-#' 
-#' checked <- check_each_criterium(my_data = with_clusters,
+#' checked <- check_each_criterium(my_data = example_data,
 #'                      min_ppm_deviation = -20,
 #'                      max_ppm_deviation = 20,
 #'                      max_ipq = 0.2,
@@ -174,10 +165,7 @@ apply_chosen_criteria <- function(my_data,
 #' @examples
 #' data(example_data)
 #' 
-#' with_clusters <- define_clusters(data = example_data,
-#'                                  cluster_keywords = "IgGI")
-#' 
-#' checked <- check_each_criterium(my_data = with_clusters,
+#' checked <- check_each_criterium(my_data = example_data,
 #'                      min_ppm_deviation = -20,
 #'                      max_ppm_deviation = 20,
 #'                      max_ipq = 0.2,
@@ -233,9 +221,6 @@ report_failed_criteria <- function(my_data,
 #'
 #' @examples
 #' data("example_data")
-#'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
 #'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                   min_ppm_deviation = -20,
@@ -320,9 +305,6 @@ summarize_spectra_checks <- function(checked_data) {
 #'
 #' @examples
 #' data("example_data")
-#'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
 #'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
@@ -427,9 +409,6 @@ mean_plus_SD <- function(x, SD_factor, na.rm) {
 #' @examples
 #' data("example_data")
 #'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
-#'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
 #'                                                max_ppm_deviation = 20,
@@ -520,9 +499,6 @@ determine_reason_for_failure <- function(data) {
 #' @examples
 #' data("example_data")
 #'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
-#'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
 #'                                                max_ppm_deviation = 20,
@@ -571,9 +547,6 @@ kick_out_spectra <- function(curated_spectra) {
 #'
 #' @examples
 #' data("example_data")
-#'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
 #'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
@@ -647,9 +620,6 @@ remove_unneeded_columns <- function(passing_spectra) {
 #' @examples
 #' data("example_data")
 #'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
-#'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
 #'                                                max_ppm_deviation = 20,
@@ -696,9 +666,6 @@ return_when_spectra_curation_is_skipped <- function(checked_data,
 #'
 #' @examples
 #' data("example_data")
-#'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
 #'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
@@ -755,9 +722,6 @@ get_sample_type_options <- function(summarized_checks,
 #'
 #' @examples
 #' data("example_data")
-#'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
 #'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
@@ -874,9 +838,6 @@ create_cut_off_plot <- function(summarized_checks) {
 #'
 #' @examples
 #' data("example_data")
-#'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
 #'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
