@@ -433,7 +433,38 @@ plotly::ggplotly(cut_off_plot_with_cut_offs,
 
 The user has the option to change the cut-off values manually.
 
-Cut-off table...
+The cut-off values are shown in a table beneath the cut-off plot:
+
+```{r cut-offs-table}
+
+for_cut_off_table <- cut_offs %>% 
+        dplyr::mutate(
+          `Based on sample types` = purrr::map_chr(
+            sample_type_list,
+            ~ paste("Yes,",
+                    comma_and(.x$sample_type))),
+          curation_method = firstupper(
+            stringr::str_replace_all(curation_method,
+                                     pattern = "_",
+                                     replacement = " "))) %>% 
+        dplyr::ungroup() %>% 
+        dplyr::select(-c(cluster,
+                         sample_type_list)) %>% 
+        dplyr::rename("Cut-off sum intensity" = cut_off_sum_intensity,
+                      "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage,
+                      "Curation method" = curation_method) %>% 
+        dplyr::rename_with(firstupper)
+
+DT::datatable(for_cut_off_table,
+              rownames = FALSE,
+              width = "600px",
+              options = list(searching = FALSE,
+                             paging = FALSE,
+                             info = FALSE))
+
+```
+
+In case the user has chosen cut-offs manually those are also shown in the cut-off table.
 
 When the user clicks on the perform spectra curation button the cut-offs are used to curate the spectra.
 
@@ -448,6 +479,8 @@ passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
 for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
 
 ```
+
+failed spectra tables...
 
 ## 3. Analyte curation
 
