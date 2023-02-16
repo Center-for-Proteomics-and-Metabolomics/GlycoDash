@@ -555,6 +555,8 @@ normalized_data_wide <- normalized_data %>%
                      names_sep = "_",
                      values_from = relative_abundance)
 
+#test
+
 ```
 
 ## 5. Derived traits
