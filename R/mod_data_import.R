@@ -177,7 +177,8 @@ mod_data_import_server <- function(id){
       filename_sample_list = data_incl_sample_ids$filename_sample_list,
       filenames_metadata = data_incl_metadata$filenames_metadata,
       sample_types_method = data_incl_sample_types$method,
-      filename_sample_types = data_incl_sample_types$filename_sample_types
+      filename_sample_types = data_incl_sample_types$filename_sample_types,
+      colnames_metadata = data_incl_metadata$colnames_metadata
     ))
     
   })

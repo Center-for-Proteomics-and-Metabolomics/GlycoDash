@@ -16,7 +16,7 @@ mod_derived_traits_ui <- function(id){
               ),
       fluidRow(
         shinydashboard::box(
-          title = "Calculate derived traits",
+          title = "Calculate derived traits automatically",
           width = 3,
           solidHeader = TRUE,
           status = "primary",
@@ -39,6 +39,19 @@ mod_derived_traits_ui <- function(id){
         DT::dataTableOutput(ns("formulas"))
         )
       ),
+      
+      fluidRow(
+        shinydashboard::box(
+          title = "Calculate custom derived traits",
+          width = 3,
+          solidHeader = TRUE,
+          status = "primary",
+          fileInput(ns("custom_traits_file"), 
+                    "Upload Excel file with custom derived traits formulas",
+                    accept = c(".xlsx"))
+        )
+      ),
+      
       fluidRow(
         shinydashboard::box(
           title = "View data with derived traits",
@@ -55,13 +68,38 @@ mod_derived_traits_ui <- function(id){
 #' derived_traits Server Functions
 #'
 #' @noRd 
-mod_derived_traits_server <- function(id, results_normalization){
+mod_derived_traits_server <- function(id, results_normalization, results_data_import){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
     normalized_data <- reactive({
       req(results_normalization$normalized_data())
       results_normalization$normalized_data()
+    })
+    
+    colnames_metadata <- reactive({
+      req(results_data_import$colnames_metadata())
+      results_data_import$colnames_metadata()
+    })
+    
+    observe({
+      req(colnames_metadata())
+      print(colnames_metadata())
+    })
+    
+    traits_excel <- reactive({
+      req(input$custom_traits_file)
+      readxl::read_excel(input$custom_traits_file$datapath, col_names = FALSE)
+    })
+    
+    custom_traits <- reactive({
+      req(traits_excel(), normalized_data())
+      calculate_custom_traits(normalized_data(), traits_excel())
+    })
+    
+    observe({
+      req(custom_traits())
+      print(custom_traits())
     })
     
     observe({
@@ -71,7 +109,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     })
     
     derived_traits <- reactive({
-      req(normalized_data())
+      #req(normalized_data())
       
       calculate_derived_traits(data = normalized_data(),
                                selected_derived_traits = input$traits_menu)

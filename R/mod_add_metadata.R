@@ -196,6 +196,10 @@ mod_add_metadata_server <- function(id, summary){
       return(merged_metadata)
     }) %>% bindEvent(input$button)
     
+    colnames_metadata <- reactive({
+      colnames(merged_metadata())
+    })
+    
     unmatched_ids <- reactive({
       req(merged_metadata(),
           summary())
@@ -290,7 +294,8 @@ mod_add_metadata_server <- function(id, summary){
     return(list(
       data = with_metadata,
       button = reactive({r$master_button}),
-      filenames_metadata = filenames_metadata # pass the filenames along for the report
+      filenames_metadata = filenames_metadata, # pass the filenames along for the report
+      colnames_metadata = colnames_metadata
       ))
     
   })
