@@ -141,7 +141,7 @@ mod_add_sample_types_ui <- function(id){
 #' add_sample_types Server Functions
 #'
 #' @noRd 
-mod_add_sample_types_server <- function(id, summary, read_lacytools_button, sample_ids_button){
+mod_add_sample_types_server <- function(id, LacyTools_summary, read_lacytools_button, sample_ids_button){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -160,7 +160,7 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
                                  is_truthy(manual_sample_types$list())
                                )
                              ),
-                             is_truthy(summary())
+                             is_truthy(LacyTools_summary())
                            ))
     })
     
@@ -172,7 +172,7 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
         r$response <- NULL
         r$show_reset_warning <- TRUE
       }
-    }) %>% bindEvent(summary())
+    }) %>% bindEvent(LacyTools_summary())
     
     observe({
       if (is_truthy(r$show_reset_warning)) {
@@ -184,13 +184,13 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
                      sample_ids_button())
     
     observe({
-      req(summary(),
+      req(LacyTools_summary(),
           input$method == "Automatically determine sample types based on sample ID's")
       
       browser()
       
       #TODO: convert this to a function:
-      r$with_auto_sample_types <- summary() %>% 
+      r$with_auto_sample_types <- LacyTools_summary() %>% 
         tidyr::extract(col = sample_id,
                        into = c("sample_type"),
                        regex = "([[:alpha:]]+)",
@@ -209,10 +209,10 @@ mod_add_sample_types_server <- function(id, summary, read_lacytools_button, samp
     
     with_manual_sample_types <- reactive({
       req(manual_sample_types$list(),
-          summary(),
+          LacyTools_summary(),
           input$method == "Upload a list with sample ID's and corresponding sample types")
       
-      dplyr::left_join(summary(),
+      dplyr::left_join(LacyTools_summary(),
                        dplyr::distinct(manual_sample_types$list()))
     })
     

@@ -222,7 +222,7 @@ mod_read_lacytools_server <- function(id){
           input$keyword_specific,
           input$keyword_total)
       
-      summary <- tryCatch(
+      lacytools_summary <- tryCatch(
         expr = {
           # Detect based on sample names which samples are Total Ig and which are
           # Specific Ig samples
@@ -255,16 +255,16 @@ mod_read_lacytools_server <- function(id){
           NULL
         })
       
-      return(summary)
+      return(lacytools_summary)
     })
     
     to_return <- reactive({
       req(lacytools_summary())
-      summary <- tryCatch(lacytools_summary_total_and_specific(),
+      summary_to_return <- tryCatch(lacytools_summary_total_and_specific(),
                           error = function(e) {
                             lacytools_summary()
                           })
-      return(summary)
+      return(summary_to_return)
     }) # can't use bindEvent(input$button), because then re-adding sample ID's 
     # to a newly uploaded summary is faster then resetting the plate_design to NULL,
     # which results in an empty sample_id column added to the new summary
