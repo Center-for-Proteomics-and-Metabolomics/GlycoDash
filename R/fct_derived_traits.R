@@ -407,6 +407,7 @@ create_expr_ls <- function(str_expr) {
 #'
 #' @examples
 calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
+  
   calculated_traits <- normalized_data %>% 
     # Separate analyte into cluster and glycan
     dplyr::select(-cluster) %>%   # remove existing cluster column
@@ -419,15 +420,30 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
   # Calculate traits per sample (plate well) and per cluster
   # Iterate through formulas provided in Excel file
   for (i in range(1:nrow(custom_traits_formulas))){
+    # Get cluster for which to calculate the trait
+    cluster_specified <- as.character(custom_traits_formulas[i, 1])
     # Get formula as string
-    formula_string <- as.character(custom_traits_formulas[i, 1])
+    formula_string <- as.character(custom_traits_formulas[i, 2])
     # Convert to expression that can be used in dplyr mutate function
     formula_expr_ls <- create_expr_ls(formula_string)
-    # Calculate trait per sample (plate well) and per cluster
-    calculated_traits <- calculated_traits %>%
-      dplyr::group_by(plate_well, cluster) %>%
-      dplyr::mutate(!!! formula_expr_ls) %>% 
-      dplyr::ungroup()
+    # Calculate trait per sample, if cluster matches specified cluster
+    # Gives a tibble with 3 columns: cluster, plate_well, and <custom trait>
+    calculated_trait_cluster <- calculated_traits %>%
+      dplyr::filter(cluster == cluster_specified) %>% 
+      dplyr::group_by(plate_well) %>%
+      dplyr::mutate(!!! formula_expr_ls) %>%
+      dplyr::ungroup() %>% 
+      dplyr::select(cluster, plate_well, names(formula_expr_ls)[1]) %>% 
+      # Change name of column <custom trait> to <cluster_specified>_<custom trait>
+      dplyr::rename(
+        !!paste(cluster_specified, names(formula_expr_ls)[1], sep = "_") := names(formula_expr_ls)[1]
+      ) %>% 
+      # Select plate_well and <cluster>_<trait>
+      dplyr::select(-cluster)
+    
+    # Add to "calculated traits" data frame
+    calculated_traits <- calculated_traits %>% 
+      dplyr::left_join(., calculated_trait_cluster, by = "plate_well")
   }
   
   return(calculated_traits)
