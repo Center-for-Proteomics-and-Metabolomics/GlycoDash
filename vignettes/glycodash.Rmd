@@ -571,15 +571,28 @@ path_to_traits_formulas <- system.file("extdata",
 custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas, 
                                              col_names = FALSE)
 
+
 test_expr <- create_expr_ls("my_trait = H3N4F1 + H4N5")
 
-test <- calculate_custom_traits(normalized_data, custom_traits_formulas)
+
+custom_traits <- calculate_custom_traits(normalized_data, custom_traits_formulas)
   
-# Then: get calculated custom traits data frame in same format as 
-# "data_with_derived_traits"
-# Columns: sample_name, group, sample_type, sample_id, plate_well, 
-# number_of_replicates, replicates, [<cluster>_<cluster>1<glycan>], 
-# [<cluster>_<custom trait>]
+# Next: join custom traits data frame with normalized data in wide format,
+# to get the a data frame similar to "data_with_derived_traits"
+
+data_with_custom_traits <- dplyr::full_join(normalized_data_wide, 
+                                            custom_traits) %>% 
+  dplyr::select(-tidyselect::ends_with("formula")) %>% 
+  dplyr::select(-cluster)
+
+
+# The example data has only IgG1 analytes. 
+# The IgGII custom trait column now only has NA values.
+# Will have to check if it works with other clusters than IgG1.
+
+# Next:
+# Show formulas used in dashboard
+# Combine custom traits with calculated default traits
 ```
 
 ```{r calculate-derived-traits}
@@ -601,6 +614,13 @@ data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
                      values_from = dplyr::any_of(traits_to_calculate),
                      names_glue = "{cluster}_{.value}")
 
+```
+
+```{r}
+# Combine custom traits with default traits
+data_with_all_traits <- dplyr::full_join(
+  data_with_derived_traits, data_with_custom_traits
+)
 ```
 
 The formulas that have been used to calculate the derived traits are shown in a table.

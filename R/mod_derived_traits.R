@@ -87,6 +87,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_data_im
       print(colnames_metadata())
     })
     
+    ################################################################
     traits_excel <- reactive({
       req(input$custom_traits_file)
       readxl::read_excel(input$custom_traits_file$datapath, col_names = FALSE)
@@ -97,10 +98,18 @@ mod_derived_traits_server <- function(id, results_normalization, results_data_im
       calculate_custom_traits(normalized_data(), traits_excel())
     })
     
+    data_with_custom_traits <- reactive({
+      req(custom_traits())
+      dplyr::full_join(results_normalization$normalized_data_wide(),
+                       custom_traits()) %>% 
+        dplyr::select(-tidyselect::ends_with("formula"))
+    })
+    
     observe({
       req(custom_traits())
       print(custom_traits())
     })
+    ################################################################
     
     observe({
       shinyjs::toggleState("do_calculation", 
@@ -125,6 +134,21 @@ mod_derived_traits_server <- function(id, results_normalization, results_data_im
                            names_glue = "{cluster}_{.value}")
     })
     
+    
+    ##########################################################################
+    
+    # Combine default traits with custom traits
+    data_with_all_traits <- reactive({
+      req(data_with_derived_traits())
+      req(data_with_custom_traits())
+      dplyr::full_join(
+        data_with_derived_traits, data_with_custom_traits
+      )
+    })
+    
+    # If only default traits were calculated: use "data_with_derived_traits()" here
+    # If only custom traits were calculated: use "data_with_custom_traits()" here
+    # If both default and custom traits were calculated: use "data_with_all_traits()" here
     output$data_table <- DT::renderDT({
       req(data_with_derived_traits())
       

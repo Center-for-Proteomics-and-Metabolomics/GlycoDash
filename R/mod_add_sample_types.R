@@ -186,8 +186,7 @@ mod_add_sample_types_server <- function(id, LacyTools_summary, read_lacytools_bu
     observe({
       req(LacyTools_summary(),
           input$method == "Automatically determine sample types based on sample ID's")
-      
-      browser()
+
       
       #TODO: convert this to a function:
       r$with_auto_sample_types <- LacyTools_summary() %>% 

@@ -23,8 +23,8 @@ and an expression on the right-hand side. E.g.:
 my_trait = (0.5 * H3N4 + H4N4) / (H3N4F1 + H4N4F1)}
 }
 \value{
-A tibble with a separate row for each sample and cluster. Contains a column
-for each glycan and its relative abundance, and a column for each calculated trait.
+A tibble with the following columns: sample_name, cluster, group, custom traits
+and formulas used to calculate custom traits.
 }
 \description{
 Calculate custom derived traits of IgG based on formulas provided in an 
