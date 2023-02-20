@@ -172,7 +172,8 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
           curation_method = "manual"
         )
         
-        cut_offs <- dplyr::full_join(specific, total)
+        cut_offs <- dplyr::full_join(specific, total) %>% 
+          dplyr::mutate(group = as.factor(group))
         
       } else {
         req(input$cut_off_sum_intensity,
