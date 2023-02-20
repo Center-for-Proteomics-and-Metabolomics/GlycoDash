@@ -574,7 +574,12 @@ custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas,
 test_expr <- create_expr_ls("my_trait = H3N4F1 + H4N5")
 
 test <- calculate_custom_traits(normalized_data, custom_traits_formulas)
-
+  
+# Then: get calculated custom traits data frame in same format as 
+# "data_with_derived_traits"
+# Columns: sample_name, group, sample_type, sample_id, plate_well, 
+# number_of_replicates, replicates, [<cluster>_<cluster>1<glycan>], 
+# [<cluster>_<custom trait>]
 ```
 
 ```{r calculate-derived-traits}
