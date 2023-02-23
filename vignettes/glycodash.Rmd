@@ -588,20 +588,24 @@ custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas,
                                              col_names = FALSE)
 
 
+
 # Calculate custom derived traits
 custom_traits <- calculate_custom_traits(normalized_data,
-                                         custom_traits_formulas)
-
+                                         custom_traits_formulas) %>% 
+  dplyr::select(-cluster) %>% 
+  dplyr::group_by(sample_name) %>% 
+  tidyr::fill(tidyr::everything(), .direction = "downup") %>% 
+  dplyr::ungroup() %>% 
+  dplyr::distinct()
 
 
 
 # Next: join custom traits data frame with normalized data in wide format,
 # to get the a data frame similar to "data_with_derived_traits"
 
-# data_with_custom_traits <- dplyr::full_join(normalized_data_wide, 
-#                                             custom_traits) #%>% 
-#   dplyr::select(-tidyselect::ends_with("formula")) %>% 
-#   dplyr::select(-cluster)
+data_with_custom_traits <- dplyr::full_join(normalized_data_wide,
+                                            custom_traits) %>%
+  dplyr::select(-tidyselect::ends_with("formula"))
 ```
 
 For default derived traits, the user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
@@ -635,6 +639,8 @@ data_with_all_traits <- dplyr::full_join(
 ```
 
 The formulas that have been used to calculate the derived traits are shown in a table.
+
+*Still incorporate custom trait formulas.*
 
 ```{r derived_traits-formulas}
 
