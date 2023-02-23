@@ -105,10 +105,10 @@ mod_derived_traits_server <- function(id, results_normalization, results_data_im
         dplyr::select(-tidyselect::ends_with("formula"))
     })
     
-    observe({
-      req(custom_traits())
-      print(custom_traits())
-    })
+    # observe({
+    #   req(custom_traits())
+    #   print(custom_traits())
+    # })
     ################################################################
     
     observe({
@@ -139,22 +139,36 @@ mod_derived_traits_server <- function(id, results_normalization, results_data_im
     
     # Combine default traits with custom traits
     data_with_all_traits <- reactive({
-      req(data_with_derived_traits())
-      req(data_with_custom_traits())
+      req(data_with_derived_traits(), data_with_custom_traits())
       dplyr::full_join(
-        data_with_derived_traits, data_with_custom_traits
+        data_with_derived_traits(), data_with_custom_traits()
       )
     })
+    
     
     # If only default traits were calculated: use "data_with_derived_traits()" here
     # If only custom traits were calculated: use "data_with_custom_traits()" here
     # If both default and custom traits were calculated: use "data_with_all_traits()" here
+    
+    traits_data_table <- reactive({
+      if (is_truthy(data_with_all_traits())) {
+        return(data_with_all_traits())  
+      } else if (is_truthy(data_with_derived_traits())) {
+        return(data_with_derived_traits())
+      } else if (is_truthy(data_with_custom_traits())) {
+        return(data_with_custom_traits())
+      }
+    })
+
     output$data_table <- DT::renderDT({
-      req(data_with_derived_traits())
-      
-      DT::datatable(data = data_with_derived_traits(),
+      req(traits_data_table())
+      # req(data_with_derived_traits())
+      DT::datatable(data = traits_data_table(),
+                    # data = data_with_derived_traits(),
                     options = list(scrollX = TRUE))
     })
+    
+    
     
     formulas <- reactive({
       req(derived_traits())

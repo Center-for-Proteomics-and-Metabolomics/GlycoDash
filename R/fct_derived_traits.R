@@ -417,42 +417,55 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
     tidyr::pivot_wider(names_from = "glycan", values_from = relative_abundance) 
   
   
+  
   # Calculate traits per sample (plate well) and per cluster
   # Iterate through formulas provided in Excel file
-  for (i in range(1:nrow(custom_traits_formulas))){
+  
+  # Create empty vector, will append column to names to select at the end
+  columns_to_select <- c()
+  
+  # Start for-loop
+  for (i in seq(1:nrow(custom_traits_formulas))){
     # Get cluster for which to calculate the trait
-    cluster_specified <- as.character(custom_traits_formulas[i, 1])
+    cluster_specified <- as.character(custom_traits_formulas[i, 1])   # E.g.: IgGI
+    
     # Get formula as string
-    formula_string <- as.character(custom_traits_formulas[i, 2])
+    formula_string <- as.character(custom_traits_formulas[i, 2])      # E.g.:  first_trait = 0.5 * H4N4 + H5N4
+    
     # Convert to expression that can be used in dplyr mutate function
     formula_expr_ls <- create_expr_ls(formula_string)
+    
     # Get name of custom trait including cluster: <cluster>_<trait name>
-    custom_trait_name <- paste(cluster_specified, names(formula_expr_ls)[1], sep = "_")
-    # Calculate trait per sample, if cluster matches specified cluster
-    # Gives a tibble with 3 columns: cluster, plate_well, and <custom trait>
+    custom_trait_name <- paste(cluster_specified, names(formula_expr_ls)[1], sep = "_")  # E.g. IgGI_first_trait
+    
+    # Add trait names and formulas to "columns_to_select" (these will be the column names)
+    columns_to_select <- append(columns_to_select, custom_trait_name)
+    formula_column_name <- paste(custom_trait_name, "formula", sep = "_")   # E.g IgGI_first_trait_formula
+    columns_to_select <- append(columns_to_select, formula_column_name)
+
+    # Calculate trait per sample, cluster has to match specified cluster
+    # Gives a tibble with 3 columns: cluster, plate_well, <custom trait>, and the used formula.
     calculated_trait_cluster <- calculated_custom_traits %>%
-      dplyr::filter(cluster == cluster_specified) %>% 
-      dplyr::group_by(plate_well) %>%
+      dplyr::filter(cluster == cluster_specified) %>%
       dplyr::mutate(!!! formula_expr_ls) %>%
-      dplyr::ungroup() %>% 
-      dplyr::select(cluster, plate_well, names(formula_expr_ls)[1]) %>% 
+      dplyr::select(sample_name:plate_well, names(formula_expr_ls)[1]) %>%  # includes group if it exists
       # Change name of column <custom trait> to <cluster_specified>_<custom trait>
-      dplyr::rename(!!custom_trait_name := names(formula_expr_ls)[1]) %>% 
+      dplyr::rename(!!custom_trait_name := names(formula_expr_ls)[1]) %>%
       # Add a column with the formula that was used to calculate the trait
       dplyr::mutate(
         !!paste(custom_trait_name, "formula", sep = "_") := formula_string
-      ) %>%
-      # Select plate_well and <cluster>_<trait>
-      dplyr::select(-cluster)
-    
+      )
+
+
     # Add to "calculated traits" data frame
-    calculated_custom_traits <- calculated_custom_traits %>% 
-      dplyr::left_join(., calculated_trait_cluster, by = "plate_well")
+    calculated_custom_traits <- calculated_custom_traits %>%
+      dplyr::left_join(., calculated_trait_cluster)  # "by = " automatically
+
   }
-  
+
   # Get "calculated_custom_traits" in same format as "derived_traits".
-  calculated_custom_traits <- calculated_custom_traits %>% 
-    dplyr::select(sample_name, cluster, group, starts_with("IgG"))
-  
+  calculated_custom_traits <- calculated_custom_traits %>%
+    dplyr::select(sample_name:plate_well, any_of(columns_to_select))
+
   return(calculated_custom_traits)
 }

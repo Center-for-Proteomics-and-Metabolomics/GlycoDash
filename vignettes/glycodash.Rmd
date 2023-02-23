@@ -41,8 +41,18 @@ The data import step can be broken down into 5 smaller steps:
 
 ```{r upload-your-data}
 
+# path_to_file <- system.file("extdata",
+#                             "LacyTools_summary_example.txt",
+#                             package = "glycodash")
+
+
+
+# "LacyTools_summary_example.txt" has only IgGI cluster.
+# "LaCyTools_summary_examply_extra_clusters.txt" has extra clusters:
+# IgGI, IgGII, IgGIII, IgGIV
+# Use this file for testing the custom derived traits feature.
 path_to_file <- system.file("extdata",
-                            "LacyTools_summary_example.txt",
+                            "LacyTools_summary_example_extra_clusters.txt",
                             package = "glycodash")
 
 raw_LacyTools_summary <- read_non_rectangular(path = path_to_file, 
@@ -173,7 +183,10 @@ The user needs to indicate the number of clusters and give a keyword for each cl
 ```{r clusters}
 
 with_clusters <- define_clusters(data = with_sample_types,
-                                 cluster_keywords = c("IgGI"))
+                                 cluster_keywords = c("IgGI",
+                                                      "IgGII",
+                                                      "IgGIII",
+                                                      "IgGIV"))
 
 ```
 
@@ -561,9 +574,12 @@ normalized_data_wide <- normalized_data %>%
 
 ## 5. Derived traits
 
-Currently derived traits can only be calculated for IgG data. The user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
+Currently derived traits can only be calculated for IgG data.
+
+*We want to incorporate the option to calculate custom derived traits based on an Excel file with formulas provided by the user.*
 
 ```{r}
+# Load example file with custom derived traits
 path_to_traits_formulas <- system.file("extdata",
                                        "traits_formulas.xlsx",
                                        package = "glycodash")
@@ -572,28 +588,23 @@ custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas,
                                              col_names = FALSE)
 
 
-test_expr <- create_expr_ls("my_trait = H3N4F1 + H4N5")
+# Calculate custom derived traits
+custom_traits <- calculate_custom_traits(normalized_data,
+                                         custom_traits_formulas)
 
 
-custom_traits <- calculate_custom_traits(normalized_data, custom_traits_formulas)
-  
+
+
 # Next: join custom traits data frame with normalized data in wide format,
 # to get the a data frame similar to "data_with_derived_traits"
 
-data_with_custom_traits <- dplyr::full_join(normalized_data_wide, 
-                                            custom_traits) %>% 
-  dplyr::select(-tidyselect::ends_with("formula")) %>% 
-  dplyr::select(-cluster)
-
-
-# The example data has only IgG1 analytes. 
-# The IgGII custom trait column now only has NA values.
-# Will have to check if it works with other clusters than IgG1.
-
-# Next:
-# Show formulas used in dashboard
-# Combine custom traits with calculated default traits
+# data_with_custom_traits <- dplyr::full_join(normalized_data_wide, 
+#                                             custom_traits) #%>% 
+#   dplyr::select(-tidyselect::ends_with("formula")) %>% 
+#   dplyr::select(-cluster)
 ```
+
+For default derived traits, the user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
 
 ```{r calculate-derived-traits}
 
