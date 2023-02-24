@@ -129,7 +129,7 @@ mod_derived_traits_ui <- function(id){
 #' derived_traits Server Functions
 #'
 #' @noRd 
-mod_derived_traits_server <- function(id, results_normalization, results_data_import){
+mod_derived_traits_server <- function(id, results_normalization){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -137,17 +137,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_data_im
       req(results_normalization$normalized_data())
       results_normalization$normalized_data()
     })
-    
-    colnames_metadata <- reactive({
-      req(results_data_import$colnames_metadata())
-      results_data_import$colnames_metadata()
-    })
-    
-    observe({
-      req(colnames_metadata())
-      print(colnames_metadata())
-    })
-    
     
     ####################  Custom derived traits  ####################
     
