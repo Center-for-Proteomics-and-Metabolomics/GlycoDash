@@ -70,7 +70,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
-    # Hide the cut_off_basis selectInput when manual_cut_off is chosen:
+    # Show the cut-off numericInputs when manual_cut_off is chosen:
     observe({
       shinyjs::toggle("cut_off_sum_intensity",
                       condition = all(is_truthy(input$switch_to_manual),
@@ -96,6 +96,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     observe({
       req(calculated_cut_offs())
       req(is_truthy(input$switch_to_manual))
+      req(!is_truthy(manual_cut_offs()))
       
       if (contains_total_and_specific_samples() == "Yes") {
         calculated_sum_intensity_cut_off_specific <- calculated_cut_offs() %>% 
@@ -171,7 +172,8 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
           curation_method = "manual"
         )
         
-        cut_offs <- dplyr::full_join(specific, total)
+        cut_offs <- dplyr::full_join(specific, total) %>% 
+          dplyr::mutate(group = as.factor(group))
         
       } else {
         req(input$cut_off_sum_intensity,
@@ -238,98 +240,98 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       plotly[["x"]][["layout"]][["margin"]][["l"]] <- 90
       
       plotly <- facet_strip_bigger(plotly)
-  
       
       return(plotly)
     })
     
-    # TODO: split this up in multiple reactives, because now it recalculates
-    # itself quite often.
-    cut_off_table <- reactive({
-      req(any(is_truthy(calculated_cut_offs()),
-              is_truthy(manual_cut_offs())))
+    for_cut_off_table_both <- reactive({
+      req(calculated_cut_offs(),
+          manual_cut_offs())
       
-      cut_off_table <- tryCatch(
-        expr = {
-          dplyr::full_join(calculated_cut_offs(),
-                           manual_cut_offs()) %>% 
-            dplyr::mutate(
-              `Based on samples` = purrr::map_chr(
-                sample_type_list,
-                ~ paste(ifelse(rlang::is_empty(.x),"No", "Yes,"),
-                        comma_and(.x$sample_type))
-              ),
-              curation_method = firstupper(
-                stringr::str_replace_all(curation_method,
-                                         pattern = "_",
-                                         replacement = " ")
-              )
-            ) %>% 
-            dplyr::ungroup() %>% 
-            dplyr::select(-c(cluster,
-                             sample_type_list)) %>% 
-            dplyr::rename("Sum intensity cut-off" = cut_off_sum_intensity,
-                          "Percentage of passing analytes cut-off" = cut_off_passing_analyte_percentage,
-                          "Curation method" = curation_method) %>% 
-            dplyr::rename_with(firstupper)
-          
-        },
-        error = function(e) {
-          if (is_truthy(calculated_cut_offs())) {
-            
-            calculated_cut_offs() %>% 
-              dplyr::mutate(
-                `Based on sample types` = purrr::map_chr(
-                  sample_type_list,
-                  ~ paste("Yes,",
-                          comma_and(.x$sample_type))),
-                curation_method = firstupper(
-                  stringr::str_replace_all(curation_method,
-                                           pattern = "_",
-                                           replacement = " "))) %>% 
-              dplyr::ungroup() %>% 
-              dplyr::select(-c(cluster,
-                               sample_type_list)) %>% 
-              dplyr::rename("Cut-off sum intensity" = cut_off_sum_intensity,
-                            "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage,
-                            "Curation method" = curation_method) %>% 
-              dplyr::rename_with(firstupper)
-            
-          } else {
-            
-            manual_cut_offs() %>% 
-              dplyr::mutate(`Based on sample types` = "No",
-                            curation_method = "Manual cut-offs") %>% 
-              dplyr::ungroup()%>% 
-              dplyr::rename("Cut-off sum intensity" = cut_off_sum_intensity,
-                            "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage,
-                            "Curation method" = curation_method) %>% 
-              dplyr::select(-c(cluster)) %>% 
-              dplyr::rename_with(firstupper)
-            
-          }
-          
+      dplyr::full_join(calculated_cut_offs(),
+                       manual_cut_offs()) %>% 
+        dplyr::mutate(
+          `Based on samples` = purrr::map_chr(
+            sample_type_list,
+            ~ paste(ifelse(rlang::is_empty(.x),"No", "Yes,"),
+                    comma_and(.x$sample_type))
+          ),
+          curation_method = firstupper(
+            stringr::str_replace_all(curation_method,
+                                     pattern = "_",
+                                     replacement = " ")
+          )
+        ) %>% 
+        dplyr::ungroup() %>% 
+        dplyr::select(-c(cluster,
+                         sample_type_list)) %>% 
+        dplyr::rename("Sum intensity cut-off" = cut_off_sum_intensity,
+                      "Percentage of passing analytes cut-off" = cut_off_passing_analyte_percentage,
+                      "Curation method" = curation_method) %>% 
+        dplyr::rename_with(firstupper)
+    })
+    
+    for_cut_off_table_calculated <- reactive({
+      req(calculated_cut_offs())
+      
+      calculated_cut_offs() %>% 
+        dplyr::mutate(
+          `Based on sample types` = purrr::map_chr(
+            sample_type_list,
+            ~ paste("Yes,",
+                    comma_and(.x$sample_type))),
+          curation_method = firstupper(
+            stringr::str_replace_all(curation_method,
+                                     pattern = "_",
+                                     replacement = " "))) %>% 
+        dplyr::ungroup() %>% 
+        dplyr::select(-c(cluster,
+                         sample_type_list)) %>% 
+        dplyr::rename("Cut-off sum intensity" = cut_off_sum_intensity,
+                      "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage,
+                      "Curation method" = curation_method) %>% 
+        dplyr::rename_with(firstupper)
+    })
+    
+    for_cut_off_table_manual <- reactive({
+      req(manual_cut_offs())
+      
+      manual_cut_offs() %>% 
+        dplyr::mutate(`Based on sample types` = "No",
+                      curation_method = "Manual cut-offs") %>% 
+        dplyr::ungroup()%>% 
+        dplyr::rename("Cut-off sum intensity" = cut_off_sum_intensity,
+                      "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage,
+                      "Curation method" = curation_method) %>% 
+        dplyr::rename_with(firstupper)
+    })
+    
+    show_in_cut_off_table <- reactive({
+      if (is_truthy(input$switch_to_manual)) {
+        if (is_truthy(for_cut_off_table_both())) {
+          for_cut_off_table_both()
+        } else {
+          req(for_cut_off_table_manual())
         }
-      )
-      
-      return(cut_off_table)
+      } else {
+        req(for_cut_off_table_calculated())
+      }
     })
     
     output$table <- DT::renderDT({
-      req(cut_off_table())
+      req(show_in_cut_off_table())
       
-      DT::datatable(cut_off_table(),
+      DT::datatable(show_in_cut_off_table(),
                     rownames = FALSE,
                     width = "600px",
                     options = list(searching = FALSE,
                                    paging = FALSE,
                                    info = FALSE))
-      
     })
     
     return(list(
       plot = my_plot,
-      table = cut_off_table,
+      table = show_in_cut_off_table,
       cut_offs_to_use = cut_offs_to_use
     ))
     

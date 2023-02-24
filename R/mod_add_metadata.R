@@ -19,8 +19,7 @@ mod_add_metadata_ui <- function(id){
               multiple = TRUE),
     div(
       id = ns("metadata_menu"),
-      uiOutput(ns("sample_id")),
-      uiOutput(ns("date"))
+      uiOutput(ns("sample_id"))
     ),
     actionButton(ns("button"), "Add the metadata")
   )
@@ -92,38 +91,6 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
                   })
     })
     
-    # Create inputIds for the date_column selectizeInputs based on the 
-    # number of metadata files that were uploaded:
-    date_column_inputIds <- reactive({
-      req(metadata_list())
-      purrr::map(seq_len(length(metadata_list())),
-                 ~ paste0("date_column", .x))
-    })
-    
-    # Create selectizeInputs for the date_columns. The number of inputs 
-    # created is the same as the number of metadata files that were uploaded.
-    output$date <- renderUI({
-      req(date_column_inputIds())
-      purrr::pmap(list(date_column_inputIds(),
-                       metadata_list(),
-                       names(metadata_list())),
-                  function(inputIds, metadata, metadata_name) {
-                    selectizeInput(
-                      ns(inputIds),
-                      label = paste("Which columns in", 
-                                    metadata_name, 
-                                    "contain dates?"),
-                      # The choices for each input correspond to the names of the 
-                      # columns in the metadata file:
-                      choices = unique(colnames(metadata)),
-                      # By default all columns with "date" in their name are selected:
-                      selected = stringr::str_subset(
-                        colnames(metadata),
-                        pattern = stringr::regex("date", ignore_case = TRUE)),
-                      multiple = TRUE)
-                  })
-    })
-    
     # Hide the metadata menu until metadata is uploaded:
     observe({
       shinyjs::toggle("metadata_menu", 
@@ -145,7 +112,6 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
     # This observe call ensures that the actionButton is only enabled under the
     # right circumstances
     observe({
-      
       shinyjs::toggleState("button",
                            condition = all(
                              is_truthy(metadata_list()),
@@ -154,9 +120,8 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
                            ))
     })
     
-    # For all metadata files in the metadata_list:
-    # Convert all date columns to date format (or if it's a mixed date and text format,
-    # to character) and rename the column with sample ID's to "sample_id":
+    
+    # Merge the metadata dataframes in metadata_list() together:
     merged_metadata <- reactive({
       req(
         metadata_list(),
@@ -164,31 +129,36 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
                            ~ isTruthy(input[[.x]])))
       )
       
-      # TODO: convert this to a function with warnings
-      # TODO: remove date part
+      # For all metadata files in the metadata_list: Rename the column that the
+      # user indicated as the sample ID column to "sample_id" so that the
+      # metadata can later be joined with the data using the sample_id column as
+      # the key:
       prepped_metadata <- purrr::pmap(
         list(metadata_list(),
-             sample_id_inputIds(),
-             date_column_inputIds()),
+             sample_id_inputIds()),
         function(metadata, 
-                 sample_id_inputId,
-                 date_column_inputId) {
-          # Check whether the metadata contains a column named "sample_id" that
-          # is not chosen as the sample ID column. If this is the case, the
-          # column needs to be renamed to prevent duplicated names (which would
-          # cause the app to crash)
-          conflict <- "sample_id" %in% colnames(metadata) & input[[sample_id_inputId]] != "sample_id"
-          if (conflict == TRUE) {
-            metadata <- metadata %>% 
-              dplyr::rename(sample_id_original = sample_id)
-          }
-          metadata <- metadata %>% 
-            dplyr::mutate(dplyr::across(tidyselect::any_of(input[[date_column_inputId]]), 
-                                        date_with_text)) %>% 
-            dplyr::rename(sample_id = input[[sample_id_inputId]])
-          return(metadata)
+                 sample_id_inputId) {
+          sample_id_column <- input[[sample_id_inputId]]
+          
+          renamed <- tryCatch(
+            expr = {
+              rename_sample_id_column(metadata = metadata,
+                                      sample_id_column = sample_id_column)
+          },
+          sample_id_conflict = function(c) {
+            showNotification(c$message,
+                             type = "warning",
+                             duration = NULL)
+            
+            rename_sample_id_column(metadata = metadata,
+                                    sample_id_column = sample_id_column)
+          })
+          
+          return(renamed)
         })
       
+      # Join all the metadata together (in case the user uploaded more than one
+      # metadata file):
       merged_metadata <- purrr::reduce(prepped_metadata,
                                        dplyr::full_join,
                                        by = "sample_id")
@@ -256,12 +226,12 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
       )) {
-        to_return <- dplyr::left_join(LacyTools_summary(),
-                         merged_metadata())
+        dplyr::left_join(summary(),
+                         merged_metadata(),
+                         by = "sample_id")
       } else {
-        to_return <- NULL
+        NULL
       }
-      return(to_return)
       
     })
     

@@ -23,9 +23,6 @@
 #' # First spectra curation has to be performed:
 #' data("example_data")
 #'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
-#'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
 #'                                                max_ppm_deviation = 20,
@@ -111,18 +108,22 @@ calculate_total_intensity <- function(data) {
     dplyr::mutate(intensity_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
     # For each sample + analyte combination, the intensities for all charge
     # states should be added together:
-    dplyr::group_by(sample_name, 
-                    analyte,
-                    # The remaining grouping variables are only there to ensure they
-                    # remain in the dataframe after summarize()
-                    cluster,
-                    group,
-                    sample_type,
-                    sample_id,
-                    plate_well,
-                    sum_intensity,
-                    number_of_replicates,
-                    replicates) %>% 
+    dplyr::group_by(
+      dplyr::across(tidyselect::any_of(
+        c("sample_name", 
+          "analyte",
+          # The remaining grouping variables are only there to ensure they
+          # remain in the dataframe after summarize()
+          "cluster",
+          "group",
+          "sample_type",
+          "sample_id",
+          "plate_well",
+          "sum_intensity",
+          "number_of_replicates",
+          "replicates")
+      ))
+    ) %>% 
     dplyr::summarize(total_absolute_intensity = sum(intensity_by_fraction,
                                                     na.rm = TRUE # check if this is needed?
                                                     )) %>% 
@@ -151,9 +152,6 @@ calculate_total_intensity <- function(data) {
 #' @examples
 #' # First spectra curation has to be performed:
 #' data("example_data")
-#'
-#' example_data <- define_clusters(data = example_data,
-#'                                 cluster_keywords = "IgGI")
 #'
 #' checked_data <- check_analyte_quality_criteria(my_data = example_data,
 #'                                                min_ppm_deviation = -20,

@@ -204,12 +204,38 @@ path_to_metadata <- system.file("extdata",
 metadata_list <- read_metadata(filepaths = list(path_to_metadata),
                                filenames = list("Metadata_example.xlsx"))
 
-merged_metadata <- purrr::reduce(metadata_list,
+# For each metadata file, the user needs to select which column contains the sample ID's, in this case the "Sample ID" column:
+sample_id_columns <- list("Sample ID")
+
+# The sample ID column(s) selected by the user are then renamed to "sample_id" so the metadata can be merged (if there were multiple metadata files) and joined with the data:
+prepped_metadata <- purrr::pmap(
+  list(metadata_list,
+       sample_id_columns),
+  function(metadata, 
+           sample_id_column) {
+    renamed <- tryCatch(
+      expr = {
+        rename_sample_id_column(metadata = metadata,
+                                sample_id_column = sample_id_column)
+      },
+      sample_id_conflict = function(c) {
+        showNotification(c$message,
+                         type = "warning",
+                         duration = NULL)
+        
+        rename_sample_id_column(metadata = metadata,
+                                sample_id_column = sample_id_column)
+      })
+    return(renamed)
+  })
+
+merged_metadata <- purrr::reduce(prepped_metadata,
                                  dplyr::full_join,
                                  by = "sample_id")
 
 with_metadata <- dplyr::left_join(with_clusters,
-                                  merged_metadata)
+                                  merged_metadata,
+                                  by = "sample_id")
 
 ```
 
@@ -420,7 +446,38 @@ plotly::ggplotly(cut_off_plot_with_cut_offs,
 
 The user has the option to change the cut-off values manually.
 
-Cut-off table...
+The cut-off values are shown in a table beneath the cut-off plot:
+
+```{r cut-offs-table}
+
+for_cut_off_table <- cut_offs %>% 
+        dplyr::mutate(
+          `Based on sample types` = purrr::map_chr(
+            sample_type_list,
+            ~ paste("Yes,",
+                    comma_and(.x$sample_type))),
+          curation_method = firstupper(
+            stringr::str_replace_all(curation_method,
+                                     pattern = "_",
+                                     replacement = " "))) %>% 
+        dplyr::ungroup() %>% 
+        dplyr::select(-c(cluster,
+                         sample_type_list)) %>% 
+        dplyr::rename("Cut-off sum intensity" = cut_off_sum_intensity,
+                      "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage,
+                      "Curation method" = curation_method) %>% 
+        dplyr::rename_with(firstupper)
+
+DT::datatable(for_cut_off_table,
+              rownames = FALSE,
+              width = "600px",
+              options = list(searching = FALSE,
+                             paging = FALSE,
+                             info = FALSE))
+
+```
+
+In case the user has chosen cut-offs manually those are also shown in the cut-off table.
 
 When the user clicks on the perform spectra curation button the cut-offs are used to curate the spectra.
 
@@ -433,6 +490,47 @@ curated_spectra <- curate_spectra(checked_data = checked_data,
 passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
 
 for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
+
+```
+
+### 2.3 Spectra curation results
+
+The results of the spectra curation are visualized in the "View spectra curation box" where a plot and two tables are shown.
+
+```{r curated-spectra-plot}
+
+curated_spectra_plot <- plot_spectra_curation_results(
+  curated_data = curated_spectra, 
+  total_and_specific = "Yes"
+)
+
+plotly::ggplotly(curated_spectra_plot,
+                 tooltip = "text")
+
+```
+
+```{r overview-of-failed-spectra}
+
+for_table <- curated_spectra %>% 
+  dplyr::select(1:cut_off_passing_analyte_percentage) %>% 
+  dplyr::distinct() %>% 
+  dplyr::filter(!has_passed_spectra_curation)
+
+DT::datatable(for_table,
+              options = list(scrollX = TRUE,
+                             filter = "top"))
+
+
+```
+
+```{r details-of-failed-spectra}
+
+DT::datatable(curated_spectra %>% 
+                dplyr::select(-(passing_analyte_percentage:replicates)) %>% 
+                dplyr::distinct() %>% 
+                dplyr::filter(has_passed_spectra_curation == FALSE),
+              options = list(scrollX = TRUE,
+                             searching = TRUE))
 
 ```
 

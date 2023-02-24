@@ -480,7 +480,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       for_table <- curated_data()%>% 
         dplyr::select(1:cut_off_passing_analyte_percentage) %>% 
         dplyr::distinct() %>% 
-        dplyr::filter(has_passed_spectra_curation == FALSE)
+        dplyr::filter(!has_passed_spectra_curation)
       
       DT::datatable(for_table,
                     options = list(scrollX = TRUE,
