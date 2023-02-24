@@ -591,12 +591,7 @@ custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas,
 
 # Calculate custom derived traits
 custom_traits <- calculate_custom_traits(normalized_data,
-                                         custom_traits_formulas) %>% 
-  dplyr::select(-cluster) %>% 
-  dplyr::group_by(sample_name) %>% 
-  tidyr::fill(tidyr::everything(), .direction = "downup") %>% 
-  dplyr::ungroup() %>% 
-  dplyr::distinct()
+                                         custom_traits_formulas)
 
 
 
@@ -630,6 +625,8 @@ data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
                      names_glue = "{cluster}_{.value}")
 
 ```
+
+Combine the default derived traits with the custom derived traits.
 
 ```{r}
 # Combine custom traits with default traits

@@ -392,8 +392,9 @@ create_expr_ls <- function(str_expr) {
 #' 
 #' IgGII1H3N4F1.
 #' @param custom_traits_formulas An Excel file loaded with the "load_excel" function
-#' from the loadxl package. The Excel file contains formulas for the custom
-#' derived traits. Each formula must be placed on a new row, in the first column. 
+#' from the loadxl package. The first column in the Excel file contains the cluster.
+#' The second column contains a trait to calculate for that cluster.
+#' Each custom trait must be places on a new row. 
 #' A formula must have the name of the trait on the left-hand side, 
 #' and an expression on the right-hand side. E.g.:
 #' 
@@ -463,9 +464,15 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
 
   }
 
-  # Get "calculated_custom_traits" in same format as "derived_traits".
+  # Get "calculated_custom_traits" in correct format
   calculated_custom_traits <- calculated_custom_traits %>%
-    dplyr::select(sample_name:plate_well, any_of(columns_to_select))
+    dplyr::select(sample_name:plate_well, any_of(columns_to_select)) %>% 
+    dplyr::select(-cluster) %>% 
+    dplyr::group_by(sample_name) %>% 
+    tidyr::fill(tidyr::everything(), .direction = "downup") %>% 
+    dplyr::ungroup() %>% 
+    dplyr::distinct()
 
+  # Return calculated custom traits tibble
   return(calculated_custom_traits)
 }
