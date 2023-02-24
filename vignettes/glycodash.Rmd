@@ -41,8 +41,18 @@ The data import step can be broken down into 5 smaller steps:
 
 ```{r upload-your-data}
 
+# path_to_file <- system.file("extdata",
+#                             "LacyTools_summary_example.txt",
+#                             package = "glycodash")
+
+
+
+# "LacyTools_summary_example.txt" has only IgGI cluster.
+# "LaCyTools_summary_examply_extra_clusters.txt" has extra clusters:
+# IgGI, IgGII, IgGIII, IgGIV
+# Use this file for testing the custom derived traits feature.
 path_to_file <- system.file("extdata",
-                            "LacyTools_summary_example.txt",
+                            "LacyTools_summary_example_extra_clusters.txt",
                             package = "glycodash")
 
 raw_LacyTools_summary <- read_non_rectangular(path = path_to_file, 
@@ -173,7 +183,10 @@ The user needs to indicate the number of clusters and give a keyword for each cl
 ```{r clusters}
 
 with_clusters <- define_clusters(data = with_sample_types,
-                                 cluster_keywords = c("IgGI"))
+                                 cluster_keywords = c("IgGI",
+                                                      "IgGII",
+                                                      "IgGIII",
+                                                      "IgGIV"))
 
 ```
 
@@ -653,11 +666,42 @@ normalized_data_wide <- normalized_data %>%
                      names_sep = "_",
                      values_from = relative_abundance)
 
+#test
+
 ```
 
 ## 5. Derived traits
 
-Currently derived traits can only be calculated for IgG data. The user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
+Currently derived traits can only be calculated for IgG data.
+
+*We want to incorporate the option to calculate custom derived traits based on an Excel file with formulas provided by the user.*
+
+```{r calculate-custom-traits}
+# Load example file with custom derived traits
+path_to_traits_formulas <- system.file("extdata",
+                                       "Custom_traits_formulas_example.xlsx",
+                                       package = "glycodash")
+
+custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas, 
+                                             col_names = FALSE)
+
+
+
+# Calculate custom derived traits
+custom_traits <- calculate_custom_traits(normalized_data,
+                                         custom_traits_formulas)
+
+
+
+# Next: join custom traits data frame with normalized data in wide format,
+# to get the a data frame similar to "data_with_derived_traits"
+
+data_with_custom_traits <- dplyr::full_join(normalized_data_wide,
+                                            custom_traits) %>%
+  dplyr::select(-tidyselect::ends_with("formula"))
+```
+
+For default derived traits, the user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
 
 ```{r calculate-derived-traits}
 
@@ -680,9 +724,18 @@ data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
 
 ```
 
+Combine the default derived traits with the custom derived traits.
+
+```{r}
+# Combine custom traits with default traits
+data_with_all_traits <- dplyr::full_join(
+  data_with_derived_traits, data_with_custom_traits
+)
+```
+
 The formulas that have been used to calculate the derived traits are shown in a table.
 
-```{r derived_traits-formulas}
+```{r derived-traits-formulas}
 
 formulas <- derived_traits %>% 
   dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
@@ -706,6 +759,21 @@ DT::datatable(formulas,
                              ordering = FALSE,
                              searching = FALSE))
 
+```
+
+Show table with custom trait formulas.
+
+```{r custom-traits-table}
+
+# Just get these from the Excel file
+custom_formulas <- custom_traits_formulas %>% 
+  dplyr::rename(cluster = ...1) %>% 
+  dplyr::rename(trait_formula = ...2) %>% 
+  tidyr::separate(trait_formula, into = c("custom_trait", "formula"),
+                  sep = "=", remove = TRUE)
+
+DT::datatable(custom_formulas,
+              colnames = c("Cluster", "Custom trait", "Formula"))
 ```
 
 ## 6. Repeatability
@@ -862,6 +930,5 @@ my_histogram(filtered_data,
              xvar = xvar,
              color = color,
              facets = facets)
-
-
 ```
+

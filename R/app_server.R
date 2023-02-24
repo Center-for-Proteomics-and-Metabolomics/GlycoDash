@@ -26,7 +26,8 @@ app_server <- function( input, output, session ) {
   
   results_derived_traits <- mod_derived_traits_server(
     id = "derived_traits_ui_1",
-    results_normalization = results_normalization)
+    results_normalization = results_normalization,
+    results_data_import = results_data_import)
   
   results_repeatability <- mod_repeatability_server(
     id = "repeatability_ui_1",
