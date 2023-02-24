@@ -10,6 +10,7 @@
 mod_derived_traits_ui <- function(id){
   ns <- NS(id)
   tagList(
+    shinyFeedback::useShinyFeedback(),  # Needed for warning message when non-xlsx file is uploaded.
     tags$style(HTML(paste0(
       "#",
       ns("box_header"),
@@ -43,6 +44,7 @@ mod_derived_traits_ui <- function(id){
           solidHeader = TRUE,
           status = "primary",
           "Attention: derived traits calculation can only be used on IgG data for now!",
+          br(),
           br(),
           shinyWidgets::awesomeCheckboxGroup(ns("traits_menu"),
                                              "Select the derived traits that should be calculated:",
@@ -93,8 +95,8 @@ mod_derived_traits_ui <- function(id){
           solidHeader = TRUE,
           status = "primary",
           fileInput(ns("custom_traits_file"), 
-                    "Upload Excel file with custom derived traits formulas",
-                    accept = c(".xlsx"))
+                    "Upload Excel file with custom derived traits formulas"
+                    )
         ),
         
         shinydashboard::box(
@@ -148,9 +150,27 @@ mod_derived_traits_server <- function(id, results_normalization, results_data_im
     
     
     ####################  Custom derived traits  ####################
-    traits_excel <- reactive({
+    
+    # Reactive expression containing the file extension of the uploaded file
+    extension <- reactive({
       req(input$custom_traits_file)
-      readxl::read_excel(input$custom_traits_file$datapath, col_names = FALSE)
+      tools::file_ext(input$custom_traits_file$name)
+    })
+    
+    # Show warning when non-Excel file is uploaded.
+    observe({
+      req(extension())
+      shinyFeedback::feedbackWarning("custom_traits_file",
+                                     extension() != "xlsx",
+                                     text = "Please upload an Excel (.xlsx) file.")
+    })
+    
+    
+    traits_excel <- reactive({
+      req(input$custom_traits_file, extension())
+      if (extension() == "xlsx"){
+        readxl::read_excel(input$custom_traits_file$datapath, col_names = FALSE)
+      }
     })
     
     custom_traits <- reactive({
@@ -256,13 +276,13 @@ mod_derived_traits_server <- function(id, results_normalization, results_data_im
     })
     
     output$custom_formulas <- DT::renderDT({
-      req(custom_formulas())
+      req(custom_formulas(), extension())
       DT::datatable(custom_formulas(),
                     colnames = c("Cluster", "Custom trait", "Formula"),
                     rownames = FALSE, 
                     options = list(paging = FALSE,
-                                   ordering = FALSE,
-                                   searching = FALSE))
+                                  ordering = FALSE,
+                                  searching = FALSE))
     })
     
     
