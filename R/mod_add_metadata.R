@@ -28,7 +28,7 @@ mod_add_metadata_ui <- function(id){
 #' add_metadata Server Functions
 #'
 #' @noRd 
-mod_add_metadata_server <- function(id, summary){
+mod_add_metadata_server <- function(id, LacyTools_summary){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -115,7 +115,7 @@ mod_add_metadata_server <- function(id, summary){
       shinyjs::toggleState("button",
                            condition = all(
                              is_truthy(metadata_list()),
-                             is_truthy(summary()),
+                             is_truthy(LacyTools_summary()),
                              sample_id_inputs_completed()
                            ))
     })
@@ -166,11 +166,15 @@ mod_add_metadata_server <- function(id, summary){
       return(merged_metadata)
     }) %>% bindEvent(input$button)
     
+    colnames_metadata <- reactive({
+      colnames(merged_metadata())
+    })
+    
     unmatched_ids <- reactive({
       req(merged_metadata(),
-          summary())
+          LacyTools_summary())
       
-      unmatched <- setdiff(summary()$sample_id,
+      unmatched <- setdiff(LacyTools_summary()$sample_id,
                            merged_metadata()$sample_id)
       
     if (rlang::is_empty(unmatched)) {
@@ -260,7 +264,8 @@ mod_add_metadata_server <- function(id, summary){
     return(list(
       data = with_metadata,
       button = reactive({r$master_button}),
-      filenames_metadata = filenames_metadata # pass the filenames along for the report
+      filenames_metadata = filenames_metadata, # pass the filenames along for the report
+      colnames_metadata = colnames_metadata
       ))
     
   })
