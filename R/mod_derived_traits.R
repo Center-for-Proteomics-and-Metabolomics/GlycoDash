@@ -268,11 +268,23 @@ mod_derived_traits_server <- function(id, results_normalization, results_data_im
     #### Custom traits formulas
     custom_formulas <- reactive({
       req(traits_excel())
-      traits_excel() %>%
-        dplyr::rename(cluster = ...1) %>% 
-        dplyr::rename(trait_formula = ...2) %>% 
-        tidyr::separate(trait_formula, into = c("custom_trait", "formula"),
-                        sep = "=", remove = TRUE)
+      tryCatch({
+        traits_excel() %>%
+          dplyr::rename(cluster = ...1) %>% 
+          dplyr::rename(trait_formula = ...2) %>% 
+          tidyr::separate(trait_formula, into = c("custom_trait", "formula"),
+                          sep = "=", remove = TRUE)
+      }, warning = function(w) {
+        shinyFeedback::feedbackWarning("custom_traits_file",
+                                       show = TRUE,
+                                       text = "Excel file not formatted correctly!")
+        NULL
+      })
+      # traits_excel() %>%
+      #   dplyr::rename(cluster = ...1) %>% 
+      #   dplyr::rename(trait_formula = ...2) %>% 
+      #   tidyr::separate(trait_formula, into = c("custom_trait", "formula"),
+      #                   sep = "=", remove = TRUE)
     })
     
     output$custom_formulas <- DT::renderDT({
