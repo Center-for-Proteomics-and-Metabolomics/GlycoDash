@@ -10,14 +10,36 @@
 mod_derived_traits_ui <- function(id){
   ns <- NS(id)
   tagList(
+    tags$style(HTML(paste0(
+      "#",
+      ns("box_header"),
+      " .box-title {width: 100%}",
+      "#",
+      ns("box_header"),
+      # changed all .fa to .fas  because of fontawesome version update
+      " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#",
+      ns("box_header"),
+      " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#",
+      ns("box_header"),
+      " .btn {float: right; border-width: 0px; margin-right: 5px}",
+      "#",
+      ns("box_header"),
+      " .dropdown {display: inline-block; float: right; width: 135px}",
+      "#",
+      ns("box_header"),
+      " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+    ))),
     fluidPage(
       fluidRow(
         h1("Derived traits"),
               ),
       fluidRow(
         shinydashboard::box(
+          id = ns("box"),
           title = "Calculate derived traits automatically",
-          width = 3,
+          width = 4,
           solidHeader = TRUE,
           status = "primary",
           "Attention: derived traits calculation can only be used on IgG data for now!",
@@ -32,25 +54,59 @@ mod_derived_traits_ui <- function(id){
                        "Calculate derived traits")
         ),
         shinydashboard::box(
-          title = "Formulas used to calculate the derived traits:",
-          width = 9,
+          title = "Formulas used to automatically calculate the derived traits:",
+          width = 8,
           solidHeader = TRUE,
           status = "primary",
         DT::dataTableOutput(ns("formulas"))
         )
       ),
       
+      
+      
       fluidRow(
-        shinydashboard::box(
-          title = "Calculate custom derived traits",
-          width = 3,
+        shinydashboardPlus::box(
+          id = ns("box"),
+          title = div(
+            id = ns("box_header"),
+            "Calculate custom derived traits",
+            shinyWidgets::dropdownButton(
+              tags$style(HTML(paste0(
+                "#",
+                ns("dropdown_content"),
+                " .fas {float: left}",
+                "#",
+                ns("dropdown_content"),
+                " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
+              ))),
+              div(id = ns("dropdown_content"),
+                  downloadButton(ns("download_ex_custom_formulas"),
+                                 "Download an example Excel file")),
+              icon = icon("paperclip", class = "ml"),
+              tooltip = shinyWidgets::tooltipOptions(placement = "top",
+                                                     title = "Example"),
+              width = "330px",
+              size = "xs"
+            ),
+          ),
+          width = 4,
           solidHeader = TRUE,
           status = "primary",
           fileInput(ns("custom_traits_file"), 
                     "Upload Excel file with custom derived traits formulas",
                     accept = c(".xlsx"))
+        ),
+        
+        shinydashboard::box(
+          title = "Formulas used to calculate the custom derived traits:",
+          width = 8,
+          solidHeader = TRUE,
+          status = "primary",
+          DT::dataTableOutput(ns("custom_formulas"))
         )
       ),
+      
+      
       
       fluidRow(
         shinydashboard::box(
@@ -65,6 +121,9 @@ mod_derived_traits_ui <- function(id){
   )
 }
     
+
+
+
 #' derived_traits Server Functions
 #'
 #' @noRd 
@@ -170,11 +229,44 @@ mod_derived_traits_server <- function(id, results_normalization, results_data_im
     
     
     
+    ########## Download example Excel of custom traits ##########
+    output$download_ex_custom_formulas <- downloadHandler(
+      filename = "Custom_traits_formulas_example.xlsx",
+      content = function(file) {
+        example_file <- system.file("app",
+                                    "www",
+                                    "Custom_traits_formulas_example.xlsx",
+                                    package = "glycodash")
+        file.copy(example_file, file)
+      }
+    )
+    
+    
     
     ############### Formulas of derived traits ###############
     
-    ##TODO Add a box with "Formulas used to calculate custom traits"
+    #### Custom traits formulas
+    custom_formulas <- reactive({
+      req(traits_excel())
+      traits_excel() %>%
+        dplyr::rename(cluster = ...1) %>% 
+        dplyr::rename(trait_formula = ...2) %>% 
+        tidyr::separate(trait_formula, into = c("custom_trait", "formula"),
+                        sep = "=", remove = TRUE)
+    })
     
+    output$custom_formulas <- DT::renderDT({
+      req(custom_formulas())
+      DT::datatable(custom_formulas(),
+                    colnames = c("Cluster", "Custom trait", "Formula"),
+                    rownames = FALSE, 
+                    options = list(paging = FALSE,
+                                   ordering = FALSE,
+                                   searching = FALSE))
+    })
+    
+    
+    #### Default traits formulas
     formulas <- reactive({
       req(derived_traits())
       derived_traits() %>% 

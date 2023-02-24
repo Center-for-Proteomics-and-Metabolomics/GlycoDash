@@ -37,8 +37,7 @@ mod_add_sample_ids_ui <- function(id){
       "#",
       ns("box_header"),
       " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
-    ))
-    ),
+    ))),
     shinydashboardPlus::box(
       id = ns("box"),
       title = div(

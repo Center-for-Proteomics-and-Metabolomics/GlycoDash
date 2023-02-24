@@ -378,7 +378,6 @@ create_expr_ls <- function(str_expr) {
 }
 
 
-
 #' Calculate custom derived glycosylation traits
 #' 
 #' Calculate custom derived traits of IgG based on formulas provided in an 

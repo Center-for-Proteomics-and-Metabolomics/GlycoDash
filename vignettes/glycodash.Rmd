@@ -578,10 +578,10 @@ Currently derived traits can only be calculated for IgG data.
 
 *We want to incorporate the option to calculate custom derived traits based on an Excel file with formulas provided by the user.*
 
-```{r}
+```{r calculate-custom-traits}
 # Load example file with custom derived traits
 path_to_traits_formulas <- system.file("extdata",
-                                       "traits_formulas.xlsx",
+                                       "Custom_traits_formulas_example.xlsx",
                                        package = "glycodash")
 
 custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas, 
@@ -637,9 +637,7 @@ data_with_all_traits <- dplyr::full_join(
 
 The formulas that have been used to calculate the derived traits are shown in a table.
 
-*Still incorporate custom trait formulas.*
-
-```{r derived_traits-formulas}
+```{r derived-traits-formulas}
 
 formulas <- derived_traits %>% 
   dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
@@ -663,4 +661,19 @@ DT::datatable(formulas,
                              ordering = FALSE,
                              searching = FALSE))
 
+```
+
+Show table with custom trait formulas.
+
+```{r custom-traits-table}
+
+# Just get these from the Excel file
+custom_formulas <- custom_traits_formulas %>% 
+  dplyr::rename(cluster = ...1) %>% 
+  dplyr::rename(trait_formula = ...2) %>% 
+  tidyr::separate(trait_formula, into = c("custom_trait", "formula"),
+                  sep = "=", remove = TRUE)
+
+DT::datatable(custom_formulas,
+              colnames = c("Cluster", "Custom trait", "Formula"))
 ```

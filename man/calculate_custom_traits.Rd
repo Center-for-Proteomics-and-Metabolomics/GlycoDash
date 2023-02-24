@@ -15,8 +15,9 @@ e.g.:
 IgGII1H3N4F1.}
 
 \item{custom_traits_formulas}{An Excel file loaded with the "load_excel" function
-from the loadxl package. The Excel file contains formulas for the custom
-derived traits. Each formula must be placed on a new row, in the first column. 
+from the loadxl package. The first column in the Excel file contains the cluster.
+The second column contains a trait to calculate for that cluster.
+Each custom trait must be places on a new row. 
 A formula must have the name of the trait on the left-hand side, 
 and an expression on the right-hand side. E.g.:
 
