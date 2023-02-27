@@ -43,8 +43,13 @@ mod_derived_traits_ui <- function(id){
           width = 4,
           solidHeader = TRUE,
           status = "primary",
-          "Attention: derived traits calculation can only be used on IgG data for now!",
-          br(),
+          div(
+            strong("Attention:"),
+            "derived traits calculations can only be performed on IgG data for now.",
+            style = "color:red"
+          ),
+          # "Attention: derived traits calculation can only be used on IgG data for now!",
+          # br(),
           br(),
           shinyWidgets::awesomeCheckboxGroup(ns("traits_menu"),
                                              "Select the derived traits that should be calculated:",
