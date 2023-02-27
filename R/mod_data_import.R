@@ -104,7 +104,7 @@ mod_data_import_server <- function(id){
             } else {
               if (is_truthy(LacyTools_summary$data())) {
                 show_in_table <- LacyTools_summary$data()
-                showNotification("The LacyTools summary has been loaded.",
+                showNotification("The LaCyTools summary has been loaded.",
                                  type = "message")
               }
             } 
