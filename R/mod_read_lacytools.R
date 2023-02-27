@@ -16,7 +16,7 @@ mod_read_lacytools_ui <- function(id){
     solidHeader = TRUE,
     status = "primary",
     fileInput(ns("lacytools_summary"), 
-              "Upload LacyTools summary.txt file:"),
+              "Upload LaCyTools summary.txt file:"),
     shinyWidgets::awesomeRadio(ns("contains_total_and_specific_samples"),
                                "Does your data contain total and specific immunoglobulin samples?",
                                choices = c("Yes", "No"),
@@ -44,7 +44,7 @@ mod_read_lacytools_ui <- function(id){
             placement = "right")
     ),
     actionButton(ns("button"),
-                 "Load the LacyTools summary file")
+                 "Load the LaCyTools summary file")
   )
 }
     
