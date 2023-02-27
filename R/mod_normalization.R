@@ -37,7 +37,7 @@ mod_normalization_ui <- function(id){
 #' normalization Server Functions
 #'
 #' @noRd 
-mod_normalization_server <- function(id, results_analyte_curation){
+mod_normalization_server <- function(id, results_analyte_curation, merged_metadata){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -72,9 +72,9 @@ mod_normalization_server <- function(id, results_analyte_curation){
       normalized_data() %>% 
         tidyr::pivot_wider(names_from = c(cluster, analyte),
                            names_sep = "_",
-                           values_from = relative_abundance) #%>% 
-        # Add metadata
-        # dplyr::left_join(., merged_metadata, by = "sample_id")
+                           values_from = relative_abundance) %>% 
+        # Combine with metadata
+        dplyr::left_join(., merged_metadata(), by = "sample_id")
     })
     
     output$data_table <- DT::renderDT({

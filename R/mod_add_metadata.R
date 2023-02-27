@@ -258,10 +258,10 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
     server = FALSE)
     
     return(list(
-      # merged_metadata = merged_metadata,  # for combining with the normalized data
       data = with_metadata,
       button = reactive({r$master_button}),
-      filenames_metadata = filenames_metadata # pass the filenames along for the report
+      filenames_metadata = filenames_metadata, # pass the filenames along for the report
+      merged_metadata = merged_metadata  # for combining with normalized data
       ))
     
   })
