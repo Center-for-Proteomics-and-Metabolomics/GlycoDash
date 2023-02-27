@@ -22,7 +22,7 @@ app_server <- function( input, output, session ) {
   
   results_normalization <- mod_normalization_server(
     id = "normalization_ui_1",
-    results_analyte_curation = results_analyte_curation)
+    results_analyte_curation = results_analyte_curation)  # results_data_import for metadata
   
   results_derived_traits <- mod_derived_traits_server(
     id = "derived_traits_ui_1",

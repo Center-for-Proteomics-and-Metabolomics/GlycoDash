@@ -78,6 +78,7 @@ mod_data_import_server <- function(id){
     
     data_incl_metadata <- mod_add_metadata_server("add_metadata_ui_1",
                                                   LacyTools_summary = data_incl_clusters$data)
+
     
     # Update the data shown in the datatable according to the steps that have
     # been completed by the user:
@@ -179,6 +180,7 @@ mod_data_import_server <- function(id){
       sample_types_method = data_incl_sample_types$method,
       filename_sample_types = data_incl_sample_types$filename_sample_types,
       colnames_metadata = data_incl_metadata$colnames_metadata
+      # merged_metadata = data_incl_metadata$merged_metadata
     ))
     
   })
