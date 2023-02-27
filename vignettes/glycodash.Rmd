@@ -648,9 +648,6 @@ DT::datatable(table)
 Total area normalization is performed per cluster.
 
 ```{r total-area-normalization}
-#TODO: prevent metadata columns from being lost in this step.
-# Possible solution: combined normalized data with merged_metadata
-
 # First, for each glycopeptide the total sum intensity of all charge states (divided by their fraction) together is calculated:
 total_intensities <- calculate_total_intensity(for_normalization)
 
