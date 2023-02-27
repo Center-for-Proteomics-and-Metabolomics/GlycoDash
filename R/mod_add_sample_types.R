@@ -215,7 +215,7 @@ mod_add_sample_types_server <- function(id, LacyTools_summary, read_lacytools_bu
         dplyr::mutate(sample_type = as.factor(sample_type)) %>% 
         dplyr::distinct()
       
-      dplyr::left_join(summary(),
+      dplyr::left_join(LacyTools_summary(),
                        sample_types_as_factor)
     })
     

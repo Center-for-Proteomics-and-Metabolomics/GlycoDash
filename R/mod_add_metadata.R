@@ -222,7 +222,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
       )) {
-        dplyr::left_join(summary(),
+        dplyr::left_join(LacyTools_summary(),
                          merged_metadata(),
                          by = "sample_id")
       } else {
