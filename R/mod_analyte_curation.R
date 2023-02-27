@@ -123,11 +123,11 @@ mod_analyte_curation_ui <- function(id){
             status = "primary",
             title = "Analyte curation results per cluster",
             div(
-              strong("Warning:"),
+              strong("Attention:"),
               paste(
                 "in the case of multiple clusters, you must click on each tab",
                 "below in order for the data to be correctly processed."),
-              style = "color:red"
+              style = "color:#0021B8"
             ),
             br(),
             tabsetPanel(id = ns("tabs"))

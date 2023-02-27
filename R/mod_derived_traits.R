@@ -46,7 +46,7 @@ mod_derived_traits_ui <- function(id){
           div(
             strong("Attention:"),
             "derived traits calculations can only be performed on IgG data for now.",
-            style = "color:red"
+            style = "color:#0021B8"
           ),
           # "Attention: derived traits calculation can only be used on IgG data for now!",
           # br(),
