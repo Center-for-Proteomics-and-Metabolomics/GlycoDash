@@ -672,9 +672,32 @@ normalized_data_wide <- normalized_data %>%
 
 ## 5. Derived traits
 
-Currently derived traits can only be calculated for IgG data.
+For automatically calculating default derived traits, the user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
 
-*We want to incorporate the option to calculate custom derived traits based on an Excel file with formulas provided by the user.*
+Currently, derived traits can only be calculated automatically for IgG.
+
+```{r calculate-derived-traits}
+
+traits_to_calculate <- c("Fucosylation", 
+                         "Sialylation")
+
+# First the derived traits are calculated
+derived_traits <- calculate_derived_traits(
+  data = normalized_data,
+  selected_derived_traits = traits_to_calculate
+)
+
+# Then they are added to the normalized data in wide format:
+data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
+                                             derived_traits) %>% 
+  dplyr::select(-tidyselect::ends_with("formula")) %>% 
+  tidyr::pivot_wider(names_from = cluster,
+                     values_from = dplyr::any_of(traits_to_calculate),
+                     names_glue = "{cluster}_{.value}")
+
+```
+
+The user can also calculate custom derived traits by uploading an Excel file.
 
 ```{r calculate-custom-traits}
 # Load example file with custom derived traits
@@ -699,29 +722,6 @@ custom_traits <- calculate_custom_traits(normalized_data,
 data_with_custom_traits <- dplyr::full_join(normalized_data_wide,
                                             custom_traits) %>%
   dplyr::select(-tidyselect::ends_with("formula"))
-```
-
-For default derived traits, the user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
-
-```{r calculate-derived-traits}
-
-traits_to_calculate <- c("Fucosylation", 
-                         "Sialylation")
-
-# First the derived traits are calculated
-derived_traits <- calculate_derived_traits(
-  data = normalized_data,
-  selected_derived_traits = traits_to_calculate
-)
-
-# Then they are added to the normalized data in wide format:
-data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
-                                             derived_traits) %>% 
-  dplyr::select(-tidyselect::ends_with("formula")) %>% 
-  tidyr::pivot_wider(names_from = cluster,
-                     values_from = dplyr::any_of(traits_to_calculate),
-                     names_glue = "{cluster}_{.value}")
-
 ```
 
 Combine the default derived traits with the custom derived traits.
