@@ -668,7 +668,6 @@ normalized_data_wide <- normalized_data %>%
   # Add metadata again
   dplyr::left_join(., merged_metadata, by = "sample_id")
 
-
 ```
 
 ## 5. Derived traits
