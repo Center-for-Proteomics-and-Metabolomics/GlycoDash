@@ -160,7 +160,7 @@ mod_tab_curated_analytes_server <- function(id, info, cluster){
                                                                        charge_column, 
                                                                        row_index),
                                                       value = dplyr::if_else(
-                                                        curated_analytes_table()[row_index, charge_column] == "Yes",
+                                                        curated_analytes_table()[[row_index, charge_column]] == "Yes",
                                                         TRUE,
                                                         FALSE)
                                   )
