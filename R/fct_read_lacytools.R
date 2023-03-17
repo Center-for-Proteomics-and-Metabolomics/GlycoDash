@@ -429,7 +429,8 @@ get_analytes_info <- function(data, variable) {
   
   # Pivot the dataframe and do some formatting:
   analytes_info <- analytes_info %>%
-    dplyr::slice(n = -1) %>% 
+    # dplyr::slice(n = -1) %>% 
+    dplyr::slice(-1) %>% 
     tidyr::pivot_longer(cols = -info_variables,
                         names_to = "analyte", 
                         values_to = "value") %>%
