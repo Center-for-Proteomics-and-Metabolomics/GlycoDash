@@ -654,6 +654,7 @@ total_intensities <- calculate_total_intensity(for_normalization)
 # And then the relative abundance of each glycopeptide is calculated per cluster:
 normalized_data <- normalize_data(total_intensities)
 
+
 # The normalized data is shown in a wide format (a column for each glycopeptide):
 normalized_data_wide <- normalized_data %>% 
   # removing columns no longer needed with values that differ between clusters:

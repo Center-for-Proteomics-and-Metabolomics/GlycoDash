@@ -124,9 +124,10 @@ calculate_total_intensity <- function(data) {
           "replicates")
       ))
     ) %>% 
+
     dplyr::summarize(total_absolute_intensity = sum(intensity_by_fraction,
                                                     na.rm = TRUE # check if this is needed?
-                                                    )) %>% 
+                                                    )) %>%
     dplyr::ungroup()
   
   return(total_intensities)
@@ -226,9 +227,8 @@ normalize_data <- function(total_intensities) {
   normalized_data <- total_intensities %>% 
     dplyr::group_by(cluster, 
                     sample_name) %>% 
-    dplyr::summarise(sum_intensity = sum(total_absolute_intensity),
+    dplyr::reframe(sum_intensity = sum(total_absolute_intensity),
                      across()) %>% 
-    dplyr::ungroup() %>% 
     dplyr::mutate(relative_abundance = total_absolute_intensity / sum_intensity * 100,
                   .keep = "unused")
   
