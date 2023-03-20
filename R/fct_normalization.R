@@ -124,9 +124,10 @@ calculate_total_intensity <- function(data) {
           "replicates")
       ))
     ) %>% 
+
     dplyr::summarize(total_absolute_intensity = sum(intensity_by_fraction,
                                                     na.rm = TRUE # check if this is needed?
-                                                    )) %>% 
+                                                    )) %>%
     dplyr::ungroup()
   
   return(total_intensities)
