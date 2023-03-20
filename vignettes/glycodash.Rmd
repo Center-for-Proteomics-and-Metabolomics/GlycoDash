@@ -51,6 +51,7 @@ The data import step can be broken down into 5 smaller steps:
 # "LaCyTools_summary_examply_extra_clusters.txt" has extra clusters:
 # IgGI, IgGII, IgGIII, IgGIV
 # Use this file for testing the custom derived traits feature.
+
 path_to_file <- system.file("extdata",
                             "LacyTools_summary_example.txt",
                             package = "glycodash")
@@ -672,9 +673,84 @@ normalized_data_wide <- normalized_data %>%
 
 ## 5. Derived traits
 
-Currently derived traits can only be calculated for IgG data.
+For automatically calculating default derived traits, the user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
 
-*We want to incorporate the option to calculate custom derived traits based on an Excel file with formulas provided by the user.*
+Currently, derived traits can only be calculated automatically for IgG.
+
+```{r calculate-derived-traits}
+
+traits_to_calculate <- c("Fucosylation", 
+                         "Sialylation")
+
+# First the derived traits are calculated
+derived_traits <- calculate_derived_traits(
+  data = normalized_data,
+  selected_derived_traits = traits_to_calculate
+)
+
+# Then they are added to the normalized data in wide format:
+data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
+                                             derived_traits) %>% 
+  dplyr::select(-tidyselect::ends_with("formula")) %>% 
+  tidyr::pivot_wider(names_from = cluster,
+                     values_from = dplyr::any_of(traits_to_calculate),
+                     names_glue = "{cluster}_{.value}")
+
+```
+
+*We want to add an option to automatically calculate additional derived traits for IgG: terminal galactosylation, sialic acid per galactose, hybrids and high mannose.*
+
+```{r}
+# Try to calculate high mannose
+# high-mannose (%) = sum(high-mannose glycans)   [relative intensities]
+
+# Create data with high mannose glycans
+high_mannose_data <- normalized_data %>% 
+  dplyr::group_by(
+    dplyr::across(
+      dplyr::any_of(c("sample_name", "cluster", "group"))
+    )
+  ) %>%   
+  dplyr::mutate(
+    # Create Man5, Man6 and Man8
+    analyte = stringr::str_replace_all(analyte, "H5N4F1S1", "H5N2"),
+    analyte = stringr::str_replace_all(analyte, "H5N4F1S2", "H6N2"),
+    analyte = stringr::str_replace_all(analyte, "H5N4S1", "H8N2")
+  )
+
+
+# All high-mannose glycans have 2 GlcNAc
+high_mannose_analytes <- stringr::str_subset(
+  string = unique(high_mannose_data$analyte),
+  pattern = "N2"
+)
+
+
+# unique() creates a character vector with all the analytes
+# set_names() turns this into a named vector, like: x <- c(a = 1, b = 2)
+formulas_per_cluster <- rlang::set_names(unique(high_mannose_data$cluster)) %>% 
+  # map() applies a function to each element of a vector, returns a list.
+  # List has clusters as names, and for each cluster a character vector with
+  # the high-mannose + all type glycans that are present. 
+  purrr::map(.,
+    function(cluster) {
+       stringr::str_subset(string = high_mannose_analytes,
+                           pattern = cluster)
+    }) %>% 
+  # imap() applies a function to each element and its index, returns a list.
+  # imap_dfc() returns a data frame created by column binding.
+  # Code below creates a character formula for the trait
+  purrr::imap_dfc(.,
+    function(analytes, name) {
+      paste0(
+        "(",
+        paste(analytes, collapse = " + "),
+        ")"
+      )
+    })
+```
+
+The user can also calculate custom derived traits by uploading an Excel file.
 
 ```{r calculate-custom-traits}
 # Load example file with custom derived traits
@@ -699,29 +775,6 @@ custom_traits <- calculate_custom_traits(normalized_data,
 data_with_custom_traits <- dplyr::full_join(normalized_data_wide,
                                             custom_traits) %>%
   dplyr::select(-tidyselect::ends_with("formula"))
-```
-
-For default derived traits, the user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
-
-```{r calculate-derived-traits}
-
-traits_to_calculate <- c("Fucosylation", 
-                         "Sialylation")
-
-# First the derived traits are calculated
-derived_traits <- calculate_derived_traits(
-  data = normalized_data,
-  selected_derived_traits = traits_to_calculate
-)
-
-# Then they are added to the normalized data in wide format:
-data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
-                                             derived_traits) %>% 
-  dplyr::select(-tidyselect::ends_with("formula")) %>% 
-  tidyr::pivot_wider(names_from = cluster,
-                     values_from = dplyr::any_of(traits_to_calculate),
-                     names_glue = "{cluster}_{.value}")
-
 ```
 
 Combine the default derived traits with the custom derived traits.
