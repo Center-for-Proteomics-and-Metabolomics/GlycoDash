@@ -60,8 +60,8 @@ mod_data_exploration_server <- function(id,
     
     my_data <- reactive({
       req(results_normalization$normalized_data_wide)
-      if (is_truthy(results_derived_traits$data_with_derived_traits())) {
-        results_derived_traits$data_with_derived_traits()
+      if (is_truthy(results_derived_traits$data_with_traits())) {
+        results_derived_traits$data_with_traits()
       } else {
         results_normalization$normalized_data_wide()
       }

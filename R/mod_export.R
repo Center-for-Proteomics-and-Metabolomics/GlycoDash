@@ -58,8 +58,8 @@ mod_export_server <- function(id,
     # If data_with_derived_traits exists it is assigned to x$data, otherwise
     # normalized_data is assigned to x$data:
     observe({
-      if (is_truthy(results_derived_traits$data_with_derived_traits())){
-        x$data <- results_derived_traits$data_with_derived_traits()
+      if (is_truthy(results_derived_traits$data_with_traits())){
+        x$data <- results_derived_traits$data_with_traits()
       } 
       else { if (is_truthy(results_normalization$normalized_data_wide())){
         x$data <- results_normalization$normalized_data_wide()

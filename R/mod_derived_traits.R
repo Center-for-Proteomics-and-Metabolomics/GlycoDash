@@ -320,9 +320,24 @@ mod_derived_traits_server <- function(id, results_normalization){
                                    searching = FALSE))
     })
     
+    
+    
+##### Create "data_with_traits" tibble to return  #########
+    data_with_traits <- reactive({
+      if (is_truthy(data_with_all_traits())) {
+        return(data_with_all_traits())
+      } else if (is_truthy(data_with_derived_traits())) {
+        return(data_with_derived_traits())
+      } else if (is_truthy(data_with_custom_traits())) {
+        return(data_with_custom_traits())
+      }
+    })
+    
+    
     return(
       list(
-        data_with_derived_traits = data_with_derived_traits,
+        # data_with_derived_traits = data_with_derived_traits,
+        data_with_traits = data_with_traits,
         normalized_data = normalized_data,
         derived_traits = reactive({ input$traits_menu }),
         formulas = formulas
