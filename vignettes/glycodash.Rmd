@@ -239,6 +239,22 @@ with_metadata <- dplyr::left_join(with_clusters,
 
 ```
 
+*Create a list/vector in the data import tab with potential column names that can later be chosen as column that contains the biological groups.*
+
+```{r}
+x <- c(
+  c("group", "sample_id", "sample_type", "test"),
+  colnames(merged_metadata)
+)
+
+biogroups_cols <- x[x %in% colnames(with_metadata)]
+
+
+# In mod_data_import.R, to_return() contains all data columns
+# (This is passed on to the next tab as LacyTools_summary)
+# Use this to_return() to create a biogroups_cols vector that is passed on.
+```
+
 ## 2. Spectra curation
 
 There are 3 options for spectra curation:

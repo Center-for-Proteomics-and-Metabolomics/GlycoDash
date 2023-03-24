@@ -17,11 +17,28 @@ mod_analyte_curation_ui <- function(id){
       fluidRow(
         column(
           width = 6,
+          # Box with settings for the analyte curation
           shinydashboard::box(
             title = "Method for analyte curation",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
+            # Ask user whether analyte curation should be done per biological group
+            shinyWidgets::awesomeRadio(
+              ns("curate_per_group"),
+              "Should analyte curation be performed per biological group?",
+              choices = c("Yes", "No"),
+              selected = "No"
+            ),
+            div(
+              id = ns("choose_biological_groups_column"),
+              selectInput(
+                ns("biological_groups_column"),
+                "Which variable (column) in your data contains the biological groups?",
+                choices = c("Temp1", "Temp2")  # Show relevant columns here
+              )
+            ),
+            # Ask user to choose a method for analyte curation
             selectInput(ns("method"), 
                         "Choose method for analyte curation:",
                         choices = c("Curate analytes based on data",
@@ -148,6 +165,15 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     passing_spectra <- reactive({
       req(results_spectra_curation$passing_spectra())
       results_spectra_curation$passing_spectra()
+    })
+    
+    # Only show drop-down menu to choose biological groups column when the 
+    # user selects "Yes" when asked if curation should be done per group.
+    observe({
+      shinyjs::toggle(
+        "choose_biological_groups_column",
+        condition = input$curate_per_group == "Yes"
+      )
     })
     
     # Show and hide UI based on the chosen method:

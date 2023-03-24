@@ -168,7 +168,7 @@ mod_data_import_server <- function(id){
     )
     
     return(list(
-      LacyTools_summary = to_return,
+      LacyTools_summary = to_return,  # Calling this LacyTools_summary is a bit confusing
       contains_total_and_specific_samples = LacyTools_summary$contains_total_and_specific_samples,
       keyword_specific = LacyTools_summary$keyword_specific,
       keyword_total = LacyTools_summary$keyword_total,
