@@ -698,58 +698,6 @@ data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
 
 ```
 
-*We want to add an option to automatically calculate additional derived traits for IgG: terminal galactosylation, sialic acid per galactose, hybrids and high mannose.*
-
-```{r}
-# Try to calculate high mannose
-# high-mannose (%) = sum(high-mannose glycans)   [relative intensities]
-
-# Create data with high mannose glycans
-high_mannose_data <- normalized_data %>% 
-  dplyr::group_by(
-    dplyr::across(
-      dplyr::any_of(c("sample_name", "cluster", "group"))
-    )
-  ) %>%   
-  dplyr::mutate(
-    # Create Man5, Man6 and Man8
-    analyte = stringr::str_replace_all(analyte, "H5N4F1S1", "H5N2"),
-    analyte = stringr::str_replace_all(analyte, "H5N4F1S2", "H6N2"),
-    analyte = stringr::str_replace_all(analyte, "H5N4S1", "H8N2")
-  )
-
-
-# All high-mannose glycans have 2 GlcNAc
-high_mannose_analytes <- stringr::str_subset(
-  string = unique(high_mannose_data$analyte),
-  pattern = "N2"
-)
-
-
-# unique() creates a character vector with all the analytes
-# set_names() turns this into a named vector, like: x <- c(a = 1, b = 2)
-formulas_per_cluster <- rlang::set_names(unique(high_mannose_data$cluster)) %>% 
-  # map() applies a function to each element of a vector, returns a list.
-  # List has clusters as names, and for each cluster a character vector with
-  # the high-mannose + all type glycans that are present. 
-  purrr::map(.,
-    function(cluster) {
-       stringr::str_subset(string = high_mannose_analytes,
-                           pattern = cluster)
-    }) %>% 
-  # imap() applies a function to each element and its index, returns a list.
-  # imap_dfc() returns a data frame created by column binding.
-  # Code below creates a character formula for the trait
-  purrr::imap_dfc(.,
-    function(analytes, name) {
-      paste0(
-        "(",
-        paste(analytes, collapse = " + "),
-        ")"
-      )
-    })
-```
-
 The user can also calculate custom derived traits by uploading an Excel file.
 
 ```{r calculate-custom-traits}
