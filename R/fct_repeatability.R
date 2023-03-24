@@ -230,11 +230,10 @@ calculate_repeatability_stats <- function(data,
   repeatability <- repeatability %>% 
     dplyr::mutate(plate = stringr::str_extract(plate_well, "^[A-Z]|\\d+")) %>% 
     dplyr::group_by(plate, analyte) %>% 
-    dplyr::summarise(average_abundance = mean(relative_abundance),
+    dplyr::reframe(average_abundance = mean(relative_abundance),
                      RSD = sd(relative_abundance) / average_abundance,
                      n = dplyr::n(),
-                     dplyr::across(cluster)) %>% 
-    dplyr::ungroup(.)
+                     dplyr::across(cluster)) 
   
   return(repeatability)
 }
@@ -519,16 +518,15 @@ visualize_repeatability_mean_bars <- function(data,
       dplyr::filter(group == selected_group)
   }
   
-  to_plot <- to_plot %>% 
-    dplyr::group_by(analyte) %>% 
-    na.omit(cols = "relative_abundance") %>% 
-    dplyr::summarize(mean_rel_ab = mean(relative_abundance),
+  to_plot <- to_plot %>%
+    dplyr::group_by(analyte) %>%
+    na.omit(cols = "relative_abundance") %>%
+    dplyr::reframe(mean_rel_ab = mean(relative_abundance),
                      sd_rel_ab = sd(relative_abundance),
                      rsd = sd_rel_ab / mean_rel_ab,
                      n = dplyr::n(),
-                     dplyr::across()) %>% 
-    dplyr::ungroup()
-  
+                     dplyr::across(.cols = tidyselect::everything()))
+
   if (nrow(to_plot) == 0) {
     rlang::abort(
       class = "all_NAs",
@@ -542,12 +540,12 @@ visualize_repeatability_mean_bars <- function(data,
                        "so there is no data to show.")
     )
   }
-  
+
   n_colors <- length(unique(to_plot$analyte))
   my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
-  
+
   mean_barplot <- ggplot2::ggplot(to_plot) +
-    ggplot2::geom_col(ggplot2::aes(x = analyte, 
+    ggplot2::geom_col(ggplot2::aes(x = analyte,
                                    y = mean_rel_ab,
                                    text = paste("Analyte:",
                                                 analyte,
@@ -566,7 +564,7 @@ visualize_repeatability_mean_bars <- function(data,
                                                      signif(sd_rel_ab, 3),
                                                      "%")),
                            width = 0.6) +
-    ggplot2::geom_point(ggplot2::aes(x = analyte, 
+    ggplot2::geom_point(ggplot2::aes(x = analyte,
                                      y = rsd,
                                      fill = analyte,
                                      text = paste("RSD:",
