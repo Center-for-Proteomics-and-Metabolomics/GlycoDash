@@ -47,6 +47,9 @@ calculate_fucosylation <- function(.data) {
   
 }
 
+
+
+
 #' Calculate sialylation
 #'
 #' This function calculates the derived trait sialylation based on the relative
@@ -106,6 +109,9 @@ calculate_sialylation <- function(.data) {
   
 }
 
+
+
+
 #' Calculate galactosylation
 #' 
 #' This function calculates the derived trait galactosylation based on the
@@ -164,6 +170,9 @@ calculate_galactosylation <- function(.data) {
     dplyr::full_join(., formulas_per_cluster)
 }
 
+
+
+
 #' Calculate bisection
 #'
 #' This function calculates the derived trait bisection based on the relative
@@ -210,6 +219,9 @@ calculate_bisection <- function(.data) {
     dplyr::full_join(., formulas_per_cluster)
   
 }
+
+
+
 
 #' Calculate derived glycosylation traits
 #'
@@ -360,6 +372,7 @@ calculate_derived_traits <- function(data, selected_derived_traits) {
 
 
 
+
 #' create_expr_ls
 #' 
 #' Function to transform trait formula string into named list containing the 
@@ -374,6 +387,8 @@ create_expr_ls <- function(str_expr) {
   expr_code <- stringr::str_replace_all(str_expr, "(^\\w+\\s?=\\s?)(.*)", "\\2")
   rlang::set_names(list(str2lang(expr_code)), expr_nm)
 }
+
+
 
 
 #' Calculate custom derived glycosylation traits
