@@ -74,7 +74,7 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
       updateSelectizeInput(inputId = "color",
                            choices = c("", colnames(my_data())))
       updateSelectizeInput(inputId = "filter",
-                           choices = c("", unique(my_data()$sample_type)))
+                           choices = c("", unique(my_data()["sample_type"])))
     }) %>% bindEvent(trigger()) # Only once the trigger has become TRUE (and 
     # thus when the selectizeInputs have been rendered) are the selectizeInputs
     # updated.
