@@ -131,7 +131,7 @@ mod_clusters_server <- function(id, LacyTools_summary){
     observe({
       if (!is_truthy(LacyTools_summary()) & is_truthy(r$with_clusters)) {
         r$with_clusters <- NULL
-        showNotification("Clusters have to be readded to the data.",
+        showNotification("Clusters have to be re-added to the data.",
                          type = "warning")
       }
     })

@@ -232,7 +232,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
     })
     
     observe({
-      showNotification("The metadata is being added to the data. This may take a while",
+      showNotification("The metadata is being added to the data. This may take a while.",
                        type = "message")
     }) %>% bindEvent(with_metadata())
     

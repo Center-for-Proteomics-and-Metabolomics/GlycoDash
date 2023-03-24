@@ -887,7 +887,6 @@ filter <- c("PBS", "IVIGg")
 
 filtered_data <- data_with_derived_traits %>% 
   dplyr::filter(!(sample_type %in% filter))
-
 ```
 
 ```{r boxplot}

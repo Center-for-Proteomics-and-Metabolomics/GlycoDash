@@ -89,17 +89,17 @@ mod_data_import_server <- function(id){
       } else {
         if (is_truthy(data_incl_clusters$data())) {
           show_in_table <- data_incl_clusters$data()
-          showNotification("The clusters are being added to the data. This may take a while",
+          showNotification("The clusters are being added to the data. This may take a while.",
                            type = "message")
         } else {
           if (is_truthy(data_incl_sample_types$data())) {
             show_in_table <- data_incl_sample_types$data()
-            showNotification("The sample types were added to the data",
+            showNotification("The sample types were added to the data.",
                              type = "message")
           } else { 
             if (is_truthy(data_incl_sample_ids$data())) {
               show_in_table <- data_incl_sample_ids$data()
-              showNotification("The sample ID's were added to the data",
+              showNotification("The sample ID's were added to the data.",
                                type = "message")
             } else {
               if (is_truthy(LacyTools_summary$data())) {
