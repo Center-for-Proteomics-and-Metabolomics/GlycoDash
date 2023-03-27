@@ -31,11 +31,11 @@ mod_analyte_curation_ui <- function(id){
               selected = "No"
             ),
             div(
-              id = ns("choose_biological_groups_column"),
+              id = ns("choose_biogroup_cols"),
               selectInput(
-                ns("biological_groups_column"),
-                "Which variable (column) in your data contains the biological groups?",
-                choices = c("Temp1", "Temp2")  # Show relevant columns here
+                ns("biogroup_col"),
+                label = "Which variable (column) in your data contains the biological groups?",
+                choices = ""  # Update in server to show column names
               )
             ),
             # Ask user to choose a method for analyte curation
@@ -154,11 +154,13 @@ mod_analyte_curation_ui <- function(id){
     )
   )
 }
+
+
     
 #' analyte_curation Server Functions
 #'
 #' @noRd 
-mod_analyte_curation_server <- function(id, results_spectra_curation){
+mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_cols){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -171,8 +173,16 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
     # user selects "Yes" when asked if curation should be done per group.
     observe({
       shinyjs::toggle(
-        "choose_biological_groups_column",
+        "biogroup_col",
         condition = input$curate_per_group == "Yes"
+      )
+    })
+    
+    # Show potential column names with biological groups
+    observe({
+      updateSelectInput(session,
+        inputId = "biogroup_col",
+        choices = c("", biogroup_cols())
       )
     })
     
