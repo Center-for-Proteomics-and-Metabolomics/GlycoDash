@@ -38,9 +38,12 @@ mod_analyte_curation_ui <- function(id){
                 choices = ""  # Update in server to show column names
               )
             ),
+            # Button to determine the biological groups
+            actionButton(ns("determine_groups_button"),
+                         "Determine the biological groups"),
             # Ask user to choose a method for analyte curation
             selectInput(ns("method"), 
-                        "Choose method for analyte curation:",
+                        HTML("<br/>Choose method for analyte curation:"),
                         choices = c("Curate analytes based on data",
                                     "Supply an analyte list")),
             tags$style(
@@ -169,6 +172,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       results_spectra_curation$passing_spectra()
     })
     
+    
     # Only show drop-down menu to choose biological groups column when the 
     # user selects "Yes" when asked if curation should be done per group.
     observe({
@@ -176,15 +180,61 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         "biogroup_col",
         condition = input$curate_per_group == "Yes"
       )
+      shinyjs::toggle(
+        "determine_groups_button",
+        condition = input$curate_per_group == "Yes"
+      )
+      shinyjs::toggleState(
+        "determine_groups_button",
+        condition = input$biogroup_col != ""
+      )
     })
     
     # Show potential column names with biological groups
     observe({
-      updateSelectInput(session,
+      req(biogroup_cols())
+      updateSelectInput(
         inputId = "biogroup_col",
         choices = c("", biogroup_cols())
       )
     })
+    
+    # Show pop-up with detected biological groups and ask for confirmation.
+    observe({
+      req(input$curate_per_group == "Yes")
+      shinyalert::shinyalert(
+        inputId = "popup",
+        html = TRUE,
+        text = tagList(
+          "The following biological groups were detected:",
+          DT::dataTableOutput(ns("popup_table"))
+        ),
+        size = "m",
+        confirmButtonText = "Accept these as biological groups",
+        showCancelButton = TRUE,
+        cancelButtonText = "Cancel",
+        confirmButtonCol = "#3c8dbc",
+        callbackR = NULL
+      )
+    }) %>% bindEvent(input$determine_groups_button)
+    
+    # The data table that is shown in the pop-up
+    output$popup_table <- DT::renderDataTable({
+      biological_groups <- data.frame(unique(passing_spectra()[input$biogroup_col]))
+      DT::datatable(biological_groups,
+                    options = list(
+                      scrollY = "150px",
+                      paging = FALSE,
+                      searching = FALSE,
+                      columnDefs = list(
+                        list(
+                          className = 'dt-center',
+                          targets = "_all"))),
+                    # colnames = FALSE,
+                    rownames = FALSE
+      )
+    })
+
     
     # Show and hide UI based on the chosen method:
     observe({
@@ -199,6 +249,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                              is_truthy(analyte_list())) | 
                              (input$method == "Curate analytes based on data"))
     })
+    
     
     # The selection menu for input$ignore_samples is updated so that the choices
     # are sample_types and groups that are present in the data.
