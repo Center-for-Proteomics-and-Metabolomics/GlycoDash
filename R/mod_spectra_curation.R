@@ -468,7 +468,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
           checked_data = checked_data(),
           summarized_checks = summarized_checks()
         )
-        browser()
       } else {
         req(passing_spectra())
         remove_unneeded_columns(passing_spectra = passing_spectra())
