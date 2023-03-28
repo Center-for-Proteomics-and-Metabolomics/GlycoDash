@@ -4,7 +4,12 @@
 \alias{plot_analyte_curation}
 \title{Create a visual summary of the analyte curation process}
 \usage{
-plot_analyte_curation(curated_analytes, cut_off_percentage, selected_cluster)
+plot_analyte_curation(
+  curated_analytes,
+  cut_off_percentage,
+  selected_cluster,
+  bio_groups_colname = ""
+)
 }
 \arguments{
 \item{curated_analytes}{The result of the \code{\link{curate_analytes}}
@@ -18,6 +23,11 @@ pass curation.}
 
 \item{selected_cluster}{The cluster for which the analyte curation results
 should be plotted.}
+
+\item{bio_groups_colname}{The name of the column that contains the biological groups,
+as a character string. This parameter is only required when you want to perform
+analyte curation per biological group. When this parameter is not specified, it is 
+set to NULL (default) and analyte curation will not be performed per group.}
 }
 \value{
 A bar plot with all analytes in the selected cluster on the x-axis,

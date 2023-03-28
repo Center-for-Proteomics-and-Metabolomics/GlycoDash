@@ -27,7 +27,7 @@ mod_tab_curated_analytes_ui <- function(id){
 #' tab_curated_analytes Server Function
 #'
 #' @noRd 
-mod_tab_curated_analytes_server <- function(id, info, cluster){
+mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -38,7 +38,8 @@ mod_tab_curated_analytes_server <- function(id, info, cluster){
       
       plot_analyte_curation(curated_analytes = info$curated_analytes(),
                             cut_off_percentage = info$cut_off(),
-                            selected_cluster = cluster)
+                            selected_cluster = cluster,
+                            bio_groups_colname = biogroup_column)
     })
     
     output$plot <- plotly::renderPlotly({

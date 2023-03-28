@@ -70,7 +70,7 @@ mod_analyte_curation_ui <- function(id){
             div(
               id = ns("choose_biogroup_cols"),
               selectInput(
-                ns("biogroup_col"),
+                ns("biogroup_column"),
                 label = "Which variable (column) in your data contains the biological groups?",
                 choices = ""  # Update in server to show column names
               )
@@ -177,28 +177,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # Below, rv_resp$response is created when analyte curation is performed per biological group.
     rv_resp <- reactiveValues(response = NULL)
     
-    # Only show drop-down menu to choose biological groups column when the 
-    # user selects "Yes" when asked if curation should be done per group.
-    # observe({
-    #   shinyjs::toggle(
-    #     "biogroup_col",
-    #     condition = input$curate_per_group == "Yes"
-    #   )
-    #   shinyjs::toggle(
-    #     "determine_groups_button",
-    #     condition = input$curate_per_group == "Yes"
-    #   )
-    #   shinyjs::toggleState(
-    #     "determine_groups_button",
-    #     condition = input$biogroup_col != ""
-    #   )
-    # })
-    
     # Show potential column names with biological groups
     observe({
       req(biogroup_cols())
       updateSelectInput(
-        inputId = "biogroup_col",
+        inputId = "biogroup_column",
         choices = c("", biogroup_cols())
       )
     })
@@ -227,7 +210,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
  
     # The data table that is shown in the pop-up
     output$popup_table <- DT::renderDataTable({
-      biological_groups <- data.frame(unique(passing_spectra()[input$biogroup_col]))
+      biological_groups <- data.frame(unique(passing_spectra()[input$biogroup_column]))
       DT::datatable(biological_groups,
                     options = list(
                       scrollY = "150px",
@@ -261,7 +244,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       # Only show drop-down menu to choose biological groups column when the 
       # user selects "Yes" when asked if curation should be done per group.
       shinyjs::toggle(
-        "biogroup_col",
+        "biogroup_column",
         condition = input$curate_per_group == "Yes"
       )
       shinyjs::toggle(
@@ -270,7 +253,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       )
       shinyjs::toggleState(
         "determine_groups_button",
-        condition = input$biogroup_col != ""
+        condition = input$biogroup_column != ""
       )
     })
     
@@ -365,10 +348,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       if (input$method == "Curate analytes based on data") {
         req(checked_analytes())
         #  Check if curation should be done per biological group
-        if (rv_resp$response == TRUE) {
-          curated_analytes <- curate_analytes(checked_analytes(), input$cutoff, input$biogroups_col)
+        if (isTRUE(rv_resp$response)) {
+          curated_analytes <- curate_analytes(checked_analytes(), input$cut_off, input$biogroup_column)
         } else {
-          curated_analytes <- curate_analytes(checked_analytes(), input$cutoff)
+          curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
         }
         
       } else if (input$method == "Supply an analyte list") {
@@ -481,7 +464,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           function(cluster) {
             mod_tab_curated_analytes_server(id = cluster,
                                             info = info,
-                                            cluster = cluster)
+                                            cluster = cluster,
+                                            biogroup_column = input$biogroup_column)
           })
     },
     priority = 10)

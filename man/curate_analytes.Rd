@@ -4,7 +4,11 @@
 \alias{curate_analytes}
 \title{Perform analyte curation}
 \usage{
-curate_analytes(checked_analytes, cut_off_percentage)
+curate_analytes(
+  checked_analytes,
+  cut_off_percentage,
+  bio_groups_colname = NULL
+)
 }
 \arguments{
 \item{checked_analytes}{The result of the
@@ -13,10 +17,15 @@ curate_analytes(checked_analytes, cut_off_percentage)
 \item{cut_off_percentage}{The minimum percentage of spectra in which an
 analyte needs to fulfill the quality criteria in order for that analyte to
 pass curation.}
+
+\item{bio_groups_colname}{The name of the column that contains the biological groups,
+as a character string. This parameter is only required when you want to perform
+analyte curation per biological group. When this parameter is not specified, it is 
+set to NULL (default) and analyte curation will not be performed per group.}
 }
 \value{
 A dataframe with one row for each combination of analyte and charge
-  per cluster, a column named \code{passing_percentage} with the percentage
+  per cluster (and per biological group if applicable), a column named \code{passing_percentage} with the percentage
   of spectra that pass the analyte quality criteria for that analyte and a
   logical column named \code{has_passed_analyte_curation} that is \code{TRUE} for
   analytes with a \code{passing_percentage} equal to or above the
@@ -25,7 +34,8 @@ A dataframe with one row for each combination of analyte and charge
 }
 \description{
 Curate analytes based on the percentage of spectra in which the analyte
-passes the quality criteria. Before this function is used, you should filter
+passes the quality criteria. Optionally, analyte curation can be performed
+per biological group. Before this function is used, you should filter
 out samples that you don't want to base the analyte curation on with the
 function \code{\link{throw_out_samples}} and you should use the function
 \code{\link{check_analyte_quality_criteria}} to check the analyte quality

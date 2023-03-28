@@ -387,7 +387,7 @@ curate_analytes_with_list <- function(passing_spectra,
 plot_analyte_curation <- function(curated_analytes, 
                                   cut_off_percentage, 
                                   selected_cluster,
-                                  bio_groups_colname = NULL) {
+                                  bio_groups_colname = "") {
   
   data_to_plot <- curated_analytes %>% 
     dplyr::filter(cluster == selected_cluster) %>% 
@@ -416,11 +416,11 @@ plot_analyte_curation <- function(curated_analytes,
                         color = "#E74C3C", 
                         size = 1) +
     {
-      if (!is.null(bio_groups_colname)) {
+      if (bio_groups_colname != "") {
         # Using {{bio_groups_colname}} does not work here for some reason
-        ggplot2::facet_grid(charge ~ .data[[bio_groups_colname]])
+        ggplot2::facet_grid(.data[[bio_groups_colname]] ~ charge)
       } else {
-        ggplot2::facet_grid(charge ~ .)
+        ggplot2::facet_grid(. ~ charge)
       }
     } +
     ggplot2::theme_classic() +
@@ -428,7 +428,7 @@ plot_analyte_curation <- function(curated_analytes,
                                                        hjust = 1),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
                    #text = ggplot2::element_text(size = 16),
-                   legend.position = "top",
+                   legend.position = "right",
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
     ggplot2::xlab("Analyte") +
     ggplot2::scale_y_continuous(labels = function(x) paste0(x, "%"), 
