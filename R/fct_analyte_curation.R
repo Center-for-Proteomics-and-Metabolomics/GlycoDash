@@ -94,7 +94,8 @@ throw_out_samples <- function(passing_spectra,
 #' Perform analyte curation
 #'
 #' Curate analytes based on the percentage of spectra in which the analyte
-#' passes the quality criteria. Before this function is used, you should filter
+#' passes the quality criteria. Optionally, analyte curation can be performed
+#' per biological group. Before this function is used, you should filter
 #' out samples that you don't want to base the analyte curation on with the
 #' function \code{\link{throw_out_samples}} and you should use the function
 #' \code{\link{check_analyte_quality_criteria}} to check the analyte quality
@@ -103,15 +104,20 @@ throw_out_samples <- function(passing_spectra,
 #' curation is that during spectra curation one or more criteria could be
 #' disregarded with advanced settings. During analyte curation all three analyte
 #' quality criteria should be considered.
-#'
+#' 
+#' 
 #' @param checked_analytes The result of the
 #'   \code{\link{check_analyte_quality_criteria}} function.
 #' @param cut_off_percentage The minimum percentage of spectra in which an
 #'   analyte needs to fulfill the quality criteria in order for that analyte to
 #'   pass curation.
+#' @param bio_groups_colname The name of the column that contains the biological groups,
+#'   as a character string. This parameter is only required when you want to perform
+#'   analyte curation per biological group. When this parameter is not specified, it is 
+#'   set to NULL (default) and analyte curation will not be performed per group.
 #'
 #' @return A dataframe with one row for each combination of analyte and charge
-#'   per cluster, a column named \code{passing_percentage} with the percentage
+#'   per cluster (and per biological group if applicable), a column named \code{passing_percentage} with the percentage
 #'   of spectra that pass the analyte quality criteria for that analyte and a
 #'   logical column named \code{has_passed_analyte_curation} that is \code{TRUE} for
 #'   analytes with a \code{passing_percentage} equal to or above the
@@ -182,7 +188,7 @@ throw_out_samples <- function(passing_spectra,
 #' curate_analytes(checked_analytes = checked_analytes,
 #'                 cut_off_percentage = 25)
 #' 
-curate_analytes <- function(checked_analytes, cut_off_percentage) {
+curate_analytes <- function(checked_analytes, cut_off_percentage, bio_groups_colname = NULL) {
   
   required_columns <- c("cluster", 
                         "charge", 
@@ -199,13 +205,22 @@ curate_analytes <- function(checked_analytes, cut_off_percentage) {
   }
   
   curated_analytes <- checked_analytes %>% 
-    dplyr::group_by(cluster, charge, analyte) %>% 
+    {
+      if (is.null(bio_groups_colname)) {
+        dplyr::group_by(.data = ., 
+                        cluster, charge, analyte)
+      } else {
+        dplyr::group_by(.data = ., 
+                        across({{bio_groups_colname}}), cluster, charge, analyte)
+      }
+    } %>% 
     dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>% 
     dplyr::ungroup() %>% 
     dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cut_off_percentage) 
   
   return(curated_analytes)
 }
+
 
 #' Read an analyte list Excel or .rds file
 #'
