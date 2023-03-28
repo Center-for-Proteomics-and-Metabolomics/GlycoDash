@@ -218,6 +218,8 @@ curate_analytes <- function(checked_analytes, cut_off_percentage, bio_groups_col
     dplyr::ungroup() %>% 
     dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cut_off_percentage) 
   
+  # change the list here when curation was done per group
+  
   return(curated_analytes)
 }
 
@@ -384,7 +386,8 @@ curate_analytes_with_list <- function(passing_spectra,
 #'                       selected_cluster = "IgGI1")
 plot_analyte_curation <- function(curated_analytes, 
                                   cut_off_percentage, 
-                                  selected_cluster) {
+                                  selected_cluster,
+                                  bio_groups_colname = NULL) {
   
   data_to_plot <- curated_analytes %>% 
     dplyr::filter(cluster == selected_cluster) %>% 
@@ -412,8 +415,14 @@ plot_analyte_curation <- function(curated_analytes,
                         linetype = "dashed",
                         color = "#E74C3C", 
                         size = 1) +
-    ggplot2::facet_wrap(~ charge,
-                        ncol = 1) +
+    {
+      if (!is.null(bio_groups_colname)) {
+        # Using {{bio_groups_colname}} does not work here for some reason
+        ggplot2::facet_grid(charge ~ .data[[bio_groups_colname]])
+      } else {
+        ggplot2::facet_grid(charge ~ .)
+      }
+    } +
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, 
                                                        hjust = 1),
