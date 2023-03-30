@@ -540,15 +540,14 @@ DT::datatable(curated_spectra %>%
 
 ```{r}
 # TODO
-# 2. Curate per biological group if user chooses to, otherwise curate everything
-#    the way it is done now. (need if-else statement)
+# - In analyte curation: samples with biological group NA (like pools) should be
+#   dropped. Perhaps show a warning here?
 #
-# 3. Per cluster and group: should get separate analyte list (per charge state).
-#    Combine them (inclusively) into one analyte list.
-# 
-# 4. Show the results in the "Analyte curation results per cluster" box.
-#    Add option to view results per biological group separately.
-#    Perhaps add an option (slider) to facet by biological group?
+# - Per cluster and group: should get separate analyte list (per charge state).
+#   Combine them (inclusively) into one analyte list.
+#
+# - Make sure "Export results" works, and that the data is correctly passed on
+#   to the next tabs.
 ```
 
 ### 3.1 Methods for analyte curation
