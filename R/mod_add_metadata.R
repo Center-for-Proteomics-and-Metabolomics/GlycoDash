@@ -128,7 +128,6 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
         all(purrr::map_lgl(sample_id_inputIds(),
                            ~ isTruthy(input[[.x]])))
       )
-      
       # For all metadata files in the metadata_list: Rename the column that the
       # user indicated as the sample ID column to "sample_id" so that the
       # metadata can later be joined with the data using the sample_id column as
@@ -228,11 +227,10 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
       } else {
         NULL
       }
-      
     })
     
     observe({
-      showNotification("The metadata is being added to the data. This may take a while.",
+      showNotification("The metadata was added to the data.",
                        type = "message")
     }) %>% bindEvent(with_metadata())
     

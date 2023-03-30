@@ -32,7 +32,7 @@ mod_data_import_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            DT::DTOutput(ns("data_table"))
+            shinycssloaders::withSpinner(DT::DTOutput(ns("data_table")))
           ),
           shinydashboard::box(
             title = "Export results",
@@ -86,30 +86,22 @@ mod_data_import_server <- function(id){
       
       if (is_truthy(data_incl_metadata$data())) {
         show_in_table <- data_incl_metadata$data()
-      } else {
-        if (is_truthy(data_incl_clusters$data())) {
-          show_in_table <- data_incl_clusters$data()
-          showNotification("The clusters are being added to the data. This may take a while.",
+      } else if (is_truthy(data_incl_clusters$data())) {
+        show_in_table <- data_incl_clusters$data()
+        showNotification("The clusters were added to the data.",
+                         type = "message")
+      } else if (is_truthy(data_incl_sample_types$data())) {
+          show_in_table <- data_incl_sample_types$data()
+          showNotification("The sample types were added to the data.",
                            type = "message")
-        } else {
-          if (is_truthy(data_incl_sample_types$data())) {
-            show_in_table <- data_incl_sample_types$data()
-            showNotification("The sample types were added to the data.",
-                             type = "message")
-          } else { 
-            if (is_truthy(data_incl_sample_ids$data())) {
-              show_in_table <- data_incl_sample_ids$data()
-              showNotification("The sample ID's were added to the data.",
-                               type = "message")
-            } else {
-              if (is_truthy(LacyTools_summary$data())) {
-                show_in_table <- LacyTools_summary$data()
-                showNotification("The LaCyTools summary has been loaded.",
-                                 type = "message")
-              }
-            } 
-          }
-        }
+      } else if (is_truthy(data_incl_sample_ids$data())) {
+        show_in_table <- data_incl_sample_ids$data()
+        showNotification("The sample ID's were added to the data.",
+                         type = "message")
+      } else if (is_truthy(LacyTools_summary$data())) {
+          show_in_table <- LacyTools_summary$data()
+          showNotification("The LaCyTools summary has been loaded.",
+                           type = "message")
       }
       return(show_in_table)
     }) %>% bindEvent(LacyTools_summary$button(), 
@@ -122,7 +114,6 @@ mod_data_import_server <- function(id){
     # in the data table
     output$data_table <- DT::renderDT({
       req(show_in_table())
-      
       DT::datatable(show_in_table(),
                     options = list(scrollX = TRUE),
                     filter = "top")
@@ -148,13 +139,9 @@ mod_data_import_server <- function(id){
     biogroup_cols <- reactive({
       if (is_truthy(data_incl_metadata$data())) {
         c("group", "sample_id", "sample_type", colnames(data_incl_metadata$merged_metadata()))
-      } else {
-        if (is_truthy(data_incl_clusters$data())) {
+      } else if (is_truthy(data_incl_clusters$data())) {
           c("group", "sample_id", "sample_type")
-        } else {
-          NULL
-        }
-      }
+      } else NULL
     })
     
     
