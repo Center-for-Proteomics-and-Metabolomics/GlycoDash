@@ -165,6 +165,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
       return(merged_metadata)
     }) %>% bindEvent(input$button)
     
+    
     unmatched_ids <- reactive({
       req(merged_metadata(),
           LacyTools_summary())
@@ -172,11 +173,11 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
       unmatched <- setdiff(LacyTools_summary()$sample_id,
                            merged_metadata()$sample_id)
       
-    if (rlang::is_empty(unmatched)) {
-      return("none")
-    } else {
-      return(unmatched)
-    }
+      if (rlang::is_empty(unmatched)) {
+        return("none")
+      } else {
+        return(unmatched)
+      }
     })
     
     # If there are unmatched sample ID's a pop-up is shown.
@@ -228,11 +229,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
         NULL
       }
     })
-    
-    observe({
-      showNotification("The metadata was added to the data.",
-                       type = "message")
-    }) %>% bindEvent(with_metadata())
+
     
     # This is the datatable containing the unmatched sample ID's that is shown 
     # in the pop-up:
@@ -255,6 +252,30 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
     },
     server = FALSE)
     
+    
+    
+    # Show a spinner while the metadata is being processed.
+    observeEvent(input$button, {
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8", 
+        text = HTML("<br/><strong>Processing metadata...")
+      )
+    }, priority = 10)
+
+    # Remove the spinner when metadata is added.
+    observeEvent(with_metadata(), {
+      shinybusy::remove_modal_spinner()
+    })
+    
+    # Remove spinner when user cancels after warning popup
+    observeEvent(input$popup, {
+      if (input$popup == FALSE) {
+        shinybusy::remove_modal_spinner()
+      }
+    }, priority = 10)
+    
+    
+  
     return(list(
       data = with_metadata,
       button = reactive({r$master_button}),
