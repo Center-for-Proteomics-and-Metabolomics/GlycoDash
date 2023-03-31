@@ -139,10 +139,17 @@ mod_data_import_server <- function(id){
     # Create a vector with column names, from which a column can later be
     # chosen as the column that contains the biological groups.
     biogroup_cols <- reactive({
+      req(data_incl_clusters$data())
       if (is_truthy(data_incl_metadata$data())) {
-        c("group", "sample_id", "sample_type", colnames(data_incl_metadata$merged_metadata()))
+        intersect(
+          c("group", "sample_id", "sample_type", colnames(data_incl_metadata$merged_metadata())),
+          colnames(data_incl_metadata$data())
+        )
       } else if (is_truthy(data_incl_clusters$data())) {
-          c("group", "sample_id", "sample_type")
+          intersect(
+            c("group", "sample_id", "sample_type"),
+            colnames(data_incl_clusters$data())
+          )
       } else NULL
     })
     
