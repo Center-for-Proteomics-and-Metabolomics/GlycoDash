@@ -540,8 +540,17 @@ DT::datatable(curated_spectra %>%
 
 ```{r}
 # TODO
-# - In analyte curation: samples with biological group NA (like pools) should be
-#   dropped. Perhaps show a warning here?
+#
+# - Show shinybusy modal spinner while analyte curation is being performed.
+#
+# - Make sure message is shown at the right time.
+#
+# - Try to fix the bug that each tab has to be clicked.
+#
+# - Samples with biological group NA (pools, blanks) should be dropped      
+#   automatically.
+#
+# - There should be an option to exclude certain biological groups.
 #
 # - Per cluster and group: should get separate analyte list (per charge state).
 #   Combine them (inclusively) into one analyte list.
