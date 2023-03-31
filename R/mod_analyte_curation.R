@@ -255,7 +255,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         "determine_groups_button",
         condition = input$biogroup_column != ""
       )
-    })
+    }, priority = 10)
     
     
     # The selection menu for input$ignore_samples is updated so that the choices

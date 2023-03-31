@@ -541,6 +541,8 @@ DT::datatable(curated_spectra %>%
 ```{r}
 # TODO
 #
+# - Bug: table with bio classes shows too many entries (NA is probably empty line)
+#
 # - Show shinybusy modal spinner while analyte curation is being performed.
 #
 # - Make sure message is shown at the right time.
@@ -557,6 +559,8 @@ DT::datatable(curated_spectra %>%
 #
 # - Make sure "Export results" works, and that the data is correctly passed on
 #   to the next tabs.
+#
+# - Show table on the right with clusters that can be chosen? [not urgent]
 ```
 
 ### 3.1 Methods for analyte curation

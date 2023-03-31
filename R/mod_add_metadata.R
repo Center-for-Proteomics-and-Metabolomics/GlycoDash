@@ -214,7 +214,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
           r$master_button <- isolate(r$master_button) + 1
         }
       }
-    }) %>% bindEvent(input$popup, input$button)
+    }, priority = 5) %>% bindEvent(input$popup, input$button)
     
     with_metadata <- reactive({
       req(unmatched_ids())
@@ -268,11 +268,12 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
     })
     
     # Remove spinner when user cancels after warning popup
+    # This takes too long
     observeEvent(input$popup, {
       if (input$popup == FALSE) {
         shinybusy::remove_modal_spinner()
       }
-    }, priority = 10)
+    }, priority = 20)
     
     
   
