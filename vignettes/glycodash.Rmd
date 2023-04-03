@@ -128,7 +128,8 @@ replicates <- with_sample_ids %>%
   dplyr::ungroup(.)
 
 with_sample_ids <- dplyr::full_join(replicates, 
-                                    with_sample_ids)
+                                    with_sample_ids,
+                                    multiple = "all")
 
 ```
 
@@ -173,8 +174,6 @@ sample_types <- read_sample_type_file(filepath = path_to_sample_type_file,
 with_sample_types <- dplyr::left_join(with_sample_ids,
                                       dplyr::distinct(sample_types)) %>% 
   dplyr::mutate(sample_type = as.factor(sample_type))
-# TODO: in module make sure sample types based on list is a factor!
-
 ```
 
 ### 1.4 Divide analytes into clusters
@@ -605,7 +604,8 @@ curated_analytes_with_list <- curate_analytes_with_list(
 ```{r}
 
 analyte_curated_data <- dplyr::left_join(curated_analytes, 
-                                         for_analyte_curation)
+                                         for_analyte_curation,
+                                         multiple = "all")
 
 for_normalization <- analyte_curated_data %>%
    dplyr::filter(has_passed_analyte_curation) %>%
