@@ -1,4 +1,4 @@
-# Use "Source" in Rstudio to load the dashboard
+# Use "Source" or "Source with Echo" in Rstudio to load the dashboard
 # Do not change code below
 
 
