@@ -78,6 +78,16 @@ mod_analyte_curation_ui <- function(id){
             # Button to determine the biological groups
             actionButton(ns("determine_groups_button"),
                          "Determine the biological groups"),
+            # Option to ignore certain biological groups
+            div(
+              id = ns("curation_based_on_groups_div"),
+              selectizeInput(
+                ns("groups_to_ignore"),
+                HTML("<br/>Biological groups to ignore regarding analyte curation:"),
+                choices = c(""),
+                multiple = TRUE
+              )
+            ),
             
             div(
               id = ns("curation_based_on_data_div"),
@@ -120,7 +130,8 @@ mod_analyte_curation_ui <- function(id){
                   html = "true")
             ),
             actionButton(ns("curate_analytes"), 
-                         "Perform analyte curation")
+                         "Perform analyte curation"),
+           
           ),
           shinydashboard::box(
             title = "Export results",
@@ -231,6 +242,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                       condition = input$method == "Supply an analyte list")
       shinyjs::toggle("curation_based_on_data_div", 
                       condition = input$method == "Curate analytes based on data")
+      shinyjs::toggle("ignore_samples",
+                      condition = input$method == "Curate analytes based on data" & input$curate_per_group == "No")
+      shinyjs::toggle("groups_to_ignore",
+                     condition = input$method == "Curate analytes based on data" & input$curate_per_group == "Yes")
       # Only enable button under right circumstances:
       shinyjs::toggleState("curate_analytes", 
                            condition = 
@@ -270,6 +285,17 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       
       updateSelectizeInput(inputId = "ignore_samples",
                            choices = c("", options))
+    })
+    
+    
+    # Update the selection menu for "Biological groups to ignore", based on the chosen columm.
+    observe({
+      req(is_truthy(input$biogroup_column))
+      options <- dplyr::pull(
+        unique(passing_spectra()[input$biogroup_column]) %>% 
+        tidyr::drop_na()
+      )
+      updateSelectizeInput(inputId = "groups_to_ignore", choices = c("", options))
     })
     
     
