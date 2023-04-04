@@ -210,7 +210,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
  
     # The data table that is shown in the pop-up
     output$popup_table <- DT::renderDataTable({
-      biological_groups <- data.frame(unique(passing_spectra()[input$biogroup_column]))
+      biological_groups <- data.frame(unique(passing_spectra()[input$biogroup_column])) %>% tidyr::drop_na()
       DT::datatable(biological_groups,
                     options = list(
                       scrollY = "150px",
@@ -349,7 +349,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         req(checked_analytes())
         #  Check if curation should be done per biological group
         if (isTRUE(rv_resp$response)) {
-          curated_analytes <- curate_analytes(checked_analytes(), input$cut_off, input$biogroup_column)
+          # Curate per biological group
+          curated_analytes <- checked_analytes() %>% 
+            # Drop samples that don't belong to a biological group (e.g. pools, blanks)
+            tidyr::drop_na(., input$biogroup_column) %>% 
+            curate_analytes(., input$cut_off, input$biogroup_column)
         } else {
           curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
         }
