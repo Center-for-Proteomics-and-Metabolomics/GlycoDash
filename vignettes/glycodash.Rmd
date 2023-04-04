@@ -541,6 +541,10 @@ DT::datatable(curated_spectra %>%
 ```{r}
 # TODO
 #
+# - Samples that are dropped for analyte curation should still be in the
+#   normalized/exported data.
+#
+#
 # - Show shinybusy modal spinner while analyte curation is being performed.
 #
 # - Make sure message is shown at the right time.

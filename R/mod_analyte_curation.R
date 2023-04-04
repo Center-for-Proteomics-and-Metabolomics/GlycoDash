@@ -379,6 +379,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           curated_analytes <- checked_analytes() %>% 
             # Drop samples that don't belong to a biological group (e.g. pools, blanks)
             tidyr::drop_na(., input$biogroup_column) %>% 
+            # Drop samples in biological groups that should be ignored
+            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>%  # Thanks ChatGPT
             curate_analytes(., input$cut_off, input$biogroup_column)
         } else {
           curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
