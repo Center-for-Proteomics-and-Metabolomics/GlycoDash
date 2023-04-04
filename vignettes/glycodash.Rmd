@@ -541,16 +541,13 @@ DT::datatable(curated_spectra %>%
 ```{r}
 # TODO
 #
-# - Bug: table with bio classes shows too many entries (NA is probably empty line)
-#
 # - Show shinybusy modal spinner while analyte curation is being performed.
 #
 # - Make sure message is shown at the right time.
 #
 # - Try to fix the bug that each tab has to be clicked.
 #
-# - Samples with biological group NA (pools, blanks) should be dropped      
-#   automatically.
+#
 #
 # - There should be an option to exclude certain biological groups.
 #
