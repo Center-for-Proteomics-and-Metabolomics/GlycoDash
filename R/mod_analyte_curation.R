@@ -541,6 +541,18 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       }
     )
     
+    
+    # Show a spinner while analyte curation is being performed.
+    # It is removed in "mod_tab_curated_analytes.R"
+    observeEvent(input$curate_analytes, {
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8", 
+        text = HTML("<br/><strong>Curating analytes...")
+      )
+    }, priority = 20)
+
+    
+    
     return(list(
       analyte_curated_data = with_analytes_to_include,
       method = reactive({ input$method }),
