@@ -97,9 +97,13 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
       
       table <- prepare_analyte_curation_table(
         analyte_curated_data = info$analyte_curated_data(),
-        selected_cluster = cluster
+        selected_cluster = cluster,
+        by_group = ifelse(
+          test = (!is.null(biogroup_column) & biogroup_column != ""),
+          yes = TRUE, no = FALSE
+          )
         )
-      
+
       charge_columns <- colnames(table)[-1]
       
       table_with_checkboxes <- table %>% 

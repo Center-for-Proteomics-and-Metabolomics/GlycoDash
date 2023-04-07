@@ -414,7 +414,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       
       return(curated_analytes)
     })
-    
+
     analyte_curated_data <- reactive({
       req(curated_analytes())
       
@@ -497,7 +497,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
             mod_tab_curated_analytes_server(id = cluster,
                                             info = info,
                                             cluster = cluster,
-                                            biogroup_column = input$biogroup_column)
+                                            biogroup_column = input$biogroup_column
+                                            )
           })
     },
     priority = 10)
@@ -551,7 +552,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       )
     }, priority = 20)
 
-    
     
     return(list(
       analyte_curated_data = with_analytes_to_include,

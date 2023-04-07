@@ -526,6 +526,7 @@ Shiny.bindAll(this.api().table().node()); } ')
 #'   function (see example below).
 #' @param selected_cluster The cluster for which the analyte curation results
 #'   should be shown.
+#' @param by_group Will be set to TRUE if analyte curation is done per biological group, otherwise FALSE.
 #'
 #' @return This function returns a dataframe that can be passed as the
 #'   \code{dataframe_for_table} argument to the
@@ -562,13 +563,29 @@ Shiny.bindAll(this.api().table().node()); } ')
 #' dataframe <- prepare_analyte_curation_table(analyte_curated_data = curated_analytes,
 #'                                             selected_cluster = "IgGI1")
 #'                                             
-prepare_analyte_curation_table <- function(analyte_curated_data, selected_cluster) {
+prepare_analyte_curation_table <- function(analyte_curated_data, selected_cluster, by_group) {
   
   analyte_curation_dataframe <- analyte_curated_data %>% 
     dplyr::ungroup() %>% 
     dplyr::filter(cluster == selected_cluster) %>% 
     dplyr::select(analyte, charge, has_passed_analyte_curation) %>% 
-    dplyr::distinct() %>% 
+    dplyr::distinct() %>%
+    { # Below is only required when analyte curation is done per biological group.
+      if (by_group == TRUE) {
+        dplyr::group_by(., analyte, charge)  %>%
+        dplyr::mutate(., n = dplyr::n()) %>%
+        dplyr::ungroup(.) %>%
+        dplyr::mutate(.,
+          # If n > 1, then set has_passed_analye_curation to TRUE
+          has_passed_analyte_curation = ifelse(test = n > 1, yes = TRUE,
+                                               no = has_passed_analyte_curation)
+        ) %>%
+        dplyr::select(., -n) %>%
+        dplyr::distinct(.)
+      } else {
+          identity(.)
+      }
+    } %>%
     tidyr::pivot_wider(names_from = charge,
                        values_from = has_passed_analyte_curation,
                        values_fn = function(value) dplyr::if_else(isTRUE(value),

@@ -536,34 +536,6 @@ DT::datatable(curated_spectra %>%
 
 ## 3. Analyte curation
 
-*Analyte curation per biological group.*
-
-```{r}
-# TODO
-#
-# - Samples that are dropped for analyte curation should still be in the
-#   normalized/exported data.
-#
-#
-# - Show shinybusy modal spinner while analyte curation is being performed.
-#
-# - Make sure message is shown at the right time.
-#
-# - Try to fix the bug that each tab has to be clicked.
-#
-#
-#
-# - There should be an option to exclude certain biological groups.
-#
-# - Per cluster and group: should get separate analyte list (per charge state).
-#   Combine them (inclusively) into one analyte list.
-#
-# - Make sure "Export results" works, and that the data is correctly passed on
-#   to the next tabs.
-#
-# - Show table on the right with clusters that can be chosen? [not urgent]
-```
-
 ### 3.1 Methods for analyte curation
 
 There are two methods for analyte curation:
