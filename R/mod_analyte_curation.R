@@ -479,12 +479,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                  })
     })
     
+    
     info <- list(
       curated_analytes = curated_analytes,
       cut_off = reactive({ input$cut_off }),
       analyte_curated_data = analyte_curated_data,
       method = reactive({ input$method })
     )
+    
     
     observe({
       req(clusters())
