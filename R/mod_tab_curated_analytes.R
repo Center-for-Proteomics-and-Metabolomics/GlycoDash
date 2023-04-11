@@ -216,7 +216,7 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
       req(curated_analytes_table())
       shinybusy::remove_modal_spinner()
     })
-    
+
     
     return(list(plot = curated_analytes_plot,
                 analytes_to_include = analytes_to_include))

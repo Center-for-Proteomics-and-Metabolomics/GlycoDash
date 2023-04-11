@@ -551,7 +551,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         text = HTML("<br/><strong>Curating analytes...")
       )
     }, priority = 20)
-
+    
+    
     
     return(list(
       analyte_curated_data = with_analytes_to_include,

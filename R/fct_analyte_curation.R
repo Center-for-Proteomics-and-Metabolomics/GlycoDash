@@ -218,8 +218,6 @@ curate_analytes <- function(checked_analytes, cut_off_percentage, bio_groups_col
     dplyr::ungroup() %>% 
     dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cut_off_percentage) 
   
-  # change the list here when curation was done per group
-  
   return(curated_analytes)
 }
 
