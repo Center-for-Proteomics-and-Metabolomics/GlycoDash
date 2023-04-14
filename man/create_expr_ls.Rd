@@ -14,4 +14,6 @@ Based on:
 }
 \details{
 https://stackoverflow.com/questions/70821721/how-to-use-an-expression-in-dplyrmutate-in-r
+
+expr_rm extracts whatever comes before the "=" sign (spaces around the "=" sign do not matter)
 }

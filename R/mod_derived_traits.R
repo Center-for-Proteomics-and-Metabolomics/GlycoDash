@@ -14,6 +14,12 @@ mod_derived_traits_ui <- function(id){
     tags$style(HTML(paste0(
       "#",
       ns("box_header"),
+      " .awesome-checkbox {padding-top: 7px}",
+      "#",
+      ns("box_header"),
+      " .popover {max-width: 400px !important; color: #333}",
+      "#",
+      ns("box"),
       " .box-title {width: 100%}",
       "#",
       ns("box_header"),
@@ -26,7 +32,7 @@ mod_derived_traits_ui <- function(id){
       ns("box_header"),
       " .btn {float: right; border-width: 0px; margin-right: 5px}",
       "#",
-      ns("box_header"),
+      ns("box"),
       " .dropdown {display: inline-block; float: right; width: 135px}",
       "#",
       ns("box_header"),
@@ -48,8 +54,6 @@ mod_derived_traits_ui <- function(id){
             "derived traits calculations can only be performed on IgG data for now.",
             style = "color:#0021B8"
           ),
-          # "Attention: derived traits calculation can only be used on IgG data for now!",
-          # br(),
           br(),
           shinyWidgets::awesomeCheckboxGroup(ns("traits_menu"),
                                              "Select the derived traits that should be calculated:",
@@ -77,6 +81,31 @@ mod_derived_traits_ui <- function(id){
           title = div(
             id = ns("box_header"),
             "Calculate custom derived traits",
+      
+            # Add info for custom traits
+            icon("info-circle", class = "ml") %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "Here you can upload an Excel file with formulas of the 
+                  custom traits that you want to calculate.
+                  Click the paperclip button to download an example Excel file.
+                  <br><br>
+                  The Excel file must contain one column that specifies the
+                  clusters for which you want to calculate the traits. The 
+                  second column contains the formulas that you want to use.
+                  A formula consists of the name of the trait, and how
+                  to calculate the trait, separated by an \"=\" sign. 
+                  <br><br>
+                  You must always place spaces around the following signs: 
+                  addition, subtraction, division, multiplication (+ &nbsp; - &nbsp; \\ &nbsp; *)
+                  "
+                ),
+                trigger = "hover",
+                placement = "right",
+                html = "true"
+              ),
+            
             shinyWidgets::dropdownButton(
               tags$style(HTML(paste0(
                 "#",
@@ -94,12 +123,12 @@ mod_derived_traits_ui <- function(id){
                                                      title = "Example"),
               width = "330px",
               size = "xs"
-            ),
+            )
           ),
           width = 4,
           solidHeader = TRUE,
           status = "primary",
-          fileInput(ns("custom_traits_file"), 
+          fileInput(ns("custom_traits_file"),
                     "Upload Excel file with custom derived traits formulas"
                     )
         ),

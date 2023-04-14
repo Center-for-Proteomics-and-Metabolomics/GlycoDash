@@ -382,6 +382,8 @@ calculate_derived_traits <- function(data, selected_derived_traits) {
 #' 
 #' https://stackoverflow.com/questions/70821721/how-to-use-an-expression-in-dplyrmutate-in-r
 #'
+#'expr_rm extracts whatever comes before the "=" sign (spaces around the "=" sign do not matter)
+#'
 create_expr_ls <- function(str_expr) {
   expr_nm <- stringr::str_extract(str_expr, "^\\w+")
   expr_code <- stringr::str_replace_all(str_expr, "(^\\w+\\s?=\\s?)(.*)", "\\2")
