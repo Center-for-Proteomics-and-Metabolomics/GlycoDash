@@ -17,11 +17,13 @@ mod_analyte_curation_ui <- function(id){
       fluidRow(
         column(
           width = 6,
+          # Box with settings for the analyte curation
           shinydashboard::box(
             title = "Method for analyte curation",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
+            # Ask user to choose a method for analyte curation
             selectInput(ns("method"), 
                         "Choose method for analyte curation:",
                         choices = c("Curate analytes based on data",
@@ -58,10 +60,39 @@ mod_analyte_curation_ui <- function(id){
                           ns("curation_based_on_data"),
                           " .popover {width: 400px;}"))
             ),
+            # Ask user whether analyte curation should be done per biological group
+            shinyWidgets::awesomeRadio(
+              ns("curate_per_group"),
+              "Should analyte curation be performed per biological group?",
+              choices = c("Yes", "No"),
+              selected = "No"
+            ),
+            div(
+              id = ns("choose_biogroup_cols"),
+              selectInput(
+                ns("biogroup_column"),
+                label = "Which variable (column) in your data contains the biological groups?",
+                choices = ""  # Update in server to show column names
+              )
+            ),
+            # Button to determine the biological groups
+            actionButton(ns("determine_groups_button"),
+                         "Determine the biological groups"),
+            # Option to ignore certain biological groups
+            div(
+              id = ns("curation_based_on_groups_div"),
+              selectizeInput(
+                ns("groups_to_ignore"),
+                HTML("<br/>Biological groups to ignore regarding analyte curation:"),
+                choices = c(""),
+                multiple = TRUE
+              )
+            ),
+            
             div(
               id = ns("curation_based_on_data_div"),
               selectizeInput(ns("ignore_samples"),
-                             "Sample types to ignore regarding analyte curation:",
+                             HTML("<br/>Sample types to ignore regarding analyte curation:"),
                              choices = c("Total", "Blanks", "Negative controls"),
                              multiple = TRUE) %>% 
                 bsplus::bs_embed_popover(
@@ -99,7 +130,8 @@ mod_analyte_curation_ui <- function(id){
                   html = "true")
             ),
             actionButton(ns("curate_analytes"), 
-                         "Perform analyte curation")
+                         "Perform analyte curation"),
+           
           ),
           shinydashboard::box(
             title = "Export results",
@@ -137,11 +169,13 @@ mod_analyte_curation_ui <- function(id){
     )
   )
 }
+
+
     
 #' analyte_curation Server Functions
 #'
 #' @noRd 
-mod_analyte_curation_server <- function(id, results_spectra_curation){
+mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_cols){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -150,19 +184,94 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       results_spectra_curation$passing_spectra()
     })
     
+    # Create reactiveValues. 
+    # Below, rv_resp$response is created when analyte curation is performed per biological group.
+    rv_resp <- reactiveValues(response = NULL)
+    
+    # Show potential column names with biological groups
+    observe({
+      req(biogroup_cols())
+      updateSelectInput(
+        inputId = "biogroup_column",
+        choices = c("", biogroup_cols())
+      )
+    })
+    
+    # Show pop-up with detected biological groups and ask for confirmation.
+    observe({
+      req(input$curate_per_group == "Yes")
+      shinyalert::shinyalert(
+        inputId = "popup",
+        html = TRUE,
+        text = tagList(
+          "The following biological groups were detected:",
+          DT::dataTableOutput(ns("popup_table"))
+        ),
+        size = "m",
+        confirmButtonText = "Accept these as biological groups",
+        showCancelButton = TRUE,
+        cancelButtonText = "Cancel",
+        confirmButtonCol = "#3c8dbc",
+        callbackR = function(response){
+          rv_resp$response <- response  # TRUE or FALSE, depending on whether user accepts biol. groups.
+        }
+      )
+    }) %>% bindEvent(input$determine_groups_button) # Show pop-up window when button is clicked.
+    
+ 
+    # The data table that is shown in the pop-up
+    output$popup_table <- DT::renderDataTable({
+      biological_groups <- data.frame(unique(passing_spectra()[input$biogroup_column])) %>% tidyr::drop_na()
+      DT::datatable(biological_groups,
+                    options = list(
+                      scrollY = "150px",
+                      paging = FALSE,
+                      searching = FALSE,
+                      columnDefs = list(
+                        list(
+                          className = 'dt-center',
+                          targets = "_all"))),
+                    rownames = FALSE
+      )
+    })
+
+    
     # Show and hide UI based on the chosen method:
     observe({
       shinyjs::toggle("analyte_list_div", 
                       condition = input$method == "Supply an analyte list")
       shinyjs::toggle("curation_based_on_data_div", 
                       condition = input$method == "Curate analytes based on data")
+      shinyjs::toggle("ignore_samples",
+                      condition = input$method == "Curate analytes based on data" & input$curate_per_group == "No")
+      shinyjs::toggle("groups_to_ignore",
+                     condition = input$method == "Curate analytes based on data" & input$curate_per_group == "Yes")
       # Only enable button under right circumstances:
       shinyjs::toggleState("curate_analytes", 
                            condition = 
                              (input$method == "Supply an analyte list" & 
                              is_truthy(analyte_list())) | 
-                             (input$method == "Curate analytes based on data"))
-    })
+                             ((input$method == "Curate analytes based on data") &
+                             (input$curate_per_group == "No" | isTRUE(rv_resp$response))))
+      # Only ask for analyte curation per biological group when "Curate analytes based on data"
+      shinyjs::toggle("curate_per_group",
+                      condition = input$method == "Curate analytes based on data")
+      # Only show drop-down menu to choose biological groups column when the 
+      # user selects "Yes" when asked if curation should be done per group.
+      shinyjs::toggle(
+        "biogroup_column",
+        condition = input$curate_per_group == "Yes"
+      )
+      shinyjs::toggle(
+        "determine_groups_button",
+        condition = input$curate_per_group == "Yes" & input$method == "Curate analytes based on data"
+      )
+      shinyjs::toggleState(
+        "determine_groups_button",
+        condition = input$biogroup_column != ""
+      )
+    }, priority = 10)
+    
     
     # The selection menu for input$ignore_samples is updated so that the choices
     # are sample_types and groups that are present in the data.
@@ -177,6 +286,18 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       updateSelectizeInput(inputId = "ignore_samples",
                            choices = c("", options))
     })
+    
+    
+    # Update the selection menu for "Biological groups to ignore", based on the chosen columm.
+    observe({
+      req(is_truthy(input$biogroup_column))
+      options <- dplyr::pull(
+        unique(passing_spectra()[input$biogroup_column]) %>% 
+        tidyr::drop_na()
+      )
+      updateSelectizeInput(inputId = "groups_to_ignore", choices = c("", options))
+    })
+    
     
     # Read in the analyte list when it is uploaded. Show a Warning if
     # it's the wrong file extension or not formatted correctly:
@@ -246,14 +367,25 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       )
     })
     
+    
+    # Curate the analytes
     curated_analytes <- reactive({
+      
       if (input$method == "Curate analytes based on data") {
         req(checked_analytes())
+        #  Check if curation should be done per biological group
+        if (isTRUE(rv_resp$response)) {
+          # Curate per biological group
+          curated_analytes <- checked_analytes() %>% 
+            # Drop samples that don't belong to a biological group (e.g. pools, blanks)
+            tidyr::drop_na(., input$biogroup_column) %>% 
+            # Drop samples in biological groups that should be ignored
+            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>%  # Thanks ChatGPT
+            curate_analytes(., input$cut_off, input$biogroup_column)
+        } else {
+          curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
+        }
         
-        curated_analytes <- curate_analytes(
-          checked_analytes = checked_analytes(),
-          cut_off_percentage = input$cut_off
-        )
       } else if (input$method == "Supply an analyte list") {
         req(analyte_list())
         req(passing_spectra())
@@ -282,7 +414,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
       
       return(curated_analytes)
     })
-    
+
     analyte_curated_data <- reactive({
       req(curated_analytes())
       
@@ -299,17 +431,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                     "based on the analyte list."
                                   )),
                        type = "message")
-      # 
-      # if (input$method == "Curate analytes based on data") {
-      #   
-      #   showNotification("Analyte curation has been performed based on the data.", 
-      #                    type = "message")
-      #   
-      # } else if (input$method == "Supply an analyte list") {
-      #   
-      #   showNotification("Analyte curation has been performed based on the analyte list.", 
-      #                    type = "message")
-      # }
     }) %>% bindEvent(analyte_curated_data())
    
     clusters <- reactive({
@@ -358,12 +479,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                  })
     })
     
+    
     info <- list(
       curated_analytes = curated_analytes,
       cut_off = reactive({ input$cut_off }),
       analyte_curated_data = analyte_curated_data,
       method = reactive({ input$method })
     )
+    
     
     observe({
       req(clusters())
@@ -375,7 +498,9 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
           function(cluster) {
             mod_tab_curated_analytes_server(id = cluster,
                                             info = info,
-                                            cluster = cluster)
+                                            cluster = cluster,
+                                            biogroup_column = input$biogroup_column
+                                            )
           })
     },
     priority = 10)
@@ -418,6 +543,18 @@ mod_analyte_curation_server <- function(id, results_spectra_curation){
                                                   path = file))
       }
     )
+    
+    
+    # Show a spinner while analyte curation is being performed.
+    # It is removed in "mod_tab_curated_analytes.R"
+    observeEvent(input$curate_analytes, {
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8", 
+        text = HTML("<br/><strong>Curating analytes...")
+      )
+    }, priority = 20)
+    
+    
     
     return(list(
       analyte_curated_data = with_analytes_to_include,

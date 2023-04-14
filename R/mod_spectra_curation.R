@@ -255,11 +255,11 @@ mod_spectra_curation_ui <- function(id){
               tabPanel(title = "Overview of failed spectra",
                        column(width = 12,
                               br(),
-                              DT::dataTableOutput(ns("failed_spectra_table")))),
+                              shinycssloaders::withSpinner(DT::dataTableOutput(ns("failed_spectra_table"))))),
               tabPanel(title = "Details of failed spectra per analyte",
                        column(width = 12,
                               br(),
-                              DT::dataTableOutput(ns("failed_spectra_details"))))
+                              shinycssloaders::withSpinner(DT::dataTableOutput(ns("failed_spectra_details")))))
             )
           )
         )

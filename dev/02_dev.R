@@ -17,7 +17,9 @@
 ## Add one line by package you want to add as dependency
 usethis::use_package( "shinydashboard" )
 usethis::use_package( "shinyjs" )
-usethis::use_package( "stringr" )
+usethis::use_package( "shinycssloaders" )  
+usethis::use_package( "shinybusy" )        
+usethis::use_package( "stringr" )     
 usethis::use_package( "purrr" )
 usethis::use_package( "plater" )
 usethis::use_package( "tidyr" )

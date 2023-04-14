@@ -554,7 +554,9 @@ The user can specify which sample types or groups (total or specific samples) sh
 # In this example analyte curation is based only on the Spike pool samples:
 without_samples_to_ignore <- throw_out_samples(
   passing_spectra = for_analyte_curation,
-  samples_to_ignore = c("PBS", "IVIGg", "Visucon", "Total")
+  # samples_to_ignore = c("PBS", "IVIGg", "Visucon", "Total")
+  samples_to_ignore = c("PBS", "IVIGg", "Visucon") 
+  # Removed Total for example of analyte curation per group
 )
 
 checked_analytes <- check_analyte_quality_criteria(
@@ -571,16 +573,33 @@ checked_analytes <- check_analyte_quality_criteria(
 
 In addition the user chooses a percentage of spectra (not including the sample types to ignore) in which an analyte needs to fulfill the analyte quality criteria in order to pass analyte curation.
 
+It is also possible (not required) to perform the analyte curation per biological group.
+
 ```{r curate-analytes}
 
 cut_off_percentage <- 25
 
-curated_analytes <- curate_analytes(
-  checked_analytes = checked_analytes,
-  cut_off_percentage = cut_off_percentage
-)
 
+# Curate analytes, but not per biological group.
+curated_analytes <- curate_analytes(checked_analytes, cut_off_percentage)
+
+# Curate analytes per biological group
+# Note that the biological groups column can have any name.
+curated_analytes_group <- curate_analytes(
+  checked_analytes, cut_off_percentage, "group"
+  ) 
+
+# Create a consensus analyte list
+consensus_list <- curated_analytes_group %>% 
+  dplyr::select(cluster, charge, analyte, has_passed_analyte_curation) %>% 
+  dplyr::group_by(cluster, charge, analyte) %>% 
+  dplyr::mutate(pass_n = sum(has_passed_analyte_curation == TRUE)) %>% 
+  dplyr::ungroup()
 ```
+
+*In plotting curated_analytes_group: facet by group in addition to charge.*
+
+*In the table: show all analytes and select which pass based on consensus list.*
 
 #### 3.1.2 Upload an analyte list
 
@@ -602,7 +621,6 @@ curated_analytes_with_list <- curate_analytes_with_list(
 ```
 
 ```{r}
-
 analyte_curated_data <- dplyr::left_join(curated_analytes, 
                                          for_analyte_curation,
                                          multiple = "all")
@@ -619,16 +637,17 @@ For each cluster a tab is created showing the results of the analyte curation. E
 
 ```{r plot-analyte-curation-results}
 
+(
 curated_analytes_plot <- plot_analyte_curation(
-  curated_analytes = curated_analytes,
+  curated_analytes = curated_analytes_group,
   cut_off_percentage = cut_off_percentage,
-  selected_cluster = "IgGI"
+  selected_cluster = "IgGI",
+  bio_groups_colname = "group"
+)
 )
 
 plotly::ggplotly(p = curated_analytes_plot,
                  tooltip = "text")
-
-
 ```
 
 In the dashboard the table has an additional column with check-boxes for each charge column. The analytes that are checked in that table are the ones that are included in the further steps. Here a simplified version of the table is shown, because the check-boxes are shiny inputs and I can't use them in this Rmarkdown file.

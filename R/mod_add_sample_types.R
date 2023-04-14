@@ -229,10 +229,10 @@ mod_add_sample_types_server <- function(id, LacyTools_summary, read_lacytools_bu
         inputId = "popup",
         html = TRUE,
         text = tagList(
-          paste("Based on the sample IDs the following",
+          paste("Based on the sample ID's the following",
                 length(unique(r$with_auto_sample_types$sample_type)),
                 "sample types were defined:"),
-          DT::dataTableOutput(ns("popup_table"))
+          shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table")))
         ),
         size = "m",
         confirmButtonText = "Accept these sample types",

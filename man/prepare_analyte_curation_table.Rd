@@ -4,7 +4,11 @@
 \alias{prepare_analyte_curation_table}
 \title{Prepare a dataframe for the analyte curation table}
 \usage{
-prepare_analyte_curation_table(analyte_curated_data, selected_cluster)
+prepare_analyte_curation_table(
+  analyte_curated_data,
+  selected_cluster,
+  by_group
+)
 }
 \arguments{
 \item{analyte_curated_data}{Your data after spectra curation (see
@@ -14,6 +18,8 @@ function (see example below).}
 
 \item{selected_cluster}{The cluster for which the analyte curation results
 should be shown.}
+
+\item{by_group}{Will be set to TRUE if analyte curation is done per biological group, otherwise FALSE.}
 }
 \value{
 This function returns a dataframe that can be passed as the

@@ -5,7 +5,7 @@ RUN R -e 'install.packages("remotes")'
 RUN Rscript -e 'remotes::install_version("magrittr",upgrade="never", version = "2.0.3")'
 RUN Rscript -e 'remotes::install_version("rlang",upgrade="never", version = "1.1.0")'
 RUN Rscript -e 'remotes::install_version("glue",upgrade="never", version = "1.4.2")'
-RUN Rscript -e 'remotes::install_version("processx",upgrade="never", version = "1.6.2")'
+RUN Rscript -e 'remotes::install_version("processx",upgrade="never", version = "3.8.0")'
 RUN Rscript -e 'remotes::install_version("htmltools",upgrade="never", version = "0.5.2")'
 RUN Rscript -e 'remotes::install_version("tidyselect",upgrade="never", version = "1.2.0")'
 RUN Rscript -e 'remotes::install_version("purrr",upgrade="never", version = "1.0.1")'
@@ -36,6 +36,8 @@ RUN Rscript -e 'remotes::install_version("kableExtra",upgrade="never", version =
 RUN Rscript -e 'remotes::install_version("golem",upgrade="never", version = "0.4.0")'
 RUN Rscript -e 'remotes::install_version("dashboardthemes",upgrade="never", version = "1.1.6")'
 RUN Rscript -e 'remotes::install_version("bsplus",upgrade="never", version = "0.1.4")'
+RUN Rscript -e 'remotes::install_version("shinycssloaders",upgrade="never", version = "1.0.0")'
+RUN Rscript -e 'remotes::install_version("shinybusy",upgrade="never", version = "0.3.1")'
 RUN mkdir /build_zone
 ADD . /build_zone
 WORKDIR /build_zone
