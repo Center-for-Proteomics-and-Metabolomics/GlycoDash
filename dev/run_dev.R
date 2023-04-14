@@ -11,10 +11,3 @@ rm(list=ls(all.names = TRUE))
 golem::document_and_reload()
 
 run_app()
-
-
-
-
-
-# Below is for profiling (ignore)
-# profvis::profvis(shiny::runApp(run_app()))
