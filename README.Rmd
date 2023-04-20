@@ -35,7 +35,15 @@ You can run the development version of glycodash on your own pc like so:
 6.  
 7.  Optional: in the Rstudio dashboard window, click "open in browser" (this should look better). The dashboard was tested in Google Chrome and Microsoft Edge.
 
-## Example 
+## Branches
+
+The master branch will be used for "official" releases.
+
+The alfa branch is the development branch.
+
+The beta branch contains the version of the dashboard that is currently running on the cpmtools server.
+
+## Example
 
 This is a basic example which shows you how to solve a common problem:
 
