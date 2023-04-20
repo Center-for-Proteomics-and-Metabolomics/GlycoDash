@@ -16,20 +16,26 @@ knitr::opts_chunk$set(
 # glycodash
 
 <!-- badges: start -->
+
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+
 <!-- badges: end -->
 
-The goal of glycodash is to ...
+The goal of glycodash is to...
 
 ## Installation
 
-You can install the development version of glycodash like so:
+You can run the development version of glycodash on your own pc like so:
 
-``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
-```
+1.  Install R and Rstudio: <https://posit.co/download/rstudio-desktop/>
+2.  Download the master branch as a zip file, then unzip and store the folder somewhere.
+3.  Double click "glycodash.Rproj", this launch open Rstudio.
+4.  In Rstudio: click file --\> open. Then in the glycodash-master folder, open "run_dev.R" in the dev folder.
+5.  In Rstudio, click the "source" button, or use Ctrl+Shift+S, to start the Dashboard. A new Rstudio window should now open with the dashboard running. *(Rstudio might first ask you to install required packages. Accept this. For package requirements: see the DESCRIPTION file.*)
+6.  
+7.  Optional: in the Rstudio dashboard window, click "open in browser" (this should look better). The dashboard was tested in Google Chrome and Microsoft Edge.
 
-## Example
+## Example 
 
 This is a basic example which shows you how to solve a common problem:
 
