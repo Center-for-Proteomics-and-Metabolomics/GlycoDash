@@ -58,23 +58,22 @@ mod_export_server <- function(id,
     # If data_with_derived_traits exists it is assigned to x$data, otherwise
     # normalized_data is assigned to x$data:
     observe({
-      if (is_truthy(results_derived_traits$data_with_traits())){
+      if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
-      } 
-      else { if (is_truthy(results_normalization$normalized_data_wide())){
+      } else if (is_truthy(results_normalization$normalized_data_wide())) {
         x$data <- results_normalization$normalized_data_wide()
-      }
       }
     })
     
     output$download <- downloadHandler(
       filename = function() {
-        todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-                                                       pattern = "-",
-                                                       replacement = ""))
+        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
+        #                                                pattern = "-",
+        #                                                replacement = ""))
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
         switch(input$download_format,
-               "R object" = paste0(todays_date, "_processed_data.rds"),
-               "Excel file" = paste0(todays_date, "_processed_data.xlsx"))
+               "R object" = paste0(current_datetime, "_processed_data.rds"),
+               "Excel file" = paste0(current_datetime, "_processed_data.xlsx"))
       },
       content = function(file) {
         data_to_download <- x$data
@@ -88,10 +87,11 @@ mod_export_server <- function(id,
     
     output$report <- downloadHandler(
       filename = function() {
-        todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-                                                       pattern = "-",
-                                                       replacement = ""))
-        paste0(todays_date, "_data_processing_report.html")
+        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
+        #                                                pattern = "-",
+        #                                                replacement = ""))
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
+        paste0(current_datetime, "_data_processing_report.html")
       },
       content = function(file) {
         
@@ -211,6 +211,7 @@ mod_export_server <- function(id,
           analyte_curation_tab_contents = analyte_curation_tab_contents,
           derived_traits = try_call(results_derived_traits$derived_traits),
           formulas = try_call(results_derived_traits$formulas),
+          # custom_formulas = try_call(results_derived_traits$custom_formulas),
           repeatability = repeatability_tab_contents,
           data_exploration = data_exploration_tab_contents
         )
