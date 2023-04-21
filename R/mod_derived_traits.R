@@ -203,8 +203,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     
     data_with_custom_traits <- reactive({
       req(custom_traits())
-      dplyr::full_join(results_normalization$normalized_data_wide(),
-                       custom_traits()) %>% 
+      dplyr::full_join(custom_traits(), results_normalization$normalized_data_wide()) %>% 
       dplyr::select(-tidyselect::ends_with("formula"))
     })
     
@@ -232,7 +231,8 @@ mod_derived_traits_server <- function(id, results_normalization){
         dplyr::select(-tidyselect::ends_with("formula")) %>% 
         tidyr::pivot_wider(names_from = cluster,
                            values_from = dplyr::any_of(input$traits_menu),
-                           names_glue = "{cluster}_{.value}")
+                           names_glue = "{cluster}_{.value}") %>% 
+        dplyr::relocate(contains(input$traits_menu), .after = replicates)
     })
     
     

@@ -719,7 +719,8 @@ data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
   dplyr::select(-tidyselect::ends_with("formula")) %>% 
   tidyr::pivot_wider(names_from = cluster,
                      values_from = dplyr::any_of(traits_to_calculate),
-                     names_glue = "{cluster}_{.value}")
+                     names_glue = "{cluster}_{.value}") %>% 
+  dplyr::relocate(contains(traits_to_calculate), .after = replicates)
 
 ```
 
@@ -735,18 +736,17 @@ custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas,
                                              col_names = FALSE)
 
 
+v <- c("IgGI_first_trait", "IgGI_second_trait", "IgGII_third_trait", "IgGIV_fourth_trait")
 
 # Calculate custom derived traits
 custom_traits <- calculate_custom_traits(normalized_data,
                                          custom_traits_formulas)
 
 
-
 # Next: join custom traits data frame with normalized data in wide format,
 # to get the a data frame similar to "data_with_derived_traits"
-
-data_with_custom_traits <- dplyr::full_join(normalized_data_wide,
-                                            custom_traits) %>%
+data_with_custom_traits <- dplyr::full_join(custom_traits, 
+                                            normalized_data_wide) %>%
   dplyr::select(-tidyselect::ends_with("formula"))
 ```
 
@@ -754,6 +754,7 @@ Combine the default derived traits with the custom derived traits.
 
 ```{r}
 # Combine custom traits with default traits
+# This still messes up the ordering of the custom traits
 data_with_all_traits <- dplyr::full_join(
   data_with_derived_traits, data_with_custom_traits
 )

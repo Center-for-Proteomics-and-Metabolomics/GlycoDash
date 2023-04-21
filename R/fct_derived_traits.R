@@ -425,7 +425,7 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
   
   calculated_custom_traits <- normalized_data %>% 
     # Separate analyte into cluster and glycan
-    dplyr::select(-cluster) %>%   # remove existing cluster column
+    dplyr::select(-cluster, -sum_intensity) %>% 
     tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), 
                     extra = "merge", remove = TRUE) %>% 
     # Create column for each glycan with relative abundance as value
@@ -438,6 +438,10 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
   
   # Create empty vector, will append column to names to select at the end
   columns_to_select <- c()
+  
+  # Another empty vector which will only contrain the names of the custom traits.
+  # Is used to relocate columns.
+  custom_traits_names <- c()
   
   # Start for-loop
   for (i in seq(1:nrow(custom_traits_formulas))){
@@ -455,6 +459,7 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
     
     # Add trait names and formulas to "columns_to_select" (these will be the column names)
     columns_to_select <- append(columns_to_select, custom_trait_name)
+    custom_traits_names <- append(custom_traits_names, custom_trait_name)
     formula_column_name <- paste(custom_trait_name, "formula", sep = "_")   # E.g IgGI_first_trait_formula
     columns_to_select <- append(columns_to_select, formula_column_name)
 
@@ -463,7 +468,7 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
     calculated_trait_cluster <- calculated_custom_traits %>%
       dplyr::filter(cluster == cluster_specified) %>%
       dplyr::mutate(!!! formula_expr_ls) %>%
-      dplyr::select(sample_name:plate_well, names(formula_expr_ls)[1]) %>%  # includes group if it exists
+      dplyr::select(sample_name:replicates, names(formula_expr_ls)[1]) %>%  # includes group if it exists
       # Change name of column <custom trait> to <cluster_specified>_<custom trait>
       dplyr::rename(!!custom_trait_name := names(formula_expr_ls)[1]) %>%
       # Add a column with the formula that was used to calculate the trait
@@ -480,12 +485,13 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
 
   # Get "calculated_custom_traits" in correct format
   calculated_custom_traits <- calculated_custom_traits %>%
-    dplyr::select(sample_name:plate_well, any_of(columns_to_select)) %>% 
+    dplyr::select(sample_name:replicates, any_of(columns_to_select)) %>% 
     dplyr::select(-cluster) %>% 
     dplyr::group_by(sample_name) %>% 
     tidyr::fill(tidyr::everything(), .direction = "downup") %>% 
     dplyr::ungroup() %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::relocate(all_of(custom_traits_names), .after = replicates)
 
   # Return calculated custom traits tibble
   return(calculated_custom_traits)
