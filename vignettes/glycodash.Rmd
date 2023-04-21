@@ -656,7 +656,7 @@ In the dashboard the table has an additional column with check-boxes for each ch
 
 table <- prepare_analyte_curation_table(
   analyte_curated_data = analyte_curated_data,
-  selected_cluster = "IgGI"
+  selected_cluster = "IgGI", by_group = FALSE
 )
 
 DT::datatable(table)
