@@ -224,7 +224,8 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
       )) {
         dplyr::left_join(LacyTools_summary(),
                          merged_metadata(),
-                         by = "sample_id")
+                         by = "sample_id") %>% 
+          dplyr::relocate(colnames(merged_metadata())[-1], .after = sample_id)
       } else {
         NULL
       }
