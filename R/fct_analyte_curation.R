@@ -418,7 +418,7 @@ plot_analyte_curation <- function(curated_analytes,
         # Using {{bio_groups_colname}} does not work here for some reason
         ggplot2::facet_grid(charge ~ .data[[bio_groups_colname]])
       } else {
-        ggplot2::facet_grid(charge ~ .)
+        ggplot2::facet_wrap(~ charge, ncol = 1)
       }
     } +
     ggplot2::theme_classic() +
