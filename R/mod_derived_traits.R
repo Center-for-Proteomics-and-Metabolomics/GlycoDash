@@ -369,7 +369,8 @@ mod_derived_traits_server <- function(id, results_normalization){
         data_with_traits = data_with_traits,
         normalized_data = normalized_data,
         derived_traits = reactive({ input$traits_menu }),
-        formulas = formulas
+        formulas = formulas,
+        custom_formulas = custom_formulas
       )
     )
  

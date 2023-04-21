@@ -573,12 +573,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     output$download <- downloadHandler(
       filename = function() {
-        todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-                                                       pattern = "-",
-                                                       replacement = ""))
+        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
+        #                                                pattern = "-",
+        #                                                replacement = ""))
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
         switch(input$download_format,
-               "R object" = paste0(todays_date, "_curated_spectra.rds"),
-               "Excel file" = paste0(todays_date, "_curated_spectra.xlsx"))
+               "R object" = paste0(current_datetime, "_curated_spectra.rds"),
+               "Excel file" = paste0(current_datetime, "_curated_spectra.xlsx"))
       },
       content = function(file) {
         data_to_download <- to_return()

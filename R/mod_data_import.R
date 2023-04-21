@@ -162,12 +162,13 @@ mod_data_import_server <- function(id){
     
     output$download <- downloadHandler(
       filename = function() {
-        todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-                                                       pattern = "-",
-                                                       replacement = ""))
+        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
+        #                                                pattern = "-",
+        #                                                replacement = ""))
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
         switch(input$download_format,
-               "R object" = paste0(todays_date, "_data.rds"),
-               "Excel file" = paste0(todays_date, "_data.xlsx"))
+               "R object" = paste0(current_datetime, "_data.rds"),
+               "Excel file" = paste0(current_datetime, "_data.xlsx"))
       },
       content = function(file) {
         data_to_download <- show_in_table()
