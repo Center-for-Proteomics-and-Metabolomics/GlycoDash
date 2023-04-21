@@ -41,19 +41,13 @@ The data import step can be broken down into 5 smaller steps:
 
 ```{r upload-your-data}
 
-# path_to_file <- system.file("extdata",
-#                             "LacyTools_summary_example.txt",
-#                             package = "glycodash")
-
-
-
 # "LacyTools_summary_example.txt" has only IgGI cluster.
-# "LaCyTools_summary_examply_extra_clusters.txt" has extra clusters:
+# "LaCyTools_summary_example_extra_clusters.txt" has extra clusters:
 # IgGI, IgGII, IgGIII, IgGIV
 # Use this file for testing the custom derived traits feature.
 
 path_to_file <- system.file("extdata",
-                            "LacyTools_summary_example.txt",
+                            "LacyTools_summary_example_extra_clusters.txt",
                             package = "glycodash")
 
 raw_LacyTools_summary <- read_non_rectangular(path = path_to_file, 
@@ -183,7 +177,7 @@ The user needs to indicate the number of clusters and give a keyword for each cl
 ```{r clusters}
 
 with_clusters <- define_clusters(data = with_sample_types,
-                                 cluster_keywords = c("IgGI"))
+                                 cluster_keywords = c("IgGI", "IgGII", "IgGIII", "IgGIV"))
 
 # For example data with four clusters:
 # cluster_keywords = c("IgGI", "IgGII", "IgGIII", "IgGIV")
@@ -683,11 +677,19 @@ normalized_data_wide <- normalized_data %>%
   # removing columns no longer needed with values that differ between clusters:
   dplyr::select(-tidyselect::any_of(c("passing_analyte_percentage", 
                                       "cut_off_passing_analyte_percentage", 
-                                      "cut_off_sum_intensity"))) %>% 
-  tidyr::pivot_wider(names_from = c(cluster, analyte),
-                     names_sep = "_",
-                     values_from = relative_abundance) %>% 
+                                      "cut_off_sum_intensity"))) %>%
   
+  tidyr::pivot_wider(names_from = cluster,
+                     values_from = sum_intensity,
+                     names_glue = "{cluster}_sum_intensity") %>%
+  
+  tidyr::pivot_wider(names_from = analyte, values_from = relative_abundance) %>% 
+  
+  dplyr::group_by(sample_name) %>% 
+  tidyr::fill(replicates:last_col(), .direction = "downup") %>% 
+  dplyr::ungroup() %>% 
+  dplyr::distinct() %>% 
+
   # Add metadata again
   dplyr::left_join(., merged_metadata, by = "sample_id") %>% 
   dplyr::relocate(colnames(merged_metadata)[-1], .after = sample_id)

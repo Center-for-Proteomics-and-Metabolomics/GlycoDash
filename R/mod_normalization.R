@@ -68,25 +68,16 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     normalized_data_wide <- reactive({
       req(normalized_data())
-        
-      # If user added metadata: combine wide normalized data with metadata
-      # if (is_truthy(merged_metadata)) {
-      #   normalized_data() %>% 
-      #     tidyr::pivot_wider(names_from = c(cluster, analyte),
-      #                       names_sep = "_",
-      #                       values_from = relative_abundance) %>% 
-      #     dplyr::left_join(., merged_metadata(), by = "sample_id")
-      # } else {
-      #   normalized_data() %>% 
-      #     tidyr::pivot_wider(names_from = c(cluster, analyte),
-      #                        names_sep = "_",
-      #                        values_from = relative_abundance)
-      # }
       
       normalized_data() %>% 
-        tidyr::pivot_wider(names_from = c(cluster, analyte),
-                           names_sep = "_",
-                           values_from = relative_abundance) %>% 
+        tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity, 
+                           names_glue = "{cluster}_sum_intensity") %>% 
+        tidyr::pivot_wider(names_from = analyte, values_from = relative_abundance) %>% 
+        dplyr::group_by(sample_name) %>% 
+        tidyr::fill(replicates:last_col(), .direction = "downup") %>% 
+        dplyr::ungroup() %>% 
+        dplyr::distinct() %>% 
+        
         { # Combine with metadata if it exists
           if (is_truthy(merged_metadata())) {
             dplyr::left_join(., merged_metadata(), by = "sample_id") %>% 
