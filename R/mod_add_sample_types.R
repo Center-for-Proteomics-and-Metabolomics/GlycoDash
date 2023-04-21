@@ -128,6 +128,7 @@ mod_add_sample_types_ui <- function(id){
                 "The \"sample_type\" column should contain the corresponding sample",
                 "type of each sample."
               )),
+              tags$p("Each sample ID should be present only once."),
               tags$p("For an example, click on the paperclip icon.")
             ))
           )
