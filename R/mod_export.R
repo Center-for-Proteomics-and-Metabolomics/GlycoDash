@@ -211,7 +211,7 @@ mod_export_server <- function(id,
           analyte_curation_tab_contents = analyte_curation_tab_contents,
           derived_traits = try_call(results_derived_traits$derived_traits),
           formulas = try_call(results_derived_traits$formulas),
-          # custom_formulas = try_call(results_derived_traits$custom_formulas),
+          custom_formulas = try_call(results_derived_traits$custom_formulas),
           repeatability = repeatability_tab_contents,
           data_exploration = data_exploration_tab_contents
         )
