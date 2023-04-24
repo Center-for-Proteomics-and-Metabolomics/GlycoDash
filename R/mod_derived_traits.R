@@ -239,12 +239,24 @@ mod_derived_traits_server <- function(id, results_normalization){
     
     ############### Combined default + custom traits ###############
     
+    # Get column names of custom traits, required to relocate them after combining with default traits
+    custom_traits_colnames <- reactive({
+      req(custom_traits())
+      custom_traits() %>% 
+        dplyr::select(replicates:dplyr::last_col()) %>% 
+        dplyr::select(-replicates) %>% 
+        dplyr::select(1:floor(ncol(.)/2)) %>% # This removes columns with traits formulas
+        names()  # This extracts the column names as a vector
+    })
+    
+    
     # Combine default traits with custom traits
     data_with_all_traits <- reactive({
-      req(data_with_derived_traits(), data_with_custom_traits())
+      req(data_with_derived_traits(), data_with_custom_traits(), custom_traits_colnames())
       dplyr::full_join(
         data_with_derived_traits(), data_with_custom_traits()
-      )
+      ) %>% 
+        dplyr::relocate(all_of(custom_traits_colnames()), .after = replicates)
     })
     
     

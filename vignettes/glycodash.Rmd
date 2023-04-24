@@ -753,11 +753,21 @@ data_with_custom_traits <- dplyr::full_join(custom_traits,
 Combine the default glycosylation traits with the custom glycosylation traits.
 
 ```{r}
+# Use custom_traits dataframe to extract custom traits column names.
+# These are necessary to relocate them after combining with default traits.
+custom_traits_colnames <- custom_traits %>% 
+  dplyr::select(replicates:dplyr::last_col()) %>% 
+  dplyr::select(-replicates) %>% 
+  # This removes columns with formulas
+  dplyr::select(1:floor(ncol(.)/2)) %>% 
+  names()
+
+
 # Combine custom traits with default traits
-# This still messes up the ordering of the custom traits
 data_with_all_traits <- dplyr::full_join(
   data_with_derived_traits, data_with_custom_traits
-)
+) %>% 
+  dplyr::relocate(all_of(custom_traits_colnames), .after = replicates)
 ```
 
 The formulas that have been used to calculate the glycosylation traits are shown in a table.
