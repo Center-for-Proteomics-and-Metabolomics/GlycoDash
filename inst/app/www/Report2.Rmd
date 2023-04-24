@@ -213,20 +213,20 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
 
 ```
 
-## Derived traits
+## Glycosylation traits
 
 ```{r derived-traits, results='asis'}
 
 if (is.null(params$derived_traits)) {
-  cat("No derived traits were calculated")
+  cat("No glycosylation traits were calculated")
 } else {
-  cat("The following derived traits were calculated:\n\n- ",
+  cat("The following glycosylation traits were calculated:\n\n- ",
       paste(params$derived_traits, collapse = "\n- "))
 }
 
 ```
 
-Formulas used to calculate the derived traits:
+Formulas used to calculate the glycosylation traits:
 
 ```{r derived-traits-formulas, results='asis'}
 

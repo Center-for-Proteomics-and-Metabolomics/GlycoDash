@@ -228,12 +228,12 @@ calculate_bisection <- function(.data) {
 #' With this function derived glycosylation traits of IgG can be calculated
 #' based on the measured relative abundances of glycans. This function can only
 #' be used on IgG data, because it assumes that all glycans are diantennary. The
-#' derived traits are calculated per cluster.
+#' glycosylation traits are calculated per cluster.
 #'
 #' @param data A dataframe that contains at least the columns "sample_name",
 #'   "cluster", "relative_abundance" and "analyte".
 #' @param selected_derived_traits A character vector containing the names of the
-#'   derived traits that should be calculated. The derived traits that can be
+#'   glycosylation traits that should be calculated. The glycosylation traits that can be
 #'   calculated with this function are: \describe{ \item{"Fucosylation"}{The
 #'   percentage of detected glycans that is fucosylated.} \item{"Bisection"}{The
 #'   percentage of detected glycans that contain a bisecting GlcNaC}
@@ -246,7 +246,7 @@ calculate_bisection <- function(.data) {
 #'
 #' @return A tibble with the following columns:
 #'   \describe{\item{sample_name}{The name of the measured
-#'   sample.}\item{cluster}{The cluster of analytes that the derived traits were
+#'   sample.}\item{cluster}{The cluster of analytes that the glycosylation traits were
 #'   calculated for.}\item{group}{Only when there are both total and specific Ig
 #'   samples in the data.}} In addition, for each derived trait given in the argument
 #'   \code{selected_derived_traits} there is one column with the relative
@@ -395,7 +395,7 @@ create_expr_ls <- function(str_expr) {
 
 #' Calculate custom derived glycosylation traits
 #' 
-#' Calculate custom derived traits of IgG based on formulas provided in an 
+#' Calculate custom glycosylation traits of IgG based on formulas provided in an 
 #' Excel file.
 #' 
 #'

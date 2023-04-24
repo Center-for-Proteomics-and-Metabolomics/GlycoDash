@@ -44,7 +44,7 @@ The data import step can be broken down into 5 smaller steps:
 # "LacyTools_summary_example.txt" has only IgGI cluster.
 # "LaCyTools_summary_example_extra_clusters.txt" has extra clusters:
 # IgGI, IgGII, IgGIII, IgGIV
-# Use this file for testing the custom derived traits feature.
+# Use this file for testing the custom glycosylation traits feature.
 
 path_to_file <- system.file("extdata",
                             "LacyTools_summary_example_extra_clusters.txt",
@@ -696,18 +696,18 @@ normalized_data_wide <- normalized_data %>%
 
 ```
 
-## 5. Derived traits
+## 5. Glycosylation traits
 
-For automatically calculating default derived traits, the user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
+For automatically calculating default glycosylation traits, the user can select which of the 4 glycosylation traits should be calculated. The glycosylation traits are calculated per cluster.
 
-Currently, derived traits can only be calculated automatically for IgG.
+Currently, glycosylation traits can only be calculated automatically for IgG.
 
 ```{r calculate-derived-traits}
 
 traits_to_calculate <- c("Fucosylation", 
                          "Sialylation")
 
-# First the derived traits are calculated
+# First the glycosylation traits are calculated
 derived_traits <- calculate_derived_traits(
   data = normalized_data,
   selected_derived_traits = traits_to_calculate
@@ -724,10 +724,10 @@ data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
 
 ```
 
-The user can also calculate custom derived traits by uploading an Excel file.
+The user can also calculate custom glycosylation traits by uploading an Excel file.
 
 ```{r calculate-custom-traits}
-# Load example file with custom derived traits
+# Load example file with custom glycosylation traits
 path_to_traits_formulas <- system.file("extdata",
                                        "Custom_traits_formulas_example.xlsx",
                                        package = "glycodash")
@@ -738,7 +738,7 @@ custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas,
 
 v <- c("IgGI_first_trait", "IgGI_second_trait", "IgGII_third_trait", "IgGIV_fourth_trait")
 
-# Calculate custom derived traits
+# Calculate custom glycosylation traits
 custom_traits <- calculate_custom_traits(normalized_data,
                                          custom_traits_formulas)
 
@@ -750,7 +750,7 @@ data_with_custom_traits <- dplyr::full_join(custom_traits,
   dplyr::select(-tidyselect::ends_with("formula"))
 ```
 
-Combine the default derived traits with the custom derived traits.
+Combine the default glycosylation traits with the custom glycosylation traits.
 
 ```{r}
 # Combine custom traits with default traits
@@ -760,7 +760,7 @@ data_with_all_traits <- dplyr::full_join(
 )
 ```
 
-The formulas that have been used to calculate the derived traits are shown in a table.
+The formulas that have been used to calculate the glycosylation traits are shown in a table.
 
 ```{r derived-traits-formulas}
 
