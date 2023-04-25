@@ -24,10 +24,11 @@ params:
   analyte_list: NA
   analyte_curation_tab_contents: NA
   derived_traits: NA
+  custom_traits_colnames: NA
   formulas: NA
+  custom_formulas: NA
   repeatability: NA
   data_exploration: NA
-  
 ---
 
 ```{r setup, include=FALSE}
@@ -43,10 +44,10 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 
 ## Data import
 
-- LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
-- Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
-- Sample list file: `r ifelse(is.null(params$metadata), "none", paste0("\"", params$sample_list, "\""))`
-- Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
+-   LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
+-   Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
+-   Sample list file: `r ifelse(is.null(params$metadata), "none", paste0("\"", params$sample_list, "\""))`
+-   Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
 
 Sample types were added `r ifelse(params$sample_types_method == "Automatically determine sample types based on sample ID's", "automatically", "manually")`.
 
@@ -62,13 +63,12 @@ if (params$sample_types_method != "Automatically determine sample types based on
 
 ## Spectra curation
 
-- Analyte quality criteria:
-  - Acceptable mass accuracy range: `r min(params$mass_acc)` - `r max(params$mass_acc)`
-  - Max. IPQ value: `r params$ipq`
-  - Min. S/N ratio: `r params$sn`
-  
-The following analyte quality criteria were taken into account in the calculation 
-of the cut-off for the percentage of passing analytes: `r params$included_qc`
+-   Analyte quality criteria:
+    -   Acceptable mass accuracy range: `r min(params$mass_acc)` - `r max(params$mass_acc)`
+    -   Max. IPQ value: `r params$ipq`
+    -   Min. S/N ratio: `r params$sn`
+
+The following analyte quality criteria were taken into account in the calculation of the cut-off for the percentage of passing analytes: `r params$included_qc`
 
 ### Spectra curation cut-offs
 
@@ -172,7 +172,6 @@ if (params$analyte_curation_method == "Supply an analyte list") {
 
 ```
 
-
 ```{r analyte-curation-plot-table, results='asis'}
 
 if (params$analyte_curation_method == "Curate analytes based on data") {
@@ -213,20 +212,22 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
 
 ```
 
-## Derived traits
+## Glycosylation traits
 
 ```{r derived-traits, results='asis'}
 
+#TODO Try to list the custom traits here as well, using "custom_traits_colnames"
+
 if (is.null(params$derived_traits)) {
-  cat("No derived traits were calculated")
+  cat("No glycosylation traits were calculated")
 } else {
-  cat("The following derived traits were calculated:\n\n- ",
+  cat("The following glycosylation traits were calculated automatically:\n\n- ",
       paste(params$derived_traits, collapse = "\n- "))
 }
 
 ```
 
-Formulas used to calculate the derived traits:
+Formulas used to calculate the glycosylation traits:
 
 ```{r derived-traits-formulas, results='asis'}
 
@@ -240,8 +241,17 @@ if (!is.null(params$formulas)) {
     print()
 }
 
-```
+if (!is.null(params$custom_formulas)) {
+  params$custom_formulas %>% 
+    kableExtra::kbl() %>%
+    kableExtra::kable_styling(bootstrap_options = "striped",
+                              full_width = F,
+                              position = "left") %>%
+    htmltools::HTML() %>%
+    print()
+}
 
+```
 
 ## Repeatability
 
@@ -350,4 +360,3 @@ purrr::iwalk(reordered_data_exploration,
              })
 
 ```
-

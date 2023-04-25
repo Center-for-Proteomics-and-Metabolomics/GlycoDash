@@ -28,6 +28,6 @@ A tibble with the following columns: sample_name, cluster, group, custom traits
 and formulas used to calculate custom traits.
 }
 \description{
-Calculate custom derived traits of IgG based on formulas provided in an 
+Calculate custom glycosylation traits of IgG based on formulas provided in an 
 Excel file.
 }

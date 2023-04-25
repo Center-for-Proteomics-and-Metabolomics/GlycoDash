@@ -1,3 +1,6 @@
+# Use "Source" or "Source with Echo" in Rstudio to load the dashboard
+# Do not change code below
+
 
 options(golem.app.prod = FALSE) # TRUE = production mode, FALSE = development mode
 
@@ -8,5 +11,3 @@ rm(list=ls(all.names = TRUE))
 golem::document_and_reload()
 
 run_app()
-
-
