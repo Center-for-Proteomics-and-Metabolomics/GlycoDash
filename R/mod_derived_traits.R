@@ -51,7 +51,7 @@ mod_derived_traits_ui <- function(id){
           status = "primary",
           div(
             strong("Attention:"),
-            "glycosylation traits calculations can only be performed on IgG data for now.",
+            "glycosylation traits can only be calculated for IgG complex-type glycans.",
             style = "color:#0021B8"
           ),
           br(),
