@@ -61,11 +61,17 @@ mod_analyte_curation_ui <- function(id){
                           " .popover {width: 400px;}"))
             ),
             # Ask user whether analyte curation should be done per biological group
+            # shinyWidgets::awesomeRadio(
+            #   ns("curate_per_group"),
+            #   "Should analyte curation be performed per biological group?",
+            #   choices = c("Yes", "No"),
+            #   selected = "No"
+            # ),
             shinyWidgets::awesomeRadio(
-              ns("curate_per_group"),
-              "Should analyte curation be performed per biological group?",
-              choices = c("Yes", "No"),
-              selected = "No"
+              ns("curation_method"),
+              "How do you want to perform analyte curation?",
+              choices = c("On all data", "Per biological group", "Per sample"),
+              selected = "On all data"
             ),
             div(
               id = ns("choose_biogroup_cols"),
@@ -199,7 +205,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     # Show pop-up with detected biological groups and ask for confirmation.
     observe({
-      req(input$curate_per_group == "Yes")
+      req(input$curation_method == "Per biological group")
       shinyalert::shinyalert(
         inputId = "popup",
         html = TRUE,
@@ -243,16 +249,18 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       shinyjs::toggle("curation_based_on_data_div", 
                       condition = input$method == "Curate analytes based on data")
       shinyjs::toggle("ignore_samples",
-                      condition = input$method == "Curate analytes based on data" & input$curate_per_group == "No")
+                      condition = input$method == "Curate analytes based on data" & 
+                      input$curation_method == "On all data")
       shinyjs::toggle("groups_to_ignore",
-                     condition = input$method == "Curate analytes based on data" & input$curate_per_group == "Yes")
+                     condition = input$method == "Curate analytes based on data" & 
+                     input$curation_method == "Per biological group")
       # Only enable button under right circumstances:
       shinyjs::toggleState("curate_analytes", 
                            condition = 
                              (input$method == "Supply an analyte list" & 
                              is_truthy(analyte_list())) | 
                              ((input$method == "Curate analytes based on data") &
-                             (input$curate_per_group == "No" | isTRUE(rv_resp$response))))
+                             (input$curation_method != "Per biological group" | isTRUE(rv_resp$response))))
       # Only ask for analyte curation per biological group when "Curate analytes based on data"
       shinyjs::toggle("curate_per_group",
                       condition = input$method == "Curate analytes based on data")
@@ -260,15 +268,15 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       # user selects "Yes" when asked if curation should be done per group.
       shinyjs::toggle(
         "biogroup_column",
-        condition = input$curate_per_group == "Yes"
+        condition = input$curation_method == "Per biological group"
       )
       shinyjs::toggle(
         "determine_groups_button",
-        condition = input$curate_per_group == "Yes" & input$method == "Curate analytes based on data"
+        condition = input$curation_method == "Per biological group" & input$method == "Curate analytes based on data"
       )
       shinyjs::toggleState(
         "determine_groups_button",
-        condition = input$biogroup_column != ""
+        condition = input$biogroup_column != "" & input$curation_method == "Per biological group"
       )
     }, priority = 10)
     
