@@ -51,7 +51,7 @@ mod_derived_traits_ui <- function(id){
           status = "primary",
           div(
             strong("Attention:"),
-            "glycosylation traits can only be calculated for IgG complex-type glycans.",
+            "glycosylation traits can only be calculated automatically for IgG complex-type glycans.",
             style = "color:#0021B8"
           ),
           br(),
