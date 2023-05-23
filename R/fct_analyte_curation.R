@@ -188,7 +188,8 @@ throw_out_samples <- function(passing_spectra,
 #' curate_analytes(checked_analytes = checked_analytes,
 #'                 cut_off_percentage = 25)
 #' 
-curate_analytes <- function(checked_analytes, cut_off_percentage, bio_groups_colname = NULL) {
+curate_analytes <- function(checked_analytes, cut_off_percentage, 
+                            bio_groups_colname = NULL) {
   
   required_columns <- c("cluster", 
                         "charge", 
@@ -204,19 +205,19 @@ curate_analytes <- function(checked_analytes, cut_off_percentage, bio_groups_col
                                  "Attention: curate_analytes() can only be used after spectra curation has been performed with curate_spectra()"))
   }
   
-  curated_analytes <- checked_analytes %>% 
+  curated_analytes <- checked_analytes %>%
     {
       if (is.null(bio_groups_colname)) {
-        dplyr::group_by(.data = ., 
+        dplyr::group_by(.data = .,
                         cluster, charge, analyte)
       } else {
-        dplyr::group_by(.data = ., 
+        dplyr::group_by(.data = .,
                         across({{bio_groups_colname}}), cluster, charge, analyte)
       }
-    } %>% 
-    dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>% 
-    dplyr::ungroup() %>% 
-    dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cut_off_percentage) 
+    } %>%
+    dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cut_off_percentage)
   
   return(curated_analytes)
 }

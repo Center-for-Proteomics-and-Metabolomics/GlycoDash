@@ -390,8 +390,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
             # Drop samples in biological groups that should be ignored
             dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>%  # Thanks ChatGPT
             curate_analytes(., input$cut_off, input$biogroup_column)
-        } else {
-          curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
+        } else if (input$curation_method == "On all data") {
+            curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
+        } else if (input$curation_method == "Per sample") {
+            # Will have to curate per sample. Don't use cut-off.
+            curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
         }
         
       } else if (input$method == "Supply an analyte list") {
@@ -425,7 +428,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
 
     analyte_curated_data <- reactive({
       req(curated_analytes())
-      
+
       dplyr::left_join(curated_analytes(), 
                        passing_spectra())
     }) %>% bindEvent(input$curate_analytes)

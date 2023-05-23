@@ -576,6 +576,8 @@ It is also possible (not required) to perform the analyte curation per biologica
 
 cut_off_percentage <- 25
 
+test <- checked_analytes
+
 
 # Curate analytes, but not per biological group.
 curated_analytes <- curate_analytes(checked_analytes, cut_off_percentage)
