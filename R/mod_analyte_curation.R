@@ -115,7 +115,7 @@ mod_analyte_curation_ui <- function(id){
                   placement = "right",
                   trigger = "hover",
                   html = "true"),
-              numericInput(ns("cut_off"), "Cut-off (%)", value = 25) %>% 
+              numericInput(ns("cut_off"), "Cut-off (%)", value = 25, min = 0, max = 100) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
                   content = HTML(paste0(
