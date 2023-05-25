@@ -596,6 +596,14 @@ consensus_list <- curated_analytes_group %>%
   dplyr::ungroup()
 ```
 
+```{r}
+# Analyte curation per sample
+
+curated_per_sample <- checked_analytes %>% 
+  dplyr::filter(analyte_meets_criteria == TRUE) %>% 
+  dplyr::select(-analyte_meets_criteria, -failed_criteria)
+```
+
 *In plotting curated_analytes_group: facet by group in addition to charge.*
 
 *In the table: show all analytes and select which pass based on consensus list.*

@@ -431,12 +431,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       return(curated_analytes)
     })
 
+    
     analyte_curated_data <- reactive({
       req(curated_analytes())
 
       dplyr::left_join(curated_analytes(), 
                        passing_spectra())
     }) %>% bindEvent(input$curate_analytes)
+    
     
     observe({
       
@@ -451,6 +453,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
    
     clusters <- reactive({
       req(analyte_curated_data())
+      
       unique(analyte_curated_data()$cluster)
     })
     
@@ -566,11 +569,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # It is removed in "mod_tab_curated_analytes.R"
     observeEvent(input$curate_analytes, {
       shinybusy::show_modal_spinner(
-        spin = "cube-grid", color = "#0275D8", 
+        spin = "cube-grid", color = "#0275D8",
         text = HTML("<br/><strong>Curating analytes...")
       )
     }, priority = 20)
-    
+
     
     
     return(list(
