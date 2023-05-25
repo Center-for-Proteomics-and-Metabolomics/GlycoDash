@@ -98,7 +98,7 @@ mod_analyte_curation_ui <- function(id){
             div(
               id = ns("curation_based_on_data_div"),
               selectizeInput(ns("ignore_samples"),
-                             HTML("<br/>Sample types to ignore regarding analyte curation:"),
+                             HTML("Sample types to ignore regarding analyte curation:"),
                              choices = c("Total", "Blanks", "Negative controls"),
                              multiple = TRUE) %>% 
                 bsplus::bs_embed_popover(
@@ -277,6 +277,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       shinyjs::toggleState(
         "determine_groups_button",
         condition = input$biogroup_column != "" & input$curation_method == "Per biological group"
+      )
+      # Don't show cut-off option when doing curation per sample.
+      shinyjs::toggle(
+        "cut_off",
+        condition = input$curation_method != "Per sample"
       )
     }, priority = 10)
     
