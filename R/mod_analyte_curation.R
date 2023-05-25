@@ -92,7 +92,7 @@ mod_analyte_curation_ui <- function(id){
             div(
               id = ns("curation_based_on_data_div"),
               selectizeInput(ns("ignore_samples"),
-                             HTML("<br/>Sample types to ignore regarding analyte curation:"),
+                             HTML("Sample types to ignore regarding analyte curation:"),
                              choices = c("Total", "Blanks", "Negative controls"),
                              multiple = TRUE) %>% 
                 bsplus::bs_embed_popover(
