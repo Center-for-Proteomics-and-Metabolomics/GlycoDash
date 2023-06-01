@@ -386,6 +386,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       
       if (input$method == "Curate analytes based on data") {
         req(checked_analytes())
+        browser()
         #  Check if curation should be done per biological group
         if (isTRUE(rv_resp$response)) {
           # Curate per biological group
@@ -398,7 +399,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         } else if (input$curation_method == "On all data") {
             curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
         } else if (input$curation_method == "Per sample") {
-            # Will have to curate per sample. Don't use cut-off.
+            # Will have to curate per sample. 
             curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
         }
         
@@ -434,7 +435,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     analyte_curated_data <- reactive({
       req(curated_analytes())
-
+      browser()
       dplyr::left_join(curated_analytes(), 
                        passing_spectra())
     }) %>% bindEvent(input$curate_analytes)
@@ -510,7 +511,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     observe({
       req(clusters())
       req(info$analyte_curated_data())
-      
+      browser()
       r$mod_results <- purrr::set_names(clusters()) %>% 
         purrr::map(
           .,
