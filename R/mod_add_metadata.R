@@ -55,6 +55,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
       return(metadata_list)
     })
     
+    
     filenames_metadata <- reactive({
       req(input$file)
       comma_and(input$file$name)
@@ -162,14 +163,54 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
                                        dplyr::full_join,
                                        by = "sample_id")
       
-      return(merged_metadata)
+      # Check for column names that are not allowed.
+      # FALSE if there are no forbidden names, otherwise TRUE.
+      forbidden_colnames <- check_column_names(merged_metadata)
+      
+      
+      if (!is.null(forbidden_colnames)) {
+        
+        forbidden_colnames_table <- DT::datatable(data.frame(forbidden_colnames),
+                                                  options = list(
+                                                    scrollY = "150px",
+                                                    paging = FALSE,
+                                                    searching = FALSE,
+                                                    columnDefs = list(
+                                                      list(
+                                                        className = 'dt-center',
+                                                        targets = "_all"))),
+                                                  colnames = "",
+                                                  rownames = FALSE)
+
+        shinyalert::shinyalert(
+          html = TRUE,
+          text = tagList(
+            "The following column names in your metadata are not allowed:",
+            forbidden_colnames_table,
+            br(),
+            "Please rename (or remove) these columns, and try again."
+          ),
+          size = "l",
+          confirmButtonText = "OK",
+          confirmButtonCol = "tomato",
+          showCancelButton = FALSE,
+          showConfirmButton = TRUE
+        )
+
+        shinybusy::remove_modal_spinner()
+        
+        return(NULL)
+      } else return(merged_metadata)
+      
     }) %>% bindEvent(input$button)
     
     
+    
+    # Check for unmatched id's
     unmatched_ids <- reactive({
       req(merged_metadata(),
           LacyTools_summary())
-      
+
       unmatched <- setdiff(LacyTools_summary()$sample_id,
                            merged_metadata()$sample_id)
       
@@ -217,7 +258,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
     }, priority = 5) %>% bindEvent(input$popup, input$button)
     
     with_metadata <- reactive({
-      req(unmatched_ids())
+      req(unmatched_ids(), !is.null(merged_metadata()))
       if(any(
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
@@ -261,7 +302,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
         spin = "cube-grid", color = "#0275D8", 
         text = HTML("<br/><strong>Processing metadata...")
       )
-    }, priority = 10)
+    }, priority = 50)
 
     # Remove the spinner when metadata is added.
     observeEvent(with_metadata(), {

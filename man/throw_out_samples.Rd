@@ -12,7 +12,7 @@ throw_out_samples(passing_spectra, samples_to_ignore)
 \code{\link{return_when_spectra_curation_is_skipped}}.}
 
 \item{samples_to_ignore}{A character vector in which every element is either
-a group (specific or total) or sample_type that is present in the data
+an group (specific or total) or sample_type that is present in the data
 followed by " samples".}
 }
 \value{

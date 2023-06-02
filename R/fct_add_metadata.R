@@ -103,4 +103,31 @@ rename_sample_id_column <- function(metadata,
   
   return(metadata)
 }
+
+
+# Check that the metadata does not contain column names that already exist
+# in the LaCyTools data. A columns also can't be called "group".
+check_column_names <- function(merged_metadata) {
+  
+  not_allowed <- c("sample_name", "analyte", "charge", "mass_accuracy_ppm",
+                  "absolute_intensity_background_subtracted", "isotopic_pattern_quality", 
+                  "sn", "fraction", "exact_mass", "group", "sample_type", "cluster")
+  
+  colnames <- colnames(merged_metadata)
+  
+  forbidden <- c()  # Initiate empty vector (NULL)
+  
+  # Loop to check for forbidden column names
+  for (i in colnames) {
+    if (i %in% not_allowed) {
+      forbidden <- append(forbidden, i)
+    }
+  }
+  
+  return(forbidden)
+}
+
+
+
+
   
