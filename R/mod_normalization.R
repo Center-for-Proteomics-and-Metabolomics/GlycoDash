@@ -80,6 +80,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         
         { # Combine with metadata if it exists
           if (is_truthy(merged_metadata())) {
+            browser()
             dplyr::left_join(., merged_metadata(), by = "sample_id") %>% 
             dplyr::relocate(colnames(merged_metadata())[-1], .after = sample_id)
           } else .

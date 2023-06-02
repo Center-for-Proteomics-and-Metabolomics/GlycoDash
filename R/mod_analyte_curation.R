@@ -60,13 +60,7 @@ mod_analyte_curation_ui <- function(id){
                           ns("curation_based_on_data"),
                           " .popover {width: 400px;}"))
             ),
-            # Ask user whether analyte curation should be done per biological group
-            # shinyWidgets::awesomeRadio(
-            #   ns("curate_per_group"),
-            #   "Should analyte curation be performed per biological group?",
-            #   choices = c("Yes", "No"),
-            #   selected = "No"
-            # ),
+
             shinyWidgets::awesomeRadio(
               ns("curation_method"),
               "How do you want to perform analyte curation?",
@@ -283,7 +277,18 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         "cut_off",
         condition = input$curation_method != "Per sample"
       )
+      # Hide "Analyte curation results per cluster" when curation is done per sample
+      # Later: perhaps plot a heatmap
+      shinyjs::toggle(
+        "tabbed_box",
+        condition = input$curation_method != "Per sample"
+      )
+      # Toggle download button
+      shinyjs::toggleState(
+        "download", condition = is_truthy(with_analytes_to_include())
+      )
     }, priority = 10)
+  
     
     
     # The selection menu for input$ignore_samples is updated so that the choices
@@ -386,7 +391,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       
       if (input$method == "Curate analytes based on data") {
         req(checked_analytes())
-        browser()
+        
         #  Check if curation should be done per biological group
         if (isTRUE(rv_resp$response)) {
           # Curate per biological group
@@ -399,8 +404,9 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         } else if (input$curation_method == "On all data") {
             curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
         } else if (input$curation_method == "Per sample") {
-            # Will have to curate per sample. 
-            curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
+            # Curation per sample
+            curated_analytes <- checked_analytes() %>% 
+              dplyr::rename(has_passed_analyte_curation = analyte_meets_criteria)
         }
         
       } else if (input$method == "Supply an analyte list") {
@@ -436,6 +442,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     analyte_curated_data <- reactive({
       req(curated_analytes())
       browser()
+      # left_join below is not required for curation per sample
       dplyr::left_join(curated_analytes(), 
                        passing_spectra())
     }) %>% bindEvent(input$curate_analytes)
@@ -454,7 +461,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
    
     clusters <- reactive({
       req(analyte_curated_data())
-      
+      browser()
       unique(analyte_curated_data()$cluster)
     })
     
@@ -511,7 +518,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     observe({
       req(clusters())
       req(info$analyte_curated_data())
-      browser()
+
       r$mod_results <- purrr::set_names(clusters()) %>% 
         purrr::map(
           .,
@@ -531,6 +538,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           all(purrr::map_lgl(r$mod_results,
                          ~ is_truthy(.x$analytes_to_include()))))
       
+      browser()
+      
       purrr::imap(r$mod_results,
                   function(results, current_cluster) {
                     data_current_cluster <- passing_spectra() %>% 
@@ -544,6 +553,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       
     })
     
+
     # Make downloading analyte_curated_data possible:
     output$download <- downloadHandler(
       filename = function() {
