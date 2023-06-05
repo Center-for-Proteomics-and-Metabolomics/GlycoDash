@@ -156,23 +156,24 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
           
           return(renamed)
         })
-      
+
       # Join all the metadata together (in case the user uploaded more than one
       # metadata file):
       merged_metadata <- purrr::reduce(prepped_metadata,
                                        dplyr::full_join,
                                        by = "sample_id")
+
       
       # Check for column names that are not allowed.
-      # FALSE if there are no forbidden names, otherwise TRUE.
+      # Vector will be length 0 if there are no forbidden column names.
+      
       forbidden_colnames <- check_column_names(merged_metadata)
-      
-      
-      if (!is.null(forbidden_colnames)) {
+
+      if (length(forbidden_colnames) != 0) {
         
         forbidden_colnames_table <- DT::datatable(data.frame(forbidden_colnames),
                                                   options = list(
-                                                    scrollY = "150px",
+                                                    scrollY = "100px",
                                                     paging = FALSE,
                                                     searching = FALSE,
                                                     columnDefs = list(
@@ -181,7 +182,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
                                                         targets = "_all"))),
                                                   colnames = "",
                                                   rownames = FALSE)
-
+        
         shinyalert::shinyalert(
           html = TRUE,
           text = tagList(
@@ -190,7 +191,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
             br(),
             "Please rename (or remove) these columns, and try again."
           ),
-          size = "l",
+          size = "m",
           confirmButtonText = "OK",
           confirmButtonCol = "tomato",
           showCancelButton = FALSE,
@@ -198,12 +199,11 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
         )
 
         shinybusy::remove_modal_spinner()
-        
+
         return(NULL)
-      } else return(merged_metadata)
+        } else return(merged_metadata)
       
     }) %>% bindEvent(input$button)
-    
     
     
     # Check for unmatched id's
