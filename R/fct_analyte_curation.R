@@ -10,7 +10,7 @@
 #'   \code{\link{remove_unneeded_columns}} or from the function
 #'   \code{\link{return_when_spectra_curation_is_skipped}}.
 #' @param samples_to_ignore A character vector in which every element is either
-#'   a group (specific or total) or sample_type that is present in the data
+#'   an group (specific or total) or sample_type that is present in the data
 #'   followed by " samples".
 #'
 #' @return The same dataframe that is given as the \code{passing_spectra}

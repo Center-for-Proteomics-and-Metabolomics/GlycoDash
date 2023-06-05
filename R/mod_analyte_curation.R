@@ -92,7 +92,7 @@ mod_analyte_curation_ui <- function(id){
             div(
               id = ns("curation_based_on_data_div"),
               selectizeInput(ns("ignore_samples"),
-                             HTML("<br/>Sample types to ignore regarding analyte curation:"),
+                             HTML("Sample types to ignore regarding analyte curation:"),
                              choices = c("Total", "Blanks", "Negative controls"),
                              multiple = TRUE) %>% 
                 bsplus::bs_embed_popover(
@@ -115,7 +115,7 @@ mod_analyte_curation_ui <- function(id){
                   placement = "right",
                   trigger = "hover",
                   html = "true"),
-              numericInput(ns("cut_off"), "Cut-off (%)", value = 25) %>% 
+              numericInput(ns("cut_off"), "Cut-off (%)", value = 25, min = 0, max = 100) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
                   content = HTML(paste0(

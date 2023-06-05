@@ -47,7 +47,7 @@ The data import step can be broken down into 5 smaller steps:
 # Use this file for testing the custom glycosylation traits feature.
 
 path_to_file <- system.file("extdata",
-                            "LacyTools_summary_example_extra_clusters.txt",
+                            "LacyTools_summary_example.txt",
                             package = "glycodash")
 
 raw_LacyTools_summary <- read_non_rectangular(path = path_to_file, 
@@ -177,7 +177,7 @@ The user needs to indicate the number of clusters and give a keyword for each cl
 ```{r clusters}
 
 with_clusters <- define_clusters(data = with_sample_types,
-                                 cluster_keywords = c("IgGI", "IgGII", "IgGIII", "IgGIV"))
+                                 cluster_keywords = c("IgGI"))
 
 # For example data with four clusters:
 # cluster_keywords = c("IgGI", "IgGII", "IgGIII", "IgGIV")

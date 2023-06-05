@@ -104,10 +104,12 @@ mod_spectra_curation_ui <- function(id){
               numericInput(ns("ipq"),
                            "Max. IPQ value:",
                            value = 0.2,
-                           step = 0.1),
+                           step = 0.1,
+                           min = 0.0),
               numericInput(ns("sn"),
                            "Min. S/N ratio:",
-                           value = 9)
+                           value = 9,
+                           min = 0.0)
             )
           )
         ),
