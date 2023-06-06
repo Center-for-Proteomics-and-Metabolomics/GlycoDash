@@ -406,7 +406,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         } else if (input$curation_method == "Per sample") {
             # Curation per sample
             curated_analytes <- checked_analytes() %>% 
-              dplyr::rename(has_passed_analyte_curation = analyte_meets_criteria)
+              dplyr::rename(has_passed_analyte_curation = analyte_meets_criteria) %>% 
+              dplyr::select(-failed_criteria)
         }
         
       } else if (input$method == "Supply an analyte list") {
@@ -439,13 +440,20 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     })
 
     
+    # Analyte curated data
     analyte_curated_data <- reactive({
       req(curated_analytes())
-      browser()
-      # left_join below is not required for curation per sample
-      dplyr::left_join(curated_analytes(), 
-                       passing_spectra())
+      if (input$curation_method == "Per sample") {
+        # Left join not necessary when curation is done per sample.
+        curated_analytes()
+      } else {
+        dplyr::left_join(
+          # Order here is important!
+          curated_analytes(), passing_spectra()
+        )
+      }
     }) %>% bindEvent(input$curate_analytes)
+    
     
     
     observe({
@@ -461,7 +469,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
    
     clusters <- reactive({
       req(analyte_curated_data())
-      browser()
       unique(analyte_curated_data()$cluster)
     })
     
@@ -518,7 +525,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     observe({
       req(clusters())
       req(info$analyte_curated_data())
-
+      req(input$curation_method != "Per sample")
+      
       r$mod_results <- purrr::set_names(clusters()) %>% 
         purrr::map(
           .,
@@ -532,34 +540,42 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     },
     priority = 10)
     
+    
+    
     with_analytes_to_include <- reactive({
-      req(passing_spectra(),
-          !rlang::is_empty(r$mod_results),
-          all(purrr::map_lgl(r$mod_results,
-                         ~ is_truthy(.x$analytes_to_include()))))
       
-      browser()
-      
-      purrr::imap(r$mod_results,
-                  function(results, current_cluster) {
-                    data_current_cluster <- passing_spectra() %>% 
-                      dplyr::filter(cluster == current_cluster)
-                    
-                    dplyr::left_join(results$analytes_to_include(),
-                                     data_current_cluster)
+      if (input$curation_method == "Per sample") {
+        # Curation done per sample
+        req(analyte_curated_data())
+        to_return <- analyte_curated_data() %>% 
+          dplyr::filter(has_passed_analyte_curation == TRUE) %>% 
+          dplyr::select(-has_passed_analyte_curation, -uncalibrated)
+        # Remove spinner
+        shinybusy::remove_modal_spinner()
+      } else {
+        # Curation done on all data or per biological group
+        req(passing_spectra(),
+            !rlang::is_empty(r$mod_results),
+            all(purrr::map_lgl(r$mod_results,
+                               ~ is_truthy(.x$analytes_to_include()))))
+
+        to_return <- purrr::imap(r$mod_results,
+                    function(results, current_cluster) {
+                      data_current_cluster <- passing_spectra() %>% 
+                        dplyr::filter(cluster == current_cluster)
                       
-                  }) %>% 
-        purrr::reduce(dplyr::full_join)
-      
+                      dplyr::left_join(results$analytes_to_include(),
+                                       data_current_cluster)
+                    }) %>% 
+          purrr::reduce(dplyr::full_join)
+      }
+      return(to_return)
     })
     
 
     # Make downloading analyte_curated_data possible:
     output$download <- downloadHandler(
       filename = function() {
-        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-        #                                                pattern = "-",
-        #                                                replacement = ""))
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
         switch(input$download_format,
                "R object" = paste0(current_datetime, "_curated_analytes.rds"),
@@ -577,7 +593,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     
     # Show a spinner while analyte curation is being performed.
-    # It is removed in "mod_tab_curated_analytes.R"
+    # It is removed in "mod_tab_curated_analytes.R" for curation on all data or per group.
     observeEvent(input$curate_analytes, {
       shinybusy::show_modal_spinner(
         spin = "cube-grid", color = "#0275D8",
@@ -589,7 +605,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     return(list(
       analyte_curated_data = with_analytes_to_include,
-      method = reactive({ input$method }),
+      method = reactive({ input$method }), # based on data or analyte list
       ignore_samples = reactive({ input$ignore_samples }),
       cut_off_percentage = reactive({ input$cut_off }),
       analyte_list = reactive({ input$analyte_list$name }),
