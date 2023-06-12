@@ -117,7 +117,8 @@ my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
   
   if (!is.null(color)) {
     n_colors <- length(unique(data[[color]]))
-    my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
+    # my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
+    my_palette <- color_palette(n_colors)
     
     plot <- plot +
       ggplot2::geom_jitter(ggplot2::aes(x = .data[[xvar]],
@@ -133,6 +134,8 @@ my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
                                           ": ",
                                           .data[[yvar]]
                                         )),
+                           height = 0,
+                           width = 0.25,
                            alpha = 0.6) +
       ggplot2::scale_color_manual(values = my_palette,
                                   name = nicer_label(color))
@@ -151,7 +154,10 @@ my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
                                           ": ",
                                           .data[[yvar]]
                                         )),
-                           color = RColorBrewer::brewer.pal(3, "Set2")[1],
+                           height = 0,
+                           width = 0.25,
+                           color = "#1f77b4",
+                           # color = RColorBrewer::brewer.pal(3, "Set2")[1],
                            alpha = 0.6)
   }
   
@@ -269,8 +275,9 @@ my_scatter_plot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
   
   if (!is.null(color)) {
     n_colors <- length(unique(data[[color]]))
-    my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
-    
+    # my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
+    my_palette <- color_palette(n_colors)
+
     plot <- plot +
       ggplot2::geom_point(ggplot2::aes(x = as.numeric(.data[[xvar]]),
                                        y = as.numeric(.data[[yvar]]),
@@ -302,7 +309,8 @@ my_scatter_plot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
                                          ": ",
                                          .data[[yvar]]
                                        )),
-                          color = RColorBrewer::brewer.pal(3, "Set2")[1])
+                          color = "#1f77b4")
+                          # color = RColorBrewer::brewer.pal(3, "Set2")[1])
   }
   
   if (!is.null(facets)) {
@@ -419,7 +427,8 @@ my_histogram <- function(data, xvar = NULL, color = NULL, facets = NULL) {
   
   if (!is.null(color)) {
     n_colors <- length(unique(data[[color]]))
-    my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
+    # my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
+    my_palette <- color_palette(n_colors)
     
     plot <- plot +
       ggplot2::geom_histogram(ggplot2::aes(x = .data[[xvar]],
@@ -450,7 +459,8 @@ my_histogram <- function(data, xvar = NULL, color = NULL, facets = NULL) {
                                              " to ",
                                              signif(xmax, 3)
                                            )),
-                              fill = RColorBrewer::brewer.pal(3, "Set2")[1])
+                              fill = "1f77b4")
+                              # fill = RColorBrewer::brewer.pal(3, "Set2")[1])
   }
   
   if (!is.null(facets)) {
@@ -475,6 +485,25 @@ nicer_label <- function(varname) {
   ))
   
 }
+
+
+# Function to create a color palette
+# color_palette <- function(n_colors) {
+#   
+#   # 10 colors used by matplotlib (because they are nice)
+#   plt_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+#                   "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf")
+#   
+#   if (n_colors <= length(plt_colors)) {
+#     # Use these 10 colors if number of required colors is less than 10
+#     my_palette <- plt_colors[1:n_colors]
+#   } else {
+#     # Otherwise create different colors
+#     my_palette <- colorRampPalette(plt_colors)(n_colors)
+#   }
+#   
+#   return(my_palette)
+# }
 
 
 
