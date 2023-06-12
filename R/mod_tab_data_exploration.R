@@ -63,6 +63,14 @@ mod_tab_data_exploration_server <- function(id, my_data, trigger){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    # Hide y-variable when user selects histogram.
+    observe({
+      shinyjs::toggle(
+        id = "yvar", 
+        condition = input$plot_type != "Histogram"
+      )
+    })
+    
     observe({
       req(my_data())
       updateSelectizeInput(inputId = "yvar",

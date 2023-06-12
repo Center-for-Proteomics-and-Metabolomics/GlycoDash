@@ -137,8 +137,15 @@ my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
                            height = 0,
                            width = 0.25,
                            alpha = 0.6) +
-      ggplot2::scale_color_manual(values = my_palette,
-                                  name = nicer_label(color))
+      {
+        # In case of continuous color variable
+        if (is.numeric(data[[color]]) && !is.integer(data[[color]])) {
+          ggplot2::scale_color_continuous(type = "viridis")
+        } else {
+          ggplot2::scale_color_manual(values = my_palette,
+                                      name = nicer_label(color))
+        }
+      }
     
   } else {
     plot <- plot +
@@ -292,8 +299,14 @@ my_scatter_plot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
                                          ": ",
                                          .data[[yvar]]
                                        ))) +
-      ggplot2::scale_color_manual(values = my_palette,
-                                  name = nicer_label(color))
+      {
+        if (is.numeric(data[[color]]) && !is.integer(data[[color]])) {
+          ggplot2::scale_color_continuous(type = "viridis")
+        } else {
+          ggplot2::scale_color_manual(values = my_palette,
+                                      name = nicer_label(color))
+        }
+      }
     
   } else {
     plot <- plot +
@@ -443,8 +456,14 @@ my_histogram <- function(data, xvar = NULL, color = NULL, facets = NULL) {
                                              " to ",
                                              signif(xmax, 3)
                                            ))) +
-      ggplot2::scale_fill_manual(values = my_palette,
-                                 name = nicer_label(color))
+      {
+        if (is.numeric(data[[color]]) && !is.integer(data[[color]])) {
+          ggplot2::scale_fill_continuous(type = "viridis")
+        } else {
+          ggplot2::scale_fill_manual(values = my_palette,
+                                     name = nicer_label(color))
+        }
+      }
     
   } else {
     plot <- plot +
@@ -459,7 +478,7 @@ my_histogram <- function(data, xvar = NULL, color = NULL, facets = NULL) {
                                              " to ",
                                              signif(xmax, 3)
                                            )),
-                              fill = "1f77b4")
+                              fill = "#1f77b4")
                               # fill = RColorBrewer::brewer.pal(3, "Set2")[1])
   }
   
@@ -485,25 +504,4 @@ nicer_label <- function(varname) {
   ))
   
 }
-
-
-# Function to create a color palette
-# color_palette <- function(n_colors) {
-#   
-#   # 10 colors used by matplotlib (because they are nice)
-#   plt_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-#                   "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf")
-#   
-#   if (n_colors <= length(plt_colors)) {
-#     # Use these 10 colors if number of required colors is less than 10
-#     my_palette <- plt_colors[1:n_colors]
-#   } else {
-#     # Otherwise create different colors
-#     my_palette <- colorRampPalette(plt_colors)(n_colors)
-#   }
-#   
-#   return(my_palette)
-# }
-
-
 
