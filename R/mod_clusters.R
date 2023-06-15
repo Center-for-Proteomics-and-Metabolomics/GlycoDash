@@ -14,8 +14,26 @@ mod_clusters_ui <- function(id){
     width = NULL,
     solidHeader = TRUE,
     status = "primary",
+    shinyWidgets::awesomeRadio(
+      ns("contains_silumab"),
+      "Do your samples contain SILuMAb for IgG1 quantitation?",
+      choices = c("Yes", "No"),
+      selected = "No"
+    ),
+    textInput(
+      ns("silumab_glycopeptides"),
+      "By what word/letters within the analyte name can the SILuMAb glycopeptides be recognized?"
+    ),
+    textInput(
+      ns("silumab_peptide1"),
+      "By what word/letters within the analyte name can the SILuMAb peptide GPSVFPLAPSSK be recognized?"
+    ),
+    textInput(
+      ns("silumab_peptide2"),
+      "By what word/letters within the analyte name can the SILuMAb peptide TTPVLDSDGSFFLYSK  be recognized?"
+    ),
     numericInput(ns("n_clusters"), 
-                 "How many clusters does your data contain?",
+                 "How many natural Ig clusters does your data contain?",
                  value = 1,
                  min = 1,
                  max = 25,
@@ -58,6 +76,15 @@ mod_clusters_server <- function(id, LacyTools_summary){
     })
     
 
+# Show SILuMAb input only when user selects "Yes"
+observe({
+  shinyjs::toggle("silumab_glycopeptides", input$contains_silumab == "Yes")
+  shinyjs::toggle("silumab_peptide1", input$contains_silumab == "Yes")
+  shinyjs::toggle("silumab_peptide2", input$contains_silumab == "Yes")
+})
+    
+    
+    
 # Keyword checks ----------------------------------------------------------
 
     cluster_keywords_found <- reactive({
