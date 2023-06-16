@@ -420,7 +420,7 @@ create_expr_ls <- function(str_expr) {
 #' 
 #' @export
 #'
-#' @examples
+#' @examples fill this in...
 calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
   
   calculated_custom_traits <- normalized_data %>% 

@@ -66,7 +66,7 @@ read_metadata <- function(filepaths, filenames) {
 #' @param sample_id_column A character string, the name of the column in
 #'   \code{metadata} that contains the sample ID's.
 #'
-#' @return
+#' @return Fill this in...
 #' @export
 #'
 #' @examples
