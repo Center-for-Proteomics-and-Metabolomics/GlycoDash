@@ -1,3 +1,7 @@
-# glycodash 0.0.0.9000
+# Glycodash v1.0.0
 
-* Added a `NEWS.md` file to track changes to the package.
+First official release.
+
+
+# Glycodash v1.1.0
+New feature: analyte curation per sample.
