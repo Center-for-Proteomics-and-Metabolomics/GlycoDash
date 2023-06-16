@@ -32,7 +32,7 @@ mod_data_import_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            DT::DTOutput(ns("data_table"))
+            shinycssloaders::withSpinner(DT::DTOutput(ns("data_table")))
           ),
           shinydashboard::box(
             title = "Export results",
@@ -86,30 +86,24 @@ mod_data_import_server <- function(id){
       
       if (is_truthy(data_incl_metadata$data())) {
         show_in_table <- data_incl_metadata$data()
-      } else {
-        if (is_truthy(data_incl_clusters$data())) {
-          show_in_table <- data_incl_clusters$data()
-          showNotification("The clusters are being added to the data. This may take a while.",
+        showNotification("The metadata was added to the data.",
+                         type = "message")
+      } else if (is_truthy(data_incl_clusters$data())) {
+        show_in_table <- data_incl_clusters$data()
+        showNotification("The clusters were added to the data.",
+                         type = "message")
+      } else if (is_truthy(data_incl_sample_types$data())) {
+          show_in_table <- data_incl_sample_types$data()
+          showNotification("The sample types were added to the data.",
                            type = "message")
-        } else {
-          if (is_truthy(data_incl_sample_types$data())) {
-            show_in_table <- data_incl_sample_types$data()
-            showNotification("The sample types were added to the data.",
-                             type = "message")
-          } else { 
-            if (is_truthy(data_incl_sample_ids$data())) {
-              show_in_table <- data_incl_sample_ids$data()
-              showNotification("The sample ID's were added to the data.",
-                               type = "message")
-            } else {
-              if (is_truthy(LacyTools_summary$data())) {
-                show_in_table <- LacyTools_summary$data()
-                showNotification("The LaCyTools summary has been loaded.",
-                                 type = "message")
-              }
-            } 
-          }
-        }
+      } else if (is_truthy(data_incl_sample_ids$data())) {
+        show_in_table <- data_incl_sample_ids$data()
+        showNotification("The sample ID's were added to the data.",
+                         type = "message")
+      } else if (is_truthy(LacyTools_summary$data())) {
+          show_in_table <- LacyTools_summary$data()
+          showNotification("The LaCyTools summary has been loaded.",
+                           type = "message")
       }
       return(show_in_table)
     }) %>% bindEvent(LacyTools_summary$button(), 
@@ -122,11 +116,11 @@ mod_data_import_server <- function(id){
     # in the data table
     output$data_table <- DT::renderDT({
       req(show_in_table())
-      
       DT::datatable(show_in_table(),
                     options = list(scrollX = TRUE),
                     filter = "top")
     })
+    
     
     # The data to pass along to the next module:
     to_return <- reactive({
@@ -141,6 +135,25 @@ mod_data_import_server <- function(id){
       }
     })
     
+
+    # Create a vector with column names, from which a column can later be
+    # chosen as the column that contains the biological groups.
+    biogroup_cols <- reactive({
+      req(data_incl_clusters$data())
+      if (is_truthy(data_incl_metadata$data())) {
+        intersect(
+          c("group", "sample_id", "sample_type", colnames(data_incl_metadata$merged_metadata())),
+          colnames(data_incl_metadata$data())
+        )
+      } else if (is_truthy(data_incl_clusters$data())) {
+          intersect(
+            c("group", "sample_id", "sample_type"),
+            colnames(data_incl_clusters$data())
+          )
+      } else NULL
+    })
+    
+    
     # The download button is disabled until data has been loaded:
     observe({
       shinyjs::toggleState("download",
@@ -149,12 +162,13 @@ mod_data_import_server <- function(id){
     
     output$download <- downloadHandler(
       filename = function() {
-        todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-                                                       pattern = "-",
-                                                       replacement = ""))
+        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
+        #                                                pattern = "-",
+        #                                                replacement = ""))
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
         switch(input$download_format,
-               "R object" = paste0(todays_date, "_data.rds"),
-               "Excel file" = paste0(todays_date, "_data.xlsx"))
+               "R object" = paste0(current_datetime, "_data.rds"),
+               "Excel file" = paste0(current_datetime, "_data.xlsx"))
       },
       content = function(file) {
         data_to_download <- show_in_table()
@@ -166,9 +180,11 @@ mod_data_import_server <- function(id){
                                                   path = file))
       }
     )
+  
     
     return(list(
-      LacyTools_summary = to_return,
+      LacyTools_summary = to_return,  # Calling this LacyTools_summary is a bit confusing
+      biogroup_cols = biogroup_cols,
       contains_total_and_specific_samples = LacyTools_summary$contains_total_and_specific_samples,
       keyword_specific = LacyTools_summary$keyword_specific,
       keyword_total = LacyTools_summary$keyword_total,

@@ -18,7 +18,8 @@ app_server <- function( input, output, session ) {
   
   results_analyte_curation <- mod_analyte_curation_server(
     id = "analyte_curation_ui_1",
-    results_spectra_curation = results_spectra_curation)
+    results_spectra_curation = results_spectra_curation,
+    biogroup_cols = results_data_import$biogroup_cols)
   
   results_normalization <- mod_normalization_server(
     id = "normalization_ui_1",

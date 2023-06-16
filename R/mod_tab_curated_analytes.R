@@ -19,7 +19,7 @@ mod_tab_curated_analytes_ui <- function(id){
                                    right = TRUE,
                                    status = "primary"),
       br(),
-      DT::dataTableOutput(ns("table"))
+      shinycssloaders::withSpinner(DT::dataTableOutput(ns("table")))
     )
   )
 }
@@ -27,7 +27,7 @@ mod_tab_curated_analytes_ui <- function(id){
 #' tab_curated_analytes Server Function
 #'
 #' @noRd 
-mod_tab_curated_analytes_server <- function(id, info, cluster){
+mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -38,7 +38,8 @@ mod_tab_curated_analytes_server <- function(id, info, cluster){
       
       plot_analyte_curation(curated_analytes = info$curated_analytes(),
                             cut_off_percentage = info$cut_off(),
-                            selected_cluster = cluster)
+                            selected_cluster = cluster,
+                            bio_groups_colname = biogroup_column)
     })
     
     output$plot <- plotly::renderPlotly({
@@ -96,9 +97,13 @@ mod_tab_curated_analytes_server <- function(id, info, cluster){
       
       table <- prepare_analyte_curation_table(
         analyte_curated_data = info$analyte_curated_data(),
-        selected_cluster = cluster
+        selected_cluster = cluster,
+        by_group = ifelse(
+          test = (!is.null(biogroup_column) & biogroup_column != ""),
+          yes = TRUE, no = FALSE
+          )
         )
-      
+
       charge_columns <- colnames(table)[-1]
       
       table_with_checkboxes <- table %>% 
@@ -204,6 +209,14 @@ mod_tab_curated_analytes_server <- function(id, info, cluster){
       
       return(analytes_to_include_per_charge)
     })
+    
+    
+    # Remove "Curating analytes..." spinner
+    observe({
+      req(curated_analytes_table())
+      shinybusy::remove_modal_spinner()
+    })
+
     
     return(list(plot = curated_analytes_plot,
                 analytes_to_include = analytes_to_include))

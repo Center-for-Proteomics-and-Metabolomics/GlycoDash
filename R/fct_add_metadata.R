@@ -103,4 +103,44 @@ rename_sample_id_column <- function(metadata,
   
   return(metadata)
 }
+
+
+
+#' This function checks whether there are forbidden column names in the 
+#' uploaded metadata. Some column names are not allowed because they are
+#' already created in the code, causing conflict.
+#'
+#' @param merged_metadata 
+#'
+#' @return  A vector with forbidden column names. Can be length zero.
+#' @export
+#'
+#' @examples 
+#' forbidden_colnames <- check_column_names(merged_metadata())
+check_column_names <- function(merged_metadata) {
+  
+  not_allowed <- c("sample_name", "analyte", "charge", "mass_accuracy_ppm",
+                  "absolute_intensity_background_subtracted", "isotopic_pattern_quality", 
+                  "sn", "fraction", "exact_mass", "group", "sample_type", "cluster")
+  
+  colnames <- colnames(merged_metadata)
+  
+  forbidden <- character()  # Initiate empty character vector
+  
+  # Loop to check for forbidden column names
+  for (i in colnames) {
+    if (i %in% not_allowed) {
+      forbidden <- append(forbidden, i)
+    }
+  }
+  
+  return(forbidden)
+}
+
+
+
+
+
+
+
   

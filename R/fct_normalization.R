@@ -229,8 +229,8 @@ normalize_data <- function(total_intensities) {
                     sample_name) %>%
     dplyr::reframe(sum_intensity = sum(total_absolute_intensity),
                      across(everything())) %>%
-    dplyr::mutate(relative_abundance = total_absolute_intensity / sum_intensity * 100,
-                  .keep = "unused")
+    dplyr::mutate(relative_abundance = total_absolute_intensity / sum_intensity * 100) %>% 
+    dplyr::select(-total_absolute_intensity)
 
   return(normalized_data)
 }

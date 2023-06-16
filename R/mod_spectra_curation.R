@@ -104,10 +104,12 @@ mod_spectra_curation_ui <- function(id){
               numericInput(ns("ipq"),
                            "Max. IPQ value:",
                            value = 0.2,
-                           step = 0.1),
+                           step = 0.1,
+                           min = 0.0),
               numericInput(ns("sn"),
                            "Min. S/N ratio:",
-                           value = 9)
+                           value = 9,
+                           min = 0.0)
             )
           )
         ),
@@ -255,11 +257,11 @@ mod_spectra_curation_ui <- function(id){
               tabPanel(title = "Overview of failed spectra",
                        column(width = 12,
                               br(),
-                              DT::dataTableOutput(ns("failed_spectra_table")))),
+                              shinycssloaders::withSpinner(DT::dataTableOutput(ns("failed_spectra_table"))))),
               tabPanel(title = "Details of failed spectra per analyte",
                        column(width = 12,
                               br(),
-                              DT::dataTableOutput(ns("failed_spectra_details"))))
+                              shinycssloaders::withSpinner(DT::dataTableOutput(ns("failed_spectra_details")))))
             )
           )
         )
@@ -573,12 +575,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     output$download <- downloadHandler(
       filename = function() {
-        todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-                                                       pattern = "-",
-                                                       replacement = ""))
+        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
+        #                                                pattern = "-",
+        #                                                replacement = ""))
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
         switch(input$download_format,
-               "R object" = paste0(todays_date, "_curated_spectra.rds"),
-               "Excel file" = paste0(todays_date, "_curated_spectra.xlsx"))
+               "R object" = paste0(current_datetime, "_curated_spectra.rds"),
+               "Excel file" = paste0(current_datetime, "_curated_spectra.xlsx"))
       },
       content = function(file) {
         data_to_download <- to_return()

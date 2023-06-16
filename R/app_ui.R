@@ -26,7 +26,7 @@ app_ui <- function(request) {
                                    tabName = "analyte_curation"),
           shinydashboard::menuItem("Normalization", 
                                    tabName = "normalization"),
-          shinydashboard::menuItem("Derived Traits (optional)", 
+          shinydashboard::menuItem("Glycosylation Traits (optional)", 
                                    tabName = "derived_traits"),
           shinydashboard::menuItem("Repeatability (optional)", 
                                    tabName = "repeatability"),

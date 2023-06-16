@@ -14,6 +14,12 @@ mod_derived_traits_ui <- function(id){
     tags$style(HTML(paste0(
       "#",
       ns("box_header"),
+      " .awesome-checkbox {padding-top: 7px}",
+      "#",
+      ns("box_header"),
+      " .popover {max-width: 400px !important; color: #333}",
+      "#",
+      ns("box"),
       " .box-title {width: 100%}",
       "#",
       ns("box_header"),
@@ -26,7 +32,7 @@ mod_derived_traits_ui <- function(id){
       ns("box_header"),
       " .btn {float: right; border-width: 0px; margin-right: 5px}",
       "#",
-      ns("box_header"),
+      ns("box"),
       " .dropdown {display: inline-block; float: right; width: 135px}",
       "#",
       ns("box_header"),
@@ -34,35 +40,33 @@ mod_derived_traits_ui <- function(id){
     ))),
     fluidPage(
       fluidRow(
-        h1("Derived traits"),
+        h1("Glycosylation traits"),
               ),
       fluidRow(
         shinydashboard::box(
           id = ns("box"),
-          title = "Calculate derived traits automatically",
-          width = 4,
+          title = "Calculate glycosylation traits automatically",
+          width = 5,
           solidHeader = TRUE,
           status = "primary",
           div(
             strong("Attention:"),
-            "derived traits calculations can only be performed on IgG data for now.",
+            "glycosylation traits can only be calculated automatically for IgG complex-type glycans.",
             style = "color:#0021B8"
           ),
-          # "Attention: derived traits calculation can only be used on IgG data for now!",
-          # br(),
           br(),
           shinyWidgets::awesomeCheckboxGroup(ns("traits_menu"),
-                                             "Select the derived traits that should be calculated:",
+                                             "Select the glycosylation traits that should be calculated:",
                                              choices = c("Fucosylation",
                                                          "Bisection",
                                                          "Galactosylation",
                                                          "Sialylation")),
           actionButton(ns("do_calculation"),
-                       "Calculate derived traits")
+                       "Calculate glycosylation traits")
         ),
         shinydashboard::box(
-          title = "Formulas used to automatically calculate the derived traits:",
-          width = 8,
+          title = "Formulas used to automatically calculate the glycosylation traits:",
+          width = 7,
           solidHeader = TRUE,
           status = "primary",
         DT::dataTableOutput(ns("formulas"))
@@ -76,7 +80,32 @@ mod_derived_traits_ui <- function(id){
           id = ns("box"),
           title = div(
             id = ns("box_header"),
-            "Calculate custom derived traits",
+            "Calculate custom glycosylation traits",
+      
+            # Add info for custom traits
+            icon("info-circle", class = "ml") %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "Here you can upload an Excel file with formulas of the 
+                  custom traits that you want to calculate.
+                  Click the paperclip button to download an example Excel file.
+                  <br><br>
+                  The Excel file must contain one column that specifies the
+                  clusters for which you want to calculate the traits. The 
+                  second column contains the formulas that you want to use.
+                  A formula consists of the name of the trait, and how
+                  to calculate the trait, separated by an \"=\" sign. 
+                  <br><br>
+                  You must always place spaces around the following signs: 
+                  addition, subtraction, division, multiplication (+ &nbsp; - &nbsp; \\ &nbsp; *)
+                  "
+                ),
+                trigger = "hover",
+                placement = "right",
+                html = "true"
+              ),
+            
             shinyWidgets::dropdownButton(
               tags$style(HTML(paste0(
                 "#",
@@ -94,19 +123,19 @@ mod_derived_traits_ui <- function(id){
                                                      title = "Example"),
               width = "330px",
               size = "xs"
-            ),
+            )
           ),
-          width = 4,
+          width = 5,
           solidHeader = TRUE,
           status = "primary",
-          fileInput(ns("custom_traits_file"), 
-                    "Upload Excel file with custom derived traits formulas"
+          fileInput(ns("custom_traits_file"),
+                    "Upload Excel file with custom glycosylation traits formulas:"
                     )
         ),
         
         shinydashboard::box(
-          title = "Formulas used to calculate the custom derived traits:",
-          width = 8,
+          title = "Formulas used to calculate the custom glycosylation traits:",
+          width = 7,
           solidHeader = TRUE,
           status = "primary",
           DT::dataTableOutput(ns("custom_formulas"))
@@ -117,7 +146,7 @@ mod_derived_traits_ui <- function(id){
       
       fluidRow(
         shinydashboard::box(
-          title = "View data with derived traits",
+          title = "View data with glycosylation traits",
           width = 12,
           solidHeader = TRUE,
           status = "primary",
@@ -143,7 +172,7 @@ mod_derived_traits_server <- function(id, results_normalization){
       results_normalization$normalized_data()
     })
     
-    ####################  Custom derived traits  ####################
+    ####################  Custom glycosylation traits  ####################
     
     # Reactive expression containing the file extension of the uploaded file
     extension <- reactive({
@@ -174,14 +203,13 @@ mod_derived_traits_server <- function(id, results_normalization){
     
     data_with_custom_traits <- reactive({
       req(custom_traits())
-      dplyr::full_join(results_normalization$normalized_data_wide(),
-                       custom_traits()) %>% 
+      dplyr::full_join(custom_traits(), results_normalization$normalized_data_wide()) %>% 
       dplyr::select(-tidyselect::ends_with("formula"))
     })
     
 
   
-    ####################  Default derived traits  ####################
+    ####################  Default glycosylation traits  ####################
     
     observe({
       shinyjs::toggleState("do_calculation", 
@@ -203,19 +231,32 @@ mod_derived_traits_server <- function(id, results_normalization){
         dplyr::select(-tidyselect::ends_with("formula")) %>% 
         tidyr::pivot_wider(names_from = cluster,
                            values_from = dplyr::any_of(input$traits_menu),
-                           names_glue = "{cluster}_{.value}")
+                           names_glue = "{cluster}_{.value}") %>% 
+        dplyr::relocate(contains(input$traits_menu), .after = replicates)
     })
     
     
     
     ############### Combined default + custom traits ###############
     
+    # Get column names of custom traits, required to relocate them after combining with default traits
+    custom_traits_colnames <- reactive({
+      req(custom_traits())
+      custom_traits() %>% 
+        dplyr::select(replicates:dplyr::last_col()) %>% 
+        dplyr::select(-replicates) %>% 
+        dplyr::select(1:floor(ncol(.)/2)) %>% # This removes columns with traits formulas
+        names()  # This extracts the column names as a vector
+    })
+    
+    
     # Combine default traits with custom traits
     data_with_all_traits <- reactive({
-      req(data_with_derived_traits(), data_with_custom_traits())
+      req(data_with_derived_traits(), data_with_custom_traits(), custom_traits_colnames())
       dplyr::full_join(
         data_with_derived_traits(), data_with_custom_traits()
-      )
+      ) %>% 
+        dplyr::relocate(all_of(custom_traits_colnames()), .after = replicates)
     })
     
     
@@ -257,7 +298,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     
     
     
-    ############### Formulas of derived traits ###############
+    ############### Formulas of glycosylation traits ###############
     
     #### Custom traits formulas
     custom_formulas <- reactive({
@@ -340,7 +381,9 @@ mod_derived_traits_server <- function(id, results_normalization){
         data_with_traits = data_with_traits,
         normalized_data = normalized_data,
         derived_traits = reactive({ input$traits_menu }),
-        formulas = formulas
+        formulas = formulas,
+        custom_traits_colnames = custom_traits_colnames,
+        custom_formulas = custom_formulas
       )
     )
  

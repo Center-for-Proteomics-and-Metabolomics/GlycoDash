@@ -228,12 +228,12 @@ calculate_bisection <- function(.data) {
 #' With this function derived glycosylation traits of IgG can be calculated
 #' based on the measured relative abundances of glycans. This function can only
 #' be used on IgG data, because it assumes that all glycans are diantennary. The
-#' derived traits are calculated per cluster.
+#' glycosylation traits are calculated per cluster.
 #'
 #' @param data A dataframe that contains at least the columns "sample_name",
 #'   "cluster", "relative_abundance" and "analyte".
 #' @param selected_derived_traits A character vector containing the names of the
-#'   derived traits that should be calculated. The derived traits that can be
+#'   glycosylation traits that should be calculated. The glycosylation traits that can be
 #'   calculated with this function are: \describe{ \item{"Fucosylation"}{The
 #'   percentage of detected glycans that is fucosylated.} \item{"Bisection"}{The
 #'   percentage of detected glycans that contain a bisecting GlcNaC}
@@ -246,7 +246,7 @@ calculate_bisection <- function(.data) {
 #'
 #' @return A tibble with the following columns:
 #'   \describe{\item{sample_name}{The name of the measured
-#'   sample.}\item{cluster}{The cluster of analytes that the derived traits were
+#'   sample.}\item{cluster}{The cluster of analytes that the glycosylation traits were
 #'   calculated for.}\item{group}{Only when there are both total and specific Ig
 #'   samples in the data.}} In addition, for each derived trait given in the argument
 #'   \code{selected_derived_traits} there is one column with the relative
@@ -382,6 +382,8 @@ calculate_derived_traits <- function(data, selected_derived_traits) {
 #' 
 #' https://stackoverflow.com/questions/70821721/how-to-use-an-expression-in-dplyrmutate-in-r
 #'
+#'expr_rm extracts whatever comes before the "=" sign (spaces around the "=" sign do not matter)
+#'
 create_expr_ls <- function(str_expr) {
   expr_nm <- stringr::str_extract(str_expr, "^\\w+")
   expr_code <- stringr::str_replace_all(str_expr, "(^\\w+\\s?=\\s?)(.*)", "\\2")
@@ -393,7 +395,7 @@ create_expr_ls <- function(str_expr) {
 
 #' Calculate custom derived glycosylation traits
 #' 
-#' Calculate custom derived traits of IgG based on formulas provided in an 
+#' Calculate custom glycosylation traits of IgG based on formulas provided in an 
 #' Excel file.
 #' 
 #'
@@ -423,7 +425,7 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
   
   calculated_custom_traits <- normalized_data %>% 
     # Separate analyte into cluster and glycan
-    dplyr::select(-cluster) %>%   # remove existing cluster column
+    dplyr::select(-cluster, -sum_intensity) %>% 
     tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), 
                     extra = "merge", remove = TRUE) %>% 
     # Create column for each glycan with relative abundance as value
@@ -436,6 +438,10 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
   
   # Create empty vector, will append column to names to select at the end
   columns_to_select <- c()
+  
+  # Another empty vector which will only contrain the names of the custom traits.
+  # Is used to relocate columns.
+  custom_traits_names <- c()
   
   # Start for-loop
   for (i in seq(1:nrow(custom_traits_formulas))){
@@ -453,6 +459,7 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
     
     # Add trait names and formulas to "columns_to_select" (these will be the column names)
     columns_to_select <- append(columns_to_select, custom_trait_name)
+    custom_traits_names <- append(custom_traits_names, custom_trait_name)
     formula_column_name <- paste(custom_trait_name, "formula", sep = "_")   # E.g IgGI_first_trait_formula
     columns_to_select <- append(columns_to_select, formula_column_name)
 
@@ -461,7 +468,7 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
     calculated_trait_cluster <- calculated_custom_traits %>%
       dplyr::filter(cluster == cluster_specified) %>%
       dplyr::mutate(!!! formula_expr_ls) %>%
-      dplyr::select(sample_name:plate_well, names(formula_expr_ls)[1]) %>%  # includes group if it exists
+      dplyr::select(sample_name:replicates, names(formula_expr_ls)[1]) %>%  # includes group if it exists
       # Change name of column <custom trait> to <cluster_specified>_<custom trait>
       dplyr::rename(!!custom_trait_name := names(formula_expr_ls)[1]) %>%
       # Add a column with the formula that was used to calculate the trait
@@ -478,12 +485,13 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
 
   # Get "calculated_custom_traits" in correct format
   calculated_custom_traits <- calculated_custom_traits %>%
-    dplyr::select(sample_name:plate_well, any_of(columns_to_select)) %>% 
+    dplyr::select(sample_name:replicates, any_of(columns_to_select)) %>% 
     dplyr::select(-cluster) %>% 
     dplyr::group_by(sample_name) %>% 
     tidyr::fill(tidyr::everything(), .direction = "downup") %>% 
     dplyr::ungroup() %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::relocate(all_of(custom_traits_names), .after = replicates)
 
   # Return calculated custom traits tibble
   return(calculated_custom_traits)

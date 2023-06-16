@@ -41,16 +41,10 @@ The data import step can be broken down into 5 smaller steps:
 
 ```{r upload-your-data}
 
-# path_to_file <- system.file("extdata",
-#                             "LacyTools_summary_example.txt",
-#                             package = "glycodash")
-
-
-
 # "LacyTools_summary_example.txt" has only IgGI cluster.
-# "LaCyTools_summary_examply_extra_clusters.txt" has extra clusters:
+# "LaCyTools_summary_example_extra_clusters.txt" has extra clusters:
 # IgGI, IgGII, IgGIII, IgGIV
-# Use this file for testing the custom derived traits feature.
+# Use this file for testing the custom glycosylation traits feature.
 
 path_to_file <- system.file("extdata",
                             "LacyTools_summary_example.txt",
@@ -128,7 +122,8 @@ replicates <- with_sample_ids %>%
   dplyr::ungroup(.)
 
 with_sample_ids <- dplyr::full_join(replicates, 
-                                    with_sample_ids)
+                                    with_sample_ids,
+                                    multiple = "all")
 
 ```
 
@@ -173,8 +168,6 @@ sample_types <- read_sample_type_file(filepath = path_to_sample_type_file,
 with_sample_types <- dplyr::left_join(with_sample_ids,
                                       dplyr::distinct(sample_types)) %>% 
   dplyr::mutate(sample_type = as.factor(sample_type))
-# TODO: in module make sure sample types based on list is a factor!
-
 ```
 
 ### 1.4 Divide analytes into clusters
@@ -233,9 +226,12 @@ merged_metadata <- purrr::reduce(prepped_metadata,
                                  dplyr::full_join,
                                  by = "sample_id")
 
+
+# Join the metadata columns after sample_id column.
 with_metadata <- dplyr::left_join(with_clusters,
                                   merged_metadata,
-                                  by = "sample_id")
+                                  by = "sample_id") %>% 
+  dplyr::relocate(colnames(merged_metadata)[-1], .after = sample_id)
 
 ```
 
@@ -555,7 +551,9 @@ The user can specify which sample types or groups (total or specific samples) sh
 # In this example analyte curation is based only on the Spike pool samples:
 without_samples_to_ignore <- throw_out_samples(
   passing_spectra = for_analyte_curation,
-  samples_to_ignore = c("PBS", "IVIGg", "Visucon", "Total")
+  # samples_to_ignore = c("PBS", "IVIGg", "Visucon", "Total")
+  samples_to_ignore = c("PBS", "IVIGg", "Visucon") 
+  # Removed Total for example of analyte curation per group
 )
 
 checked_analytes <- check_analyte_quality_criteria(
@@ -572,16 +570,33 @@ checked_analytes <- check_analyte_quality_criteria(
 
 In addition the user chooses a percentage of spectra (not including the sample types to ignore) in which an analyte needs to fulfill the analyte quality criteria in order to pass analyte curation.
 
+It is also possible (not required) to perform the analyte curation per biological group.
+
 ```{r curate-analytes}
 
 cut_off_percentage <- 25
 
-curated_analytes <- curate_analytes(
-  checked_analytes = checked_analytes,
-  cut_off_percentage = cut_off_percentage
-)
 
+# Curate analytes, but not per biological group.
+curated_analytes <- curate_analytes(checked_analytes, cut_off_percentage)
+
+# Curate analytes per biological group
+# Note that the biological groups column can have any name.
+curated_analytes_group <- curate_analytes(
+  checked_analytes, cut_off_percentage, "group"
+  ) 
+
+# Create a consensus analyte list
+consensus_list <- curated_analytes_group %>% 
+  dplyr::select(cluster, charge, analyte, has_passed_analyte_curation) %>% 
+  dplyr::group_by(cluster, charge, analyte) %>% 
+  dplyr::mutate(pass_n = sum(has_passed_analyte_curation == TRUE)) %>% 
+  dplyr::ungroup()
 ```
+
+*In plotting curated_analytes_group: facet by group in addition to charge.*
+
+*In the table: show all analytes and select which pass based on consensus list.*
 
 #### 3.1.2 Upload an analyte list
 
@@ -603,9 +618,9 @@ curated_analytes_with_list <- curate_analytes_with_list(
 ```
 
 ```{r}
-
 analyte_curated_data <- dplyr::left_join(curated_analytes, 
-                                         for_analyte_curation)
+                                         for_analyte_curation,
+                                         multiple = "all")
 
 for_normalization <- analyte_curated_data %>%
    dplyr::filter(has_passed_analyte_curation) %>%
@@ -619,16 +634,17 @@ For each cluster a tab is created showing the results of the analyte curation. E
 
 ```{r plot-analyte-curation-results}
 
+(
 curated_analytes_plot <- plot_analyte_curation(
-  curated_analytes = curated_analytes,
+  curated_analytes = curated_analytes_group,
   cut_off_percentage = cut_off_percentage,
-  selected_cluster = "IgGI"
+  selected_cluster = "IgGI",
+  bio_groups_colname = "group"
+)
 )
 
 plotly::ggplotly(p = curated_analytes_plot,
                  tooltip = "text")
-
-
 ```
 
 In the dashboard the table has an additional column with check-boxes for each charge column. The analytes that are checked in that table are the ones that are included in the further steps. Here a simplified version of the table is shown, because the check-boxes are shiny inputs and I can't use them in this Rmarkdown file.
@@ -637,7 +653,7 @@ In the dashboard the table has an additional column with check-boxes for each ch
 
 table <- prepare_analyte_curation_table(
   analyte_curated_data = analyte_curated_data,
-  selected_cluster = "IgGI"
+  selected_cluster = "IgGI", by_group = FALSE
 )
 
 DT::datatable(table)
@@ -661,28 +677,37 @@ normalized_data_wide <- normalized_data %>%
   # removing columns no longer needed with values that differ between clusters:
   dplyr::select(-tidyselect::any_of(c("passing_analyte_percentage", 
                                       "cut_off_passing_analyte_percentage", 
-                                      "cut_off_sum_intensity"))) %>% 
-  tidyr::pivot_wider(names_from = c(cluster, analyte),
-                     names_sep = "_",
-                     values_from = relative_abundance) %>% 
+                                      "cut_off_sum_intensity"))) %>%
   
+  tidyr::pivot_wider(names_from = cluster,
+                     values_from = sum_intensity,
+                     names_glue = "{cluster}_sum_intensity") %>%
+  
+  tidyr::pivot_wider(names_from = analyte, values_from = relative_abundance) %>% 
+  
+  dplyr::group_by(sample_name) %>% 
+  tidyr::fill(replicates:last_col(), .direction = "downup") %>% 
+  dplyr::ungroup() %>% 
+  dplyr::distinct() %>% 
+
   # Add metadata again
-  dplyr::left_join(., merged_metadata, by = "sample_id")
+  dplyr::left_join(., merged_metadata, by = "sample_id") %>% 
+  dplyr::relocate(colnames(merged_metadata)[-1], .after = sample_id)
 
 ```
 
-## 5. Derived traits
+## 5. Glycosylation traits
 
-For automatically calculating default derived traits, the user can select which of the 4 derived traits should be calculated. The derived traits are calculated per cluster.
+For automatically calculating default glycosylation traits, the user can select which of the 4 glycosylation traits should be calculated. The glycosylation traits are calculated per cluster.
 
-Currently, derived traits can only be calculated automatically for IgG.
+Currently, glycosylation traits can only be calculated automatically for IgG.
 
 ```{r calculate-derived-traits}
 
 traits_to_calculate <- c("Fucosylation", 
                          "Sialylation")
 
-# First the derived traits are calculated
+# First the glycosylation traits are calculated
 derived_traits <- calculate_derived_traits(
   data = normalized_data,
   selected_derived_traits = traits_to_calculate
@@ -694,14 +719,15 @@ data_with_derived_traits <- dplyr::full_join(normalized_data_wide,
   dplyr::select(-tidyselect::ends_with("formula")) %>% 
   tidyr::pivot_wider(names_from = cluster,
                      values_from = dplyr::any_of(traits_to_calculate),
-                     names_glue = "{cluster}_{.value}")
+                     names_glue = "{cluster}_{.value}") %>% 
+  dplyr::relocate(contains(traits_to_calculate), .after = replicates)
 
 ```
 
-The user can also calculate custom derived traits by uploading an Excel file.
+The user can also calculate custom glycosylation traits by uploading an Excel file.
 
 ```{r calculate-custom-traits}
-# Load example file with custom derived traits
+# Load example file with custom glycosylation traits
 path_to_traits_formulas <- system.file("extdata",
                                        "Custom_traits_formulas_example.xlsx",
                                        package = "glycodash")
@@ -710,31 +736,41 @@ custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas,
                                              col_names = FALSE)
 
 
+v <- c("IgGI_first_trait", "IgGI_second_trait", "IgGII_third_trait", "IgGIV_fourth_trait")
 
-# Calculate custom derived traits
+# Calculate custom glycosylation traits
 custom_traits <- calculate_custom_traits(normalized_data,
                                          custom_traits_formulas)
 
 
-
 # Next: join custom traits data frame with normalized data in wide format,
 # to get the a data frame similar to "data_with_derived_traits"
-
-data_with_custom_traits <- dplyr::full_join(normalized_data_wide,
-                                            custom_traits) %>%
+data_with_custom_traits <- dplyr::full_join(custom_traits, 
+                                            normalized_data_wide) %>%
   dplyr::select(-tidyselect::ends_with("formula"))
 ```
 
-Combine the default derived traits with the custom derived traits.
+Combine the default glycosylation traits with the custom glycosylation traits.
 
 ```{r}
+# Use custom_traits dataframe to extract custom traits column names.
+# These are necessary to relocate them after combining with default traits.
+custom_traits_colnames <- custom_traits %>% 
+  dplyr::select(replicates:dplyr::last_col()) %>% 
+  dplyr::select(-replicates) %>% 
+  # This removes columns with formulas
+  dplyr::select(1:floor(ncol(.)/2)) %>% 
+  names()
+
+
 # Combine custom traits with default traits
 data_with_all_traits <- dplyr::full_join(
   data_with_derived_traits, data_with_custom_traits
-)
+) %>% 
+  dplyr::relocate(all_of(custom_traits_colnames), .after = replicates)
 ```
 
-The formulas that have been used to calculate the derived traits are shown in a table.
+The formulas that have been used to calculate the glycosylation traits are shown in a table.
 
 ```{r derived-traits-formulas}
 
