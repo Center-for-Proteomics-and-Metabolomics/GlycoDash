@@ -25,7 +25,7 @@ Glycodash is an R Shiny dashboard for processing IgG and IgA glycosylation data 
 
 ## Installation
 
-You can run the development version of glycodash on your own pc as follows:
+You can run the glycodash code on your own pc as follows:
 
 1.  Install R and Rstudio: <https://posit.co/download/rstudio-desktop/>
 2.  Download the master branch source code as a zip file, then unzip and store the folder somewhere.
@@ -33,6 +33,8 @@ You can run the development version of glycodash on your own pc as follows:
 4.  In Rstudio: click file --\> open. Then in the glycodash-master folder, open "run_dev.R" in the dev folder.
 5.  In Rstudio, click the "source" button, or use Ctrl+Shift+S, to start the Dashboard. A new Rstudio window should now open with the dashboard running. *(Rstudio might first ask you to install required packages. Accept this. For package requirements: see the DESCRIPTION file.*)
 6.  Optional: in the Rstudio dashboard window, click "open in browser" (this should look better). The dashboard was tested in Google Chrome and Microsoft Edge.
+
+**For official releases, you can pull a Docker image.**
 
 ## Branches
 
