@@ -63,7 +63,7 @@ glycosylation data obtained from LaCyTools
     (this should look better). The dashboard was tested in Google Chrome
     and Microsoft Edge.
 
-## How to use the Glycodash
+## How to use Glycodash
 _To be filled in..._
 
 ## Branches
