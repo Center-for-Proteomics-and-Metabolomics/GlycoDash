@@ -24,7 +24,12 @@ calculate_fucosylation <- function(.data) {
       .,
       function(cluster) {
         stringr::str_subset(string = fucosylated_analytes,
-                            pattern = cluster)
+                            pattern = ifelse(
+                              # Check if cluster name ends with "1" or not
+                              test = grepl("1$", cluster),
+                              yes = cluster,
+                              no = paste0(cluster, "1")
+                            ))
       }) %>% 
     purrr::imap_dfc(
       .,
@@ -79,9 +84,10 @@ calculate_sialylation <- function(.data) {
       function(cluster) {
         list(
           mono = stringr::str_subset(string = monosialylated_analytes,
-                                     pattern = cluster),
+                                     pattern = ifelse(grepl("1$", cluster), cluster, paste0(cluster, "1"))
+                                     ),
           di = stringr::str_subset(string = disialylated_analytes,
-                                   pattern = cluster)
+                                   pattern = ifelse(grepl("1$", cluster), cluster, paste0(cluster, "1")))
         )
       }) %>% 
     purrr::imap_dfc(
@@ -141,9 +147,9 @@ calculate_galactosylation <- function(.data) {
       function(cluster) {
         list(
           mono = stringr::str_subset(string = monogalactosylated_analytes,
-                                     pattern = cluster),
+                                     pattern = ifelse(grepl("1$", cluster), cluster, paste0(cluster, "1"))),
           di = stringr::str_subset(string = digalactosylated_analytes,
-                                   pattern = cluster)
+                                   pattern = ifelse(grepl("1$", cluster), cluster, paste0(cluster, "1")))
         )
       }) %>% 
     purrr::imap_dfc(
@@ -198,7 +204,7 @@ calculate_bisection <- function(.data) {
       .,
       function(cluster) {
         stringr::str_subset(string = bisected_analytes,
-                            pattern = cluster)
+                            pattern = ifelse(grepl("1$", cluster), cluster, paste0(cluster, "1")))
       }) %>% 
     purrr::imap_dfc(
       .,
@@ -334,7 +340,7 @@ calculate_derived_traits <- function(data, selected_derived_traits) {
   data <- data %>%
     dplyr::group_by(dplyr::across(dplyr::any_of(c("sample_name", 
                                                   "cluster", 
-                                                  "group"))))
+                                                  "group"))))  # "group" refers to Specific vs Total
   
   if("Fucosylation" %in% selected_derived_traits) {
     Fucosylation <- data %>%
