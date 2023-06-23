@@ -76,7 +76,8 @@ mod_clusters_server <- function(id, LacyTools_summary){
     # Create inputIds for the SILuMAb clusters.
     silumab_inputIds <- reactive({
       req(input$contains_silumab == "Yes")
-      list("silumab_cluster_glyco", "silumab_cluster_GPS", "silumab_cluster_TTP")
+      list("silumab_cluster_glyco", "silumab_cluster_GPS", "silumab_cluster_TTP",
+           "IgG1_cluster_glyco", "IgG1_cluster_GPS", "IgG1_cluster_TTP")
     })
     
     # Combine cluster_inputIds and silumab_inputIds if applicable
@@ -127,7 +128,6 @@ mod_clusters_server <- function(id, LacyTools_summary){
 # Keyword checks ----------------------------------------------------------
 
     cluster_keywords_found <- reactive({
-      # req(cluster_inputIds())
       req(inputIds())
       
       unique_analytes_in_data <- unique(LacyTools_summary()$analyte)
@@ -144,7 +144,6 @@ mod_clusters_server <- function(id, LacyTools_summary){
           }
         })
       
-      # names(keywords_found) <- cluster_inputIds()
       names(keywords_found) <- inputIds()
 
       return(keywords_found)
@@ -152,11 +151,6 @@ mod_clusters_server <- function(id, LacyTools_summary){
     
     
     keywords <- reactive({
-      # req(purrr::map(cluster_inputIds(),
-      #                ~input[[.x]]))
-      # 
-      # purrr::map(cluster_inputIds(),
-      #            ~input[[.x]])
       req(purrr::map(inputIds(),
                      ~ input[[.x]]))
       
@@ -168,8 +162,6 @@ mod_clusters_server <- function(id, LacyTools_summary){
     # Display feedback based on the checks that were performed:
     observe({
       req(!is.null(cluster_keywords_found()))
-      # purrr::map(cluster_inputIds(),
-      #            ~ shinyFeedback::hideFeedback(.x))
       purrr::map(inputIds(),
                  ~ shinyFeedback::hideFeedback(.x))
       
@@ -212,7 +204,7 @@ mod_clusters_server <- function(id, LacyTools_summary){
       req(LacyTools_summary(),
           keywords())
       req(all(keywords() != ""))
-      
+
       r$with_clusters <- tryCatch(
         expr = {
           define_clusters(data = LacyTools_summary(),
