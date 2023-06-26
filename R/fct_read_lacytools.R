@@ -494,3 +494,18 @@ detect_group <- function(data, keyword_specific, keyword_total) {
   }
   return(data)
 }
+
+
+
+# A function to generate ordinal suffixes
+getOrdinalSuffix <- function(num) {
+  if (num %% 10 == 1 && num %% 100 != 11) {
+    return(paste0(num, "st"))
+  } else if (num %% 10 == 2 && num %% 100 != 12) {
+    return(paste0(num, "nd"))
+  } else if (num %% 10 == 3 && num %% 100 != 13) {
+    return(paste0(num, "rd"))
+  } else {
+    return(paste0(num, "th"))
+  }
+}

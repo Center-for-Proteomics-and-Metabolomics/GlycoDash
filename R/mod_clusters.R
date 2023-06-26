@@ -97,7 +97,7 @@ mod_clusters_server <- function(id, LacyTools_summary){
       req(cluster_inputIds())
       purrr::imap(cluster_inputIds(),
                   function(inputId, i) textInput(
-                    ns(inputId),
+                    ns(inputId), # This creates input$cluster1, input$cluster2 etc.
                     label = paste("By what word/letters within the analyte name can the analytes belonging to cluster",
                                   i,
                                   "be recognized?")
@@ -127,9 +127,11 @@ mod_clusters_server <- function(id, LacyTools_summary){
     
 # Keyword checks ----------------------------------------------------------
 
+    # Create a named list with input ids ("cluster1", "cluster2" etc) as names,
+    # and TRUE or FALSE as value depending on whether the cluster keyword was found.
     cluster_keywords_found <- reactive({
       req(inputIds())
-      
+
       unique_analytes_in_data <- unique(LacyTools_summary()$analyte)
 
       keywords_found <- purrr::map_lgl(
@@ -145,14 +147,13 @@ mod_clusters_server <- function(id, LacyTools_summary){
         })
       
       names(keywords_found) <- inputIds()
-
+      
       return(keywords_found)
     })
-    
-    
+        
     keywords <- reactive({
       req(purrr::map(inputIds(),
-                     ~ input[[.x]]))
+                     ~ input[[.x]]))  # Not sure if this req() is necessary?
       
       purrr::map(inputIds(),
                  ~ input[[.x]])

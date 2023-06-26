@@ -15,6 +15,12 @@ mod_read_lacytools_ui <- function(id){
     width = NULL,
     solidHeader = TRUE,
     status = "primary",
+    numericInput(
+      ns("n_summaries"),
+      "How many LaCyTools summary.txt files do you want to upload?",
+      value = 1, min = 1
+    ),
+    uiOutput(ns("summaries")),
     fileInput(ns("lacytools_summary"), 
               "Upload LaCyTools summary.txt file:"),
     shinyWidgets::awesomeRadio(ns("contains_total_and_specific_samples"),
@@ -55,6 +61,27 @@ mod_read_lacytools_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    # Create inputIds for the LaCyTools summaries
+    summary_inputIds <- reactive({
+      purrr::map(
+        seq_len(input$n_summaries),
+        ~ paste0("summary", .x)
+      )
+    })
+    
+    # Create fileInputs for the summary.txt files.
+    output$summaries <- renderUI({
+      purrr::imap(
+        summary_inputIds(),
+        function(inputId, i) fileInput(
+          ns(inputId), # This creates input$summary1, input$summary2 etc.
+          label = paste("Upload your", getOrdinalSuffix(i), "LaCyTools summary.txt file:")
+        )
+      )
+    })
+    
+    
+    
     # Make a reactive expression containing the file extension of uploaded file:
     extension <- reactive({
       req(input$lacytools_summary)
@@ -68,6 +95,35 @@ mod_read_lacytools_server <- function(id){
                                      extension() != "txt",
                                      text = "Please upload a .txt file.")
     })
+    
+    
+    
+    # Create a named list with file extensions.
+    # Names: "summary1", "summary2", etc.
+    extensions <- reactive({
+      extensions <- purrr::map(summary_inputIds(), 
+                               ~ tools::file_ext(input[[.x]]$name))
+      names(extensions) <- summary_inputIds()
+      return(extensions)
+    })
+    
+    # Show a warning in case of wrong file extension
+    observe({
+      purrr::map(summary_inputIds(), ~ shinyFeedback::hideFeedback(.x))
+      
+      has_non_txt_character <- purrr::map(extensions(), ~ is.character(.x) && .x != "txt")
+      
+      if (any(unlist(has_non_txt_character))) {
+        purrr::imap(
+          extensions(), function(extension, inputId) {
+            shinyFeedback::feedbackWarning(
+              inputId,
+              show = (extension != "txt" && typeof(extension) == "character"),
+              text = "Please upload a .txt file."
+            )}
+        )}
+    })
+    
     
     # Make sure that the read_summary actionButton is only available once the
     # right type of file is uploaded as lacytools summary and once the user has
