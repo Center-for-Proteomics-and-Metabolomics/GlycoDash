@@ -18,10 +18,10 @@ mod_read_lacytools_ui <- function(id){
     numericInput(
       ns("n_summaries"),
       "How many LaCyTools summary.txt files do you want to upload?",
-      value = 1, min = 1
+      value = 1, min = 1, max = 10
     ),
     uiOutput(ns("summaries")),
-    fileInput(ns("lacytools_summary"), 
+    fileInput(ns("lacytools_summary"),
               "Upload LaCyTools summary.txt file:"),
     shinyWidgets::awesomeRadio(ns("contains_total_and_specific_samples"),
                                "Does your data contain total and specific immunoglobulin samples?",
@@ -50,7 +50,7 @@ mod_read_lacytools_ui <- function(id){
             placement = "right")
     ),
     actionButton(ns("button"),
-                 "Load the LaCyTools summary file")
+                 "Load the LaCyTools summary files")
   )
 }
     
@@ -87,7 +87,7 @@ mod_read_lacytools_server <- function(id){
       req(input$lacytools_summary)
       tools::file_ext(input$lacytools_summary$name)
     })
-    
+
     # Show a warning when the wrong type of file is uploaded as lacytools summary:
     observe({
       req(extension())
@@ -126,7 +126,7 @@ mod_read_lacytools_server <- function(id){
     
     
     # Make sure that the read_summary actionButton is only available once the
-    # right type of file is uploaded as lacytools summary and once the user has
+    # right type of file is uploaded as LaCyTools summary and once the user has
     # provided all required inputs:
     observe({
       shinyjs::toggleState(
@@ -134,7 +134,8 @@ mod_read_lacytools_server <- function(id){
         condition = any(
           all(
             input$contains_total_and_specific_samples == "No",
-            is_truthy(lacytools_summary())
+            # is_truthy(lacytools_summary())
+            all(extensions() == "txt")
           ),
           all(
             input$contains_total_and_specific_samples == "Yes",
@@ -143,6 +144,8 @@ mod_read_lacytools_server <- function(id){
         )
       )
     })
+
+    
     
     # If the user indicates (via input$contains_total_and_specific_samples) that the data contains total and
     # specific Ig samples, the textInputs for the specific and total keywords
@@ -164,9 +167,10 @@ mod_read_lacytools_server <- function(id){
                       session = session)
     }) %>% bindEvent(input$contains_total_and_specific_samples == "No")
     
+    
+    # Read the raw LaCyTools summary file
     raw_lacytools_summary <- reactive({
       req(input$lacytools_summary$datapath)
-      
       tryCatch(
         expr = {
           read_non_rectangular(input$lacytools_summary$datapath)
@@ -190,8 +194,44 @@ mod_read_lacytools_server <- function(id){
           NULL
         }
       )
-      
     })
+    
+    
+    
+    # Read the raw LaCyTools summary files
+    raw_lacytools_summaries <- reactive({
+      
+      purrr::map(summary_inputIds(), function(inputId) {
+          if (!is.null(input[[inputId]]$datapath)) {
+            tryCatch(
+              expr = {
+                read_non_rectangular(input[[inputId]]$datapath)
+              },
+              embedded_null = function(c) {
+                shinyFeedback::feedbackDanger(inputId,
+                                              show = TRUE,
+                                              text = c$message)
+                NULL
+              },
+              empty_file = function(c) {
+                shinyFeedback::feedbackDanger(inputId,
+                                              show = TRUE,
+                                              text = c$message)
+                NULL
+              },
+              wrong_delim = function(c) {
+                shinyFeedback::feedbackDanger(inputId,
+                                              show = TRUE,
+                                              text = c$message)
+                NULL
+              }
+            )
+          } else NULL
+        })
+    })
+    # For some reason I need this observer to make the warnings show up...
+    observe(req(raw_lacytools_summaries()))
+    
     
     warn_duplicated_analytes <- reactive({
       req(raw_lacytools_summary())
