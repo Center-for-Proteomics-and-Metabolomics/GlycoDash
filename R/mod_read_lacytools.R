@@ -125,26 +125,28 @@ mod_read_lacytools_server <- function(id){
     })
     
     
+    ############# KEEP THIS BUT MODIFY ########################################
+  
     # Make sure that the read_summary actionButton is only available once the
     # right type of file is uploaded as LaCyTools summary and once the user has
     # provided all required inputs:
-    observe({
-      shinyjs::toggleState(
-        id = "button",
-        condition = any(
-          all(
-            input$contains_total_and_specific_samples == "No",
-            # is_truthy(lacytools_summary())
-            all(extensions() == "txt")
-          ),
-          all(
-            input$contains_total_and_specific_samples == "Yes",
-            is_truthy(lacytools_summary_total_and_specific())
-          )
-        )
-      )
-    })
-
+    # observe({
+    #   shinyjs::toggleState(
+    #     id = "button",
+    #     condition = any(
+    #       all(
+    #         input$contains_total_and_specific_samples == "No",
+    #         # is_truthy(lacytools_summary())
+    #         all(extensions() == "txt")
+    #       ),
+    #       all(
+    #         input$contains_total_and_specific_samples == "Yes",
+    #         is_truthy(lacytools_summary_total_and_specific())
+    #       )
+    #     )
+    #   )
+    # })
+    ########################################################################
     
     
     # If the user indicates (via input$contains_total_and_specific_samples) that the data contains total and
@@ -198,8 +200,9 @@ mod_read_lacytools_server <- function(id){
     
     
     
-    # Read the raw LaCyTools summary files
+    # Create a vector that contains the raw LaCyTools summary files.
     raw_lacytools_summaries <- reactive({
+      req(summary_inputIds())
       
       purrr::map(summary_inputIds(), function(inputId) {
           if (!is.null(input[[inputId]]$datapath)) {
@@ -229,12 +232,15 @@ mod_read_lacytools_server <- function(id){
           } else NULL
         })
     })
-    # For some reason I need this observer to make the warnings show up...
+    # For some reason I need this observer to make the warnings show up.
     observe(req(raw_lacytools_summaries()))
+
+  
     
-    
+    # Check for duplicate analytes. Returns either NULL or warning message.
     warn_duplicated_analytes <- reactive({
       req(raw_lacytools_summary())
+      
       # Create the object 'warning' to save the result of for-loop in:
       warning <- NULL
       
@@ -276,13 +282,17 @@ mod_read_lacytools_server <- function(id){
       return(warning)
     })
     
+    
+    # Show warning for duplicate analytes when applicable.
     observe({
       if (is_truthy(warn_duplicated_analytes())) {
         showNotification(warn_duplicated_analytes(),
                          type = "warning",
                          duration = NULL)
       }
-    }) %>% bindEvent(input$read_summary)
+    }) %>% bindEvent(input$button)
+    
+    
     
     lacytools_summary <- reactive({
       req(raw_lacytools_summary())

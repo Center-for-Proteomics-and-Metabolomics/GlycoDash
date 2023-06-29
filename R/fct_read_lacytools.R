@@ -156,7 +156,7 @@ convert_lacytools_summary <- function(data) {
   
   if (rlang::is_empty(all_blocks)) {
     rlang::abort(class = "no_outputs_present",
-                 message = paste("None of the LacyTools output variables are", 
+                 message = paste("None of the LaCyTools output variables are", 
                                  "present in the first column of the LacyTools",
                                  "summary file. Did you choose the correct file?"))
   }
@@ -199,11 +199,11 @@ get_block <- function(data, variable) {
   if (any(duplicated(colnames(block)))) {
     duplicated_analytes <- unique(colnames(block)[duplicated(colnames(block))])
     rlang::warn(class = "duplicated_analytes",
-                message = paste("In your LacyTools summary file, the analytes",
-                                paste(duplicated_analytes, collapse = " "),
-                                "are present more than once. The names of the", 
-                                "duplicated analytes are given a suffix", 
-                                "('..columnnumber') to differentiate between them."))
+                message = paste0("In your LaCyTools summary file, ",
+                                "the following analytes are present more than once: ",
+                                paste(duplicated_analytes, collapse = ", "),
+                                ". The names of the duplicates analytes are given",
+                                "a suffix ('..columnnumber') to differentiate between them."))
     
     block <- suppressMessages(tibble::tibble(block,
                                              .name_repair = "universal"))
@@ -240,7 +240,7 @@ find_block <- function(data, variable) {
   if (rlang::is_empty(first_row)) {
     rlang::abort(
       class = "lacytools_output_not_found",
-      message = paste("Error: LacyTools output format",
+      message = paste("Error: LaCyTools output format",
                       variable, "is not present in the first column of the input file."))
   } else {
     next_na <- find_next_na(data, first_row)
