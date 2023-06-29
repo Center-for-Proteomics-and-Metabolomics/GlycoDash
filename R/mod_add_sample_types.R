@@ -142,7 +142,7 @@ mod_add_sample_types_ui <- function(id){
 #' add_sample_types Server Functions
 #'
 #' @noRd 
-mod_add_sample_types_server <- function(id, LacyTools_summary, read_lacytools_button, sample_ids_button){
+mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_button, sample_ids_button){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -161,7 +161,7 @@ mod_add_sample_types_server <- function(id, LacyTools_summary, read_lacytools_bu
                                  is_truthy(manual_sample_types$list())
                                )
                              ),
-                             is_truthy(LacyTools_summary())
+                             is_truthy(LaCyTools_summary())
                            ))
     })
     
@@ -173,7 +173,7 @@ mod_add_sample_types_server <- function(id, LacyTools_summary, read_lacytools_bu
         r$response <- NULL
         r$show_reset_warning <- TRUE
       }
-    }) %>% bindEvent(LacyTools_summary())
+    }) %>% bindEvent(LaCyTools_summary())
     
     observe({
       if (is_truthy(r$show_reset_warning)) {
@@ -185,12 +185,12 @@ mod_add_sample_types_server <- function(id, LacyTools_summary, read_lacytools_bu
                      sample_ids_button())
     
     observe({
-      req(LacyTools_summary(),
+      req(LaCyTools_summary(),
           input$method == "Automatically determine sample types based on sample ID's")
 
       
       #TODO: convert this to a function:
-      r$with_auto_sample_types <- LacyTools_summary() %>% 
+      r$with_auto_sample_types <- LaCyTools_summary() %>% 
         tidyr::extract(col = sample_id,
                        into = c("sample_type"),
                        regex = "([[:alpha:]]+)",
@@ -209,14 +209,14 @@ mod_add_sample_types_server <- function(id, LacyTools_summary, read_lacytools_bu
     
     with_manual_sample_types <- reactive({
       req(manual_sample_types$list(),
-          LacyTools_summary(),
+          LaCyTools_summary(),
           input$method == "Upload a list with sample ID's and corresponding sample types")
       
       sample_types_as_factor <- manual_sample_types$list() %>% 
         dplyr::mutate(sample_type = as.factor(sample_type)) %>% 
         dplyr::distinct()
       
-      dplyr::left_join(LacyTools_summary(),
+      dplyr::left_join(LaCyTools_summary(),
                        sample_types_as_factor)
     })
     

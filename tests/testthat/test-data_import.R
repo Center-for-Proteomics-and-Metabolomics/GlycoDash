@@ -59,7 +59,7 @@ test_that("read_non_rectangular reads blank lines as a row with only NAs", {
 
 test_that("read_non_rectangular() throws an error if the resulting dataframe has only one column", {
   path_to_lacytools <- system.file("extdata",
-                                   "LacyTools_summary_example.txt",
+                                   "LaCyTools_summary_example.txt",
                                    package = "glycodash")
   expect_warning(read_non_rectangular(path_to_lacytools, delim = ";"),
                "The file seems to consist of a single column\\. Are you sure that you chose the correct delimiter for your file?" )
@@ -75,7 +75,7 @@ test_that("read_non_rectangular() throws an error if an empty file or dummy file
   
   path_to_wrong_encoding <- system.file("extdata",
                                         "for_tests",
-                                        "LacyTools_summary_example_UTF16LE.txt",
+                                        "LaCyTools_summary_example_UTF16LE.txt",
                                         package = "glycodash")
   
   expect_error(read_non_rectangular(path_to_wrong_encoding, delim = "\t"),

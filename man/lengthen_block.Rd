@@ -2,29 +2,29 @@
 % Please edit documentation in R/fct_read_lacytools.R
 \name{lengthen_block}
 \alias{lengthen_block}
-\title{Transform a LacyTools summary block to a long format.}
+\title{Transform a LaCyTools summary block to a long format.}
 \usage{
 lengthen_block(block, metadata = NULL)
 }
 \arguments{
-\item{block}{A dataframe containing a block from a LacyTools summary file
+\item{block}{A dataframe containing a block from a LaCyTools summary file
 (the result of \code{\link{get_block}}).}
 
 \item{metadata}{A dataframe containing metadata in case the metadata has
 already been added to the data. Defaults too \code{NULL}.}
 }
 \value{
-A dataframe containing the LacyTools summary block in long format.
+A dataframe containing the LaCyTools summary block in long format.
 }
 \description{
-\code{lengthen_block()} transforms a LacyTools summary block from a wide
+\code{lengthen_block()} transforms a LaCyTools summary block from a wide
 format (each analyte has its own column) to a long format. A column named
 "analyte" and a column named "charge" have been added and each combination 
 of sample, analyte and charge state has its own row.
 }
 \examples{
-data("LacyTools_summary")
-block <- get_block(LacyTools_summary, 
+data("LaCyTools_summary")
+block <- get_block(LaCyTools_summary, 
                    variable = "Absolute Intensity (Background Subtracted, 2+)")
 lengthen_block(block = block)
 }

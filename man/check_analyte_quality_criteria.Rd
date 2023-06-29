@@ -39,7 +39,7 @@ The original dataframe given as the my_data argument, but with 3
   \code{TRUE} indicates that the analyte + charge combination in that sample fulfilled
   the quality criteria in criteria_to_consider, whereas \code{FALSE} indicates that 
   one or more criteria were not fulfilled.}\item{uncalibrated}{A Boolean:
-  \code{TRUE} if the combination of cluster and sample failed calibration in LacyTools}
+  \code{TRUE} if the combination of cluster and sample failed calibration in LaCyTools}
   \item{failed_criteria}{A character string describing which criteria in 
   criteria_to_consider were not fulfilled. If all criteria were fulfilled 
   failed_criteria is \code{NA}}}

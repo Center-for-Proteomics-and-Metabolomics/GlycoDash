@@ -41,21 +41,21 @@ The data import step can be broken down into 5 smaller steps:
 
 ```{r upload-your-data}
 
-# "LacyTools_summary_example.txt" has only IgGI cluster.
+# "LaCyTools_summary_example.txt" has only IgGI cluster.
 # "LaCyTools_summary_example_extra_clusters.txt" has extra clusters:
 # IgGI, IgGII, IgGIII, IgGIV
 # Use this file for testing the custom glycosylation traits feature.
 
 path_to_file <- system.file("extdata",
-                            "LacyTools_summary_example.txt",
+                            "LaCyTools_summary_example.txt",
                             package = "glycodash")
 
-raw_LacyTools_summary <- read_non_rectangular(path = path_to_file, 
+raw_LaCyTools_summary <- read_non_rectangular(path = path_to_file, 
                                           delim = "\t")
 
-LacyTools_summary <- convert_lacytools_summary(data = raw_LacyTools_summary)
+LaCyTools_summary <- convert_lacytools_summary(data = raw_LaCyTools_summary)
 
-LacyTools_summary <- detect_group(data = LacyTools_summary,
+LaCyTools_summary <- detect_group(data = LaCyTools_summary,
                                   keyword_specific = "Spike",
                                   keyword_total = "Total")
 
@@ -79,7 +79,7 @@ plate_design <- read_and_process_plate_design(
   plate_design_file = path_to_plate_design
 )
 
-summary_with_plate_well <- detect_plate_and_well(data = LacyTools_summary)
+summary_with_plate_well <- detect_plate_and_well(data = LaCyTools_summary)
 
 with_sample_ids <- dplyr::left_join(summary_with_plate_well,
                                     plate_design)
@@ -94,7 +94,7 @@ path_to_sample_list <- system.file("extdata",
 
 sample_list <- process_sample_list(sample_list_file = path_to_sample_list)
 
-summary_with_plate_well <- detect_plate_and_well(data = LacyTools_summary)
+summary_with_plate_well <- detect_plate_and_well(data = LaCyTools_summary)
 
 with_sample_ids <- dplyr::left_join(summary_with_plate_well,
                                     sample_list)

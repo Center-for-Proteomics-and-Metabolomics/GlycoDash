@@ -1,6 +1,6 @@
 #' read_lacytools UI Function
 #'
-#' @description A shiny Module to upload and read a LacyTools summary file.
+#' @description A shiny Module to upload and read a LaCyTools summary file.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
@@ -301,7 +301,7 @@ mod_read_lacytools_server <- function(id){
           convert_lacytools_summary(data = raw_lacytools_summary())
         },
         no_outputs_present = function(c) {
-          # Show feedback that there are no outputs found in the LacyTools file:
+          # Show feedback that there are no outputs found in the LaCyTools file:
           shinyFeedback::feedbackDanger("lacytools_summary",
                                         show = TRUE,
                                         text = c$message)

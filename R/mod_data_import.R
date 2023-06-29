@@ -58,31 +58,31 @@ mod_data_import_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    LacyTools_summary <- mod_read_lacytools_server("read_lacytools_ui_1")
+    LaCyTools_summary <- mod_read_lacytools_server("read_lacytools_ui_1")
     
     data_incl_sample_ids <- mod_add_sample_ids_server("add_sample_ids_ui_1",
-                                                      keyword_specific = LacyTools_summary$keyword_specific,
-                                                      keyword_total = LacyTools_summary$keyword_total,
-                                                      contains_total_and_specific_samples = LacyTools_summary$contains_total_and_specific_samples,
-                                                      LacyTools_summary = LacyTools_summary$data,
-                                                      lacytools_fileInput = LacyTools_summary$lacytools_fileInput,
-                                                      read_lacytools_button = LacyTools_summary$button)
+                                                      keyword_specific = LaCyTools_summary$keyword_specific,
+                                                      keyword_total = LaCyTools_summary$keyword_total,
+                                                      contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
+                                                      LaCyTools_summary = LaCyTools_summary$data,
+                                                      lacytools_fileInput = LaCyTools_summary$lacytools_fileInput,
+                                                      read_lacytools_button = LaCyTools_summary$button)
     
     data_incl_sample_types <- mod_add_sample_types_server("add_sample_types_ui_1",
-                                                          LacyTools_summary = data_incl_sample_ids$data,
-                                                          read_lacytools_button = LacyTools_summary$button,
+                                                          LaCyTools_summary = data_incl_sample_ids$data,
+                                                          read_lacytools_button = LaCyTools_summary$button,
                                                           sample_ids_button = data_incl_sample_ids$button)
     
     data_incl_clusters <- mod_clusters_server("clusters_ui_1",
-                                              LacyTools_summary = data_incl_sample_types$data)
+                                              LaCyTools_summary = data_incl_sample_types$data)
     
     data_incl_metadata <- mod_add_metadata_server("add_metadata_ui_1",
-                                                  LacyTools_summary = data_incl_clusters$data)
+                                                  LaCyTools_summary = data_incl_clusters$data)
     
     # Update the data shown in the datatable according to the steps that have
     # been completed by the user:
     show_in_table <- reactive({
-      req(LacyTools_summary$data())
+      req(LaCyTools_summary$data())
       
       if (is_truthy(data_incl_metadata$data())) {
         show_in_table <- data_incl_metadata$data()
@@ -100,13 +100,13 @@ mod_data_import_server <- function(id){
         show_in_table <- data_incl_sample_ids$data()
         showNotification("The sample ID's were added to the data.",
                          type = "message")
-      } else if (is_truthy(LacyTools_summary$data())) {
-          show_in_table <- LacyTools_summary$data()
+      } else if (is_truthy(LaCyTools_summary$data())) {
+          show_in_table <- LaCyTools_summary$data()
           showNotification("The LaCyTools summary has been loaded.",
                            type = "message")
       }
       return(show_in_table)
-    }) %>% bindEvent(LacyTools_summary$button(), 
+    }) %>% bindEvent(LaCyTools_summary$button(), 
                     data_incl_sample_ids$button(),
                     data_incl_sample_types$button(),
                     data_incl_clusters$button(),
@@ -180,12 +180,12 @@ mod_data_import_server <- function(id){
   
     
     return(list(
-      LacyTools_summary = to_return,  # Calling this LacyTools_summary is a bit confusing
+      LaCyTools_summary = to_return,  # Calling this LaCyTools_summary is a bit confusing
       biogroup_cols = biogroup_cols,
-      contains_total_and_specific_samples = LacyTools_summary$contains_total_and_specific_samples,
-      keyword_specific = LacyTools_summary$keyword_specific,
-      keyword_total = LacyTools_summary$keyword_total,
-      filename_summary = reactive({ LacyTools_summary$lacytools_fileInput()$name }),
+      contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
+      keyword_specific = LaCyTools_summary$keyword_specific,
+      keyword_total = LaCyTools_summary$keyword_total,
+      filename_summary = reactive({ LaCyTools_summary$lacytools_fileInput()$name }),
       filenames_plate_design = data_incl_sample_ids$filenames_plate_design,
       filename_sample_list = data_incl_sample_ids$filename_sample_list,
       filenames_metadata = data_incl_metadata$filenames_metadata,

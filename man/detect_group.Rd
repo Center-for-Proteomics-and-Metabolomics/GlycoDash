@@ -13,11 +13,11 @@ refer to Specific samples.}
 \item{keyword_total}{The word(s)/characters within the sample name used to
 refer to Total samples.}
 
-\item{block}{A dataframe containing a LacyTools summary with a column 
+\item{block}{A dataframe containing a LaCyTools summary with a column 
 "sample_name".}
 }
 \value{
-The dataframe containing a block from a LacyTools summary file, with
+The dataframe containing a block from a LaCyTools summary file, with
  an additional column named "group" that indicates whether a sample is
  specific or total.
 }
