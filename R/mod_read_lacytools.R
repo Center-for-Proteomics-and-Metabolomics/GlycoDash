@@ -237,60 +237,73 @@ mod_read_lacytools_server <- function(id){
 
   
     
-    # Check for duplicate analytes. Returns either NULL or warning message.
-    warn_duplicated_analytes <- reactive({
-      req(raw_lacytools_summary())
+    # Check for duplicate analytes in each uploaded summary file.
+    warning_duplicate_analytes <- reactive({
+      req(!all(sapply(raw_lacytools_summaries(), is.null)))  # Don't do anything if no summary was yet uploaded.
       
-      # Create the object 'warning' to save the result of for-loop in:
-      warning <- NULL
-      
-      # Try to get_block() with each output, until either a block is found
-      # without errors/warnings, or until the 'duplicated_analytes' warning
-      # occurs:
-      for (output in outputs) {
-        result <- tryCatch(
-          expr = {
-            get_block(data = raw_lacytools_summary(),
-                      variable = output)
-            # If get_block has run without errors/warnings, return NULL
-            NULL
-          },
-          lacytools_output_not_found = function(c) {
-            # If this error occurs, return 'block_not_found"
-            "block_not_found"
-          },
-          duplicated_analytes = function(c) {
-            # If this warning occurs, return warning message
-            c$message
-          })
+      purrr::map(raw_lacytools_summaries(), function(summary) {
         
-        # Save the result of this round in warning
-        warning <- result
-        
-        # Unless result of this round was "block_not_found", exit the loop
-        if (result != "block_not_found") {
-          break
+        if (is.null(summary)) {
+          return(NULL)
         }
-      }
-      
-      # In case we have looped through all outputs and no block was found,
-      # return 'warning' as NULL
-      if (warning == "block_not_found") {
-        warning <- NULL
-      }
-      
-      return(warning)
+        else {
+          # Create the object 'warning' to save the result of for-loop in:
+          warning <- NULL
+          
+          # Try to get_block() with each output, until either a block is found
+          # without errors/warnings, or until the 'duplicated_analytes' warning
+          # occurs:
+          for (output in outputs) {
+            result <- tryCatch(
+              expr = {
+                get_block(data = summary,
+                          variable = output)
+                # If get_block has run without errors/warnings, return NULL
+                NULL
+              },
+              lacytools_output_not_found = function(c) {
+                # If this error occurs, return 'block_not_found"
+                "block_not_found"
+              },
+              duplicated_analytes = function(c) {
+                # If this warning occurs, return warning message
+                c$message
+              })
+            
+            # Save the result of this round in warning
+            warning <- result
+            
+            # Unless result of this round was "block_not_found", exit the loop
+            if (list(result) != "block_not_found") {
+              break
+            }
+          }
+          
+          # In case we have looped through all outputs and no block was found,
+          # return 'warning' as NULL
+          if (list(warning) == "block_not_found") {
+            warning <- NULL
+          }
+          
+          return(warning)
+        }
+      })
     })
     
     
     # Show warning for duplicate analytes when applicable.
     observe({
-      if (is_truthy(warn_duplicated_analytes())) {
-        showNotification(warn_duplicated_analytes(),
-                         type = "warning",
-                         duration = NULL)
-      }
-    }) %>% bindEvent(input$button)
+      req(!all(sapply(warning_duplicate_analytes(), is.null)))
+      for (i in seq_along(warning_duplicate_analytes())) {
+        warning <- warning_duplicate_analytes()[[i]]
+        if (!is.null(warning)) {
+          showNotification(
+            paste0("In LaCyTools summary file number ", i, ", ", warning),
+            type = "warning",
+            duration = NULL
+          )}
+        }
+      }) %>% bindEvent(input$button)
     
     
     

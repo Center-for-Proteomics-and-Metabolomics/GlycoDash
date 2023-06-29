@@ -199,7 +199,7 @@ get_block <- function(data, variable) {
   if (any(duplicated(colnames(block)))) {
     duplicated_analytes <- unique(colnames(block)[duplicated(colnames(block))])
     rlang::warn(class = "duplicated_analytes",
-                message = paste0("In your LaCyTools summary file, ",
+                message = paste0(# "In your LaCyTools summary file, ",
                                 "the following analytes are present more than once: ",
                                 paste(duplicated_analytes, collapse = ", "),
                                 ". The names of the duplicates analytes are given",
