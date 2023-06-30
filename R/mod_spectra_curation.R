@@ -590,6 +590,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                   path = file))
       }
     )
+  
     
     return(list(
       passing_spectra = to_return,
