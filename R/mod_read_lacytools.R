@@ -315,7 +315,7 @@ mod_read_lacytools_server <- function(id){
         },
         no_outputs_present = function(c) {
           # Show feedback that there are no outputs found in the LaCyTools file:
-          shinyFeedback::feedbackDanger("lacytools_summary",
+          shinyFeedback::feedbackDanger("lacytools_message",
                                         show = TRUE,
                                         text = c$message)
           
@@ -329,6 +329,41 @@ mod_read_lacytools_server <- function(id){
       
       return(tidy_summary)
     })
+    
+    
+    # Create a list with tidy LaCyTools summaries
+    lacytools_summaries <- reactive({
+      req(!any(sapply(raw_lacytools_summaries(), is.null))) 
+      
+      tidy_summaries <- purrr::imap(raw_lacytools_summaries(), function(summary, i) {
+        tryCatch(
+          expr = {
+            convert_lacytools_summary(data = raw_lacytools_summaries()[[i]])
+          },
+          no_outputs_present = function(c) {
+            # Show feedback that there are no outputs found in the LaCyTools file:
+            shinyFeedback::feedbackDanger("lacytools_message",
+                                          show = TRUE,
+                                          text = paste("In summary file", i, c$message))
+            
+            showNotification(paste0("In summary file ", i, c$message),
+                             type = "error",
+                             duration = NULL)
+            
+            # Return NULL
+            NULL
+          })
+      })
+      
+      return(tidy_summaries)
+    })
+    
+    
+    observe({
+      req(lacytools_summaries())
+      browser()
+    })
+    
     
     lacytools_summary_total_and_specific <- reactive({
       

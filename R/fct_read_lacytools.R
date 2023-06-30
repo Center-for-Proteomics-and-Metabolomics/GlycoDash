@@ -156,9 +156,8 @@ convert_lacytools_summary <- function(data) {
   
   if (rlang::is_empty(all_blocks)) {
     rlang::abort(class = "no_outputs_present",
-                 message = paste("None of the LaCyTools output variables are", 
-                                 "present in the first column of the LaCyTools",
-                                 "summary file. Did you choose the correct file?"))
+                 message = paste(", none of the LaCyTools output variables are present.", 
+                                 "Did you choose the correct file?"))
   }
   
   long_data_list <- purrr::map(all_blocks, lengthen_block)
