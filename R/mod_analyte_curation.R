@@ -159,7 +159,7 @@ mod_analyte_curation_ui <- function(id){
               paste(
                 "in the case of multiple clusters, you must click on each tab",
                 "below in order for the data to be correctly processed."),
-              style = "color:#0021B8"
+              style = "color:#0021B8; font-size: 18px"
             ),
             br(),
             tabsetPanel(id = ns("tabs"))
