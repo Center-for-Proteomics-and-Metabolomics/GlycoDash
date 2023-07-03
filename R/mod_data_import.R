@@ -177,7 +177,6 @@ mod_data_import_server <- function(id){
                                                   path = file))
       }
     )
-  
     
     return(list(
       LacyTools_summary = to_return,  # Calling this LacyTools_summary is a bit confusing

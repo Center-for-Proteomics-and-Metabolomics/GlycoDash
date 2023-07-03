@@ -24,7 +24,7 @@ golem::fill_desc(
   pkg_description = "Package for processing IgG/IgA glycosylation data.", # The Description of the package containing the App 
   author_first_name = "Sterre", # Your First Name
   author_last_name = "Siekman", # Your Last Name
-  author_email = "s.l.siekman@lumc.nl", # Your Email
+  author_email = "s.gijze@lumc.nl", # Your Email
   repo_url = NULL # The URL of the GitHub Repo (optional) 
 )     
 
@@ -33,7 +33,7 @@ golem::set_golem_options()
 
 ## Create Common Files ----
 ## See ?usethis for more information
-usethis::use_mit_license( "Sterre Siekman" )  # You can set another license here
+usethis::use_mit_license( "Sterre Siekman, Steinar Gijze" )  # You can set another license here
 usethis::use_readme_rmd( open = FALSE )
 usethis::use_code_of_conduct()
 usethis::use_lifecycle_badge( "Experimental" )

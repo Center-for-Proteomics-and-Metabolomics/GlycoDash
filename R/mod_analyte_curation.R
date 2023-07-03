@@ -362,7 +362,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     without_samples_to_ignore <- reactive({
       req(input$method == "Curate analytes based on data")
       req(passing_spectra())
-      
       if (is_truthy(input$ignore_samples)) {
         throw_out_samples(passing_spectra = passing_spectra(),
                           samples_to_ignore = input$ignore_samples)

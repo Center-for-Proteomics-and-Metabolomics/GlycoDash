@@ -218,8 +218,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     })
     
     derived_traits <- reactive({
-      #req(normalized_data())
-      
+      req(normalized_data())
       calculate_derived_traits(data = normalized_data(),
                                selected_derived_traits = input$traits_menu)
     }) %>% bindEvent(input$do_calculation)
