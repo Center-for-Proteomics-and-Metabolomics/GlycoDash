@@ -250,7 +250,7 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            plotly::plotlyOutput(ns("curated_spectra_plot")),
+            shinycssloaders::withSpinner(plotly::plotlyOutput(ns("curated_spectra_plot"))),
             tabsetPanel(id = ns("more_than_4_clusters")),
             br(),
             tabsetPanel(

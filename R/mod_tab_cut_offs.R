@@ -11,7 +11,7 @@ mod_tab_cut_offs_ui <- function(id){
   ns <- NS(id)
   tagList(
     br(),
-    plotly::plotlyOutput(ns("plot")),
+    shinycssloaders::withSpinner(plotly::plotlyOutput(ns("plot"))),
     br(),
     tags$style(HTML(paste0(
       "#",

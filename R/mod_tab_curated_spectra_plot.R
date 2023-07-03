@@ -13,7 +13,7 @@ mod_tab_curated_spectra_plot_ui <- function(id){
     column(
       width = 12,
       br(),
-      plotly::plotlyOutput(ns("plot"))
+      shinycssloaders::withSpinner(plotly::plotlyOutput(ns("plot")))
     )
   )
 }
