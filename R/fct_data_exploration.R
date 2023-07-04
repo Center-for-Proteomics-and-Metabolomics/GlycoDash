@@ -104,7 +104,20 @@
 my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
   
   plot <- data %>% 
-    ggplot2::ggplot() +
+    ggplot2::ggplot(
+      ggplot2::aes(
+        text = paste0(
+          "\nSample name: ",
+          sample_name,
+          "\nSample type: ",
+          sample_type,
+          "\n",
+          nicer_label(yvar),
+          ": ",
+          .data[[yvar]]
+        )
+      )
+    ) +
     ggplot2::geom_boxplot(ggplot2::aes(x = .data[[xvar]],
                                        y = .data[[yvar]]),
                           outlier.shape = NA) +
@@ -123,17 +136,7 @@ my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
     plot <- plot +
       ggplot2::geom_jitter(ggplot2::aes(x = .data[[xvar]],
                                         y = .data[[yvar]],
-                                        color = .data[[color]],
-                                        text = paste0(
-                                          "\nSample name: ",
-                                          sample_name,
-                                          "\nSample type: ",
-                                          sample_type,
-                                          "\n",
-                                          nicer_label(yvar),
-                                          ": ",
-                                          .data[[yvar]]
-                                        )),
+                                        color = .data[[color]]),
                            height = 0,
                            width = 0.25,
                            alpha = 0.6) +
@@ -150,17 +153,7 @@ my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
   } else {
     plot <- plot +
       ggplot2::geom_jitter(ggplot2::aes(x = .data[[xvar]],
-                                        y = .data[[yvar]],
-                                        text = paste0(
-                                          "\nSample name: ",
-                                          sample_name,
-                                          "\nSample type: ",
-                                          sample_type,
-                                          "\n",
-                                          nicer_label(yvar),
-                                          ": ",
-                                          .data[[yvar]]
-                                        )),
+                                        y = .data[[yvar]]),
                            height = 0,
                            width = 0.25,
                            color = "#1f77b4",
@@ -272,7 +265,20 @@ my_boxplot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
 my_scatter_plot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
   
   plot <- data %>% 
-    ggplot2::ggplot() +
+    ggplot2::ggplot(
+      ggplot2::aes(
+        text = paste0(
+          "\nSample name: ",
+          sample_name,
+          "\nSample type: ",
+          sample_type,
+          "\n",
+          nicer_label(yvar),
+          ": ",
+          .data[[yvar]]
+        )
+      )
+    ) +
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
@@ -288,17 +294,7 @@ my_scatter_plot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
     plot <- plot +
       ggplot2::geom_point(ggplot2::aes(x = as.numeric(.data[[xvar]]),
                                        y = as.numeric(.data[[yvar]]),
-                                       color = .data[[color]],
-                                       text = paste0(
-                                         "\nSample name: ",
-                                         sample_name,
-                                         "\nSample type: ",
-                                         sample_type,
-                                         "\n",
-                                         nicer_label(yvar),
-                                         ": ",
-                                         .data[[yvar]]
-                                       ))) +
+                                       color = .data[[color]])) +
       {
         if (is.numeric(data[[color]]) && !is.integer(data[[color]])) {
           ggplot2::scale_color_continuous(type = "viridis")
@@ -311,17 +307,7 @@ my_scatter_plot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
   } else {
     plot <- plot +
       ggplot2::geom_point(ggplot2::aes(x = as.numeric(.data[[xvar]]),
-                                       y = as.numeric(.data[[yvar]]),
-                                       text = paste0(
-                                         "\nSample name: ",
-                                         sample_name,
-                                         "\nSample type: ",
-                                         sample_type,
-                                         "\n",
-                                         nicer_label(yvar),
-                                         ": ",
-                                         .data[[yvar]]
-                                       )),
+                                       y = as.numeric(.data[[yvar]])),
                           color = "#1f77b4")
                           # color = RColorBrewer::brewer.pal(3, "Set2")[1])
   }
@@ -431,7 +417,20 @@ my_scatter_plot <- function(data, xvar, yvar, color = NULL, facets = NULL) {
 my_histogram <- function(data, xvar = NULL, color = NULL, facets = NULL) {
   
   plot <- data %>% 
-    ggplot2::ggplot() +
+    ggplot2::ggplot(
+      ggplot2::aes(
+        text = paste0(
+          "Number of samples: ",
+          ggplot2::after_stat(count),
+          "\n",
+          nicer_label(xvar),
+          ": ",
+          signif(xmin, 3),
+          " to ",
+          signif(xmax, 3)
+        )
+      )
+    ) +
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
@@ -445,17 +444,7 @@ my_histogram <- function(data, xvar = NULL, color = NULL, facets = NULL) {
     
     plot <- plot +
       ggplot2::geom_histogram(ggplot2::aes(x = .data[[xvar]],
-                                           fill = .data[[color]],
-                                           text = paste0(
-                                             "Number of samples: ",
-                                             ggplot2::after_stat(count),
-                                             "\n",
-                                             nicer_label(xvar),
-                                             ": ",
-                                             signif(xmin, 3),
-                                             " to ",
-                                             signif(xmax, 3)
-                                           ))) +
+                                           fill = .data[[color]])) +
       {
         if (is.numeric(data[[color]]) && !is.integer(data[[color]])) {
           ggplot2::scale_fill_continuous(type = "viridis")
@@ -467,17 +456,7 @@ my_histogram <- function(data, xvar = NULL, color = NULL, facets = NULL) {
     
   } else {
     plot <- plot +
-      ggplot2::geom_histogram(ggplot2::aes(x = .data[[xvar]],
-                                           text = paste0(
-                                             "Number of samples: ",
-                                             ggplot2::after_stat(count),
-                                             "\n",
-                                             nicer_label(xvar),
-                                             ": ",
-                                             signif(xmin, 3),
-                                             " to ",
-                                             signif(xmax, 3)
-                                           )),
+      ggplot2::geom_histogram(ggplot2::aes(x = .data[[xvar]]),
                               fill = "#1f77b4")
                               # fill = RColorBrewer::brewer.pal(3, "Set2")[1])
   }

@@ -217,14 +217,10 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       if (is_truthy(summarized_checks_with_cut_offs())) {
         plot <- plot +
           ggplot2::geom_vline(data = summarized_checks_with_cut_offs(),
-                              ggplot2::aes(xintercept = cut_off_passing_analyte_percentage,
-                                           text = paste0("Passing analyte percentage cut-off: ",
-                                                         cut_off_passing_analyte_percentage)),
+                              ggplot2::aes(xintercept = cut_off_passing_analyte_percentage),
                               linetype = "dotted") +
           ggplot2::geom_hline(data = summarized_checks_with_cut_offs(),
-                              ggplot2::aes(yintercept = cut_off_sum_intensity,
-                                           text = paste0("Sum intensity cut-off: ",
-                                                         cut_off_sum_intensity)),
+                              ggplot2::aes(yintercept = cut_off_sum_intensity),
                               linetype = "dotted")
         
       }
