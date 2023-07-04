@@ -353,7 +353,7 @@ calculate_cut_offs <- function(summarized_checks,
   
   cut_offs <- cut_off_basis %>%  
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-    dplyr::summarise(
+    dplyr::reframe(
       cut_off_sum_intensity = if (use_mean_SD) { 
         mean_plus_SD(sum_intensity, SD_factor, uncalibrated_as_NA) } else { 
           quantile(sum_intensity, 
