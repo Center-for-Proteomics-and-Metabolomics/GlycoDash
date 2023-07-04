@@ -250,18 +250,18 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            shinycssloaders::withSpinner(plotly::plotlyOutput(ns("curated_spectra_plot"))),
+            plotly::plotlyOutput(ns("curated_spectra_plot")),
             tabsetPanel(id = ns("more_than_4_clusters")),
             br(),
             tabsetPanel(
               tabPanel(title = "Overview of failed spectra",
                        column(width = 12,
                               br(),
-                              shinycssloaders::withSpinner(DT::dataTableOutput(ns("failed_spectra_table"))))),
+                              DT::dataTableOutput(ns("failed_spectra_table")))),
               tabPanel(title = "Details of failed spectra per analyte",
                        column(width = 12,
                               br(),
-                              shinycssloaders::withSpinner(DT::dataTableOutput(ns("failed_spectra_details")))))
+                              DT::dataTableOutput(ns("failed_spectra_details"))))
             )
           )
         )
@@ -590,7 +590,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                   path = file))
       }
     )
-  
     
     return(list(
       passing_spectra = to_return,
