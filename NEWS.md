@@ -5,3 +5,12 @@ First official release.
 
 # Glycodash v1.1.0
 New feature: analyte curation per sample.
+
+
+# Glycodash v1.1.1
+Bug fix: clusters no longer combined in derived traits when their names overlap.
+
+
+# Glycodash v1.1.2
+Bug fix: "group is not a factor" when using separate plate designs for total 
+and specific antibodies.
