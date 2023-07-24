@@ -576,6 +576,8 @@ It is also possible (not required) to perform the analyte curation per biologica
 
 cut_off_percentage <- 25
 
+test <- checked_analytes
+
 
 # Curate analytes, but not per biological group.
 curated_analytes <- curate_analytes(checked_analytes, cut_off_percentage)
@@ -592,6 +594,14 @@ consensus_list <- curated_analytes_group %>%
   dplyr::group_by(cluster, charge, analyte) %>% 
   dplyr::mutate(pass_n = sum(has_passed_analyte_curation == TRUE)) %>% 
   dplyr::ungroup()
+```
+
+```{r}
+# Analyte curation per sample
+
+curated_per_sample <- checked_analytes %>% 
+  dplyr::filter(analyte_meets_criteria == TRUE) %>% 
+  dplyr::select(-analyte_meets_criteria, -failed_criteria)
 ```
 
 *In plotting curated_analytes_group: facet by group in addition to charge.*

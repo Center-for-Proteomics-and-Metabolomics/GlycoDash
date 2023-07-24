@@ -31,3 +31,6 @@ and formulas used to calculate custom traits.
 Calculate custom glycosylation traits of IgG based on formulas provided in an 
 Excel file.
 }
+\examples{
+fill this in...
+}

@@ -257,11 +257,11 @@ mod_spectra_curation_ui <- function(id){
               tabPanel(title = "Overview of failed spectra",
                        column(width = 12,
                               br(),
-                              shinycssloaders::withSpinner(DT::dataTableOutput(ns("failed_spectra_table"))))),
+                              DT::dataTableOutput(ns("failed_spectra_table")))),
               tabPanel(title = "Details of failed spectra per analyte",
                        column(width = 12,
                               br(),
-                              shinycssloaders::withSpinner(DT::dataTableOutput(ns("failed_spectra_details")))))
+                              DT::dataTableOutput(ns("failed_spectra_details"))))
             )
           )
         )
@@ -324,6 +324,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     observe({
+
       shinyjs::toggle("controls_module",
                       condition = input$curation_method == "Negative control spectra")
       
@@ -575,9 +576,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     output$download <- downloadHandler(
       filename = function() {
-        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-        #                                                pattern = "-",
-        #                                                replacement = ""))
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
         switch(input$download_format,
                "R object" = paste0(current_datetime, "_curated_spectra.rds"),
