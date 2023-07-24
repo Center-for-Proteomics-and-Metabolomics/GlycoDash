@@ -750,7 +750,7 @@ create_cut_off_plot <- function(summarized_checks) {
                                      passing_analyte_percentage = 0))
   
   n_colors <- length(unique(for_plot$sample_type))
-  my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
+  my_palette <- color_palette(n_colors)
   
   p <- for_plot %>% 
     ggplot2::ggplot(
@@ -883,7 +883,14 @@ plot_spectra_curation_results <- function(curated_data,
           "Number of spectra:",
           number,
           "\nPercentage of spectra:",
-          percentage
+          percentage,
+          "\nPassed curation:",
+          # reason_for_failure  # need if else statement
+          ifelse(
+            !is.na(reason_for_failure),
+            paste("No", reason_for_failure, sep = ", "),
+            "Yes"
+          )
         )
       )
     ) +
