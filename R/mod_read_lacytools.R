@@ -21,8 +21,6 @@ mod_read_lacytools_ui <- function(id){
       value = 1, min = 1, max = 10
     ),
     uiOutput(ns("summaries")),
-    fileInput(ns("lacytools_summary"),
-              "Upload LaCyTools summary.txt file:"),
     shinyWidgets::awesomeRadio(ns("contains_total_and_specific_samples"),
                                "Does your data contain total and specific immunoglobulin samples?",
                                choices = c("Yes", "No"),
@@ -81,23 +79,6 @@ mod_read_lacytools_server <- function(id){
     })
     
     
-    
-    # Make a reactive expression containing the file extension of uploaded file:
-    extension <- reactive({
-      req(input$lacytools_summary)
-      tools::file_ext(input$lacytools_summary$name)
-    })
-
-    # Show a warning when the wrong type of file is uploaded as lacytools summary:
-    observe({
-      req(extension())
-      shinyFeedback::feedbackWarning("lacytools_summary",
-                                     extension() != "txt",
-                                     text = "Please upload a .txt file.")
-    })
-    
-    
-    
     # Create a named list with file extensions.
     # Names: "summary1", "summary2", etc.
     extensions <- reactive({
@@ -125,30 +106,6 @@ mod_read_lacytools_server <- function(id){
     })
     
     
-    ############# KEEP THIS BUT MODIFY ########################################
-  
-    # Make sure that the read_summary actionButton is only available once the
-    # right type of file is uploaded as LaCyTools summary and once the user has
-    # provided all required inputs:
-    # observe({
-    #   shinyjs::toggleState(
-    #     id = "button",
-    #     condition = any(
-    #       all(
-    #         input$contains_total_and_specific_samples == "No",
-    #         # is_truthy(lacytools_summary())
-    #         all(extensions() == "txt")
-    #       ),
-    #       all(
-    #         input$contains_total_and_specific_samples == "Yes",
-    #         is_truthy(lacytools_summary_total_and_specific())
-    #       )
-    #     )
-    #   )
-    # })
-    ########################################################################
-    
-    
     # If the user indicates (via input$contains_total_and_specific_samples) that the data contains total and
     # specific Ig samples, the textInputs for the specific and total keywords
     # are shown.
@@ -156,6 +113,7 @@ mod_read_lacytools_server <- function(id){
       shinyjs::toggle("keywords_specific_total",
                       condition = input$contains_total_and_specific_samples == "Yes")
     })
+    
     
     # If the user changes input$contains_total_and_specific_samples to "No"  the
     # textInputs for the keywords are reset to empty strings "". This is needed
@@ -168,35 +126,6 @@ mod_read_lacytools_server <- function(id){
                       value = "",
                       session = session)
     }) %>% bindEvent(input$contains_total_and_specific_samples == "No")
-    
-    
-    # Read the raw LaCyTools summary file
-    raw_lacytools_summary <- reactive({
-      req(input$lacytools_summary$datapath)
-      tryCatch(
-        expr = {
-          read_non_rectangular(input$lacytools_summary$datapath)
-        },
-        embedded_null = function(c) {
-          shinyFeedback::feedbackDanger("lacytools_summary",
-                                        show = TRUE,
-                                        text = c$message)
-          NULL
-        },
-        empty_file = function(c) {
-          shinyFeedback::feedbackDanger("lacytools_summary",
-                                        show = TRUE,
-                                        text = c$message)
-          NULL
-        },
-        wrong_delim = function(c) {
-          shinyFeedback::feedbackDanger("lacytools_summary",
-                                        show = TRUE,
-                                        text = c$message)
-          NULL
-        }
-      )
-    })
     
     
     
@@ -307,30 +236,6 @@ mod_read_lacytools_server <- function(id){
     
     
     
-    lacytools_summary <- reactive({
-      req(raw_lacytools_summary())
-      tidy_summary <- tryCatch(
-        expr = {
-          convert_lacytools_summary(data = raw_lacytools_summary())
-        },
-        no_outputs_present = function(c) {
-          # Show feedback that there are no outputs found in the LaCyTools file:
-          shinyFeedback::feedbackDanger("lacytools_message",
-                                        show = TRUE,
-                                        text = c$message)
-          
-          showNotification(c$message,
-                           type = "error",
-                           duration = NULL)
-          
-          # Return NULL to the reactive lacytools_summary()
-          NULL
-        })
-      
-      return(tidy_summary)
-    })
-    
-    
     # Create a list with tidy LaCyTools summaries
     lacytools_summaries <- reactive({
       req(!any(sapply(raw_lacytools_summaries(), is.null))) 
@@ -359,20 +264,24 @@ mod_read_lacytools_server <- function(id){
     })
     
     
-    observe({
+    
+    # Combine the lacytools_summaries using dplyr::bind_rows
+    lacytools_summaries_combined <- reactive({
       req(lacytools_summaries())
-      browser()
+      do.call(dplyr::bind_rows, lacytools_summaries())
     })
     
+  
     
-    lacytools_summary_total_and_specific <- reactive({
+    # Detect total and specific samples if applicable.
+    lacytools_summaries_total_and_specific <- reactive({
       
       shinyFeedback::hideFeedback("keyword_specific")
       shinyFeedback::hideFeedback("keyword_total")
       
-      # Pause here until lacytools_summary() is Truthy, and until the inputs for
+      # Pause here until lacytools_summaries_combined() is Truthy, and until the inputs for
       # the keywords are not empty:
-      req(lacytools_summary(),
+      req(lacytools_summaries_combined(),
           input$keyword_specific,
           input$keyword_total)
       
@@ -412,16 +321,38 @@ mod_read_lacytools_server <- function(id){
       return(lacytools_summary)
     })
     
+    
+    
+    # Return combined lacytools summaries.
     to_return <- reactive({
-      req(lacytools_summary())
-      summary_to_return <- tryCatch(lacytools_summary_total_and_specific(),
-                          error = function(e) {
-                            lacytools_summary()
-                          })
-      return(summary_to_return)
-    }) # can't use bindEvent(input$button), because then re-adding sample ID's 
-    # to a newly uploaded summary is faster then resetting the plate_design to NULL,
-    # which results in an empty sample_id column added to the new summary
+      req(lacytools_summaries_combined())
+      tryCatch(
+        lacytools_summaries_total_and_specific(),
+        error = function(e) {
+          lacytools_summaries_combined()
+        }
+      )
+    })  # can't use bindEvent(input$button), because then re-adding sample ID's 
+    # # to a newly uploaded summary is faster then resetting the plate_design to NULL,
+    # # which results in an empty sample_id column added to the new summary
+    
+    
+    
+    # Control the state of the "Load" actionButton
+    observe({
+      shinyjs::toggleState(
+        id = "button",
+        condition = any(
+          all(
+            input$contains_total_and_specific_samples == "No",
+            is_truthy(lacytools_summaries_combined())
+          ),
+          all(
+            input$contains_total_and_specific_samples == "Yes",
+            is_truthy(lacytools_summaries_total_and_specific())
+          )))
+    })
+    
     
     return(list(
       data = to_return,
