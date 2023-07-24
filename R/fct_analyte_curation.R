@@ -396,18 +396,18 @@ plot_analyte_curation <- function(curated_analytes,
         has_passed_analyte_curation == "FALSE" ~ "No"
       ))
   
-  plot <- ggplot2::ggplot(data_to_plot) + 
+  plot <- ggplot2::ggplot(data_to_plot, 
+                          ggplot2::aes(text = paste(
+                            "Analyte:",
+                            analyte,
+                            "\nPercentage of passing spectra:",
+                            paste0(signif(passing_percentage,
+                                          4), 
+                                   "%")
+                          ))) + 
     ggplot2::geom_col(ggplot2::aes(x = analyte, 
                                    y = passing_percentage,
-                                   fill = `Passed curation?`,
-                                   text = paste(
-                                     "Analyte:",
-                                     analyte,
-                                     "\nPercentage of passing spectra:",
-                                     paste0(signif(passing_percentage,
-                                                   4), 
-                                            "%")
-                                   ))) +
+                                   fill = `Passed curation?`)) +
     ggplot2::scale_fill_discrete(type = c("Yes" = "#3498DB",
                                           "No" = "#E74C3C")) +
     ggplot2::geom_hline(yintercept = cut_off_percentage, 

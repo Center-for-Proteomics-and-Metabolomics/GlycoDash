@@ -353,7 +353,7 @@ calculate_cut_offs <- function(summarized_checks,
   
   cut_offs <- cut_off_basis %>%  
     dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-    dplyr::summarise(
+    dplyr::reframe(
       cut_off_sum_intensity = if (use_mean_SD) { 
         mean_plus_SD(sum_intensity, SD_factor, uncalibrated_as_NA) } else { 
           quantile(sum_intensity, 
@@ -750,46 +750,34 @@ create_cut_off_plot <- function(summarized_checks) {
                                      passing_analyte_percentage = 0))
   
   n_colors <- length(unique(for_plot$sample_type))
-  my_palette <- colorRampPalette(RColorBrewer::brewer.pal(8, "Set2"))(n_colors)
+  my_palette <- color_palette(n_colors)
   
   p <- for_plot %>% 
-    ggplot2::ggplot() +
+    ggplot2::ggplot(
+      ggplot2::aes( text = paste0("Sample name: ",
+                                 sample_name,
+                                 "\n",
+                                 "Sample ID: ",
+                                 sample_id,
+                                 "\n",
+                                 "Passing analyte percentage: ",
+                                 passing_analyte_percentage,
+                                 "\n",
+                                 "Sum intensity: ",
+                                 sum_intensity,
+                                 "\nUncalibrated: ",
+                                 uncalibrated))
+    ) +
     ggplot2::geom_jitter(data = for_plot[!for_plot$uncalibrated, ],
                          ggplot2::aes(color = sample_type,
                                       x = passing_analyte_percentage,
-                                      y = sum_intensity,
-                                      text = paste0("Sample name: ",
-                                                    sample_name,
-                                                    "\n",
-                                                    "Sample ID: ",
-                                                    sample_id,
-                                                    "\n",
-                                                    "Passing analyte percentage: ",
-                                                    passing_analyte_percentage,
-                                                    "\n",
-                                                    "Sum intensity: ",
-                                                    sum_intensity,
-                                                    "\nUncalibrated: ",
-                                                    uncalibrated)),
+                                      y = sum_intensity),
                          size = 1,
                          alpha = 0.7) +
     ggplot2::geom_jitter(data = for_plot[for_plot$uncalibrated, ],
                          ggplot2::aes(color = sample_type,
                                       x = passing_analyte_percentage,
-                                      y = sum_intensity,
-                                      text = paste0("Sample name: ",
-                                                    sample_name,
-                                                    "\n",
-                                                    "Sample ID: ",
-                                                    sample_id,
-                                                    "\n",
-                                                    "Passing analyte percentage: ",
-                                                    passing_analyte_percentage,
-                                                    "\n",
-                                                    "Sum intensity: ",
-                                                    sum_intensity,
-                                                    "\nUncalibrated: ",
-                                                    uncalibrated)),
+                                      y = sum_intensity),
                          shape = 15,
                          size = 1,
                          alpha = 0.7,
@@ -889,15 +877,25 @@ plot_spectra_curation_results <- function(curated_data,
     calculate_number_and_percentage_per_reason()
   
   plot <- my_data %>% 
-    ggplot2::ggplot() +
+    ggplot2::ggplot(
+      ggplot2::aes(
+        text = paste(
+          "Number of spectra:",
+          number,
+          "\nPercentage of spectra:",
+          percentage,
+          "\nPassed curation:",
+          # reason_for_failure  # need if else statement
+          ifelse(
+            !is.na(reason_for_failure),
+            paste("No", reason_for_failure, sep = ", "),
+            "Yes"
+          )
+        )
+      )
+    ) +
     ggplot2::geom_bar(ggplot2::aes(x = sample_type,
-                                   fill = `Passed curation?`,
-                                   text = paste(
-                                     "Number of spectra:",
-                                     number,
-                                     "\nPercentage of spectra:",
-                                     percentage
-                                   )), 
+                                   fill = `Passed curation?`), 
                       position = "fill") +
     ggplot2::xlab("Sample type") +
     ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
