@@ -12,7 +12,7 @@ mod_tab_curated_analytes_ui <- function(id){
   tagList(
     column(
       width= 12,
-      plotly::plotlyOutput(ns("plot")),
+      shinycssloaders::withSpinner(plotly::plotlyOutput(ns("plot"))),
       br(),
       shinyWidgets::materialSwitch(ns("check_all"),
                                    "If one charge state has passed curation, also select all other charge states for further analysis.",

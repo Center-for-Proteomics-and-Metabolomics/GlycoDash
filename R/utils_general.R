@@ -329,3 +329,24 @@ firstlower <- function(string) {
   substr(string, 1, 1) <- tolower(substr(string, 1, 1))
   return(string)
 }
+
+
+
+# Function to create a color palette
+color_palette <- function(n_colors) {
+  
+  # 10 colors used by matplotlib (because they are nice)
+  plt_colors <- c("#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+                  "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf")
+  
+  if (n_colors <= length(plt_colors)) {
+    # Use these 10 colors if number of required colors is less than 10
+    my_palette <- plt_colors[1:n_colors]
+  } else {
+    # Otherwise create different colors
+    my_palette <- colorRampPalette(plt_colors)(n_colors)
+  }
+  
+  return(my_palette)
+}
+

@@ -12,6 +12,9 @@ rename_sample_id_column(metadata, sample_id_column)
 \item{sample_id_column}{A character string, the name of the column in
 \code{metadata} that contains the sample ID's.}
 }
+\value{
+Fill this in...
+}
 \description{
 This function renames the column in the metadata file that contains sample
 ID's to "sample_id".

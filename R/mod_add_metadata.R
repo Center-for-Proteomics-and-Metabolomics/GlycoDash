@@ -210,7 +210,6 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
     unmatched_ids <- reactive({
       req(merged_metadata(),
           LacyTools_summary())
-
       unmatched <- setdiff(LacyTools_summary()$sample_id,
                            merged_metadata()$sample_id)
       

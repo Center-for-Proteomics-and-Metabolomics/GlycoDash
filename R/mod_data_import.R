@@ -162,9 +162,6 @@ mod_data_import_server <- function(id){
     
     output$download <- downloadHandler(
       filename = function() {
-        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-        #                                                pattern = "-",
-        #                                                replacement = ""))
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
         switch(input$download_format,
                "R object" = paste0(current_datetime, "_data.rds"),
@@ -180,7 +177,6 @@ mod_data_import_server <- function(id){
                                                   path = file))
       }
     )
-  
     
     return(list(
       LacyTools_summary = to_return,  # Calling this LacyTools_summary is a bit confusing

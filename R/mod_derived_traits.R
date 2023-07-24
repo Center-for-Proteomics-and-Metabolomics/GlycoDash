@@ -52,7 +52,7 @@ mod_derived_traits_ui <- function(id){
           div(
             strong("Attention:"),
             "glycosylation traits can only be calculated automatically for IgG complex-type glycans.",
-            style = "color:#0021B8"
+            style = "color:#0021B8; font-size: 18px"
           ),
           br(),
           shinyWidgets::awesomeCheckboxGroup(ns("traits_menu"),
@@ -218,8 +218,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     })
     
     derived_traits <- reactive({
-      #req(normalized_data())
-      
+      req(normalized_data())
       calculate_derived_traits(data = normalized_data(),
                                selected_derived_traits = input$traits_menu)
     }) %>% bindEvent(input$do_calculation)

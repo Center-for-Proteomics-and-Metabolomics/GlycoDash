@@ -11,7 +11,7 @@ mod_tab_cut_offs_ui <- function(id){
   ns <- NS(id)
   tagList(
     br(),
-    plotly::plotlyOutput(ns("plot")),
+    shinycssloaders::withSpinner(plotly::plotlyOutput(ns("plot"))),
     br(),
     tags$style(HTML(paste0(
       "#",
@@ -24,38 +24,39 @@ mod_tab_cut_offs_ui <- function(id){
                                  "Choose cut-off values manually instead",
                                  right = TRUE,
                                  status = "primary"),
-    numericInput(ns("cut_off_sum_intensity"),
+    shinyjs::hidden(numericInput(ns("cut_off_sum_intensity"),
                  "Enter a cut-off value for the sum intensity:",
-                 value = ""),
-    numericInput(ns("cut_off_passing_analyte_percentage"),
+                 value = "")),
+    shinyjs::hidden(numericInput(ns("cut_off_passing_analyte_percentage"),
                  "Enter a cut-off value for the percentage of passing analytes:",
-                 value = ""),
-    shinydashboardPlus::box(
-      title = "Specific Ig manual cut-offs",
-      id = ns("spike_manual_cut_offs"),
-      solidHeader = TRUE,
-      #status = "primary",
-      width = 6,
-      numericInput(ns("cut_off_sum_intensity_specific"),
-                   "Enter a cut-off value for the sum intensity in the specific Ig samples:",
-                   value = ""),
-      numericInput(ns("cut_off_passing_analyte_percentage_specific"),
-                   "Enter a cut-off value for the percentage of passing analytes in the specific Ig samples:",
-                   value = "")
-    ),
-    shinydashboardPlus::box(
-      title = "Total Ig manual cut-offs",
-      id = ns("total_manual_cut_offs"),
-      solidHeader = TRUE,
-      #status = "primary",
-      width = 6,
-      numericInput(ns("cut_off_sum_intensity_total"),
-                   "Enter a cut-off value for the sum intensity in the total Ig samples:",
-                   value = ""),
-      numericInput(ns("cut_off_passing_analyte_percentage_total"),
-                   "Enter a cut-off value for the percentage of passing analytes in the total Ig samples:",
-                   value = "")
-    )
+                 value = "")),
+    # div() has to be placed around the boxes below for toggle to work properly.
+    shinyjs::hidden(div(id = ns("spike_manual_cut_offs"),
+      shinydashboardPlus::box(
+        title = "Specific Ig manual cut-offs",
+        solidHeader = TRUE,
+        #status = "primary",
+        width = 6,
+        numericInput(ns("cut_off_sum_intensity_specific"),
+                     "Enter a cut-off value for the sum intensity in the specific Ig samples:",
+                     value = ""),
+        numericInput(ns("cut_off_passing_analyte_percentage_specific"),
+                     "Enter a cut-off value for the percentage of passing analytes in the specific Ig samples:",
+                     value = "")
+      ))),
+    shinyjs::hidden(div(id = ns("total_manual_cut_offs"),
+      shinydashboardPlus::box(
+        title = "Total Ig manual cut-offs",
+        solidHeader = TRUE,
+        #status = "primary",
+        width = 6,
+        numericInput(ns("cut_off_sum_intensity_total"),
+                     "Enter a cut-off value for the sum intensity in the total Ig samples:",
+                     value = ""),
+        numericInput(ns("cut_off_passing_analyte_percentage_total"),
+                     "Enter a cut-off value for the percentage of passing analytes in the total Ig samples:",
+                     value = "")
+      )))
   )
 }
     
@@ -72,21 +73,24 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     
     # Show the cut-off numericInputs when manual_cut_off is chosen:
     observe({
+
       shinyjs::toggle("cut_off_sum_intensity",
                       condition = all(is_truthy(input$switch_to_manual),
                                       contains_total_and_specific_samples() == "No"))
       shinyjs::toggle("cut_off_passing_analyte_percentage",
                       condition = all(is_truthy(input$switch_to_manual),
                                       contains_total_and_specific_samples() == "No"))
-      
+
       shinyjs::toggle("spike_manual_cut_offs",
                       condition = all(is_truthy(input$switch_to_manual),
                                       contains_total_and_specific_samples() == "Yes"))
-      
+
       shinyjs::toggle("total_manual_cut_offs",
                       condition = all(is_truthy(input$switch_to_manual),
                                       contains_total_and_specific_samples() == "Yes"))
     })
+    
+
     
     observe({
       shinyjs::toggle("switch_to_manual",
@@ -97,7 +101,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       req(calculated_cut_offs())
       req(is_truthy(input$switch_to_manual))
       req(!is_truthy(manual_cut_offs()))
-      
+
       if (contains_total_and_specific_samples() == "Yes") {
         calculated_sum_intensity_cut_off_specific <- calculated_cut_offs() %>% 
           dplyr::filter(group == keyword_specific()) %>% 
@@ -213,14 +217,10 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       if (is_truthy(summarized_checks_with_cut_offs())) {
         plot <- plot +
           ggplot2::geom_vline(data = summarized_checks_with_cut_offs(),
-                              ggplot2::aes(xintercept = cut_off_passing_analyte_percentage,
-                                           text = paste0("Passing analyte percentage cut-off: ",
-                                                         cut_off_passing_analyte_percentage)),
+                              ggplot2::aes(xintercept = cut_off_passing_analyte_percentage),
                               linetype = "dotted") +
           ggplot2::geom_hline(data = summarized_checks_with_cut_offs(),
-                              ggplot2::aes(yintercept = cut_off_sum_intensity,
-                                           text = paste0("Sum intensity cut-off: ",
-                                                         cut_off_sum_intensity)),
+                              ggplot2::aes(yintercept = cut_off_sum_intensity),
                               linetype = "dotted")
         
       }
