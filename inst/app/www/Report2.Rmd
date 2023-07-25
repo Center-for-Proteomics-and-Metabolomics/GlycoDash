@@ -44,7 +44,7 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 
 ## Data import
 
--   LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
+-   LaCyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
 -   Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
 -   Sample list file: `r ifelse(is.null(params$metadata), "none", paste0("\"", params$sample_list, "\""))`
 -   Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
