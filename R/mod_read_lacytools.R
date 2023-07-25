@@ -271,7 +271,7 @@ mod_read_lacytools_server <- function(id){
       do.call(dplyr::bind_rows, lacytools_summaries())
     })
     
-  
+
     
     # Detect total and specific samples if applicable.
     lacytools_summaries_total_and_specific <- reactive({
@@ -285,11 +285,11 @@ mod_read_lacytools_server <- function(id){
           input$keyword_specific,
           input$keyword_total)
       
-      lacytools_summary <- tryCatch(
+      summary <- tryCatch(
         expr = {
           # Detect based on sample names which samples are Total Ig and which are
           # Specific Ig samples
-          detect_group(data = lacytools_summary(),
+          detect_group(data = lacytools_summaries_combined(),
                        keyword_specific = input$keyword_specific,
                        keyword_total = input$keyword_total)
         },
@@ -318,7 +318,7 @@ mod_read_lacytools_server <- function(id){
           NULL
         })
       
-      return(lacytools_summary)
+      return(summary)
     })
     
     
