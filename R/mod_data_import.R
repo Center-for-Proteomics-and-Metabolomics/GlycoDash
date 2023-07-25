@@ -102,7 +102,7 @@ mod_data_import_server <- function(id){
                          type = "message")
       } else if (is_truthy(LaCyTools_summary$data())) {
           show_in_table <- LaCyTools_summary$data()
-          showNotification("The LaCyTools summary has been loaded.",
+          showNotification("The LaCyTools summaries have been loaded.",
                            type = "message")
       }
       return(show_in_table)
@@ -177,7 +177,6 @@ mod_data_import_server <- function(id){
                                                   path = file))
       }
     )
-  
     
     return(list(
       LaCyTools_summary = to_return,  # Calling this LaCyTools_summary is a bit confusing

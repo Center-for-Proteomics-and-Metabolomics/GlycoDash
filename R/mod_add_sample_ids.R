@@ -301,7 +301,8 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
           plate_design_total_with_group())
       
       dplyr::full_join(plate_design_specific_with_group(),
-                       plate_design_total_with_group())
+                       plate_design_total_with_group()) %>% 
+        dplyr::mutate(group = as.factor(group))
     })
     
     plate_design_filenames <- reactive({
@@ -418,8 +419,11 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
       filename_sample_list = sample_list$filename
     ))
     
+
   })
 }
+
+
 
 ## To be copied in the UI
 # mod_add_sample_ids_ui("add_sample_ids_ui_1")

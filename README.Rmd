@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# glycodash
+# Glycodash
 
 <!-- badges: start -->
 
@@ -21,19 +21,20 @@ knitr::opts_chunk$set(
 
 <!-- badges: end -->
 
-The goal of glycodash is to...
+Glycodash is an R Shiny dashboard for processing IgG and IgA glycosylation data obtained from LaCyTools (<https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00171>).
 
 ## Installation
 
-You can run the development version of glycodash on your own pc like so:
+You can run the glycodash code on your own pc as follows:
 
 1.  Install R and Rstudio: <https://posit.co/download/rstudio-desktop/>
-2.  Download the master branch as a zip file, then unzip and store the folder somewhere.
-3.  Double click "glycodash.Rproj", this launch open Rstudio.
+2.  Download the master branch source code as a zip file, then unzip and store the folder somewhere.
+3.  Double click "glycodash.Rproj", this will launch RStudio.
 4.  In Rstudio: click file --\> open. Then in the glycodash-master folder, open "run_dev.R" in the dev folder.
 5.  In Rstudio, click the "source" button, or use Ctrl+Shift+S, to start the Dashboard. A new Rstudio window should now open with the dashboard running. *(Rstudio might first ask you to install required packages. Accept this. For package requirements: see the DESCRIPTION file.*)
-6.  
-7.  Optional: in the Rstudio dashboard window, click "open in browser" (this should look better). The dashboard was tested in Google Chrome and Microsoft Edge.
+6.  Optional: in the Rstudio dashboard window, click "open in browser" (this should look better). The dashboard was tested in Google Chrome and Microsoft Edge.
+
+**For official releases, you can pull a Docker image.**
 
 ## Branches
 
@@ -42,28 +43,3 @@ The master branch will be used for "official" releases.
 The alfa branch is the development branch.
 
 The beta branch contains the version of the dashboard that is currently running on the cpmtools server.
-
-## Example
-
-This is a basic example which shows you how to solve a common problem:
-
-```{r example}
-library(glycodash)
-## basic example code
-```
-
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
-
-```{r cars}
-summary(cars)
-```
-
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this. You could also use GitHub Actions to re-render `README.Rmd` every time you push. An example workflow can be found here: <https://github.com/r-lib/actions/tree/v1/examples>.
-
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
