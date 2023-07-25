@@ -1,3 +1,7 @@
+# v1.2.0
+New feature: ability to upload multiple LaCyTools summary files.
+
+
 # v1.1.3
 Change color palette of the spectra curation scatter plot.
 
