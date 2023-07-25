@@ -202,7 +202,7 @@ mod_export_server <- function(id,
           sn = results_spectra_curation$sn(),
           included_qc = results_spectra_curation$included_qc(),
           spectra_curation_tab_contents = spectra_curation_tab_contents,
-          curated_spectra_plot = try_call(results_spectra_curation$plot()),
+          curated_spectra_plot = try_call(results_spectra_curation$plot),
           curated_spectra_plots = curated_spectra_plots,
           analyte_curation_method = results_analyte_curation$method(),
           ignore_samples = results_analyte_curation$ignore_samples(), # test if empty
