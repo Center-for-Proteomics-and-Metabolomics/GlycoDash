@@ -1,3 +1,9 @@
+# v1.2.1
+Bug fix: plots with spectra curation results are now shown in the processing report when <5 clusters.
+
+Adjustment: consistent coloring in the spectra curation results plot.
+
+
 # v1.2.0
 New feature: ability to upload multiple LaCyTools summary files.
 
