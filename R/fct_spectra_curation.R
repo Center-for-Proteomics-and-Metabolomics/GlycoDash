@@ -862,9 +862,18 @@ create_cut_off_plot <- function(summarized_checks) {
 plot_spectra_curation_results <- function(curated_data,
                                           total_and_specific) {
   
-  n_colors <- length(unique(curated_data$reason_for_failure)) - 1
-  my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
-                  "#3498DB")
+  # n_colors <- length(unique(curated_data$reason_for_failure)) - 1
+  # my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
+  #                 "#3498DB")
+  
+  # Consistent fill colors.
+  my_palette <- c(
+    "Yes" = "#3498DB",
+    "No, calibration failed." = "#BF9C9C",
+    "No, percentage of passing\nanalytes and sum\nintensity below cut-offs." = "#660000",
+    "No, percentage of passing\nanalytes below\ncut-off." = "#ff0000",
+    "No, sum intensity below\ncut-off." = "#ff6600"
+  )
   
   my_data <- curated_data %>% 
     dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
