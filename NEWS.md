@@ -1,3 +1,7 @@
+# v1.2.2
+Bug fix in analyte curation UI when supplying an analyte list.
+
+
 # v1.2.1
 Bug fix: plots with spectra curation results are now shown in the processing report when <5 clusters.
 
