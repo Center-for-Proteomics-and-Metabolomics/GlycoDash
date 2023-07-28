@@ -1,6 +1,6 @@
 Package: glycodash
 Title: glycodash
-Version: 0.0.0.9000
+Version: 1.y.z
 Authors@R: person('Sterre', 'Siekman', email = 's.l.siekman@lumc.nl', role = c('cre', 'aut'))
 Description: Package for processing glycomics data.
 License: MIT + file LICENSE
