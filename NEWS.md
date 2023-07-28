@@ -1,7 +1,7 @@
 # v1.2.3
 ## Adjustments
 * Added a link to the Glycodash GitHub page in the top right corner of the dashboard.
-* Added a download button for release notes in the top right corner.
+* Added a download button for the changelog in the top right corner.
 * Changed the title of the dashboard to “Glycodash v<x.y.z>”
 
 

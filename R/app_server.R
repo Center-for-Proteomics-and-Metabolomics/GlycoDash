@@ -10,10 +10,10 @@ app_server <- function( input, output, session ) {
   # Increasing the maximum size of files that can be uploaded to 200 MB:
   options(shiny.maxRequestSize=200*1024^2)
   
-  # Download release notes
+  # Download changelog
   output$download_md <- downloadHandler(
     filename = function() {
-      "glycodash_release_notes.html"
+      "glycodash_changelog.html"
     },
     content = function(file) {
       # Convert the md_content to HTML
