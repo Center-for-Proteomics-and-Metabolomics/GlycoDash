@@ -21,12 +21,12 @@ the flat file.
 \code{read_non_rectangular()} can read flat files where the number of fields 
 per line is not constant (non-rectangular data). Blank lines are not skipped 
 and empty fields "" and 0's are interpreted as \code{NA}. This function was 
-created to read LacyTools summary files (tab-delimited non-rectangular .txt 
+created to read LaCyTools summary files (tab-delimited non-rectangular .txt 
 files).
 }
 \examples{
 data_file <- system.file("extdata", 
-                         "LacyTools_summary_example.txt", 
+                         "LaCyTools_summary_example.txt", 
                          package = "glycodash")
 read_non_rectangular(path = data_file, delim = "\t")
 

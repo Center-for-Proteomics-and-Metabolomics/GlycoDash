@@ -28,7 +28,7 @@ mod_add_metadata_ui <- function(id){
 #' add_metadata Server Functions
 #'
 #' @noRd 
-mod_add_metadata_server <- function(id, LacyTools_summary){
+mod_add_metadata_server <- function(id, LaCyTools_summary){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -116,7 +116,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
       shinyjs::toggleState("button",
                            condition = all(
                              is_truthy(metadata_list()),
-                             is_truthy(LacyTools_summary()),
+                             is_truthy(LaCyTools_summary()),
                              sample_id_inputs_completed()
                            ))
     })
@@ -209,8 +209,8 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
     # Check for unmatched id's
     unmatched_ids <- reactive({
       req(merged_metadata(),
-          LacyTools_summary())
-      unmatched <- setdiff(LacyTools_summary()$sample_id,
+          LaCyTools_summary())
+      unmatched <- setdiff(LaCyTools_summary()$sample_id,
                            merged_metadata()$sample_id)
       
       if (rlang::is_empty(unmatched)) {
@@ -262,7 +262,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
       )) {
-        dplyr::left_join(LacyTools_summary(),
+        dplyr::left_join(LaCyTools_summary(),
                          merged_metadata(),
                          by = "sample_id") %>% 
           dplyr::relocate(colnames(merged_metadata())[-1], .after = sample_id)

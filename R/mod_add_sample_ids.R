@@ -202,7 +202,7 @@ mod_add_sample_ids_ui <- function(id){
 #' add_sample_ids Server Functions
 #'
 #' @noRd 
-mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, contains_total_and_specific_samples, LacyTools_summary,
+mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, contains_total_and_specific_samples, LaCyTools_summary,
                                       lacytools_fileInput, read_lacytools_button){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
@@ -230,16 +230,16 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
     r <- reactiveValues(resetter = 0,
                         show_reset_warning = FALSE)
     
-    # Whenever a new (correct) LacyTools summary file is uploaded and sample
+    # Whenever a new (correct) LaCyTools summary file is uploaded and sample
     # ID's had already been added to the old summary, the resetter counter is
     # increased with 1 and show_reset_warning is set to TRUE:
     observe({
-      if (is_truthy(LacyTools_summary()) & is_truthy(data_with_sample_ids())) {
+      if (is_truthy(LaCyTools_summary()) & is_truthy(data_with_sample_ids())) {
         r$resetter <- isolate(r$resetter) + 1
         r$show_reset_warning <- TRUE
       }
     }) %>% bindEvent(lacytools_fileInput()) # I use the lacytools fileInput 
-    # instead of LacyTools_summary(), because LacyTools_summary() also changes when total and 
+    # instead of LaCyTools_summary(), because LaCyTools_summary() also changes when total and 
     # specific keywords are entered/changed.
     
     observe({
@@ -322,9 +322,9 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
     )
     
     data_with_sample_ids <- reactive({
-      req(LacyTools_summary(),
+      req(LaCyTools_summary(),
           read_lacytools_button() > 0) # Showing the plate_well_NAs feedback 
-      # before the "Load LacyTools summary" button has been clicked might be
+      # before the "Load LaCyTools summary" button has been clicked might be
       # confusing for the user.
       
       shinyFeedback::hideFeedback("sample_id_method")
@@ -332,7 +332,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
       if (input$sample_id_method == "Upload a plate design") {
         summary_with_plate_well <- tryCatch(
           expr = {
-            detect_plate_and_well(LacyTools_summary())
+            detect_plate_and_well(LaCyTools_summary())
           },
           well_precedes_plate = function(c) {
             shinyFeedback::showFeedbackDanger(
@@ -359,7 +359,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
         }
       } else {
         req(sample_list$sample_list())
-        with_sample_ids <- dplyr::left_join(LacyTools_summary(),
+        with_sample_ids <- dplyr::left_join(LaCyTools_summary(),
                                             sample_list$sample_list())
       }
       

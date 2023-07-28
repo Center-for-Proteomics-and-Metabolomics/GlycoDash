@@ -11,13 +11,21 @@ app_ui <- function(request) {
     
     # Your application UI logic 
     shinydashboard::dashboardPage(
+      
+      # Title header, with button that links to GitHUb
       header = shinydashboard::dashboardHeader(
-        title = "Glyco data processing dashboard"
+        title = "Glycodash v1.2.3",
+        tags$li(a(
+          onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/glycodash')",
+          href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"
+        ), class = "dropdown"),
+        tags$li(customDownloadbutton("download_md"), class = "dropdown")
       ),
       
       sidebar = shinydashboard::dashboardSidebar(
         shinydashboard::sidebarMenu(
           id = "tabs",
+          
           shinydashboard::menuItem("Data Import", 
                                    tabName = "data_import"),
           shinydashboard::menuItem("Spectra Curation", 
@@ -77,7 +85,7 @@ app_ui <- function(request) {
           )
         )
       ),
-      title = "Glyco data processing dashboard"
+      title = "Glycodash"
     )
   )
 }

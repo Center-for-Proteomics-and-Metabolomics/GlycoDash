@@ -329,7 +329,7 @@ process_plate_design <- function (plate_design) {
 #' @param sample_list_file The path to an Excel file containing the sample list.
 #' The Excel file should contain only one sheet with two columns named 
 #' "sample_name" and "sample_id". The sample_name column should contain all
-#' sample names that are present in your LacyTools summary. The sample_id column
+#' sample names that are present in your LaCyTools summary. The sample_id column
 #' should contain the sample ID corresponding to that sample name. Standards 
 #' and blanks should be included.
 #'
