@@ -17,8 +17,9 @@ app_server <- function( input, output, session ) {
     },
     content = function(file) {
       # Convert the md_content to HTML
-      html_content <- markdown::markdownToHTML(readLines("NEWS.md"))
-
+      md_file <- system.file("app", "www", "NEWS.md", package = "glycodash")
+      html_content <- markdown::markdownToHTML(readLines(md_file))
+      
       # Write the HTML content to the output_file.html
       writeLines(html_content, file)
     }
