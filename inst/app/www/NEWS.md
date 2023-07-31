@@ -2,6 +2,9 @@
 ## Bug fixes
 * The “Changelog” download button now works in Docker and on the cpmtools server (previously it only worked in RStudio).
 
+## Adjustments
+* Added an example metadata file, and an info box about metadata.
+
 
 # v1.2.3
 ## Adjustments
