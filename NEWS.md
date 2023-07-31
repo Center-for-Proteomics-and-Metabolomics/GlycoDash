@@ -1,6 +1,6 @@
 # v1.2.4
 ## Bug fixes
-* The "Changelog" download button now works in Docker and on the cpmtools server (previously it only worked in RStudio).
+* The “Changelog” download button now works in Docker and on the cpmtools server (previously it only worked in RStudio).
 
 
 # v1.2.3
