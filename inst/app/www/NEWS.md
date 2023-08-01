@@ -1,3 +1,9 @@
+# v1.2.5
+## Performance improvements
+* Adding clusters and adding metadata in the “Data import” tab is now much faster.
+* Analyte curation is performed much faster.
+
+
 # v1.2.4
 ## Bug fixes
 * The “Changelog” download button now works in Docker and on the cpmtools server (previously it only worked in RStudio).

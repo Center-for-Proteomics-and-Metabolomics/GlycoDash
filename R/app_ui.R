@@ -12,9 +12,9 @@ app_ui <- function(request) {
     # Your application UI logic 
     shinydashboard::dashboardPage(
       
-      # Title header, with button that links to GitHUb
+      # Title header, with button that links to GitHub
       header = shinydashboard::dashboardHeader(
-        title = "Glycodash v1.2.4",
+        title = "Glycodash v1.2.5",
         tags$li(a(
           onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/glycodash')",
           href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"
