@@ -142,11 +142,14 @@ check_each_criterium <- function(my_data,
 #' 
 apply_chosen_criteria <- function(my_data,
                                   criteria_to_consider) {
-  to_return <- my_data %>% 
-    dplyr::rowwise() %>% 
-    dplyr::mutate(analyte_meets_criteria = all(
-      dplyr::c_across(tidyselect::all_of(criteria_to_consider))
-    ))
+  to_return <- my_data 
+  
+  if (length(criteria_to_consider) == 0) {
+    to_return$analyte_meets_criteria <- TRUE
+  } else {
+    qc_cols <- to_return[, criteria_to_consider, drop = FALSE]
+    to_return$analyte_meets_criteria <- rowSums(qc_cols) == length(criteria_to_consider)
+  }
   
   return(to_return)
 }
