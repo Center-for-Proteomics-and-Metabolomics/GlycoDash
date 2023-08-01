@@ -26,6 +26,12 @@ app_server <- function( input, output, session ) {
     results_analyte_curation = results_analyte_curation,
     merged_metadata = results_data_import$merged_metadata)
   
+  results_quantitation <- mod_quantitation_server(
+    id = "quantitation_ui_1",
+    results_analyte_curation = results_analyte_curation,
+    results_normalization = results_normalization
+  )
+  
   results_derived_traits <- mod_derived_traits_server(
     id = "derived_traits_ui_1",
     results_normalization = results_normalization)

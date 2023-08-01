@@ -12,6 +12,24 @@ mod_quantitation_ui <- function(id) {
   
   # Code for UI below...
   
+  
+  
+  
+  
+  ##### PLACEHOLDER CODE #####
+  tagList(
+    sliderInput(
+      inputId = ns("choice"), 
+      label = "Choice",
+      min = 1, max = 10, value = 5
+    ),
+    actionButton(
+      inputId = ns("validate"),
+      label = "Validate Choice"
+    )
+  )
+  ###########################
+  
 }
 
 
@@ -24,9 +42,15 @@ mod_quantitation_server <- function(id, results_analyte_curation, results_normal
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 	
-	# Code for server below...
+	  # Code for server below...
   
   
+    
+    ##### PLACEHOLDER CODE #####
+    observeEvent( input$validate , {
+      print(input$choice)
+    })
+    ############################
   
   })
 }
