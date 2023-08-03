@@ -39,12 +39,24 @@ mod_quantitation_ui <- function(id) {
 #'
 #' @noRd 
 mod_quantitation_server <- function(id, quantitation_clusters,
-                                    results_analyte_curation) {
+                                    LaCyTools_summary,
+                                    analyte_curated_data,
+                                    results_normalization) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-	
-	  # Code for server below...
-  
+    
+    # Write a function: quantify_IgG1() --> place in fct_quantitation.R
+    IgG1_quantitation_data <- reactive({
+      req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
+      get_IgG1_quantitation_data(LaCyTools_summary(), 
+                                 quantitation_clusters(),
+                                 analyte_curated_data())
+    })
+    
+    observe({
+      req(IgG1_quantitation_data())
+      browser()
+    })
   
     
     ##### PLACEHOLDER CODE #####
