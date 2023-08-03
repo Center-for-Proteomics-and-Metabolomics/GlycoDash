@@ -41,8 +41,8 @@ mod_analyte_curation_ui <- function(id){
                     content = HTML(paste(
                       tags$b("Excel file:"),
                       tags$p(paste(
-                        "The file should consist of one column with the names of the",
-                        "analytes that you want to keep. A column name is not required."
+                        'The file should consist of one column called "analyte",',
+                        'followed by the names of the analytes that you want to keep.'
                       )),
                       tags$b("R object:"),
                       tags$p(paste(
@@ -238,6 +238,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     # Show and hide UI based on the chosen method:
     observe({
+      shinyjs::toggle("curation_method",
+                      condition = input$method == "Curate analytes based on data")
       shinyjs::toggle("analyte_list_div", 
                       condition = input$method == "Supply an analyte list")
       shinyjs::toggle("curation_based_on_data_div", 

@@ -9,19 +9,80 @@
 #' @importFrom shiny NS tagList 
 mod_add_metadata_ui <- function(id){
   ns <- NS(id)
-  shinydashboard::box(
-    title = "Upload your metadata",
-    width = NULL,
-    solidHeader = TRUE,
-    status = "primary",
-    fileInput(ns("file"), 
-              "Upload one or more metadata Excel file(s) or R object(s):",
-              multiple = TRUE),
-    div(
-      id = ns("metadata_menu"),
-      uiOutput(ns("sample_id"))
-    ),
-    actionButton(ns("button"), "Add the metadata")
+  tagList(
+    tags$style(HTML(paste0(
+      "#",
+      ns("box_header"),
+      " .awesome-checkbox {padding-top: 7px}",
+      "#",
+      ns("box_header"),
+      " .popover {max-width: 400px !important; color: #333}",
+      "#",
+      ns("box"),
+      " .box-title {width: 100%}",
+      "#",
+      ns("box_header"),
+      " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#",
+      ns("box_header"),
+      " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#",
+      ns("box_header"),
+      " .btn {float: right; border-width: 0px; margin-right: 10px}",
+      "#",
+      ns("box"),
+      " .dropdown {display: inline-block; float: right; width: 330px}",
+      "#",
+      ns("box_header"),
+      " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+    ))),
+  
+    shinydashboardPlus::box(
+      id = ns("box"),
+      title = div(
+        id = ns("box_header"),
+        "Upload your metadata (optional)",
+        icon("info-circle", class = "ml") %>% 
+          bsplus::bs_embed_popover(
+            title = "Explanation",
+            content = HTML(
+              "Your metadata Excel file should contain a column with the sample ID's, and one more or more columns with metadata.",
+              "Each sample ID should be present only once in your Excel file."
+            ),
+            trigger = "hover", 
+            placement = "right",
+            html = "true"),
+        shinyWidgets::dropdownButton(
+          tags$style(HTML(paste0(
+            "#",
+            ns("dropdown_content"),
+            " .fas {float: left}",
+            "#",
+            ns("dropdown_content"),
+            " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
+          ))),
+          div(id = ns("dropdown_content"),
+              downloadButton(ns("download_example_metadata"),
+                             "Download a metadata example file")),
+          icon = icon("paperclip",
+                      class = "ml"),
+          tooltip = shinyWidgets::tooltipOptions(placement = "top",
+                                                 title = "Examples"),
+          width = "330px",
+          size = "xs"
+        )),
+      width = NULL,
+      solidHeader = TRUE,
+      status = "primary",
+      fileInput(ns("file"), 
+                "Upload one or more metadata Excel file(s) or R object(s):",
+                multiple = TRUE),
+      div(
+        id = ns("metadata_menu"),
+        uiOutput(ns("sample_id"))
+      ),
+      actionButton(ns("button"), "Add the metadata")
+    )
   )
 }
     
@@ -317,7 +378,18 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
     }, priority = 20)
     
     
-  
+    # Download example metadata file
+    output$download_example_metadata <- downloadHandler(
+      filename = "metadata_example.xlsx",
+      content = function(file) {
+        example_file <- system.file("app",
+                                    "www",
+                                    "metadata_example.xlsx",
+                                    package = "glycodash")
+        file.copy(example_file, file)
+      }
+    )
+    
     return(list(
       data = with_metadata,
       button = reactive({r$master_button}),
