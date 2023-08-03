@@ -771,20 +771,19 @@ create_cut_off_plot <- function(summarized_checks) {
                                  "\nUncalibrated: ",
                                  uncalibrated))
     ) +
-    ggplot2::geom_jitter(data = for_plot[!for_plot$uncalibrated, ],
+    ggplot2::geom_point(data = for_plot[!for_plot$uncalibrated, ],
                          ggplot2::aes(color = sample_type,
                                       x = passing_analyte_percentage,
                                       y = sum_intensity),
                          size = 1,
                          alpha = 0.7) +
-    ggplot2::geom_jitter(data = for_plot[for_plot$uncalibrated, ],
+    ggplot2::geom_point(data = for_plot[for_plot$uncalibrated, ],
                          ggplot2::aes(color = sample_type,
                                       x = passing_analyte_percentage,
                                       y = sum_intensity),
                          shape = 15,
                          size = 1,
-                         alpha = 0.7,
-                         width = 0.01) +
+                         alpha = 0.7) +
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +

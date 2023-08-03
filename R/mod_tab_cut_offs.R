@@ -226,6 +226,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       }
       return(plot)
     })
+
     
     output$plot <- plotly::renderPlotly({
       req(my_plot())
