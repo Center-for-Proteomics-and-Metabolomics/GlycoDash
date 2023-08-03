@@ -1,3 +1,11 @@
+# v1.2.6
+## Adjustments
+* In the spectra curation cut-off plots, the points are no longer jittered.
+
+## Bug fixes
+* Clicking each cluster tab in the analyte curation results is no longer required.
+
+
 # v1.2.5
 ## Performance improvements
 * Adding clusters and adding metadata in the “Data import” tab is now much faster.

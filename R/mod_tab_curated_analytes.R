@@ -181,10 +181,6 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
       create_analyte_curation_table(dataframe_for_table = curated_analytes_table())
     })
     
-    # observe({
-    #   req(curated_analytes_table())
-    #   browser()
-    # })
     
     analytes_to_include <- reactive({
       req(curated_analytes_table())
