@@ -707,8 +707,7 @@ get_sample_type_options <- function(summarized_checks,
 #'This function can be used to visualize spectra curation. It will create a
 #'scatter plot with the sum intensity plotted against the percentage of passing
 #'analytes. Each point represents one sum spectrum (one cluster from one
-#'sample). The points have a horizontal jitter to minimize overlap. Colors
-#'represent sample types. Uncalibrated spectra are shown as squares, while
+#'sample). Colors represent sample types. Uncalibrated spectra are shown as squares, while
 #'calibrated spectra are shown as dots. If the data contains total and specific
 #'samples, the plot is faceted by group (total or specific).
 #'
