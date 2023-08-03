@@ -542,7 +542,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     priority = 10)
     
     
-    
     with_analytes_to_include <- reactive({
       
       if (input$curation_method == "Per sample") {
