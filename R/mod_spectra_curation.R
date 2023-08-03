@@ -293,22 +293,29 @@ mod_spectra_curation_server <- function(id, results_data_import){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    LaCyTools_summary <- reactive({
+    # If quantitation is done: exlude quantitation clusters except IgG1 glycopeptides
+    data_to_check <- reactive({
       req(results_data_import$LaCyTools_summary())
-      results_data_import$LaCyTools_summary()
+      if (is_truthy(results_data_import$quantitation_clusters())) {
+        clusters <- results_data_import$quantitation_clusters()
+        exclude <- clusters[setdiff(names(clusters), "IgG1_cluster_glyco")]
+        to_return <- results_data_import$LaCyTools_summary() %>% 
+          dplyr::filter(!cluster %in% exclude)
+        return(to_return)
+      } else {
+        results_data_import$LaCyTools_summary()
+      }
     })
     
-    # Data with criteria checks for each analyte in each sample:
+    
+    # Data with criteria checks for each analyte in each sample.
     checked_data <- reactive({
-      req(LaCyTools_summary(),
-          input$sn,
-          input$ipq
-      )
+      req(data_to_check(), input$sn, input$ipq)
       
       r$tab_contents <- NULL # Reset the tab contents so that 
       # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
       
-      check_analyte_quality_criteria(my_data = LaCyTools_summary(),
+      check_analyte_quality_criteria(my_data = data_to_check(),
                                      min_ppm_deviation = input$mass_accuracy[1],
                                      max_ppm_deviation = input$mass_accuracy[2],
                                      max_ipq = input$ipq,
@@ -316,6 +323,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                      criteria_to_consider = input$qc_to_include)
       
     })
+    
+    
     
     # Analyte quality criteria checks summarized per cluster per sample: 
     summarized_checks <- reactive({
@@ -366,8 +375,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     clusters <- reactive({
-      req(LaCyTools_summary())
-      unique(LaCyTools_summary()$cluster)
+      req(data_to_check())
+      unique(data_to_check()$cluster)
     })
     
     observeEvent(clusters(), {

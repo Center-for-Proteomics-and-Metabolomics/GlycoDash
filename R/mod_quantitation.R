@@ -38,7 +38,8 @@ mod_quantitation_ui <- function(id) {
 #' quantitation Server Functions
 #'
 #' @noRd 
-mod_quantitation_server <- function(id, results_analyte_curation, results_normalization) {
+mod_quantitation_server <- function(id, quantitation_clusters,
+                                    results_analyte_curation) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 	

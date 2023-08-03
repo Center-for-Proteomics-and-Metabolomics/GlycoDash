@@ -219,8 +219,24 @@ mod_clusters_server <- function(id, LaCyTools_summary){
         })
     }) %>% bindEvent(input$button)
     
+    
+    # Get the cluster names required for IgG1 quantitation, if applicable.
+    quantitation_clusters <- reactive({
+      req(r$with_clusters, LaCyTools_summary(), input$contains_silumab == "Yes")
+      list(
+        "silumab_cluster_glyco" = input$silumab_cluster_glyco,
+        "silumab_cluster_GPS" = input$silumab_cluster_GPS,
+        "silumab_cluster_TTP" = input$silumab_cluster_TTP,
+        "IgG1_cluster_glyco" = input$IgG1_cluster_glyco,
+        "IgG1_cluster_GPS" = input$IgG1_cluster_GPS,
+        "IgG1_cluster_TTP" = input$IgG1_cluster_TTP
+      )
+    })
+    
+    
     return(list(
       data = reactive({ r$with_clusters }),
+      quantitation_clusters = quantitation_clusters,
       button = reactive({ input$button })
     ))
     

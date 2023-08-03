@@ -34,7 +34,7 @@ app_ui <- function(request) {
                                    tabName = "analyte_curation"),
           shinydashboard::menuItem("Normalization", 
                                    tabName = "normalization"),
-          shinydashboard::menuItem("Quantitation (optional)",
+          shinydashboard::menuItem("IgG1 quantitation (optional)",
                                    tabName = "quantitation"),
           shinydashboard::menuItem("Glycosylation Traits (optional)", 
                                    tabName = "derived_traits"),
