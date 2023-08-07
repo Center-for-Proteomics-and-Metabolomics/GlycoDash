@@ -491,18 +491,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       # Create one tab for each cluster in without_samples_to_ignore:
       purrr::map(clusters(),
                  function(cluster) {
-                   shinyjs::delay(
-                     ms = 2000,
-                     expr = {
-                       appendTab("tabs",
-                                 select = TRUE,
-                                 session = session,
-                                 tabPanel(
-                                   title = cluster,
-                                   mod_tab_curated_analytes_ui(ns(cluster))
-                                 ))
-                     })
-                   
+                   appendTab("tabs", select = TRUE, session = session,
+                             tabPanel(
+                               title = cluster,
+                               mod_tab_curated_analytes_ui(ns(cluster))
+                             ))
                  })
     })
     
