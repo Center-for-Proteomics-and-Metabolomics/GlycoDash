@@ -363,7 +363,7 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
     }, priority = 5) %>% bindEvent(input$popup, input$button)
     
     with_metadata <- reactive({
-      req(unmatched_ids(), !is.null(merged_metadata()))
+      req(unmatched_ids(), !is.null(merged_metadata()), unique_sample_ids() == TRUE)
       if(any(
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
@@ -435,11 +435,17 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
       }
     )
     
+    # Only return merged_metadata if sample IDs are unique.
+    merged_metadata_to_return <- reactive({
+      req(merged_metadata(), unique_sample_ids() == TRUE)
+      merged_metadata()
+    })
+    
     return(list(
       data = with_metadata,
       button = reactive({r$master_button}),
       filenames_metadata = filenames_metadata, # pass the filenames along for the report
-      merged_metadata = merged_metadata  # for combining with normalized data
+      merged_metadata = merged_metadata_to_return  # for combining with normalized data
       ))
     
   })
