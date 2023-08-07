@@ -9,6 +9,7 @@
 #' @importFrom shiny NS tagList 
 mod_tab_curated_analytes_ui <- function(id){
   ns <- NS(id)
+  
   tagList(
     column(
       width= 12,
