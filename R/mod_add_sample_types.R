@@ -207,8 +207,56 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_bu
     manual_sample_types <- mod_process_sample_type_file_server("process_sample_type_file_ui_1",
                                                                allowed = c("rds", "xlsx", "xls"))
     
+    
+    # observe({
+    #   req(manual_sample_types$list())
+    #   browser()
+    # })
+    
+    # In the case of manual sample types: make sure that the sample IDs are unique
+    unique_manual_sample_ids <- reactive({
+      req(manual_sample_types$list())
+      sample_ids <- manual_sample_types$list()$sample_id
+      all_unique <- length(sample_ids) == length(unique(sample_ids))
+      if (all_unique) {
+        return(TRUE)
+      } else {
+        # Show table with duplicate sample IDs
+        non_unique_ids <- sample_ids[duplicated(sample_ids)]
+        duplicates_table <- DT::datatable(data.frame(non_unique_ids),
+                                          options = list(
+                                            scrollY = "100px",
+                                            paging = FALSE,
+                                            searching = FALSE,
+                                            columnDefs = list(
+                                              list(
+                                                className = 'dt-center',
+                                                targets = "_all"))),
+                                            colnames = "sample_id",
+                                            rownames = FALSE)
+        
+        shinyalert::shinyalert(
+          html = TRUE,
+          text = tagList(
+            "The following sample ID's are present more than once in your file:",
+            duplicates_table,
+            br(),
+            "Please change your file such that each sample ID is present only once, and try again."
+          ),
+          size = "m",
+          confirmButtonText = "OK",
+          confirmButtonCol = "tomato",
+          showCancelButton = FALSE,
+          showConfirmButton = TRUE
+        )
+        
+        return(FALSE)
+      }
+    })
+    
+    
     with_manual_sample_types <- reactive({
-      req(manual_sample_types$list(),
+      req(unique_manual_sample_ids() == TRUE,
           LaCyTools_summary(),
           input$method == "Upload a list with sample ID's and corresponding sample types")
       
