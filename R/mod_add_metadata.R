@@ -263,14 +263,58 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
         shinybusy::remove_modal_spinner()
 
         return(NULL)
-        } else return(merged_metadata)
-      
+      } else return(merged_metadata)
     }) %>% bindEvent(input$button)
+    
+    
+    # Check for duplicate sample IDs
+    unique_sample_ids <- reactive({
+      req(merged_metadata())
+      sample_ids <- merged_metadata()$sample_id
+      all_unique <- length(sample_ids) == length(unique(sample_ids))
+      if (all_unique) {
+        return(TRUE)
+      } else {
+        # Show table with duplicate sample IDs
+        non_unique_ids <- sample_ids[duplicated(sample_ids)]
+        duplicates_table <- DT::datatable(data.frame(non_unique_ids),
+                                          options = list(
+                                            scrollY = "150px",
+                                            paging = FALSE,
+                                            searching = FALSE,
+                                            columnDefs = list(
+                                              list(
+                                                className = 'dt-center',
+                                                targets = "_all"))),
+                                          colnames = "sample_id",
+                                          rownames = FALSE)
+
+        shinyalert::shinyalert(
+          html = TRUE,
+          text = tagList(
+            "The following sample ID's are present more than once in your file:",
+            duplicates_table,
+            br(),
+            "Please change your file such that each sample ID is present only once, and try again."
+          ),
+          size = "m",
+          confirmButtonText = "OK",
+          confirmButtonCol = "tomato",
+          showCancelButton = FALSE,
+          showConfirmButton = TRUE
+        )
+        
+        # Remove the spinner and return FALSE
+        shinybusy::remove_modal_spinner()
+        return(FALSE)
+      }
+    })
     
     
     # Check for unmatched id's
     unmatched_ids <- reactive({
       req(merged_metadata(),
+          unique_sample_ids() == TRUE,
           LaCyTools_summary())
       unmatched <- setdiff(LaCyTools_summary()$sample_id,
                            merged_metadata()$sample_id)
@@ -293,7 +337,7 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
                 "sample ID's in the data had no match in the metadata:"),
           DT::dataTableOutput(ns("unmatched_ids_table")),
           br(),
-          "Please check: 1) Does the spelling of sample IDs in your metadata corresponds to the spelling in your plate design?",
+          "Please check: 1) Does the spelling of sample IDs in your metadata correspond to the spelling in your plate design?",
           "and 2) Have you selected the correct sample ID columns?"
         ),
         size = "m",
