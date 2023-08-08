@@ -105,7 +105,7 @@ mod_add_sample_ids_ui <- function(id){
             )),
             "<p>plate<i>[insert plate number here]</i>_<i>[insert well position here]</i></p>",
             "An example of a valid sample name is:",
-            "<p>\"38160_38161_IM5_<b>plate1_A8</b>_01_Spike 20210409_000237.raw\"</P",
+            "<p>\"38160_38161_IM5_<b>plate1_A8</b>_01_\nSpike_20210409_000237.raw\"</P",
             br(),
             br(),
             tags$p(tags$b("Sample list:"),
