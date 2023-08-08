@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Glycodash
+# GlycoDash
 
 <!-- badges: start -->
 
@@ -10,18 +10,18 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 
 <!-- badges: end -->
 
-Glycodash is an R Shiny dashboard for processing IgG and IgA
+GlycoDash is an R Shiny dashboard for processing IgG and IgA
 glycosylation data obtained from LaCyTools
 (<https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00171>).
 
 ## Installation
 
-### Option 1: Run Glycodash using Docker
+### Option 1: Run GlycoDash using Docker
 
 1. Download and install Docker desktop (https://www.docker.com/products/docker-desktop/)
 2. Start Docker desktop on your computer.
 3. Open Command Prompt.
-4. Look for the most recent Glycodash package here: https://github.com/orgs/Center-for-Proteomics-and-Metabolomics/packages?repo_name=glycodash
+4. Look for the most recent GlycoDash package here: https://github.com/orgs/Center-for-Proteomics-and-Metabolomics/packages?repo_name=GlycoDash
 
     Then pull the Docker image by pasting the listed command in your command prompt, i.e.:
    
@@ -46,7 +46,7 @@ glycosylation data obtained from LaCyTools
 8. When you are done using Glycodash, simply stop the container in Docker by clicking the stop button.
 
 
-### Option 2: Run the Glycodash code in RStudio.
+### Option 2: Run the GlycoDash code in RStudio.
 
 1.  Install R and Rstudio: <https://posit.co/download/rstudio-desktop/>
 2.  Download the source code of the most recent release as a zip file, then unzip and
@@ -63,7 +63,7 @@ glycosylation data obtained from LaCyTools
     (this should look better). The dashboard was tested in Google Chrome
     and Microsoft Edge.
 
-## How to use Glycodash
+## How to use GlycoDash
 _To be filled in..._
 
 ## Branches
