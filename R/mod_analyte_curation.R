@@ -243,12 +243,19 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                      condition = input$method == "Curate analytes based on data" & 
                      input$curation_method == "Per biological group")
       # Only enable button under right circumstances:
-      shinyjs::toggleState("curate_analytes", 
+      shinyjs::toggleState("curate_analytes",
                            condition = 
-                             (input$method == "Supply an analyte list" & 
-                             is_truthy(analyte_list())) | 
-                             ((input$method == "Curate analytes based on data") &
-                             (input$curation_method != "Per biological group" | isTRUE(rv_resp$response))))
+                             all(
+                               is_truthy(passing_spectra()),
+                               any(
+                                 all(input$method == "Supply an analyte list", is_truthy(analyte_list())),
+                                 all(
+                                   input$method == "Curate analytes based on data",
+                                   (input$curation_method != "Per biological group") | isTRUE(rv_resp$response)
+                                 )
+                               )
+                             )
+      )
       # Only ask for analyte curation per biological group when "Curate analytes based on data"
       shinyjs::toggle("curate_per_group",
                       condition = input$method == "Curate analytes based on data")
