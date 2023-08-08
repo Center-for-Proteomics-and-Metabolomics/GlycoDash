@@ -44,4 +44,4 @@ WORKDIR /build_zone
 RUN R -e 'remotes::install_local(upgrade="never")'
 RUN rm -rf /build_zone
 EXPOSE 80
-CMD R -e "options('shiny.port'=80,shiny.host='0.0.0.0');glycodash::run_app()"
+CMD R -e "options('shiny.port'=80,shiny.host='0.0.0.0');GlycoDash::run_app()"

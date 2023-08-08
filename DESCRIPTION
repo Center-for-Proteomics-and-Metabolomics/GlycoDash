@@ -1,5 +1,5 @@
-Package: glycodash
-Title: glycodash
+Package: GlycoDash
+Title: GlycoDash
 Version: 1.0.0
 Authors@R: person('Sterre', 'Siekman', email = 's.l.siekman@lumc.nl', role = c('cre', 'aut'))
 Description: Package for processing glycomics data.

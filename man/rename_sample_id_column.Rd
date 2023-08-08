@@ -28,7 +28,7 @@ names.
 \examples{
 path <- system.file("extdata",
                     "Metadata_example.xlsx",
-                    package = "glycodash")
+                    package = "GlycoDash")
 
 metadata_list <- read_metadata(filepaths = list(path),
                                filenames = list("Metadata_example.xlsx"))

@@ -25,9 +25,9 @@
 
 # v1.2.3
 ## Adjustments
-* Added a link to the Glycodash GitHub page in the top right corner of the dashboard.
+* Added a link to the GlycoDash GitHub page in the top right corner of the dashboard.
 * Added a download button for the changelog in the top right corner.
-* Changed the title of the dashboard to “Glycodash v<x.y.z>”
+* Changed the title of the dashboard to “GlycoDash v<x.y.z>”
 
 
 # v1.2.2
@@ -78,6 +78,6 @@
 
 
 # v1.0.0
-The first official release of the Glycodash master branch on GitHub.
+The first official release of the GlycoDash master branch on GitHub.
 
 

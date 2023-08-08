@@ -394,7 +394,7 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_bu
         example_file <- system.file("app",
                                     "www",
                                     "Example sample types file.xlsx",
-                                    package = "glycodash")
+                                    package = "GlycoDash")
         file.copy(example_file, file)
       }
     )

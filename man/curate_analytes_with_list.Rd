@@ -35,7 +35,7 @@ curated_spectra <- example_data$curated_data \%>\%
 
 analyte_list_file <- system.file("extdata",
                                  "Analyte_list.xlsx",
-                                 package = "glycodash")
+                                 package = "GlycoDash")
 
 analyte_list <- readxl::read_excel(analyte_list_file)
 

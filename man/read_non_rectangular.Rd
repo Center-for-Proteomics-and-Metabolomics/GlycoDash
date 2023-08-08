@@ -27,7 +27,7 @@ files).
 \examples{
 data_file <- system.file("extdata", 
                          "LaCyTools_summary_example.txt", 
-                         package = "glycodash")
+                         package = "GlycoDash")
 read_non_rectangular(path = data_file, delim = "\t")
 
 }

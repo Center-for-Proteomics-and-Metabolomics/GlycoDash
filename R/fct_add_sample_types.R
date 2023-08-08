@@ -19,7 +19,7 @@
 #' @examples
 #' path <- system.file("extdata",
 #'                     "Sample_types_example.xlsx",
-#'                     package = "glycodash")
+#'                     package = "GlycoDash")
 #' 
 #' read_sample_type_file(filepath = path, 
 #'                       filename = "Sample_types_example.xlsx")

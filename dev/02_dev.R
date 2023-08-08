@@ -113,8 +113,8 @@ usethis::use_test( "normalization" )
 # Documentation
 
 ## Vignette ----
-usethis::use_vignette("glycodash_data_import")
-usethis::use_vignette("glycodash_spectra_curation")
+usethis::use_vignette("GlycoDash_data_import")
+usethis::use_vignette("GlycoDash_spectra_curation")
 devtools::build_vignettes()
 
 ## Code Coverage----

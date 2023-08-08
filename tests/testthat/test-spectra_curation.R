@@ -1,4 +1,4 @@
-library(glycodash)
+library(GlycoDash)
 
 test_that("analyte_meets_criteria is TRUE when the analyte meets all criteria", {
   

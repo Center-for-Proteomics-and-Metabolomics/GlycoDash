@@ -430,7 +430,7 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
         example_file <- system.file("app",
                                     "www",
                                     "metadata_example.xlsx",
-                                    package = "glycodash")
+                                    package = "GlycoDash")
         file.copy(example_file, file)
       }
     )
