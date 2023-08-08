@@ -898,7 +898,7 @@ plot_spectra_curation_results <- function(curated_data,
           # reason_for_failure  # need if else statement
           ifelse(
             !is.na(reason_for_failure),
-            paste("No", reason_for_failure, sep = ", "),
+            paste("No", tolower(reason_for_failure), sep = ", "),
             "Yes"
           )
         )
