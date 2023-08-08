@@ -158,7 +158,9 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_bu
                                input$method == "Automatically determine sample types based on sample ID's",
                                all(
                                  input$method == "Upload a list with sample ID's and corresponding sample types",
-                                 is_truthy(manual_sample_types$list())
+                                 is_truthy(manual_sample_types$list()),
+                                 !is_truthy(unmatched_sample_ids()),
+                                 !is_truthy(duplicate_sample_ids())
                                )
                              ),
                              is_truthy(LaCyTools_summary())
@@ -208,40 +210,79 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_bu
                                                                allowed = c("rds", "xlsx", "xls"))
     
     
-    # observe({
-    #   req(manual_sample_types$list())
-    #   browser()
-    # })
-    
     # In the case of manual sample types: make sure that the sample IDs are unique
-    unique_manual_sample_ids <- reactive({
+    duplicate_sample_ids <- reactive({
       req(manual_sample_types$list())
       sample_ids <- manual_sample_types$list()$sample_id
       all_unique <- length(sample_ids) == length(unique(sample_ids))
       if (all_unique) {
-        return(TRUE)
+        return(NULL)
       } else {
-        # Show table with duplicate sample IDs
         non_unique_ids <- sample_ids[duplicated(sample_ids)]
-        duplicates_table <- DT::datatable(data.frame(non_unique_ids),
-                                          options = list(
-                                            scrollY = "100px",
-                                            paging = FALSE,
-                                            searching = FALSE,
-                                            columnDefs = list(
-                                              list(
-                                                className = 'dt-center',
-                                                targets = "_all"))),
-                                            colnames = "sample_id",
-                                            rownames = FALSE)
+        return(non_unique_ids)
+      }
+    })
+    
+    observe({
+      req(duplicate_sample_ids())
+      duplicates_table <- DT::datatable(data.frame(duplicate_sample_ids()),
+                                        options = list(
+                                          scrollY = "150px",
+                                          paging = FALSE,
+                                          searching = FALSE,
+                                          columnDefs = list(
+                                            list(
+                                              className = 'dt-center',
+                                              targets = "_all"))),
+                                        colnames = "sample_id",
+                                        rownames = FALSE)
+      shinyalert::shinyalert(
+        html = TRUE,
+        text = tagList(
+          "The following sample ID's are present more than once in your file:",
+          duplicates_table,
+          br(),
+          "Please change your file such that each sample ID is present only once, and try again."
+        ),
+        size = "m",
+        confirmButtonText = "OK",
+        confirmButtonCol = "tomato",
+        showCancelButton = FALSE,
+        showConfirmButton = TRUE
+      )
+    })
+    
         
+    # In the case of manual sample types: check for unmatched ID's
+    unmatched_sample_ids <- reactive({
+      req(!is_truthy(duplicate_sample_ids()), LaCyTools_summary(), manual_sample_types$list())
+      unmatched <- setdiff(LaCyTools_summary()$sample_id, manual_sample_types$list()$sample_id)
+      if (rlang::is_empty(unmatched)) {
+        return(NULL)
+      } else return(unmatched)
+    })
+    
+    observe({
+      req(unmatched_sample_ids())
+      # Show a pop-up table if there are unmatched sample ID's
+      unmatched_table <- DT::datatable(data.frame(unmatched_sample_ids()),
+                                        options = list(
+                                          scrollY = "150px",
+                                          paging = FALSE,
+                                          searching = FALSE,
+                                          columnDefs = list(
+                                            list(
+                                              className = 'dt-center',
+                                              targets = "_all"))),
+                                        colnames = "sample_id",
+                                        rownames = FALSE)
         shinyalert::shinyalert(
           html = TRUE,
           text = tagList(
-            "The following sample ID's are present more than once in your file:",
-            duplicates_table,
+            "The following sample ID's from your data are not present in your sample type list:",
+            unmatched_table,
             br(),
-            "Please change your file such that each sample ID is present only once, and try again."
+            "Please add these sample ID's to your file, and try again."
           ),
           size = "m",
           confirmButtonText = "OK",
@@ -249,24 +290,27 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_bu
           showCancelButton = FALSE,
           showConfirmButton = TRUE
         )
-        
-        return(FALSE)
-      }
     })
     
     
+    # Combine manual sample types with data
     with_manual_sample_types <- reactive({
-      req(unique_manual_sample_ids() == TRUE,
-          LaCyTools_summary(),
-          input$method == "Upload a list with sample ID's and corresponding sample types")
-      
-      sample_types_as_factor <- manual_sample_types$list() %>% 
-        dplyr::mutate(sample_type = as.factor(sample_type)) %>% 
+      req(LaCyTools_summary(),
+          input$method == "Upload a list with sample ID's and corresponding sample types",
+          manual_sample_types$list(),
+          !is_truthy(unmatched_sample_ids()),
+          !is_truthy(duplicate_sample_ids())
+          )
+
+      sample_types_as_factor <- manual_sample_types$list() %>%
+        dplyr::mutate(sample_type = as.factor(sample_type)) %>%
         dplyr::distinct()
-      
-      dplyr::left_join(LaCyTools_summary(),
-                       sample_types_as_factor)
-    })
+
+      dplyr::left_join(LaCyTools_summary(), sample_types_as_factor) %>%
+        dplyr::relocate(sample_type, .after = sample_id)
+    }) %>% 
+      bindEvent(input$button)
+    
     
     # Show popup with automatically determined sample types if automatic method
     # is chosen and button is clicked:
