@@ -1,6 +1,9 @@
 # v1.2.6
 ## Adjustments
 * In the spectra curation cut-off plots, the points are no longer jittered.
+* Implemented a check against duplicate sample IDs in the sample type list and metadata Excel file.
+* Implemented a check against missing sample IDs in the sample type list.
+* The “Perform analyte curation” button is now disabled when spectra curation was not yet performed.
 
 ## Bug fixes
 * Clicking each cluster tab in the analyte curation results is no longer required.
