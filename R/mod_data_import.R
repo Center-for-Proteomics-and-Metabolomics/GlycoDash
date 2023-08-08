@@ -1,6 +1,6 @@
 #' data_import UI Function
 #'
-#' @description This module contains the first tab 'Data Import' of the Glycodash app.
+#' @description This module contains the first tab 'Data Import' of the GlycoDash app.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'

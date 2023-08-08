@@ -36,7 +36,7 @@ outputs <- as.list(unlist(lapply(output_types,
 #' @examples 
 #' data_file <- system.file("extdata", 
 #'                          "LaCyTools_summary_example.txt", 
-#'                          package = "glycodash")
+#'                          package = "GlycoDash")
 #' read_non_rectangular(path = data_file, delim = "\t")
 #' 
 read_non_rectangular <- function(path, delim = "\t") {
@@ -73,7 +73,7 @@ read_non_rectangular <- function(path, delim = "\t") {
 #' @examples
 #' data_file <- system.file("extdata", 
 #'                          "LaCyTools_summary_example.txt", 
-#'                          package = "glycodash")
+#'                          package = "GlycoDash")
 #' find_widest_row(path = data_file, delim = "\t")
 find_widest_row <- function(path, delim) {
   

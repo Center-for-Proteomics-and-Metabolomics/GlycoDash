@@ -1,3 +1,14 @@
+# v1.2.6
+## Adjustments
+* In the spectra curation cut-off plots, the points are no longer jittered.
+* Implemented a check against duplicate sample IDs in the sample type list and metadata Excel file.
+* Implemented a check against missing sample IDs in the sample type list.
+* The “Perform analyte curation” button is now disabled when spectra curation was not yet performed.
+
+## Bug fixes
+* Clicking each cluster tab in the analyte curation results is no longer required.
+
+
 # v1.2.5
 ## Performance improvements
 * Adding clusters and adding metadata in the “Data import” tab is now much faster.
@@ -14,9 +25,9 @@
 
 # v1.2.3
 ## Adjustments
-* Added a link to the Glycodash GitHub page in the top right corner of the dashboard.
+* Added a link to the GlycoDash GitHub page in the top right corner of the dashboard.
 * Added a download button for the changelog in the top right corner.
-* Changed the title of the dashboard to “Glycodash v<x.y.z>”
+* Changed the title of the dashboard to “GlycoDash v<x.y.z>”
 
 
 # v1.2.2
@@ -67,6 +78,6 @@
 
 
 # v1.0.0
-The first official release of the Glycodash master branch on GitHub.
+The first official release of the GlycoDash master branch on GitHub.
 
 

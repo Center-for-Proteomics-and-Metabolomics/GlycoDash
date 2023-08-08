@@ -223,7 +223,7 @@ mod_export_server <- function(id,
         report_file <- system.file("app",
                                    "www", 
                                    "Report2.Rmd",
-                                   package = "glycodash")
+                                   package = "GlycoDash")
         
         # Copy the original Report.Rmd file to the temporary file location:
         file.copy(report_file, 

@@ -19,8 +19,8 @@
 ## to change the name in the app_sys() function in app_config.R /!\
 ## 
 golem::fill_desc(
-  pkg_name = "glycodash", # The Name of the package containing the App 
-  pkg_title = "glycodash", # The Title of the package containing the App 
+  pkg_name = "GlycoDash", # The Name of the package containing the App 
+  pkg_title = "GlycoDash", # The Title of the package containing the App 
   pkg_description = "Package for processing IgG/IgA glycosylation data.", # The Description of the package containing the App 
   author_first_name = "Sterre", # Your First Name
   author_last_name = "Siekman", # Your Last Name

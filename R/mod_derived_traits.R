@@ -290,7 +290,7 @@ mod_derived_traits_server <- function(id, results_normalization){
         example_file <- system.file("app",
                                     "www",
                                     "Custom_traits_formulas_example.xlsx",
-                                    package = "glycodash")
+                                    package = "GlycoDash")
         file.copy(example_file, file)
       }
     )

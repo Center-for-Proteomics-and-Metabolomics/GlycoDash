@@ -9,6 +9,7 @@
 #' @importFrom shiny NS tagList 
 mod_tab_curated_analytes_ui <- function(id){
   ns <- NS(id)
+  
   tagList(
     column(
       width= 12,
@@ -181,6 +182,7 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
       create_analyte_curation_table(dataframe_for_table = curated_analytes_table())
     })
     
+    
     analytes_to_include <- reactive({
       req(curated_analytes_table())
       
@@ -207,7 +209,20 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
         dplyr::filter(!is.na(analyte)) %>% 
         dplyr::mutate(dplyr::across(analyte, as.character))
       
-      return(analytes_to_include_per_charge)
+      
+      # Test if analytes_to_include_per_charge is empty.
+      # This is the case when the cluster tab has not yet been clicked.
+      to_return <- if (nrow(analytes_to_include_per_charge) > 0) {
+        analytes_to_include_per_charge
+      } else {
+        curated_analytes_table() %>% 
+          dplyr::select(., "analyte", charge_columns) %>% 
+          tidyr::pivot_longer(., cols = charge_columns, names_to = "charge") %>% 
+          dplyr::filter(., value == "Yes") %>% 
+          dplyr::select(., -value)
+      }
+      
+      return(to_return)
     })
     
     

@@ -24,7 +24,7 @@ ID's can be linked to your data.
 \examples{
 path <- system.file("extdata",
                     "Sample_list_example.xlsx",
-                    package = "glycodash")
+                    package = "GlycoDash")
 
 process_sample_list(sample_list_file = path)
 }
