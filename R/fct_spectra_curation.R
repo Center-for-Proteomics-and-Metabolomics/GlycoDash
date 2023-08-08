@@ -707,8 +707,7 @@ get_sample_type_options <- function(summarized_checks,
 #'This function can be used to visualize spectra curation. It will create a
 #'scatter plot with the sum intensity plotted against the percentage of passing
 #'analytes. Each point represents one sum spectrum (one cluster from one
-#'sample). The points have a horizontal jitter to minimize overlap. Colors
-#'represent sample types. Uncalibrated spectra are shown as squares, while
+#'sample). Colors represent sample types. Uncalibrated spectra are shown as squares, while
 #'calibrated spectra are shown as dots. If the data contains total and specific
 #'samples, the plot is faceted by group (total or specific).
 #'
@@ -771,20 +770,19 @@ create_cut_off_plot <- function(summarized_checks) {
                                  "\nUncalibrated: ",
                                  uncalibrated))
     ) +
-    ggplot2::geom_jitter(data = for_plot[!for_plot$uncalibrated, ],
+    ggplot2::geom_point(data = for_plot[!for_plot$uncalibrated, ],
                          ggplot2::aes(color = sample_type,
                                       x = passing_analyte_percentage,
                                       y = sum_intensity),
                          size = 1,
                          alpha = 0.7) +
-    ggplot2::geom_jitter(data = for_plot[for_plot$uncalibrated, ],
+    ggplot2::geom_point(data = for_plot[for_plot$uncalibrated, ],
                          ggplot2::aes(color = sample_type,
                                       x = passing_analyte_percentage,
                                       y = sum_intensity),
                          shape = 15,
                          size = 1,
-                         alpha = 0.7,
-                         width = 0.01) +
+                         alpha = 0.7) +
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
@@ -900,7 +898,7 @@ plot_spectra_curation_results <- function(curated_data,
           # reason_for_failure  # need if else statement
           ifelse(
             !is.na(reason_for_failure),
-            paste("No", reason_for_failure, sep = ", "),
+            paste("No", tolower(reason_for_failure), sep = ", "),
             "Yes"
           )
         )

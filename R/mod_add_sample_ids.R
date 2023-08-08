@@ -396,7 +396,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
         example_file <- system.file("app",
                                     "www",
                                     "Example plate design file.xlsx",
-                                    package = "glycodash")
+                                    package = "GlycoDash")
         file.copy(example_file, file)
       }
     )
@@ -407,7 +407,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
         example_file <- system.file("app",
                                     "www",
                                     "Example sample list file.xlsx",
-                                    package = "glycodash")
+                                    package = "GlycoDash")
         file.copy(example_file, file)
       }
     )

@@ -47,6 +47,6 @@ the same format.
 \examples{
 path <- system.file("extdata",
                     "Plate_design_example.xlsx",
-                    package = "glycodash")
+                    package = "GlycoDash")
 read_plate_design(plate_design_file = path)
 }

@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Glycodash
+# GlycoDash
 
 <!-- badges: start -->
 
@@ -21,11 +21,11 @@ knitr::opts_chunk$set(
 
 <!-- badges: end -->
 
-Glycodash is an R Shiny dashboard for processing IgG and IgA glycosylation data obtained from LaCyTools (<https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00171>).
+GlycoDash is an R Shiny dashboard for processing IgG and IgA glycosylation data obtained from LaCyTools (<https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00171>).
 
 ## Installation
 
-You can run the glycodash code on your own pc as follows:
+You can run the GlycoDash code on your own pc as follows:
 
 1.  Install R and Rstudio: <https://posit.co/download/rstudio-desktop/>
 2.  Download the master branch source code as a zip file, then unzip and store the folder somewhere.

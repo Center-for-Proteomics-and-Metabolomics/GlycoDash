@@ -2,12 +2,12 @@ test_that("read_non_rectangular can read in files with different delimiters", {
   path_to_csv <- system.file("extdata",
                              "for_tests",
                              "flatfile.csv",
-                             package = "glycodash")
+                             package = "GlycoDash")
   
   path_to_txt <- system.file("extdata",
                              "for_tests",
                              "flatfile.txt",
-                             package = "glycodash")
+                             package = "GlycoDash")
   
   expect_no_error(read_non_rectangular(path = path_to_csv,
                                     delim = ";"))
@@ -32,7 +32,7 @@ test_that("number of columns of dataframe read in with read_non_rectangular() is
   path_to_csv <- system.file("extdata",
                              "for_tests",
                              "flatfile.csv",
-                             package = "glycodash")
+                             package = "GlycoDash")
   
   expect_length(object = read_non_rectangular(path_to_csv,
                                               delim = ";"),
@@ -43,7 +43,7 @@ test_that("read_non_rectangular reads blank lines as a row with only NAs", {
   path_to_txt <- system.file("extdata",
                              "for_tests",
                              "flatfile.txt",
-                             package = "glycodash")
+                             package = "GlycoDash")
   
   data <- read_non_rectangular(path_to_txt)
   
@@ -60,7 +60,7 @@ test_that("read_non_rectangular reads blank lines as a row with only NAs", {
 test_that("read_non_rectangular() throws an error if the resulting dataframe has only one column", {
   path_to_lacytools <- system.file("extdata",
                                    "LaCyTools_summary_example.txt",
-                                   package = "glycodash")
+                                   package = "GlycoDash")
   expect_warning(read_non_rectangular(path_to_lacytools, delim = ";"),
                "The file seems to consist of a single column\\. Are you sure that you chose the correct delimiter for your file?" )
 })
@@ -68,7 +68,7 @@ test_that("read_non_rectangular() throws an error if the resulting dataframe has
 test_that("read_non_rectangular() throws an error if an empty file or dummy file is uploaded", {
   path_to_dummy <- system.file("extdata",
                                "dummy.txt",
-                               package = "glycodash")
+                               package = "GlycoDash")
   
   expect_error(read_non_rectangular(path_to_dummy, delim = "\t"),
                class = "embedded_null")
@@ -76,7 +76,7 @@ test_that("read_non_rectangular() throws an error if an empty file or dummy file
   path_to_wrong_encoding <- system.file("extdata",
                                         "for_tests",
                                         "LaCyTools_summary_example_UTF16LE.txt",
-                                        package = "glycodash")
+                                        package = "GlycoDash")
   
   expect_error(read_non_rectangular(path_to_wrong_encoding, delim = "\t"),
                class = "embedded_null")
@@ -84,7 +84,7 @@ test_that("read_non_rectangular() throws an error if an empty file or dummy file
   path_to_empty <- system.file("extdata",
                                "for_tests",
                                "empty.txt",
-                               package = "glycodash")
+                               package = "GlycoDash")
   
   expect_error(read_non_rectangular(path_to_empty, delim = "\t"),
                class = "empty_file")
@@ -135,7 +135,7 @@ test_that("read_and_process_plate_design() throws an error when plate design fil
   file_no_blank_line <- system.file("extdata",
                                     "for_tests",
                                     "Plate_design_no_blank_line_between_plates.xlsx",
-                                    package = "glycodash")
+                                    package = "GlycoDash")
   
   expect_error(read_and_process_plate_design(file_no_blank_line),
                regexp = "Please check that your plate design file is formatted correctly\\. Run `\\?read_and_process_plate_design` to find the required format\\.")
@@ -143,7 +143,7 @@ test_that("read_and_process_plate_design() throws an error when plate design fil
   file_with_title <- system.file("extdata",
                                  "for_tests",
                                  "Plate_design_with_title.xlsx",
-                                 package = "glycodash")
+                                 package = "GlycoDash")
   
   expect_error(read_and_process_plate_design(file_with_title),
                regexp = "Please check that your plate design file is formatted correctly\\. Run `\\?read_and_process_plate_design` to find the required format\\.")
@@ -152,7 +152,7 @@ test_that("read_and_process_plate_design() throws an error when plate design fil
 test_that("read_and_process_plate_design() returns a dataframe with the number of plates * 96 as number of rows", {
   plate_design_file <- system.file("extdata",
                                    "Plate_design_example.xlsx",
-                                   package = "glycodash")
+                                   package = "GlycoDash")
   
     expect_equal(
       object = nrow(read_and_process_plate_design(plate_design_file)),
@@ -220,7 +220,7 @@ test_that("read_metadata() does not throw an error when colnames contain special
   path_to_metadata <- system.file("extdata",
                                   "for_tests",
                                   "Metadata_example_special_chars.xlsx",
-                                  package = "glycodash")
+                                  package = "GlycoDash")
   
   expect_no_error(read_metadata(filepaths = list(path_to_metadata),
                                 filenames = list("Metadata_example_special_chars.xlsx")))

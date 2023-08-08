@@ -13,11 +13,11 @@ app_server <- function( input, output, session ) {
   # Download changelog
   output$download_md <- downloadHandler(
     filename = function() {
-      "glycodash_changelog.html"
+      "GlycoDash_changelog.html"
     },
     content = function(file) {
       # Convert the md_content to HTML
-      md_file <- system.file("app", "www", "NEWS.md", package = "glycodash")
+      md_file <- system.file("app", "www", "NEWS.md", package = "GlycoDash")
       html_content <- markdown::markdownToHTML(readLines(md_file))
       
       # Write the HTML content to the output_file.html

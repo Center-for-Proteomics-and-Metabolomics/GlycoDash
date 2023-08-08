@@ -42,7 +42,7 @@ Excel file for a 96-wells plate and processes it.
 \examples{
 path <- system.file("extdata",
                     "Plate_design_example.xlsx",
-                    package = "glycodash")
+                    package = "GlycoDash")
 
 read_and_process_plate_design(plate_design_file = path)
 }

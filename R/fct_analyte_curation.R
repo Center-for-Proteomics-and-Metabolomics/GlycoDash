@@ -240,7 +240,7 @@ curate_analytes <- function(checked_analytes, cut_off_percentage,
 #' @examples
 #' path <- system.file("extdata",
 #'                     "Analyte_list.xlsx",
-#'                     package = "glycodash")
+#'                     package = "GlycoDash")
 #'
 #' read_analyte_list_file(filepath = path,
 #'                       filename = "Analyte_list.xlsx")
@@ -311,7 +311,7 @@ read_analyte_list_file <- function(filepath, filename) {
 #'
 #' analyte_list_file <- system.file("extdata",
 #'                                  "Analyte_list.xlsx",
-#'                                  package = "glycodash")
+#'                                  package = "GlycoDash")
 #'
 #' analyte_list <- readxl::read_excel(analyte_list_file)
 #'

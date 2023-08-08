@@ -24,7 +24,7 @@ function and converts it to a different format.
 \examples{
 path <- system.file("extdata",
                     "Plate_design_example.xlsx",
-                    package = "glycodash")
+                    package = "GlycoDash")
 
 plate_design <- read_plate_design(path)
 process_plate_design(plate_design)
