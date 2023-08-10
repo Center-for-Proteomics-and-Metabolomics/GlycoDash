@@ -4,7 +4,7 @@ RUN echo "options(repos = c(CRAN = 'https://cran.rstudio.com/'), download.file.m
 RUN R -e 'install.packages("remotes")'
 RUN Rscript -e 'remotes::install_version("magrittr",upgrade="never", version = "2.0.3")'
 RUN Rscript -e 'remotes::install_version("rlang",upgrade="never", version = "1.1.0")'
-RUN Rscript -e 'remotes::install_version("glue",upgrade="never", version = "1.4.2")'
+RUN Rscript -e 'remotes::install_version("glue",upgrade="never", version = "1.6.2")'
 RUN Rscript -e 'remotes::install_version("processx",upgrade="never", version = "3.8.0")'
 RUN Rscript -e 'remotes::install_version("htmltools",upgrade="never", version = "0.5.2")'
 RUN Rscript -e 'remotes::install_version("tidyselect",upgrade="never", version = "1.2.0")'
