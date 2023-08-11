@@ -52,14 +52,18 @@ mod_quantitation_server <- function(id, quantitation_clusters,
                                     analyte_curated_data())
     })
     
-    observe({
+    IgG1_concentrations <- reactive({
       req(IgG1_sum_intensities())
-      browser()
-      
-      test <- IgG1_sum_intensities() %>% 
-        dplyr::group_by(sample_name) %>% 
-        dplyr::summarize(n = dplyr::n())  # 6 clusters for each sample = OK
+      calculate_IgG1_concentrations(IgG1_sum_intensities(), quantitation_clusters())
     })
+    
+    observe({
+      req(IgG1_concentrations())
+      browser()
+      # Still good to check these ratios
+    })
+    
+    
   
     
     ##### PLACEHOLDER CODE #####

@@ -15,8 +15,8 @@
 #' for IgG1 quantitation. 
 #' 
 calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
-                                      quantitation_clusters,
-                                      analyte_curated_data) {
+                                          quantitation_clusters,
+                                          analyte_curated_data) {
   
   # Get data of passing IgG1 analytes
   passing_IgG1_analytes_data <- analyte_curated_data %>% 
@@ -44,9 +44,37 @@ calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
     dplyr::select(-total_absolute_intensity) %>% 
     # Select data that's needed
     dplyr::select(sample_name, plate_well, sample_id, sample_type, cluster, sum_intensity) %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity)
     
   return(quantitation_data)
+}
+
+
+
+# Function to calculate IgG1 concentrations...
+
+calculate_IgG1_concentrations <- function(IgG1_sum_intensities,
+                                          quantitation_clusters) {
+  
+  # Start by calculating the ratio between natural and SIL peptides.
+  sum_intensity_ratios <- IgG1_sum_intensities %>% 
+    dplyr::mutate(
+      glyco_ratio = .[[quantitation_clusters$IgG1_cluster_glyco]] /
+        .[[quantitation_clusters$silumab_cluster_glyco]],
+      
+      GPS_ratio = .[[quantitation_clusters$IgG1_cluster_GPS]] / 
+        .[[quantitation_clusters$silumab_cluster_GPS]],
+      
+      TTP_ratio = .[[quantitation_clusters$IgG1_cluster_TTP]] / 
+        .[[quantitation_clusters$silumab_cluster_GPS]]
+    ) %>% 
+    # Get rid of sum intensities
+    dplyr::select(sample_name:sample_type, tidyselect::contains("ratio")) %>% 
+    # Calculate the mean of the ratios 
+    dplyr::mutate(
+      mean_ratio = rowMeans(dplyr::across(tidyselect::contains("ratio")))
+    )
 }
 
 
