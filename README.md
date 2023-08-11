@@ -16,7 +16,7 @@ glycosylation data obtained from LaCyTools
 
 ## Installation
 
-### Option 1: Run GlycoDash using Docker
+### Option 1: Run GlycoDash using Docker _(preferred method)_
 
 1. Download and install Docker desktop (https://www.docker.com/products/docker-desktop/)
 2. Start Docker desktop on your computer.
@@ -50,7 +50,7 @@ glycosylation data obtained from LaCyTools
 
 ### Option 2: Run the GlycoDash code in RStudio.
 
-**_Note_:****it is recommended that you use the same R and package versions that are listed in the Dockerfile. Using different versions can break your code.**
+_**It is recommended that you use the same R and package versions that are listed in the Dockerfile. Using different versions can break your code. For less strict requirements, see the DESCRIPTION file.**_
 
 1.  Install R and Rstudio: <https://posit.co/download/rstudio-desktop/>
 2.  Install the required R packages. 
