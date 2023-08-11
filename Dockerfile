@@ -38,6 +38,9 @@ RUN Rscript -e 'remotes::install_version("dashboardthemes",upgrade="never", vers
 RUN Rscript -e 'remotes::install_version("bsplus",upgrade="never", version = "0.1.4")'
 RUN Rscript -e 'remotes::install_version("shinycssloaders",upgrade="never", version = "1.0.0")'
 RUN Rscript -e 'remotes::install_version("shinybusy",upgrade="never", version = "0.3.1")'
+RUN Rscript -e 'remotes::install_version("plotly", upgrade="never", version = "4.10.1")'  
+RUN Rscript -e 'remotes::install_version("shinydashboardPlus", upgrade="never", version = "2.0.3")'
+RUN Rscript -e 'remotes::install_version("shinyjqui", upgrade="never", version = "0.4.1")' 
 RUN mkdir /build_zone
 ADD . /build_zone
 WORKDIR /build_zone
