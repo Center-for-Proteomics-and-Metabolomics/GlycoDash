@@ -45,17 +45,20 @@ mod_quantitation_server <- function(id, quantitation_clusters,
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    # Write a function: quantify_IgG1() --> place in fct_quantitation.R
-    IgG1_quantitation_data <- reactive({
+    IgG1_sum_intensities <- reactive({
       req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
-      get_IgG1_quantitation_data(LaCyTools_summary(), 
-                                 quantitation_clusters(),
-                                 analyte_curated_data())
+      calculate_IgG1_sum_intensities(LaCyTools_summary(),
+                                    quantitation_clusters(),
+                                    analyte_curated_data())
     })
     
     observe({
-      req(IgG1_quantitation_data())
+      req(IgG1_sum_intensities())
       browser()
+      
+      test <- IgG1_sum_intensities() %>% 
+        dplyr::group_by(sample_name) %>% 
+        dplyr::summarize(n = dplyr::n())  # 6 clusters for each sample = OK
     })
   
     
