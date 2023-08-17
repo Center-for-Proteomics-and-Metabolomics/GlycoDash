@@ -10,26 +10,39 @@
 mod_quantitation_ui <- function(id) {
   ns <- NS(id)
   
-  # Code for UI below...
-  
-  # Make a tab for the plots
-  
-  
-  
-  
-  ##### PLACEHOLDER CODE #####
   tagList(
-    sliderInput(
-      inputId = ns("choice"), 
-      label = "Choice",
-      min = 1, max = 10, value = 5
-    ),
-    actionButton(
-      inputId = ns("validate"),
-      label = "Validate Choice"
+    fluidPage(
+      fluidRow(h1("IgG1 quantitation")),
+      fluidRow(
+        column(
+          width = 6,
+          shinydashboard::box(
+            title = "IgG1 quantitation using SILuMAb",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            # Text for when there is no SILuMAb
+            div(
+              id = ns("no_silumab"),
+              strong("Your samples do not contain SILuMAb for IgG1 quantitation.\n\n"),
+              style = "color:#0021B8; font-size: 16px"
+            ),
+            # Input for SILuMAb concentration.
+            numericInput(
+              ns("silumab_concentration"),
+              "SILuMAb concentration per sample (ng/mL):",
+              value = 50, min = 0, max = NA
+            ),
+            # Button to calculate IgG1 concentrations
+            actionButton(
+              ns("calculate_concentrations"),
+              "Calculate IgG1 concentrations"
+            )
+          )
+        )
+      )
     )
   )
-  ###########################
   
 }
 
@@ -46,21 +59,37 @@ mod_quantitation_server <- function(id, quantitation_clusters,
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    IgG1_sum_intensities <- reactive({
-      req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
-      calculate_IgG1_sum_intensities(LaCyTools_summary(),
-                                    quantitation_clusters(),
-                                    analyte_curated_data())
+    # Toggle UI elements
+    observe({
+      shinyjs::toggle(
+        id = "no_silumab",
+        condition = !is_truthy(quantitation_clusters())
+      )
+      shinyjs::toggle(
+        id = "silumab_concentration",
+        condition = is_truthy(quantitation_clusters())
+      )
+      shinyjs::toggle(
+        id = "calculate_concentrations",
+        condition = is_truthy(quantitation_clusters())
+      )
+      shinyjs::toggleState(
+        id = "calculate_concentrations",
+        condition = all(
+          is_truthy(quantitation_clusters()),
+          is_truthy(results_normalization$normalized_data())
+        )
+      )
     })
+    
     
     IgG1_ratios <- reactive({
-      req(IgG1_sum_intensities())
-      calculate_IgG1_ratios(IgG1_sum_intensities(), quantitation_clusters())
-    })
-    
-    observe({
-      req(IgG1_ratios())
-      browser()
+      req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
+      IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
+        LaCyTools_summary(), quantitation_clusters(), analyte_curated_data()
+      )
+      ratios <- calculate_IgG1_ratios(IgG1_sum_intensities, quantitation_clusters())
+      return(ratios)
     })
     
 
