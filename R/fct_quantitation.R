@@ -52,12 +52,12 @@ calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
 
 
 
-# Function to calculate IgG1 concentrations...
 
-calculate_IgG1_concentrations <- function(IgG1_sum_intensities,
-                                          quantitation_clusters) {
+# Function to calculate ratio between natural and SIL peptides
+
+calculate_IgG1_ratios <- function(IgG1_sum_intensities,
+                                  quantitation_clusters) {
   
-  # Start by calculating the ratio between natural and SIL peptides.
   sum_intensity_ratios <- IgG1_sum_intensities %>% 
     dplyr::mutate(
       glyco_ratio = .[[quantitation_clusters$IgG1_cluster_glyco]] /
@@ -71,11 +71,17 @@ calculate_IgG1_concentrations <- function(IgG1_sum_intensities,
     ) %>% 
     # Get rid of sum intensities
     dplyr::select(sample_name:sample_type, tidyselect::contains("ratio")) %>% 
-    # Calculate the mean of the ratios 
+    # Use the median of the ratios for calculating concentrations
+    dplyr::rowwise() %>% 
     dplyr::mutate(
-      mean_ratio = rowMeans(dplyr::across(tidyselect::contains("ratio")))
-    )
+      median_ratio = median(dplyr::c_across(tidyselect::contains("ratio")))
+    ) %>% 
+    dplyr::ungroup()
+  
+  return(sum_intensity_ratios)
 }
+
+
 
 
 

@@ -12,6 +12,7 @@ mod_quantitation_ui <- function(id) {
   
   # Code for UI below...
   
+  # Make a tab for the plots
   
   
   
@@ -52,25 +53,17 @@ mod_quantitation_server <- function(id, quantitation_clusters,
                                     analyte_curated_data())
     })
     
-    IgG1_concentrations <- reactive({
+    IgG1_ratios <- reactive({
       req(IgG1_sum_intensities())
-      calculate_IgG1_concentrations(IgG1_sum_intensities(), quantitation_clusters())
+      calculate_IgG1_ratios(IgG1_sum_intensities(), quantitation_clusters())
     })
     
     observe({
-      req(IgG1_concentrations())
+      req(IgG1_ratios())
       browser()
-      # Still good to check these ratios
     })
     
+
     
-  
-    
-    ##### PLACEHOLDER CODE #####
-    observeEvent( input$validate , {
-      print(input$choice)
-    })
-    ############################
-  
   })
 }
