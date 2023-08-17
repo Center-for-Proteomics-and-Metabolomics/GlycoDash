@@ -70,16 +70,22 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
         .[[quantitation_clusters$silumab_cluster_GPS]]
     ) %>% 
     # Get rid of sum intensities
-    dplyr::select(sample_name:sample_type, tidyselect::contains("ratio")) %>% 
-    # Use the median of the ratios for calculating concentrations
-    dplyr::rowwise() %>% 
-    dplyr::mutate(
-      median_ratio = median(dplyr::c_across(tidyselect::contains("ratio")))
-    ) %>% 
-    dplyr::ungroup()
+    dplyr::select(sample_name:sample_type, tidyselect::contains("ratio"))
+  
+  
+  # Use base R to get median ratio.
+  # (Using dplyr::rowwise() is slow)
+  ratio_columns <- sum_intensity_ratios[, grepl("ratio", colnames(sum_intensity_ratios))]
+  
+  sum_intensity_ratios$median_ratio <- apply(ratio_columns, 1, median)
+  
+  
+  # TODO: find a way to get the column name corresponding to the median ratio
+  
   
   return(sum_intensity_ratios)
 }
+
 
 
 

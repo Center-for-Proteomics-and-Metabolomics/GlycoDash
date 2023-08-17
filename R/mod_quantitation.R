@@ -83,6 +83,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     })
     
     
+    # Calculate ratios of peptides.
     IgG1_ratios <- reactive({
       req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
       IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
@@ -92,7 +93,18 @@ mod_quantitation_server <- function(id, quantitation_clusters,
       return(ratios)
     })
     
-
+    # Calculate IgG1 concentrations
+    IgG1_concentrations <- reactive({
+      req(IgG1_ratios(), input$silumab_concentration)
+      IgG1_ratios() %>% 
+        dplyr::mutate(IgG1_concentration = median_ratio * input$silumab_concentration)
+    }) %>% 
+      bindEvent(input$calculate_concentrations)
     
+    observe({
+      req(IgG1_ratios())
+      browser()
+    })
+
   })
 }
