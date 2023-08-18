@@ -104,6 +104,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     observe({
       req(IgG1_ratios())
       browser()
+      
     })
 
   })

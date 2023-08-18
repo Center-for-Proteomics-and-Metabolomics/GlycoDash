@@ -54,7 +54,6 @@ calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
 
 
 # Function to calculate ratio between natural and SIL peptides
-
 calculate_IgG1_ratios <- function(IgG1_sum_intensities,
                                   quantitation_clusters) {
   
@@ -72,16 +71,41 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
     # Get rid of sum intensities
     dplyr::select(sample_name:sample_type, tidyselect::contains("ratio"))
   
-  
-  # Use base R to get median ratio.
-  # (Using dplyr::rowwise() is slow)
+  # Extract the columns with the ratios.
   ratio_columns <- sum_intensity_ratios[, grepl("ratio", colnames(sum_intensity_ratios))]
   
-  sum_intensity_ratios$median_ratio <- apply(ratio_columns, 1, median)
+  # Determine column number with median value for each row
+  median_column_numbers <- apply(ratio_columns, 1, function(row) {
+    median_value <- median(row)
+    which(row == median_value)
+  })
   
+  # Create an empty vector to store the column names.
+  median_colnames <- character(length = length(median_column_numbers))
+  # Loop over the median column numbers and determine the column name for each.
+  ratio_colnames <- colnames(ratio_columns)
+  for (i in seq(length(median_column_numbers))) {
+    number <- median_column_numbers[i]
+    median_colnames[i] <- ratio_colnames[number]
+  }
   
-  # TODO: find a way to get the column name corresponding to the median ratio
+  # Add column to sum_intensity_ratios
+  sum_intensity_ratios$median_colname <- median_colnames
   
+  # Create a column with the median values.
+  sum_intensity_ratios$median_value <- apply(
+    sum_intensity_ratios, 1, function(row) row[row["median_colname"]]
+    # row["median_colname"] retrieves the value of the column "median_colname" in the row.
+    # row[row["median_colname]] then retrieves the value of that column for the row.
+  )
+  
+  # Alternatively could have used:
+  #
+  #     sum_intensity_ratios <- sum_intensity_ratios %>% 
+  #       dplyr::rowwise() %>% 
+  #       dplyr::mutate(median_value = get(median_colname))
+  #
+  # But using apply() should be faster because it uses vectorization.
   
   return(sum_intensity_ratios)
 }
