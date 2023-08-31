@@ -8,7 +8,7 @@ params:
   summary_filenames: NA
   plate_design: NA
   sample_list: NA
-  metadata: NA
+  filenames_metadata: NA
   sample_types_method: NA
   filename_sample_types: NA
   mass_acc: NA
@@ -47,7 +47,7 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 -   LaCyTools summary files: `r paste0("\"", params$summary_filenames, "\"")`
 -   Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
 -   Sample list file: `r ifelse(is.null(params$metadata), "none", paste0("\"", params$sample_list, "\""))`
--   Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
+-   Metadata file(s): `r ifelse(is.null(params$filenames_metadata), "none", paste0("\"", params$filenames_metadata, "\""))`
 
 Sample types were added `r ifelse(params$sample_types_method == "Automatically determine sample types based on sample ID's", "automatically", "manually")`.
 

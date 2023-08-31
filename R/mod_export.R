@@ -188,7 +188,7 @@ mod_export_server <- function(id,
           summary_filenames = results_data_import$summary_filenames(),
           plate_design = try_call(results_data_import$filenames_plate_design), # trycall not needed?
           sample_list = try_call(results_data_import$filename_sample_list), # trycall not needed?
-          metadata = try_call(results_data_import$metadata), # trycall not needed?
+          filenames_metadata = try_call(results_data_import$filenames_metadata), # trycall not needed?
           sample_types_method = results_data_import$sample_types_method(),
           filename_sample_types = try_call(results_data_import$filename_sample_types),
           mass_acc = results_spectra_curation$mass_acc(),
