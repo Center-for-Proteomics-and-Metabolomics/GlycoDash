@@ -1,3 +1,8 @@
+# v1.2.7
+## Bug fixes
+* The file names of the uploaded LaCyTools summaries and metadata are now shown in the report.
+
+
 # v1.2.6
 ## Adjustments
 * In the spectra curation cut-off plots, the points are no longer jittered.
