@@ -5,7 +5,7 @@ output:
     toc: TRUE
     toc_float: TRUE
 params: 
-  lacytools_summary: NA
+  summary_filenames: NA
   plate_design: NA
   metadata: NA
   sample_types_method: NA
@@ -34,7 +34,7 @@ library(magrittr)
 
 ## Data import
 
--   LaCyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
+-   LaCyTools summary files: `r paste0("\"", params$summary_filenames, "\"")`
 -   Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
 -   Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
 

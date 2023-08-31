@@ -67,9 +67,6 @@ mod_export_server <- function(id,
     
     output$download <- downloadHandler(
       filename = function() {
-        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-        #                                                pattern = "-",
-        #                                                replacement = ""))
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
         switch(input$download_format,
                "R object" = paste0(current_datetime, "_processed_data.rds"),
@@ -87,9 +84,6 @@ mod_export_server <- function(id,
     
     output$report <- downloadHandler(
       filename = function() {
-        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-        #                                                pattern = "-",
-        #                                                replacement = ""))
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
         paste0(current_datetime, "_data_processing_report.html")
       },
@@ -191,7 +185,7 @@ mod_export_server <- function(id,
         # other information from the dashboard to pass along to the Report.Rmd
         # markdown file:
         params <- list(
-          lacytools_summary = results_data_import$filename_summary(),
+          summary_filenames = results_data_import$summary_filenames(),
           plate_design = try_call(results_data_import$filenames_plate_design), # trycall not needed?
           sample_list = try_call(results_data_import$filename_sample_list), # trycall not needed?
           metadata = try_call(results_data_import$metadata), # trycall not needed?

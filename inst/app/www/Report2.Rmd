@@ -5,7 +5,7 @@ output:
     toc: TRUE
     toc_float: TRUE
 params: 
-  lacytools_summary: NA
+  summary_filenames: NA
   plate_design: NA
   sample_list: NA
   metadata: NA
@@ -44,7 +44,7 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 
 ## Data import
 
--   LaCyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
+-   LaCyTools summary files: `r paste0("\"", params$summary_filenames, "\"")`
 -   Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
 -   Sample list file: `r ifelse(is.null(params$metadata), "none", paste0("\"", params$sample_list, "\""))`
 -   Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`

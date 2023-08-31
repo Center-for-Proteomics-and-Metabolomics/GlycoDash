@@ -202,8 +202,8 @@ mod_add_sample_ids_ui <- function(id){
 #' add_sample_ids Server Functions
 #'
 #' @noRd 
-mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, contains_total_and_specific_samples, LaCyTools_summary,
-                                      lacytools_fileInput, read_lacytools_button){
+mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, contains_total_and_specific_samples, 
+                                      summary_filenames, LaCyTools_summary, read_lacytools_button) {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -238,7 +238,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
         r$resetter <- isolate(r$resetter) + 1
         r$show_reset_warning <- TRUE
       }
-    }) %>% bindEvent(lacytools_fileInput()) # I use the lacytools fileInput 
+    }) %>% bindEvent(summary_filenames()) # When summary_filenames() updates,
     # instead of LaCyTools_summary(), because LaCyTools_summary() also changes when total and 
     # specific keywords are entered/changed.
     

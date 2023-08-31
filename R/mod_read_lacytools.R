@@ -79,6 +79,13 @@ mod_read_lacytools_server <- function(id){
     })
     
     
+    # Create a list with names of the uploaded summary files.
+    summary_filenames <- reactive({
+      req(summary_inputIds())
+      purrr::map(summary_inputIds(), function(inputId) input[[inputId]]$name)
+    })
+  
+    
     # Create a named list with file extensions.
     # Names: "summary1", "summary2", etc.
     extensions <- reactive({
@@ -360,7 +367,7 @@ mod_read_lacytools_server <- function(id){
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
       contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
-      lacytools_fileInput = reactive({input$lacytools_summary})
+      summary_filenames = summary_filenames
     ))
     
   })
