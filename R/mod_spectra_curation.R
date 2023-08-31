@@ -293,14 +293,14 @@ mod_spectra_curation_server <- function(id, results_data_import){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    LacyTools_summary <- reactive({
-      req(results_data_import$LacyTools_summary())
-      results_data_import$LacyTools_summary()
+    LaCyTools_summary <- reactive({
+      req(results_data_import$LaCyTools_summary())
+      results_data_import$LaCyTools_summary()
     })
     
     # Data with criteria checks for each analyte in each sample:
     checked_data <- reactive({
-      req(LacyTools_summary(),
+      req(LaCyTools_summary(),
           input$sn,
           input$ipq
       )
@@ -308,7 +308,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       r$tab_contents <- NULL # Reset the tab contents so that 
       # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
       
-      check_analyte_quality_criteria(my_data = LacyTools_summary(),
+      check_analyte_quality_criteria(my_data = LaCyTools_summary(),
                                      min_ppm_deviation = input$mass_accuracy[1],
                                      max_ppm_deviation = input$mass_accuracy[2],
                                      max_ipq = input$ipq,
@@ -366,8 +366,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     clusters <- reactive({
-      req(LacyTools_summary())
-      unique(LacyTools_summary()$cluster)
+      req(LaCyTools_summary())
+      unique(LaCyTools_summary()$cluster)
     })
     
     observeEvent(clusters(), {

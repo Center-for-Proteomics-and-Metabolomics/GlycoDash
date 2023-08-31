@@ -25,7 +25,7 @@ read in as \code{NA}. All column names will be converted to snake case
 \examples{
 path <- system.file("extdata",
                     "Metadata_example.xlsx",
-                    package = "glycodash")
+                    package = "GlycoDash")
 
 read_metadata(filepaths = list(path),
               filenames = list("Metadata_example.xlsx"))

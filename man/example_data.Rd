@@ -3,7 +3,7 @@
 \docType{data}
 \name{example_data}
 \alias{example_data}
-\title{Example of a processed LacyTools summary}
+\title{Example of a processed LaCyTools summary}
 \format{
 A data frame with 6344 rows and 14 variables.
 }
@@ -15,8 +15,8 @@ The center for proteomics and metabolomics (CPM) at the Leiden
 example_data
 }
 \description{
-This dataset is an example of a LacyTools summary file that has been read in
-and processed using \code{link{convert_lacytools_summary}}. This LacyTools
+This dataset is an example of a LaCyTools summary file that has been read in
+and processed using \code{link{convert_lacytools_summary}}. This LaCyTools
 summary contains only measurements of standards and blanks.
 }
 \keyword{datasets}

@@ -23,7 +23,7 @@ to determine how many columns need to be read in.
 }
 \examples{
 data_file <- system.file("extdata", 
-                         "LacyTools_summary_example.txt", 
-                         package = "glycodash")
+                         "LaCyTools_summary_example.txt", 
+                         package = "GlycoDash")
 find_widest_row(path = data_file, delim = "\t")
 }

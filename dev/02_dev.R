@@ -99,7 +99,7 @@ golem::add_css_file( "custom" )
 
 ## Add internal datasets ----
 ## If you have data in your package
-usethis::use_data_raw( name = "LacyTools_summary", open = TRUE )
+usethis::use_data_raw( name = "LaCyTools_summary", open = TRUE )
 usethis::use_data_raw(name = "metadata_cleaned", open = TRUE)
 usethis::use_data_raw(name = "example_data", open = TRUE)
 
@@ -113,8 +113,8 @@ usethis::use_test( "normalization" )
 # Documentation
 
 ## Vignette ----
-usethis::use_vignette("glycodash_data_import")
-usethis::use_vignette("glycodash_spectra_curation")
+usethis::use_vignette("GlycoDash_data_import")
+usethis::use_vignette("GlycoDash_spectra_curation")
 devtools::build_vignettes()
 
 ## Code Coverage----

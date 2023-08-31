@@ -27,7 +27,7 @@
 #'   \code{TRUE} indicates that the analyte + charge combination in that sample fulfilled
 #'   the quality criteria in criteria_to_consider, whereas \code{FALSE} indicates that 
 #'   one or more criteria were not fulfilled.}\item{uncalibrated}{A Boolean:
-#'   \code{TRUE} if the combination of cluster and sample failed calibration in LacyTools}
+#'   \code{TRUE} if the combination of cluster and sample failed calibration in LaCyTools}
 #'   \item{failed_criteria}{A character string describing which criteria in 
 #'   criteria_to_consider were not fulfilled. If all criteria were fulfilled 
 #'   failed_criteria is \code{NA}}}
@@ -142,11 +142,14 @@ check_each_criterium <- function(my_data,
 #' 
 apply_chosen_criteria <- function(my_data,
                                   criteria_to_consider) {
-  to_return <- my_data %>% 
-    dplyr::rowwise() %>% 
-    dplyr::mutate(analyte_meets_criteria = all(
-      dplyr::c_across(tidyselect::all_of(criteria_to_consider))
-    ))
+  to_return <- my_data 
+  
+  if (length(criteria_to_consider) == 0) {
+    to_return$analyte_meets_criteria <- TRUE
+  } else {
+    qc_cols <- to_return[, criteria_to_consider, drop = FALSE]
+    to_return$analyte_meets_criteria <- rowSums(qc_cols) == length(criteria_to_consider)
+  }
   
   return(to_return)
 }
@@ -704,8 +707,7 @@ get_sample_type_options <- function(summarized_checks,
 #'This function can be used to visualize spectra curation. It will create a
 #'scatter plot with the sum intensity plotted against the percentage of passing
 #'analytes. Each point represents one sum spectrum (one cluster from one
-#'sample). The points have a horizontal jitter to minimize overlap. Colors
-#'represent sample types. Uncalibrated spectra are shown as squares, while
+#'sample). Colors represent sample types. Uncalibrated spectra are shown as squares, while
 #'calibrated spectra are shown as dots. If the data contains total and specific
 #'samples, the plot is faceted by group (total or specific).
 #'
@@ -768,20 +770,19 @@ create_cut_off_plot <- function(summarized_checks) {
                                  "\nUncalibrated: ",
                                  uncalibrated))
     ) +
-    ggplot2::geom_jitter(data = for_plot[!for_plot$uncalibrated, ],
+    ggplot2::geom_point(data = for_plot[!for_plot$uncalibrated, ],
                          ggplot2::aes(color = sample_type,
                                       x = passing_analyte_percentage,
                                       y = sum_intensity),
                          size = 1,
                          alpha = 0.7) +
-    ggplot2::geom_jitter(data = for_plot[for_plot$uncalibrated, ],
+    ggplot2::geom_point(data = for_plot[for_plot$uncalibrated, ],
                          ggplot2::aes(color = sample_type,
                                       x = passing_analyte_percentage,
                                       y = sum_intensity),
                          shape = 15,
                          size = 1,
-                         alpha = 0.7,
-                         width = 0.01) +
+                         alpha = 0.7) +
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
@@ -862,9 +863,18 @@ create_cut_off_plot <- function(summarized_checks) {
 plot_spectra_curation_results <- function(curated_data,
                                           total_and_specific) {
   
-  n_colors <- length(unique(curated_data$reason_for_failure)) - 1
-  my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
-                  "#3498DB")
+  # n_colors <- length(unique(curated_data$reason_for_failure)) - 1
+  # my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
+  #                 "#3498DB")
+  
+  # Consistent fill colors.
+  my_palette <- c(
+    "Yes" = "#3498DB",
+    "No, calibration failed." = "#BF9C9C",
+    "No, percentage of passing\nanalytes and sum\nintensity below cut-offs." = "#660000",
+    "No, percentage of passing\nanalytes below\ncut-off." = "#ff0000",
+    "No, sum intensity below\ncut-off." = "#ff6600"
+  )
   
   my_data <- curated_data %>% 
     dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
@@ -888,7 +898,7 @@ plot_spectra_curation_results <- function(curated_data,
           # reason_for_failure  # need if else statement
           ifelse(
             !is.na(reason_for_failure),
-            paste("No", reason_for_failure, sep = ", "),
+            paste("No", tolower(reason_for_failure), sep = ", "),
             "Yes"
           )
         )

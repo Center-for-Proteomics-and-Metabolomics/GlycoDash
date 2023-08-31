@@ -1,5 +1,5 @@
 ---
-title: "Data processing report"
+title: "GlycoDash data processing report"
 output: 
   html_document:
     toc: TRUE
@@ -44,7 +44,7 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 
 ## Data import
 
--   LacyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
+-   LaCyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
 -   Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
 -   Sample list file: `r ifelse(is.null(params$metadata), "none", paste0("\"", params$sample_list, "\""))`
 -   Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
@@ -97,7 +97,7 @@ purrr::iwalk(params$spectra_curation_tab_contents,
                
                p[["x"]][["layout"]][["margin"]][["l"]] <- 90
                
-               p <- glycodash::facet_strip_bigger(p)
+               p <- GlycoDash::facet_strip_bigger(p)
                
                print(htmltools::tagList(p))
              })
@@ -114,7 +114,7 @@ if (!is.null(params$curated_spectra_plot)) {
   p <- params$curated_spectra_plot %>% 
     plotly::ggplotly(., tooltip = "text")
   
-  p <- glycodash::facet_strip_bigger(p)
+  p <- GlycoDash::facet_strip_bigger(p)
   
   p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
   
@@ -133,7 +133,7 @@ if (!is.null(params$curated_spectra_plot)) {
                p <- curated_spectra_plot %>% 
                  plotly::ggplotly(., tooltip = "text")
                
-               p <- glycodash::facet_strip_bigger(p)
+               p <- GlycoDash::facet_strip_bigger(p)
                
                p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
                
@@ -267,7 +267,7 @@ purrr::walk(params$repeatability,
                 p <- objects_list$plot %>% 
                   plotly::ggplotly(., tooltip = "text")
                 
-                p <- glycodash::change_axis_title_distance(p,
+                p <- GlycoDash::change_axis_title_distance(p,
                                                 y_distance = 90)
                 
                 print(htmltools::tagList(p))
@@ -285,7 +285,7 @@ purrr::walk(params$repeatability,
                                 p <- my_plot %>% 
                                 plotly::ggplotly(., tooltip = "text")
                               
-                              p <- glycodash::change_axis_title_distance(p,
+                              p <- GlycoDash::change_axis_title_distance(p,
                                                               y_distance = 90)
                               
                               print(htmltools::tagList(p))
@@ -345,13 +345,13 @@ purrr::iwalk(reordered_data_exploration,
                  if ("GeomBoxplot" %in% geoms_in_plot) {
                    # Determine the number of facets n, the first n traces will correspond to
                    # the boxplot traces in the ggplotly object:
-                   boxplot_traces <- 1:glycodash::nfacets(ggplot_object)
+                   boxplot_traces <- 1:GlycoDash::nfacets(ggplot_object)
                    
                    plotly_object <- plotly_object %>% # Use "text" as hoverinfo for the points,
                      # but use the default hoverinfo for the boxplot traces:
                      plotly::style(hoverinfo = "y", traces = boxplot_traces) %>% 
                      # Hide the outliers (needed because plotly ignores "outlier.shape = NA"):
-                     glycodash::hide_outliers(.) 
+                     GlycoDash::hide_outliers(.) 
                  }
                  
                  print(htmltools::tagList(plotly_object))

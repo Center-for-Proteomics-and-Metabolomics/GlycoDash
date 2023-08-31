@@ -9,26 +9,88 @@
 #' @importFrom shiny NS tagList 
 mod_add_metadata_ui <- function(id){
   ns <- NS(id)
-  shinydashboard::box(
-    title = "Upload your metadata",
-    width = NULL,
-    solidHeader = TRUE,
-    status = "primary",
-    fileInput(ns("file"), 
-              "Upload one or more metadata Excel file(s) or R object(s):",
-              multiple = TRUE),
-    div(
-      id = ns("metadata_menu"),
-      uiOutput(ns("sample_id"))
-    ),
-    actionButton(ns("button"), "Add the metadata")
+  tagList(
+    tags$style(HTML(paste0(
+      "#",
+      ns("box_header"),
+      " .awesome-checkbox {padding-top: 7px}",
+      "#",
+      ns("box_header"),
+      " .popover {max-width: 400px !important; color: #333}",
+      "#",
+      ns("box"),
+      " .box-title {width: 100%}",
+      "#",
+      ns("box_header"),
+      " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#",
+      ns("box_header"),
+      " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#",
+      ns("box_header"),
+      " .btn {float: right; border-width: 0px; margin-right: 10px}",
+      "#",
+      ns("box"),
+      " .dropdown {display: inline-block; float: right; width: 330px}",
+      "#",
+      ns("box_header"),
+      " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+    ))),
+  
+    shinydashboardPlus::box(
+      id = ns("box"),
+      title = div(
+        id = ns("box_header"),
+        "Upload your metadata (optional)",
+        icon("info-circle", class = "ml") %>% 
+          bsplus::bs_embed_popover(
+            title = "Explanation",
+            content = HTML(
+              "Your metadata Excel file should contain a column with the sample ID's, and one more or more columns with metadata.",
+              "Each sample ID should be present only once in your Excel file",
+              "(even if it is present multiple times in your plate design)."
+            ),
+            trigger = "hover", 
+            placement = "right",
+            html = "true"),
+        shinyWidgets::dropdownButton(
+          tags$style(HTML(paste0(
+            "#",
+            ns("dropdown_content"),
+            " .fas {float: left}",
+            "#",
+            ns("dropdown_content"),
+            " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
+          ))),
+          div(id = ns("dropdown_content"),
+              downloadButton(ns("download_example_metadata"),
+                             "Download a metadata example file")),
+          icon = icon("paperclip",
+                      class = "ml"),
+          tooltip = shinyWidgets::tooltipOptions(placement = "top",
+                                                 title = "Examples"),
+          width = "330px",
+          size = "xs"
+        )),
+      width = NULL,
+      solidHeader = TRUE,
+      status = "primary",
+      fileInput(ns("file"), 
+                "Upload one or more metadata Excel file(s) or R object(s):",
+                multiple = TRUE),
+      div(
+        id = ns("metadata_menu"),
+        uiOutput(ns("sample_id"))
+      ),
+      actionButton(ns("button"), "Add the metadata")
+    )
   )
 }
     
 #' add_metadata Server Functions
 #'
 #' @noRd 
-mod_add_metadata_server <- function(id, LacyTools_summary){
+mod_add_metadata_server <- function(id, LaCyTools_summary){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -116,7 +178,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
       shinyjs::toggleState("button",
                            condition = all(
                              is_truthy(metadata_list()),
-                             is_truthy(LacyTools_summary()),
+                             is_truthy(LaCyTools_summary()),
                              sample_id_inputs_completed()
                            ))
     })
@@ -201,16 +263,60 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
         shinybusy::remove_modal_spinner()
 
         return(NULL)
-        } else return(merged_metadata)
-      
+      } else return(merged_metadata)
     }) %>% bindEvent(input$button)
+    
+    
+    # Check for duplicate sample IDs
+    unique_sample_ids <- reactive({
+      req(merged_metadata())
+      sample_ids <- merged_metadata()$sample_id
+      all_unique <- length(sample_ids) == length(unique(sample_ids))
+      if (all_unique) {
+        return(TRUE)
+      } else {
+        # Show table with duplicate sample IDs
+        non_unique_ids <- sample_ids[duplicated(sample_ids)]
+        duplicates_table <- DT::datatable(data.frame(non_unique_ids),
+                                          options = list(
+                                            scrollY = "150px",
+                                            paging = FALSE,
+                                            searching = FALSE,
+                                            columnDefs = list(
+                                              list(
+                                                className = 'dt-center',
+                                                targets = "_all"))),
+                                          colnames = "sample_id",
+                                          rownames = FALSE)
+
+        shinyalert::shinyalert(
+          html = TRUE,
+          text = tagList(
+            "The following sample ID's are present more than once in your file:",
+            duplicates_table,
+            br(),
+            "Please change your file such that each sample ID is present only once, and try again."
+          ),
+          size = "m",
+          confirmButtonText = "OK",
+          confirmButtonCol = "tomato",
+          showCancelButton = FALSE,
+          showConfirmButton = TRUE
+        )
+        
+        # Remove the spinner and return FALSE
+        shinybusy::remove_modal_spinner()
+        return(FALSE)
+      }
+    })
     
     
     # Check for unmatched id's
     unmatched_ids <- reactive({
       req(merged_metadata(),
-          LacyTools_summary())
-      unmatched <- setdiff(LacyTools_summary()$sample_id,
+          unique_sample_ids() == TRUE,
+          LaCyTools_summary())
+      unmatched <- setdiff(LaCyTools_summary()$sample_id,
                            merged_metadata()$sample_id)
       
       if (rlang::is_empty(unmatched)) {
@@ -231,7 +337,7 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
                 "sample ID's in the data had no match in the metadata:"),
           DT::dataTableOutput(ns("unmatched_ids_table")),
           br(),
-          "Please check: 1) Does the spelling of sample IDs in your metadata corresponds to the spelling in your plate design?",
+          "Please check: 1) Does the spelling of sample IDs in your metadata correspond to the spelling in your plate design?",
           "and 2) Have you selected the correct sample ID columns?"
         ),
         size = "m",
@@ -257,12 +363,12 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
     }, priority = 5) %>% bindEvent(input$popup, input$button)
     
     with_metadata <- reactive({
-      req(unmatched_ids(), !is.null(merged_metadata()))
+      req(unmatched_ids(), !is.null(merged_metadata()), unique_sample_ids() == TRUE)
       if(any(
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
       )) {
-        dplyr::left_join(LacyTools_summary(),
+        dplyr::left_join(LaCyTools_summary(),
                          merged_metadata(),
                          by = "sample_id") %>% 
           dplyr::relocate(colnames(merged_metadata())[-1], .after = sample_id)
@@ -317,12 +423,29 @@ mod_add_metadata_server <- function(id, LacyTools_summary){
     }, priority = 20)
     
     
-  
+    # Download example metadata file
+    output$download_example_metadata <- downloadHandler(
+      filename = "metadata_example.xlsx",
+      content = function(file) {
+        example_file <- system.file("app",
+                                    "www",
+                                    "metadata_example.xlsx",
+                                    package = "GlycoDash")
+        file.copy(example_file, file)
+      }
+    )
+    
+    # Only return merged_metadata if sample IDs are unique.
+    merged_metadata_to_return <- reactive({
+      req(merged_metadata(), unique_sample_ids() == TRUE)
+      merged_metadata()
+    })
+    
     return(list(
       data = with_metadata,
       button = reactive({r$master_button}),
       filenames_metadata = filenames_metadata, # pass the filenames along for the report
-      merged_metadata = merged_metadata  # for combining with normalized data
+      merged_metadata = merged_metadata_to_return  # for combining with normalized data
       ))
     
   })
