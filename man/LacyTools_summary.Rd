@@ -3,7 +3,7 @@
 \docType{data}
 \name{LacyTools_summary}
 \alias{LacyTools_summary}
-\title{Example of an unprocessed LacyTools summary}
+\title{Example of an unprocessed LaCyTools summary}
 \format{
 A data frame with 1023 rows and 27 columns
 }
@@ -15,9 +15,9 @@ The center for proteomics and metabolomics (CPM) at the Leiden
 LacyTools_summary
 }
 \description{
-This dataset is an example of a LacyTools summary file that has been read in
+This dataset is an example of a LaCyTools summary file that has been read in
 using \code{link{read_non_rectangular}}, but has not yet been processed
-further. This LacyTools summary contains only measurements of standards and
+further. This LaCyTools summary contains only measurements of standards and
 blanks.
 }
 \keyword{datasets}

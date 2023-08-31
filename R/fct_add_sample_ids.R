@@ -151,7 +151,7 @@ detect_plate_and_well <- function(data) {
 #' @examples
 #' path <- system.file("extdata",
 #'                     "Plate_design_example.xlsx",
-#'                     package = "glycodash")
+#'                     package = "GlycoDash")
 #' 
 #' read_and_process_plate_design(plate_design_file = path)
 read_and_process_plate_design <- function(plate_design_file) {
@@ -209,7 +209,7 @@ read_and_process_plate_design <- function(plate_design_file) {
 #' @examples
 #' path <- system.file("extdata",
 #'                     "Plate_design_example.xlsx",
-#'                     package = "glycodash")
+#'                     package = "GlycoDash")
 #' read_plate_design(plate_design_file = path)
 read_plate_design <- function(plate_design_file) {
   # The plater package can only read .csv files, so we convert the Excel file to
@@ -272,7 +272,7 @@ read_plate_design <- function(plate_design_file) {
 #' @examples
 #' path <- system.file("extdata",
 #'                     "Plate_design_example.xlsx",
-#'                     package = "glycodash")
+#'                     package = "GlycoDash")
 #'
 #' plate_design <- read_plate_design(path)
 #' process_plate_design(plate_design)
@@ -329,7 +329,7 @@ process_plate_design <- function (plate_design) {
 #' @param sample_list_file The path to an Excel file containing the sample list.
 #' The Excel file should contain only one sheet with two columns named 
 #' "sample_name" and "sample_id". The sample_name column should contain all
-#' sample names that are present in your LacyTools summary. The sample_id column
+#' sample names that are present in your LaCyTools summary. The sample_id column
 #' should contain the sample ID corresponding to that sample name. Standards 
 #' and blanks should be included.
 #'
@@ -339,7 +339,7 @@ process_plate_design <- function (plate_design) {
 #' @examples
 #' path <- system.file("extdata",
 #'                     "Sample_list_example.xlsx",
-#'                     package = "glycodash")
+#'                     package = "GlycoDash")
 #' 
 #' process_sample_list(sample_list_file = path)
 process_sample_list <- function(sample_list_file) {

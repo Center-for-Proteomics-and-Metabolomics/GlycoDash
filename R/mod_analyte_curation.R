@@ -41,8 +41,8 @@ mod_analyte_curation_ui <- function(id){
                     content = HTML(paste(
                       tags$b("Excel file:"),
                       tags$p(paste(
-                        "The file should consist of one column with the names of the",
-                        "analytes that you want to keep. A column name is not required."
+                        'The file should consist of one column called "analyte",',
+                        'followed by the names of the analytes that you want to keep.'
                       )),
                       tags$b("R object:"),
                       tags$p(paste(
@@ -154,14 +154,6 @@ mod_analyte_curation_ui <- function(id){
             solidHeader = TRUE,
             status = "primary",
             title = "Analyte curation results per cluster",
-            div(
-              strong("Attention:"),
-              paste(
-                "in the case of multiple clusters, you must click on each tab",
-                "below in order for the data to be correctly processed."),
-              style = "color:#0021B8; font-size: 18px"
-            ),
-            br(),
             tabsetPanel(id = ns("tabs"))
           )
         )
@@ -238,6 +230,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     # Show and hide UI based on the chosen method:
     observe({
+      shinyjs::toggle("curation_method",
+                      condition = input$method == "Curate analytes based on data")
       shinyjs::toggle("analyte_list_div", 
                       condition = input$method == "Supply an analyte list")
       shinyjs::toggle("curation_based_on_data_div", 
@@ -249,12 +243,19 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                      condition = input$method == "Curate analytes based on data" & 
                      input$curation_method == "Per biological group")
       # Only enable button under right circumstances:
-      shinyjs::toggleState("curate_analytes", 
+      shinyjs::toggleState("curate_analytes",
                            condition = 
-                             (input$method == "Supply an analyte list" & 
-                             is_truthy(analyte_list())) | 
-                             ((input$method == "Curate analytes based on data") &
-                             (input$curation_method != "Per biological group" | isTRUE(rv_resp$response))))
+                             all(
+                               is_truthy(passing_spectra()),
+                               any(
+                                 all(input$method == "Supply an analyte list", is_truthy(analyte_list())),
+                                 all(
+                                   input$method == "Curate analytes based on data",
+                                   (input$curation_method != "Per biological group") | isTRUE(rv_resp$response)
+                                 )
+                               )
+                             )
+      )
       # Only ask for analyte curation per biological group when "Curate analytes based on data"
       shinyjs::toggle("curate_per_group",
                       condition = input$method == "Curate analytes based on data")
@@ -497,18 +498,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       # Create one tab for each cluster in without_samples_to_ignore:
       purrr::map(clusters(),
                  function(cluster) {
-                   shinyjs::delay(
-                     ms = 2000,
-                     expr = {
-                       appendTab("tabs",
-                                 select = TRUE,
-                                 session = session,
-                                 tabPanel(
-                                   title = cluster,
-                                   mod_tab_curated_analytes_ui(ns(cluster))
-                                 ))
-                     })
-                   
+                   appendTab("tabs", select = TRUE, session = session,
+                             tabPanel(
+                               title = cluster,
+                               mod_tab_curated_analytes_ui(ns(cluster))
+                             ))
                  })
     })
     
@@ -538,7 +532,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           })
     },
     priority = 10)
-    
     
     
     with_analytes_to_include <- reactive({

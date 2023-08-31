@@ -8,7 +8,7 @@
 #'  If it is an Excel file it should contain only one sheet. If it's a .rds file
 #'  it should be a dataframe or tibble. In both cases there should be two columns named 
 #' "sample_id" and "sample_type". The sample_id column should contain all
-#' sample ID's that are present in your LacyTools summary. The sample_type column
+#' sample ID's that are present in your LaCyTools summary. The sample_type column
 #' should contain the sample type corresponding to that sample ID. Standards 
 #' and blanks should be included.
 #' @param filename The name of the Excel or .rds file including the file extension.
@@ -19,7 +19,7 @@
 #' @examples
 #' path <- system.file("extdata",
 #'                     "Sample_types_example.xlsx",
-#'                     package = "glycodash")
+#'                     package = "GlycoDash")
 #' 
 #' read_sample_type_file(filepath = path, 
 #'                       filename = "Sample_types_example.xlsx")

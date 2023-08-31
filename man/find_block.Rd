@@ -2,23 +2,23 @@
 % Please edit documentation in R/fct_read_lacytools.R
 \name{find_block}
 \alias{find_block}
-\title{Find a block in a LacyTools summary file}
+\title{Find a block in a LaCyTools summary file}
 \usage{
 find_block(data, variable)
 }
 \arguments{
-\item{data}{A dataframe with the LacyTools summary (the result of
+\item{data}{A dataframe with the LaCyTools summary (the result of
 \code{\link{read_non_rectangular}}).}
 
-\item{variable}{The name of a LacyTools output format.}
+\item{variable}{The name of a LaCyTools output format.}
 }
 \value{
 The row indices of the block.
 }
 \description{
-Find a block in a LacyTools summary file
+Find a block in a LaCyTools summary file
 }
 \examples{
- data("LacyTools_summary")
- find_block(data = LacyTools_summary, variable = "S/N (2+)")
+ data("LaCyTools_summary")
+ find_block(data = LaCyTools_summary, variable = "S/N (2+)")
 }

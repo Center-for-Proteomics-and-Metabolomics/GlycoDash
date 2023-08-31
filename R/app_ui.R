@@ -11,13 +11,21 @@ app_ui <- function(request) {
     
     # Your application UI logic 
     shinydashboard::dashboardPage(
+      
+      # Title header, with button that links to GitHub
       header = shinydashboard::dashboardHeader(
-        title = "Glyco data processing dashboard"
+        title = "GlycoDash v1.2.6",
+        tags$li(a(
+          onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash')",
+          href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"
+        ), class = "dropdown"),
+        tags$li(customDownloadbutton("download_md"), class = "dropdown")
       ),
       
       sidebar = shinydashboard::dashboardSidebar(
         shinydashboard::sidebarMenu(
           id = "tabs",
+          
           shinydashboard::menuItem("Data Import", 
                                    tabName = "data_import"),
           shinydashboard::menuItem("Spectra Curation", 
@@ -77,7 +85,7 @@ app_ui <- function(request) {
           )
         )
       ),
-      title = "Glyco data processing dashboard"
+      title = "GlycoDash"
     )
   )
 }
@@ -100,7 +108,7 @@ golem_add_external_resources <- function(){
     favicon(),
     bundle_resources(
       path = app_sys('app/www'),
-      app_title = 'glycodash'
+      app_title = 'GlycoDash'
     )
   )
 }

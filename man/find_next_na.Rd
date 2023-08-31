@@ -2,12 +2,12 @@
 % Please edit documentation in R/fct_read_lacytools.R
 \name{find_next_na}
 \alias{find_next_na}
-\title{Find the next empty line from a given line in a LacyTools summary file.}
+\title{Find the next empty line from a given line in a LaCyTools summary file.}
 \usage{
 find_next_na(data, row)
 }
 \arguments{
-\item{data}{A dataframe with the LacyTools summary (the result of
+\item{data}{A dataframe with the LaCyTools summary (the result of
 \code{\link{read_non_rectangular}}).}
 
 \item{row}{The row used as a starting point from which to search for the next
@@ -18,7 +18,7 @@ The row index (integer) for the next line with \code{NA}'s. If there
  are no next lines with \code{NA}'s the function will return an empty integer vector.
 }
 \description{
-Find the next empty line from a given line in a LacyTools summary file.
+Find the next empty line from a given line in a LaCyTools summary file.
 }
 \examples{
 df <- data.frame(c("John", "Lisa", NA, "Pete", NA, "Paul"),

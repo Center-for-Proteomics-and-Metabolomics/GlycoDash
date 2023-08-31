@@ -1,6 +1,6 @@
 # This file contains all functions used in the module mod_read_lacytools.R.
 
-# The list 'outputs' with LacyTools outputs is used in the function
+# The list 'outputs' with LaCyTools outputs is used in the function
 # 'read_lacytools'.
 max_positive_charge <- 20
 output_types <- list(
@@ -19,7 +19,7 @@ outputs <- as.list(unlist(lapply(output_types,
 #' \code{read_non_rectangular()} can read flat files where the number of fields 
 #' per line is not constant (non-rectangular data). Blank lines are not skipped 
 #' and empty fields "" and 0's are interpreted as \code{NA}. This function was 
-#' created to read LacyTools summary files (tab-delimited non-rectangular .txt 
+#' created to read LaCyTools summary files (tab-delimited non-rectangular .txt 
 #' files).
 #'
 #' @param path A path to a file with non-rectangular data.
@@ -35,8 +35,8 @@ outputs <- as.list(unlist(lapply(output_types,
 #'
 #' @examples 
 #' data_file <- system.file("extdata", 
-#'                          "LacyTools_summary_example.txt", 
-#'                          package = "glycodash")
+#'                          "LaCyTools_summary_example.txt", 
+#'                          package = "GlycoDash")
 #' read_non_rectangular(path = data_file, delim = "\t")
 #' 
 read_non_rectangular <- function(path, delim = "\t") {
@@ -72,8 +72,8 @@ read_non_rectangular <- function(path, delim = "\t") {
 #'
 #' @examples
 #' data_file <- system.file("extdata", 
-#'                          "LacyTools_summary_example.txt", 
-#'                          package = "glycodash")
+#'                          "LaCyTools_summary_example.txt", 
+#'                          package = "GlycoDash")
 #' find_widest_row(path = data_file, delim = "\t")
 find_widest_row <- function(path, delim) {
   
@@ -115,30 +115,30 @@ find_widest_row <- function(path, delim) {
   return(max_n_columns)
 }
 
-#'Convert a LacyTools summary to a 'tidy' dataframe
+#'Convert a LaCyTools summary to a 'tidy' dataframe
 #'
 #'The function \code{convert_lacytools_summary()} can convert a dataframe 
-#'containing a LacyTools summary to a 'tidy' dataframe in long format. The long 
+#'containing a LaCyTools summary to a 'tidy' dataframe in long format. The long 
 #'format means that for each sample there is one row per analyte per charge state.
 #'
-#'@param data A dataframe containing a LacyTools summary returned by
+#'@param data A dataframe containing a LaCyTools summary returned by
 #' \code{\link{read_non_rectangular}}.
 #'
 #'@return This function returns a dataframe with the following columns:
 #'  \describe{ \item{sample_name}{The (unchanged) sample names.}
 #'  \item{analyte}{The analyte. For each sample, there is one row per analyte
 #'  per charge state of that analyte.} \item{charge}{The charge state of the
-#'  analyte.} \item{LacyTools output formats}{The dataframe will contain one
-#'  column for each LacyTools output format that was present in the LacyTools
+#'  analyte.} \item{LaCyTools output formats}{The dataframe will contain one
+#'  column for each LaCyTools output format that was present in the LaCyTools
 #'  summary file.} \item{fraction}{The fraction of the isotopic pattern that was
 #'  included for the analyte.} \item{exact_mass}{The exact mass of the most
 #'  abundant isotopologue of the analyte.}}
 #'@export
 #'
 #' @examples
-#' data("LacyTools_summary")
+#' data("LaCyTools_summary")
 #'
-#' convert_lacytools_summary(data = LacyTools_summary)
+#' convert_lacytools_summary(data = LaCyTools_summary)
 convert_lacytools_summary <- function(data) {
   
   all_blocks <- purrr::map(outputs, # outputs is a list created at the top of fct_read_lacytools.R
@@ -156,9 +156,8 @@ convert_lacytools_summary <- function(data) {
   
   if (rlang::is_empty(all_blocks)) {
     rlang::abort(class = "no_outputs_present",
-                 message = paste("None of the LacyTools output variables are", 
-                                 "present in the first column of the LacyTools",
-                                 "summary file. Did you choose the correct file?"))
+                 message = paste(", none of the LaCyTools output variables are present.", 
+                                 "Did you choose the correct file?"))
   }
   
   long_data_list <- purrr::map(all_blocks, lengthen_block)
@@ -174,7 +173,7 @@ convert_lacytools_summary <- function(data) {
   return(long_data)
 }
 
-#' Create a subset containing one block from a LacyTools summary.
+#' Create a subset containing one block from a LaCyTools summary.
 #'
 #' @inheritParams find_block
 #'
@@ -182,8 +181,8 @@ convert_lacytools_summary <- function(data) {
 #' @export
 #'
 #' @examples
-#' data(LacyTools_summary)
-#' get_block(LacyTools_summary, 
+#' data(LaCyTools_summary)
+#' get_block(LaCyTools_summary, 
 #'           variable = "Absolute Intensity (Background Subtracted, 2+)")
 #'           
 get_block <- function(data, variable) {
@@ -194,16 +193,16 @@ get_block <- function(data, variable) {
   # The first column should be named "sample_name":
   colnames(block)[1] <- "sample_name"
   
-  # In case there are duplicated analyte names in the LacyTools summary, apply
-  # .name_repair (and issue a warning message --> IMPLEMENT THIS)
+  # In case there are duplicated analyte names in the LaCyTools summary, apply
+  # .name_repair (and issue a warning message)
   if (any(duplicated(colnames(block)))) {
     duplicated_analytes <- unique(colnames(block)[duplicated(colnames(block))])
     rlang::warn(class = "duplicated_analytes",
-                message = paste("In your LacyTools summary file, the analytes",
-                                paste(duplicated_analytes, collapse = " "),
-                                "are present more than once. The names of the", 
-                                "duplicated analytes are given a suffix", 
-                                "('..columnnumber') to differentiate between them."))
+                message = paste0(# "In your LaCyTools summary file, ",
+                                "the following analytes are present more than once: ",
+                                paste(duplicated_analytes, collapse = ", "),
+                                ". The names of the duplicates analytes are given",
+                                "a suffix ('..columnnumber') to differentiate between them."))
     
     block <- suppressMessages(tibble::tibble(block,
                                              .name_repair = "universal"))
@@ -224,23 +223,23 @@ get_block <- function(data, variable) {
   return(block)
 }
 
-#' Find a block in a LacyTools summary file
+#' Find a block in a LaCyTools summary file
 #'
 #' @inheritParams find_next_na
-#' @param variable The name of a LacyTools output format.
+#' @param variable The name of a LaCyTools output format.
 #'
 #' @return The row indices of the block.
 #' @export
 #'
 #' @examples
-#'  data("LacyTools_summary")
-#'  find_block(data = LacyTools_summary, variable = "S/N (2+)")
+#'  data("LaCyTools_summary")
+#'  find_block(data = LaCyTools_summary, variable = "S/N (2+)")
 find_block <- function(data, variable) {
   first_row <- which(data[ , 1] == variable)
   if (rlang::is_empty(first_row)) {
     rlang::abort(
       class = "lacytools_output_not_found",
-      message = paste("Error: LacyTools output format",
+      message = paste("Error: LaCyTools output format",
                       variable, "is not present in the first column of the input file."))
   } else {
     next_na <- find_next_na(data, first_row)
@@ -253,9 +252,9 @@ find_block <- function(data, variable) {
   return(rows)
 }
 
-#'Find the next empty line from a given line in a LacyTools summary file.
+#'Find the next empty line from a given line in a LaCyTools summary file.
 #'
-#'@param data A dataframe with the LacyTools summary (the result of
+#'@param data A dataframe with the LaCyTools summary (the result of
 #'  \code{\link{read_non_rectangular}}).
 #'@param row The row used as a starting point from which to search for the next
 #'  blank line (blank meaning consisting of only \code{NA}'s).
@@ -287,24 +286,24 @@ find_next_na <- function(data, row) {
 
 
 
-#' Transform a LacyTools summary block to a long format.
+#' Transform a LaCyTools summary block to a long format.
 #'
-#' \code{lengthen_block()} transforms a LacyTools summary block from a wide
+#' \code{lengthen_block()} transforms a LaCyTools summary block from a wide
 #' format (each analyte has its own column) to a long format. A column named
 #' "analyte" and a column named "charge" have been added and each combination 
 #' of sample, analyte and charge state has its own row.
 #'
-#' @param block A dataframe containing a block from a LacyTools summary file
+#' @param block A dataframe containing a block from a LaCyTools summary file
 #'   (the result of \code{\link{get_block}}).
 #' @param metadata A dataframe containing metadata in case the metadata has
 #'   already been added to the data. Defaults too \code{NULL}.
 #'
-#' @return A dataframe containing the LacyTools summary block in long format.
+#' @return A dataframe containing the LaCyTools summary block in long format.
 #' @export
 #'
 #' @examples
-#' data("LacyTools_summary")
-#' block <- get_block(LacyTools_summary, 
+#' data("LaCyTools_summary")
+#' block <- get_block(LaCyTools_summary, 
 #'                    variable = "Absolute Intensity (Background Subtracted, 2+)")
 #' lengthen_block(block = block)
 lengthen_block <- function(block, metadata = NULL) {
@@ -324,18 +323,18 @@ lengthen_block <- function(block, metadata = NULL) {
   return(long_block)
 }
 
-#' Get the analytes info from a LacyTools summary using a list of output formats
+#' Get the analytes info from a LaCyTools summary using a list of output formats
 #'
 #' This function uses \code{\link{get_analytes_info}} to get the exact mass of
 #' the most abundant isotopologue and the fraction for each analyte in a
-#' LacyTools summary, for each charge state of those analytes. The reason that
+#' LaCyTools summary, for each charge state of those analytes. The reason that
 #' the info is retrieved for each charge state is that the fraction of an
 #' analyte can be different in different charge states. This can happen when
 #' there are contaminants that need to be excluded near one charge state of an
 #' analyte, but not near another charge state of that same analyte.
 #'
-#' @param data A dataframe with a LacyTools summary.
-#' @param list_of_variables A list/vector with the name of LacyTools output
+#' @param data A dataframe with a LaCyTools summary.
+#' @param list_of_variables A list/vector with the name of LaCyTools output
 #'   formats.
 #'
 #' @return A dataframe with three columns (analyte, exact mass and fraction) and
@@ -343,7 +342,7 @@ lengthen_block <- function(block, metadata = NULL) {
 #' @export
 #'
 #' @examples
-#' data("LacyTools_summary")
+#' data("LaCyTools_summary")
 #' 
 #' outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
 #'                 "Absolute Intensity (Background Subtracted, 3+)", 
@@ -354,7 +353,7 @@ lengthen_block <- function(block, metadata = NULL) {
 #'                 "S/N (2+)",
 #'                 "S/N (3+)")
 #' 
-#' get_analytes_info_from_list(data = LacyTools_summary, list_of_variables = outputs)
+#' get_analytes_info_from_list(data = LaCyTools_summary, list_of_variables = outputs)
 get_analytes_info_from_list <- function(data, list_of_variables) {
   # Get the analytes_info for each variable and put them in a list:
   analytes_info_list <- purrr::map(list_of_variables,
@@ -378,7 +377,7 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
   # Remove NULL items from the analytes_info_list:
   analytes_info_list <- analytes_info_list[!sapply(analytes_info_list, is.null)]
   
-  # Find what charges are present in the LacyTools summary:
+  # Find what charges are present in the LaCyTools summary:
   charges <- as.factor(purrr::map_chr(analytes_info_list, 
                                       function(x) unique(x$charge)))
   # Divide the analytes_info_list into one list per charge:
@@ -391,10 +390,10 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
   return(analytes_info)
 }
 
-#' Get analytes info from a LacyTools summary for one output format
+#' Get analytes info from a LaCyTools summary for one output format
 #'
 #' This function gets the exact mass of the most abundant isotopologue and the
-#' fraction for each analyte in a LacyTools summary, for a single output format.
+#' fraction for each analyte in a LaCyTools summary, for a single output format.
 #' This function is used within \code{\link{get_analytes_info_from_list}}.
 #'
 #' @inheritParams find_block
@@ -405,15 +404,15 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
 #' @export
 #'
 #' @examples
-#' data("LacyTools_summary")
-#' get_analytes_info(data = LacyTools_summary, variable = "S/N (2+)")
+#' data("LaCyTools_summary")
+#' get_analytes_info(data = LaCyTools_summary, variable = "S/N (2+)")
 get_analytes_info <- function(data, variable) {
-  # The row that in the first column contains the name of the LacyTools output
+  # The row that in the first column contains the name of the LaCyTools output
   # format, contains the analyte names in the remaining columns. Find the index
   # of that row:
   row_index_analyte_names <- which(data[ , 1] == variable)
   if (rlang::is_empty(row_index_analyte_names)){
-    stop(paste("The LacyTools output format", variable,
+    stop(paste("The LaCyTools output format", variable,
                "is not present in the input summary file"))
   }
   # The two rows below the row with analyte names, contain the exact mass and
@@ -436,7 +435,7 @@ get_analytes_info <- function(data, variable) {
                         values_to = "value") %>%
     tidyr::pivot_wider(names_from = info_variables) %>% 
     # I don't rename the columns directly using new_name = old_name, because in
-    # different versions of LacyTools these columns are named differently
+    # different versions of LaCyTools these columns are named differently
     # ("Exact mass of most abundant isotopologue" in one version and
     # "Monoisotopic mass" in the other):
     dplyr::rename(fraction = tidyselect::contains("fraction"),
@@ -450,14 +449,14 @@ get_analytes_info <- function(data, variable) {
 
 #'Detect whether a sample is specific or total Ig based on the sample name.
 #'
-#'@param block A dataframe containing a LacyTools summary with a column 
+#'@param block A dataframe containing a LaCyTools summary with a column 
 #'"sample_name".
 #'@param keyword_specific The word(s)/characters within the sample name used to
 #'  refer to Specific samples.
 #'@param keyword_total The word(s)/characters within the sample name used to
 #'  refer to Total samples.
 #'
-#'@return The dataframe containing a block from a LacyTools summary file, with
+#'@return The dataframe containing a block from a LaCyTools summary file, with
 #'  an additional column named "group" that indicates whether a sample is
 #'  specific or total.
 #'@export
@@ -493,4 +492,19 @@ detect_group <- function(data, keyword_specific, keyword_total) {
                                 "Please reconsider your keywords."))
   }
   return(data)
+}
+
+
+
+# A function to generate ordinal suffixes
+getOrdinalSuffix <- function(num) {
+  if (num %% 10 == 1 && num %% 100 != 11) {
+    return(paste0(num, "st"))
+  } else if (num %% 10 == 2 && num %% 100 != 12) {
+    return(paste0(num, "nd"))
+  } else if (num %% 10 == 3 && num %% 100 != 13) {
+    return(paste0(num, "rd"))
+  } else {
+    return(paste0(num, "th"))
+  }
 }

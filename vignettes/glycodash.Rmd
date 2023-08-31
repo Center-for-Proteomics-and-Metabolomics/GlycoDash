@@ -1,8 +1,8 @@
 ---
-title: "glycodash"
+title: "GlycoDash"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{glycodash}
+  %\VignetteIndexEntry{GlycoDash}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -16,12 +16,12 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 
-#library(glycodash)
+#library(GlycoDash)
 devtools::load_all()
 
 ```
 
-This vignette gives an overview of the steps that are performed within the Glycodash dashboard and the options available to users. For more detailed information check the function documentation and comments in the modules.
+This vignette gives an overview of the steps that are performed within the GlycoDash dashboard and the options available to users. For more detailed information check the function documentation and comments in the modules.
 
 ## 1. Data import tab
 
@@ -41,21 +41,21 @@ The data import step can be broken down into 5 smaller steps:
 
 ```{r upload-your-data}
 
-# "LacyTools_summary_example.txt" has only IgGI cluster.
+# "LaCyTools_summary_example.txt" has only IgGI cluster.
 # "LaCyTools_summary_example_extra_clusters.txt" has extra clusters:
 # IgGI, IgGII, IgGIII, IgGIV
 # Use this file for testing the custom glycosylation traits feature.
 
 path_to_file <- system.file("extdata",
-                            "LacyTools_summary_example.txt",
-                            package = "glycodash")
+                            "LaCyTools_summary_example.txt",
+                            package = "GlycoDash")
 
-raw_LacyTools_summary <- read_non_rectangular(path = path_to_file, 
+raw_LaCyTools_summary <- read_non_rectangular(path = path_to_file, 
                                           delim = "\t")
 
-LacyTools_summary <- convert_lacytools_summary(data = raw_LacyTools_summary)
+LaCyTools_summary <- convert_lacytools_summary(data = raw_LaCyTools_summary)
 
-LacyTools_summary <- detect_group(data = LacyTools_summary,
+LaCyTools_summary <- detect_group(data = LaCyTools_summary,
                                   keyword_specific = "Spike",
                                   keyword_total = "Total")
 
@@ -73,13 +73,13 @@ There are two methods to add sample ID's to your data:
 
 path_to_plate_design <- system.file("extdata",
                                     "Plate_design_example.xlsx",
-                                    package = "glycodash")
+                                    package = "GlycoDash")
 
 plate_design <- read_and_process_plate_design(
   plate_design_file = path_to_plate_design
 )
 
-summary_with_plate_well <- detect_plate_and_well(data = LacyTools_summary)
+summary_with_plate_well <- detect_plate_and_well(data = LaCyTools_summary)
 
 with_sample_ids <- dplyr::left_join(summary_with_plate_well,
                                     plate_design)
@@ -90,11 +90,11 @@ with_sample_ids <- dplyr::left_join(summary_with_plate_well,
 
 path_to_sample_list <- system.file("extdata",
                                    "Sample_list_example.xlsx",
-                                   package = "glycodash")
+                                   package = "GlycoDash")
 
 sample_list <- process_sample_list(sample_list_file = path_to_sample_list)
 
-summary_with_plate_well <- detect_plate_and_well(data = LacyTools_summary)
+summary_with_plate_well <- detect_plate_and_well(data = LaCyTools_summary)
 
 with_sample_ids <- dplyr::left_join(summary_with_plate_well,
                                     sample_list)
@@ -160,7 +160,7 @@ with_sample_types <- with_sample_ids %>%
 
 path_to_sample_type_file <- system.file("extdata",
                                         "Sample_types_example.xlsx",
-                                        package = "glycodash")
+                                        package = "GlycoDash")
 
 sample_types <- read_sample_type_file(filepath = path_to_sample_type_file,
                                       filename = "Sample_types_example.xlsx")
@@ -192,7 +192,7 @@ This step is optional. Users can upload one or more metadata files (Excel or .rd
 # In this example only one metadata file is uploaded:
 path_to_metadata <- system.file("extdata",
                                 "Metadata_example.xlsx",
-                                package = "glycodash")
+                                package = "GlycoDash")
 
 metadata_list <- read_metadata(filepaths = list(path_to_metadata),
                                filenames = list("Metadata_example.xlsx"))
@@ -616,7 +616,7 @@ The user can upload a list with analytes that should pass curation. All analytes
 
 path_to_analyte_list <- system.file("extdata",
                                     "Analyte_list.xlsx",
-                                    package = "glycodash")
+                                    package = "GlycoDash")
 
 analyte_list <- readxl::read_excel(path_to_analyte_list)
 
@@ -740,7 +740,7 @@ The user can also calculate custom glycosylation traits by uploading an Excel fi
 # Load example file with custom glycosylation traits
 path_to_traits_formulas <- system.file("extdata",
                                        "Custom_traits_formulas_example.xlsx",
-                                       package = "glycodash")
+                                       package = "GlycoDash")
 
 custom_traits_formulas <- readxl::read_excel(path_to_traits_formulas, 
                                              col_names = FALSE)

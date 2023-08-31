@@ -10,6 +10,21 @@ app_server <- function( input, output, session ) {
   # Increasing the maximum size of files that can be uploaded to 200 MB:
   options(shiny.maxRequestSize=200*1024^2)
   
+  # Download changelog
+  output$download_md <- downloadHandler(
+    filename = function() {
+      "GlycoDash_changelog.html"
+    },
+    content = function(file) {
+      # Convert the md_content to HTML
+      md_file <- system.file("app", "www", "NEWS.md", package = "GlycoDash")
+      html_content <- markdown::markdownToHTML(readLines(md_file))
+      
+      # Write the HTML content to the output_file.html
+      writeLines(html_content, file)
+    }
+  )
+  
   results_data_import <- mod_data_import_server("data_import_ui_1")
   
   results_spectra_curation <- mod_spectra_curation_server(

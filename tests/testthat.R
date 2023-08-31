@@ -1,4 +1,4 @@
 library(testthat)
-library(glycodash)
+library(GlycoDash)
 
-test_check("glycodash")
+test_check("GlycoDash")
