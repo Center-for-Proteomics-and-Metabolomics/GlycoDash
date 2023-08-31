@@ -21,7 +21,7 @@ glycosylation data obtained from LaCyTools
 1. Download and install Docker desktop (https://www.docker.com/products/docker-desktop/)
 2. Start Docker desktop on your computer.
 3. Open Command Prompt.
-4. Look for the most recent GlycoDash package here: https://github.com/orgs/Center-for-Proteomics-and-Metabolomics/packages?repo_name=glycodash
+4. Look for the most recent GlycoDash package here: https://github.com/orgs/Center-for-Proteomics-and-Metabolomics/packages?repo_name=GlycoDash
 
     Then pull the Docker image by pasting the listed command in your command prompt, i.e.:
    
@@ -43,7 +43,7 @@ glycosylation data obtained from LaCyTools
 
    <img width="814" alt="glycodash" src="https://github.com/Center-for-Proteomics-and-Metabolomics/glycodash/assets/105744767/c2840219-ab01-42f4-8d1b-59a6b95cec05">
 
-8. When you are done using GlycoDash, simply stop the container in Docker by clicking the stop button.
+8. When you are done using Glycodash, simply stop the container in Docker by clicking the stop button.
 
 
 ### Option 2: Run the GlycoDash code in RStudio.
