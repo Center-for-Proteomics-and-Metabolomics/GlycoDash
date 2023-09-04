@@ -80,14 +80,9 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
     which(row == median_value)
   })
   
-  # Create an empty vector to store the column names.
-  median_colnames <- character(length = length(median_column_numbers))
-  # Loop over the median column numbers and determine the column name for each.
+  # Determine the column name for each median column number
   ratio_colnames <- colnames(ratio_columns)
-  for (i in seq(length(median_column_numbers))) {
-    number <- median_column_numbers[i]
-    median_colnames[i] <- ratio_colnames[number]
-  }
+  median_colnames <- ratio_colnames[median_column_numbers]
   
   # Add column to sum_intensity_ratios
   sum_intensity_ratios$median_colname <- median_colnames
