@@ -40,6 +40,18 @@ mod_quantitation_ui <- function(id) {
             )
           )
         )
+      ),
+      fluidRow(
+        column(
+          width = 12,
+          shinydashboard::box(
+            title = "View IgG1 quantitation results",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            plotly::plotlyOutput(ns("quantitation_plot"))
+          )
+        )
       )
     )
   )
@@ -100,11 +112,21 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         dplyr::mutate(IgG1_median_concentration = median_value * input$silumab_concentration)
     }) %>% 
       bindEvent(input$calculate_concentrations)
+
     
-    observe({
+    # Create a plot
+    quantitation_plot <- reactive({
       req(IgG1_concentrations())
-      browser()
+      create_quantitation_plot(IgG1_concentrations())
     })
+    
+    output$quantitation_plot <- plotly::renderPlotly({
+      req(quantitation_plot())
+      plotly_object <- plotly::ggplotly(quantitation_plot(), tooltip = "text")
+      
+      return(plotly_object)
+    })
+    
 
   })
 }

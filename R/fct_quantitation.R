@@ -103,4 +103,43 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
 
 
 
+# Function to make a quantitation plot.
+create_quantitation_plot <- function(IgG1_concentrations) {
+  
+  n_colors <- length(unique(IgG1_concentrations$sample_type))
+  my_palette <- color_palette(n_colors)
+  
+  plot <- IgG1_concentrations %>%
+    ggplot2::ggplot(., ggplot2::aes(
+      text = paste0(
+        "Sample name: ", sample_name, "\n",
+        "Sample ID: ", sample_id, "\n",
+        "Plate well: ", plate_well, "\n",
+        "Quantitation based on: ", dplyr::case_when(
+          median_colname == "glyco_ratio" ~ "glycopeptides",
+          median_colname == "GPS_ratio" ~ "peptide GPSVFPLAPSSK",
+          median_colname == "TTP_ratio" ~ "peptide TTPVLDSDGSFFLYSK"
+        ), "\n",
+        "IgG1 concentration: ", paste(IgG1_median_concentration, "ng/mL")
+      )
+    )) +
+    ggplot2::geom_point(ggplot2::aes(
+      x = sample_name,
+      y = IgG1_median_concentration,
+      color = sample_type
+    ), size = 1, alpha = 0.7) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+                   strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
+    ggplot2::scale_color_manual(values = my_palette,
+                                name = "Sample type") +
+    ggplot2::labs(y = "IgG1 concentration (ng/mL)", x = "") +
+    ggplot2::scale_x_discrete(labels = NULL)
+
+  return(plot)
+}
+
+
+
+
 
