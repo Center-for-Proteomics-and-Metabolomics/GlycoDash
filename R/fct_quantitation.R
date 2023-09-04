@@ -88,19 +88,13 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
   sum_intensity_ratios$median_colname <- median_colnames
   
   # Create a column with the median values.
-  sum_intensity_ratios$median_value <- apply(
+  # The code inside apply() apparently extracts the values as character,
+  # therefore as.numeric() is placed around it.
+  sum_intensity_ratios$median_value <- as.numeric(apply(
     sum_intensity_ratios, 1, function(row) row[row["median_colname"]]
     # row["median_colname"] retrieves the value of the column "median_colname" in the row.
     # row[row["median_colname]] then retrieves the value of that column for the row.
-  )
-  
-  # Alternatively could have used:
-  #
-  #     sum_intensity_ratios <- sum_intensity_ratios %>% 
-  #       dplyr::rowwise() %>% 
-  #       dplyr::mutate(median_value = get(median_colname))
-  #
-  # But using apply() should be faster because it uses vectorization.
+  ))
   
   return(sum_intensity_ratios)
 }

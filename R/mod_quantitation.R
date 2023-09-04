@@ -96,15 +96,14 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     # Calculate IgG1 concentrations
     IgG1_concentrations <- reactive({
       req(IgG1_ratios(), input$silumab_concentration)
-      IgG1_ratios() %>% 
-        dplyr::mutate(IgG1_concentration = median_ratio * input$silumab_concentration)
+      cs <- IgG1_ratios() %>% 
+        dplyr::mutate(IgG1_median_concentration = median_value * input$silumab_concentration)
     }) %>% 
       bindEvent(input$calculate_concentrations)
     
     observe({
-      req(IgG1_ratios())
+      req(IgG1_concentrations())
       browser()
-      
     })
 
   })
