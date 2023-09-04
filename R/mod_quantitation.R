@@ -27,16 +27,16 @@ mod_quantitation_ui <- function(id) {
               strong("Your samples do not contain SILuMAb for IgG1 quantitation.\n\n"),
               style = "color:#0021B8; font-size: 16px"
             ),
-            # Input for SILuMAb concentration.
+            # Input for SILuMAb amounts.
             numericInput(
-              ns("silumab_concentration"),
-              "SILuMAb concentration per sample (ng/mL):",
-              value = 50, min = 0, max = NA
+              ns("silumab_amount"),
+              "Amount of SILuMAb per sample (ng):",
+              value = 5000, min = 0, max = NA
             ),
-            # Button to calculate IgG1 concentrations
+            # Button to cquantify IgG1
             actionButton(
-              ns("calculate_concentrations"),
-              "Calculate IgG1 concentrations"
+              ns("quantify_IgG1"),
+              "Quantify IgG1"
             )
           )
         )
@@ -45,7 +45,7 @@ mod_quantitation_ui <- function(id) {
         column(
           width = 12,
           shinydashboard::box(
-            title = "View IgG1 quantitation results",
+            title = "IgG1 quantitation plot",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
@@ -78,15 +78,15 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         condition = !is_truthy(quantitation_clusters())
       )
       shinyjs::toggle(
-        id = "silumab_concentration",
+        id = "silumab_amount",
         condition = is_truthy(quantitation_clusters())
       )
       shinyjs::toggle(
-        id = "calculate_concentrations",
+        id = "quantify_IgG1",
         condition = is_truthy(quantitation_clusters())
       )
       shinyjs::toggleState(
-        id = "calculate_concentrations",
+        id = "quantify_IgG1",
         condition = all(
           is_truthy(quantitation_clusters()),
           is_truthy(results_normalization$normalized_data())
@@ -105,25 +105,29 @@ mod_quantitation_server <- function(id, quantitation_clusters,
       return(ratios)
     })
     
-    # Calculate IgG1 concentrations
-    IgG1_concentrations <- reactive({
-      req(IgG1_ratios(), input$silumab_concentration)
-      cs <- IgG1_ratios() %>% 
-        dplyr::mutate(IgG1_median_concentration = median_value * input$silumab_concentration)
-    }) %>% 
-      bindEvent(input$calculate_concentrations)
-
+    # Calculate IgG1 amounts
+    IgG1_amounts <- reactive({
+      req(IgG1_ratios(), input$silumab_amount)
+      IgG1_ratios() %>% 
+        dplyr::mutate(
+          IgG1_median_amount = median_ratio * input$silumab_amount,
+          # Use scientific formatting
+          IgG1_median_amount = format(IgG1_median_amount, scientific = TRUE, digits = 2)
+        )
+    }) %>% bindEvent(input$quantify_IgG1)
+    
     
     # Create a plot
     quantitation_plot <- reactive({
-      req(IgG1_concentrations())
-      create_quantitation_plot(IgG1_concentrations())
+      req(IgG1_amounts())
+      create_quantitation_plot(IgG1_amounts())
     })
     
     output$quantitation_plot <- plotly::renderPlotly({
       req(quantitation_plot())
-      plotly_object <- plotly::ggplotly(quantitation_plot(), tooltip = "text")
-      
+      plotly_object <- plotly::ggplotly(quantitation_plot(), tooltip = "text") %>% 
+        # plotly ignores "outlier.shape" so use function from utils
+        GlycoDash::hide_outliers(.)
       return(plotly_object)
     })
     

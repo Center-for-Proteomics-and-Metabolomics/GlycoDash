@@ -71,30 +71,13 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
     # Get rid of sum intensities
     dplyr::select(sample_name:sample_type, tidyselect::contains("ratio"))
   
-  # Extract the columns with the ratios.
+  
+  # Extract the columns with the ratios, and calculate median ratio for each sample
   ratio_columns <- sum_intensity_ratios[, grepl("ratio", colnames(sum_intensity_ratios))]
+  ratio_columns$median_ratio <- apply(ratio_columns, 1, median)
   
-  # Determine column number with median value for each row
-  median_column_numbers <- apply(ratio_columns, 1, function(row) {
-    median_value <- median(row)
-    which(row == median_value)
-  })
-  
-  # Determine the column name for each median column number
-  ratio_colnames <- colnames(ratio_columns)
-  median_colnames <- ratio_colnames[median_column_numbers]
-  
-  # Add column to sum_intensity_ratios
-  sum_intensity_ratios$median_colname <- median_colnames
-  
-  # Create a column with the median values.
-  # The code inside apply() apparently extracts the values as character,
-  # therefore as.numeric() is placed around it.
-  sum_intensity_ratios$median_value <- as.numeric(apply(
-    sum_intensity_ratios, 1, function(row) row[row["median_colname"]]
-    # row["median_colname"] retrieves the value of the column "median_colname" in the row.
-    # row[row["median_colname]] then retrieves the value of that column for the row.
-  ))
+  # Add median ratios to sum_intensity_ratios
+  sum_intensity_ratios$median_ratio <- ratio_columns$median_ratio
   
   return(sum_intensity_ratios)
 }
@@ -104,36 +87,35 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
 
 
 # Function to make a quantitation plot.
-create_quantitation_plot <- function(IgG1_concentrations) {
+create_quantitation_plot <- function(IgG1_amounts) {
   
-  n_colors <- length(unique(IgG1_concentrations$sample_type))
+  n_colors <- length(unique(IgG1_amounts$sample_type))
   my_palette <- color_palette(n_colors)
   
-  plot <- IgG1_concentrations %>%
+  plot <- IgG1_amounts %>%
     ggplot2::ggplot(., ggplot2::aes(
       text = paste0(
         "Sample name: ", sample_name, "\n",
         "Sample ID: ", sample_id, "\n",
         "Plate well: ", plate_well, "\n",
-        "Quantitation based on: ", dplyr::case_when(
-          median_colname == "glyco_ratio" ~ "glycopeptides",
-          median_colname == "GPS_ratio" ~ "peptide GPSVFPLAPSSK",
-          median_colname == "TTP_ratio" ~ "peptide TTPVLDSDGSFFLYSK"
-        ), "\n",
-        "IgG1 concentration: ", paste(IgG1_median_concentration, "ng/mL")
+        "Amount of IgG1 (ng): ", IgG1_median_amount
       )
     )) +
-    ggplot2::geom_point(ggplot2::aes(
-      x = sample_name,
-      y = IgG1_median_concentration,
+    ggplot2::geom_boxplot(ggplot2::aes(
+      x = sample_type,
+      y = as.numeric(IgG1_median_amount)
+    )) +
+    ggplot2::geom_jitter(ggplot2::aes(
+      x = sample_type,
+      y = as.numeric(IgG1_median_amount),
       color = sample_type
-    ), size = 1, alpha = 0.7) +
+    ), height = 0, width = 0.2, size = 1, alpha = 0.7) +
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
     ggplot2::scale_color_manual(values = my_palette,
                                 name = "Sample type") +
-    ggplot2::labs(y = "IgG1 concentration (ng/mL)", x = "") +
+    ggplot2::labs(y = "Amount of IgG1 (ng)", x = "Sample") +
     ggplot2::scale_x_discrete(labels = NULL)
 
   return(plot)
