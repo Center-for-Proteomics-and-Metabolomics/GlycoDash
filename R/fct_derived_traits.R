@@ -434,6 +434,8 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
     dplyr::select(-cluster, -sum_intensity) %>% 
     tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), 
                     extra = "merge", remove = TRUE) %>% 
+    # Replace NA relative abundances by zero
+    dplyr::mutate(relative_abundance = ifelse(is.na(relative_abundance), 0, relative_abundance)) %>% 
     # Create column for each glycan with relative abundance as value
     tidyr::pivot_wider(names_from = "glycan", values_from = relative_abundance) 
   
