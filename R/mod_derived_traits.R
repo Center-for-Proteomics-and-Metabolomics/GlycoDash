@@ -97,6 +97,8 @@ mod_derived_traits_ui <- function(id){
                   A formula consists of the name of the trait, and how
                   to calculate the trait, separated by an \"=\" sign. 
                   <br><br>
+                  <strong>Trait names should not contain any spaces.</strong>
+                  <br><br>
                   You must always place spaces around the following signs: 
                   addition, subtraction, division, multiplication (+ &nbsp; - &nbsp; \\ &nbsp; *)
                   "
