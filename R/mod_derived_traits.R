@@ -207,6 +207,7 @@ mod_derived_traits_server <- function(id, results_normalization){
       dplyr::select(-tidyselect::ends_with("formula"))
     })
     
+    
 
   
     ####################  Default glycosylation traits  ####################
@@ -322,7 +323,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     })
     
     output$custom_formulas <- DT::renderDT({
-      req(custom_formulas(), extension())
+      req(custom_formulas(), extension(), custom_traits())
       DT::datatable(custom_formulas(),
                     colnames = c("Cluster", "Custom trait", "Formula"),
                     rownames = FALSE, 

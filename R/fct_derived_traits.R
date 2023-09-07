@@ -453,16 +453,29 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
   # Start for-loop
   for (i in seq(1:nrow(custom_traits_formulas))){
     # Get cluster for which to calculate the trait
-    cluster_specified <- as.character(custom_traits_formulas[i, 1])   # E.g.: IgGI
+    cluster_specified <- as.character(custom_traits_formulas[i, 1])
     
     # Get formula as string
-    formula_string <- as.character(custom_traits_formulas[i, 2])      # E.g.:  first_trait = 0.5 * H4N4 + H5N4
+    formula_string <- as.character(custom_traits_formulas[i, 2])  
     
     # Convert to expression that can be used in dplyr mutate function
     formula_expr_ls <- create_expr_ls(formula_string)
     
+    # Check that glycans in the formula actually exist in the data frame. 
+    # If not, stop the for-loop (return NA) and show a warning message.
+    cols_to_check <- all.vars(formula_expr_ls[[1]])
+    if (!all(cols_to_check %in% names(calculated_custom_traits))) {
+      shinyalert::shinyalert(
+        text = "Your formulas for glycosylation traits contain one or more
+               glycans that are not present in the data after analyte curation.
+               Please check your formulas and try again.",
+        type = "warning"
+      )
+      return(NA)
+    }
+    
     # Get name of custom trait including cluster: <cluster>_<trait name>
-    custom_trait_name <- paste(cluster_specified, names(formula_expr_ls)[1], sep = "_")  # E.g. IgGI_first_trait
+    custom_trait_name <- paste(cluster_specified, names(formula_expr_ls)[1], sep = "_")
     
     # Add trait names and formulas to "columns_to_select" (these will be the column names)
     columns_to_select <- append(columns_to_select, custom_trait_name)
@@ -474,7 +487,7 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
     # Gives a tibble with 3 columns: cluster, plate_well, <custom trait>, and the used formula.
     calculated_trait_cluster <- calculated_custom_traits %>%
       dplyr::filter(cluster == cluster_specified) %>%
-      dplyr::mutate(!!! formula_expr_ls) %>%
+      dplyr::mutate(!!!formula_expr_ls) %>%
       dplyr::select(sample_name:replicates, names(formula_expr_ls)[1]) %>%  # includes group if it exists
       # Change name of column <custom trait> to <cluster_specified>_<custom trait>
       dplyr::rename(!!custom_trait_name := names(formula_expr_ls)[1]) %>%
