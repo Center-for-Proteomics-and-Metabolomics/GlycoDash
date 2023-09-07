@@ -325,7 +325,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     output$custom_formulas <- DT::renderDT({
       req(custom_formulas(), extension(), custom_traits())
       DT::datatable(custom_formulas(),
-                    colnames = c("Cluster", "Custom trait", "Formula"),
+                    colnames = c("Cluster", "Trait", "Formula"),
                     rownames = FALSE, 
                     options = list(paging = FALSE,
                                   ordering = FALSE,
@@ -340,11 +340,11 @@ mod_derived_traits_server <- function(id, results_normalization){
         dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
         dplyr::distinct() %>% 
         tidyr::pivot_longer(cols = -cluster,
-                            names_to = "Derived trait",
+                            names_to = "Trait",
                             values_to = "Formula") %>% 
         dplyr::rename_with(.fn = firstupper, 
                            .cols = cluster) %>% 
-        dplyr::mutate(`Derived trait` = dplyr::recode(`Derived trait`,
+        dplyr::mutate(`Trait` = dplyr::recode(`Trait`,
                                                       fuc_formula = "Fucosylation",
                                                       gal_formula = "Galactosylation",
                                                       sial_formula = "Sialylation",
