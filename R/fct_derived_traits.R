@@ -434,20 +434,19 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
     dplyr::select(-cluster, -sum_intensity) %>% 
     tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), 
                     extra = "merge", remove = TRUE) %>% 
-    # Replace NA relative abundances by zero
-    dplyr::mutate(relative_abundance = ifelse(is.na(relative_abundance), 0, relative_abundance)) %>% 
     # Create column for each glycan with relative abundance as value
-    tidyr::pivot_wider(names_from = "glycan", values_from = relative_abundance) 
-  
+    tidyr::pivot_wider(names_from = "glycan", values_from = relative_abundance) %>% 
+    # Replace NA relative abundances by zero
+    dplyr::mutate_at(dplyr::vars(replicates:last_col()), ~ifelse(is.na(.), 0, .)) # relative abundances come after replicates column
   
   
   # Calculate traits per sample (plate well) and per cluster
   # Iterate through formulas provided in Excel file
   
-  # Create empty vector, will append column to names to select at the end
+  # Create empty vector, will add column names to select at the end.
   columns_to_select <- c()
   
-  # Another empty vector which will only contrain the names of the custom traits.
+  # Another empty vector which will only contain the names of the custom traits.
   # Is used to relocate columns.
   custom_traits_names <- c()
   
@@ -483,7 +482,6 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
       dplyr::mutate(
         !!paste(custom_trait_name, "formula", sep = "_") := formula_string
       )
-
 
     # Add to "calculated traits" data frame
     calculated_custom_traits <- calculated_custom_traits %>%
