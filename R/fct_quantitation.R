@@ -122,5 +122,12 @@ create_quantitation_plot <- function(IgG1_amounts) {
 
 
 
-
+plot_peptide_correlation <- function() {
+  df <- data.frame(
+    x = c(1, 2, 3, 4, 5),
+    y = c(2, 4, 1, 3, 5)
+  )
+  plot <- ggplot2::ggplot(df, ggplot2::aes(x, y)) + ggplot2::geom_point()
+  return(plot)
+}
 

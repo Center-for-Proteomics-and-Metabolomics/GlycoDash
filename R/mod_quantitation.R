@@ -46,7 +46,21 @@ mod_quantitation_ui <- function(id) {
             title = "Peptide correlations",
             width = NULL,
             solidHeader = TRUE,
-            status = "primary"
+            status = "primary",
+            tabsetPanel(id = ns("tabs"),
+              tabPanel(
+                title = "Glycopeptides vs GPS",
+                plotly::plotlyOutput(ns("glyco_vs_GPS"))
+              ),
+              tabPanel(
+                title = "Glycopeptides vs TTP",
+                plotly::plotlyOutput(ns("glyco_vs_TTP"))
+              ),
+              tabPanel(
+                title = "GPS vs TTP",
+                plotly::plotlyOutput(ns("GPS_vs_TTP"))
+              )
+            )
           )
         )
       ),
@@ -124,9 +138,22 @@ mod_quantitation_server <- function(id, quantitation_clusters,
           IgG1_median_amount = format(IgG1_median_amount, scientific = TRUE, digits = 2)
         )
     }) %>% bindEvent(input$quantify_IgG1)
+  
     
     
-    # Create a plot
+    # Create peptide correlation plots
+    purrr::map(c("glyco_vs_GPS", "glyco_vs_TTP", "GPS_vs_TTP"), ~ {
+      plot <- reactive({
+        plot_peptide_correlation()
+      })
+      output[[.x]] <- plotly::renderPlotly({
+        req(plot())
+        plotly::ggplotly(plot(), tooltip = "text")
+      })
+    })
+    
+    
+    # Create a plot with quantitation results
     quantitation_plot <- reactive({
       req(IgG1_amounts())
       create_quantitation_plot(IgG1_amounts())
