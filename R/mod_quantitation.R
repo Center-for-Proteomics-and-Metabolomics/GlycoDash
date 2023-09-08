@@ -15,7 +15,7 @@ mod_quantitation_ui <- function(id) {
       fluidRow(h1("IgG1 quantitation")),
       fluidRow(
         column(
-          width = 6,
+          width = 5,
           shinydashboard::box(
             title = "IgG1 quantitation using SILuMAb",
             width = NULL,
@@ -38,6 +38,15 @@ mod_quantitation_ui <- function(id) {
               ns("quantify_IgG1"),
               "Quantify IgG1"
             )
+          )
+        ),
+        column(
+          width = 7,
+          shinydashboard::box(
+            title = "Peptide correlations",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary"
           )
         )
       ),

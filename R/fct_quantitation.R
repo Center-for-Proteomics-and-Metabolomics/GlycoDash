@@ -115,8 +115,7 @@ create_quantitation_plot <- function(IgG1_amounts) {
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
     ggplot2::scale_color_manual(values = my_palette,
                                 name = "Sample type") +
-    ggplot2::labs(y = "Amount of IgG1 (ng)", x = "Sample") +
-    ggplot2::scale_x_discrete(labels = NULL)
+    ggplot2::labs(y = "Amount of IgG1 (ng)", x = "Sample type")
 
   return(plot)
 }
