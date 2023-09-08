@@ -125,7 +125,7 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
 #TODO Try to list the custom traits here as well, using "custom_traits_colnames"
 
 if (is.null(params$derived_traits)) {
-  cat("No glycosylation traits were calculated automatically")
+  cat("No glycosylation traits were calculated automatically.")
 } else {
   cat("The following glycosylation traits were calculated automatically:\n\n- ",
       paste(params$derived_traits, collapse = "\n- "))

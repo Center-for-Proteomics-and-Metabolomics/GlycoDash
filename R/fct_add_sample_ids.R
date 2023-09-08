@@ -215,7 +215,8 @@ read_plate_design <- function(plate_design_file) {
   # The plater package can only read .csv files, so we convert the Excel file to
   # .csv:
   plate_design <- readxl::read_excel(plate_design_file,
-                                     .name_repair = "minimal")
+                                     .name_repair = "minimal",
+                                     col_types = "text")
   
   # Replacing the NA's that are due to empty cells on the plates with "Empty cell
   # in plate design"

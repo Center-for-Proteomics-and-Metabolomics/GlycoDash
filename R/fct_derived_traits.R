@@ -435,70 +435,74 @@ calculate_custom_traits <- function(normalized_data, custom_traits_formulas){
     tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), 
                     extra = "merge", remove = TRUE) %>% 
     # Create column for each glycan with relative abundance as value
-    tidyr::pivot_wider(names_from = "glycan", values_from = relative_abundance) 
+    tidyr::pivot_wider(names_from = "glycan", values_from = relative_abundance) %>% 
+    # Replace NA relative abundances by zero
+    dplyr::mutate_at(dplyr::vars(replicates:last_col()), ~ifelse(is.na(.), 0, .)) # relative abundances come after replicates column
   
   
+  # Create two empty vectors: one for trait column names, and one for trait formulas
+  trait_colnames <- vector("character", length = nrow(custom_traits_formulas))
+  formula_colnames <- vector("character", length = nrow(custom_traits_formulas))
   
-  # Calculate traits per sample (plate well) and per cluster
-  # Iterate through formulas provided in Excel file
-  
-  # Create empty vector, will append column to names to select at the end
-  columns_to_select <- c()
-  
-  # Another empty vector which will only contrain the names of the custom traits.
-  # Is used to relocate columns.
-  custom_traits_names <- c()
-  
-  # Start for-loop
+  # Loop the traits.
+  # TODO: replace this by vectorized operations to make it faster.
   for (i in seq(1:nrow(custom_traits_formulas))){
     # Get cluster for which to calculate the trait
-    cluster_specified <- as.character(custom_traits_formulas[i, 1])   # E.g.: IgGI
+    cluster_specified <- as.character(custom_traits_formulas[i, 1])
     
     # Get formula as string
-    formula_string <- as.character(custom_traits_formulas[i, 2])      # E.g.:  first_trait = 0.5 * H4N4 + H5N4
+    formula_string <- as.character(custom_traits_formulas[i, 2])  
     
     # Convert to expression that can be used in dplyr mutate function
     formula_expr_ls <- create_expr_ls(formula_string)
     
-    # Get name of custom trait including cluster: <cluster>_<trait name>
-    custom_trait_name <- paste(cluster_specified, names(formula_expr_ls)[1], sep = "_")  # E.g. IgGI_first_trait
+    # Check that glycans in the formula actually exist in the data frame. 
+    # If not, stop the for-loop (return NA) and show a warning message.
+    cols_to_check <- all.vars(formula_expr_ls[[1]])
+    if (!all(cols_to_check %in% names(calculated_custom_traits))) {
+      shinyalert::shinyalert(
+        text = "Your formulas for glycosylation traits contain one or more
+               glycans that are not present in the data after analyte curation.
+               Please check your formulas and try again.",
+        type = "warning"
+      )
+      return(NA)
+    }
     
-    # Add trait names and formulas to "columns_to_select" (these will be the column names)
-    columns_to_select <- append(columns_to_select, custom_trait_name)
-    custom_traits_names <- append(custom_traits_names, custom_trait_name)
-    formula_column_name <- paste(custom_trait_name, "formula", sep = "_")   # E.g IgGI_first_trait_formula
-    columns_to_select <- append(columns_to_select, formula_column_name)
-
+    # Get name of custom trait including cluster: <cluster>_<trait name>
+    trait_name <- paste(cluster_specified, names(formula_expr_ls)[1], sep = "_")
+    
+    # Add trait names and formulas to the vectors
+    trait_colnames[i] <- trait_name
+    formula_colnames[i] <- paste(trait_name, "formula", sep = "_")
+    
     # Calculate trait per sample, cluster has to match specified cluster
     # Gives a tibble with 3 columns: cluster, plate_well, <custom trait>, and the used formula.
     calculated_trait_cluster <- calculated_custom_traits %>%
       dplyr::filter(cluster == cluster_specified) %>%
-      dplyr::mutate(!!! formula_expr_ls) %>%
-      dplyr::select(sample_name:replicates, names(formula_expr_ls)[1]) %>%  # includes group if it exists
+      dplyr::mutate(!!!formula_expr_ls) %>%
+      dplyr::select(sample_name:replicates, names(formula_expr_ls)[1]) %>%
       # Change name of column <custom trait> to <cluster_specified>_<custom trait>
-      dplyr::rename(!!custom_trait_name := names(formula_expr_ls)[1]) %>%
+      dplyr::rename(!!trait_name := names(formula_expr_ls)[1]) %>%
       # Add a column with the formula that was used to calculate the trait
-      dplyr::mutate(
-        !!paste(custom_trait_name, "formula", sep = "_") := formula_string
-      )
-
-
+      dplyr::mutate(!!paste(trait_name, "formula", sep = "_") := formula_string)
+    
     # Add to "calculated traits" data frame
     calculated_custom_traits <- calculated_custom_traits %>%
-      dplyr::left_join(., calculated_trait_cluster)  # "by = " automatically
-
+      dplyr::left_join(., calculated_trait_cluster)
+    
   }
-
+  
   # Get "calculated_custom_traits" in correct format
   calculated_custom_traits <- calculated_custom_traits %>%
-    dplyr::select(sample_name:replicates, any_of(columns_to_select)) %>% 
+    dplyr::select(sample_name:replicates, tidyselect::any_of(c(trait_colnames, formula_colnames))) %>% 
     dplyr::select(-cluster) %>% 
     dplyr::group_by(sample_name) %>% 
     tidyr::fill(tidyr::everything(), .direction = "downup") %>% 
     dplyr::ungroup() %>% 
     dplyr::distinct() %>% 
-    dplyr::relocate(all_of(custom_traits_names), .after = replicates)
-
+    dplyr::relocate(all_of(trait_colnames), .after = replicates)
+  
   # Return calculated custom traits tibble
   return(calculated_custom_traits)
 }

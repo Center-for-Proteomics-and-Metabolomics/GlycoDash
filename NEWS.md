@@ -1,3 +1,13 @@
+# v1.2.8
+## Bug fixes
+* NA values are now treated as zeros when calculating custom glycosylation traits.
+
+## Adjustments
+* In the Data Import tab, the “Define the clusters” button is disabled when not all keywords were found or filled in.
+* Show correct analyte curation method in data report.
+* Show a warning when formulas for custom traits contain glycans that are not present in the data after analyte curation.
+
+
 # v1.2.7
 ## Bug fixes
 * The file names of the uploaded LaCyTools summaries and metadata are now shown in the report.
