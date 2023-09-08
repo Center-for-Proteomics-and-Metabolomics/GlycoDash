@@ -84,7 +84,6 @@ mod_clusters_server <- function(id, LaCyTools_summary){
       return(keywords_found)
     })
     
-    
     keywords <- reactive({
       req(purrr::map(cluster_inputIds(),
                      ~input[[.x]]))
@@ -117,12 +116,17 @@ mod_clusters_server <- function(id, LaCyTools_summary){
     
     
     # Add clusters to data ----------------------------------------------------
-    
     observe({
       shinyjs::toggleState("button",
                            condition = all(
-                             is_truthy(LaCyTools_summary()),
-                             is_truthy(cluster_keywords_found())
+                             is_truthy(cluster_keywords_found()),
+                             if (is_truthy(cluster_keywords_found())) {
+                               # Can only check this if cluster_keywords_found() is Truthy
+                               all(cluster_keywords_found())
+                             },
+                             !any(keywords() == ""),
+                             # Prevent accidental duplicate clusters) 
+                             length(unique(keywords())) == length(keywords())
                            ))
     })
     

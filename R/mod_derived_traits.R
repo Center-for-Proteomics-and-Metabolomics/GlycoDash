@@ -97,6 +97,8 @@ mod_derived_traits_ui <- function(id){
                   A formula consists of the name of the trait, and how
                   to calculate the trait, separated by an \"=\" sign. 
                   <br><br>
+                  <strong>Trait names should not contain any spaces.</strong>
+                  <br><br>
                   You must always place spaces around the following signs: 
                   addition, subtraction, division, multiplication (+ &nbsp; - &nbsp; \\ &nbsp; *)
                   "
@@ -206,6 +208,7 @@ mod_derived_traits_server <- function(id, results_normalization){
       dplyr::full_join(custom_traits(), results_normalization$normalized_data_wide()) %>% 
       dplyr::select(-tidyselect::ends_with("formula"))
     })
+    
     
 
   
@@ -322,9 +325,9 @@ mod_derived_traits_server <- function(id, results_normalization){
     })
     
     output$custom_formulas <- DT::renderDT({
-      req(custom_formulas(), extension())
+      req(custom_formulas(), extension(), custom_traits())
       DT::datatable(custom_formulas(),
-                    colnames = c("Cluster", "Custom trait", "Formula"),
+                    colnames = c("Cluster", "Trait", "Formula"),
                     rownames = FALSE, 
                     options = list(paging = FALSE,
                                   ordering = FALSE,
@@ -339,11 +342,11 @@ mod_derived_traits_server <- function(id, results_normalization){
         dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
         dplyr::distinct() %>% 
         tidyr::pivot_longer(cols = -cluster,
-                            names_to = "Derived trait",
+                            names_to = "Trait",
                             values_to = "Formula") %>% 
         dplyr::rename_with(.fn = firstupper, 
                            .cols = cluster) %>% 
-        dplyr::mutate(`Derived trait` = dplyr::recode(`Derived trait`,
+        dplyr::mutate(`Trait` = dplyr::recode(`Trait`,
                                                       fuc_formula = "Fucosylation",
                                                       gal_formula = "Galactosylation",
                                                       sial_formula = "Sialylation",

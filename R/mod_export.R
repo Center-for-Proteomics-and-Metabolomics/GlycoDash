@@ -199,6 +199,8 @@ mod_export_server <- function(id,
           curated_spectra_plot = try_call(results_spectra_curation$plot),
           curated_spectra_plots = curated_spectra_plots,
           analyte_curation_method = results_analyte_curation$method(),
+          analyte_curation_choice = results_analyte_curation$curation_method(),
+          groups_to_ignore = results_analyte_curation$groups_to_ignore(),
           ignore_samples = results_analyte_curation$ignore_samples(), # test if empty
           cut_off_percentage = results_analyte_curation$cut_off(),
           analyte_list = results_analyte_curation$analyte_list(),
