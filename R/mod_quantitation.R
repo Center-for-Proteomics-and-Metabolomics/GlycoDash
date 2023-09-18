@@ -47,20 +47,7 @@ mod_quantitation_ui <- function(id) {
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            tabsetPanel(id = ns("tabs"),
-              tabPanel(
-                title = "Glycopeptides vs GPS",
-                plotly::plotlyOutput(ns("glyco_vs_GPS"))
-              ),
-              tabPanel(
-                title = "Glycopeptides vs TTP",
-                plotly::plotlyOutput(ns("glyco_vs_TTP"))
-              ),
-              tabPanel(
-                title = "GPS vs TTP",
-                plotly::plotlyOutput(ns("GPS_vs_TTP"))
-              )
-            )
+            tabsetPanel(id = ns("tabs"))
           )
         )
       ),
@@ -72,7 +59,7 @@ mod_quantitation_ui <- function(id) {
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            plotly::plotlyOutput(ns("quantitation_plot"))
+            shinycssloaders::withSpinner(plotly::plotlyOutput(ns("quantitation_plot")))
           )
         )
       )
@@ -132,23 +119,27 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     IgG1_amounts <- reactive({
       req(IgG1_ratios(), input$silumab_amount)
       IgG1_ratios() %>% 
-        dplyr::mutate(
-          IgG1_median_amount = median_ratio * input$silumab_amount,
-          # Use scientific formatting
-          IgG1_median_amount = format(IgG1_median_amount, scientific = TRUE, digits = 2)
-        )
+        dplyr::mutate(IgG1_median_amount = median_ratio * input$silumab_amount)
     }) %>% bindEvent(input$quantify_IgG1)
   
     
     
-    # Create peptide correlation plots
-    purrr::map(c("glyco_vs_GPS", "glyco_vs_TTP", "GPS_vs_TTP"), ~ {
-      plot <- reactive({
-        plot_peptide_correlation()
-      })
-      output[[.x]] <- plotly::renderPlotly({
-        req(plot())
-        plotly::ggplotly(plot(), tooltip = "text")
+    # Create peptide correlation plots.
+    observe({
+      req(IgG1_amounts())
+      tab_ids <- c("glyco_vs_GPS", "glyco_vs_TTP", "GPS_vs_TTP")
+      tab_titles <- c("Glycopeptides vs GPS", "Glycopeptides vs TTP", "GPS vs TTP")
+      purrr::imap(tab_ids, function(tab_id, i) {
+        plot <- plot_peptide_correlation(IgG1_amounts(), tab_id, input$silumab_amount)
+        output[[tab_id]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
+        appendTab(
+          inputId = "tabs",
+          select = TRUE,
+          tab = tabPanel(
+            title = tab_titles[[i]],
+            plotly::plotlyOutput(ns(tab_id))
+          )
+        )
       })
     })
     

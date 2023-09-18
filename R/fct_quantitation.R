@@ -37,8 +37,7 @@ calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
     # Use function from normalization to calculate total intensities of analytes
     calculate_total_intensity(.) %>% 
     # Then calculate the sum intensities (code below is part of normalization function)
-    dplyr::group_by(cluster,
-                    sample_name) %>%
+    dplyr::group_by(cluster, sample_name) %>%
     dplyr::reframe(sum_intensity = sum(total_absolute_intensity),
                    across(everything())) %>% 
     dplyr::select(-total_absolute_intensity) %>% 
@@ -103,11 +102,11 @@ create_quantitation_plot <- function(IgG1_amounts) {
     )) +
     ggplot2::geom_boxplot(ggplot2::aes(
       x = sample_type,
-      y = as.numeric(IgG1_median_amount)
+      y = IgG1_median_amount
     )) +
     ggplot2::geom_jitter(ggplot2::aes(
       x = sample_type,
-      y = as.numeric(IgG1_median_amount),
+      y = IgG1_median_amount,
       color = sample_type
     ), height = 0, width = 0.2, size = 1, alpha = 0.7) +
     ggplot2::theme_classic() +
@@ -122,12 +121,41 @@ create_quantitation_plot <- function(IgG1_amounts) {
 
 
 
-plot_peptide_correlation <- function() {
-  df <- data.frame(
-    x = c(1, 2, 3, 4, 5),
-    y = c(2, 4, 1, 3, 5)
+# Function to plot peptide correlations.
+plot_peptide_correlation <- function(IgG1_amounts, tab_id, amount) {
+  # Determine x and y columns to plot, depending on tab_id
+  ycol <- dplyr::case_when(
+    tab_id %in% c("glyco_vs_GPS", "glyco_vs_TTP") ~ "glyco_ratio",
+    tab_id == "GPS_vs_TTP" ~ "GPS_ratio"
   )
-  plot <- ggplot2::ggplot(df, ggplot2::aes(x, y)) + ggplot2::geom_point()
-  return(plot)
+  xcol <- dplyr::case_when(
+    tab_id %in% c("glyco_vs_TTP", "GPS_vs_TTP") ~ "TTP_ratio",
+    tab_id == "glyco_vs_GPS" ~ "GPS_ratio"
+  )
+  
+  # Color palette for plot
+  n_colors <- length(unique(IgG1_amounts$sample_type))
+  my_palette <- color_palette(n_colors)
+  
+  # Correlation plot
+  ggplot2::ggplot(data = IgG1_amounts, ggplot2::aes(
+    x = .data[[xcol]] * amount,
+    y = .data[[ycol]] * amount
+  )) + 
+    ggplot2::geom_point(ggplot2::aes(color = sample_type), size = 1, alpha = 0.7) +
+    ggplot2::xlab(dplyr::case_when(
+      xcol == "TTP_ratio" ~ "IgG1 (ng) - Based on TTP",
+      xcol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS"
+    )) +
+    ggplot2::ylab(dplyr::case_when(
+      ycol == "glyco_ratio" ~ "IgG1 (ng) - Based on glycopeptides",
+      ycol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS"
+    )) + 
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5)
+    ) +
+    ggplot2::scale_color_manual(values = my_palette, name = "Sample type")
 }
 
