@@ -114,8 +114,7 @@ create_quantitation_plot <- function(IgG1_amounts) {
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
     ggplot2::scale_color_manual(values = my_palette,
                                 name = "Sample type") +
-    ggplot2::labs(y = "Amount of IgG1 (ng)", x = "Sample type") +
-    ggplot2::scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
+    ggplot2::labs(y = "Amount of IgG1 (ng)", x = "Sample type")
 
   return(plot)
 }
@@ -161,12 +160,12 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, amount) {
       )
     ), size = 1, alpha = 0.7) +
     ggplot2::xlab(dplyr::case_when(
-      xcol == "TTP_ratio" ~ "IgG1 (ng) - Based on TTP",
-      xcol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS"
+      xcol == "TTP_ratio" ~ "IgG1 (ng) - Based on TTP[...]",
+      xcol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS[...]"
     )) +
     ggplot2::ylab(dplyr::case_when(
       ycol == "glyco_ratio" ~ "IgG1 (ng) - Based on glycopeptides",
-      ycol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS"
+      ycol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS[...]"
     )) + 
     ggplot2::theme_classic() +
     ggplot2::theme(
@@ -174,8 +173,6 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, amount) {
       panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
       plot.title = ggplot2::element_text(size = 12)
     ) +
-    ggplot2::scale_color_manual(values = my_palette, name = "Sample type") +
-    ggplot2::scale_x_continuous(labels = function(x) format(x, scientific = TRUE)) +
-    ggplot2::scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
+    ggplot2::scale_color_manual(values = my_palette, name = "Sample type")
 }
 

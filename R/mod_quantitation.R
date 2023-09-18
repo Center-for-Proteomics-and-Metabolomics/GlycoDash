@@ -119,7 +119,10 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     IgG1_amounts <- reactive({
       req(IgG1_ratios(), input$silumab_amount)
       IgG1_ratios() %>% 
-        dplyr::mutate(IgG1_median_amount = median_ratio * input$silumab_amount)
+        dplyr::mutate(
+          # Calculate median amount of IgG1 (ng), rounded to whole number.
+          IgG1_median_amount = round(median_ratio * input$silumab_amount, digits = 0)
+        )
     }) %>% bindEvent(input$quantify_IgG1)
   
     
