@@ -31,7 +31,7 @@ mod_quantitation_ui <- function(id) {
             numericInput(
               ns("silumab_amount"),
               "Amount of SILuMAb per sample (ng):",
-              value = 5000, min = 0, max = NA
+              value = 5, min = 0, max = NA
             ),
             # Button to cquantify IgG1
             actionButton(

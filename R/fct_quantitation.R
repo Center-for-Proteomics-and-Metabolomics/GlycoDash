@@ -114,10 +114,13 @@ create_quantitation_plot <- function(IgG1_amounts) {
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
     ggplot2::scale_color_manual(values = my_palette,
                                 name = "Sample type") +
-    ggplot2::labs(y = "Amount of IgG1 (ng)", x = "Sample type")
+    ggplot2::labs(y = "Amount of IgG1 (ng)", x = "Sample type") +
+    ggplot2::scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
 
   return(plot)
 }
+
+
 
 
 
@@ -133,16 +136,30 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, amount) {
     tab_id == "glyco_vs_GPS" ~ "GPS_ratio"
   )
   
+  # Calculate Spearman's correlation
+  correlation <- stats::cor(IgG1_amounts[[xcol]], IgG1_amounts[[ycol]], 
+                            method = "spearman")
+  
   # Color palette for plot
   n_colors <- length(unique(IgG1_amounts$sample_type))
   my_palette <- color_palette(n_colors)
   
   # Correlation plot
-  ggplot2::ggplot(data = IgG1_amounts, ggplot2::aes(
-    x = .data[[xcol]] * amount,
-    y = .data[[ycol]] * amount
-  )) + 
-    ggplot2::geom_point(ggplot2::aes(color = sample_type), size = 1, alpha = 0.7) +
+  ggplot2::ggplot() + 
+    ggplot2::ggtitle(paste0(
+      "Spearman correlation = ",
+      as.character(round(correlation, digits = 2))
+    )) +
+    ggplot2::geom_point(data = IgG1_amounts, ggplot2::aes(
+      x = .data[[xcol]] * amount,
+      y = .data[[ycol]] * amount,
+      color = sample_type,
+      text = paste0(
+        "Sample name: ", sample_name, "\n",
+        "Sample ID: ", sample_id, "\n",
+        "Plate well: ", plate_well
+      )
+    ), size = 1, alpha = 0.7) +
     ggplot2::xlab(dplyr::case_when(
       xcol == "TTP_ratio" ~ "IgG1 (ng) - Based on TTP",
       xcol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS"
@@ -154,8 +171,11 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, amount) {
     ggplot2::theme_classic() +
     ggplot2::theme(
       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5)
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+      plot.title = ggplot2::element_text(size = 12)
     ) +
-    ggplot2::scale_color_manual(values = my_palette, name = "Sample type")
+    ggplot2::scale_color_manual(values = my_palette, name = "Sample type") +
+    ggplot2::scale_x_continuous(labels = function(x) format(x, scientific = TRUE)) +
+    ggplot2::scale_y_continuous(labels = function(x) format(x, scientific = TRUE))
 }
 
