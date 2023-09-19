@@ -75,10 +75,11 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
 
 
 
-# Calculate IgG1 amounts based on ratios and chosen peptides.
+# Calculate IgG1 amounts based on ratios of chosen peptides, and amount of SILuMAb.
 # The IgG1 is quantitied based on the median of the peptide ratios.
 # Quantities (ng) are rounded to whole numbers.
-calculate_IgG1_amounts <- function(IgG1_ratios, chosen_peptides) {
+calculate_IgG1_amounts <- function(IgG1_ratios, chosen_peptides,
+                                   silumab_amount) {
   
   # Select the peptide ratios to include in calculating the median.
   # Define a predefined list of peptides and their corresponding ratios.
@@ -91,12 +92,14 @@ calculate_IgG1_amounts <- function(IgG1_ratios, chosen_peptides) {
   # Create ratios_to_use based on the indices.
   ratios_to_use <- ifelse(!is.na(indices), ratio_list[indices], NA)
   
-  # Now calculate the median ratios.
+  # Now calculate the median ratios, and subsequently IgG1 concentrations
   with_medians <- IgG1_ratios %>% 
     dplyr::mutate(
       median_ratio = apply(
         dplyr::select(., tidyselect::all_of(ratios_to_use)), 1, median, na.rm = TRUE
-      )
+      ),
+      # Calculate amount of IgG1 (ng), rounded to whole number.
+      IgG1_median_amount = round(median_ratio * silumab_amount, digits = 0)
     )
   
   return(with_medians)
@@ -143,7 +146,7 @@ create_quantitation_plot <- function(IgG1_amounts) {
 
 
 # Function to plot peptide correlations.
-plot_peptide_correlation <- function(IgG1_amounts, tab_id, amount) {
+plot_peptide_correlation <- function(IgG1_amounts, tab_id) {
   # Determine x and y columns to plot, depending on tab_id
   ycol <- dplyr::case_when(
     tab_id %in% c("glyco_vs_GPS", "glyco_vs_TTP") ~ "glyco_ratio",
@@ -169,8 +172,8 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, amount) {
       as.character(round(correlation, digits = 2))
     )) +
     ggplot2::geom_point(data = IgG1_amounts, ggplot2::aes(
-      x = .data[[xcol]] * amount,
-      y = .data[[ycol]] * amount,
+      x = .data[[xcol]],
+      y = .data[[ycol]],
       color = sample_type,
       text = paste0(
         "Sample name: ", sample_name, "\n",
