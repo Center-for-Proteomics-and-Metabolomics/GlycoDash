@@ -1,5 +1,6 @@
 # TODO
 # - Make checkboxes work (calculation excluding peptides)
+# - In the generated report, mention on which peptides the quantitation was based.
 # - Delete already created correlation plot tabs after pushing button.
 # - Pass results on to "Traits" and "Export results" tab.
 # - Check what happens with missing values (NA) for peptides?
@@ -137,25 +138,45 @@ mod_quantitation_server <- function(id, quantitation_clusters,
       return(ratios)
     })
     
-    # Calculate IgG1 amounts
+    # Calculate IgG1 amounts based on chosen peptides.
     IgG1_amounts <- reactive({
       req(IgG1_ratios(), input$silumab_amount)
-      IgG1_ratios() %>% 
-        dplyr::mutate(
-          # Calculate median amount of IgG1 (ng), rounded to whole number.
-          IgG1_median_amount = round(median_ratio * input$silumab_amount, digits = 0)
-        )
+      calculate_IgG1_amounts(IgG1_ratios(), input$chosen_peptides, input$silumab_amount)
     }) %>% bindEvent(input$quantify_IgG1)
   
     
     
     # Create peptide correlation plots.
-    observe({
-      req(IgG1_amounts())
-      tab_ids <- c("glyco_vs_GPS", "glyco_vs_TTP", "GPS_vs_TTP")
-      tab_titles <- c("Glycopeptides vs GPS", "Glycopeptides vs TTP", "GPS vs TTP")
+    # TODO: Remove created plot tabs when amounts are re-calculated.
+    r <- reactiveValues(created_tabs = vector("character"))  # To store IDs of created tabs
+    observeEvent(IgG1_amounts(), {
+      req(length(input$chosen_peptides) > 1)
+      
+      # Determine tab IDs and titles
+      # TODO: make this a function
+      peptide_list <- c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
+      id_list <- c("glyco_vs_GPS", "glyco_vs_TTP", "GPS_vs_TTP")
+      title_list <- c("Glycopeptides vs GPS", "Glycopeptides vs TTP", "GPS vs TTP")
+      
+      if (length(input$chosen_peptides) == 3) {
+        tab_ids <- id_list
+        tab_titles <- title_list
+      } else {
+        tab_ids <- dplyr::case_when(
+          all(input$chosen_peptides == c("Glycopeptides", "GPSVFPLAPSSK")) ~ "glyco_vs_GPS",
+          all(input$chosen_peptides == c("Glycopeptides", "TTPVLDSDGSFFLYSK")) ~ "glyco_vs_TTP",
+          all(input$chosen_peptides == c("GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")) ~ "GPS_vs_TTP"
+        )
+        tab_titles <- dplyr::case_when(
+          tab_ids == "glyco_vs_GPS" ~ "Glycopeptides vs GPS",
+          tab_ids == "glyco_vs_TTP" ~ "Glycopeptides vs TTP",
+          tab_ids == "GPS_vs_TTP" ~ "GPS vs TTP"
+        )
+      }
+      
+      # Create tabs and plots.
       purrr::imap(tab_ids, function(tab_id, i) {
-        plot <- plot_peptide_correlation(IgG1_amounts(), tab_id, input$silumab_amount)
+        plot <- plot_peptide_correlation(IgG1_amounts(), tab_id)
         output[[tab_id]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
         appendTab(
           inputId = "tabs",
@@ -167,6 +188,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         )
       })
     })
+    
     
     
     # Create a plot with quantitation results
