@@ -70,18 +70,37 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
     # Get rid of sum intensities
     dplyr::select(sample_name:sample_type, tidyselect::contains("ratio"))
   
-  
-  # Extract the columns with the ratios, and calculate median ratio for each sample
-  ratio_columns <- sum_intensity_ratios[, grepl("ratio", colnames(sum_intensity_ratios))]
-  ratio_columns$median_ratio <- apply(ratio_columns, 1, median)
-  
-  # Add median ratios to sum_intensity_ratios
-  sum_intensity_ratios$median_ratio <- ratio_columns$median_ratio
-  
   return(sum_intensity_ratios)
 }
 
 
+
+# Calculate IgG1 amounts based on ratios and chosen peptides.
+# The IgG1 is quantitied based on the median of the peptide ratios.
+# Quantities (ng) are rounded to whole numbers.
+calculate_IgG1_amounts <- function(IgG1_ratios, chosen_peptides) {
+  
+  # Select the peptide ratios to include in calculating the median.
+  # Define a predefined list of peptides and their corresponding ratios.
+  peptide_list <- c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
+  ratio_list <- c("glyco_ratio", "GPS_ratio", "TTP_ratio")
+  
+  # Use match to find indices of matching peptides.
+  indices <- match(chosen_peptides, peptide_list)
+  
+  # Create ratios_to_use based on the indices.
+  ratios_to_use <- ifelse(!is.na(indices), ratio_list[indices], NA)
+  
+  # Now calculate the median ratios.
+  with_medians <- IgG1_ratios %>% 
+    dplyr::mutate(
+      median_ratio = apply(
+        dplyr::select(., tidyselect::all_of(ratios_to_use)), 1, median, na.rm = TRUE
+      )
+    )
+  
+  return(with_medians)
+}
 
 
 
@@ -159,6 +178,8 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, amount) {
         "Plate well: ", plate_well
       )
     ), size = 1, alpha = 0.7) +
+    # ggplot2::geom_abline(intercept = 0, slope = 1, 
+    #                     linetype = "dotted", color = "black", alpha = 0.5) +
     ggplot2::xlab(dplyr::case_when(
       xcol == "TTP_ratio" ~ "IgG1 (ng) - Based on TTP[...]",
       xcol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS[...]"
