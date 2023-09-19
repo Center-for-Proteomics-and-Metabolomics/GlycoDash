@@ -1,3 +1,12 @@
+# TODO
+# - Make checkboxes work (calculation excluding peptides)
+# - Delete already created correlation plot tabs after pushing button.
+# - Pass results on to "Traits" and "Export results" tab.
+# - Check what happens with missing values (NA) for peptides?
+# - Make quantitation work in the case of Total and Specific antibodies.
+# - Add info boxes.
+
+
 #' quantitation UI Function
 #'
 #' @description A shiny Module.
@@ -32,6 +41,14 @@ mod_quantitation_ui <- function(id) {
               ns("silumab_amount"),
               "Amount of SILuMAb per sample (ng):",
               value = 5, min = 0, max = NA
+            ),
+            # Checkboxes to include/exclude peptides
+            # TODO: toggle visibiliy, require at least 1 checked for quantitation button
+            shinyWidgets::awesomeCheckboxGroup(
+              ns("chosen_peptides"),
+              "Peptides to include in the calculation:",
+              choices = c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK"),
+              selected = c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
             ),
             # Button to cquantify IgG1
             actionButton(
@@ -95,11 +112,16 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         id = "quantify_IgG1",
         condition = is_truthy(quantitation_clusters())
       )
+      shinyjs::toggle(
+        id = "chosen_peptides",
+        condition = is_truthy(quantitation_clusters())
+      )
       shinyjs::toggleState(
         id = "quantify_IgG1",
         condition = all(
           is_truthy(quantitation_clusters()),
-          is_truthy(results_normalization$normalized_data())
+          is_truthy(results_normalization$normalized_data()),
+          length(input$chosen_peptides) >= 1
         )
       )
     })
