@@ -75,6 +75,7 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
 
 
 
+
 # Calculate IgG1 amounts based on ratios of chosen peptides, and amount of SILuMAb.
 # The IgG1 is quantitied based on the median of the peptide ratios.
 # Quantities (ng) are rounded to whole numbers.
@@ -104,6 +105,7 @@ calculate_IgG1_amounts <- function(IgG1_ratios, chosen_peptides,
   
   return(with_medians)
 }
+
 
 
 
@@ -144,7 +146,6 @@ create_quantitation_plot <- function(IgG1_amounts) {
 
 
 
-
 # Function to plot peptide correlations.
 plot_peptide_correlation <- function(IgG1_amounts, tab_id) {
   # Determine x and y columns to plot, depending on tab_id
@@ -181,8 +182,6 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id) {
         "Plate well: ", plate_well
       )
     ), size = 1, alpha = 0.7) +
-    # ggplot2::geom_abline(intercept = 0, slope = 1, 
-    #                     linetype = "dotted", color = "black", alpha = 0.5) +
     ggplot2::xlab(dplyr::case_when(
       xcol == "TTP_ratio" ~ "IgG1 (ng) - Based on TTP[...]",
       xcol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS[...]"
@@ -199,4 +198,42 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id) {
     ) +
     ggplot2::scale_color_manual(values = my_palette, name = "Sample type")
 }
+
+
+
+
+# Determine tab IDs for correlation plots, based on chosen peptides.
+determine_tab_ids <- function(chosen_peptides) {
+  peptide_list <- c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
+  id_list <- c("glyco_vs_GPS", "glyco_vs_TTP", "GPS_vs_TTP")
+  if (length(chosen_peptides) == 3) {
+    tab_ids <- id_list
+  } else {
+    tab_ids <- dplyr::case_when(
+      all(chosen_peptides == c("Glycopeptides", "GPSVFPLAPSSK")) ~ "glyco_vs_GPS",
+      all(chosen_peptides == c("Glycopeptides", "TTPVLDSDGSFFLYSK")) ~ "glyco_vs_TTP",
+      all(chosen_peptides == c("GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")) ~ "GPS_vs_TTP"
+    )
+  }
+  return(tab_ids)
+}
+
+# Determine tab titles for correlation plots, based on chosen peptides and created tab IDs.
+determine_tab_titles <- function(chosen_peptides, tab_ids) {
+  peptide_list <- c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
+  title_list <- c("Glycopeptides vs GPS", "Glycopeptides vs TTP", "GPS vs TTP")
+  if (length(chosen_peptides) == 3) {
+    tab_titles <- title_list
+  } else {
+    tab_titles <- dplyr::case_when(
+      tab_ids == "glyco_vs_GPS" ~ "Glycopeptides vs GPS",
+      tab_ids == "glyco_vs_TTP" ~ "Glycopeptides vs TTP",
+      tab_ids == "GPS_vs_TTP" ~ "GPS vs TTP"
+    )
+  }
+  return(tab_titles)
+}
+
+
+
 
