@@ -1,9 +1,11 @@
 # TODO
+# - When quantitation is done based on one peptide: no correlation plot.
 # - In the generated report, mention on which peptides the quantitation was based.
 # - Pass results on to "Traits" and "Export results" tab.
 # - Check what happens with missing values (NA) for peptides?
 # - Make quantitation work in the case of Total and Specific antibodies.
 # - Add info boxes.
+# - Show data with IgG1 quantities.
 
 
 #' quantitation UI Function
@@ -77,6 +79,15 @@ mod_quantitation_ui <- function(id) {
             status = "primary",
             shinycssloaders::withSpinner(plotly::plotlyOutput(ns("quantitation_plot")))
           )
+        )
+      ),
+      fluidRow(
+        shinydashboard::box(
+          title = "View data with IgG1 quantities",
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          DT::dataTableOutput(ns("data_table"))
         )
       )
     )
@@ -192,6 +203,24 @@ mod_quantitation_server <- function(id, quantitation_clusters,
       return(plotly_object)
     })
     
+    
+    # Combine the calculated IgG1 quantities with normalized data.
+    with_data <- reactive({
+      req(IgG1_amounts())
+      IgG1_quantities <- IgG1_amounts() %>% 
+        dplyr::select(sample_name:sample_type, IgG1_median_amount) %>% 
+        dplyr::rename(IgG1_quantity_ng = IgG1_median_amount) 
+    
+      dplyr::full_join(results_normalization$normalized_data_wide(),
+                       IgG1_quantities) %>% 
+        dplyr::relocate(IgG1_quantity_ng, .after = replicates)
+    })
+    
+    output$data_table <- DT::renderDT({
+      req(with_data())
+      DT::datatable(data = with_data(),
+                    options = list(scrollX = TRUE))
+    })
 
   })
 }

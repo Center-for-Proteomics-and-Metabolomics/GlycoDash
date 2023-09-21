@@ -221,7 +221,8 @@ determine_tab_ids <- function(chosen_peptides) {
 # Determine tab titles for correlation plots, based on chosen peptides and created tab IDs.
 determine_tab_titles <- function(chosen_peptides, tab_ids) {
   peptide_list <- c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
-  title_list <- c("Glycopeptides vs GPS", "Glycopeptides vs TTP", "GPS vs TTP")
+  title_list <- c("Glycopeptides vs GPS[...]", "Glycopeptides vs TTP[...]", 
+                  "GPS[...] vs TTP[...]")
   if (length(chosen_peptides) == 3) {
     tab_titles <- title_list
   } else {
