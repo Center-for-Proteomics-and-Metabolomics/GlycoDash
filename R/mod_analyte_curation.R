@@ -92,14 +92,13 @@ mod_analyte_curation_ui <- function(id){
                     When an analyte fulfills the quality criteria in a percentage
                     of spectra that is higher than the chosen cut-off (e.g. >25%),
                     then that analyte passes curation and is used for further analysis
-                    in all samples. Spectra from sample types that you choose to ignore
-                    are not included in this assessment.</li> <br>
+                    in all samples.</li> <br>
                     <li>
                     <b> Per biological group </b> <br>
                     When an analyte fulfills the quality criteria in a percentage of
                     spectra above the cut-off in one or more of the biological groups,
                     then that analyte passes curation. Spectra without an assigned
-                    biological group (e.g. blanks and pools) are not used in this
+                    biological group (e.g. blanks and standards) are not used in this
                     assessment. </li> <br>
                     <li> <b> Per sample </b> <br>
                     For each sample only the analytes that fulfill all quality criteria
@@ -130,7 +129,16 @@ mod_analyte_curation_ui <- function(id){
                 HTML("<br/>Biological groups to ignore regarding analyte curation:"),
                 choices = c(""),
                 multiple = TRUE
-              )
+              ) %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = "
+                  You may want to exclude certain biological groups from the assessment,
+                  for instance when the size of the group is very small.
+                 ",
+               trigger = "hover",
+               placement = "right"
+                )
             ),
             
             div(
@@ -148,8 +156,11 @@ mod_analyte_curation_ui <- function(id){
                       "Spectra curation\" to choose these criteria)."
                     )),
                     tags$p(paste(
-                      "However, some spectra (e.g. blanks, standards or total", 
-                      "Ig samples) should not be included in this assesment."
+                      "However, some sample type (e.g. blanks and standards)", 
+                      "should not be included in this assessment.",
+                      "When your data contains total and specific Ig,",
+                      "you can also exlude either total or specific samples",
+                      "from the assessment."
                     )),
                     tags$p(paste(
                       "Select here which samples should be ignored with regards",
@@ -282,7 +293,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                       condition = input$method == "Curate analytes based on data")
       shinyjs::toggle("ignore_samples",
                       condition = input$method == "Curate analytes based on data" & 
-                      input$curation_method == "On all data")
+                      input$curation_method != "Per sample")
       shinyjs::toggle("groups_to_ignore",
                      condition = input$method == "Curate analytes based on data" & 
                      input$curation_method == "Per biological group")
