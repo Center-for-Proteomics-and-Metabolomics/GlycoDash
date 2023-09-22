@@ -27,7 +27,17 @@ mod_analyte_curation_ui <- function(id){
             selectInput(ns("method"), 
                         "Choose method for analyte curation:",
                         choices = c("Curate analytes based on data",
-                                    "Supply an analyte list")),
+                                    "Supply an analyte list")) %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = "
+                Analyte curation can be performed based on the data.
+                You can also upload a list with analytes that should pass
+                in all samples.
+                ",
+                trigger = "hover",
+                placement = "right"
+              ),
             tags$style(
               HTML(paste0("#",
                           ns("analyte_list_div"),
@@ -39,12 +49,12 @@ mod_analyte_curation_ui <- function(id){
                   bsplus::bs_embed_popover(
                     title = "Explanation",
                     content = HTML(paste(
-                      tags$b("Excel file:"),
+                      tags$b("Excel file"),
                       tags$p(paste(
                         'The file should consist of one column called "analyte",',
                         'followed by the names of the analytes that you want to keep.'
                       )),
-                      tags$b("R object:"),
+                      tags$b("R object"),
                       tags$p(paste(
                         "The R object should be a character vector or a list of",
                         "character strings (not a dataframe!) with the names of",
@@ -61,12 +71,46 @@ mod_analyte_curation_ui <- function(id){
                           " .popover {width: 400px;}"))
             ),
 
-            shinyWidgets::awesomeRadio(
-              ns("curation_method"),
-              "How do you want to perform analyte curation?",
-              choices = c("On all data", "Per biological group", "Per sample"),
-              selected = "On all data"
-            ),
+            # shinyWidgets::awesomeRadio(
+            #   ns("curation_method"),
+            #   "How do you want to perform analyte curation?",
+            #   choices = c("On all data", "Per biological group", "Per sample"),
+            #   selected = "On all data"
+            # ),
+            
+            selectInput(ns("curation_method"), 
+                        "How do you want to perform analyte curation based on the data?",
+                        choices = c("On all data",
+                                    "Per biological group",
+                                    "Per sample")) %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML("
+                  <ul>
+                    <li>
+                    <b> On all data </b> <br>
+                    When an analyte fulfills the quality criteria in a percentage
+                    of spectra that is higher than the chosen cut-off (e.g. >25%),
+                    then that analyte passes curation and is used for further analysis
+                    in all samples. Spectra from sample types that you choose to ignore
+                    are not included in this assessment.</li> <br>
+                    <li>
+                    <b> Per biological group </b> <br>
+                    When an analyte fulfills the quality criteria in a percentage of
+                    spectra above the cut-off in one or more of the biological groups,
+                    then that analyte passes curation. Spectra without an assigned
+                    biological group (e.g. blanks and pools) are not used in this
+                    assessment. </li> <br>
+                    <li> <b> Per sample </b> <br>
+                    For each sample only the analytes that fulfill all quality criteria
+                    in that sample will be used for further analysis. </li>
+                    </ul>
+                "),
+                trigger = "hover",
+                placement = "right",
+                html = "true"
+              ),
+            
             div(
               id = ns("choose_biogroup_cols"),
               selectInput(
