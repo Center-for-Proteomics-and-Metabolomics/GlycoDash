@@ -158,7 +158,7 @@ mod_spectra_curation_ui <- function(id){
                               title = "Spectra curation methods",
                               content = HTML(paste0(
                                 tags$p(
-                                  tags$b("Negative control spectra:"),
+                                  tags$b("Negative control spectra"),
                                   br(),
                                   paste(
                                     "Choose a group of samples that should not pass spectra",
