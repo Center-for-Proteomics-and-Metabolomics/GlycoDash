@@ -86,24 +86,22 @@ mod_analyte_curation_ui <- function(id){
               bsplus::bs_embed_popover(
                 title = "Explanation",
                 content = HTML("
-                  <ul>
-                    <li>
-                    <b> On all data </b> <br>
+                    <p> <b> On all data </b> <br>
                     When an analyte fulfills the quality criteria in a percentage
                     of spectra that is higher than the chosen cut-off (e.g. >25%),
                     then that analyte passes curation and is used for further analysis
-                    in all samples.</li> <br>
-                    <li>
-                    <b> Per biological group </b> <br>
+                    in all samples.
+                    
+                    <p> <b> Per biological group </b> <br>
                     When an analyte fulfills the quality criteria in a percentage of
                     spectra above the cut-off in one or more of the biological groups,
                     then that analyte passes curation. Spectra without an assigned
                     biological group (e.g. blanks and standards) are not used in this
-                    assessment. </li> <br>
-                    <li> <b> Per sample </b> <br>
+                    assessment.
+                    
+                    <p> <b> Per sample </b> <br>
                     For each sample only the analytes that fulfill all quality criteria
                     in that sample will be used for further analysis. </li>
-                    </ul>
                 "),
                 trigger = "hover",
                 placement = "right",
