@@ -143,7 +143,8 @@ mod_analyte_curation_ui <- function(id){
               id = ns("curation_based_on_data_div"),
               selectizeInput(ns("ignore_samples"),
                              HTML("Sample types to ignore regarding analyte curation:"),
-                             choices = c("Total", "Blanks", "Negative controls"),
+                             choices = c(""),
+                             #choices = c("Total", "Blanks", "Negative controls"),
                              multiple = TRUE) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
@@ -363,10 +364,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # Update the selection menu for "Biological groups to ignore", based on the chosen columm.
     observe({
       req(is_truthy(input$biogroup_column))
-      options <- dplyr::pull(
+      options <- as.character(dplyr::pull(
         unique(passing_spectra()[input$biogroup_column]) %>% 
         tidyr::drop_na()
-      )
+      )) # as.character() for when the column contains factors, as is the case with sample_types
       updateSelectizeInput(inputId = "groups_to_ignore", choices = c("", options))
     })
     
@@ -415,6 +416,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     without_samples_to_ignore <- reactive({
       req(input$method == "Curate analytes based on data")
+      req(input$curation_method != "Per sample")
       req(passing_spectra())
       if (is_truthy(input$ignore_samples)) {
         throw_out_samples(passing_spectra = passing_spectra(),
@@ -452,7 +454,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
             # Drop samples that don't belong to a biological group (e.g. pools, blanks)
             tidyr::drop_na(., input$biogroup_column) %>% 
             # Drop samples in biological groups that should be ignored
-            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>%  # Thanks ChatGPT
+            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>%
             curate_analytes(., input$cut_off, input$biogroup_column)
         } else if (input$curation_method == "On all data") {
             curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
@@ -490,7 +492,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       }
       
       return(curated_analytes)
-    })
+    }) %>% bindEvent(input$curate_analytes)
 
     
     # Analyte curated data
@@ -505,8 +507,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           curated_analytes(), passing_spectra()
         )
       }
-    }) %>% bindEvent(input$curate_analytes)
-    
+    })
     
     
     observe({
@@ -524,6 +525,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       req(analyte_curated_data())
       unique(analyte_curated_data()$cluster)
     })
+    
     
     r <- reactiveValues(mod_results = list(),
                         created_cluster_tabs = vector())
@@ -570,7 +572,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     observe({
       req(clusters())
-      req(info$analyte_curated_data())
+      req(analyte_curated_data())
       req(input$curation_method != "Per sample")
       
       r$mod_results <- purrr::set_names(clusters()) %>% 
