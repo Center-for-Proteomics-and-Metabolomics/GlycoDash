@@ -194,7 +194,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     traits_excel <- reactive({
       req(input$custom_traits_file, extension())
       if (extension() == "xlsx"){
-        readxl::read_excel(input$custom_traits_file$datapath, col_names = FALSE)
+        readxl::read_excel(input$custom_traits_file$datapath, col_names = FALSE, col_types = "text")
       }
     })
     
