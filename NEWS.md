@@ -1,3 +1,10 @@
+# v1.2.9
+## Adjustments
+* Performing analyte curation is (for now) possible only once, because curating analytes multiple times does not always work properly.
+* Info boxes were added to the analyte curation tab.
+* Option to exclude sample types when curating analytes per biological group.
+
+
 # v1.2.8
 ## Bug fixes
 * NA values are now treated as zeros when calculating custom glycosylation traits.
