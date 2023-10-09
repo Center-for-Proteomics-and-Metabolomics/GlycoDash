@@ -32,7 +32,8 @@ read_sample_type_file <- function(filepath, filename) {
     sample_types <- load_and_assign(filepath)
   } else { if (extension %in% c("xlsx", "xls")) {
     sample_types <- readxl::read_excel(filepath, 
-                                       col_names = TRUE)
+                                       col_names = TRUE,
+                                       col_types = "text")
   } else {
     rlang::abort(class = "wrong_extension",
                  message = "Please upload a .xlsx, .xls or .rds file.")

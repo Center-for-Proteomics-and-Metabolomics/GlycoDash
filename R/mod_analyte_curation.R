@@ -27,7 +27,17 @@ mod_analyte_curation_ui <- function(id){
             selectInput(ns("method"), 
                         "Choose method for analyte curation:",
                         choices = c("Curate analytes based on data",
-                                    "Supply an analyte list")),
+                                    "Supply an analyte list")) %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = "
+                Analyte curation can be performed based on the data.
+                You can also upload a list with analytes that should pass
+                in all samples.
+                ",
+                trigger = "hover",
+                placement = "right"
+              ),
             tags$style(
               HTML(paste0("#",
                           ns("analyte_list_div"),
@@ -39,12 +49,12 @@ mod_analyte_curation_ui <- function(id){
                   bsplus::bs_embed_popover(
                     title = "Explanation",
                     content = HTML(paste(
-                      tags$b("Excel file:"),
+                      tags$b("Excel file"),
                       tags$p(paste(
                         'The file should consist of one column called "analyte",',
                         'followed by the names of the analytes that you want to keep.'
                       )),
-                      tags$b("R object:"),
+                      tags$b("R object"),
                       tags$p(paste(
                         "The R object should be a character vector or a list of",
                         "character strings (not a dataframe!) with the names of",
@@ -60,13 +70,37 @@ mod_analyte_curation_ui <- function(id){
                           ns("curation_based_on_data"),
                           " .popover {width: 400px;}"))
             ),
-
-            shinyWidgets::awesomeRadio(
-              ns("curation_method"),
-              "How do you want to perform analyte curation?",
-              choices = c("On all data", "Per biological group", "Per sample"),
-              selected = "On all data"
-            ),
+            
+            selectInput(ns("curation_method"), 
+                        "How do you want to perform analyte curation based on the data?",
+                        choices = c("On all data",
+                                    "Per biological group",
+                                    "Per sample")) %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML("
+                    <p> <b> On all data </b> <br>
+                    When an analyte fulfills the quality criteria in a percentage
+                    of spectra that is higher than the chosen cut-off (e.g. >25%),
+                    then that analyte passes curation and is used for further analysis
+                    in all samples.
+                    
+                    <p> <b> Per biological group </b> <br>
+                    When an analyte fulfills the quality criteria in a percentage of
+                    spectra above the cut-off in one or more of the biological groups,
+                    then that analyte passes curation. Spectra without an assigned
+                    biological group (e.g. blanks and standards) are not used in this
+                    assessment.
+                    
+                    <p> <b> Per sample </b> <br>
+                    For each sample only the analytes that fulfill all quality criteria
+                    in that sample will be used for further analysis. </li>
+                "),
+                trigger = "hover",
+                placement = "right",
+                html = "true"
+              ),
+            
             div(
               id = ns("choose_biogroup_cols"),
               selectInput(
@@ -86,14 +120,31 @@ mod_analyte_curation_ui <- function(id){
                 HTML("<br/>Biological groups to ignore regarding analyte curation:"),
                 choices = c(""),
                 multiple = TRUE
-              )
+              ) %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML("
+                  <p>
+                  You may want to exclude certain biological groups from the assessment,
+                  for instance when the size of the group is very small.
+                
+                  <p> <i>
+                  Note: if you chose \"sample_type\" as the column that contains 
+                  the biological groups, you can either exclude a sample type/group here,
+                  in the box below, or both. </i>
+                "),
+                trigger = "hover",
+                placement = "right",
+                html = "true"
+                )
             ),
             
             div(
               id = ns("curation_based_on_data_div"),
               selectizeInput(ns("ignore_samples"),
                              HTML("Sample types to ignore regarding analyte curation:"),
-                             choices = c("Total", "Blanks", "Negative controls"),
+                             choices = c(""),
+                             #choices = c("Total", "Blanks", "Negative controls"),
                              multiple = TRUE) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
@@ -104,8 +155,11 @@ mod_analyte_curation_ui <- function(id){
                       "Spectra curation\" to choose these criteria)."
                     )),
                     tags$p(paste(
-                      "However, some spectra (e.g. blanks, standards or total", 
-                      "Ig samples) should not be included in this assesment."
+                      "However, some sample type (e.g. blanks and standards)", 
+                      "should not be included in this assessment.",
+                      "When your data contains total and specific Ig,",
+                      "you can also exlude either total or specific samples",
+                      "from the assessment."
                     )),
                     tags$p(paste(
                       "Select here which samples should be ignored with regards",
@@ -129,8 +183,14 @@ mod_analyte_curation_ui <- function(id){
                   trigger = "hover",
                   html = "true")
             ),
+            div(
+              strong("Note:"),
+              "analyte curation can only be peformed once for now.",
+              style = "color: #0021B8; font-size: 18px"
+            ),
+            br(),
             actionButton(ns("curate_analytes"), 
-                         "Perform analyte curation"),
+                         "Perform analyte curation")
            
           ),
           shinydashboard::box(
@@ -171,6 +231,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    # For now, make it possible to perform analyte curation only once.
+    # When counter is 1, the button is disabled.
+    counter <- reactiveValues(count = 0)
+    observeEvent(input$curate_analytes, {
+      counter$count <- 1
+    })
+    
+    
     passing_spectra <- reactive({
       req(results_spectra_curation$passing_spectra())
       results_spectra_curation$passing_spectra()
@@ -185,7 +253,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       req(biogroup_cols())
       updateSelectInput(
         inputId = "biogroup_column",
-        choices = c("", biogroup_cols())
+        choices = c(biogroup_cols())
       )
     })
     
@@ -209,6 +277,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         }
       )
     }) %>% bindEvent(input$determine_groups_button) # Show pop-up window when button is clicked.
+    
+    
+    # When user decides to change curation method, set rv_resp$response to NULL
+    observeEvent(input$curation_method, {
+      rv_resp$response <- NULL
+    })
+    
+    
     
  
     # The data table that is shown in the pop-up
@@ -238,7 +314,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                       condition = input$method == "Curate analytes based on data")
       shinyjs::toggle("ignore_samples",
                       condition = input$method == "Curate analytes based on data" & 
-                      input$curation_method == "On all data")
+                      input$curation_method != "Per sample")
       shinyjs::toggle("groups_to_ignore",
                      condition = input$method == "Curate analytes based on data" & 
                      input$curation_method == "Per biological group")
@@ -246,6 +322,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       shinyjs::toggleState("curate_analytes",
                            condition = 
                              all(
+                               counter$count == 0,
                                is_truthy(passing_spectra()),
                                any(
                                  all(input$method == "Supply an analyte list", is_truthy(analyte_list())),
@@ -303,18 +380,23 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       }
       
       updateSelectizeInput(inputId = "ignore_samples",
-                           choices = c("", options))
+                           choices = c(options))
     })
     
     
     # Update the selection menu for "Biological groups to ignore", based on the chosen columm.
     observe({
-      req(is_truthy(input$biogroup_column))
-      options <- dplyr::pull(
+      req(is_truthy(input$biogroup_column), rv_resp$response == TRUE)
+      options <- as.character(dplyr::pull(
         unique(passing_spectra()[input$biogroup_column]) %>% 
         tidyr::drop_na()
-      )
-      updateSelectizeInput(inputId = "groups_to_ignore", choices = c("", options))
+      )) # as.character() for when the column contains factors, as is the case with sample_types
+      updateSelectizeInput(inputId = "groups_to_ignore", choices = c(options))
+    })
+    
+    observeEvent(input$biogroup_column, {
+      rv_resp$response <- NULL
+      updateSelectizeInput(inputId = "groups_to_ignore", choices = c(""))
     })
     
     
@@ -363,8 +445,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     without_samples_to_ignore <- reactive({
       req(input$method == "Curate analytes based on data")
       req(passing_spectra())
-      if (is_truthy(input$ignore_samples)) {
-        throw_out_samples(passing_spectra = passing_spectra(),
+      if (input$curation_method == "Per sample") {
+        passing_spectra()
+      } else if (is_truthy(input$ignore_samples)) {
+        throw_out_samples(passing_spectra = passing_spectra(), 
                           samples_to_ignore = input$ignore_samples)
       } else {
         passing_spectra()
@@ -387,10 +471,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     
     # Curate the analytes
+    # TODO: turn this into a function
     curated_analytes <- reactive({
       
       if (input$method == "Curate analytes based on data") {
-        req(checked_analytes())
         
         #  Check if curation should be done per biological group
         if (isTRUE(rv_resp$response)) {
@@ -399,7 +483,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
             # Drop samples that don't belong to a biological group (e.g. pools, blanks)
             tidyr::drop_na(., input$biogroup_column) %>% 
             # Drop samples in biological groups that should be ignored
-            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>%  # Thanks ChatGPT
+            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>%
             curate_analytes(., input$cut_off, input$biogroup_column)
         } else if (input$curation_method == "On all data") {
             curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
@@ -437,7 +521,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       }
       
       return(curated_analytes)
-    })
+    }) %>% bindEvent(input$curate_analytes)  # Execute code when button is pushed.
+
 
     
     # Analyte curated data
@@ -449,15 +534,16 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       } else {
         dplyr::left_join(
           # Order here is important!
+          # This gives a subset of passing_spectra(), with only the analytes that pass curation.
           curated_analytes(), passing_spectra()
         )
-      }
-    }) %>% bindEvent(input$curate_analytes)
-    
+      } # bindEvent() below makes sure analyte_curated_data() is updated only
+        # when curated_analytes() changes. Not when input$curation_method changes.
+        # curated_analytes() changes when the "Perform analyte curation" button is pushed.
+    }) %>% bindEvent(curated_analytes())
     
     
     observe({
-      
       showNotification(ui = paste("Analyte curation has been performed",
                                   ifelse(
                                     input$method == "Curate analytes based on data",
@@ -467,10 +553,12 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                        type = "message")
     }) %>% bindEvent(analyte_curated_data())
    
+    
     clusters <- reactive({
       req(analyte_curated_data())
       unique(analyte_curated_data()$cluster)
     })
+    
     
     r <- reactiveValues(mod_results = list(),
                         created_cluster_tabs = vector())
@@ -483,86 +571,86 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                                       clusters())
     })
     
+    
     observe({
-      req(clusters(),
-          r$created_cluster_tabs)
-      
-      # Remove tabs that have been created before:
-      purrr::map(r$created_cluster_tabs,
-                function(cluster) {
-                  removeTab("tabs",
-                            target = cluster)
-                  # Trying to remove a tab that doesn't exist does not result in an error
-                })
-      
-      # Create one tab for each cluster in without_samples_to_ignore:
-      purrr::map(clusters(),
-                 function(cluster) {
-                   appendTab("tabs", select = TRUE, session = session,
-                             tabPanel(
-                               title = cluster,
-                               mod_tab_curated_analytes_ui(ns(cluster))
-                             ))
-                 })
+      req(clusters(), r$created_cluster_tabs)
+      # Remove tabs that were created before
+      # (Trying to remove a non-existing tab doesn't result in an error)
+      purrr::map(r$created_cluster_tabs, function(cluster) {
+        removeTab(inputId = "tabs", target = cluster)
+      })
+      # Create one tab for each cluster in without_samples_to_ignore
+      purrr::map(clusters(), function(cluster) {
+        appendTab(
+          inputId = "tabs", select = TRUE, session = session,
+          tab = tabPanel(
+            title = cluster,
+            mod_tab_curated_analytes_ui(ns(cluster))
+          )
+        )
+      })
     })
     
     
-    info <- list(
-      curated_analytes = curated_analytes,
-      cut_off = reactive({ input$cut_off }),
-      analyte_curated_data = analyte_curated_data,
-      method = reactive({ input$method })
-    )
+    info <- reactive({
+      req(analyte_curated_data())
+      list(
+        curated_analytes = curated_analytes(),
+        cut_off = input$cut_off,
+        analyte_curated_data = analyte_curated_data(),
+        method = input$method
+      )
+    }) %>% bindEvent(analyte_curated_data())
     
     
-    observe({
+    
+    observeEvent(info()$analyte_curated_data, {
       req(clusters())
-      req(info$analyte_curated_data())
       req(input$curation_method != "Per sample")
       
       r$mod_results <- purrr::set_names(clusters()) %>% 
-        purrr::map(
-          .,
-          function(cluster) {
-            mod_tab_curated_analytes_server(id = cluster,
-                                            info = info,
-                                            cluster = cluster,
-                                            biogroup_column = input$biogroup_column
-                                            )
-          })
-    },
-    priority = 10)
+        purrr::map(., function(cluster) {
+          mod_tab_curated_analytes_server(
+            id = cluster,
+            info = info(),
+            cluster = cluster,
+            biogroup_column = ifelse(
+              isTRUE(rv_resp$response),
+              input$biogroup_column,
+              ""
+            )
+          )
+        })
+    })
+  
     
     
     with_analytes_to_include <- reactive({
-      
       if (input$curation_method == "Per sample") {
-        # Curation done per sample
-        req(analyte_curated_data())
+        # Analyte curation per sample
+        # req(analyte_curated_data())
         to_return <- analyte_curated_data() %>% 
-          dplyr::filter(has_passed_analyte_curation == TRUE) %>% 
+          dplyr::filter(has_passed_analyte_curation == TRUE) %>%
           dplyr::select(-has_passed_analyte_curation, -uncalibrated)
-        # Remove spinner
+        # Remove spinner  
         shinybusy::remove_modal_spinner()
       } else {
-        # Curation done on all data or per biological group
-        req(passing_spectra(),
-            !rlang::is_empty(r$mod_results),
-            all(purrr::map_lgl(r$mod_results,
-                               ~ is_truthy(.x$analytes_to_include()))))
-
-        to_return <- purrr::imap(r$mod_results,
-                    function(results, current_cluster) {
-                      data_current_cluster <- passing_spectra() %>% 
-                        dplyr::filter(cluster == current_cluster)
-                      
-                      dplyr::left_join(results$analytes_to_include(),
-                                       data_current_cluster)
-                    }) %>% 
+        # Analyte curation on all data or per biological group
+        req(
+          passing_spectra(),
+          !rlang::is_empty(r$mod_results),
+          all(purrr::map_lgl(r$mod_results, ~is_truthy(.x$analytes_to_include())))
+        )
+        to_return <- purrr::imap(r$mod_results, function(results, current_cluster) {
+          data_current_cluster <- passing_spectra() %>% 
+            dplyr::filter(cluster == current_cluster)
+          dplyr::left_join(results$analytes_to_include(), data_current_cluster)
+        }) %>% 
           purrr::reduce(dplyr::full_join)
       }
       return(to_return)
     })
+    
     
 
     # Make downloading analyte_curated_data possible:

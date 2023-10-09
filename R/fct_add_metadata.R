@@ -32,7 +32,8 @@ read_metadata <- function(filepaths, filenames) {
       extension <- tools::file_ext(name)
       if (extension %in% c("xlsx", "xls")) {
         metadata <- readxl::read_excel(path,
-                                       na = c("", "NA"))
+                                       na = c("", "NA"),
+                                       col_types = "text")
       } else {
         if (extension == "rds") {
           metadata <- load_and_assign(path)
