@@ -98,6 +98,7 @@ calculate_IgG1_amounts <- function(IgG1_ratios, chosen_peptides,
     dplyr::mutate(
       median_ratio = apply(
         dplyr::select(., tidyselect::all_of(ratios_to_use)), 1, median, na.rm = TRUE
+        # na.rm = TRUE gets rid of NA values before calculating the median
       ),
       # Calculate amount of IgG1 (ng), rounded to whole number.
       IgG1_median_amount = round(median_ratio * silumab_amount, digits = 0)
@@ -159,8 +160,12 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id) {
   )
   
   # Calculate Spearman's correlation
-  correlation <- stats::cor(IgG1_amounts[[xcol]], IgG1_amounts[[ycol]], 
-                            method = "spearman")
+  correlation <- stats::cor(
+    x = IgG1_amounts[[xcol]], y = IgG1_amounts[[ycol]],
+    method = "spearman",
+    # Exclude points for which one or both of the values are NA
+    use = "pairwise.complete.obs"
+  )
   
   # Color palette for plot
   n_colors <- length(unique(IgG1_amounts$sample_type))

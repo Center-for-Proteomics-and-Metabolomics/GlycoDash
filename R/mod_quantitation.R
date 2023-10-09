@@ -2,6 +2,7 @@
 # - In the generated report, mention on which peptides the quantitation was based.
 # - Pass results on to "Traits" and "Export results" tab.
 # - Check what happens with missing values (NA) for peptides?
+#     --> Points are not plotted.
 # - Make quantitation work in the case of Total and Specific antibodies.
 # - Add info boxes.
 
@@ -134,6 +135,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     })
     
     
+    
     # Calculate ratios of peptides.
     IgG1_ratios <- reactive({
       req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
@@ -151,6 +153,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     }) %>% bindEvent(input$quantify_IgG1)
   
   
+    
     # Create peptide correlation plots.
     r <- reactiveValues(created_tab_titles = vector("character"))
     observeEvent(IgG1_amounts(), {
@@ -185,6 +188,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     })
     
     
+    
     # Create a plot with quantitation results
     quantitation_plot <- reactive({
       req(IgG1_amounts())
@@ -198,6 +202,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         GlycoDash::hide_outliers(.)
       return(plotly_object)
     })
+    
     
     
     # Combine the calculated IgG1 quantities with normalized data.
