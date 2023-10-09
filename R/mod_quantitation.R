@@ -1,11 +1,9 @@
 # TODO
-# - When quantitation is done based on one peptide: no correlation plot.
 # - In the generated report, mention on which peptides the quantitation was based.
 # - Pass results on to "Traits" and "Export results" tab.
 # - Check what happens with missing values (NA) for peptides?
 # - Make quantitation work in the case of Total and Specific antibodies.
 # - Add info boxes.
-# - Show data with IgG1 quantities.
 
 
 #' quantitation UI Function
@@ -44,7 +42,6 @@ mod_quantitation_ui <- function(id) {
               value = 5, min = 0, max = NA
             ),
             # Checkboxes to include/exclude peptides
-            # TODO: toggle visibiliy, require at least 1 checked for quantitation button
             shinyWidgets::awesomeCheckboxGroup(
               ns("chosen_peptides"),
               "Peptides to include in the calculation:",
@@ -157,35 +154,34 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     # Create peptide correlation plots.
     r <- reactiveValues(created_tab_titles = vector("character"))
     observeEvent(IgG1_amounts(), {
-      # Using observeEvents ensures that this code is executed when
-      # the "Quantify IgG1" button is pushed.
-      req(length(input$chosen_peptides) > 1)
       
       # Remove previously created tabs
       purrr::map(r$created_tab_titles, function(tab_title) {
         removeTab(inputId = "tabs", target = tab_title, session = session)
       })
       
-      # Determine new tab IDs and titles
-      tab_ids <- determine_tab_ids(input$chosen_peptides)
-      tab_titles <- determine_tab_titles(input$chosen_peptides, tab_ids)
-      
-      # Store tab titles in reactiveValues vector
-      r$created_tab_titles <- tab_titles
-      
-      # Create tabs and plots.
-      purrr::imap(tab_ids, function(tab_id, i) {
-        plot <- plot_peptide_correlation(IgG1_amounts(), tab_id)
-        output[[tab_id]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
-        appendTab(
-          inputId = "tabs",
-          select = TRUE,
-          tab = tabPanel(
-            title = tab_titles[[i]],
-            plotly::plotlyOutput(ns(tab_id))
+      if (length(input$chosen_peptides) > 1) {
+        # Determine new tab IDs and titles
+        tab_ids <- determine_tab_ids(input$chosen_peptides)
+        tab_titles <- determine_tab_titles(input$chosen_peptides, tab_ids)
+        
+        # Store tab titles in reactiveValues vector
+        r$created_tab_titles <- tab_titles
+        
+        # Create tabs and plots.
+        purrr::imap(tab_ids, function(tab_id, i) {
+          plot <- plot_peptide_correlation(IgG1_amounts(), tab_id)
+          output[[tab_id]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
+          appendTab(
+            inputId = "tabs",
+            select = TRUE,
+            tab = tabPanel(
+              title = tab_titles[[i]],
+              plotly::plotlyOutput(ns(tab_id))
+            )
           )
-        )
-      })
+        })
+      }
     })
     
     
