@@ -429,7 +429,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     without_samples_to_ignore <- reactive({
       req(input$method == "Curate analytes based on data")
-      # req(input$curation_method != "Per sample")
       req(passing_spectra())
       if (input$curation_method == "Per sample") {
         passing_spectra()
@@ -509,7 +508,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       return(curated_analytes)
     }) %>% bindEvent(input$curate_analytes)  # Execute code when button is pushed.
 
-    
+
     
     # Analyte curated data
     analyte_curated_data <- reactive({
@@ -520,10 +519,12 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       } else {
         dplyr::left_join(
           # Order here is important!
+          # This gives a subset of passing_spectra(), with only the analytes that pass curation.
           curated_analytes(), passing_spectra()
         )
       } # bindEvent() below makes sure analyte_curated_data() is updated only
         # when curated_analytes() changes. Not when input$curation_method changes.
+        # curated_analytes() changes when the "Perform analyte curation" button is pushed.
     }) %>% bindEvent(curated_analytes())
     
     
@@ -537,6 +538,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                        type = "message")
     }) %>% bindEvent(analyte_curated_data())
    
+    
     clusters <- reactive({
       req(analyte_curated_data())
       unique(analyte_curated_data()$cluster)
@@ -554,29 +556,25 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                                       clusters())
     })
     
-    observe({
-      req(clusters(),
-          r$created_cluster_tabs)
-      
-      # Remove tabs that have been created before:
-      purrr::map(r$created_cluster_tabs,
-                function(cluster) {
-                  removeTab("tabs",
-                            target = cluster)
-                  # Trying to remove a tab that doesn't exist does not result in an error
-                })
-      
-      # Create one tab for each cluster in without_samples_to_ignore:
-      purrr::map(clusters(),
-                 function(cluster) {
-                   appendTab("tabs", select = TRUE, session = session,
-                             tabPanel(
-                               title = cluster,
-                               mod_tab_curated_analytes_ui(ns(cluster))
-                             ))
-                 })
-    })
     
+    observe({
+      req(clusters(), r$created_cluster_tabs)
+      # Remove tabs that were created before
+      # (Trying to remove a non-existing tab doesn't result in an error)
+      purrr::map(r$created_cluster_tabs, function(cluster) {
+        removeTab(inputId = "tabs", target = cluster)
+      })
+      # Create one tab for each cluster in without_samples_to_ignore
+      purrr::map(clusters(), function(cluster) {
+        appendTab(
+          inputId = "tabs", select = TRUE, session = session,
+          tab = tabPanel(
+            title = cluster,
+            mod_tab_curated_analytes_ui(ns(cluster))
+          )
+        )
+      })
+    })
     
     
     info <- reactive({
@@ -590,54 +588,54 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     }) %>% bindEvent(analyte_curated_data())
     
     
+    
     observeEvent(info()$analyte_curated_data, {
       req(clusters())
       req(input$curation_method != "Per sample")
+      
       r$mod_results <- purrr::set_names(clusters()) %>% 
-        purrr::map(
-          .,
-          function(cluster) {
-            mod_tab_curated_analytes_server(id = cluster,
-                                            info = info(),
-                                            cluster = cluster,
-                                            biogroup_column = ifelse(
-                                              isTRUE(rv_resp$response),
-                                              input$biogroup_column,
-                                              ""
-                                            ))
-          })
+        purrr::map(., function(cluster) {
+          mod_tab_curated_analytes_server(
+            id = cluster,
+            info = info(),
+            cluster = cluster,
+            biogroup_column = ifelse(
+              isTRUE(rv_resp$response),
+              input$biogroup_column,
+              ""
+            )
+          )
+        })
     })
+  
     
     
     with_analytes_to_include <- reactive({
-      
       if (input$curation_method == "Per sample") {
-        # Curation done per sample
-        req(analyte_curated_data())
+        # Analyte curation per sample
+        # req(analyte_curated_data())
         to_return <- analyte_curated_data() %>% 
-          dplyr::filter(has_passed_analyte_curation == TRUE) %>% 
+          dplyr::filter(has_passed_analyte_curation == TRUE) %>%
           dplyr::select(-has_passed_analyte_curation, -uncalibrated)
-        # Remove spinner
+        # Remove spinner  
         shinybusy::remove_modal_spinner()
       } else {
-        # Curation done on all data or per biological group
-        req(passing_spectra(),
-            !rlang::is_empty(r$mod_results),
-            all(purrr::map_lgl(r$mod_results,
-                               ~ is_truthy(.x$analytes_to_include()))))
-
-        to_return <- purrr::imap(r$mod_results,
-                    function(results, current_cluster) {
-                      data_current_cluster <- passing_spectra() %>% 
-                        dplyr::filter(cluster == current_cluster)
-                      
-                      dplyr::left_join(results$analytes_to_include(),
-                                       data_current_cluster)
-                    }) %>% 
+        # Analyte curation on all data or per biological group
+        req(
+          passing_spectra(),
+          !rlang::is_empty(r$mod_results),
+          all(purrr::map_lgl(r$mod_results, ~is_truthy(.x$analytes_to_include())))
+        )
+        to_return <- purrr::imap(r$mod_results, function(results, current_cluster) {
+          data_current_cluster <- passing_spectra() %>% 
+            dplyr::filter(cluster == current_cluster)
+          dplyr::left_join(results$analytes_to_include(), data_current_cluster)
+        }) %>% 
           purrr::reduce(dplyr::full_join)
       }
       return(to_return)
     })
+    
     
 
     # Make downloading analyte_curated_data possible:
