@@ -148,7 +148,7 @@ create_quantitation_plot <- function(IgG1_amounts) {
 
 
 # Function to plot peptide correlations.
-plot_peptide_correlation <- function(IgG1_amounts, tab_id) {
+plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
   # Determine x and y columns to plot, depending on tab_id
   ycol <- dplyr::case_when(
     tab_id %in% c("glyco_vs_GPS", "glyco_vs_TTP") ~ "glyco_ratio",
@@ -178,8 +178,8 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id) {
       as.character(round(correlation, digits = 2))
     )) +
     ggplot2::geom_point(data = IgG1_amounts, ggplot2::aes(
-      x = .data[[xcol]],
-      y = .data[[ycol]],
+      x = round(.data[[xcol]] * silumab_amount, digits = 0),
+      y = round(.data[[ycol]] * silumab_amount, digits = 0),
       color = sample_type,
       text = paste0(
         "Sample name: ", sample_name, "\n",

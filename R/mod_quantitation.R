@@ -1,4 +1,5 @@
 # TODO
+# - Correlation plots don't show correct ng
 # - In the generated report, mention on which peptides the quantitation was based.
 # - Pass results on to "Traits" and "Export results" tab.
 # - Check what happens with missing values (NA) for peptides?
@@ -218,8 +219,8 @@ mod_quantitation_server <- function(id, quantitation_clusters,
       req(IgG1_ratios(), input$silumab_amount)
       calculate_IgG1_amounts(IgG1_ratios(), input$chosen_peptides, input$silumab_amount)
     }) %>% bindEvent(input$quantify_IgG1)
-  
-  
+    
+    
     
     # Create peptide correlation plots.
     r <- reactiveValues(created_tab_titles = vector("character"))
@@ -240,7 +241,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         
         # Create tabs and plots.
         purrr::imap(tab_ids, function(tab_id, i) {
-          plot <- plot_peptide_correlation(IgG1_amounts(), tab_id)
+          plot <- plot_peptide_correlation(IgG1_amounts(), tab_id, input$silumab_amount)
           output[[tab_id]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
           appendTab(
             inputId = "tabs",
