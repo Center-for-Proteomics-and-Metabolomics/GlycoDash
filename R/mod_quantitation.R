@@ -4,7 +4,6 @@
 # - Check what happens with missing values (NA) for peptides?
 #     --> Points are not plotted.
 # - Make quantitation work in the case of Total and Specific antibodies.
-# - Add info boxes.
 
 
 #' quantitation UI Function
@@ -18,15 +17,66 @@
 #' @importFrom shiny NS tagList 
 mod_quantitation_ui <- function(id) {
   ns <- NS(id)
-  
   tagList(
+    tags$style(HTML(paste0(
+      "#", ns("box_header1"), " .awesome-checkbox {padding-top: 7px}",
+      "#", ns("box_header1"), " .popover {max-width: 400px !important; color: #333}",
+      "#", ns("box_header1"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#", ns("box_header1"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#", ns("box_header1"), " .btn {float: right; border-width: 0px; margin-right: 10px}",
+      "#", ns("box_header1"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}",
+      "#", ns("box1"), " .box-title {width: 100%}",
+      "#", ns("box1"), " .dropdown {display: inline-block; float: right; width: 330px}",
+      "#", ns("box_header2"), " .awesome-checkbox {padding-top: 7px}",
+      "#", ns("box_header2"), " .popover {max-width: 400px !important; color: #333}",
+      "#", ns("box_header2"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#", ns("box_header2"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#", ns("box_header2"), " .btn {float: right; border-width: 0px; margin-right: 10px}",
+      "#", ns("box_header2"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}",
+      "#", ns("box2"), " .box-title {width: 100%}",
+      "#", ns("box2"), " .dropdown {display: inline-block; float: right; width: 330px}"
+    ))),
     fluidPage(
       fluidRow(h1("IgG1 quantitation")),
       fluidRow(
         column(
           width = 5,
-          shinydashboard::box(
-            title = "IgG1 quantitation using SILuMAb",
+          shinydashboardPlus::box(
+            id = ns("box1"),
+            title = div(
+              id = ns("box_header2"),
+              "IgG1 quantitation using SILuMAb",
+              icon("info-circle", class = "ml") %>% 
+                bsplus::bs_embed_popover(
+                  title = "Explanation",
+                  content = HTML("
+                  <p>
+                  IgG1 quantitation is first performed based on three different 
+                  types of peptides: the Fc glycopeptides and two proteotypic peptides
+                  GPS[...] and TTP[...]. It is also possible to perform the quantitation
+                  based on one or two of these peptides, using the checkboxes.
+                  
+                  <ul>
+                  <li>For the glycopeptides, the summed intensity of the natural IgG1
+                  glycopeptides is divided by the summed intensity of the SIL glycopeptides.
+                  This ratio is then multiplied by the amount of SILuMAb in the sample.</li>
+                  
+                  <li>For GPS[...] and TTP[...], the intensity each natural peptide
+                  is divided by the intensity of the corresponding SIL peptide,
+                  after which the ratio is multiplied by the amount of SILuMAb in the sample.</li>
+                  </ul>
+                  
+                  <p>
+                  The reported amount of IgG1 in the plot and table below is the
+                  median of the values calculated based on the different peptides.
+                  When a sample is missing a value for one of the peptides, this
+                  peptide is excluded from calculation of the median.
+                  "),
+                  trigger = "hover",
+                  placement = "right",
+                  html = "true"
+                )
+            ),
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
@@ -49,7 +99,7 @@ mod_quantitation_ui <- function(id) {
               choices = c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK"),
               selected = c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
             ),
-            # Button to cquantify IgG1
+            # Button to quantify IgG1
             actionButton(
               ns("quantify_IgG1"),
               "Quantify IgG1"
@@ -58,8 +108,25 @@ mod_quantitation_ui <- function(id) {
         ),
         column(
           width = 7,
-          shinydashboard::box(
-            title = "Peptide correlations",
+          shinydashboardPlus::box(
+            id = ns("box2"),
+            title = div(
+              id = ns("box_header2"),
+              "Peptide correlations",
+              icon("info-circle", class = "ml") %>% 
+                bsplus::bs_embed_popover(
+                  title = "Explanation",
+                  content = HTML("
+                  When quantifying IgG1 based on different peptides,
+                  the amounts of IgG1 calculated based on the different peptides 
+                  should correlate well. When this is not the case, you may want to 
+                  exclude certain peptides from the quantitation.
+                  "),
+                  trigger = "hover",
+                  placement = "left",
+                  html = "true"
+                )
+            ),
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
