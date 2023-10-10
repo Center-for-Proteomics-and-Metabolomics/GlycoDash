@@ -185,7 +185,7 @@ mod_analyte_curation_ui <- function(id){
             ),
             div(
               strong("Note:"),
-              "analyte curation can only be peformed once for now.",
+              "analyte curation can only be performed once for now.",
               style = "color: #0021B8; font-size: 18px"
             ),
             br(),

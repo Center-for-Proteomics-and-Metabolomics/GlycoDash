@@ -1,9 +1,3 @@
-# TODO
-# - Check what happens with missing values (NA) for peptides?
-#     --> Points are not plotted.
-# - Make quantitation work in the case of Total and Specific antibodies.
-
-
 #' quantitation UI Function
 #'
 #' @description A shiny Module.
@@ -125,6 +119,11 @@ mod_quantitation_ui <- function(id) {
                   <p>
                   The Spearman correlation is calculated based
                   on IgG1 quantitities rounded to a whole number of ng.
+                  
+                  <p>
+                  Samples for which no quantity could be calculated 
+                  because of missing values are not shown in the plot, and
+                  are not used in calculating the correlation.
                   "),
                   trigger = "hover",
                   placement = "left",
@@ -223,7 +222,10 @@ mod_quantitation_server <- function(id, quantitation_clusters,
       calculate_IgG1_amounts(IgG1_ratios(), input$chosen_peptides, input$silumab_amount)
     }) %>% bindEvent(input$quantify_IgG1)
     
-    
+    observe({
+      req(IgG1_amounts())
+      browser()
+    })
     
     # Create peptide correlation plots.
     r <- reactiveValues(created_tab_titles = vector("character"))
