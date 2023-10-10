@@ -69,6 +69,11 @@ mod_export_server <- function(id,
       }
     })
     
+    # Disable the "Download processed data" button until normalized data is available
+    observe({
+      shinyjs::toggleState("download", is_truthy(x$data))
+    })
+    
     output$download <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
