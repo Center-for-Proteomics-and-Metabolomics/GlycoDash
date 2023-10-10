@@ -159,9 +159,10 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
     tab_id == "glyco_vs_GPS" ~ "GPS_ratio"
   )
   
-  # Calculate Spearman's correlation
+  # Calculate Spearman's correlation based on amounts rounded to whole number of ng
   correlation <- stats::cor(
-    x = IgG1_amounts[[xcol]], y = IgG1_amounts[[ycol]],
+    x = round(IgG1_amounts[[xcol]] * silumab_amount, digits = 0),
+    y = round(IgG1_amounts[[ycol]] * silumab_amount, digits = 0),
     method = "spearman",
     # Exclude points for which one or both of the values are NA
     use = "pairwise.complete.obs"

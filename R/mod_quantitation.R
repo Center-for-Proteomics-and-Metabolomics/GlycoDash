@@ -71,7 +71,8 @@ mod_quantitation_ui <- function(id) {
                   The reported amount of IgG1 in the plot and table below is the
                   median of the values calculated based on the different peptides.
                   When a sample is missing a value for one of the peptides, this
-                  peptide is excluded from calculation of the median.
+                  peptide is excluded from calculation of the median. The calculated 
+                  amount of IgG1 is rounded to a whole number (ng).
                   "),
                   trigger = "hover",
                   placement = "right",
@@ -118,10 +119,15 @@ mod_quantitation_ui <- function(id) {
                 bsplus::bs_embed_popover(
                   title = "Explanation",
                   content = HTML("
+                  <p>
                   When quantifying IgG1 based on different peptides,
                   the amounts of IgG1 calculated based on the different peptides 
                   should correlate well. When this is not the case, you may want to 
                   exclude certain peptides from the quantitation.
+                  
+                  <p>
+                  The Spearman correlation is calculated based
+                  on IgG1 quantitities rounded to a whole number of ng.
                   "),
                   trigger = "hover",
                   placement = "left",
