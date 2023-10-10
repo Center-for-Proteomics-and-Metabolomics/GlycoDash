@@ -44,6 +44,7 @@ mod_export_ui <- function(id){
 #' @noRd 
 mod_export_server <- function(id, 
                               results_derived_traits,
+                              results_quantitation,
                               results_data_import,
                               results_spectra_curation,
                               results_analyte_curation,
@@ -56,11 +57,14 @@ mod_export_server <- function(id,
     x <- reactiveValues()
     
     # If data_with_derived_traits exists it is assigned to x$data, otherwise
-    # normalized_data is assigned to x$data:
+    # quantitation_data or normalized_data is assigned to x$data:
     observe({
+      req(results_normalization$normalized_data_wide())
       if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
-      } else if (is_truthy(results_normalization$normalized_data_wide())) {
+      } else if (is_truthy(results_quantitation$quantitation_data())) {
+        x$data <- results_quantitation$quantitation_data()
+      } else {
         x$data <- results_normalization$normalized_data_wide()
       }
     })

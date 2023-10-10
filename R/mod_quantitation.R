@@ -297,5 +297,12 @@ mod_quantitation_server <- function(id, quantitation_clusters,
                     options = list(scrollX = TRUE))
     })
 
+    
+    
+    # Return the data and plots
+    return(list(
+      quantitation_data = with_data
+    ))
+    
   })
 }

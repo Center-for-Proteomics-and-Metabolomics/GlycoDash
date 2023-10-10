@@ -54,14 +54,17 @@ mod_data_exploration_ui <- function(id){
 #' @noRd 
 mod_data_exploration_server <- function(id, 
                                         results_derived_traits,
+                                        results_quantitation,
                                         results_normalization){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
     my_data <- reactive({
-      req(results_normalization$normalized_data_wide)
+      req(results_normalization$normalized_data_wide())
       if (is_truthy(results_derived_traits$data_with_traits())) {
         results_derived_traits$data_with_traits()
+      } else if (is_truthy(results_quantitation$quantitation_data())) {
+        results_quantitation$quantitation_data()
       } else {
         results_normalization$normalized_data_wide()
       }
