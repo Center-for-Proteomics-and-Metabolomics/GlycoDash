@@ -33,6 +33,15 @@ mod_export_ui <- function(id){
                            "Generate report")
           )
         )
+      ),
+      fluidRow(
+        shinydashboard::box(
+          title = "View the processed data",
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          DT::dataTableOutput(ns("data_table"))
+        )
       )
     )
  
@@ -74,6 +83,15 @@ mod_export_server <- function(id,
       shinyjs::toggleState("download", is_truthy(x$data))
     })
     
+    # Display the final data table
+    output$data_table <- DT::renderDT({
+      req(x$data)
+      DT::datatable(data = x$data,
+                    options = list(scrollX = TRUE))
+    })
+    
+    
+    # Download the final data
     output$download <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
