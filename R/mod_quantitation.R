@@ -1,7 +1,4 @@
 # TODO
-# - Correlation plots don't show correct ng
-# - In the generated report, mention on which peptides the quantitation was based.
-# - Pass results on to "Traits" and "Export results" tab.
 # - Check what happens with missing values (NA) for peptides?
 #     --> Points are not plotted.
 # - Make quantitation work in the case of Total and Specific antibodies.
@@ -237,6 +234,9 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         removeTab(inputId = "tabs", target = tab_title, session = session)
       })
       
+      # Create vector for correlation plots, to show in the report.
+      r$peptide_correlation_plots <- vector("list", length = length(input$chosen_peptides))
+      
       if (length(input$chosen_peptides) > 1) {
         # Determine new tab IDs and titles
         tab_ids <- determine_tab_ids(input$chosen_peptides)
@@ -248,6 +248,9 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         # Create tabs and plots.
         purrr::imap(tab_ids, function(tab_id, i) {
           plot <- plot_peptide_correlation(IgG1_amounts(), tab_id, input$silumab_amount)
+          # Add the plot to reactiveValues vector, to show it in the report later.
+          r$peptide_correlation_plots[[i]] <- plot
+          # Show the plot in UI
           output[[tab_id]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
           appendTab(
             inputId = "tabs",
@@ -296,12 +299,15 @@ mod_quantitation_server <- function(id, quantitation_clusters,
       DT::datatable(data = with_data(),
                     options = list(scrollX = TRUE))
     })
-
     
     
     # Return the data and plots
     return(list(
-      quantitation_data = with_data
+      quantitation_data = with_data,
+      silumab_amount = reactive(input$silumab_amount),
+      chosen_peptides = reactive(input$chosen_peptides),
+      quantitation_plot = quantitation_plot,
+      peptide_correlation_plots = reactive(r$peptide_correlation_plots)
     ))
     
   })

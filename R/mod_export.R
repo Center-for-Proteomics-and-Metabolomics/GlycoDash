@@ -236,7 +236,11 @@ mod_export_server <- function(id,
           formulas = try_call(results_derived_traits$formulas),
           custom_formulas = try_call(results_derived_traits$custom_formulas),
           repeatability = repeatability_tab_contents,
-          data_exploration = data_exploration_tab_contents
+          data_exploration = data_exploration_tab_contents,
+          silumab_amount = try_call(results_quantitation$silumab_amount),
+          chosen_peptides = try_call(results_quantitation$chosen_peptides),
+          quantitation_plot = try_call(results_quantitation$quantitation_plot),
+          peptide_correlation_plots = try_call(results_quantitation$peptide_correlation_plots)
         )
         
         # Create a temporary file with a unique name per session to prevent
