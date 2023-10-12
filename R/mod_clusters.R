@@ -47,7 +47,7 @@ mod_clusters_ui <- function(id){
     numericInput(ns("n_clusters"),
                  "How many peptide clusters does your data contain?",
                  value = 1,
-                 min = 1,
+                 min = 0,
                  max = 25,
                  step = 1),
     uiOutput(ns("clusters")),
@@ -115,13 +115,14 @@ mod_clusters_server <- function(id, LaCyTools_summary){
     
     # Change label of input$n_clusters when the data contains SILuMAb
     observeEvent(input$contains_silumab, {
-      updateNumericInput(session,
-                         "n_clusters",
-                         label = ifelse(
-                           input$contains_silumab == "Yes",
-                           "How many additional peptide clusters does your data contain?",
-                           "How many peptide clusters does your data contain?"
-                         ))
+      updateNumericInput(
+        session = session, inputId = "n_clusters",
+        label = ifelse(
+          input$contains_silumab == "Yes",
+          "How many additional peptide clusters does your data contain?",
+          "How many peptide clusters does your data contain?"
+        )
+      )
     })
     
     
