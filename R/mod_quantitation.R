@@ -92,6 +92,13 @@ mod_quantitation_ui <- function(id) {
               choices = c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK"),
               selected = c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
             ),
+            # Option to exclude sample types from calculating correlations
+            selectInput(
+              ns("exclude_samples"),
+              "Sample types to exclude from calculating the peptide correlations:",
+              choices = c(""),
+              multiple = TRUE
+            ),
             # Button to quantify IgG1
             actionButton(
               ns("quantify_IgG1"),
@@ -194,6 +201,10 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         id = "chosen_peptides",
         condition = is_truthy(quantitation_clusters())
       )
+      shinyjs::toggle(
+        id = "exclude_samples",
+        condition = is_truthy(quantitation_clusters()) 
+      )
       shinyjs::toggleState(
         id = "quantify_IgG1",
         condition = all(
@@ -202,6 +213,21 @@ mod_quantitation_server <- function(id, quantitation_clusters,
           length(input$chosen_peptides) >= 1
         )
       )
+    })
+    
+    
+    # The selection menu for input$exlude_samples is updated so that the choices
+    # are sample_types and groups that are present in the data.
+    observe({
+      if ("group" %in% colnames(results_normalization$normalized_data())) {
+        options <- c(paste(unique(results_normalization$normalized_data()$sample_type), "samples"), 
+                     paste(unique(results_normalization$normalized_data()$group), "samples"))
+      } else {
+        options <- c(paste(unique(results_normalization$normalized_data()$sample_type), "samples"))
+      }
+      
+      updateSelectizeInput(inputId = "exclude_samples",
+                           choices = c(options))
     })
     
     

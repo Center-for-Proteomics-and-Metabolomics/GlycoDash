@@ -149,6 +149,7 @@ create_quantitation_plot <- function(IgG1_amounts) {
 
 # Function to plot peptide correlations.
 plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
+  
   # Determine x and y columns to plot, depending on tab_id
   ycol <- dplyr::case_when(
     tab_id %in% c("glyco_vs_GPS", "glyco_vs_TTP") ~ "glyco_ratio",
