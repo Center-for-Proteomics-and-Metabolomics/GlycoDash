@@ -222,10 +222,6 @@ mod_quantitation_server <- function(id, quantitation_clusters,
       calculate_IgG1_amounts(IgG1_ratios(), input$chosen_peptides, input$silumab_amount)
     }) %>% bindEvent(input$quantify_IgG1)
     
-    observe({
-      req(IgG1_amounts())
-      browser()
-    })
     
     # Create peptide correlation plots.
     r <- reactiveValues(created_tab_titles = vector("character"))
