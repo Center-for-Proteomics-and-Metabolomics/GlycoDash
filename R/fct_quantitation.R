@@ -42,8 +42,12 @@ calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
                    across(everything())) %>% 
     dplyr::select(-total_absolute_intensity) %>% 
     # Select data that's needed
-    dplyr::select(sample_name, plate_well, sample_id, sample_type, cluster, sum_intensity) %>% 
+    dplyr::select(
+      sample_name, plate_well, sample_id, sample_type, cluster, sum_intensity,
+      tidyselect::any_of("group")
+    ) %>% 
     dplyr::distinct() %>% 
+    # Create wide format
     tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity)
     
   return(quantitation_data)
@@ -68,7 +72,9 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
         .[[quantitation_clusters$silumab_cluster_GPS]]
     ) %>% 
     # Get rid of sum intensities
-    dplyr::select(sample_name:sample_type, tidyselect::contains("ratio"))
+    dplyr::select(sample_name:sample_type, 
+                  tidyselect::any_of("group"),
+                  tidyselect::contains("ratio"))
   
   return(sum_intensity_ratios)
 }
@@ -140,6 +146,14 @@ create_quantitation_plot <- function(IgG1_amounts) {
     ggplot2::scale_color_manual(values = my_palette,
                                 name = "Sample type") +
     ggplot2::labs(y = "Amount of IgG1 (ng)", x = "Sample type")
+  
+  
+  # Check for total and specific
+  if ("group" %in% colnames(IgG1_amounts)) {
+    plot <- plot + ggplot2::facet_wrap(~ group)
+  } else {
+    plot <- plot
+  }
 
   return(plot)
 }
@@ -173,7 +187,7 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
   my_palette <- color_palette(n_colors)
   
   # Correlation plot
-  ggplot2::ggplot() + 
+  plot <- ggplot2::ggplot() + 
     ggplot2::ggtitle(paste0(
       "Spearman correlation = ",
       as.character(round(correlation, digits = 2))
@@ -203,6 +217,8 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
       plot.title = ggplot2::element_text(size = 12)
     ) +
     ggplot2::scale_color_manual(values = my_palette, name = "Sample type")
+  
+  return(plot)
 }
 
 
