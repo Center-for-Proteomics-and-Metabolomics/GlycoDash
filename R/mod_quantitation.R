@@ -93,7 +93,7 @@ mod_quantitation_ui <- function(id) {
               selected = c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
             ),
             # Option to exclude sample types from calculating correlations
-            selectInput(
+            selectizeInput(
               ns("exclude_samples"),
               "Sample types to exclude from calculating the peptide correlations:",
               choices = c(""),
@@ -249,6 +249,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     }) %>% bindEvent(input$quantify_IgG1)
     
     
+    
     # Create peptide correlation plots.
     r <- reactiveValues(created_tab_titles = vector("character"))
     observeEvent(IgG1_amounts(), {
@@ -269,9 +270,24 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         # Store tab titles in reactiveValues vector
         r$created_tab_titles <- tab_titles
         
+        # See if sample types should be excluded from the correlation
+        samples_to_exclude <- stringr::str_remove(input$exclude_samples, " samples")
+        
+        if (!is_truthy(input$exclude_samples)) {
+          to_plot <- IgG1_amounts()
+        } else if ("group" %in% colnames(results_normalization$normalized_data())) {
+          to_plot <- IgG1_amounts() %>% 
+            dplyr::filter(!sample_type %in% samples_to_exclude) %>% 
+            dplyr::filter(!group %in% samples_to_exclude)
+        } else {
+          to_plot <- IgG1_amounts() %>% 
+            dplyr::filter(!sample_type %in% samples_to_exclude)
+        }
+        
         # Create tabs and plots.
         purrr::imap(tab_ids, function(tab_id, i) {
-          plot <- plot_peptide_correlation(IgG1_amounts(), tab_id, input$silumab_amount)
+          plot <- plot_peptide_correlation(to_plot, tab_id, input$silumab_amount)
+          
           # Add the plot to reactiveValues vector, to show it in the report later.
           r$peptide_correlation_plots[[i]] <- plot
           # Show the plot in UI

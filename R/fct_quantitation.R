@@ -146,7 +146,6 @@ create_quantitation_plot <- function(IgG1_amounts) {
 
 
 
-
 # Function to plot peptide correlations.
 plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
   
