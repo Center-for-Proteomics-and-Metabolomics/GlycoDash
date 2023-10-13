@@ -1,3 +1,11 @@
+# v1.3.0
+## New features
+* IgG1 quantitation with SILuMAb
+
+## Adjustments
+* The “Export results” tab now displays the final data that can be downloaded.
+
+
 # v1.2.9
 ## Adjustments
 * Performing analyte curation is (for now) possible only once, because curating analytes multiple times does not always work properly.
