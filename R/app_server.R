@@ -41,9 +41,18 @@ app_server <- function( input, output, session ) {
     results_analyte_curation = results_analyte_curation,
     merged_metadata = results_data_import$merged_metadata)
   
+  results_quantitation <- mod_quantitation_server(
+    id = "quantitation_ui_1",
+    quantitation_clusters = results_data_import$quantitation_clusters,
+    LaCyTools_summary = results_data_import$LaCyTools_summary,
+    analyte_curated_data = results_analyte_curation$analyte_curated_data,
+    results_normalization = results_normalization
+  )
+  
   results_derived_traits <- mod_derived_traits_server(
     id = "derived_traits_ui_1",
-    results_normalization = results_normalization)
+    results_normalization = results_normalization,
+    results_quantitation = results_quantitation)
   
   results_repeatability <- mod_repeatability_server(
     id = "repeatability_ui_1",
@@ -54,11 +63,13 @@ app_server <- function( input, output, session ) {
   results_data_exploration <- mod_data_exploration_server(
     id = "data_exploration_ui_1",
     results_derived_traits = results_derived_traits,
+    results_quantitation = results_quantitation,
     results_normalization = results_normalization)
   
   mod_export_server(
     id = "export_ui_1",
     results_derived_traits = results_derived_traits,
+    results_quantitation = results_quantitation,
     results_data_import = results_data_import,
     results_spectra_curation = results_spectra_curation,
     results_analyte_curation = results_analyte_curation,

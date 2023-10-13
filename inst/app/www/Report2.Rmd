@@ -31,6 +31,10 @@ params:
   custom_formulas: NA
   repeatability: NA
   data_exploration: NA
+  silumab_amount: NA
+  chosen_peptides: NA
+  quantitation_plot: NA
+  peptide_correlation_plots: NA
 ---
 
 ```{r setup, include=FALSE}
@@ -222,6 +226,41 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
                
                }
 
+```
+
+## IgG1 quantitation
+
+```{r IgG1-quantitation-peptides, results='asis'}
+
+if (is.null(params$quantitation_plot)) {
+  cat("IgG1 was not quantified.")
+} else {
+  cat("IgG1 was quantified with SILuMAb based on the following peptides:",
+      paste(params$chosen_peptides, collapse = ", "))
+}
+```
+
+Peptide correlation plots:
+
+```{r IgG1-peptide-correlations, results='asis'}
+
+if (length(params$peptide_correlation_plots) > 0) {
+  for (plot in params$peptide_correlation_plots) {
+    p <- plotly::ggplotly(plot, tooltip = "text")
+    print(htmltools::tagList(p))
+  }
+}
+```
+
+IgG1 quantitation plot:
+
+```{r IgG1-quantitation-plot, results='asis'}
+
+if (!is.null(params$quantitation_plot)) {
+  p <- plotly::ggplotly(params$quantitation_plot, tooltip = "text") %>% 
+    GlycoDash::hide_outliers(.)
+  print(htmltools::tagList(p))
+}
 ```
 
 ## Glycosylation traits

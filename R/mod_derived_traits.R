@@ -165,14 +165,15 @@ mod_derived_traits_ui <- function(id){
 #' derived_traits Server Functions
 #'
 #' @noRd 
-mod_derived_traits_server <- function(id, results_normalization){
-  moduleServer( id, function(input, output, session){
+mod_derived_traits_server <- function(id, results_normalization, results_quantitation) {
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     normalized_data <- reactive({
       req(results_normalization$normalized_data())
       results_normalization$normalized_data()
     })
+    
     
     ####################  Custom glycosylation traits  ####################
     
@@ -265,8 +266,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     # If only default traits were calculated: use "data_with_derived_traits()" here
     # If only custom traits were calculated: use "data_with_custom_traits()" here
     # If both default and custom traits were calculated: use "data_with_all_traits()" here
-    
-    traits_data_table <- reactive({
+    with_data <- reactive({
       if (is_truthy(data_with_all_traits())) {
         return(data_with_all_traits())  
       } else if (is_truthy(data_with_derived_traits())) {
@@ -275,12 +275,21 @@ mod_derived_traits_server <- function(id, results_normalization){
         return(data_with_custom_traits())
       }
     })
-
+    
+    # Check if there is quantitation data to combine with the traits.
+    data_with_traits <- reactive({
+      req(with_data())
+      if (is_truthy(results_quantitation$quantitation_data())) {
+        dplyr::full_join(with_data(), results_quantitation$quantitation_data()) %>% 
+          dplyr::relocate(IgG1_quantity_ng, .after = replicates)
+      } else {
+        with_data()
+      }
+    })
+    
     output$data_table <- DT::renderDT({
-      req(traits_data_table())
-      # req(data_with_derived_traits())
-      DT::datatable(data = traits_data_table(),
-                    # data = data_with_derived_traits(),
+      req(data_with_traits())
+      DT::datatable(data = data_with_traits(),
                     options = list(scrollX = TRUE))
     })
     
@@ -365,21 +374,8 @@ mod_derived_traits_server <- function(id, results_normalization){
     
     
     
-##### Create "data_with_traits" tibble to return  #########
-    data_with_traits <- reactive({
-      if (is_truthy(data_with_all_traits())) {
-        return(data_with_all_traits())
-      } else if (is_truthy(data_with_derived_traits())) {
-        return(data_with_derived_traits())
-      } else if (is_truthy(data_with_custom_traits())) {
-        return(data_with_custom_traits())
-      }
-    })
-    
-    
     return(
       list(
-        # data_with_derived_traits = data_with_derived_traits,
         data_with_traits = data_with_traits,
         normalized_data = normalized_data,
         derived_traits = reactive({ input$traits_menu }),
