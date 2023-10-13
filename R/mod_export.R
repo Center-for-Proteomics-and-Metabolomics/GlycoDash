@@ -33,6 +33,15 @@ mod_export_ui <- function(id){
                            "Generate report")
           )
         )
+      ),
+      fluidRow(
+        shinydashboard::box(
+          title = "View the processed data",
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          DT::dataTableOutput(ns("data_table"))
+        )
       )
     )
  
@@ -44,6 +53,7 @@ mod_export_ui <- function(id){
 #' @noRd 
 mod_export_server <- function(id, 
                               results_derived_traits,
+                              results_quantitation,
                               results_data_import,
                               results_spectra_curation,
                               results_analyte_curation,
@@ -56,15 +66,32 @@ mod_export_server <- function(id,
     x <- reactiveValues()
     
     # If data_with_derived_traits exists it is assigned to x$data, otherwise
-    # normalized_data is assigned to x$data:
+    # quantitation_data or normalized_data is assigned to x$data:
     observe({
+      req(results_normalization$normalized_data_wide())
       if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
-      } else if (is_truthy(results_normalization$normalized_data_wide())) {
+      } else if (is_truthy(results_quantitation$quantitation_data())) {
+        x$data <- results_quantitation$quantitation_data()
+      } else {
         x$data <- results_normalization$normalized_data_wide()
       }
     })
     
+    # Disable the "Download processed data" button until normalized data is available
+    observe({
+      shinyjs::toggleState("download", is_truthy(x$data))
+    })
+    
+    # Display the final data table
+    output$data_table <- DT::renderDT({
+      req(x$data)
+      DT::datatable(data = x$data,
+                    options = list(scrollX = TRUE))
+    })
+    
+    
+    # Download the final data
     output$download <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
@@ -209,7 +236,11 @@ mod_export_server <- function(id,
           formulas = try_call(results_derived_traits$formulas),
           custom_formulas = try_call(results_derived_traits$custom_formulas),
           repeatability = repeatability_tab_contents,
-          data_exploration = data_exploration_tab_contents
+          data_exploration = data_exploration_tab_contents,
+          silumab_amount = try_call(results_quantitation$silumab_amount),
+          chosen_peptides = try_call(results_quantitation$chosen_peptides),
+          quantitation_plot = try_call(results_quantitation$quantitation_plot),
+          peptide_correlation_plots = try_call(results_quantitation$peptide_correlation_plots)
         )
         
         # Create a temporary file with a unique name per session to prevent
