@@ -183,12 +183,6 @@ mod_analyte_curation_ui <- function(id){
                   trigger = "hover",
                   html = "true")
             ),
-            div(
-              strong("Note:"),
-              "analyte curation can only be performed once for now.",
-              style = "color: #0021B8; font-size: 18px"
-            ),
-            br(),
             actionButton(ns("curate_analytes"), 
                          "Perform analyte curation")
            
@@ -230,14 +224,6 @@ mod_analyte_curation_ui <- function(id){
 mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_cols){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    
-    # For now, make it possible to perform analyte curation only once.
-    # When counter is 1, the button is disabled.
-    counter <- reactiveValues(count = 0)
-    observeEvent(input$curate_analytes, {
-      counter$count <- 1
-    })
-    
     
     passing_spectra <- reactive({
       req(results_spectra_curation$passing_spectra())
@@ -322,7 +308,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       shinyjs::toggleState("curate_analytes",
                            condition = 
                              all(
-                               counter$count == 0,
                                is_truthy(passing_spectra()),
                                any(
                                  all(input$method == "Supply an analyte list", is_truthy(analyte_list())),
