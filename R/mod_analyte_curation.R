@@ -341,18 +341,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         "cut_off",
         condition = input$curation_method != "Per sample"
       )
-      # Hide "Analyte curation results per cluster" when curation is done per sample
-      # Later: perhaps plot a heatmap
-      shinyjs::toggle(
-        "tabbed_box",
-        condition = input$curation_method != "Per sample"
-      )
       # Toggle download button
       shinyjs::toggleState(
         "download", condition = is_truthy(with_analytes_to_include())
       )
     }, priority = 5)
-  
     
     
     # The selection menu for input$ignore_samples is updated so that the choices
@@ -434,7 +427,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     r <- reactiveValues(mod_results = list(),
                         created_cluster_tabs = vector())
     
-    # When use pushes the button:
+    # When user pushes the button:
     observeEvent(input$curate_analytes, {
       # Show spinner
       shinybusy::show_modal_spinner(
@@ -442,14 +435,17 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         text = HTML("<br/><strong>Curating analytes...")
       )
       # Remove tabs that may have been created before
-      # For some reason the checkboxes are removed here, but the
-      # tabs and plots are not removed directly.
       for (cluster in r$created_cluster_tabs) {
         removeTab(inputId = "tabs", target = cluster)
       }
       # Reset reactiveValues vector
       r$mod_results <- list()
       r$created_cluster_tabs <- vector()
+      # If curation is done per sample: hide plots
+      shinyjs::toggle(
+        "tabbed_box",
+        condition = input$curation_method != "Per sample"
+      )
     }, 
     # Priority to make sure this code is executed first when button is pushed.
     priority = 10)
@@ -594,6 +590,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
 
     # Create tabs for each cluster, when clusters() changes.
+    # input$tabs always takes on the value (cluster name) of the selected tab
     # Note that clusters() updates whenever analyte_curated_data() updates.
     observeEvent(clusters(), {
       # Create one tab for each cluster, store the name of the cluster in r.
@@ -612,7 +609,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     })
     
     
-    
     info <- reactive({
       req(analyte_curated_data())
       list(
@@ -628,7 +624,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     observeEvent(info()$analyte_curated_data, {
       req(clusters())
       req(input$curation_method != "Per sample")
-      
       r$mod_results <- purrr::set_names(clusters()) %>% 
         purrr::map(., function(cluster) {
           mod_tab_curated_analytes_server(
@@ -653,8 +648,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         to_return <- analyte_curated_data() %>% 
           dplyr::filter(has_passed_analyte_curation == TRUE) %>%
           dplyr::select(-has_passed_analyte_curation, -uncalibrated)
-        # Remove spinner  
-        shinybusy::remove_modal_spinner()
       } else {
         # Analyte curation on all data or per biological group
         req(
@@ -669,6 +662,9 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         }) %>% 
           purrr::reduce(dplyr::full_join)
       }
+      # Remove spinner  
+      shinybusy::remove_modal_spinner()
+      # Return
       return(to_return)
     })
     
@@ -691,16 +687,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                                                   path = file))
       }
     )
-    
-    
-    # Show a spinner while analyte curation is being performed.
-    # It is removed in "mod_tab_curated_analytes.R" for curation on all data or per group.
-    # observeEvent(input$curate_analytes, {
-    #   shinybusy::show_modal_spinner(
-    #     spin = "cube-grid", color = "#0275D8",
-    #     text = HTML("<br/><strong>Curating analytes...")
-    #   )
-    # }, priority = 20)
 
     
     
