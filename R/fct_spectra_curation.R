@@ -1005,3 +1005,27 @@ calculate_number_and_percentage_per_reason <- function(curated_data) {
     )
   
 }
+
+
+
+create_downloadHandler <- function(data_to_download, download_format, paste) {
+  downloadHandler(
+    filename = function() {
+      current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+      if (download_format == "R object") {
+        print(download_format)
+        return(paste0(current_datetime, paste, ".rds"))
+      } else {
+        print(download_format)
+        return(paste0(current_datetime, paste, ".xlsx"))
+      }
+    },
+    content = function(file) {
+      if (download_format == "R object") {
+        save(data_to_download, file = file)
+      } else {
+        writexl::write_xlsx(data_to_download, path = file)
+      }
+    }
+  )
+}

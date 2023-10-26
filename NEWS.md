@@ -1,7 +1,11 @@
-# v 1.3.1
+# v1.3.1
 ## Adjustments
 * Add a line of equality to the peptide correlation plots in the “IgG1 quantitation” tab.
 * Round cut-off numbers in curated spectra scatter plot and table.
+* Display overview of passing spectra in the “Spectra curation” tab, and make it possible to download tables of failed spectra.
+
+## Bug fixes
+* Prevent dashboard from crashing when de-selecting all QC criteria in spectra curation.
 
 
 # v1.3.0
