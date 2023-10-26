@@ -763,10 +763,13 @@ create_cut_off_plot <- function(summarized_checks) {
                                  sample_id,
                                  "\n",
                                  "Passing analyte percentage: ",
-                                 passing_analyte_percentage,
+                                 paste0(
+                                   format(round(passing_analyte_percentage, digits = 2), nsmall = 2),
+                                   "%"
+                                 ),
                                  "\n",
                                  "Sum intensity: ",
-                                 sum_intensity,
+                                 round(sum_intensity, digits = 0),
                                  "\nUncalibrated: ",
                                  uncalibrated))
     ) +

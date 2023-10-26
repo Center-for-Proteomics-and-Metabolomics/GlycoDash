@@ -1,3 +1,9 @@
+# v 1.3.1
+## Adjustments
+* Add a line of equality to the peptide correlation plots in the “IgG1 quantitation” tab.
+* Round cut-off numbers in curated spectra scatter plot and table.
+
+
 # v1.3.0
 ## New features
 * IgG1 quantitation with SILuMAb
