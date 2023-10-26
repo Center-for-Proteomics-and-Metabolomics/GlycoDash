@@ -310,7 +310,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     # Data with criteria checks for each analyte in each sample.
     checked_data <- reactive({
-      req(data_to_check(), input$sn, input$ipq)
+      req(data_to_check(), input$sn, input$ipq, length(input$qc_to_include) > 0)
       
       r$tab_contents <- NULL # Reset the tab contents so that 
       # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
