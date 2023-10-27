@@ -427,8 +427,14 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     r <- reactiveValues(mod_results = list(),
                         created_cluster_tabs = vector())
     
+    # Create a counter to track how many times analyte curation is performed.
+    # This is used to generate unique tab ids each curation round.
+    counter <- reactiveValues(count = 0)
+    
     # When user pushes the button:
     observeEvent(input$curate_analytes, {
+      # Update the counter
+      counter$count <- counter$count + 1
       # Show spinner
       shinybusy::show_modal_spinner(
         spin = "cube-grid", color = "#0275D8",
@@ -602,7 +608,9 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           session = session,
           tab = tabPanel(
             title = clusters()[[i]],
-            mod_tab_curated_analytes_ui(ns(clusters()[[i]]))
+            mod_tab_curated_analytes_ui(ns(
+              paste0(clusters()[[i]], "_", counter$count)
+            ))
           )
         )
       }
@@ -627,7 +635,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       r$mod_results <- purrr::set_names(clusters()) %>% 
         purrr::map(., function(cluster) {
           mod_tab_curated_analytes_server(
-            id = cluster,
+            id = paste0(cluster, "_", counter$count),
             info = info(),
             cluster = cluster,
             biogroup_column = ifelse(
@@ -638,7 +646,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           )
         })
     })
-  
     
     
     with_analytes_to_include <- reactive({
