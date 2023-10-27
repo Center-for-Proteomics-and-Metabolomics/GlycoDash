@@ -319,10 +319,22 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       }
     })
     
-    output$table <- DT::renderDT({
+    cut_off_table_rounded <- reactive({
       req(show_in_cut_off_table())
-      
-      DT::datatable(show_in_cut_off_table(),
+      show_in_cut_off_table() %>% 
+        dplyr::mutate(
+          `Cut-off sum intensity` = as.character(round(`Cut-off sum intensity`, digits = 0)),
+          `Cut-off percentage of passing analytes` = paste0(
+            format(round(`Cut-off percentage of passing analytes`, digits = 2), nsmall = 2),
+            "%"
+          )
+        )
+    })
+    
+    output$table <- DT::renderDT({
+      req(cut_off_table_rounded())
+  
+      DT::datatable(cut_off_table_rounded(),
                     rownames = FALSE,
                     width = "600px",
                     options = list(searching = FALSE,

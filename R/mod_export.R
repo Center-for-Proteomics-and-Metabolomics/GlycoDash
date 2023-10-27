@@ -171,11 +171,19 @@ mod_export_server <- function(id,
           }
         )
         
+        
+        # Repeatability
+        # Mapping (or looping) a reactiveValues list is not possible. You need
+        # to convert it to a regular list first. 
+        repeatability_list <- shiny::reactiveValuesToList(results_repeatability$tab_results)
+        # Remove potential NULL values from the list (happens when tabs are deleted)
+        repeatability_list_clean <- repeatability_list[!sapply(repeatability_list, is.null)]
+        # Loop over the tabs in the list
         repeatability_tab_contents <- purrr::map(
-          # Mapping (or looping) a reactiveValues list is not possible. You need
-          # to convert it to a regular list first:
-          shiny::reactiveValuesToList(results_repeatability$tab_results),
+          repeatability_list_clean,
           function(list_of_objects) {
+            # Remove NULL tabs from the list (happens when tabs are deleted)
+            
             plot <- try_call(list_of_objects$plot)
             plots <- purrr::map(list_of_objects$plots(),
                                 ~ try_call(.x))
@@ -189,6 +197,7 @@ mod_export_server <- function(id,
               title = title
             ))
           })
+        
         
         data_exploration_tab_contents <- purrr::map(
           # Mapping (or looping) a reactiveValues list is not possible. You need

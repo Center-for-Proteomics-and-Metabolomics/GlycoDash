@@ -131,6 +131,10 @@ mod_quantitation_ui <- function(id) {
                   Samples for which no quantity could be calculated 
                   because of missing values are not shown in the plot, and
                   are not used in calculating the correlation.
+                  
+                  <p>
+                  The diagonal line is the line of equality (y = x), which is
+                  useful for comparing two different quantitation methods.
                   "),
                   trigger = "hover",
                   placement = "left",

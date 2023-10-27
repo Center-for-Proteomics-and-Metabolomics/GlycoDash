@@ -192,10 +192,17 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
       "Spearman correlation = ",
       as.character(round(correlation, digits = 2))
     )) +
+    # Plot a line of equality (y = x)
+    ggplot2::geom_abline(
+      slope = 1, 
+      intercept = 0,
+      color = "#3D3D3D"
+    ) +
+    # Plot the points
     ggplot2::geom_point(data = IgG1_amounts, ggplot2::aes(
       x = round(.data[[xcol]] * silumab_amount, digits = 0),
       y = round(.data[[ycol]] * silumab_amount, digits = 0),
-      color = sample_type,
+      color = sample_type, alpha = 0.5,
       text = paste0(
         "Sample name: ", sample_name, "\n",
         "Sample ID: ", sample_id, "\n",

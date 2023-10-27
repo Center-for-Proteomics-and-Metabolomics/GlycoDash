@@ -1,3 +1,18 @@
+# v1.3.1
+## Adjustments
+* Add a line of equality to the peptide correlation plots in the “IgG1 quantitation” tab.
+* Round cut-off numbers in curated spectra scatter plot and table.
+* Display overview of passing spectra in the “Spectra curation” tab, and make it possible to download tables of failed spectra.
+* Show a spinner while processing LaCyTools summary files.
+
+## Bug fixes
+* Analyte curation can be performed multiple times.
+* Prevent dashboard from crashing when de-selecting all QC criteria in spectra curation.
+* Prevent dashboard from crashing during spectra curation when all negative control spectra are uncalibrated. 
+  Show a warning message and disable button when all negative controls are uncalibrated for one or more clusters.
+* Report generation works when repeatability tabs were deleted.
+
+
 # v1.3.0
 ## New features
 * IgG1 quantitation with SILuMAb

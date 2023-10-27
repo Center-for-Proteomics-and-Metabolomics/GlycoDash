@@ -217,7 +217,7 @@ mod_spectra_curation_ui <- function(id){
                   ),
                   shinyWidgets::awesomeCheckbox(
                     ns("uncalibrated_as_na"),
-                    label = "Treat uncalibrated spectra as missing values, not zeroes.",
+                    label = "Treat uncalibrated spectra as missing values, not zeros.",
                     value = TRUE
                   )
                 )
@@ -254,6 +254,10 @@ mod_spectra_curation_ui <- function(id){
             tabsetPanel(id = ns("more_than_4_clusters")),
             br(),
             tabsetPanel(
+              tabPanel(title = "Details of passing spectra per analyte",
+                       column(width = 12,
+                              br(),
+                              DT::dataTableOutput(ns("passing_spectra_details")))),
               tabPanel(title = "Overview of failed spectra",
                        column(width = 12,
                               br(),
@@ -277,8 +281,19 @@ mod_spectra_curation_ui <- function(id){
             radioButtons(ns("download_format"),
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
-            downloadButton(ns("download"), 
-                           "Download curated spectra")
+            downloadButton(ns("download1"), 
+                           "Download details of passing spectra per analyte",
+                           style = "width: 330px;"),
+            br(),
+            br(),
+            downloadButton(ns("download2"),
+                           "Download overview of failed spectra",
+                           style = "Width: 330px;"),
+            br(),
+            br(),
+            downloadButton(ns("download3"),
+                           "Download details of failed spectra per analyte",
+                           style = "Width: 330px;")
           )
         )
       )
@@ -310,7 +325,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     # Data with criteria checks for each analyte in each sample.
     checked_data <- reactive({
-      req(data_to_check(), input$sn, input$ipq)
+      req(data_to_check(), input$sn, input$ipq, length(input$qc_to_include) > 0)
       
       r$tab_contents <- NULL # Reset the tab contents so that 
       # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
@@ -443,17 +458,31 @@ mod_spectra_curation_server <- function(id, results_data_import){
                      })
     })
     
+    
+    # Disable button when cut-offs are missing for one or more clusters, but enable
+    # when user unchecks "Treat uncalibrated spectra as missing values, not zeros"
     observe({
-      shinyjs::disable(id = "button")
-      
-      req(summarized_checks(),
-          cut_offs_to_use_all_clusters(),
-          !rlang::is_empty(cut_offs_to_use_all_clusters()))
-      
-      shinyjs::enable(id = "button")
-    },
-    priority = 10) # Ensure that this observer is executed before others so that 
-    # the button is disabled immediately.
+      shinyjs::disable("button")
+      if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
+        if (input$uncalibrated_as_na) {
+          if (setequal(cut_offs_to_use_all_clusters()$cluster, clusters())) {
+            shinyjs::enable("button")
+          } else {
+            shinyjs::disable("button")
+            showNotification(
+              "For one or more clusters, all negative control spectra are
+              uncalibrated. Please use different or additional negative controls,
+              or choose to treat uncalibrated spectra as zeros instead of missing values.",
+              type = "warning",
+              duration = 30
+            )
+          }
+        } else {
+          shinyjs::enable("button")
+        }
+      }
+    })
+    
     
     # Perform spectra curation when button is clicked:
     curated_data <- reactive({
@@ -461,6 +490,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                      summarized_checks = summarized_checks(),
                      cut_offs = cut_offs_to_use_all_clusters())
     }) %>% bindEvent(input$button)
+    
     
     observe({
       showNotification("Spectra curation has been performed.",
@@ -484,6 +514,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
         req(passing_spectra())
         remove_unneeded_columns(passing_spectra = passing_spectra())
       }
+    })
+    
+    output$passing_spectra_details <- DT::renderDataTable({
+      req(to_return())
+      DT::datatable(to_return(),
+                    options = list(scrollX = TRUE, searching = TRUE))
     })
     
     output$failed_spectra_table <- DT::renderDataTable({
@@ -583,12 +619,21 @@ mod_spectra_curation_server <- function(id, results_data_import){
       return(plotly_object)
     })
     
-    output$download <- downloadHandler(
+    
+    
+    # Download buttons
+    observe({
+      shinyjs::toggleState("download1", is_truthy(to_return()))
+      shinyjs::toggleState("download2", is_truthy(curated_data()))
+      shinyjs::toggleState("download3", is_truthy(curated_data()))
+    })
+    
+    output$download1 <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
         switch(input$download_format,
-               "R object" = paste0(current_datetime, "_curated_spectra.rds"),
-               "Excel file" = paste0(current_datetime, "_curated_spectra.xlsx"))
+               "R object" = paste0(current_datetime, "_passing_spectra_details.rds"),
+               "Excel file" = paste0(current_datetime, "_passing_spectra_details.xlsx"))
       },
       content = function(file) {
         data_to_download <- to_return()
@@ -599,6 +644,49 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                   path = file))
       }
     )
+    
+    
+    output$download2 <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        switch(input$download_format,
+               "R object" = paste0(current_datetime, "_failed_spectra_overview.rds"),
+               "Excel file" = paste0(current_datetime, "_failed_spectra_overview.xlsx"))
+      },
+      content = function(file) {
+        data_to_download <- curated_data() %>%
+          dplyr::select(1:cut_off_passing_analyte_percentage) %>%
+          dplyr::distinct() %>%
+          dplyr::filter(!has_passed_spectra_curation)
+        switch(input$download_format,
+               "R object" = save(data_to_download, 
+                                 file = file),
+               "Excel file" = writexl::write_xlsx(data_to_download, 
+                                                  path = file))
+      }
+    )
+    
+    output$download3 <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        switch(input$download_format,
+               "R object" = paste0(current_datetime, "_failed_spectra_details.rds"),
+               "Excel file" = paste0(current_datetime, "_failed_spectra_details.xlsx"))
+      },
+      content = function(file) {
+        data_to_download <- curated_data() %>%
+          dplyr::select(-(passing_analyte_percentage:replicates)) %>%
+          dplyr::distinct() %>%
+          dplyr::filter(has_passed_spectra_curation == FALSE)
+        switch(input$download_format,
+               "R object" = save(data_to_download, 
+                                 file = file),
+               "Excel file" = writexl::write_xlsx(data_to_download, 
+                                                  path = file))
+      }
+    )
+    
+    
     
     return(list(
       passing_spectra = to_return,

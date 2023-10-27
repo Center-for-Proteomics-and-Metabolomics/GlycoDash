@@ -183,12 +183,6 @@ mod_analyte_curation_ui <- function(id){
                   trigger = "hover",
                   html = "true")
             ),
-            div(
-              strong("Note:"),
-              "analyte curation can only be performed once for now.",
-              style = "color: #0021B8; font-size: 18px"
-            ),
-            br(),
             actionButton(ns("curate_analytes"), 
                          "Perform analyte curation")
            
@@ -231,18 +225,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    # For now, make it possible to perform analyte curation only once.
-    # When counter is 1, the button is disabled.
-    counter <- reactiveValues(count = 0)
-    observeEvent(input$curate_analytes, {
-      counter$count <- 1
-    })
-    
-    
+    # passing_spectra contains the LaCyTools output for all the spectra
+    # that passed curation.
     passing_spectra <- reactive({
       req(results_spectra_curation$passing_spectra())
       results_spectra_curation$passing_spectra()
     })
+
     
     # Create reactiveValues. 
     # Below, rv_resp$response is created when analyte curation is performed per biological group.
@@ -285,8 +274,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     })
     
     
-    
- 
     # The data table that is shown in the pop-up
     output$popup_table <- DT::renderDataTable({
       biological_groups <- data.frame(unique(passing_spectra()[input$biogroup_column])) %>% tidyr::drop_na()
@@ -322,7 +309,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       shinyjs::toggleState("curate_analytes",
                            condition = 
                              all(
-                               counter$count == 0,
                                is_truthy(passing_spectra()),
                                any(
                                  all(input$method == "Supply an analyte list", is_truthy(analyte_list())),
@@ -355,18 +341,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         "cut_off",
         condition = input$curation_method != "Per sample"
       )
-      # Hide "Analyte curation results per cluster" when curation is done per sample
-      # Later: perhaps plot a heatmap
-      shinyjs::toggle(
-        "tabbed_box",
-        condition = input$curation_method != "Per sample"
-      )
       # Toggle download button
       shinyjs::toggleState(
         "download", condition = is_truthy(with_analytes_to_include())
       )
-    }, priority = 10)
-  
+    }, priority = 5)
     
     
     # The selection menu for input$ignore_samples is updated so that the choices
@@ -442,6 +421,45 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       return(analytes)
     })
     
+    
+    
+    # Create a reactiveValues vector to store results from the tabs.
+    r <- reactiveValues(mod_results = list(),
+                        created_cluster_tabs = vector())
+    
+    # Create a counter to track how many times analyte curation is performed.
+    # This is used to generate unique tab ids each curation round.
+    counter <- reactiveValues(count = 0)
+    
+    # When user pushes the button:
+    observeEvent(input$curate_analytes, {
+      # Update the counter
+      counter$count <- counter$count + 1
+      # Show spinner
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8",
+        text = HTML("<br/><strong>Curating analytes...")
+      )
+      # Remove tabs that may have been created before
+      for (cluster in r$created_cluster_tabs) {
+        removeTab(inputId = "tabs", target = cluster)
+      }
+      # Reset reactiveValues vector
+      r$mod_results <- list()
+      r$created_cluster_tabs <- vector()
+      # If curation is done per sample: hide plots
+      shinyjs::toggle(
+        "tabbed_box",
+        condition = input$curation_method != "Per sample"
+      )
+    }, 
+    # Priority to make sure this code is executed first when button is pushed.
+    priority = 10)
+    
+    
+    
+    # without_samples_to_ignore contains the LaCyTools data of the passed spectra,
+    # but without the sample types that the user wants to ignore in analyte curation.
     without_samples_to_ignore <- reactive({
       req(input$method == "Curate analytes based on data")
       req(passing_spectra())
@@ -455,6 +473,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       }
     })
     
+    # checked_analytes is the same as without_samples_to_ignore, but with new 
+    # columns describing whether an analyte fulfills all three quality criteria.
     checked_analytes <- reactive({
       req(input$method == "Curate analytes based on data")
       req(without_samples_to_ignore())
@@ -470,8 +490,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     })
     
     
-    # Curate the analytes
-    # TODO: turn this into a function
+    
+    # Curate the analytes when user pushed the button.
+    # This creates a dataframe with the passing percentage for each analyte,
+    # and whether that analyte passes curation (TRUE or FALSE).
+    # When curation is done per biological group, each analyte is present multiple
+    # times in the dataframe (once for each biological group).
+    # TODO: turn (part of) this into a function
     curated_analytes <- reactive({
       
       if (input$method == "Curate analytes based on data") {
@@ -522,10 +547,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       
       return(curated_analytes)
     }) %>% bindEvent(input$curate_analytes)  # Execute code when button is pushed.
-
-
     
-    # Analyte curated data
+    
+    
+    # analyte_curated_data is a dataframe with the LaCyTools output of the
+    # passing spectra, but with only the analytes that passed curation.
     analyte_curated_data <- reactive({
       req(curated_analytes())
       if (input$curation_method == "Per sample") {
@@ -533,8 +559,12 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         curated_analytes()
       } else {
         dplyr::left_join(
-          # Order here is important!
-          # This gives a subset of passing_spectra(), with only the analytes that pass curation.
+          # This combines the info from curated_analytes (whether analytes pass or not)
+          # with the LaCyTools output of the passing spectra.
+          # The order here is important in the case of curation per biological group,
+          # when one or more groups should be ignored. This order ensures that
+          # only groups that should be taken into account are part of the resulting
+          # dataframe (reversing the order would include all biological groups).
           curated_analytes(), passing_spectra()
         )
       } # bindEvent() below makes sure analyte_curated_data() is updated only
@@ -543,6 +573,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     }) %>% bindEvent(curated_analytes())
     
     
+    
+    # Show a notification when analyte curation is finished.
     observe({
       showNotification(ui = paste("Analyte curation has been performed",
                                   ifelse(
@@ -554,41 +586,34 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     }) %>% bindEvent(analyte_curated_data())
    
     
+    
+    
+    # Create a vector with names of the clusters
     clusters <- reactive({
       req(analyte_curated_data())
       unique(analyte_curated_data()$cluster)
     })
     
-    
-    r <- reactiveValues(mod_results = list(),
-                        created_cluster_tabs = vector())
-    
-    # Save which tabs have been created in r$created_cluster_tabs so that they
-    # can still be removed after clusters() changes:
-    observe({
-      req(clusters())
-      r$created_cluster_tabs <- union(isolate({ r$created_cluster_tabs }),
-                                      clusters())
-    })
-    
-    
-    observe({
-      req(clusters(), r$created_cluster_tabs)
-      # Remove tabs that were created before
-      # (Trying to remove a non-existing tab doesn't result in an error)
-      purrr::map(r$created_cluster_tabs, function(cluster) {
-        removeTab(inputId = "tabs", target = cluster)
-      })
-      # Create one tab for each cluster in without_samples_to_ignore
-      purrr::map(clusters(), function(cluster) {
+
+    # Create tabs for each cluster, when clusters() changes.
+    # input$tabs always takes on the value (cluster name) of the selected tab
+    # Note that clusters() updates whenever analyte_curated_data() updates.
+    observeEvent(clusters(), {
+      # Create one tab for each cluster, store the name of the cluster in r.
+      for (i in seq(length(clusters()))) {
+        r$created_cluster_tabs[i] <- clusters()[i]
         appendTab(
-          inputId = "tabs", select = TRUE, session = session,
+          inputId = "tabs",
+          select = TRUE,
+          session = session,
           tab = tabPanel(
-            title = cluster,
-            mod_tab_curated_analytes_ui(ns(cluster))
+            title = clusters()[[i]],
+            mod_tab_curated_analytes_ui(ns(
+              paste0(clusters()[[i]], "_", counter$count)
+            ))
           )
         )
-      })
+      }
     })
     
     
@@ -607,11 +632,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     observeEvent(info()$analyte_curated_data, {
       req(clusters())
       req(input$curation_method != "Per sample")
-      
       r$mod_results <- purrr::set_names(clusters()) %>% 
         purrr::map(., function(cluster) {
           mod_tab_curated_analytes_server(
-            id = cluster,
+            id = paste0(cluster, "_", counter$count),
             info = info(),
             cluster = cluster,
             biogroup_column = ifelse(
@@ -622,7 +646,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           )
         })
     })
-  
     
     
     with_analytes_to_include <- reactive({
@@ -632,8 +655,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         to_return <- analyte_curated_data() %>% 
           dplyr::filter(has_passed_analyte_curation == TRUE) %>%
           dplyr::select(-has_passed_analyte_curation, -uncalibrated)
-        # Remove spinner  
-        shinybusy::remove_modal_spinner()
       } else {
         # Analyte curation on all data or per biological group
         req(
@@ -648,6 +669,9 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         }) %>% 
           purrr::reduce(dplyr::full_join)
       }
+      # Remove spinner  
+      shinybusy::remove_modal_spinner()
+      # Return
       return(to_return)
     })
     
@@ -670,16 +694,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                                                   path = file))
       }
     )
-    
-    
-    # Show a spinner while analyte curation is being performed.
-    # It is removed in "mod_tab_curated_analytes.R" for curation on all data or per group.
-    observeEvent(input$curate_analytes, {
-      shinybusy::show_modal_spinner(
-        spin = "cube-grid", color = "#0275D8",
-        text = HTML("<br/><strong>Curating analytes...")
-      )
-    }, priority = 20)
 
     
     
