@@ -9,6 +9,7 @@
 * Prevent dashboard from crashing when de-selecting all QC criteria in spectra curation.
 * Prevent dashboard from crashing during spectra curation when all negative control spectra are uncalibrated. 
   Show a warning message and disable button when all negative controls are uncalibrated for one or more clusters.
+* Report generation works when repeatability tabs were deleted.
 
 
 # v1.3.0
