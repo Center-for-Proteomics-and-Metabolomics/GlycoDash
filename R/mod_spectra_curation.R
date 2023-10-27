@@ -217,7 +217,7 @@ mod_spectra_curation_ui <- function(id){
                   ),
                   shinyWidgets::awesomeCheckbox(
                     ns("uncalibrated_as_na"),
-                    label = "Treat uncalibrated spectra as missing values, not zeroes.",
+                    label = "Treat uncalibrated spectra as missing values, not zeros.",
                     value = TRUE
                   )
                 )
@@ -458,17 +458,31 @@ mod_spectra_curation_server <- function(id, results_data_import){
                      })
     })
     
+    
+    # Disable button when cut-offs are missing for one or more clusters, but enable
+    # when user unchecks "Treat uncalibrated spectra as missing values, not zeros"
     observe({
-      shinyjs::disable(id = "button")
-      
-      req(summarized_checks(),
-          cut_offs_to_use_all_clusters(),
-          !rlang::is_empty(cut_offs_to_use_all_clusters()))
-      
-      shinyjs::enable(id = "button")
-    },
-    priority = 10) # Ensure that this observer is executed before others so that 
-    # the button is disabled immediately.
+      shinyjs::disable("button")
+      if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
+        if (input$uncalibrated_as_na) {
+          if (setequal(cut_offs_to_use_all_clusters()$cluster, clusters())) {
+            shinyjs::enable("button")
+          } else {
+            shinyjs::disable("button")
+            showNotification(
+              "For one or more clusters, all negative control spectra are
+              uncalibrated. Please use different or additional negative controls,
+              or choose to treat uncalibrated spectra as zeros instead of missing values.",
+              type = "warning",
+              duration = 30
+            )
+          }
+        } else {
+          shinyjs::enable("button")
+        }
+      }
+    })
+    
     
     # Perform spectra curation when button is clicked:
     curated_data <- reactive({
@@ -476,6 +490,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                      summarized_checks = summarized_checks(),
                      cut_offs = cut_offs_to_use_all_clusters())
     }) %>% bindEvent(input$button)
+    
     
     observe({
       showNotification("Spectra curation has been performed.",
@@ -603,7 +618,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
       
       return(plotly_object)
     })
-    
     
     
     
