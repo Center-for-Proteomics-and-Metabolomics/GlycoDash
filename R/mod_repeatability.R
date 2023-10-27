@@ -139,11 +139,9 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
         tab_counter$n <- tab_counter$n - 1
       }
       
-      # Remove the contents of the tab that is closed from the tab_results list:
-      tab_results[[stringr::str_replace(input$remove_tab,
-                                        "Standard ",
-                                        "tab")]] <- NULL
-      
+      # Remove the contents of the tab that is closed from the tab_results list
+      tab_to_remove <- stringr::str_replace(input$remove_tab, "Standard ", "tab") # Space in "Standard " is important
+      tab_results[[tab_to_remove]] <- NULL
     }) %>% bindEvent(input$remove_tab)
     
     return(list(
