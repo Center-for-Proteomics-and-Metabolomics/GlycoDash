@@ -6,6 +6,7 @@
 * Show a spinner while processing LaCyTools summary files.
 
 ## Bug fixes
+* Analyte curation can be performed multiple times.
 * Prevent dashboard from crashing when de-selecting all QC criteria in spectra curation.
 * Prevent dashboard from crashing during spectra curation when all negative control spectra are uncalibrated. 
   Show a warning message and disable button when all negative controls are uncalibrated for one or more clusters.
