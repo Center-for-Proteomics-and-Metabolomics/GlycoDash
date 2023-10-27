@@ -242,6 +242,14 @@ mod_read_lacytools_server <- function(id){
       }) %>% bindEvent(input$button)
     
     
+    # Show spinner while processing LaCyTools summaries
+    observe({
+      req(!any(sapply(raw_lacytools_summaries(), is.null)))
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8",
+        text = HTML("<br/><strong>Processing LaCyTools summaries...")
+      )
+    }, priority = 5)
     
     # Create a list with tidy LaCyTools summaries
     lacytools_summaries <- reactive({
@@ -271,14 +279,16 @@ mod_read_lacytools_server <- function(id){
     })
     
     
-    
-    # Combine the lacytools_summaries using dplyr::bind_rows
+    # Combine the LaCyTools_summaries using dplyr::bind_rows
     lacytools_summaries_combined <- reactive({
       req(lacytools_summaries())
       do.call(dplyr::bind_rows, lacytools_summaries())
     })
     
-
+    # Hide spinner
+    observeEvent(lacytools_summaries_combined(), {
+      shinybusy::remove_modal_spinner()
+    })
     
     # Detect total and specific samples if applicable.
     lacytools_summaries_total_and_specific <- reactive({
