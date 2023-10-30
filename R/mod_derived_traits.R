@@ -49,18 +49,69 @@ mod_derived_traits_ui <- function(id){
           width = 5,
           solidHeader = TRUE,
           status = "primary",
-          div(
-            strong("Attention:"),
-            "glycosylation traits can only be calculated automatically for IgG complex-type glycans.",
-            style = "color:#0021B8; font-size: 18px"
+          # div(
+          #   strong("Attention:"),
+          #   "glycosylation traits can only be calculated automatically for IgG complex-type glycans.",
+          #   style = "color:#0021B8; font-size: 18px"
+          # ),
+          # br(),
+          # shinyWidgets::awesomeCheckboxGroup(ns("traits_menu"),
+          #                                    "Select the glycosylation traits that should be calculated:",
+          #                                    choices = c("Fucosylation",
+          #                                                "Bisection",
+          #                                                "Galactosylation",
+          #                                                "Sialylation")),
+          selectizeInput(
+            ns("antibody_types"),
+            "Select the types of antibodies that present in your data:",
+            choices = c(
+              "Human IgG",
+              # "Human IgA",
+              # "Human IgM",
+              "Mouse IgG"
+            ),
+            selected = c(""),
+            multiple = TRUE
           ),
-          br(),
-          shinyWidgets::awesomeCheckboxGroup(ns("traits_menu"),
-                                             "Select the glycosylation traits that should be calculated:",
-                                             choices = c("Fucosylation",
-                                                         "Bisection",
-                                                         "Galactosylation",
-                                                         "Sialylation")),
+          # Human IgG traits
+          selectizeInput(
+            ns("human_IgG_traits"),
+            "Select the traits you want to calculate for human IgG:",
+            choices = c(
+              "Fucosylation of complex-type glycans",
+              "Bisection of complex-type glycans",
+              "Galactosylation of complex-type glycans",
+              "Sialylation of complex type-glycans",
+              "Percentage of hybrid-type glycans",
+              "Percentage of oligomannose-type glycans"
+            ),
+            selected = c(""),
+            multiple = TRUE
+          ),
+          selectizeInput(
+            ns("human_IgG_clusters"),
+            "For which clusters in your data should the human IgG traits be calculated?",
+            choices = c(""),
+            multiple = TRUE
+          ),
+          # Mouse IgG traits
+          selectizeInput(
+            ns("mouse_IgG_traits"),
+            "Select the traits you want to calculate for mouse IgG:",
+            choices = c(
+              "Mouse trait 1",
+              "Mouse trait 2",
+              "Mickey Mouse"
+            ),
+            selected = c(""),
+            multiple = TRUE
+          ),
+          selectizeInput(
+            ns("mouse_IgG_clusters"),
+            "For which clusters in your data should the mouse IgG traits be calculated?",
+            choices = c(""),
+            multiple = TRUE
+          ),
           actionButton(ns("do_calculation"),
                        "Calculate glycosylation traits")
         ),
@@ -175,6 +226,37 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
     
     
+    # Show possible derived traits depending on type of antibodies in data
+    observe({
+      if ("Human IgG" %in% input$antibody_types) {
+        shinyjs::show("human_IgG_traits")
+        shinyjs::show("human_IgG_clusters")
+      } else {
+        shinyjs::hide("human_IgG_traits")
+        shinyjs::hide("human_IgG_clusters")
+      }
+      
+      if ("Mouse IgG" %in% input$antibody_types) {
+        shinyjs::show("mouse_IgG_traits")
+        shinyjs::show("mouse_IgG_clusters")
+      } else {
+        shinyjs::hide("mouse_IgG_traits")
+        shinyjs::hide("mouse_IgG_clusters")
+      }
+    })
+    
+    
+    # Show clusters in input
+    observe({
+      req(normalized_data())
+      for (id in c("human_IgG_clusters", "mouse_IgG_clusters")) {
+        updateSelectizeInput(
+          inputId = id,
+          choices = unique(normalized_data()$cluster)
+        )
+      }
+    })
+
     ####################  Custom glycosylation traits  ####################
     
     # Reactive expression containing the file extension of the uploaded file
