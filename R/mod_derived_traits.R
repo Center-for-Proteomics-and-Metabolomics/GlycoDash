@@ -82,6 +82,7 @@ mod_derived_traits_ui <- function(id){
               "Bisection of complex-type glycans",
               "Galactosylation of complex-type glycans",
               "Sialylation of complex type-glycans",
+              "Monoantennarity of complex-type glycans",
               "Percentage of hybrid-type glycans",
               "Percentage of oligomannose-type glycans"
             ),
@@ -224,7 +225,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       req(results_normalization$normalized_data())
       results_normalization$normalized_data()
     })
-    
     
     # Show possible derived traits depending on type of antibodies in data
     observe({
