@@ -43,67 +43,31 @@ human_IgG_clusters <- c("IgGI", "IgGII")
 ```
 
 ```{r}
-IgGI_normalized_data <- normalized_data %>% 
-  dplyr::filter(cluster == "IgGI")
-
-IgGI_analytes <- IgGI_normalized_data %>% 
-  dplyr::select(analyte) %>% 
-  dplyr::distinct() %>% 
-  tidyr::separate(
-    analyte, into = c("cluster", "glycan"),
-    sep = "1", extra = "merge", remove = FALSE
-    ) %>% 
-  # Assign glycan types
-  dplyr::mutate(
-    glycan_type = dplyr::case_when(
-      # Oligomannose = anything ending with N2
-      grepl("N2$", glycan) ~ "oligomannose",
-      # Hybrid = anything containing "H5N3...", "H6N3...", etc.
-      # Also bisected hybrids: "H6N4...", "H7N4...", etc.
-      (grepl("H[5-9]\\d*N3", glycan) | grepl("H[6-9]\\d*N4", glycan)) ~ "hybrid",
-      # Complex-type = no oligomannose and no hybrid
-      .default = "complex"
-    )
-  )
-```
-
-```{r}
-for (i in human_IgG_clusters) {
-  
-  cluster_normalized_data <- normalized_data %>% 
-    dplyr::filter(cluster == i)
-  
-  cluster_analytes <- cluster_normalized_data %>% 
+assign_glycan_types_human_IgG <- function(cluster_normalized_data) {
+  cluster_normalized_data %>% 
     dplyr::select(analyte) %>% 
     dplyr::distinct() %>% 
     tidyr::separate(
       analyte, into = c("cluster", "glycan"),
       sep = "1", extra = "merge", remove = FALSE
     ) %>% 
-    dplyr::mutate(
-      glycan_type = dplyr::case_when(
-        # Oligomannose = anything ending with N2
-        grepl("N2$", glycan) ~ "oligomannose",
-        # Hybrid = anything containing "H5N3...", "H6N3...", etc.
-        # Also bisected hybrids: "H6N4...", "H7N4...", etc.
-        (grepl("H[5-9]\\d*N3", glycan) | grepl("H[6-9]\\d*N4", glycan)) ~ "hybrid",
-        # Complex-type = no oligomannose and no hybrid
-        .default = "complex"
+    # Assign a type to each glycan
+      dplyr::mutate(
+        glycan_type = dplyr::case_when(
+          # Oligomannose = anything ending with N2
+          grepl("N2$", glycan) ~ "oligomannose",
+          # Hybrid = anything containing "H5N3...", "H6N3...", etc.
+          # Also bisected hybrids: "H6N4...", "H7N4...", etc.
+          (grepl("H[5-9]\\d*N3", glycan) | grepl("H[6-9]\\d*N4", glycan)) ~ "hybrid",
+          # Complex-type = no oligomannose and no hybrid
+          .default = "complex"
+        )
       )
-    )
-
-  
 }
 ```
 
 ```{r}
 calculate_human_IgG_traits <- function(data, traits, clusters) {
-  
-  # group data
-  data <- data %>%
-    dplyr::group_by(dplyr::across(dplyr::any_of(
-      c("sample_name", "cluster", "group")
-    ))) # "group" refers to Specific vs Total
   
   # Create empty list to store traits of each cluster
   traits_list <- vector("list", length = length(clusters))
@@ -116,28 +80,14 @@ calculate_human_IgG_traits <- function(data, traits, clusters) {
       dplyr::filter(cluster == clusters[[i]])
     
     # Get the analytes of the cluster
-    cluster_analytes <- cluster_normalized_data %>% 
-      dplyr::select(analyte) %>% 
-      dplyr::distinct() %>% 
-      tidyr::separate(
-        analyte, into = c("cluster", "glycan"), 
-        sep = "1", extra = "merge", remove = FALSE
-      ) %>% 
-      # Assign a type to each glycan
-      dplyr::mutate(
-        glycan_type = dplyr::case_when(
-          # Oligomannose = anything ending with N2
-          grepl("N2$", glycan) ~ "oligomannose",
-          # Hybrid = anything containing "H5N3...", "H6N3...", etc.
-          # Also bisected hybrids: "H6N4...", "H7N4...", etc.
-          (grepl("H[5-9]\\d*N3", glycan) | grepl("H[6-9]\\d*N4", glycan)) ~ "hybrid",
-          # Complex-type = no oligomannose and no hybrid
-          .default = "complex"
-        )
-      )
-    
+    cluster_analytes <- assign_glycan_types_human_IgG(cluster_normalized_data)
+      
     # Add the glycan types to the normalized data
-    data_with_glycan_types <- dplyr::left_join(data, cluster_analytes)
+    data_with_glycan_types <- dplyr::left_join(data, cluster_analytes) %>% 
+      # Group the data
+      dplyr::group_by(dplyr::across(dplyr::any_of(
+        c("sample_name", "cluster", "group")
+      )))
     
     # Split data into glycan types
     data_complex <- data_with_glycan_types %>% 
@@ -174,19 +124,39 @@ calculate_human_IgG_traits <- function(data, traits, clusters) {
     to_join <- purrr::map(possible_traits, function(trait) get0(trait))
     to_join_clean <- to_join[!sapply(to_join, is.null)]
     
-    cluster_traits <- purrr::reduce(to_join, dplyr::full_join) %>% 
+    cluster_traits <- purrr::reduce(to_join_clean, dplyr::full_join) %>% 
       dplyr::ungroup()
     
-    # return(cluster_traits)
     traits_list[[i]] <- cluster_traits
   }
   
-  return(traits_list)
+  # Combine the traits of the different clusters
+  to_return <- purrr::reduce(traits_list, dplyr::full_join)
+  
+  return(to_return)
 }
 ```
 
 ```{r}
-test <- calculate_human_IgG_traits(
+# IgGI and IgGII traits
+test1 <- calculate_human_IgG_traits(
   normalized_data, human_IgG_traits, human_IgG_clusters
 )
+```
+
+```{r}
+# Try IgGIsil traits --> different number of columns
+sil_traits <- c(
+  "Fucosylation of complex-type glycans",
+  "Galactosylation of complex-type glycans"
+)
+
+test2 <- calculate_human_IgG_traits(
+  normalized_data, sil_traits, c("IgGIsil")
+)
+```
+
+```{r}
+# Combine the traits
+all_traits <- dplyr::bind_rows(test1, test2)
 ```
