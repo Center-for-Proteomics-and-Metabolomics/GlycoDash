@@ -57,42 +57,6 @@ mod_derived_traits_ui <- function(id){
           # Tab panel for traits options
           tabsetPanel(id = ns("tabs")),
           br(),
-          # # Human IgG traits
-          # shinyWidgets::awesomeCheckboxGroup(
-          #   ns("human_IgG_traits"),
-          #   "Select the traits you want to calculate for human IgG:",
-          #   choices = c(
-          #     "Fucosylation of complex-type glycans",
-          #     "Bisection of complex-type glycans",
-          #     "Galactosylation of complex-type glycans",
-          #     "Sialylation of complex type-glycans",
-          #     "Monoantennarity of complex-type glycans",
-          #     "Percentage of hybrid-type glycans",
-          #     "Percentage of oligomannose-type glycans"
-          #   )
-          # ),
-          # selectizeInput(
-          #   ns("human_IgG_clusters"),
-          #   "For which clusters in your data should the human IgG traits be calculated?",
-          #   choices = c(""),
-          #   multiple = TRUE
-          # ),
-          # # Mouse IgG traits
-          # shinyWidgets::awesomeCheckboxGroup(
-          #   ns("mouse_IgG_traits"),
-          #   "Select the traits you want to calculate for mouse IgG:",
-          #   choices = c(
-          #     "Mouse Trait 1",
-          #     "Mouse Trait 2",
-          #     "Mouse Trait 3"
-          #   )
-          # ),
-          # selectizeInput(
-          #   ns("mouse_IgG_clusters"),
-          #   "For which clusters in your data should the mouse IgG traits be calculated?",
-          #   choices = c(""),
-          #   multiple = TRUE
-          # ),
           actionButton(ns("do_calculation"),
                        "Calculate glycosylation traits")
         ),
@@ -104,8 +68,6 @@ mod_derived_traits_ui <- function(id){
         DT::dataTableOutput(ns("formulas"))
         )
       ),
-      
-      
       
       fluidRow(
         shinydashboardPlus::box(
@@ -177,7 +139,6 @@ mod_derived_traits_ui <- function(id){
       ),
       
       
-      
       fluidRow(
         shinydashboard::box(
           title = "View data with glycosylation traits",
@@ -206,60 +167,45 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       results_normalization$normalized_data()
     })
     
+    
     # Create vector to store created tab names, and to count number of changes in input$antibody_types
-    r <- reactiveValues(count = 0, created_tabs = vector("character"))
+    r <- reactiveValues(count = 0, created_tab_ids = vector("character"))
+    
     observeEvent(input$antibody_types, {
       # Increase count by 1
       r$count <- r$count + 1
       # Remove previously created tabs
-      purrr::map(r$created_tabs, function(tab_title) {
-        removeTab(inputId = "tabs", target = tab_title, session = session)
+      purrr::map(r$created_tab_ids, function(tab_id) {
+        removeTab(inputId = "tabs", target = tab_id, session = session)
       })
-      # Reset r$created_tabs (count stays the same)
-      r$created_tabs <- vector("character")
+      # Reset r$created_tab_ids
+      r$created_tab_ids <- vector("character")
       # Create a tab for each selected antibody type
-      tab_id <- paste0(antibody_type, "_", r$count)  # Generate unique tab_id
       purrr::imap(input$antibody_types, function(antibody_type, i) {
-        r$created_tabs[i] <- antibody_type
+        # Generate a unique tab id
+        tab_id <- paste0(antibody_type, "_", r$count)
+        # Store the tab_id in the vector
+        r$created_tab_ids[i] <- tab_id
+        # Create the new tab
         appendTab(
           inputId = "tabs",
           select = TRUE,
-          tab = tabPanel(title = antibody_type)
+          tab = tabPanel(
+            title = antibody_type,
+            value = tab_id,
+            mod_tab_traits_ui(ns(tab_id))
+          )
         )
+      })
+      # Generate the server parts of the tabs
+      purrr::map(r$created_tab_ids, function(tab_id) {
+        antibody_type <- stringr::str_split(tab_id, pattern = "_")[[1]][1]
+        mod_tab_traits_server(id = tab_id, antibody_type = antibody_type)
       })
     #  ignoreNULL = FALSE is required to trigger the observer when all boxes are unchecked
     }, ignoreNULL = FALSE)
+  
     
-    
-    # observe({
-    #   if ("Human IgG" %in% input$antibody_types) {
-    #     shinyjs::show("human_IgG_traits")
-    #     shinyjs::show("human_IgG_clusters")
-    #   } else {
-    #     shinyjs::hide("human_IgG_traits")
-    #     shinyjs::hide("human_IgG_clusters")
-    #   }
-    #   
-    #   if ("Mouse IgG" %in% input$antibody_types) {
-    #     shinyjs::show("mouse_IgG_traits")
-    #     shinyjs::show("mouse_IgG_clusters")
-    #   } else {
-    #     shinyjs::hide("mouse_IgG_traits")
-    #     shinyjs::hide("mouse_IgG_clusters")
-    #   }
-    # })
-    
-    
-    # Show clusters in input
-    observe({
-      req(normalized_data())
-      for (id in c("human_IgG_clusters", "mouse_IgG_clusters")) {
-        updateSelectizeInput(
-          inputId = id,
-          choices = unique(normalized_data()$cluster)
-        )
-      }
-    })
 
     ####################  Custom glycosylation traits  ####################
     
@@ -301,15 +247,15 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
   
     ####################  Default glycosylation traits  ####################
     
-    observe({
-      shinyjs::toggleState("do_calculation", all(
-        is_truthy(normalized_data()),
-        length(input$antibody_types) > 0,
-        if ("Human IgG" %in% input$antibody_types) {
-          length(input$human_IgG_traits) > 0 & length(input$human_IgG_clusters) > 0
-        }
-      ))
-    })
+    # observe({
+    #   shinyjs::toggleState("do_calculation", all(
+    #     is_truthy(normalized_data()),
+    #     length(input$antibody_types) > 0,
+    #     if ("Human IgG" %in% input$antibody_types) {
+    #       length(input$human_IgG_traits) > 0 & length(input$human_IgG_clusters) > 0
+    #     }
+    #   ))
+    # })
     
     derived_traits <- reactive({
       req(normalized_data())
