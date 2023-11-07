@@ -55,7 +55,51 @@ mod_derived_traits_ui <- function(id){
             choices = c("Human IgG", "Mouse IgG")
           ),
           # Tab panel for traits options
-          tabsetPanel(id = ns("tabs")),
+          tabsetPanel(
+            id = ns("tabs"),
+            # Human IgG tab
+            tabPanel("Human IgG", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgG_traits"),
+                "Select the traits you want to calculate for human IgG:",
+                choices = c(
+                  "Fucosylation of complex-type glycans",
+                  "Bisection of complex-type glycans",
+                  "Galactosylation of complex-type glycans",
+                  "Sialylation of complex type-glycans",
+                  "Monoantennarity of complex-type glycans",
+                  "Percentage of hybrid-type glycans",
+                  "Percentage of oligomannose-type glycans"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgG_clusters"),
+                "For which clusters in your data should the human IgG traits be calculated?",
+                choices = c(""),
+                multiple = TRUE
+              )
+            )),
+            # Mouse IgG tab
+            tabPanel("Mouse IgG", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("mouse_IgG_traits"),
+                "Select the traits you want to calculate for mouse IgG:",
+                choices = c(
+                  "Mouse Trait 1",
+                  "Mouse Trait 2",
+                  "Mouse Trait 3"
+                )
+              ),
+              selectizeInput(
+                ns("mouse_IgG_clusters"),
+                "For which clusters in your data should the mouse IgG traits be calculated?",
+                choices = c(""),
+                multiple = TRUE
+              )
+            ))
+          ),
           br(),
           actionButton(ns("do_calculation"),
                        "Calculate glycosylation traits")
@@ -167,46 +211,49 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       results_normalization$normalized_data()
     })
     
-    
-    # Create vector to store created tab names, and to count number of changes in input$antibody_types
-    r <- reactiveValues(count = 0, created_tab_ids = vector("character"))
-    
+    # Toggle visibility of tabs, depending on input$antibody_types
     observeEvent(input$antibody_types, {
-      # Increase count by 1
-      r$count <- r$count + 1
-      # Remove previously created tabs
-      purrr::map(r$created_tab_ids, function(tab_id) {
-        removeTab(inputId = "tabs", target = tab_id, session = session)
-      })
-      # Reset r$created_tab_ids
-      r$created_tab_ids <- vector("character")
-      # Create a tab for each selected antibody type
-      purrr::imap(input$antibody_types, function(antibody_type, i) {
-        # Generate a unique tab id
-        tab_id <- paste0(antibody_type, "_", r$count)
-        # Store the tab_id in the vector
-        r$created_tab_ids[i] <- tab_id
-        # Create the new tab
-        appendTab(
-          inputId = "tabs",
-          select = TRUE,
-          tab = tabPanel(
-            title = antibody_type,
-            value = tab_id,
-            mod_tab_traits_ui(ns(tab_id))
-          )
-        )
-      })
-      # Generate the server parts of the tabs
-      purrr::map(r$created_tab_ids, function(tab_id) {
-        antibody_type <- stringr::str_split(tab_id, pattern = "_")[[1]][1]
-        mod_tab_traits_server(id = tab_id, antibody_type = antibody_type)
-      })
-    #  ignoreNULL = FALSE is required to trigger the observer when all boxes are unchecked
+      purrr::map(
+        c("Human IgG", "Mouse IgG"),
+        function(antibody_type) {
+          if (antibody_type %in% input$antibody_types) {
+            showTab(inputId = "tabs", target = antibody_type, select = TRUE)
+          } else {
+            hideTab(inputId = "tabs", target = antibody_type)
+          }
+        }
+      )
     }, ignoreNULL = FALSE)
-  
     
+    
+    # Add cluster options
+    clusters <- reactive({
+      req(normalized_data())
+      unique(normalized_data()$cluster)
+    })
+    
+    observe({
+      req(clusters())
+      for (id in c("human_IgG_clusters", "mouse_IgG_clusters")) {
+        updateSelectizeInput(id, choices = clusters(), session = session)
+      }
+    })
+    
+    
+    # Toggle button
+    observe({
+      shinyjs::toggleState("do_calculation", condition = all(
+        !is.null(input$antibody_types),
+        if ("Human IgG" %in% input$antibody_types) {
+          !is.null(input$human_IgG_traits) & !is.null(input$human_IgG_clusters)
+        },
+        if ("Mouse IgG" %in% input$antibody_types) {
+          !is.null(input$mouse_IgG_traits) & !is.null(input$mouse_IgG_clusters)
+        }
+      ))
+    })
 
+    
     ####################  Custom glycosylation traits  ####################
     
     # Reactive expression containing the file extension of the uploaded file
@@ -246,16 +293,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
 
   
     ####################  Default glycosylation traits  ####################
-    
-    # observe({
-    #   shinyjs::toggleState("do_calculation", all(
-    #     is_truthy(normalized_data()),
-    #     length(input$antibody_types) > 0,
-    #     if ("Human IgG" %in% input$antibody_types) {
-    #       length(input$human_IgG_traits) > 0 & length(input$human_IgG_clusters) > 0
-    #     }
-    #   ))
-    # })
     
     derived_traits <- reactive({
       req(normalized_data())
