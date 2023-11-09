@@ -459,31 +459,58 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     
-    # Disable button when cut-offs are missing for one or more clusters, but enable
-    # when user unchecks "Treat uncalibrated spectra as missing values, not zeros"
-    observe({
-      shinyjs::disable("button")
-      if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
-        if (input$uncalibrated_as_na) {
-          if (setequal(cut_offs_to_use_all_clusters()$cluster, clusters())) {
-            shinyjs::enable("button")
-          } else {
-            shinyjs::disable("button")
-            showNotification(
-              "For one or more clusters, all negative control spectra are
-              uncalibrated. Please use different or additional negative controls,
-              or choose to treat uncalibrated spectra as zeros instead of missing values.",
-              type = "warning",
-              duration = 30
-            )
-          }
-        } else {
-          shinyjs::enable("button")
+    # Check if there are clusters for which cut-offs are missing.
+    # This happens when all negative controls for a cluster are uncalibrated,
+    # unless the user chooses to treat uncalibrated spectra as zeros.
+    missing_cluster_cut_offs <- reactive({
+      req(!rlang::is_empty(cut_offs_to_use_all_clusters()))
+      if (input$uncalibrated_as_na) {
+        if (!setequal(cut_offs_to_use_all_clusters()$cluster, clusters())) {
+          TRUE
         }
+      } else {
+        FALSE
       }
     })
     
+    # Show a warning message if there are clusters missing for cut-offs.
+    # TODO: prevent this notification from showing up when choosing to 
+    # use manual cut-off values, and when emptying manual cut-off input
+    # to change its value. Also happens when the warning is not even accurate.
+    # observeEvent(missing_cluster_cut_offs(), {
+    #   req(is_truthy(missing_cluster_cut_offs()))
+    #   if (missing_cluster_cut_offs() == TRUE) {
+    #     showNotification(
+    #       HTML(
+    #         "For one or more clusters, all negative control spectra are uncalibrated.
+    #         Please do one of the following:
+    #         <ul>
+    #           <li> Use different or additional negative controls. </li>
+    #           <li> Choose to treat uncalibrated spectra as zeros, instead of missing values. </li>
+    #           <li> Choose manual cut-offs for these clusters. </li>
+    #         </ul>
+    #         "
+    #       ),
+    #       type = "warning",
+    #       duration = NULL
+    #     )
+    #   }
+    # })
     
+    
+    # Toggle state of the "Perform spectra curation" button
+    observe({
+      if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
+        if (!setequal(cut_offs_to_use_all_clusters()$cluster, clusters())) {
+          shinyjs::disable("button")
+        } else {
+          shinyjs::enable("button")
+        }
+      } else {
+        shinyjs::disable("button")
+      }
+    })
+
     # Perform spectra curation when button is clicked:
     curated_data <- reactive({
       curate_spectra(checked_data = checked_data(),
