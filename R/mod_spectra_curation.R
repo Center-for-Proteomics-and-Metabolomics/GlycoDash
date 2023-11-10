@@ -301,6 +301,8 @@ mod_spectra_curation_ui <- function(id){
   )
 }
 
+
+
 #' spectra_curation Server Functions
 #'
 #' @noRd 
@@ -415,11 +417,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
                  })
     })
     
+    
+    
     r <- reactiveValues()
     
     observe({
-      req(clusters(),
-          summarized_checks())
+      req(clusters(), summarized_checks())
       
       r$tab_contents <- rlang::set_names(clusters()) %>% 
         purrr::map(
@@ -448,6 +451,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
           })
     })
     
+    
     cut_offs_to_use_all_clusters <- reactive({
       purrr::map_dfr(r$tab_contents,
                      function(tab) {
@@ -459,44 +463,11 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     
-    # Check if there are clusters for which cut-offs are missing.
-    # This happens when all negative controls for a cluster are uncalibrated,
-    # unless the user chooses to treat uncalibrated spectra as zeros.
-    missing_cluster_cut_offs <- reactive({
-      req(!rlang::is_empty(cut_offs_to_use_all_clusters()))
-      if (input$uncalibrated_as_na) {
-        if (!setequal(cut_offs_to_use_all_clusters()$cluster, clusters())) {
-          TRUE
-        }
-      } else {
-        FALSE
-      }
-    })
     
-    # Show a warning message if there are clusters missing for cut-offs.
-    # TODO: prevent this notification from showing up when choosing to 
-    # use manual cut-off values, and when emptying manual cut-off input
-    # to change its value. Also happens when the warning is not even accurate.
-    # observeEvent(missing_cluster_cut_offs(), {
-    #   req(is_truthy(missing_cluster_cut_offs()))
-    #   if (missing_cluster_cut_offs() == TRUE) {
-    #     showNotification(
-    #       HTML(
-    #         "For one or more clusters, all negative control spectra are uncalibrated.
-    #         Please do one of the following:
-    #         <ul>
-    #           <li> Use different or additional negative controls. </li>
-    #           <li> Choose to treat uncalibrated spectra as zeros, instead of missing values. </li>
-    #           <li> Choose manual cut-offs for these clusters. </li>
-    #         </ul>
-    #         "
-    #       ),
-    #       type = "warning",
-    #       duration = NULL
-    #     )
-    #   }
-    # })
-    
+  ##############################################################################
+  ##############################################################################
+  ##############################################################################  
+  # TODO: make code below work in case of total and specific Ig
     
     # Toggle state of the "Perform spectra curation" button
     observe({
@@ -510,6 +481,46 @@ mod_spectra_curation_server <- function(id, results_data_import){
         shinyjs::disable("button")
       }
     })
+    
+    
+    # If all negative controls for one or more clusters are uncalibrated, show a warning.
+    observe({
+      req(cut_offs_based_on_controls(), input$curation_method == "Negative control spectra")
+      browser()
+      # Check if there are clusters for which there is no cut-off value
+      if (!setequal(clusters(), cut_offs_based_on_controls()$cluster)) {
+        # Determine missing clusters
+        clusters_available = ifelse(
+          !rlang::is_empty(cut_offs_based_on_controls()$cluster),
+          cut_offs_based_on_controls()$cluster,
+          c("")
+        )
+        clusters_missing <- setdiff(clusters(), clusters_available)  # The ordering in setdiff(x, y) matters
+        # Show a warning message
+        showNotification(
+          tags$div(
+            "For the following clusters, all negative control spectra are uncalibrated: ",
+            paste0(clusters_missing, collapse = ", "),
+            br(),
+            br(),
+            "Please do one of the following:",
+            tags$ul(
+              tags$li("Use different or additional negative controls."),
+              tags$li("Choose to treat uncalibrated spectra as zeros, instead of missing values."),
+              tags$li("Choose manual cut-offs for these clusters.")
+            )
+          ),
+          type = "warning",
+          duration = NULL
+        )
+      }
+    })
+    
+  ##############################################################################
+  ##############################################################################
+  ##############################################################################  
+    
+    
 
     # Perform spectra curation when button is clicked:
     curated_data <- reactive({
@@ -524,10 +535,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
                        type = "message")
     }) %>% bindEvent(curated_data())
     
+    
     passing_spectra <- reactive({
       req(curated_data())
       kick_out_spectra(curated_spectra = curated_data())
     })
+    
     
     to_return <- reactive({
       if (input$curation_method == "Skip spectra curation") {
@@ -543,11 +556,13 @@ mod_spectra_curation_server <- function(id, results_data_import){
       }
     })
     
+    
     output$passing_spectra_details <- DT::renderDataTable({
       req(to_return())
       DT::datatable(to_return(),
                     options = list(scrollX = TRUE, searching = TRUE))
     })
+    
     
     output$failed_spectra_table <- DT::renderDataTable({
       req(curated_data())
@@ -561,6 +576,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                     options = list(scrollX = TRUE,
                                    filter = "top"))
     })
+    
     
     output$failed_spectra_details <- DT::renderDataTable({
       req(curated_data())
@@ -582,6 +598,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                     results_data_import$contains_total_and_specific_samples())
     })
     
+    
     observe({
       req(clusters())
       shinyjs::toggle(id = "more_than_4_clusters",
@@ -589,6 +606,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       shinyjs::toggle(id = "curated_spectra_plot",
                       condition = length(clusters()) <= 4)
     })
+    
     
     observe({
       req(length(clusters()) > 4,
@@ -618,6 +636,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                  })
     })
     
+    
     observe({
       req(length(clusters()) > 4,
           curated_data())
@@ -636,6 +655,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
         })
     })
     
+    
     output$curated_spectra_plot <- plotly::renderPlotly({
       req(curated_spectra_plot())
       
@@ -649,6 +669,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     
     # Download buttons
+    # TODO: shorten this code
     observe({
       shinyjs::toggleState("download1", is_truthy(to_return()))
       shinyjs::toggleState("download2", is_truthy(curated_data()))
@@ -692,6 +713,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                   path = file))
       }
     )
+    
     
     output$download3 <- downloadHandler(
       filename = function() {
