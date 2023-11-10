@@ -467,12 +467,41 @@ mod_spectra_curation_server <- function(id, results_data_import){
   ##############################################################################
   ##############################################################################
   ##############################################################################  
-  # TODO: make code below work in case of total and specific Ig
+  # TODO: test this code for total and specific samples
+  # TODO: prevent the warning from showing up each time cut_offs_to_use_all_clusters() changes
+  
     
-    # Toggle state of the "Perform spectra curation" button
+    # Check if there are clusters for which all negative controls were uncalibrated
+    missing_cluster_cut_offs <- reactive({
+      if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
+        # Check if data contains total and specific samples
+        if ("group" %in% colnames(cut_offs_to_use_all_clusters())) {
+          to_compare <- rep(clusters(), 2)
+        } else {
+          to_compare <- clusters()
+        }
+        # Check if there are cut-offs missing for clusters
+        to_check <- cut_offs_to_use_all_clusters()$cluster
+        identical <- identical(
+          # Need to order elements in the character vectors to compare
+          to_check[stringr::str_order(to_check)],
+          to_compare[stringr::str_order(to_compare)]
+        )
+        if (identical) {
+          return(FALSE)
+        } else {
+          return(TRUE)
+        }
+      } else {
+        return(FALSE)
+      }
+    })
+    
+    
+    # Enable or disable button based on missing cut-offs
     observe({
       if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
-        if (!setequal(cut_offs_to_use_all_clusters()$cluster, clusters())) {
+        if (missing_cluster_cut_offs() == TRUE) {
           shinyjs::disable("button")
         } else {
           shinyjs::enable("button")
@@ -482,11 +511,9 @@ mod_spectra_curation_server <- function(id, results_data_import){
       }
     })
     
-    
     # If all negative controls for one or more clusters are uncalibrated, show a warning.
     observe({
       req(cut_offs_based_on_controls(), input$curation_method == "Negative control spectra")
-      browser()
       # Check if there are clusters for which there is no cut-off value
       if (!setequal(clusters(), cut_offs_based_on_controls()$cluster)) {
         # Determine missing clusters
