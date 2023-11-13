@@ -464,13 +464,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     
     
-  ##############################################################################
-  ##############################################################################
-  ##############################################################################  
-  # TODO: test this code for total and specific samples
-  # TODO: prevent the warning from showing up each time cut_offs_to_use_all_clusters() changes
-  
-    
     # Check if there are clusters for which all negative controls were uncalibrated
     missing_cluster_cut_offs <- reactive({
       if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
@@ -512,10 +505,11 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     # If all negative controls for one or more clusters are uncalibrated, show a warning.
-    observe({
+    # observeEvent() to prevent the message from showing up when choosing manual cut-offs
+    observeEvent(calculated_cut_offs(), {
       req(cut_offs_based_on_controls(), input$curation_method == "Negative control spectra")
       # Check if there are clusters for which there is no cut-off value
-      if (!setequal(clusters(), cut_offs_based_on_controls()$cluster)) {
+      if (missing_cluster_cut_offs() == TRUE) {
         # Determine missing clusters
         clusters_available = ifelse(
           !rlang::is_empty(cut_offs_based_on_controls()$cluster),
@@ -542,10 +536,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
         )
       }
     })
-    
-  ##############################################################################
-  ##############################################################################
-  ##############################################################################  
     
     
 

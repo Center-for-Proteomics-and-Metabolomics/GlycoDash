@@ -52,10 +52,10 @@ mod_tab_cut_offs_ui <- function(id){
         width = 6,
         numericInput(ns("cut_off_sum_intensity_total"),
                      "Enter a cut-off value for the sum intensity in the total Ig samples:",
-                     value = ""),
+                     value = 0, min = 0),
         numericInput(ns("cut_off_passing_analyte_percentage_total"),
                      "Enter a cut-off value for the percentage of passing analytes in the total Ig samples:",
-                     value = "")
+                     value = 0, min = 0)
       )))
   )
 }

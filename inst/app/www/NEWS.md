@@ -1,3 +1,10 @@
+# v1.3.2
+## Adjustments
+
+## Bug fixes
+* Minor bug fixes in spectra curation UI
+
+
 # v1.3.1
 ## Adjustments
 * Add a line of equality to the peptide correlation plots in the “IgG1 quantitation” tab.
