@@ -66,10 +66,10 @@ calculate_IgG1_ratios <- function(IgG1_sum_intensities,
         .[[quantitation_clusters$silumab_cluster_glyco]],
       
       GPS_ratio = .[[quantitation_clusters$IgG1_cluster_GPS]] / 
-        .[[quantitation_clusters$silumab_cluster_GPS]],
-      
-      TTP_ratio = .[[quantitation_clusters$IgG1_cluster_TTP]] / 
         .[[quantitation_clusters$silumab_cluster_GPS]]
+      
+      # TTP_ratio = .[[quantitation_clusters$IgG1_cluster_TTP]] / 
+      #   .[[quantitation_clusters$silumab_cluster_GPS]]
     ) %>% 
     # Get rid of sum intensities
     dplyr::select(sample_name:sample_type, 
@@ -90,8 +90,8 @@ calculate_IgG1_amounts <- function(IgG1_ratios, chosen_peptides,
   
   # Select the peptide ratios to include in calculating the median.
   # Define a predefined list of peptides and their corresponding ratios.
-  peptide_list <- c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
-  ratio_list <- c("glyco_ratio", "GPS_ratio", "TTP_ratio")
+  peptide_list <- c("Glycopeptides", "GPSVFPLAPSSK")
+  ratio_list <- c("glyco_ratio", "GPS_ratio")
   
   # Use match to find indices of matching peptides.
   indices <- match(chosen_peptides, peptide_list)

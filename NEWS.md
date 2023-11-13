@@ -1,5 +1,6 @@
 # v1.3.2
 ## Adjustments
+* Exclude TTP[...] peptide from the IgG1 quantitation.
 
 ## Bug fixes
 * Minor bug fixes in spectra curation UI
