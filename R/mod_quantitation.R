@@ -44,7 +44,7 @@ mod_quantitation_ui <- function(id) {
                   content = HTML("
                   <p>
                   IgG1 quantitation is first performed based on two different 
-                  peptides: the Fc glycopeptides and a proteitypic peptide
+                  peptides: the Fc glycopeptides and a proteotypic peptide
                   GPS[...]. It is also possible to perform the quantitation
                   based on only one of these peptides, using the checkboxes.
                   
@@ -53,7 +53,7 @@ mod_quantitation_ui <- function(id) {
                   glycopeptides is divided by the summed intensity of the SIL glycopeptides.
                   This ratio is then multiplied by the amount of SILuMAb in the sample.</li>
                   
-                  <li>For GPS[...], the intensity the natural peptide
+                  <li>For GPS[...], the intensity of the natural peptide
                   is divided by the intensity of the SIL peptide,
                   after which the ratio is multiplied by the amount of SILuMAb in the sample.</li>
                   </ul>
@@ -126,7 +126,7 @@ mod_quantitation_ui <- function(id) {
                   
                   <p>
                   The Spearman correlation is calculated based
-                  on IgG1 quantitities rounded to a whole number of ng.
+                  on IgG1 quantities rounded to a whole number of ng.
                   
                   <p>
                   Samples for which no quantity could be calculated 
