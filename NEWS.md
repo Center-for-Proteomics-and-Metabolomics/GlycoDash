@@ -1,3 +1,9 @@
+# v1.3.3
+## Adjustments
+* Normalization now happens automatically after analyte curation. 
+* Added the option to export data in the “Normalized data” tab.
+
+
 # v1.3.2
 ## Adjustments
 * Exclude TTP peptide from the IgG1 quantitation.
