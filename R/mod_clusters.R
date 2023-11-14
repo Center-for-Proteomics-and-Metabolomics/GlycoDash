@@ -27,10 +27,10 @@ mod_clusters_ui <- function(id){
              ),
              textInput(ns("silumab_cluster_GPS"),
                        "By what word/letters within the analyte name can the SILuMAb peptide GPSVFPLAPSSK be recognized?"
-             ),
-             textInput(ns("silumab_cluster_TTP"),
-                       "By what word/letters within the analyte name can the SILuMAb peptide TTPVLDSDGSFFLYSK be recognized?"
              )
+             # textInput(ns("silumab_cluster_TTP"),
+             #           "By what word/letters within the analyte name can the SILuMAb peptide TTPVLDSDGSFFLYSK be recognized?"
+             # )
       ),
       column(width = 6,
              textInput(ns("IgG1_cluster_glyco"),
@@ -38,10 +38,10 @@ mod_clusters_ui <- function(id){
              ),
              textInput(ns("IgG1_cluster_GPS"),
                        "By what word/letters within the analyte name can the IgG1 peptide GPSVFPLAPSSK be recognized?"
-             ),
-             textInput(ns("IgG1_cluster_TTP"),
-                       "By what word/letters within the analyte name can the IgG1 peptide TTPVLDSDGSFFLYSK  be recognized?"
              )
+             # textInput(ns("IgG1_cluster_TTP"),
+             #           "By what word/letters within the analyte name can the IgG1 peptide TTPVLDSDGSFFLYSK  be recognized?"
+             # )
       )
     ),
     numericInput(ns("n_clusters"),
@@ -76,8 +76,8 @@ mod_clusters_server <- function(id, LaCyTools_summary){
     # Create inputIds for the SILuMAb clusters.
     silumab_inputIds <- reactive({
       req(input$contains_silumab == "Yes")
-      list("silumab_cluster_glyco", "silumab_cluster_GPS", "silumab_cluster_TTP",
-           "IgG1_cluster_glyco", "IgG1_cluster_GPS", "IgG1_cluster_TTP")
+      list("silumab_cluster_glyco", "silumab_cluster_GPS",
+           "IgG1_cluster_glyco", "IgG1_cluster_GPS")
     })
     
     # Combine cluster_inputIds and silumab_inputIds if applicable
@@ -106,8 +106,8 @@ mod_clusters_server <- function(id, LaCyTools_summary){
     
     # Show SILuMAb input only when user selects "Yes".
     observe({
-      inputs_to_toggle <- c("silumab_cluster_glyco", "silumab_cluster_GPS", "silumab_cluster_TTP",
-                            "IgG1_cluster_glyco", "IgG1_cluster_GPS", "IgG1_cluster_TTP")
+      inputs_to_toggle <- c("silumab_cluster_glyco", "silumab_cluster_GPS",
+                            "IgG1_cluster_glyco", "IgG1_cluster_GPS")
       for (i in inputs_to_toggle) {
         shinyjs::toggle(i, input$contains_silumab == "Yes")
       }
@@ -232,10 +232,10 @@ mod_clusters_server <- function(id, LaCyTools_summary){
       list(
         "silumab_cluster_glyco" = input$silumab_cluster_glyco,
         "silumab_cluster_GPS" = input$silumab_cluster_GPS,
-        "silumab_cluster_TTP" = input$silumab_cluster_TTP,
+        # "silumab_cluster_TTP" = input$silumab_cluster_TTP,
         "IgG1_cluster_glyco" = input$IgG1_cluster_glyco,
-        "IgG1_cluster_GPS" = input$IgG1_cluster_GPS,
-        "IgG1_cluster_TTP" = input$IgG1_cluster_TTP
+        "IgG1_cluster_GPS" = input$IgG1_cluster_GPS
+        # "IgG1_cluster_TTP" = input$IgG1_cluster_TTP
       )
     })
     

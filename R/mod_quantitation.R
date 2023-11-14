@@ -43,24 +43,24 @@ mod_quantitation_ui <- function(id) {
                   title = "Explanation",
                   content = HTML("
                   <p>
-                  IgG1 quantitation is first performed based on three different 
-                  types of peptides: the Fc glycopeptides and two proteotypic peptides
-                  GPS[...] and TTP[...]. It is also possible to perform the quantitation
-                  based on one or two of these peptides, using the checkboxes.
+                  IgG1 quantitation is first performed based on two different 
+                  peptides: the Fc glycopeptides and a proteitypic peptide
+                  GPS[...]. It is also possible to perform the quantitation
+                  based on only one of these peptides, using the checkboxes.
                   
                   <ul>
                   <li>For the glycopeptides, the summed intensity of the natural IgG1
                   glycopeptides is divided by the summed intensity of the SIL glycopeptides.
                   This ratio is then multiplied by the amount of SILuMAb in the sample.</li>
                   
-                  <li>For GPS[...] and TTP[...], the intensity each natural peptide
-                  is divided by the intensity of the corresponding SIL peptide,
+                  <li>For GPS[...], the intensity the natural peptide
+                  is divided by the intensity of the SIL peptide,
                   after which the ratio is multiplied by the amount of SILuMAb in the sample.</li>
                   </ul>
                   
                   <p>
                   The reported amount of IgG1 in the plot and table below is the
-                  median of the values calculated based on the different peptides.
+                  median of the values calculated for the two different peptides.
                   When a sample is missing a value for one of the peptides, this
                   peptide is excluded from calculation of the median. The calculated 
                   amount of IgG1 is rounded to a whole number (ng).
@@ -89,8 +89,8 @@ mod_quantitation_ui <- function(id) {
             shinyWidgets::awesomeCheckboxGroup(
               ns("chosen_peptides"),
               "Peptides to include in the calculation:",
-              choices = c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK"),
-              selected = c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
+              choices = c("Glycopeptides", "GPSVFPLAPSSK"),
+              selected = c("Glycopeptides", "GPSVFPLAPSSK")
             ),
             # Option to exclude sample types from calculating correlations
             selectizeInput(
@@ -119,9 +119,10 @@ mod_quantitation_ui <- function(id) {
                   content = HTML("
                   <p>
                   When quantifying IgG1 based on different peptides,
-                  the amounts of IgG1 calculated based on the different peptides 
-                  should correlate well. When this is not the case, you may want to 
-                  exclude certain peptides from the quantitation.
+                  the amounts of IgG1 calculated based on the glycopeptides
+                  should correlate well to those calculated based on GPS[...].
+                  When this is not the case, you may want to exclude one of 
+                  the peptides from the quantitation.
                   
                   <p>
                   The Spearman correlation is calculated based
