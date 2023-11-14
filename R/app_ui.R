@@ -32,7 +32,7 @@ app_ui <- function(request) {
                                    tabName = "spectra_curation"),
           shinydashboard::menuItem("Analyte Curation", 
                                    tabName = "analyte_curation"),
-          shinydashboard::menuItem("Normalization", 
+          shinydashboard::menuItem("Normalized data", 
                                    tabName = "normalization"),
           shinydashboard::menuItem("IgG1 quantitation (optional)",
                                    tabName = "quantitation"),

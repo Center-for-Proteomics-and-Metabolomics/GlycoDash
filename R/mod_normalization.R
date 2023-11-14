@@ -12,7 +12,7 @@ mod_normalization_ui <- function(id){
   tagList(
     fluidPage(
       fluidRow(
-        h1("Normalization")
+        h1("Normalized data")
       ),
       fluidRow(
         shinydashboard::box(
@@ -20,14 +20,7 @@ mod_normalization_ui <- function(id){
           width = 12,
           solidHeader = TRUE,
           status = "primary",
-          actionButton(ns("normalization_button"),
-                       "Perform total area normalization"),
-          br(),
-          br(),
           DT::dataTableOutput(ns("data_table")),
-          br(),
-          br(),
-          "To download the normalized data proceed to the 'Export results' tab."
         )
       )
     )
@@ -50,16 +43,12 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       req(!rlang::is_empty(results_analyte_curation$analyte_curated_data()))
       results_analyte_curation$analyte_curated_data()
     })
-    
-    observe({
-      shinyjs::toggleState(id = "normalization_button",
-                           condition = is_truthy(analyte_curated_data()))
-    })
+
     
     total_intensities <- reactive({
       req(analyte_curated_data())
       calculate_total_intensity(data = analyte_curated_data())
-    }) %>% bindEvent(input$normalization_button)
+    })
     
     normalized_data <- reactive({
       req(total_intensities())
