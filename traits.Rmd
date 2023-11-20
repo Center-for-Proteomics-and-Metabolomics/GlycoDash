@@ -27,136 +27,124 @@ source("R/fct_derived_traits.R")
 ```
 
 ```{r}
-human_IgG_traits <- c(
+human_IgG_traits_ui <- c(
   "Fucosylation of complex-type glycans",
   "Bisection of complex-type glycans",
   "Galactosylation of complex-type glycans",
   "Sialylation of complex type-glycans",
   "Percentage of monoantennary complex-type glycans",
   "Percentage of hybrid-type glycans",
-  "Percentage of oligomannose-type glycans"
+  "Oligomannose-type glycans: average number of mannoses"
+  # (5 * H5N2 + 6 * H6N2 + ...) / (H5N2 + H6N2 + ...)
+)
+
+human_IgG_traits <- c(
+  "fucosylation",
+  "bisection",
+  "galactosylation",
+  "sialylation",
+  "mono_antennary",
+  "hybrid",
+  "high_mannose"
 )
 ```
 
 ```{r}
 human_IgG_clusters <- c("IgGI", "IgGII")
+# normalized_data also contains IgGIsil, but want to calculate for IgGI and IgGII
 ```
 
 ```{r}
-assign_glycan_types_human_IgG <- function(cluster_normalized_data) {
-  cluster_normalized_data %>% 
-    dplyr::select(analyte) %>% 
-    dplyr::distinct() %>% 
-    tidyr::separate(
-      analyte, into = c("cluster", "glycan"),
-      sep = "1", extra = "merge", remove = FALSE
-    ) %>% 
-    # Assign a type to each glycan
-      dplyr::mutate(
-        glycan_type = dplyr::case_when(
-          # Oligomannose = anything ending with N2
-          grepl("N2$", glycan) ~ "oligomannose",
-          # Hybrid = anything containing "H5N3...", "H6N3...", etc.
-          # Also bisected hybrids: "H6N4...", "H7N4...", etc.
-          (grepl("H[5-9]\\d*N3", glycan) | grepl("H[6-9]\\d*N4", glycan)) ~ "hybrid",
-          # Complex-type = no oligomannose and no hybrid
-          .default = "complex"
-        )
+load("./data/human_IgG_ref.rda")
+```
+
+```{r}
+generate_formula <- function(cluster, cluster_ref_df, target_trait) {
+  
+  # Get the glycans that should be used for calculating the trait
+  df <- cluster_ref_df %>% 
+    dplyr::select(glycan, tidyselect::all_of(target_trait)) %>% 
+    dplyr::filter(!!rlang::sym(target_trait) != 0)
+  
+  # Create a string with the right hand side of the formula
+  formula_string <- paste0(df[[target_trait]], " * ", df$glycan, collapse = " + ")
+  
+  # Collect terms and coefficients
+  terms <- strsplit(formula_string, " \\+ ")[[1]]
+  coefficients <- sapply(strsplit(terms, " \\* "), `[`, 1)
+  unique_coefficients <- unique(coefficients)
+  
+  # Group terms by coefficients
+  grouped_terms <- lapply(unique_coefficients, function(coeff) {
+    coeff_indices <- which(coefficients == coeff)
+    terms_with_coeff <- terms[coeff_indices]
+    if (length(terms_with_coeff) > 1) {
+      paste0(
+        coeff, 
+        " * (", 
+        paste(gsub(".* \\* ", "", terms_with_coeff), collapse = " + "),
+        ")"
       )
+    } else {
+      terms_with_coeff
+    }
+  })
+  
+  # Reconstruct cleaned formula string with grouped terms
+  clean_formula_string <- paste(unlist(grouped_terms), collapse = " + ")
+  
+  # Add the left hand side of the formula
+  final_formula_string <- ifelse(
+    # If there are no glycans for the trait, than the formula is " * "
+    # In that case the value should just be zero.
+    test = clean_formula_string == " * ",
+    yes = paste0(cluster, "_", target_trait, " = ", "0"),
+    no = paste0(cluster, "_", target_trait, " = ", clean_formula_string)
+  )
+  
+  return(final_formula_string)
 }
+
+generate_formula("IgGI", IgGI_ref, "high_mannose")
 ```
 
 ```{r}
-calculate_human_IgG_traits <- function(data, traits, clusters) {
-  
-  # Create empty list to store traits of each cluster
-  traits_list <- vector("list", length = length(clusters))
-  
-  # Loop over the IgG clusters
-  for (i in seq(length(clusters))) {
-    
-    # Get normalized data belonging to the cluster
-    cluster_normalized_data <- data %>% 
-      dplyr::filter(cluster == clusters[[i]])
-    
-    # Get the analytes of the cluster
-    cluster_analytes <- assign_glycan_types_human_IgG(cluster_normalized_data)
-      
-    # Add the glycan types to the normalized data
-    data_with_glycan_types <- dplyr::left_join(data, cluster_analytes) %>% 
-      # Group the data
-      dplyr::group_by(dplyr::across(dplyr::any_of(
-        c("sample_name", "cluster", "group")
-      )))
-    
-    # Split data into glycan types
-    data_complex <- data_with_glycan_types %>% 
-      dplyr::filter(glycan_type == "complex")
-    
-    data_hybrid <- data_with_glycan_types %>% 
-      dplyr::filter(glycan_type == "hybrid")
-    
-    data_oligomannose <- data_with_glycan_types %>% 
-      dplyr::filter(glycan_type == "oligomannose")
-    
-    
-    # Calculate traits for the clusters
-    if ("Fucosylation of complex-type glycans" %in% traits) {
-      fucosylation <- calculate_fucosylation(data_complex)
-    }
-    
-    if ("Bisection of complex-type glycans" %in% traits) {
-      bisection <- calculate_bisection(data_complex)
-    }
-    
-    if ("Galactosylation of complex-type glycans" %in% traits) {
-      galactosylation <- calculate_galactosylation(data_complex)
-    }
-    
-    if ("Sialylation of complex type-glycans" %in% traits) {
-      sialylation <- calculate_sialylation(data_complex)
-    }
-    
-    #TODO: Add hybrids and oligomannose traits
-    
-    # Combine all calculated traits for the cluster
-    possible_traits <- c("fucosylation", "bisection", "galactosylation", "sialylation")
-    to_join <- purrr::map(possible_traits, function(trait) get0(trait))
-    to_join_clean <- to_join[!sapply(to_join, is.null)]
-    
-    cluster_traits <- purrr::reduce(to_join_clean, dplyr::full_join) %>% 
-      dplyr::ungroup()
-    
-    traits_list[[i]] <- cluster_traits
+# Loop over the chosen clusters
+for (c in human_IgG_clusters) {
+  # Get the normalized data for the cluster
+  cluster_normalized_data <- normalized_data %>% 
+    dplyr::filter(cluster == c)
+  # Get all analytes/glycans in the cluster
+  cluster_analytes <- unique(cluster_normalized_data$analyte)
+  cluster_glycans <- stringr::str_remove(cluster_analytes, paste0(c, "1"))
+  # Get a subset of the reference file with only the passing analytes
+  cluster_ref <- human_IgG_ref %>% 
+    dplyr::filter(glycan %in% cluster_glycans)
+  # Loop over the chosen traits
+  for (trait in chosen_human_IgG_traits) {
+    cluster_
   }
   
-  # Combine the traits of the different clusters
-  to_return <- purrr::reduce(traits_list, dplyr::full_join)
-  
-  return(to_return)
 }
 ```
 
 ```{r}
-# IgGI and IgGII traits
-test1 <- calculate_human_IgG_traits(
-  normalized_data, human_IgG_traits, human_IgG_clusters
-)
+# For testing one clusters
+IgGI_normalized_data <- normalized_data %>% dplyr::filter(cluster == "IgGI")
+
+IgGI_analytes <- unique(IgGI_normalized_data$analyte)
+IgGI_glycans <- stringr::str_remove(IgGI_analytes, paste0("IgGI", "1"))
+
+IgGI_ref <- human_IgG_ref %>% 
+  dplyr::filter(glycan %in% IgGI_glycans)
+
+test <- generate_formula(IgGI_ref, "bisection")
+
+# # Loop over the chosen traits
+# for (trait in chosen_human_IgG_traits) {
+#   # Create a formula for the trait
+#   
+# }
 ```
 
-```{r}
-# Try IgGIsil traits --> different number of columns
-sil_traits <- c(
-  "Fucosylation of complex-type glycans",
-  "Galactosylation of complex-type glycans"
-)
-
-test2 <- calculate_human_IgG_traits(
-  normalized_data, sil_traits, c("IgGIsil")
-)
-```
-
-```{r}
-# Combine the traits
-all_traits <- dplyr::bind_rows(test1, test2)
-```
+Implement a check for when there are glycans in the cluster data that are not present in the reference file.
