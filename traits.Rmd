@@ -20,6 +20,7 @@ library(readxl)
 
 ```{r}
 normalized_data <- read_excel("normalized_data.xlsx")
+normalized_data_wide <- read_excel("normalized_data_wide.xlsx")
 ```
 
 ```{r}
@@ -85,10 +86,19 @@ for (i in seq(length(human_IgG_clusters))) {
   # Add the formulas for this cluster to formula_list
   formula_lists[i] <- list(cluster_trait_formulas)
 }
+```
 
-
+```{r}
 # Get one list with all trait formulas
 all_formulas <- purrr::reduce(formula_lists, c)  # c = concatenate
 ```
 
+```{r}
+# Calculate the traits
+normalized_data_wide_with_traits <- normalized_data_wide %>% 
+  dplyr::mutate(!!! create_expr_ls(all_formulas[[1]]))
+```
+
 Implement a check for when there are glycans in the cluster data that are not present in the reference file.
+
+Calculate sum of complex types to divide by.

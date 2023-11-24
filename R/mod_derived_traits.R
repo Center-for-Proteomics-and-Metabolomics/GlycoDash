@@ -67,10 +67,10 @@ mod_derived_traits_ui <- function(id){
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
                   "Galactosylation of complex-type glycans",
-                  "Sialylation of complex type-glycans",
+                  "Sialylation of complex-type glycans",
                   "Monoantennarity of complex-type glycans",
                   "Percentage of hybrid-type glycans",
-                  "Percentage of oligomannose-type glycans"
+                  "Average number of mannoses for oligomannose-type glycans"
                 )
               ),
               selectizeInput(
@@ -300,10 +300,10 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                                selected_derived_traits = input$traits_menu)
     }) %>% bindEvent(input$do_calculation)
     
-    observeEvent(input$do_calculation, {
-      req(normalized_data())
+    observe({
+      req(results_normalization$normalized_data_wide())
       browser()
-    }, priority = 10)
+    })
     
     data_with_derived_traits <- reactive({
       req(derived_traits())
@@ -315,6 +315,10 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                            names_glue = "{cluster}_{.value}") %>% 
         dplyr::relocate(contains(input$traits_menu), .after = replicates)
     })
+    
+    
+    
+    
     
     
     
