@@ -94,11 +94,20 @@ all_formulas <- purrr::reduce(formula_lists, c)  # c = concatenate
 ```
 
 ```{r}
-# Calculate the traits
-normalized_data_wide_with_traits <- normalized_data_wide %>% 
-  dplyr::mutate(!!! create_expr_ls(all_formulas[[1]]))
+# Initiate an empty vector for the trait names
+trait_names <- vector("character", length = length(all_formulas))
+
+# Loop over the formulas and create a new column with traits
+normalized_data_wide_with_traits <- normalized_data_wide
+for (i in seq(length(all_formulas))) {
+  formula <- all_formulas[[i]]
+  expr_ls <- create_expr_ls(formula) 
+  trait_names[[i]] <- names(expr_ls)
+  normalized_data_wide_with_traits <- normalized_data_wide_with_traits %>% 
+    dplyr::mutate(!!! expr_ls)
+}
+
+# Relocate the trait columns
+normalized_data_wide_with_traits <- normalized_data_wide_with_traits %>% 
+  dplyr::relocate(tidyselect::all_of(trait_names), .after = replicates)
 ```
-
-Implement a check for when there are glycans in the cluster data that are not present in the reference file.
-
-Calculate sum of complex types to divide by.
