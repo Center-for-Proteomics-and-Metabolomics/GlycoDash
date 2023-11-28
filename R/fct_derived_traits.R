@@ -1,4 +1,14 @@
-# TODO: add roxygen skeleton
+#' generate_formula
+#'
+#' Generates a formula for a glycan trait, based on a specified cluster,
+#' trait reference file and a trait name that is present in the reference file as a column,
+#' 
+#' @param cluster Cluster name, e.g. "IgGI"
+#' @param cluster_ref_df Reference file for traits, e.g. human_IgG_ref filtered with only glycans
+# that passed the analyte curation.
+#' @param target_trait   # Trait for which a formula should be created, e.g. "galactosylation"
+#'
+#' @return  A character string with a formula
 generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   
   # Get the glycans that should be used for calculating the trait
@@ -59,6 +69,98 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
 
 
 
+#' match_human_IgG_traits
+#'
+#' Matches human IgG traits descriptions from UI to column names in human_IgG_ref
+#'
+#' @param human_traits_ui_input Character vector from the UI human IgG traits input.
+#'
+#' @return A character vector with short names of IgG traits, which correspond to column names
+# in the human_IgG_ref file.
+#'
+match_human_IgG_traits <- function(human_traits_ui_input) {
+  traits <- c(
+    "Fucosylation of complex-type glycans" = "fucosylation",
+    "Bisection of complex-type glycans" = "bisection",
+    "Galactosylation of complex-type glycans" = "galactosylation",
+    "Sialylation of complex type-glycans" = "sialylation",
+    "Percentage of monoantennary complex-type glycans" = "mono_antennary",
+    "Percentage of hybrid-type glycans" = "hybrid",
+    "Oligomannose-type glycans: average number of mannoses" = "high_mannose"
+  )
+  
+  replaced_vector <- vector("character", length = length(human_traits_ui_input))
+  
+  for (i in seq(length(human_traits_ui_input))) {
+    trait_desc <- human_traits_ui_input[i]
+    replaced_vector[i] <- traits[[trait_desc]]
+  }
+  
+  return(replaced_vector)
+}
+
+
+
+
+
+#' create_formula_list
+#'
+#' Creates a list of formulas for human IgG traits.
+#'
+#' @param normalized_data  normalized_data in long format
+#' @param chosen_traits Character vector, e.g.  c("fucosylation", "sialylation")
+#' @param chosen_clusters  Character vector, e.g. c("IgGI", "IgGII")
+#' @param reference Reference file for traits, e.g. human_IgG_ref.
+#' 
+create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters, reference) {
+  # Initiate an empty list
+  formula_list <- vector("character", length(chosen_clusters))
+  # Loop over the chosen clusters
+  for (i in seq(length(chosen_clusters))) {
+    cluster_name <- chosen_clusters[[i]]
+    # Create an empty list to store the traits formulas for the cluster
+    cluster_trait_formulas <- vector("character", length(chosen_traits))
+    # Get the normalized data for the cluster
+    cluster_normalized_data <- normalized_data %>% 
+      dplyr::filter(cluster == cluster_name)
+    # Get all analytes/glycans in the cluster
+    cluster_analytes <- unique(cluster_normalized_data$analyte)
+    cluster_glycans <- stringr::str_remove(cluster_analytes, paste0(cluster_name, "1"))
+    # Get a subset of the reference file with only the passing analytes
+    cluster_ref <- reference %>% 
+      dplyr::filter(glycan %in% cluster_glycans)
+    # Loop over the chosen traits
+    for (j in seq(length(chosen_traits))) {
+      trait <- chosen_traits[[j]]
+      trait_formula <- generate_formula(cluster_name, cluster_ref, trait)
+      cluster_trait_formulas[j] <- trait_formula
+    }
+    # Add the formulas for this cluster to formula_list
+    formula_list[i] <- list(cluster_trait_formulas)
+  }
+  return(formula_list)
+}
+
+
+#' Automatically calculate traits based on list of formulas
+calculate_traits <- function(normalized_data_wide, trait_formulas) {
+  # Initiate an empty vector for the trait names
+  trait_names <- vector("character", length = length(trait_formulas))
+  # Loop over the formulas and create a new column with traits
+  normalized_data_wide_with_traits <- normalized_data_wide
+  for (i in seq(length(trait_formulas))) {
+    formula <- trait_formulas[[i]]
+    expr_ls <- create_expr_ls(formula) 
+    trait_names[[i]] <- names(expr_ls)
+    normalized_data_wide_with_traits <- normalized_data_wide_with_traits %>% 
+      dplyr::mutate(!!! expr_ls)
+  }
+  # Relocate the trait columns
+  normalized_data_wide_with_traits <- normalized_data_wide_with_traits %>% 
+    dplyr::relocate(tidyselect::all_of(trait_names), .after = replicates)
+  # Return normalized data with the trait columns
+  return(normalized_data_wide_with_traits)
+}
 
 
 #' create_expr_ls

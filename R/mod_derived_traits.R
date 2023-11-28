@@ -67,10 +67,10 @@ mod_derived_traits_ui <- function(id){
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
                   "Galactosylation of complex-type glycans",
-                  "Sialylation of complex-type glycans",
-                  "Monoantennarity of complex-type glycans",
+                  "Sialylation of complex type-glycans",
+                  "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
-                  "Average number of mannoses for oligomannose-type glycans"
+                  "Oligomannose-type glycans: average number of mannoses" = "high_mannose"
                 )
               ),
               selectizeInput(
@@ -294,31 +294,27 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
   
     ####################  Default glycosylation traits  ####################
     
-    derived_traits <- reactive({
+    human_IgG_traits <- reactive({
+      req(input$human_IgG_traits)
+      match_human_IgG_traits(input$human_IgG_traits)
+    })
+    
+    trait_formulas <- reactive({
       req(normalized_data())
-      calculate_derived_traits(data = normalized_data(),
-                               selected_derived_traits = input$traits_menu)
+      formula_list <- create_formula_list(
+        normalized_data = normalized_data(),
+        chosen_traits = human_IgG_traits(),
+        chosen_clusters = input$human_IgG_clusters,
+        reference = human_IgG_ref
+      )
+      purrr::reduce(formula_list, c)  # c = concatenate
     }) %>% bindEvent(input$do_calculation)
     
-    observe({
-      req(results_normalization$normalized_data_wide())
-      browser()
-    })
     
     data_with_derived_traits <- reactive({
-      req(derived_traits())
-      dplyr::full_join(results_normalization$normalized_data_wide(),
-                       derived_traits()) %>% 
-        dplyr::select(-tidyselect::ends_with("formula")) %>% 
-        tidyr::pivot_wider(names_from = cluster,
-                           values_from = dplyr::any_of(input$traits_menu),
-                           names_glue = "{cluster}_{.value}") %>% 
-        dplyr::relocate(contains(input$traits_menu), .after = replicates)
+      req(trait_formulas())
+      calculate_traits(results_normalization$normalized_data_wide(), trait_formulas())
     })
-    
-    
-    
-    
     
     
     
@@ -327,34 +323,32 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     # Get column names of custom traits, required to relocate them after combining with default traits
     custom_traits_colnames <- reactive({
       req(custom_traits())
-      custom_traits() %>% 
-        dplyr::select(replicates:dplyr::last_col()) %>% 
-        dplyr::select(-replicates) %>% 
+      custom_traits() %>%
+        dplyr::select(replicates:dplyr::last_col()) %>%
+        dplyr::select(-replicates) %>%
         dplyr::select(1:floor(ncol(.)/2)) %>% # This removes columns with traits formulas
         names()  # This extracts the column names as a vector
     })
-    
-    
-    # Combine default traits with custom traits
+
+    # # Combine default traits with custom traits
     data_with_all_traits <- reactive({
       req(data_with_derived_traits(), data_with_custom_traits(), custom_traits_colnames())
       dplyr::full_join(
         data_with_derived_traits(), data_with_custom_traits()
-      ) %>% 
+      ) %>%
         dplyr::relocate(all_of(custom_traits_colnames()), .after = replicates)
     })
-    
     
     # If only default traits were calculated: use "data_with_derived_traits()" here
     # If only custom traits were calculated: use "data_with_custom_traits()" here
     # If both default and custom traits were calculated: use "data_with_all_traits()" here
     with_data <- reactive({
       if (is_truthy(data_with_all_traits())) {
-        return(data_with_all_traits())  
+        data_with_all_traits()
       } else if (is_truthy(data_with_derived_traits())) {
-        return(data_with_derived_traits())
+        data_with_derived_traits()
       } else if (is_truthy(data_with_custom_traits())) {
-        return(data_with_custom_traits())
+        data_with_custom_traits()
       }
     })
     
@@ -362,7 +356,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     data_with_traits <- reactive({
       req(with_data())
       if (is_truthy(results_quantitation$quantitation_data())) {
-        dplyr::full_join(with_data(), results_quantitation$quantitation_data()) %>% 
+        dplyr::full_join(with_data(), results_quantitation$quantitation_data()) %>%
           dplyr::relocate(IgG1_quantity_ng, .after = replicates)
       } else {
         with_data()
@@ -374,8 +368,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       DT::datatable(data = data_with_traits(),
                     options = list(scrollX = TRUE))
     })
-    
-    
+
     
     ########## Download example Excel of custom traits ##########
     output$download_ex_custom_formulas <- downloadHandler(
@@ -388,7 +381,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         file.copy(example_file, file)
       }
     )
-    
+
     
     
     ############### Formulas of glycosylation traits ###############
@@ -427,45 +420,45 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     
     #### Default traits formulas
-    formulas <- reactive({
-      req(derived_traits())
-      derived_traits() %>% 
-        dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
-        dplyr::distinct() %>% 
-        tidyr::pivot_longer(cols = -cluster,
-                            names_to = "Trait",
-                            values_to = "Formula") %>% 
-        dplyr::rename_with(.fn = firstupper, 
-                           .cols = cluster) %>% 
-        dplyr::mutate(`Trait` = dplyr::recode(`Trait`,
-                                                      fuc_formula = "Fucosylation",
-                                                      gal_formula = "Galactosylation",
-                                                      sial_formula = "Sialylation",
-                                                      bis_formula = "Bisection"))
-    })
+    # formulas <- reactive({
+    #   req(derived_traits())
+    #   derived_traits() %>% 
+    #     dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
+    #     dplyr::distinct() %>% 
+    #     tidyr::pivot_longer(cols = -cluster,
+    #                         names_to = "Trait",
+    #                         values_to = "Formula") %>% 
+    #     dplyr::rename_with(.fn = firstupper, 
+    #                        .cols = cluster) %>% 
+    #     dplyr::mutate(`Trait` = dplyr::recode(`Trait`,
+    #                                                   fuc_formula = "Fucosylation",
+    #                                                   gal_formula = "Galactosylation",
+    #                                                   sial_formula = "Sialylation",
+    #                                                   bis_formula = "Bisection"))
+    # })
     
-    output$formulas <- DT::renderDT({
-      req(formulas())
-      
-      DT::datatable(formulas(),
-                    rownames = FALSE, 
-                    options = list(paging = FALSE,
-                                   ordering = FALSE,
-                                   searching = FALSE))
-    })
+    # output$formulas <- DT::renderDT({
+    #   req(formulas())
+    #   
+    #   DT::datatable(formulas(),
+    #                 rownames = FALSE, 
+    #                 options = list(paging = FALSE,
+    #                                ordering = FALSE,
+    #                                searching = FALSE))
+    # })
     
     
     
-    return(
-      list(
-        data_with_traits = data_with_traits,
-        normalized_data = normalized_data,
-        derived_traits = reactive({ input$traits_menu }),
-        formulas = formulas,
-        custom_traits_colnames = custom_traits_colnames,
-        custom_formulas = custom_formulas
-      )
-    )
+    # return(
+    #   list(
+    #     # data_with_traits = data_with_traits,
+    #     normalized_data = normalized_data,
+    #     derived_traits = reactive({ input$traits_menu }),
+    #     formulas = formulas,
+    #     custom_traits_colnames = custom_traits_colnames,
+    #     custom_formulas = custom_formulas
+    #   )
+    # )
  
   })
 }
