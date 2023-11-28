@@ -401,11 +401,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                                        text = "Excel file not formatted correctly!")
         NULL
       })
-      # traits_excel() %>%
-      #   dplyr::rename(cluster = ...1) %>% 
-      #   dplyr::rename(trait_formula = ...2) %>% 
-      #   tidyr::separate(trait_formula, into = c("custom_trait", "formula"),
-      #                   sep = "=", remove = TRUE)
     })
     
     output$custom_formulas <- DT::renderDT({
@@ -420,45 +415,39 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     
     #### Default traits formulas
-    # formulas <- reactive({
-    #   req(derived_traits())
-    #   derived_traits() %>% 
-    #     dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
-    #     dplyr::distinct() %>% 
-    #     tidyr::pivot_longer(cols = -cluster,
-    #                         names_to = "Trait",
-    #                         values_to = "Formula") %>% 
-    #     dplyr::rename_with(.fn = firstupper, 
-    #                        .cols = cluster) %>% 
-    #     dplyr::mutate(`Trait` = dplyr::recode(`Trait`,
-    #                                                   fuc_formula = "Fucosylation",
-    #                                                   gal_formula = "Galactosylation",
-    #                                                   sial_formula = "Sialylation",
-    #                                                   bis_formula = "Bisection"))
-    # })
+    formulas_table <- reactive({
+      req(data_with_traits())
+      formula_dfs <- vector("list", length = length(trait_formulas()))
+      for (i in seq(length(trait_formulas()))) {
+        trait_formula <- trait_formulas()[i]
+        trait_name <- names(create_expr_ls(trait_formula))
+        calculation <- stringr::str_remove(trait_formula, paste0(trait_name, " = "))
+        formula_dfs[[i]] <- data.frame(trait = trait_name, formula = calculation)
+      }
+      purrr::reduce(formula_dfs, dplyr::full_join)
+    })
     
-    # output$formulas <- DT::renderDT({
-    #   req(formulas())
-    #   
-    #   DT::datatable(formulas(),
-    #                 rownames = FALSE, 
-    #                 options = list(paging = FALSE,
-    #                                ordering = FALSE,
-    #                                searching = FALSE))
-    # })
+    output$formulas <- DT::renderDT({
+      req(formulas_table())
+      DT::datatable(formulas_table(),
+                    rownames = FALSE,
+                    options = list(paging = FALSE,
+                                   ordering = FALSE,
+                                   searching = FALSE))
+    })
     
     
     
-    # return(
-    #   list(
-    #     # data_with_traits = data_with_traits,
-    #     normalized_data = normalized_data,
-    #     derived_traits = reactive({ input$traits_menu }),
-    #     formulas = formulas,
-    #     custom_traits_colnames = custom_traits_colnames,
-    #     custom_formulas = custom_formulas
-    #   )
-    # )
+    return(
+      list(
+        data_with_traits = data_with_traits,
+        normalized_data = normalized_data,
+        derived_traits = reactive({ input$traits_menu }),
+        formulas = formulas_table,
+        custom_traits_colnames = custom_traits_colnames,
+        custom_formulas = custom_formulas
+      )
+    )
  
   })
 }
