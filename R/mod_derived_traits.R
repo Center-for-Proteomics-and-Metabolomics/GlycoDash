@@ -70,7 +70,7 @@ mod_derived_traits_ui <- function(id){
                   "Sialylation of complex type-glycans",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
-                  "Oligomannose-type glycans: average number of mannoses" = "high_mannose"
+                  "Oligomannose-type glycans: average number of mannoses"
                 )
               ),
               selectizeInput(
@@ -109,8 +109,10 @@ mod_derived_traits_ui <- function(id){
           width = 7,
           solidHeader = TRUE,
           status = "primary",
-        DT::dataTableOutput(ns("formulas"))
-        )
+          downloadButton(ns("download_formulas"), "Download as Excel file"),
+          br(),
+          DT::dataTableOutput(ns("formulas"))
+        ),
       ),
       
       fluidRow(
@@ -240,7 +242,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
     
     
-    # Toggle button
+    # Toggle calculation button
     observe({
       shinyjs::toggleState("do_calculation", condition = all(
         !is.null(input$antibody_types),
@@ -291,7 +293,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     
 
-  
     ####################  Default glycosylation traits  ####################
     
     human_IgG_traits <- reactive({
@@ -414,7 +415,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
     
     
-    #### Default traits formulas
+    # Display the formulas of the default traits
     formulas_table <- reactive({
       req(data_with_traits())
       formula_dfs <- vector("list", length = length(trait_formulas()))
@@ -436,6 +437,20 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                                    searching = FALSE))
     })
     
+    # Option to download the default traits formulas as an Excel file
+    observe({
+      shinyjs::toggleState("download_formulas", is_truthy(formulas_table()))
+    })
+    
+    output$download_formulas <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        paste0(current_datetime, "_glycosylation_traits_formulas.xlsx")
+      },
+      content = function(file) {
+        writexl::write_xlsx(formulas_table(), path = file)
+      }
+    )
     
     
     return(
