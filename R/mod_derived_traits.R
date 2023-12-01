@@ -131,16 +131,13 @@ mod_derived_traits_ui <- function(id){
                   custom traits that you want to calculate.
                   Click the paperclip button to download an example Excel file.
                   <br><br>
-                  The Excel file must contain one column that specifies the
-                  clusters for which you want to calculate the traits. The 
-                  second column contains the formulas that you want to use.
-                  A formula consists of the name of the trait, and how
-                  to calculate the trait, separated by an \"=\" sign. 
+                  The Excel file must contain one column called \"trait\" that
+                  specifies the names of the traits. The second column must be called
+                  \"formula\" and should contain the formulas for the traits. Analyte names
+                  in the formula should include both the cluster and glycan composition, 
+                  e.g. \"IgGI1H4N4F1\".
                   <br><br>
                   <strong>Trait names should not contain any spaces.</strong>
-                  <br><br>
-                  You must always place spaces around the following signs: 
-                  addition, subtraction, division, multiplication (+ &nbsp; - &nbsp; \\ &nbsp; *)
                   "
                 ),
                 trigger = "hover",
@@ -264,34 +261,54 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       tools::file_ext(input$custom_traits_file$name)
     })
     
-    # Show warning when non-Excel file is uploaded.
-    observe({
-      req(extension())
-      shinyFeedback::feedbackWarning("custom_traits_file",
-                                     extension() != "xlsx",
-                                     text = "Please upload an Excel (.xlsx) file.")
+    # Check if the extension is OK
+    observeEvent(extension(), {
+      shinyFeedback::hideFeedback("custom_traits_file")  # Hide previous feedback, if any
+      shinyFeedback::feedbackDanger(
+        "custom_traits_file",
+        !extension() %in% c("xlsx", "xls"),
+        "Please upload an .xlsx or .xls file."
+      )
     })
     
-    
+    # Read the custom traits Excel file as a data frame.
     traits_excel <- reactive({
-      req(input$custom_traits_file, extension())
-      if (extension() == "xlsx"){
-        readxl::read_excel(input$custom_traits_file$datapath, col_names = FALSE, col_types = "text")
+      req(input$custom_traits_file, extension(), extension() == "xlsx")
+      readxl::read_excel(input$custom_traits_file$datapath, col_names = TRUE, col_types = "text")
+    })
+
+    
+    # Check if traits_excel is formatted correctly
+    r <- reactiveValues(correct_formatting = FALSE)
+    observeEvent(traits_excel(), {
+      # First check for correct columns
+      ncol <- ncol(traits_excel())
+      colnames <- colnames(traits_excel())
+      if (!all(ncol == 2, colnames[1] == "trait", colnames[2] == "formula")) {
+        shinyalert::shinyalert(
+          text = "Your Excel file should contain two columns: \"trait\" and \"formula\". Please adjust your file.",
+          confirmButtonCol = "tomato"
+        )
+        r$correct_formatting <- FALSE
+      } else {
+        # Then check for spaces in trait names
+        if (any(grepl(" ", traits_excel()$trait))) {
+          shinyalert::shinyalert(
+            text = "Trait names should not contain any spaces. Please adjust your Excel file.",
+            confirmButtonCol = "tomato"
+          )
+        }
+        r$correct_formatting <- FALSE
       }
     })
-    
-    custom_traits <- reactive({
-      req(traits_excel(), normalized_data())
-      calculate_custom_traits(normalized_data(), traits_excel())
-    })
-    
+
+    # Calculate the custom traits
     data_with_custom_traits <- reactive({
-      req(custom_traits())
-      dplyr::full_join(custom_traits(), results_normalization$normalized_data_wide()) %>% 
-      dplyr::select(-tidyselect::ends_with("formula"))
+      req(traits_excel(), normalized_data(), r$correct_formatting == TRUE)
+      calculate_custom_traits(traits_excel(), results_normalization$normalized_data_wide())
     })
-    
-    
+
+
 
     ####################  Default glycosylation traits  ####################
     
@@ -316,28 +333,17 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       req(trait_formulas())
       calculate_traits(results_normalization$normalized_data_wide(), trait_formulas())
     })
-    
-    
+
     
     ############### Combined default + custom traits ###############
     
-    # Get column names of custom traits, required to relocate them after combining with default traits
-    custom_traits_colnames <- reactive({
-      req(custom_traits())
-      custom_traits() %>%
-        dplyr::select(replicates:dplyr::last_col()) %>%
-        dplyr::select(-replicates) %>%
-        dplyr::select(1:floor(ncol(.)/2)) %>% # This removes columns with traits formulas
-        names()  # This extracts the column names as a vector
-    })
-
-    # # Combine default traits with custom traits
+    # Combine default traits with custom traits
     data_with_all_traits <- reactive({
-      req(data_with_derived_traits(), data_with_custom_traits(), custom_traits_colnames())
+      req(data_with_derived_traits(), data_with_custom_traits())
       dplyr::full_join(
         data_with_derived_traits(), data_with_custom_traits()
       ) %>%
-        dplyr::relocate(all_of(custom_traits_colnames()), .after = replicates)
+        dplyr::relocate(all_of(traits_excel()$trait), .after = replicates)
     })
     
     # If only default traits were calculated: use "data_with_derived_traits()" here
@@ -387,27 +393,10 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     ############### Formulas of glycosylation traits ###############
     
-    #### Custom traits formulas
-    custom_formulas <- reactive({
-      req(traits_excel())
-      tryCatch({
-        traits_excel() %>%
-          dplyr::rename(cluster = ...1) %>% 
-          dplyr::rename(trait_formula = ...2) %>% 
-          tidyr::separate(trait_formula, into = c("custom_trait", "formula"),
-                          sep = "=", remove = TRUE)
-      }, warning = function(w) {
-        shinyFeedback::feedbackWarning("custom_traits_file",
-                                       show = TRUE,
-                                       text = "Excel file not formatted correctly!")
-        NULL
-      })
-    })
-    
+    # Display for double check
     output$custom_formulas <- DT::renderDT({
-      req(custom_formulas(), extension(), custom_traits())
-      DT::datatable(custom_formulas(),
-                    colnames = c("Cluster", "Trait", "Formula"),
+      req(traits_excel(), data_with_derived_traits())
+      DT::datatable(traits_excel(),
                     rownames = FALSE, 
                     options = list(paging = FALSE,
                                   ordering = FALSE,
@@ -459,8 +448,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         normalized_data = normalized_data,
         derived_traits = reactive({ input$traits_menu }),
         formulas = formulas_table,
-        custom_traits_colnames = custom_traits_colnames,
-        custom_formulas = custom_formulas
+        custom_traits_excel = traits_excel
       )
     )
  

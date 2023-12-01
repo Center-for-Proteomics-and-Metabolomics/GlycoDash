@@ -2,7 +2,6 @@
 
 export("%>%")
 export(apply_chosen_criteria)
-export(calculate_custom_traits)
 export(calculate_cut_offs)
 export(calculate_repeatability_stats)
 export(calculate_total_intensity)
