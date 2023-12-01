@@ -44,6 +44,7 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   clean_formula_string <- paste(unlist(grouped_terms), collapse = " + ")
   
   # Divide by the sum of all complex-type glycans if necessary
+  # Or by the sum of all high-mannose glycans
   if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation", "mono_antennary")) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::select(glycan, complex) %>% 
@@ -52,7 +53,14 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     complex_sum <- paste0(cluster, "1", complex_types_df$glycan, collapse = " + ")
     # Adjust clean_formula_string to divide by complex_types
     clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ")")
+  } else if (target_trait == "high_mannose") {
+    high_mannose_df <- cluster_ref_df %>% 
+      dplyr::select(glycan, high_mannose) %>% 
+      dplyr::filter(high_mannose != 0)
+    high_mannose_sum <- paste0(cluster, "1", high_mannose_df$glycan, collapse = " + ")
+    clean_formula_string <- paste0("(", clean_formula_string, ") / (", high_mannose_sum, ")")
   }
+  
   
   # Add the left hand side of the formula
   final_formula_string <- ifelse(

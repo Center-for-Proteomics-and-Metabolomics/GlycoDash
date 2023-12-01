@@ -210,6 +210,11 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       results_normalization$normalized_data()
     })
     
+    normalized_data_wide <- reactive({
+      req(results_normalization$normalized_data_wide())
+      results_normalization$normalized_data_wide()
+    })
+    
     # Toggle visibility of tabs, depending on input$antibody_types
     observeEvent(input$antibody_types, {
       purrr::map(
@@ -307,7 +312,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     data_with_custom_traits <- reactive({
       req(traits_excel(), normalized_data(), r$correct_formatting == TRUE)
       tryCatch({
-        calculate_custom_traits(traits_excel(), results_normalization$normalized_data_wide())
+        calculate_custom_traits(traits_excel(), normalized_data_wide())
       }, error = function(e) {
         shinyalert::shinyalert(
           text = "One or more of your formulas contain non-existing analytes. Please check your file and try again.",
@@ -326,7 +331,12 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       match_human_IgG_traits(input$human_IgG_traits)
     })
     
-    trait_formulas <- reactive({
+    # mouse_IgG_traits <- reactive({
+    #   req(input$mouse_IgG_traits)
+    #   match_mouse_IgG_traits(input$mouse_IgG_traits)
+    # })
+    
+    human_IgG_trait_formulas <- reactive({
       req(normalized_data())
       formula_list <- create_formula_list(
         normalized_data = normalized_data(),
@@ -336,11 +346,16 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       )
       purrr::reduce(formula_list, c)  # c = concatenate
     }) %>% bindEvent(input$do_calculation)
-    
+  
+    trait_formulas <- reactive({
+      req(human_IgG_trait_formulas())
+      # Extend this later with Human IgA, Mouse IgG
+      human_IgG_trait_formulas()
+    })
     
     data_with_derived_traits <- reactive({
       req(trait_formulas())
-      calculate_traits(results_normalization$normalized_data_wide(), trait_formulas())
+      calculate_traits(normalized_data_wide(), trait_formulas())
     })
 
     
