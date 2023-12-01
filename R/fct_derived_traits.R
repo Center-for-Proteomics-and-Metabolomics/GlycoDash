@@ -197,8 +197,6 @@ create_expr_ls <- function(str_expr) {
 #' @return A wide dataframe with the normalized data + calculated custom traits.
 #' 
 calculate_custom_traits <- function(traits_excel, normalized_data_wide) {
-  # TODO: Check if there are non-existing analytes in the data (specify them)
-  # ...
   # Create vector with expressions for dplyr::mutate()
   expressions <- traits_excel %>% 
     dplyr::mutate(expression = paste0(trait, " = ", formula)) %>% 

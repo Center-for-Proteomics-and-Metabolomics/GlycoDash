@@ -279,8 +279,9 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
 
     
     # Check if traits_excel is formatted correctly
-    r <- reactiveValues(correct_formatting = FALSE)
+    r <- reactiveValues()
     observeEvent(traits_excel(), {
+      r$correct_formatting <- TRUE
       # First check for correct columns
       ncol <- ncol(traits_excel())
       colnames <- colnames(traits_excel())
@@ -297,15 +298,23 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
             text = "Trait names should not contain any spaces. Please adjust your Excel file.",
             confirmButtonCol = "tomato"
           )
+          r$correct_formatting <- FALSE
         }
-        r$correct_formatting <- FALSE
       }
     })
 
     # Calculate the custom traits
     data_with_custom_traits <- reactive({
       req(traits_excel(), normalized_data(), r$correct_formatting == TRUE)
-      calculate_custom_traits(traits_excel(), results_normalization$normalized_data_wide())
+      tryCatch({
+        calculate_custom_traits(traits_excel(), results_normalization$normalized_data_wide())
+      }, error = function(e) {
+        shinyalert::shinyalert(
+          text = "One or more of your formulas contain non-existing analytes. Please check your file and try again.",
+          confirmButtonCol = "tomato"
+        )
+        NULL
+      })
     })
 
 
