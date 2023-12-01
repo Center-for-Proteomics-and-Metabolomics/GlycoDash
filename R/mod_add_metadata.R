@@ -102,23 +102,17 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
       
       shinyFeedback::hideFeedback("file")
       
-      metadata_list <- tryCatch(
-        expr = {
-          read_metadata(filepaths = input$file$datapath,
-                        filenames = input$file$name)
-        },
-        wrong_extension = function(c) {
-          shinyFeedback::feedbackDanger("file",
-                                        show = TRUE,
-                                        text = c$message)
-          
-          NULL
-        })
+      metadata_list <- tryCatch({
+        read_metadata(input$file$datapath, input$file$name)
+      }, error = function(e) {
+        shinyFeedback::feedbackDanger("file", show = TRUE, text = "Please upload a .xlsx, .xls or .rds file")
+        return(NULL)
+      })
       
       return(metadata_list)
     })
     
-    
+
     filenames_metadata <- reactive({
       req(input$file)
       comma_and(input$file$name)

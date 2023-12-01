@@ -272,7 +272,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       shinyFeedback::feedbackDanger(
         "custom_traits_file",
         !extension() %in% c("xlsx", "xls"),
-        "Please upload an .xlsx or .xls file."
+        "Please upload a .xlsx or .xls file."
       )
     })
     
