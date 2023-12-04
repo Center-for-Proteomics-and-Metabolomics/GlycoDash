@@ -3,6 +3,9 @@
 * Normalization now happens automatically after analyte curation. 
 * Added the option to export data in the “Normalized data” tab.
 
+## Bug fixes
+* GlycoDash can now handle plate designs containing plate number with two digits.
+
 
 # v1.3.2
 ## Adjustments
