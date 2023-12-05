@@ -44,7 +44,7 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   clean_formula_string <- paste(unlist(grouped_terms), collapse = " + ")
   
   # Divide by the sum of all complex-type glycans if necessary
-  # Or by the sum of all high-mannose glycans
+  # Or by the sum of all oligomannose glycans
   if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation", "mono_antennary")) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::select(glycan, complex) %>% 
@@ -53,20 +53,24 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     complex_sum <- paste0(cluster, "1", complex_types_df$glycan, collapse = " + ")
     # Adjust clean_formula_string to divide by complex_types
     clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ")")
-  } else if (target_trait == "high_mannose") {
-    high_mannose_df <- cluster_ref_df %>% 
-      dplyr::select(glycan, high_mannose) %>% 
-      dplyr::filter(high_mannose != 0)
-    high_mannose_sum <- paste0(cluster, "1", high_mannose_df$glycan, collapse = " + ")
-    clean_formula_string <- paste0("(", clean_formula_string, ") / (", high_mannose_sum, ")")
+  } else if (target_trait == "oligomannose_average") {
+    oligomannose_df <- cluster_ref_df %>%
+      dplyr::select(glycan, oligomannose_average) %>%
+      dplyr::filter(oligomannose_average != 0)
+    oligomannose_sum <- paste0(cluster, "1", oligomannose_df$glycan, collapse = " + ")
+    clean_formula_string <- paste0("(", clean_formula_string, ") / (", oligomannose_sum, ")")
   }
   
   
   # Add the left hand side of the formula
   final_formula_string <- ifelse(
-    # If there are no glycans for the trait, than the formula is " * <cluster>1"
+    # If there are no glycans for the trait, then the formula is 
+    # " * <cluster>1" or "( * <cluster>1) / (<cluster>1)"
     # In that case the value should just be zero.
-    clean_formula_string == paste0(" * ", cluster, "1"),
+    clean_formula_string %in% c(
+      paste0(" * ", cluster, "1"),
+      paste0("( * ", cluster, "1) / (", cluster, "1)")
+    ),
     paste0(cluster, "_", target_trait, " = ", "0"),
     paste0(cluster, "_", target_trait, " = ", clean_formula_string)
   )
@@ -94,7 +98,8 @@ match_human_IgG_traits <- function(human_traits_ui_input) {
     "Sialylation of complex type-glycans" = "sialylation",
     "Percentage of monoantennary complex-type glycans" = "mono_antennary",
     "Percentage of hybrid-type glycans" = "hybrid",
-    "Oligomannose-type glycans: average number of mannoses" = "high_mannose"
+    "Percentage of oligomannose-type glycans" = "oligomannose_relative",
+    "Oligomannose-type glycans: average number of mannoses" = "oligomannose_average"
   )
   
   replaced_vector <- vector("character", length = length(human_traits_ui_input))
