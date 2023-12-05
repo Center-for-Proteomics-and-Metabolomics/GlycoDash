@@ -158,7 +158,7 @@ mod_spectra_curation_ui <- function(id){
                               title = "Spectra curation methods",
                               content = HTML(paste0(
                                 tags$p(
-                                  tags$b("Negative control spectra:"),
+                                  tags$b("Negative control spectra"),
                                   br(),
                                   paste(
                                     "Choose a group of samples that should not pass spectra",
@@ -217,7 +217,7 @@ mod_spectra_curation_ui <- function(id){
                   ),
                   shinyWidgets::awesomeCheckbox(
                     ns("uncalibrated_as_na"),
-                    label = "Treat uncalibrated spectra as missing values, not zeroes.",
+                    label = "Treat uncalibrated spectra as missing values, not zeros.",
                     value = TRUE
                   )
                 )
@@ -254,6 +254,10 @@ mod_spectra_curation_ui <- function(id){
             tabsetPanel(id = ns("more_than_4_clusters")),
             br(),
             tabsetPanel(
+              tabPanel(title = "Details of passing spectra per analyte",
+                       column(width = 12,
+                              br(),
+                              DT::dataTableOutput(ns("passing_spectra_details")))),
               tabPanel(title = "Overview of failed spectra",
                        column(width = 12,
                               br(),
@@ -277,14 +281,27 @@ mod_spectra_curation_ui <- function(id){
             radioButtons(ns("download_format"),
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
-            downloadButton(ns("download"), 
-                           "Download curated spectra")
+            downloadButton(ns("download1"), 
+                           "Download details of passing spectra per analyte",
+                           style = "width: 330px;"),
+            br(),
+            br(),
+            downloadButton(ns("download2"),
+                           "Download overview of failed spectra",
+                           style = "Width: 330px;"),
+            br(),
+            br(),
+            downloadButton(ns("download3"),
+                           "Download details of failed spectra per analyte",
+                           style = "Width: 330px;")
           )
         )
       )
     )
   )
 }
+
+
 
 #' spectra_curation Server Functions
 #'
@@ -293,22 +310,29 @@ mod_spectra_curation_server <- function(id, results_data_import){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    LaCyTools_summary <- reactive({
+    # If quantitation is done: exlude quantitation clusters except IgG1 glycopeptides
+    data_to_check <- reactive({
       req(results_data_import$LaCyTools_summary())
-      results_data_import$LaCyTools_summary()
+      if (is_truthy(results_data_import$quantitation_clusters())) {
+        clusters <- results_data_import$quantitation_clusters()
+        exclude <- clusters[setdiff(names(clusters), "IgG1_cluster_glyco")]
+        to_return <- results_data_import$LaCyTools_summary() %>% 
+          dplyr::filter(!cluster %in% exclude)
+        return(to_return)
+      } else {
+        results_data_import$LaCyTools_summary()
+      }
     })
     
-    # Data with criteria checks for each analyte in each sample:
+    
+    # Data with criteria checks for each analyte in each sample.
     checked_data <- reactive({
-      req(LaCyTools_summary(),
-          input$sn,
-          input$ipq
-      )
+      req(data_to_check(), input$sn, input$ipq, length(input$qc_to_include) > 0)
       
       r$tab_contents <- NULL # Reset the tab contents so that 
       # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
       
-      check_analyte_quality_criteria(my_data = LaCyTools_summary(),
+      check_analyte_quality_criteria(my_data = data_to_check(),
                                      min_ppm_deviation = input$mass_accuracy[1],
                                      max_ppm_deviation = input$mass_accuracy[2],
                                      max_ipq = input$ipq,
@@ -316,6 +340,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                      criteria_to_consider = input$qc_to_include)
       
     })
+    
+    
     
     # Analyte quality criteria checks summarized per cluster per sample: 
     summarized_checks <- reactive({
@@ -366,8 +392,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     clusters <- reactive({
-      req(LaCyTools_summary())
-      unique(LaCyTools_summary()$cluster)
+      req(data_to_check())
+      unique(data_to_check()$cluster)
     })
     
     observeEvent(clusters(), {
@@ -391,11 +417,12 @@ mod_spectra_curation_server <- function(id, results_data_import){
                  })
     })
     
+    
+    
     r <- reactiveValues()
     
     observe({
-      req(clusters(),
-          summarized_checks())
+      req(clusters(), summarized_checks())
       
       r$tab_contents <- rlang::set_names(clusters()) %>% 
         purrr::map(
@@ -424,6 +451,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
           })
     })
     
+    
     cut_offs_to_use_all_clusters <- reactive({
       purrr::map_dfr(r$tab_contents,
                      function(tab) {
@@ -434,18 +462,83 @@ mod_spectra_curation_server <- function(id, results_data_import){
                      })
     })
     
-    observe({
-      shinyjs::disable(id = "button")
-      
-      req(summarized_checks(),
-          cut_offs_to_use_all_clusters(),
-          !rlang::is_empty(cut_offs_to_use_all_clusters()))
-      
-      shinyjs::enable(id = "button")
-    },
-    priority = 10) # Ensure that this observer is executed before others so that 
-    # the button is disabled immediately.
     
+    
+    # Check if there are clusters for which all negative controls were uncalibrated
+    missing_cluster_cut_offs <- reactive({
+      if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
+        # Check if data contains total and specific samples
+        if ("group" %in% colnames(cut_offs_to_use_all_clusters())) {
+          to_compare <- rep(clusters(), 2)
+        } else {
+          to_compare <- clusters()
+        }
+        # Check if there are cut-offs missing for clusters
+        to_check <- cut_offs_to_use_all_clusters()$cluster
+        identical <- identical(
+          # Need to order elements in the character vectors to compare
+          to_check[stringr::str_order(to_check)],
+          to_compare[stringr::str_order(to_compare)]
+        )
+        if (identical) {
+          return(FALSE)
+        } else {
+          return(TRUE)
+        }
+      } else {
+        return(FALSE)
+      }
+    })
+    
+    
+    # Enable or disable button based on missing cut-offs
+    observe({
+      if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
+        if (missing_cluster_cut_offs() == TRUE) {
+          shinyjs::disable("button")
+        } else {
+          shinyjs::enable("button")
+        }
+      } else {
+        shinyjs::disable("button")
+      }
+    })
+    
+    # If all negative controls for one or more clusters are uncalibrated, show a warning.
+    # observeEvent() to prevent the message from showing up when choosing manual cut-offs
+    observeEvent(calculated_cut_offs(), {
+      req(cut_offs_based_on_controls(), input$curation_method == "Negative control spectra")
+      # Check if there are clusters for which there is no cut-off value
+      if (missing_cluster_cut_offs() == TRUE) {
+        # Determine missing clusters
+        clusters_available = ifelse(
+          !rlang::is_empty(cut_offs_based_on_controls()$cluster),
+          cut_offs_based_on_controls()$cluster,
+          c("")
+        )
+        clusters_missing <- setdiff(clusters(), clusters_available)  # The ordering in setdiff(x, y) matters
+        # Show a warning message
+        showNotification(
+          tags$div(
+            "For the following clusters, all negative control spectra are uncalibrated: ",
+            paste0(clusters_missing, collapse = ", "),
+            br(),
+            br(),
+            "Please do one of the following:",
+            tags$ul(
+              tags$li("Use different or additional negative controls."),
+              tags$li("Choose to treat uncalibrated spectra as zeros, instead of missing values."),
+              tags$li("Choose manual cut-offs for these clusters.")
+            )
+          ),
+          type = "warning",
+          duration = NULL
+        )
+      }
+    })
+    
+    
+
     # Perform spectra curation when button is clicked:
     curated_data <- reactive({
       curate_spectra(checked_data = checked_data(),
@@ -453,15 +546,18 @@ mod_spectra_curation_server <- function(id, results_data_import){
                      cut_offs = cut_offs_to_use_all_clusters())
     }) %>% bindEvent(input$button)
     
+    
     observe({
       showNotification("Spectra curation has been performed.",
                        type = "message")
     }) %>% bindEvent(curated_data())
     
+    
     passing_spectra <- reactive({
       req(curated_data())
       kick_out_spectra(curated_spectra = curated_data())
     })
+    
     
     to_return <- reactive({
       if (input$curation_method == "Skip spectra curation") {
@@ -477,6 +573,14 @@ mod_spectra_curation_server <- function(id, results_data_import){
       }
     })
     
+    
+    output$passing_spectra_details <- DT::renderDataTable({
+      req(to_return())
+      DT::datatable(to_return(),
+                    options = list(scrollX = TRUE, searching = TRUE))
+    })
+    
+    
     output$failed_spectra_table <- DT::renderDataTable({
       req(curated_data())
       
@@ -489,6 +593,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                     options = list(scrollX = TRUE,
                                    filter = "top"))
     })
+    
     
     output$failed_spectra_details <- DT::renderDataTable({
       req(curated_data())
@@ -510,6 +615,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                     results_data_import$contains_total_and_specific_samples())
     })
     
+    
     observe({
       req(clusters())
       shinyjs::toggle(id = "more_than_4_clusters",
@@ -517,6 +623,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       shinyjs::toggle(id = "curated_spectra_plot",
                       condition = length(clusters()) <= 4)
     })
+    
     
     observe({
       req(length(clusters()) > 4,
@@ -546,6 +653,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
                  })
     })
     
+    
     observe({
       req(length(clusters()) > 4,
           curated_data())
@@ -564,6 +672,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
         })
     })
     
+    
     output$curated_spectra_plot <- plotly::renderPlotly({
       req(curated_spectra_plot())
       
@@ -574,12 +683,22 @@ mod_spectra_curation_server <- function(id, results_data_import){
       return(plotly_object)
     })
     
-    output$download <- downloadHandler(
+    
+    
+    # Download buttons
+    # TODO: shorten this code
+    observe({
+      shinyjs::toggleState("download1", is_truthy(to_return()))
+      shinyjs::toggleState("download2", is_truthy(curated_data()))
+      shinyjs::toggleState("download3", is_truthy(curated_data()))
+    })
+    
+    output$download1 <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
         switch(input$download_format,
-               "R object" = paste0(current_datetime, "_curated_spectra.rds"),
-               "Excel file" = paste0(current_datetime, "_curated_spectra.xlsx"))
+               "R object" = paste0(current_datetime, "_passing_spectra_details.rds"),
+               "Excel file" = paste0(current_datetime, "_passing_spectra_details.xlsx"))
       },
       content = function(file) {
         data_to_download <- to_return()
@@ -590,6 +709,50 @@ mod_spectra_curation_server <- function(id, results_data_import){
                                                   path = file))
       }
     )
+    
+    
+    output$download2 <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        switch(input$download_format,
+               "R object" = paste0(current_datetime, "_failed_spectra_overview.rds"),
+               "Excel file" = paste0(current_datetime, "_failed_spectra_overview.xlsx"))
+      },
+      content = function(file) {
+        data_to_download <- curated_data() %>%
+          dplyr::select(1:cut_off_passing_analyte_percentage) %>%
+          dplyr::distinct() %>%
+          dplyr::filter(!has_passed_spectra_curation)
+        switch(input$download_format,
+               "R object" = save(data_to_download, 
+                                 file = file),
+               "Excel file" = writexl::write_xlsx(data_to_download, 
+                                                  path = file))
+      }
+    )
+    
+    
+    output$download3 <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        switch(input$download_format,
+               "R object" = paste0(current_datetime, "_failed_spectra_details.rds"),
+               "Excel file" = paste0(current_datetime, "_failed_spectra_details.xlsx"))
+      },
+      content = function(file) {
+        data_to_download <- curated_data() %>%
+          dplyr::select(-(passing_analyte_percentage:replicates)) %>%
+          dplyr::distinct() %>%
+          dplyr::filter(has_passed_spectra_curation == FALSE)
+        switch(input$download_format,
+               "R object" = save(data_to_download, 
+                                 file = file),
+               "Excel file" = writexl::write_xlsx(data_to_download, 
+                                                  path = file))
+      }
+    )
+    
+    
     
     return(list(
       passing_spectra = to_return,

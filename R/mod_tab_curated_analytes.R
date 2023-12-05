@@ -33,12 +33,12 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
     ns <- session$ns
     
     curated_analytes_plot <- reactive({
-      req(info$method()  == "Curate analytes based on data")
-      req(info$curated_analytes())
-      req(info$cut_off())
+      req(info$method  == "Curate analytes based on data")
+      req(info$curated_analytes)
+      req(info$cut_off)
       
-      plot_analyte_curation(curated_analytes = info$curated_analytes(),
-                            cut_off_percentage = info$cut_off(),
+      plot_analyte_curation(curated_analytes = info$curated_analytes,
+                            cut_off_percentage = info$cut_off,
                             selected_cluster = cluster,
                             bio_groups_colname = biogroup_column)
     })
@@ -94,10 +94,10 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
     }
     
     curated_analytes_table <- reactive({
-      req(info$analyte_curated_data())
+      req(info$analyte_curated_data)
       
       table <- prepare_analyte_curation_table(
-        analyte_curated_data = info$analyte_curated_data(),
+        analyte_curated_data = info$analyte_curated_data,
         selected_cluster = cluster,
         by_group = ifelse(
           test = (!is.null(biogroup_column) & biogroup_column != ""),
@@ -224,14 +224,7 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
       
       return(to_return)
     })
-    
-    
-    # Remove "Curating analytes..." spinner
-    observe({
-      req(curated_analytes_table())
-      shinybusy::remove_modal_spinner()
-    })
-
+  
     
     return(list(plot = curated_analytes_plot,
                 analytes_to_include = analytes_to_include))

@@ -88,7 +88,7 @@ mod_add_sample_types_ui <- function(id){
         bsplus::bs_embed_popover(
           title = "Method to add sample types",
           content = HTML(paste0(
-            tags$b("Automatically:"),
+            tags$b("Automatically"),
             tags$p(paste(
               "For each sample the first string of letters within the sample ID is", 
               "assumed to be the sample type."
@@ -102,7 +102,7 @@ mod_add_sample_types_ui <- function(id){
               "Sample ID's that don't contain any letters will get the sample type",
               "\"undetermined\"."
             )),
-            tags$p(tags$b("Upload a list:"),
+            tags$p(tags$b("Upload a list"),
                    br(),
                    paste(
                      "If your sample ID's are not suitable for automatic sample type",

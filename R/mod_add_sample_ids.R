@@ -51,14 +51,14 @@ mod_add_sample_ids_ui <- function(id){
               tags$p(paste(
                 "Adding sample ID's to your data allows you to see", 
                 "which measurement corresponds to which sample.")),
-              "Sample ID's will in later steps be used to:",
+              "Sample ID's will be used in later steps to:",
               tags$ul(tags$li(paste(
-                "determine the sample type (e.g. blank, standard,", 
-                "negative control, patient, etc.)"
+                "Determine the sample type (e.g. blank, standard,", 
+                "negative control, patient)."
               )), 
               tags$li(paste(
-                "link metadata to your data (e.g. age and", 
-                "gender of the study subjects)"
+                "Link metadata to your data (e.g. age, sex,", 
+                "biological group)."
               ))
               ))),
             # Don't use body = container here, because then the custom CSS
@@ -97,7 +97,7 @@ mod_add_sample_ids_ui <- function(id){
         bsplus::bs_embed_popover(
           title = "Method to add sample ID's",
           content = HTML(paste0(
-            tags$b("Plate design:"),
+            tags$b("Plate design"),
             tags$p(paste(
               "You can only use this method when your sample names contain",
               "information on the plate and well position of the sample,", 
@@ -105,10 +105,10 @@ mod_add_sample_ids_ui <- function(id){
             )),
             "<p>plate<i>[insert plate number here]</i>_<i>[insert well position here]</i></p>",
             "An example of a valid sample name is:",
-            "<p>\"38160_38161_IM5_<b>plate1_A8</b>_01_Spike 20210409_000237.raw\"</P",
+            "<p>\"38160_38161_IM5_<b>plate1_A8</b>_01_\nSpike_20210409_000237.raw\"</P",
             br(),
             br(),
-            tags$p(tags$b("Sample list:"),
+            tags$p(tags$b("Sample list"),
                    br(),
                    paste(
                      "Use this method when your samples were not measured on plates",
@@ -202,8 +202,8 @@ mod_add_sample_ids_ui <- function(id){
 #' add_sample_ids Server Functions
 #'
 #' @noRd 
-mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, contains_total_and_specific_samples, LaCyTools_summary,
-                                      lacytools_fileInput, read_lacytools_button){
+mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, contains_total_and_specific_samples, 
+                                      summary_filenames, LaCyTools_summary, read_lacytools_button) {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -238,7 +238,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
         r$resetter <- isolate(r$resetter) + 1
         r$show_reset_warning <- TRUE
       }
-    }) %>% bindEvent(lacytools_fileInput()) # I use the lacytools fileInput 
+    }) %>% bindEvent(summary_filenames()) # When summary_filenames() updates,
     # instead of LaCyTools_summary(), because LaCyTools_summary() also changes when total and 
     # specific keywords are entered/changed.
     

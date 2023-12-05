@@ -5,9 +5,9 @@ output:
     toc: TRUE
     toc_float: TRUE
 params: 
-  lacytools_summary: NA
+  summary_filenames: NA
   plate_design: NA
-  metadata: NA
+  filenames_metadata: NA
   sample_types_method: NA
   filename_sample_types: NA
   mass_acc: NA
@@ -34,9 +34,9 @@ library(magrittr)
 
 ## Data import
 
--   LaCyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
+-   LaCyTools summary files: `r paste0("\"", params$summary_filenames, "\"")`
 -   Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
--   Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
+-   Metadata file(s): `r ifelse(is.null(params$filenames_metadata), "none", paste0("\"", params$filenames_metadata, "\""))`
 
 Sample types were added `r ifelse(params$sample_types_method == "Automatically determine sample types based on sample ID's", "automatically", "manually")`.
 
@@ -125,7 +125,7 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
 #TODO Try to list the custom traits here as well, using "custom_traits_colnames"
 
 if (is.null(params$derived_traits)) {
-  cat("No glycosylation traits were calculated automatically")
+  cat("No glycosylation traits were calculated automatically.")
 } else {
   cat("The following glycosylation traits were calculated automatically:\n\n- ",
       paste(params$derived_traits, collapse = "\n- "))

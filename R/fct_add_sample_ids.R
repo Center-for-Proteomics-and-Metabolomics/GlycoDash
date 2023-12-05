@@ -215,7 +215,8 @@ read_plate_design <- function(plate_design_file) {
   # The plater package can only read .csv files, so we convert the Excel file to
   # .csv:
   plate_design <- readxl::read_excel(plate_design_file,
-                                     .name_repair = "minimal")
+                                     .name_repair = "minimal",
+                                     col_types = "text")
   
   # Replacing the NA's that are due to empty cells on the plates with "Empty cell
   # in plate design"
@@ -345,7 +346,8 @@ process_plate_design <- function (plate_design) {
 process_sample_list <- function(sample_list_file) {
   
   sample_list <- readxl::read_excel(sample_list_file,
-                                    col_names = TRUE)
+                                    col_names = TRUE,
+                                    col_types = "text")
   
   required_columns <- c("sample_name", "sample_id")
   missing_columns <- required_columns[!(required_columns %in% colnames(sample_list))]
@@ -358,11 +360,6 @@ process_sample_list <- function(sample_list_file) {
                                  "\"sample_name\" and \"sample_id\"."
                  ))
   }
-  
-  sample_list <- sample_list %>% 
-    dplyr::mutate(sample_id = as.character(sample_id)) # If the sample ID's are 
-  # numbers readxl::read_excel will make them type numeric, but they should be
-  # type character.
   
   return(sample_list)
 }

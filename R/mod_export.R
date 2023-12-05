@@ -33,6 +33,15 @@ mod_export_ui <- function(id){
                            "Generate report")
           )
         )
+      ),
+      fluidRow(
+        shinydashboard::box(
+          title = "View the processed data",
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          DT::dataTableOutput(ns("data_table"))
+        )
       )
     )
  
@@ -44,6 +53,7 @@ mod_export_ui <- function(id){
 #' @noRd 
 mod_export_server <- function(id, 
                               results_derived_traits,
+                              results_quantitation,
                               results_data_import,
                               results_spectra_curation,
                               results_analyte_curation,
@@ -56,20 +66,34 @@ mod_export_server <- function(id,
     x <- reactiveValues()
     
     # If data_with_derived_traits exists it is assigned to x$data, otherwise
-    # normalized_data is assigned to x$data:
+    # quantitation_data or normalized_data is assigned to x$data:
     observe({
+      req(results_normalization$normalized_data_wide())
       if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
-      } else if (is_truthy(results_normalization$normalized_data_wide())) {
+      } else if (is_truthy(results_quantitation$quantitation_data())) {
+        x$data <- results_quantitation$quantitation_data()
+      } else {
         x$data <- results_normalization$normalized_data_wide()
       }
     })
     
+    # Disable the "Download processed data" button until normalized data is available
+    observe({
+      shinyjs::toggleState("download", is_truthy(x$data))
+    })
+    
+    # Display the final data table
+    output$data_table <- DT::renderDT({
+      req(x$data)
+      DT::datatable(data = x$data,
+                    options = list(scrollX = TRUE))
+    })
+    
+    
+    # Download the final data
     output$download <- downloadHandler(
       filename = function() {
-        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-        #                                                pattern = "-",
-        #                                                replacement = ""))
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
         switch(input$download_format,
                "R object" = paste0(current_datetime, "_processed_data.rds"),
@@ -87,9 +111,6 @@ mod_export_server <- function(id,
     
     output$report <- downloadHandler(
       filename = function() {
-        # todays_date <- paste0(stringr::str_replace_all(Sys.Date(),
-        #                                                pattern = "-",
-        #                                                replacement = ""))
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
         paste0(current_datetime, "_data_processing_report.html")
       },
@@ -150,11 +171,19 @@ mod_export_server <- function(id,
           }
         )
         
+        
+        # Repeatability
+        # Mapping (or looping) a reactiveValues list is not possible. You need
+        # to convert it to a regular list first. 
+        repeatability_list <- shiny::reactiveValuesToList(results_repeatability$tab_results)
+        # Remove potential NULL values from the list (happens when tabs are deleted)
+        repeatability_list_clean <- repeatability_list[!sapply(repeatability_list, is.null)]
+        # Loop over the tabs in the list
         repeatability_tab_contents <- purrr::map(
-          # Mapping (or looping) a reactiveValues list is not possible. You need
-          # to convert it to a regular list first:
-          shiny::reactiveValuesToList(results_repeatability$tab_results),
+          repeatability_list_clean,
           function(list_of_objects) {
+            # Remove NULL tabs from the list (happens when tabs are deleted)
+            
             plot <- try_call(list_of_objects$plot)
             plots <- purrr::map(list_of_objects$plots(),
                                 ~ try_call(.x))
@@ -168,6 +197,7 @@ mod_export_server <- function(id,
               title = title
             ))
           })
+        
         
         data_exploration_tab_contents <- purrr::map(
           # Mapping (or looping) a reactiveValues list is not possible. You need
@@ -191,10 +221,10 @@ mod_export_server <- function(id,
         # other information from the dashboard to pass along to the Report.Rmd
         # markdown file:
         params <- list(
-          lacytools_summary = results_data_import$filename_summary(),
+          summary_filenames = results_data_import$summary_filenames(),
           plate_design = try_call(results_data_import$filenames_plate_design), # trycall not needed?
           sample_list = try_call(results_data_import$filename_sample_list), # trycall not needed?
-          metadata = try_call(results_data_import$metadata), # trycall not needed?
+          filenames_metadata = try_call(results_data_import$filenames_metadata), # trycall not needed?
           sample_types_method = results_data_import$sample_types_method(),
           filename_sample_types = try_call(results_data_import$filename_sample_types),
           mass_acc = results_spectra_curation$mass_acc(),
@@ -205,6 +235,8 @@ mod_export_server <- function(id,
           curated_spectra_plot = try_call(results_spectra_curation$plot),
           curated_spectra_plots = curated_spectra_plots,
           analyte_curation_method = results_analyte_curation$method(),
+          analyte_curation_choice = results_analyte_curation$curation_method(),
+          groups_to_ignore = results_analyte_curation$groups_to_ignore(),
           ignore_samples = results_analyte_curation$ignore_samples(), # test if empty
           cut_off_percentage = results_analyte_curation$cut_off(),
           analyte_list = results_analyte_curation$analyte_list(),
@@ -213,7 +245,11 @@ mod_export_server <- function(id,
           formulas = try_call(results_derived_traits$formulas),
           custom_formulas = try_call(results_derived_traits$custom_formulas),
           repeatability = repeatability_tab_contents,
-          data_exploration = data_exploration_tab_contents
+          data_exploration = data_exploration_tab_contents,
+          silumab_amount = try_call(results_quantitation$silumab_amount),
+          chosen_peptides = try_call(results_quantitation$chosen_peptides),
+          quantitation_plot = try_call(results_quantitation$quantitation_plot),
+          peptide_correlation_plots = try_call(results_quantitation$peptide_correlation_plots)
         )
         
         # Create a temporary file with a unique name per session to prevent

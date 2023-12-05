@@ -1,3 +1,56 @@
+# v1.3.2
+## Adjustments
+* Exclude TTP peptide from the IgG1 quantitation.
+
+## Bug fixes
+* Minor bug fixes in spectra curation UI
+
+
+# v1.3.1
+## Adjustments
+* Add a line of equality to the peptide correlation plots in the “IgG1 quantitation” tab.
+* Round cut-off numbers in curated spectra scatter plot and table.
+* Display overview of passing spectra in the “Spectra curation” tab, and make it possible to download tables of failed spectra.
+* Show a spinner while processing LaCyTools summary files.
+
+## Bug fixes
+* Analyte curation can be performed multiple times.
+* Prevent dashboard from crashing when de-selecting all QC criteria in spectra curation.
+* Prevent dashboard from crashing during spectra curation when all negative control spectra are uncalibrated. 
+  Show a warning message and disable button when all negative controls are uncalibrated for one or more clusters.
+* Report generation works when repeatability tabs were deleted.
+
+
+# v1.3.0
+## New features
+* IgG1 quantitation with SILuMAb
+
+## Adjustments
+* The “Export results” tab now displays the final data that can be downloaded.
+
+
+# v1.2.9
+## Adjustments
+* Performing analyte curation is (for now) possible only once, because curating analytes multiple times does not always work properly.
+* Info boxes were added to the analyte curation tab.
+* Option to exclude sample types when curating analytes per biological group.
+
+
+# v1.2.8
+## Bug fixes
+* NA values are now treated as zeros when calculating custom glycosylation traits.
+
+## Adjustments
+* In the Data Import tab, the “Define the clusters” button is disabled when not all keywords were found or filled in.
+* Show correct analyte curation method in data report.
+* Show a warning when formulas for custom traits contain glycans that are not present in the data after analyte curation.
+
+
+# v1.2.7
+## Bug fixes
+* The file names of the uploaded LaCyTools summaries and metadata are now shown in the report.
+
+
 # v1.2.6
 ## Adjustments
 * In the spectra curation cut-off plots, the points are no longer jittered.

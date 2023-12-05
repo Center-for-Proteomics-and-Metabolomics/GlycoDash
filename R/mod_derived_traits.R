@@ -97,6 +97,8 @@ mod_derived_traits_ui <- function(id){
                   A formula consists of the name of the trait, and how
                   to calculate the trait, separated by an \"=\" sign. 
                   <br><br>
+                  <strong>Trait names should not contain any spaces.</strong>
+                  <br><br>
                   You must always place spaces around the following signs: 
                   addition, subtraction, division, multiplication (+ &nbsp; - &nbsp; \\ &nbsp; *)
                   "
@@ -163,14 +165,15 @@ mod_derived_traits_ui <- function(id){
 #' derived_traits Server Functions
 #'
 #' @noRd 
-mod_derived_traits_server <- function(id, results_normalization){
-  moduleServer( id, function(input, output, session){
+mod_derived_traits_server <- function(id, results_normalization, results_quantitation) {
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     normalized_data <- reactive({
       req(results_normalization$normalized_data())
       results_normalization$normalized_data()
     })
+    
     
     ####################  Custom glycosylation traits  ####################
     
@@ -192,7 +195,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     traits_excel <- reactive({
       req(input$custom_traits_file, extension())
       if (extension() == "xlsx"){
-        readxl::read_excel(input$custom_traits_file$datapath, col_names = FALSE)
+        readxl::read_excel(input$custom_traits_file$datapath, col_names = FALSE, col_types = "text")
       }
     })
     
@@ -206,6 +209,7 @@ mod_derived_traits_server <- function(id, results_normalization){
       dplyr::full_join(custom_traits(), results_normalization$normalized_data_wide()) %>% 
       dplyr::select(-tidyselect::ends_with("formula"))
     })
+    
     
 
   
@@ -262,8 +266,7 @@ mod_derived_traits_server <- function(id, results_normalization){
     # If only default traits were calculated: use "data_with_derived_traits()" here
     # If only custom traits were calculated: use "data_with_custom_traits()" here
     # If both default and custom traits were calculated: use "data_with_all_traits()" here
-    
-    traits_data_table <- reactive({
+    with_data <- reactive({
       if (is_truthy(data_with_all_traits())) {
         return(data_with_all_traits())  
       } else if (is_truthy(data_with_derived_traits())) {
@@ -272,12 +275,21 @@ mod_derived_traits_server <- function(id, results_normalization){
         return(data_with_custom_traits())
       }
     })
-
+    
+    # Check if there is quantitation data to combine with the traits.
+    data_with_traits <- reactive({
+      req(with_data())
+      if (is_truthy(results_quantitation$quantitation_data())) {
+        dplyr::full_join(with_data(), results_quantitation$quantitation_data()) %>% 
+          dplyr::relocate(IgG1_quantity_ng, .after = replicates)
+      } else {
+        with_data()
+      }
+    })
+    
     output$data_table <- DT::renderDT({
-      req(traits_data_table())
-      # req(data_with_derived_traits())
-      DT::datatable(data = traits_data_table(),
-                    # data = data_with_derived_traits(),
+      req(data_with_traits())
+      DT::datatable(data = data_with_traits(),
                     options = list(scrollX = TRUE))
     })
     
@@ -322,9 +334,9 @@ mod_derived_traits_server <- function(id, results_normalization){
     })
     
     output$custom_formulas <- DT::renderDT({
-      req(custom_formulas(), extension())
+      req(custom_formulas(), extension(), custom_traits())
       DT::datatable(custom_formulas(),
-                    colnames = c("Cluster", "Custom trait", "Formula"),
+                    colnames = c("Cluster", "Trait", "Formula"),
                     rownames = FALSE, 
                     options = list(paging = FALSE,
                                   ordering = FALSE,
@@ -339,11 +351,11 @@ mod_derived_traits_server <- function(id, results_normalization){
         dplyr::select(tidyselect::ends_with("formula"), cluster) %>% 
         dplyr::distinct() %>% 
         tidyr::pivot_longer(cols = -cluster,
-                            names_to = "Derived trait",
+                            names_to = "Trait",
                             values_to = "Formula") %>% 
         dplyr::rename_with(.fn = firstupper, 
                            .cols = cluster) %>% 
-        dplyr::mutate(`Derived trait` = dplyr::recode(`Derived trait`,
+        dplyr::mutate(`Trait` = dplyr::recode(`Trait`,
                                                       fuc_formula = "Fucosylation",
                                                       gal_formula = "Galactosylation",
                                                       sial_formula = "Sialylation",
@@ -362,21 +374,8 @@ mod_derived_traits_server <- function(id, results_normalization){
     
     
     
-##### Create "data_with_traits" tibble to return  #########
-    data_with_traits <- reactive({
-      if (is_truthy(data_with_all_traits())) {
-        return(data_with_all_traits())
-      } else if (is_truthy(data_with_derived_traits())) {
-        return(data_with_derived_traits())
-      } else if (is_truthy(data_with_custom_traits())) {
-        return(data_with_custom_traits())
-      }
-    })
-    
-    
     return(
       list(
-        # data_with_derived_traits = data_with_derived_traits,
         data_with_traits = data_with_traits,
         normalized_data = normalized_data,
         derived_traits = reactive({ input$traits_menu }),

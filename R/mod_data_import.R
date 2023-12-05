@@ -65,7 +65,7 @@ mod_data_import_server <- function(id){
                                                       keyword_total = LaCyTools_summary$keyword_total,
                                                       contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
                                                       LaCyTools_summary = LaCyTools_summary$data,
-                                                      lacytools_fileInput = LaCyTools_summary$lacytools_fileInput,
+                                                      summary_filenames = LaCyTools_summary$summary_filenames,
                                                       read_lacytools_button = LaCyTools_summary$button)
     
     data_incl_sample_types <- mod_add_sample_types_server("add_sample_types_ui_1",
@@ -135,6 +135,12 @@ mod_data_import_server <- function(id){
       }
     })
     
+    quantitation_clusters <- reactive({
+      if (is_truthy(data_incl_clusters$quantitation_clusters())) {
+        data_incl_clusters$quantitation_clusters()
+      } else NULL
+    })
+    
 
     # Create a vector with column names, from which a column can later be
     # chosen as the column that contains the biological groups.
@@ -181,10 +187,11 @@ mod_data_import_server <- function(id){
     return(list(
       LaCyTools_summary = to_return,  # Calling this LaCyTools_summary is a bit confusing
       biogroup_cols = biogroup_cols,
+      quantitation_clusters = quantitation_clusters,
       contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
       keyword_specific = LaCyTools_summary$keyword_specific,
       keyword_total = LaCyTools_summary$keyword_total,
-      filename_summary = reactive({ LaCyTools_summary$lacytools_fileInput()$name }),
+      summary_filenames = LaCyTools_summary$summary_filenames,
       filenames_plate_design = data_incl_sample_ids$filenames_plate_design,
       filename_sample_list = data_incl_sample_ids$filename_sample_list,
       filenames_metadata = data_incl_metadata$filenames_metadata,

@@ -46,8 +46,9 @@ mod_add_metadata_ui <- function(id){
           bsplus::bs_embed_popover(
             title = "Explanation",
             content = HTML(
-              "Your metadata Excel file should contain a column with the sample ID's, and one more or more columns with metadata.",
-              "Each sample ID should be present only once in your Excel file",
+              "Your metadata Excel file should contain a column with the sample ID's, and one or more columns with metadata.",
+              "<br><br>",
+              "<strong>Each sample ID should be present only once in your Excel file</strong>",
               "(even if it is present multiple times in your plate design)."
             ),
             trigger = "hover", 

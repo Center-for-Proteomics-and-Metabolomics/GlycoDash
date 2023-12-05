@@ -5,10 +5,10 @@ output:
     toc: TRUE
     toc_float: TRUE
 params: 
-  lacytools_summary: NA
+  summary_filenames: NA
   plate_design: NA
   sample_list: NA
-  metadata: NA
+  filenames_metadata: NA
   sample_types_method: NA
   filename_sample_types: NA
   mass_acc: NA
@@ -19,7 +19,9 @@ params:
   curated_spectra_plot: NA
   curated_spectra_plots: NA
   analyte_curation_method: NA
+  analyte_curation_choice: NA
   ignore_samples: NA
+  groups_to_ignore: NA
   cut_off_percentage: NA
   analyte_list: NA
   analyte_curation_tab_contents: NA
@@ -29,6 +31,10 @@ params:
   custom_formulas: NA
   repeatability: NA
   data_exploration: NA
+  silumab_amount: NA
+  chosen_peptides: NA
+  quantitation_plot: NA
+  peptide_correlation_plots: NA
 ---
 
 ```{r setup, include=FALSE}
@@ -44,10 +50,10 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 
 ## Data import
 
--   LaCyTools summary file: `r paste0("\"", params$lacytools_summary, "\"")`
+-   LaCyTools summary files: `r paste0("\"", params$summary_filenames, "\"")`
 -   Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
 -   Sample list file: `r ifelse(is.null(params$metadata), "none", paste0("\"", params$sample_list, "\""))`
--   Metadata file(s): `r ifelse(is.null(params$metadata), "none", paste0("\"", params$metadata, "\""))`
+-   Metadata file(s): `r ifelse(is.null(params$filenames_metadata), "none", paste0("\"", params$filenames_metadata, "\""))`
 
 Sample types were added `r ifelse(params$sample_types_method == "Automatically determine sample types based on sample ID's", "automatically", "manually")`.
 
@@ -150,26 +156,36 @@ if (!is.null(params$curated_spectra_plot)) {
 
 ```{r analyte-curation, results='asis'}
 
-if (params$analyte_curation_method == "Curate analytes based on data") {
-  text <- paste0(params$ignore_samples, collapse = ", ")
-  cat(
-      "- Method: based on data\n",
-      "- Samples excluded from analyte curation:",
-      text,
-      "\n- Cut-off percentage:",
-      params$cut_off,
-      "%")
-}
-
 if (params$analyte_curation_method == "Supply an analyte list") {
   cat(
-    "- Method: based on analyte list\n",
+    "- Curation method: based on analyte list\n",
     "- Analyte list file: \"",
     params$analyte_list,
     "\""
   )
 }
 
+if (params$analyte_curation_method == "Curate analytes based on data") {
+  if (params$analyte_curation_choice == "On all data") {
+    text <- paste0(params$ignore_samples, collapse = ", ")
+      cat(
+      "- Curation method: based on all data\n",
+      paste("- Samples excluded from analyte curation:", text, "\n"),
+      "- Cut-off percentage:",
+      paste0(params$cut_off, "%")
+      )
+  } else if (params$analyte_curation_choice == "Per biological group") {
+    text <- paste0(params$groups_to_ignore, collapse = ", ")
+    cat(
+      "- Curation method: per biological group\n",
+      paste("- Biological groups excluded from analyte curation:", text, "\n"),
+      "- Cut-off percentage:",
+      paste0(params$cut_off, "%")
+    )
+  } else if (params$analyte_curation_choice == "Per sample") {
+    cat("Curation method: per sample")
+  }
+}
 ```
 
 ```{r analyte-curation-plot-table, results='asis'}
@@ -212,26 +228,47 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
 
 ```
 
-## Glycosylation traits
+## IgG1 quantitation
 
-```{r derived-traits, results='asis'}
+```{r IgG1-quantitation-peptides, results='asis'}
 
-#TODO Try to list the custom traits here as well, using "custom_traits_colnames"
-
-if (is.null(params$derived_traits)) {
-  cat("No glycosylation traits were calculated")
+if (is.null(params$quantitation_plot)) {
+  cat("IgG1 was not quantified.")
 } else {
-  cat("The following glycosylation traits were calculated automatically:\n\n- ",
-      paste(params$derived_traits, collapse = "\n- "))
+  cat("IgG1 was quantified with SILuMAb based on the following peptides:",
+      paste(params$chosen_peptides, collapse = ", "))
 }
-
 ```
 
-Formulas used to calculate the glycosylation traits:
+Peptide correlation plots:
+
+```{r IgG1-peptide-correlations, results='asis'}
+
+if (length(params$peptide_correlation_plots) > 0) {
+  for (plot in params$peptide_correlation_plots) {
+    p <- plotly::ggplotly(plot, tooltip = "text")
+    print(htmltools::tagList(p))
+  }
+}
+```
+
+IgG1 quantitation plot:
+
+```{r IgG1-quantitation-plot, results='asis'}
+
+if (!is.null(params$quantitation_plot)) {
+  p <- plotly::ggplotly(params$quantitation_plot, tooltip = "text") %>% 
+    GlycoDash::hide_outliers(.)
+  print(htmltools::tagList(p))
+}
+```
+
+## Glycosylation traits
 
 ```{r derived-traits-formulas, results='asis'}
 
 if (!is.null(params$formulas)) {
+  cat("Glycosylation traits were calculated automatically as follows:")
   params$formulas %>% 
     kableExtra::kbl() %>%
     kableExtra::kable_styling(bootstrap_options = "striped",
@@ -241,8 +278,14 @@ if (!is.null(params$formulas)) {
     print()
 }
 
+```
+
+```{r custom-traits-formulas, results='asis'}
+
 if (!is.null(params$custom_formulas)) {
+  cat("Custom glycosylation traits were calculated as follows:")
   params$custom_formulas %>% 
+    dplyr::rename(Cluster = cluster, Trait = custom_trait, Formula = formula) %>% 
     kableExtra::kbl() %>%
     kableExtra::kable_styling(bootstrap_options = "striped",
                               full_width = F,
@@ -250,7 +293,6 @@ if (!is.null(params$custom_formulas)) {
     htmltools::HTML() %>%
     print()
 }
-
 ```
 
 ## Repeatability

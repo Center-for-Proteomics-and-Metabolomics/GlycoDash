@@ -763,10 +763,13 @@ create_cut_off_plot <- function(summarized_checks) {
                                  sample_id,
                                  "\n",
                                  "Passing analyte percentage: ",
-                                 passing_analyte_percentage,
+                                 paste0(
+                                   format(round(passing_analyte_percentage, digits = 2), nsmall = 2),
+                                   "%"
+                                 ),
                                  "\n",
                                  "Sum intensity: ",
-                                 sum_intensity,
+                                 round(sum_intensity, digits = 0),
                                  "\nUncalibrated: ",
                                  uncalibrated))
     ) +
@@ -1001,4 +1004,28 @@ calculate_number_and_percentage_per_reason <- function(curated_data) {
       percentage = scales::label_percent(accuracy = 0.01)(number / dplyr::n())
     )
   
+}
+
+
+
+create_downloadHandler <- function(data_to_download, download_format, paste) {
+  downloadHandler(
+    filename = function() {
+      current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+      if (download_format == "R object") {
+        print(download_format)
+        return(paste0(current_datetime, paste, ".rds"))
+      } else {
+        print(download_format)
+        return(paste0(current_datetime, paste, ".xlsx"))
+      }
+    },
+    content = function(file) {
+      if (download_format == "R object") {
+        save(data_to_download, file = file)
+      } else {
+        writexl::write_xlsx(data_to_download, path = file)
+      }
+    }
+  )
 }
