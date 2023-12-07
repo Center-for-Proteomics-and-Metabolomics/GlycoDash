@@ -45,7 +45,8 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   
   # Divide by the sum of all complex-type glycans if necessary
   # Or by the sum of all oligomannose glycans
-  if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation", "mono_antennary")) {
+  if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation", 
+                          "mono_antennary", "alpha_galactosylation")) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::select(glycan, complex) %>% 
       dplyr::filter(complex == 1)
@@ -61,15 +62,14 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     clean_formula_string <- paste0("(", clean_formula_string, ") / (", oligomannose_sum, ")")
   }
   
-  
   # Add the left hand side of the formula
   final_formula_string <- ifelse(
-    # If there are no glycans for the trait, then the formula is 
-    # " * <cluster>1" or "( * <cluster>1) / (<cluster>1)"
+    # If there are no glycans for the trait, then the calculation is equal to 
+    # " * <cluster>1" or starts with "( * <cluster>1)"
     # In that case the value should just be zero.
-    clean_formula_string %in% c(
-      paste0(" * ", cluster, "1"),
-      paste0("( * ", cluster, "1) / (", cluster, "1)")
+    any(
+      clean_formula_string == paste0(" * ", cluster, "1"),
+      stringr::str_starts(clean_formula_string, paste0("\\( \\* ", cluster, "1\\)"))  # need escapement characters
     ),
     paste0(cluster, "_", target_trait, " = ", "0"),
     paste0(cluster, "_", target_trait, " = ", clean_formula_string)
@@ -113,6 +113,38 @@ match_human_IgG_traits <- function(human_traits_ui_input) {
 }
 
 
+
+#' match_mouse_IgG_traits
+#'
+#' Matches mouse IgG traits descriptions from UI to column names in mouse_IgG_ref
+#'
+#' @param mouse_traits_ui_input Character vector from the UI mouse IgG traits input.
+#'
+#' @return A character vector with short names of mouse IgG traits, which correspond to column names
+# in the mouse_IgG_ref file.
+#'
+match_mouse_IgG_traits <- function(mouse_traits_ui_input) {
+  traits <- c(
+    "Fucosylation of complex-type glycans" = "fucosylation",
+    "Bisection of complex-type glycans" = "bisection",
+    "Galactosylation of complex-type glycans" = "galactosylation",
+    "Sialylation of complex-type glycans" = "sialylation",
+    "\u03B1-1,3-galactosylation of complex-type glycans" = "alpha_galactosylation",
+    "Percentage of monoantennary complex-type glycans" = "mono_antennary",
+    "Percentage of hybrid-type glycans" = "hybrid",
+    "Percentage of oligomannose-type glycans" = "oligomannose_average",
+    "Oligomannose-type glycans: average number of mannoses" = "oligomannose_relative"
+  )
+  
+  replaced_vector <- vector("character", length = length(mouse_traits_ui_input))
+  
+  for (i in seq(length(mouse_traits_ui_input))) {
+    trait_desc <- mouse_traits_ui_input[i]
+    replaced_vector[i] <- traits[[trait_desc]]
+  }
+  
+  return(replaced_vector)
+}
 
 
 

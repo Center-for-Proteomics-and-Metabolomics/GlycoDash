@@ -88,9 +88,15 @@ mod_derived_traits_ui <- function(id){
                 ns("mouse_IgG_traits"),
                 "Select the traits you want to calculate for mouse IgG:",
                 choices = c(
-                  "Mouse Trait 1",
-                  "Mouse Trait 2",
-                  "Mouse Trait 3"
+                  "Fucosylation of complex-type glycans",
+                  "Bisection of complex-type glycans",
+                  "Galactosylation of complex-type glycans",
+                  "Sialylation of complex-type glycans",
+                  "\u03B1-1,3-galactosylation of complex-type glycans",
+                  "Percentage of monoantennary complex-type glycans",
+                  "Percentage of hybrid-type glycans",
+                  "Percentage of oligomannose-type glycans",
+                  "Oligomannose-type glycans: average number of mannoses"
                 )
               ),
               selectizeInput(
@@ -332,13 +338,13 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       match_human_IgG_traits(input$human_IgG_traits)
     })
     
-    # mouse_IgG_traits <- reactive({
-    #   req(input$mouse_IgG_traits)
-    #   match_mouse_IgG_traits(input$mouse_IgG_traits)
-    # })
+    mouse_IgG_traits <- reactive({
+      req(input$mouse_IgG_traits)
+      match_mouse_IgG_traits(input$mouse_IgG_traits)
+    })
     
     human_IgG_trait_formulas <- reactive({
-      req(normalized_data())
+      req("Human IgG" %in% input$antibody_types)
       formula_list <- create_formula_list(
         normalized_data = normalized_data(),
         chosen_traits = human_IgG_traits(),
@@ -347,11 +353,27 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       )
       purrr::reduce(formula_list, c)  # c = concatenate
     }) %>% bindEvent(input$do_calculation)
-  
+    
+   mouse_IgG_trait_formulas <- reactive({
+     req("Mouse IgG" %in% input$antibody_types)
+     formula_list <- create_formula_list(
+       normalized_data = normalized_data(),
+       chosen_traits = mouse_IgG_traits(),
+       chosen_clusters = input$mouse_IgG_clusters,
+       reference = mouse_IgG_ref
+     )
+     purrr::reduce(formula_list, c)
+   }) %>% bindEvent(input$do_calculation)
+   
     trait_formulas <- reactive({
-      req(human_IgG_trait_formulas())
-      # Extend this later with Human IgA, Mouse IgG
-      human_IgG_trait_formulas()
+      req(any(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas())))
+      if (all(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas()))) {
+        c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
+      } else if (is_truthy(human_IgG_trait_formulas())) {
+        human_IgG_trait_formulas()
+      } else if (is_truthy(mouse_IgG_trait_formulas())) {
+        mouse_IgG_trait_formulas()
+      }
     })
     
     data_with_derived_traits <- reactive({
