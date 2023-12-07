@@ -51,18 +51,25 @@ mod_derived_traits_ui <- function(id){
           status = "primary",
           shinyWidgets::awesomeCheckboxGroup(
             ns("antibody_types"),
-            "Select the types of antibodies that are present in your data:",
-            choices = c("Human IgG", "Mouse IgG")
+            "Select the types of antibody glycans that are present in your data:",
+            choices = c(
+              "Human IgG: N-glycans",
+              # "Human IgA: N-glycans",
+              # "Human IgA: O-glycans",
+              # "Human IgM: N-glycans",
+              "Mouse IgG: N-glycans"
+            )
           ),
+          
           # Tab panel for traits options
           tabsetPanel(
             id = ns("tabs"),
             # Human IgG tab
-            tabPanel("Human IgG", tagList(
+            tabPanel("Human IgG: N-glycans", tagList(
               br(),
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgG_traits"),
-                "Select the traits you want to calculate for human IgG:",
+                "Select the traits you want to calculate for human IgG N-glycans:",
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
@@ -76,17 +83,17 @@ mod_derived_traits_ui <- function(id){
               ),
               selectizeInput(
                 ns("human_IgG_clusters"),
-                "For which clusters in your data should the human IgG traits be calculated?",
+                "For which clusters in your data should human IgG N-glycan traits be calculated?",
                 choices = c(""),
                 multiple = TRUE
               )
             )),
             # Mouse IgG tab
-            tabPanel("Mouse IgG", tagList(
+            tabPanel("Mouse IgG: N-glycans", tagList(
               br(),
               shinyWidgets::awesomeCheckboxGroup(
                 ns("mouse_IgG_traits"),
-                "Select the traits you want to calculate for mouse IgG:",
+                "Select the traits you want to calculate for mouse IgG N-glycans:",
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
@@ -101,7 +108,7 @@ mod_derived_traits_ui <- function(id){
               ),
               selectizeInput(
                 ns("mouse_IgG_clusters"),
-                "For which clusters in your data should the mouse IgG traits be calculated?",
+                "For which clusters in your data should mouse IgG N-glycan traits be calculated?",
                 choices = c(""),
                 multiple = TRUE
               )
@@ -225,7 +232,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     # Toggle visibility of tabs, depending on input$antibody_types
     observeEvent(input$antibody_types, {
       purrr::map(
-        c("Human IgG", "Mouse IgG"),
+        c("Human IgG: N-glycans", "Mouse IgG: N-glycans"),
         function(antibody_type) {
           if (antibody_type %in% input$antibody_types) {
             showTab(inputId = "tabs", target = antibody_type, select = TRUE)
@@ -255,10 +262,10 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     observe({
       shinyjs::toggleState("do_calculation", condition = all(
         !is.null(input$antibody_types),
-        if ("Human IgG" %in% input$antibody_types) {
+        if ("Human IgG: N-glycans" %in% input$antibody_types) {
           !is.null(input$human_IgG_traits) & !is.null(input$human_IgG_clusters)
         },
-        if ("Mouse IgG" %in% input$antibody_types) {
+        if ("Mouse IgG: N-glycans" %in% input$antibody_types) {
           !is.null(input$mouse_IgG_traits) & !is.null(input$mouse_IgG_clusters)
         }
       ))
@@ -351,7 +358,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     }, priority = 50)
     
     human_IgG_trait_formulas <- reactive({
-      req("Human IgG" %in% input$antibody_types)
+      req("Human IgG: N-glycans" %in% input$antibody_types)
       formula_list <- create_formula_list(
         normalized_data = normalized_data(),
         chosen_traits = human_IgG_traits(),
@@ -362,7 +369,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     }) %>% bindEvent(input$do_calculation)
     
    mouse_IgG_trait_formulas <- reactive({
-     req("Mouse IgG" %in% input$antibody_types)
+     req("Mouse IgG: N-glycans" %in% input$antibody_types)
      formula_list <- create_formula_list(
        normalized_data = normalized_data(),
        chosen_traits = mouse_IgG_traits(),
