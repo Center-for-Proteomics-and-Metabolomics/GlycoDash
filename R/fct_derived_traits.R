@@ -158,6 +158,8 @@ match_mouse_IgG_traits <- function(mouse_traits_ui_input) {
 #' @param reference Reference file for traits, e.g. human_IgG_ref.
 #' 
 create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters, reference) {
+  # Create an empty vector to store possible analytes with unknown glycan compositions
+  unknown_glycans <- c()
   # Initiate an empty list
   formula_list <- vector("character", length(chosen_clusters))
   # Loop over the chosen clusters
@@ -177,29 +179,41 @@ create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters,
     # Get all analytes/glycans in the cluster
     cluster_analytes <- unique(cluster_normalized_data$analyte)
     cluster_glycans <- stringr::str_remove(cluster_analytes, paste0(cluster_name, "1"))
-    # Check for unknown glycans in the data
-    unknown_glycans <- c()
+    # Check for unknown glycan compositions in the data
+    cluster_unknown_glycans <- c()
     for (j in seq(length(cluster_glycans))) {
       if (!cluster_glycans[j] %in% reference$glycan) {
-        unknown_glycans <- c(unknown_glycans, cluster_glycans[j])  # append unknown glycan
+        cluster_unknown_glycans <- c(cluster_unknown_glycans, cluster_analytes[j])
       }
     }
-    if (length(unknown_glycans) > 0) {
-      message("There are unknown glycans")
-      print(unknown_glycans)
+    if (length(cluster_unknown_glycans) > 0) {
+      unknown_glycans <- c(unknown_glycans, cluster_unknown_glycans)
     }
     # Get a subset of the reference file with only the passing analytes
     cluster_ref <- reference %>% 
       dplyr::filter(glycan %in% cluster_glycans)
     # Loop over the chosen traits
-    for (j in seq(length(chosen_traits))) {
-      trait <- chosen_traits[[j]]
+    for (k in seq(length(chosen_traits))) {
+      trait <- chosen_traits[[k]]
       trait_formula <- generate_formula(cluster_name, cluster_ref, trait)
-      cluster_trait_formulas[j] <- trait_formula
+      cluster_trait_formulas[k] <- trait_formula
     }
     # Add the formulas for this cluster to formula_list
     formula_list[i] <- list(cluster_trait_formulas)
   }
+  # Check if there are unknown glycan compositions
+  if (length(unknown_glycans) > 0) {
+    showNotification(
+      paste0(
+        "The following analytes in your data have unknown glycan compositions: ",
+        paste0(unknown_glycans, collapse = ", "),
+        ". Consider using the \"custom glycosylation traits\" option to include
+        these analytes in your traits calculations."
+      ),
+      type = "warning", duration = NULL
+    )
+  }
+  # Return the list with formulas for the traits
   return(formula_list)
 }
 

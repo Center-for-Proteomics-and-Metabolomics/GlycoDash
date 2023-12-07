@@ -394,10 +394,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       req(trait_formulas())
       calculate_traits(normalized_data_wide(), trait_formulas())
     })
-    
-    observeEvent(data_with_derived_traits(), {
-      shinybusy::remove_modal_spinner()
-    })
 
     
     ############### Combined default + custom traits ###############
@@ -490,6 +486,11 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                                    ordering = FALSE,
                                    searching = FALSE))
     })
+    
+    observeEvent(formulas_table(), {
+      shinybusy::remove_modal_spinner()
+    })
+    
     
     # Option to download the default traits formulas as an Excel file
     observe({
