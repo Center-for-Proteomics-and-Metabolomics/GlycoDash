@@ -177,6 +177,17 @@ create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters,
     # Get all analytes/glycans in the cluster
     cluster_analytes <- unique(cluster_normalized_data$analyte)
     cluster_glycans <- stringr::str_remove(cluster_analytes, paste0(cluster_name, "1"))
+    # Check for unknown glycans in the data
+    unknown_glycans <- c()
+    for (j in seq(length(cluster_glycans))) {
+      if (!cluster_glycans[j] %in% reference$glycan) {
+        unknown_glycans <- c(unknown_glycans, cluster_glycans[j])  # append unknown glycan
+      }
+    }
+    if (length(unknown_glycans) > 0) {
+      message("There are unknown glycans")
+      print(unknown_glycans)
+    }
     # Get a subset of the reference file with only the passing analytes
     cluster_ref <- reference %>% 
       dplyr::filter(glycan %in% cluster_glycans)
