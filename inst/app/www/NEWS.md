@@ -4,7 +4,7 @@
 * Added the option to export data in the “Normalized data” tab.
 
 ## Bug fixes
-* GlycoDash can now handle plate designs containing plate number with two digits.
+* GlycoDash can now handle plate designs containing plate numbers with two digits.
 
 
 # v1.3.2
