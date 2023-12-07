@@ -162,12 +162,18 @@ create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters,
   formula_list <- vector("character", length(chosen_clusters))
   # Loop over the chosen clusters
   for (i in seq(length(chosen_clusters))) {
-    cluster_name <- chosen_clusters[[i]]
+    # If the cluster name has "1" included at the end, remove it
+    chosen_cluster <- chosen_clusters[[i]]
+    cluster_name <- ifelse(
+      stringr::str_ends(chosen_cluster, "1"),
+      substr(chosen_cluster, 1, nchar(chosen_cluster) - 1),
+      chosen_cluster
+    )
     # Create an empty list to store the traits formulas for the cluster
     cluster_trait_formulas <- vector("character", length(chosen_traits))
     # Get the normalized data for the cluster
     cluster_normalized_data <- normalized_data %>% 
-      dplyr::filter(cluster == cluster_name)
+      dplyr::filter(cluster == chosen_cluster)
     # Get all analytes/glycans in the cluster
     cluster_analytes <- unique(cluster_normalized_data$analyte)
     cluster_glycans <- stringr::str_remove(cluster_analytes, paste0(cluster_name, "1"))
