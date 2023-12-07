@@ -343,6 +343,13 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       match_mouse_IgG_traits(input$mouse_IgG_traits)
     })
     
+    observeEvent(input$do_calculation, {
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8",
+        text = HTML("<br/><strong>Calculating traits...")
+      )
+    }, priority = 50)
+    
     human_IgG_trait_formulas <- reactive({
       req("Human IgG" %in% input$antibody_types)
       formula_list <- create_formula_list(
@@ -379,6 +386,10 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     data_with_derived_traits <- reactive({
       req(trait_formulas())
       calculate_traits(normalized_data_wide(), trait_formulas())
+    })
+    
+    observeEvent(data_with_derived_traits(), {
+      shinybusy::remove_modal_spinner()
     })
 
     
