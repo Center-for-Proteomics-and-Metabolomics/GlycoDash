@@ -43,9 +43,32 @@ mod_derived_traits_ui <- function(id){
         h1("Glycosylation traits"),
               ),
       fluidRow(
-        shinydashboard::box(
+        shinydashboardPlus::box(
           id = ns("box"),
-          title = "Calculate glycosylation traits automatically",
+          # title = "Calculate glycosylation traits automatically",
+          title = div(
+            id = ns("box_header"),
+            "Calculate glycosylation traits automatically",
+            icon("info-circle", class = "ml") %>%
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "
+                Glycosylation traits are calculated based on a reference list
+                containing known glycan compositions. A warning is shown when
+                your data contains analytes with unknown glycan compositions.
+                <br> <br>
+                The formulas used to calculate the traits will be shown in the 
+                table on the right. You can change the calculations by downloading
+                the table as an Excel file, modifying the formulas, and then uploading
+                the file in the \"custom glycosylation traits\" box below.
+                "
+                ),
+                trigger = "hover",
+                placement = "right",
+                html = "true"
+              ),
+          ),
           width = 5,
           solidHeader = TRUE,
           status = "primary",
@@ -119,7 +142,7 @@ mod_derived_traits_ui <- function(id){
                        "Calculate glycosylation traits")
         ),
         shinydashboard::box(
-          title = "Formulas used to automatically calculate the glycosylation traits:",
+          title = "Formulas used to automatically calculate the glycosylation traits",
           width = 7,
           solidHeader = TRUE,
           status = "primary",
@@ -187,7 +210,7 @@ mod_derived_traits_ui <- function(id){
         ),
         
         shinydashboard::box(
-          title = "Formulas used to calculate the custom glycosylation traits:",
+          title = "Formulas used to calculate the custom glycosylation traits",
           width = 7,
           solidHeader = TRUE,
           status = "primary",
