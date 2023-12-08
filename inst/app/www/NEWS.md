@@ -1,3 +1,17 @@
+# v1.3.3
+## New features
+* The option to automatically calculate glycosylation traits has been redesigned. Calculations are now performed based on a 
+  reference list containing known glycan compositions. Mouse IgG traits were added, as well as extra human IgG traits.
+
+## Adjustments
+* Changed required formatting of custom traits Excel files to be consistent with the automatic trait calculations.
+* Normalization now happens automatically after analyte curation. 
+* Added the option to export data in the “Normalized data” tab.
+
+## Bug fixes
+* GlycoDash can now handle plate designs containing plate numbers with two digits.
+
+
 # v1.3.2
 ## Adjustments
 * Exclude TTP peptide from the IgG1 quantitation.

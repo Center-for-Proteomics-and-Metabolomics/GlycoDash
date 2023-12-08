@@ -70,6 +70,7 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
     
     observe({
       req(extension())
+      shinyFeedback::hideFeedback("file")
       shinyFeedback::feedbackDanger("file",
                                     !(extension() %in% allowed),
                                     text = wrong_extension_warning)
@@ -124,6 +125,7 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
       )
       
     }) %>% bindEvent(input$file$datapath)
+    
     
     return(list(
       plate_design = reactive({ r$plate_design }),

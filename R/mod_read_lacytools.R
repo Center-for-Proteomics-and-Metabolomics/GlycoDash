@@ -18,7 +18,7 @@ mod_read_lacytools_ui <- function(id){
     numericInput(
       ns("n_summaries"),
       "How many LaCyTools summary.txt files do you want to upload?",
-      value = 1, min = 1, max = 10
+      value = 1, min = 1, max = 50
     ),
     uiOutput(ns("summaries")),
     shinyWidgets::awesomeRadio(ns("contains_total_and_specific_samples"),
@@ -104,7 +104,7 @@ mod_read_lacytools_server <- function(id){
       if (any(unlist(has_non_txt_character))) {
         purrr::imap(
           extensions(), function(extension, inputId) {
-            shinyFeedback::feedbackWarning(
+            shinyFeedback::feedbackDanger(
               inputId,
               show = (extension != "txt" && typeof(extension) == "character"),
               text = "Please upload a .txt file."

@@ -12,7 +12,7 @@ mod_normalization_ui <- function(id){
   tagList(
     fluidPage(
       fluidRow(
-        h1("Normalization")
+        h1("Normalized data")
       ),
       fluidRow(
         shinydashboard::box(
@@ -20,14 +20,19 @@ mod_normalization_ui <- function(id){
           width = 12,
           solidHeader = TRUE,
           status = "primary",
-          actionButton(ns("normalization_button"),
-                       "Perform total area normalization"),
-          br(),
-          br(),
-          DT::dataTableOutput(ns("data_table")),
-          br(),
-          br(),
-          "To download the normalized data proceed to the 'Export results' tab."
+          DT::dataTableOutput(ns("data_table"))
+        )
+      ),
+      fluidRow(
+        shinydashboard::box(
+          title = "Export results",
+          width = 6,
+          solidHeader = TRUE,
+          status = "primary",
+          radioButtons(ns("download_format"),
+                       "Choose a file format:",
+                       choices = c("Excel file", "R object")),
+          downloadButton(ns("download"), "Download normalized data")
         )
       )
     )
@@ -50,16 +55,12 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       req(!rlang::is_empty(results_analyte_curation$analyte_curated_data()))
       results_analyte_curation$analyte_curated_data()
     })
-    
-    observe({
-      shinyjs::toggleState(id = "normalization_button",
-                           condition = is_truthy(analyte_curated_data()))
-    })
+
     
     total_intensities <- reactive({
       req(analyte_curated_data())
       calculate_total_intensity(data = analyte_curated_data())
-    }) %>% bindEvent(input$normalization_button)
+    })
     
     normalized_data <- reactive({
       req(total_intensities())
@@ -92,6 +93,29 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       DT::datatable(data = normalized_data_wide(),
                     options = list(scrollX = TRUE))
     })
+    
+    
+    # Download normalized data
+    observe({
+      shinyjs::toggleState("download", is_truthy(normalized_data_wide()))
+    })
+
+    output$download <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        switch(input$download_format,
+               "R object" = paste0(current_datetime, "_normalized_data.rds"),
+               "Excel file" = paste0(current_datetime, "_normalized_data.xlsx"))
+      },
+      content = function(file) {
+        data_to_download <- normalized_data_wide()
+        switch(input$download_format,
+               "R object" = save(data_to_download,
+                                 file = file),
+               "Excel file" = writexl::write_xlsx(data_to_download,
+                                                  path = file))
+      }
+    )
     
     return(list(
       normalized_data = normalized_data,

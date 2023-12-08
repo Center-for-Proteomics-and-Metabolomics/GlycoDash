@@ -63,6 +63,7 @@ mod_process_sample_list_server <- function(id, allowed, reset){
     
     observe({
       req(extension())
+      shinyFeedback::hideFeedback("file")
       shinyFeedback::feedbackDanger("file",
                                     !(extension() %in% allowed),
                                     text = wrong_extension_warning)

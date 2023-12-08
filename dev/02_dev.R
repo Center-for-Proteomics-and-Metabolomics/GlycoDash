@@ -102,6 +102,8 @@ golem::add_css_file( "custom" )
 usethis::use_data_raw( name = "LaCyTools_summary", open = TRUE )
 usethis::use_data_raw(name = "metadata_cleaned", open = TRUE)
 usethis::use_data_raw(name = "example_data", open = TRUE)
+usethis::use_data_raw(name = "human_IgG_ref", open = TRUE)
+
 
 ## Tests ----
 ## Add one line by test you want to create
