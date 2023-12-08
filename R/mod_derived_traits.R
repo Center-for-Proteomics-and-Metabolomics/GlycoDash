@@ -343,7 +343,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
           r$correct_formatting <- FALSE
         }
       }
-    })
+    }, priority = 10)
 
     # Calculate the custom traits
     data_with_custom_traits <- reactive({
@@ -479,7 +479,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     # Display for double check
     output$custom_formulas <- DT::renderDT({
-      req(traits_excel(), data_with_derived_traits(), r$correct_formatting == TRUE)
+      req(traits_excel(), data_with_custom_traits())
       DT::datatable(traits_excel(),
                     rownames = FALSE, 
                     options = list(paging = FALSE,
