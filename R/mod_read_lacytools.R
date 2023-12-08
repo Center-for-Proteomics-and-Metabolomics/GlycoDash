@@ -104,7 +104,7 @@ mod_read_lacytools_server <- function(id){
       if (any(unlist(has_non_txt_character))) {
         purrr::imap(
           extensions(), function(extension, inputId) {
-            shinyFeedback::feedbackWarning(
+            shinyFeedback::feedbackDanger(
               inputId,
               show = (extension != "txt" && typeof(extension) == "character"),
               text = "Please upload a .txt file."

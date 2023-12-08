@@ -26,27 +26,18 @@
 read_metadata <- function(filepaths, filenames) {
   
   metadata_list <- purrr::pmap(
-    list(path = filepaths,
-         name = filenames),
+    list(path = filepaths, name = filenames),
     function(path, name) {
       extension <- tools::file_ext(name)
       if (extension %in% c("xlsx", "xls")) {
-        metadata <- readxl::read_excel(path,
-                                       na = c("", "NA"),
-                                       col_types = "text")
+        metadata <- readxl::read_excel(path, na = c("", "NA"), col_types = "text")
+      } else if (extension == "rds") {
+        metadata <- load_and_assign(path)
       } else {
-        if (extension == "rds") {
-          metadata <- load_and_assign(path)
-        } else {
-          rlang::abort(
-            class = "wrong_extension",
-            message = "Please upload a .xlsx, .xls or .rds file."
-          )
-        }
+        rlang::abort(class = "error")
       }
-      
-      return(metadata)
-    })
+    }
+  )
   
   names(metadata_list) <- filenames
   

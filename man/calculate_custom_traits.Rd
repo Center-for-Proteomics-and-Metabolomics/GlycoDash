@@ -2,35 +2,21 @@
 % Please edit documentation in R/fct_derived_traits.R
 \name{calculate_custom_traits}
 \alias{calculate_custom_traits}
-\title{Calculate custom derived glycosylation traits}
+\title{calculate_custom_traits}
 \usage{
-calculate_custom_traits(normalized_data, custom_traits_formulas)
+calculate_custom_traits(traits_excel, normalized_data_wide)
 }
 \arguments{
-\item{normalized_data}{A dataframe that contains at least the columns
-"analyte", "plate_well" and "relative_abundance". 
-Entries in the column "analyte" must have the form <cluster>1<glycan composition>,
-e.g.:
+\item{traits_excel}{An Excel file with two columns: "trait" and "formula".
+The "trait" column should contain the names of the traits.
+The "formula" column should contain formulas that specify how to calculate the traits.}
 
-IgGII1H3N4F1.}
-
-\item{custom_traits_formulas}{An Excel file loaded with the "load_excel" function
-from the loadxl package. The first column in the Excel file contains the cluster.
-The second column contains a trait to calculate for that cluster.
-Each custom trait must be places on a new row. 
-A formula must have the name of the trait on the left-hand side, 
-and an expression on the right-hand side. E.g.:
-
-my_trait = (0.5 * H3N4 + H4N4) / (H3N4F1 + H4N4F1)}
+\item{normalized_data_wide}{Data frame with normalized data in wide format.}
 }
 \value{
-A tibble with the following columns: sample_name, cluster, group, custom traits
-and formulas used to calculate custom traits.
+A wide dataframe with the normalized data + calculated custom traits.
 }
 \description{
-Calculate custom glycosylation traits of IgG based on formulas provided in an 
-Excel file.
-}
-\examples{
-fill this in...
+Calculate custom glycosylation traits based on an Excel file
+provided by the user.
 }
