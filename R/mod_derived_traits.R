@@ -479,7 +479,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     # Display for double check
     output$custom_formulas <- DT::renderDT({
-      req(traits_excel(), data_with_derived_traits())
+      req(traits_excel(), data_with_derived_traits(), r$correct_formatting == TRUE)
       DT::datatable(traits_excel(),
                     rownames = FALSE, 
                     options = list(paging = FALSE,
