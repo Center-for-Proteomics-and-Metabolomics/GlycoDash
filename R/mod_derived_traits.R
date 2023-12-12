@@ -381,7 +381,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     }, priority = 50)
     
     human_IgG_trait_formulas <- reactive({
-      req("Human IgG: N-glycans" %in% input$antibody_types)
+      load(system.file("app", "www", "human_IgG_ref.rda", package = "GlycoDash"))
       formula_list <- create_formula_list(
         normalized_data = normalized_data(),
         chosen_traits = human_IgG_traits(),
@@ -392,7 +392,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     }) %>% bindEvent(input$do_calculation)
     
    mouse_IgG_trait_formulas <- reactive({
-     req("Mouse IgG: N-glycans" %in% input$antibody_types)
+     load(system.file("app", "www", "mouse_IgG_ref.rda", package = "GlycoDash"))
      formula_list <- create_formula_list(
        normalized_data = normalized_data(),
        chosen_traits = mouse_IgG_traits(),
