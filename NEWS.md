@@ -1,3 +1,8 @@
+# v1.3.4
+## Bug fixes
+* The redesigned option to automatically calculate traits now works when running GlycoDash in a Docker container.
+
+
 # v1.3.3
 ## New features
 * The option to automatically calculate glycosylation traits has been redesigned. Calculations are now performed based on a 
