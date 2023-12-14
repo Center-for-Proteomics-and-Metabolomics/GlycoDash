@@ -104,12 +104,12 @@ match_traits <- function(chosen_traits, antibody_type) {
     )
   } else if (antibody_type == "Human IgA: O-glycans") {
     traits <- c(
-      "Average number of GalNAcs" = "galnacs",
-      "Average number of galactoses" = "galactoses",
-      "Average number of sialic acids" = "sialic_acids",
-      "Average number of sialic acids per galactose" = "sialic_acids_per_galactose",
-      "Average number of galactoses per GalNAc" = "galactoses_per_galnac",
-      "Percentage of glycans with more GalNAcs than galactoses" = "more_galnacs_than_galactoses"
+      "Average number of GalNAcs" = "O_galnacs",
+      "Average number of galactoses" = "O_galactoses",
+      "Average number of sialic acids" = "O_sialic_acids",
+      "Average number of sialic acids per galactose" = "O_sialic_acids_per_galactose",
+      "Average number of galactoses per GalNAc" = "O_galactoses_per_galnac",
+      "Percentage of glycans with more GalNAcs than galactoses" = "O_more_galnacs_than_galactoses"
     )
   } else if (antibody_type == "Mouse IgG: N-glycans") {
     traits <- c(
