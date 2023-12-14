@@ -46,7 +46,7 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   # Divide by the sum of all complex-type glycans if necessary
   # Or by the sum of all oligomannose glycans
   if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation", 
-                          "mono_antennary", "alpha_galactosylation")) {
+                          "mono_antennary", "alpha_galactosylation", "sialic_acids_per_galactose")) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::select(glycan, complex) %>% 
       dplyr::filter(complex == 1)
@@ -96,6 +96,7 @@ match_human_IgG_traits <- function(human_traits_ui_input) {
     "Bisection of complex-type glycans" = "bisection",
     "Galactosylation of complex-type glycans" = "galactosylation",
     "Sialylation of complex type-glycans" = "sialylation",
+    "Complex-type glycans: average number of sialic acids per galactose" = "sialic_acids_per_galactose",
     "Percentage of monoantennary complex-type glycans" = "mono_antennary",
     "Percentage of hybrid-type glycans" = "hybrid",
     "Percentage of oligomannose-type glycans" = "oligomannose_relative",
@@ -129,6 +130,7 @@ match_mouse_IgG_traits <- function(mouse_traits_ui_input) {
     "Bisection of complex-type glycans" = "bisection",
     "Galactosylation of complex-type glycans" = "galactosylation",
     "Sialylation of complex-type glycans" = "sialylation",
+    "Complex-type glycans: average number of sialic acids per galactose" = "sialic_acids_per_galactose",
     "\u03B1-1,3-galactosylation of complex-type glycans" = "alpha_galactosylation",
     "Percentage of monoantennary complex-type glycans" = "mono_antennary",
     "Percentage of hybrid-type glycans" = "hybrid",

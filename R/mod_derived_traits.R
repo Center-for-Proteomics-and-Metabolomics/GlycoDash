@@ -98,6 +98,7 @@ mod_derived_traits_ui <- function(id){
                   "Bisection of complex-type glycans",
                   "Galactosylation of complex-type glycans",
                   "Sialylation of complex type-glycans",
+                  "Complex-type glycans: average number of sialic acids per galactose",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
                   "Percentage of oligomannose-type glycans",
@@ -122,6 +123,7 @@ mod_derived_traits_ui <- function(id){
                   "Bisection of complex-type glycans",
                   "Galactosylation of complex-type glycans",
                   "Sialylation of complex-type glycans",
+                  "Complex-type glycans: average number of sialic acids per galactose",
                   "\u03B1-1,3-galactosylation of complex-type glycans",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
@@ -381,23 +383,23 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     }, priority = 50)
     
     human_IgG_trait_formulas <- reactive({
-      load(system.file("app", "www", "human_IgG_ref.rda", package = "GlycoDash"))
+      load(system.file("app", "www", "human_IgG_N_ref.rda", package = "GlycoDash"))
       formula_list <- create_formula_list(
         normalized_data = normalized_data(),
         chosen_traits = human_IgG_traits(),
         chosen_clusters = input$human_IgG_clusters,
-        reference = human_IgG_ref
+        reference = human_IgG_N_ref
       )
       purrr::reduce(formula_list, c)  # c = concatenate
     }) %>% bindEvent(input$do_calculation)
     
    mouse_IgG_trait_formulas <- reactive({
-     load(system.file("app", "www", "mouse_IgG_ref.rda", package = "GlycoDash"))
+     load(system.file("app", "www", "mouse_IgG_N_ref.rda", package = "GlycoDash"))
      formula_list <- create_formula_list(
        normalized_data = normalized_data(),
        chosen_traits = mouse_IgG_traits(),
        chosen_clusters = input$mouse_IgG_clusters,
-       reference = mouse_IgG_ref
+       reference = mouse_IgG_N_ref
      )
      purrr::reduce(formula_list, c)
    }) %>% bindEvent(input$do_calculation)
