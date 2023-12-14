@@ -390,6 +390,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
 
     ####################  Default glycosylation traits  ####################
     
+    # Get reference file column names for the chosen traits
     human_IgG_traits <- reactive({
       req(input$human_IgG_traits)
       match_traits(input$human_IgG_traits, "Human IgG: N-glycans")
@@ -405,6 +406,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       match_traits(input$mouse_IgG_traits, "Mouse IgG: N-glycans")
     })
     
+    # Show a spinner when user pushes button
     observeEvent(input$do_calculation, {
       shinybusy::show_modal_spinner(
         spin = "cube-grid", color = "#0275D8",
@@ -412,6 +414,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       )
     }, priority = 50)
     
+    # Determine formulas for the traits
     human_IgG_trait_formulas <- reactive({
       load(system.file("app", "www", "human_IgG_N_ref.rda", package = "GlycoDash"))
       formula_list <- create_formula_list(
@@ -423,28 +426,50 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       purrr::reduce(formula_list, c)  # c = concatenate
     }) %>% bindEvent(input$do_calculation)
     
-   mouse_IgG_trait_formulas <- reactive({
-     load(system.file("app", "www", "mouse_IgG_N_ref.rda", package = "GlycoDash"))
-     formula_list <- create_formula_list(
-       normalized_data = normalized_data(),
-       chosen_traits = mouse_IgG_traits(),
-       chosen_clusters = input$mouse_IgG_clusters,
-       reference = mouse_IgG_N_ref
-     )
-     purrr::reduce(formula_list, c)
-   }) %>% bindEvent(input$do_calculation)
-   
-    trait_formulas <- reactive({
-      req(any(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas())))
-      if (all(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas()))) {
-        c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
-      } else if (is_truthy(human_IgG_trait_formulas())) {
-        human_IgG_trait_formulas()
-      } else if (is_truthy(mouse_IgG_trait_formulas())) {
-        mouse_IgG_trait_formulas()
-      }
-    })
+    human_IgA_O_trait_formulas <- reactive({
+      load(system.file("app", "www", "human_IgA_O_ref.rda", package = "GlycoDash"))
+      formula_list <- create_formula_list(
+        normalized_data = normalized_data(),
+        chosen_traits = human_IgA_O_traits(),
+        chosen_clusters = input$human_IgA_O_clusters,
+        reference = human_IgA_O_ref
+      )
+      purrr::reduce(formula_list, c)  # c = concatenate
+    }) %>% bindEvent(input$do_calculation)
     
+    mouse_IgG_trait_formulas <- reactive({
+      load(system.file("app", "www", "mouse_IgG_N_ref.rda", package = "GlycoDash"))
+      formula_list <- create_formula_list(
+        normalized_data = normalized_data(),
+        chosen_traits = mouse_IgG_traits(),
+        chosen_clusters = input$mouse_IgG_clusters,
+        reference = mouse_IgG_N_ref
+       )
+       purrr::reduce(formula_list, c)
+    }) %>% bindEvent(input$do_calculation)
+   
+  
+    # Combine the trait formulas into one list
+    trait_formulas <- reactive({
+      req(any(
+        is_truthy(human_IgG_trait_formulas()),
+        is_truthy(human_IgA_O_trait_formulas()),
+        is_truthy(mouse_IgG_trait_formulas())
+      ))
+      formulas_to_include <- c()
+      if (is_truthy(human_IgG_trait_formulas())) {
+        formulas_to_include <- c(formulas_to_include, human_IgG_trait_formulas())
+      }
+      if (is_truthy(human_IgA_O_trait_formulas())) {
+        formulas_to_include <- c(formulas_to_include, human_IgA_O_trait_formulas())
+      }
+      if (is_truthy(mouse_IgG_trait_formulas())) {
+        formulas_to_include <- c(formulas_to_include, mouse_IgG_trait_formulas())
+      }
+      return(formulas_to_include)
+    })
+
+    # Calculate the traits
     data_with_derived_traits <- reactive({
       req(trait_formulas())
       calculate_traits(normalized_data_wide(), trait_formulas())
