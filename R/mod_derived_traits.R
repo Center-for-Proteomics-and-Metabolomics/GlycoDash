@@ -78,7 +78,7 @@ mod_derived_traits_ui <- function(id){
             choices = c(
               "Human IgG: N-glycans",
               # "Human IgA: N-glycans",
-              # "Human IgA: O-glycans",
+              "Human IgA: O-glycans",
               # "Human IgM: N-glycans",
               "Mouse IgG: N-glycans"
             )
@@ -108,6 +108,28 @@ mod_derived_traits_ui <- function(id){
               selectizeInput(
                 ns("human_IgG_clusters"),
                 "For which clusters in your data should human IgG N-glycan traits be calculated?",
+                choices = c(""),
+                multiple = TRUE
+              )
+            )),
+            # Human IgA O-glycans tab
+            tabPanel("Human IgA: O-glycans", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgA_O_traits"),
+                "Select the traits you want to calculate for human IgA O-glycans:",
+                choices = c(
+                  "Average number of GalNAcs",
+                  "Average number of galactoses",
+                  "Average number of sialic acids",
+                  "Average number of sialic acids per galactose",
+                  "Average number of galactoses per GalNAc",
+                  "Percentage of glycans with more GalNAcs than galactoses"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgA_O_clusters"),
+                "For which clusters in your data should human IgA O-glycan traits be calculated?",
                 choices = c(""),
                 multiple = TRUE
               )
@@ -257,7 +279,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     # Toggle visibility of tabs, depending on input$antibody_types
     observeEvent(input$antibody_types, {
       purrr::map(
-        c("Human IgG: N-glycans", "Mouse IgG: N-glycans"),
+        c("Human IgG: N-glycans", "Human IgA: O-glycans", "Mouse IgG: N-glycans"),
         function(antibody_type) {
           if (antibody_type %in% input$antibody_types) {
             showTab(inputId = "tabs", target = antibody_type, select = TRUE)
@@ -277,7 +299,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     observe({
       req(clusters())
-      for (id in c("human_IgG_clusters", "mouse_IgG_clusters")) {
+      for (id in c("human_IgG_clusters", "human_IgA_O_clusters", "mouse_IgG_clusters")) {
         updateSelectizeInput(id, choices = clusters(), session = session)
       }
     })
@@ -289,6 +311,9 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         !is.null(input$antibody_types),
         if ("Human IgG: N-glycans" %in% input$antibody_types) {
           !is.null(input$human_IgG_traits) & !is.null(input$human_IgG_clusters)
+        },
+        if ("Human IgA: O-glycans" %in% input$antibody_types) {
+          !is.null(input$human_IgA_O_traits) & !is.null(input$human_IgA_O_clusters)
         },
         if ("Mouse IgG: N-glycans" %in% input$antibody_types) {
           !is.null(input$mouse_IgG_traits) & !is.null(input$mouse_IgG_clusters)
