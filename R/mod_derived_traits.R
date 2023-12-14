@@ -392,12 +392,17 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     human_IgG_traits <- reactive({
       req(input$human_IgG_traits)
-      match_human_IgG_traits(input$human_IgG_traits)
+      match_traits(input$human_IgG_traits, "Human IgG: N-glycans")
+    })
+    
+    human_IgA_O_traits <- reactive({
+      req(input$human_IgA_O_traits)
+      match_traits(input$human_IgA_O_traits, "Human IgA: O-glycans")
     })
     
     mouse_IgG_traits <- reactive({
       req(input$mouse_IgG_traits)
-      match_mouse_IgG_traits(input$mouse_IgG_traits)
+      match_traits(input$mouse_IgG_traits, "Mouse IgG: N-glycans")
     })
     
     observeEvent(input$do_calculation, {

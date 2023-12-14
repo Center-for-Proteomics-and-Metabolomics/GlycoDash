@@ -80,69 +80,56 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
 
 
 
-
-#' match_human_IgG_traits
+#' match_traits
 #'
-#' Matches human IgG traits descriptions from UI to column names in human_IgG_ref
+#' Matches chosen glycan traits descriptions from UI to column names in in reference files.
 #'
-#' @param human_traits_ui_input Character vector from the UI human IgG traits input.
+#' @param chosen_traits Character vector from the UI traits inputs.
 #'
-#' @return A character vector with short names of IgG traits, which correspond to column names
-# in the human_IgG_ref file.
+#' @return A character vector with short names of traits, corresponding to column names in reference files.
 #'
-match_human_IgG_traits <- function(human_traits_ui_input) {
-  traits <- c(
-    "Fucosylation of complex-type glycans" = "fucosylation",
-    "Bisection of complex-type glycans" = "bisection",
-    "Galactosylation of complex-type glycans" = "galactosylation",
-    "Sialylation of complex type-glycans" = "sialylation",
-    "Complex-type glycans: average number of sialic acids per galactose" = "sialic_acids_per_galactose",
-    "Percentage of monoantennary complex-type glycans" = "mono_antennary",
-    "Percentage of hybrid-type glycans" = "hybrid",
-    "Percentage of oligomannose-type glycans" = "oligomannose_relative",
-    "Oligomannose-type glycans: average number of mannoses" = "oligomannose_average"
-  )
+match_traits <- function(chosen_traits, antibody_type) {
   
-  replaced_vector <- vector("character", length = length(human_traits_ui_input))
-  
-  for (i in seq(length(human_traits_ui_input))) {
-    trait_desc <- human_traits_ui_input[i]
-    replaced_vector[i] <- traits[[trait_desc]]
+  if (antibody_type == "Human IgG: N-glycans") {
+    traits <- c(
+      "Fucosylation of complex-type glycans" = "fucosylation",
+      "Bisection of complex-type glycans" = "bisection",
+      "Galactosylation of complex-type glycans" = "galactosylation",
+      "Sialylation of complex type-glycans" = "sialylation",
+      "Complex-type glycans: average number of sialic acids per galactose" = "sialic_acids_per_galactose",
+      "Percentage of monoantennary complex-type glycans" = "mono_antennary",
+      "Percentage of hybrid-type glycans" = "hybrid",
+      "Percentage of oligomannose-type glycans" = "oligomannose_relative",
+      "Oligomannose-type glycans: average number of mannoses" = "oligomannose_average"
+    )
+  } else if (antibody_type == "Human IgA: O-glycans") {
+    traits <- c(
+      "Average number of GalNAcs" = "galnacs",
+      "Average number of galactoses" = "galactoses",
+      "Average number of sialic acids" = "sialic_acids",
+      "Average number of sialic acids per galactose" = "sialic_acids_per_galactose",
+      "Average number of galactoses per GalNAc" = "galactoses_per_galnac",
+      "Percentage of glycans with more GalNAcs than galactoses" = "more_galnacs_than_galactoses"
+    )
+  } else if (antibody_type == "Mouse IgG: N-glycans") {
+    traits <- c(
+      "Fucosylation of complex-type glycans" = "fucosylation",
+      "Bisection of complex-type glycans" = "bisection",
+      "Galactosylation of complex-type glycans" = "galactosylation",
+      "Sialylation of complex-type glycans" = "sialylation",
+      "Complex-type glycans: average number of sialic acids per galactose" = "sialic_acids_per_galactose",
+      "\u03B1-1,3-galactosylation of complex-type glycans" = "alpha_galactosylation",
+      "Percentage of monoantennary complex-type glycans" = "mono_antennary",
+      "Percentage of hybrid-type glycans" = "hybrid",
+      "Percentage of oligomannose-type glycans" = "oligomannose_average",
+      "Oligomannose-type glycans: average number of mannoses" = "oligomannose_relative"
+    )
   }
   
-  return(replaced_vector)
-}
-
-
-
-#' match_mouse_IgG_traits
-#'
-#' Matches mouse IgG traits descriptions from UI to column names in mouse_IgG_ref
-#'
-#' @param mouse_traits_ui_input Character vector from the UI mouse IgG traits input.
-#'
-#' @return A character vector with short names of mouse IgG traits, which correspond to column names
-# in the mouse_IgG_ref file.
-#'
-match_mouse_IgG_traits <- function(mouse_traits_ui_input) {
-  traits <- c(
-    "Fucosylation of complex-type glycans" = "fucosylation",
-    "Bisection of complex-type glycans" = "bisection",
-    "Galactosylation of complex-type glycans" = "galactosylation",
-    "Sialylation of complex-type glycans" = "sialylation",
-    "Complex-type glycans: average number of sialic acids per galactose" = "sialic_acids_per_galactose",
-    "\u03B1-1,3-galactosylation of complex-type glycans" = "alpha_galactosylation",
-    "Percentage of monoantennary complex-type glycans" = "mono_antennary",
-    "Percentage of hybrid-type glycans" = "hybrid",
-    "Percentage of oligomannose-type glycans" = "oligomannose_average",
-    "Oligomannose-type glycans: average number of mannoses" = "oligomannose_relative"
-  )
-  
-  replaced_vector <- vector("character", length = length(mouse_traits_ui_input))
-  
-  for (i in seq(length(mouse_traits_ui_input))) {
-    trait_desc <- mouse_traits_ui_input[i]
-    replaced_vector[i] <- traits[[trait_desc]]
+  replaced_vector <- vector("character", length = length(chosen_traits))
+  for (i in seq(length(chosen_traits))) {
+    traits_desc <- chosen_traits[i]
+    replaced_vector[i] <- traits[[traits_desc]]
   }
   
   return(replaced_vector)
