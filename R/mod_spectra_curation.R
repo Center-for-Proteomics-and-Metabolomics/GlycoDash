@@ -254,6 +254,7 @@ mod_spectra_curation_ui <- function(id){
             tabsetPanel(id = ns("more_than_4_clusters")),
             br(),
             tabsetPanel(
+              id = ns("result_tables"),
               tabPanel(title = "Details of passing spectra per analyte",
                        column(width = 12,
                               br(),
@@ -685,9 +686,24 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     
     
-    # Download buttons
     # TODO: shorten this code
     observe({
+      # Toggle visibility of tabs
+      tab_names <- c(
+        "Details of failed spectra per analyte",
+        "Overview of failed spectra",
+        "Details of passing spectra per analyte"
+      )
+      if (is_truthy(to_return())) {
+        purrr::map(tab_names, function(tab_name) {
+          showTab(inputId = "result_tables", target = tab_name, select = TRUE)
+        })
+      } else {
+        purrr::map(tab_names, function(tab_name) {
+          hideTab(inputId = "result_tables", target = tab_name)
+        })
+      }
+      # Download buttons
       shinyjs::toggleState("download1", is_truthy(to_return()))
       shinyjs::toggleState("download2", is_truthy(curated_data()))
       shinyjs::toggleState("download3", is_truthy(curated_data()))
