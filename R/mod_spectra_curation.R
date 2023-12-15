@@ -272,7 +272,7 @@ mod_spectra_curation_ui <- function(id){
       ),
       fluidRow(
         column(
-          width = 12,
+          width = 6,
           shinydashboard::box(
             title = "Export results",
             width = NULL,
