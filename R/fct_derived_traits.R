@@ -22,7 +22,7 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   # Collect terms and coefficients
   terms <- strsplit(formula_string, " \\+ ")[[1]]
   coefficients <- sapply(strsplit(terms, " \\* "), `[`, 1)
-  unique_coefficients <- unique(coefficients)
+  unique_coefficients <- sort(unique(coefficients))
   
   # Group terms by coefficients
   grouped_terms <- lapply(unique_coefficients, function(coeff) {
