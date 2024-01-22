@@ -549,9 +549,9 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
             tidyr::drop_na(., input$biogroup_column) %>% 
             # Drop samples in biological groups that should be ignored
             dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>%
-            curate_analytes(., input$cut_off, input$biogroup_column)
+            curate_analytes(., cut_offs(), input$biogroup_column)
         } else if (input$curation_method == "On all data") {
-            curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
+            curated_analytes <- curate_analytes(checked_analytes(), cut_offs())
         } else if (input$curation_method == "Per sample") {
             # Curation per sample
             curated_analytes <- checked_analytes() %>% 
@@ -661,7 +661,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       req(analyte_curated_data())
       list(
         curated_analytes = curated_analytes(),
-        cut_off = input$cut_off,
+        cut_offs = cut_offs(),
         analyte_curated_data = analyte_curated_data(),
         method = input$method
       )

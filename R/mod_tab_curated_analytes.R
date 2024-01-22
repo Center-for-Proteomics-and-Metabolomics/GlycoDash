@@ -35,10 +35,10 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
     curated_analytes_plot <- reactive({
       req(info$method  == "Curate analytes based on data")
       req(info$curated_analytes)
-      req(info$cut_off)
+      req(info$cut_offs)
       
       plot_analyte_curation(curated_analytes = info$curated_analytes,
-                            cut_off_percentage = info$cut_off,
+                            cut_off_percentage = info$cut_offs[[cluster]],
                             selected_cluster = cluster,
                             bio_groups_colname = biogroup_column)
     })
