@@ -169,7 +169,14 @@ mod_analyte_curation_ui <- function(id){
                   placement = "right",
                   trigger = "hover",
                   html = "true"),
-              numericInput(ns("cut_off"), "Cut-off (%)", value = 25, min = 0, max = 100) %>% 
+              shinyWidgets::materialSwitch(
+                ns("cut_offs_per_cluster"),
+                "Choose cut-offs per cluster",
+                 right = TRUE,
+                 status = "primary"
+              ),
+              uiOutput(ns("cluster_cut_offs")),
+              numericInput(ns("cut_off"), "Cut-off (%)", value = 50, min = 0, max = 100) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
                   content = HTML(paste0(
@@ -195,7 +202,7 @@ mod_analyte_curation_ui <- function(id){
             radioButtons(ns("download_format"),
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
-            downloadButton(ns("download"), 
+            downloadButton(ns("download"),
                            "Download analyte-curated data")
           )
         )
@@ -290,6 +297,21 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       )
     })
 
+    # Generate input boxes for cut-offs per cluster
+    cut_off_ids <- reactive({
+      req(passing_spectra(), input$cut_offs_per_cluster == TRUE)
+      paste0(unique(passing_spectra()$cluster), "_cut_off")
+    })
+    
+    output$cluster_cut_offs <- renderUI(
+      purrr::map(cut_off_ids(), function(id) {
+        numericInput(
+          ns(id), label = paste0(sub("_cut_off$", "", id), " cut-off (%)"),
+          min = 0, max = 100, value = 50
+        )
+      })
+    )
+    
     
     # Show and hide UI based on the chosen method:
     observe({
@@ -339,7 +361,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       # Don't show cut-off option when doing curation per sample.
       shinyjs::toggle(
         "cut_off",
-        condition = input$curation_method != "Per sample"
+        condition = all(input$curation_method != "Per sample", input$cut_offs_per_cluster == FALSE)
       )
       # Toggle download button
       shinyjs::toggleState(
