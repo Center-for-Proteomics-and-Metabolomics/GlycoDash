@@ -169,7 +169,14 @@ mod_analyte_curation_ui <- function(id){
                   placement = "right",
                   trigger = "hover",
                   html = "true"),
-              numericInput(ns("cut_off"), "Cut-off (%)", value = 25, min = 0, max = 100) %>% 
+              shinyWidgets::materialSwitch(
+                ns("cut_offs_per_cluster"),
+                "Choose cut-offs per cluster",
+                 right = TRUE,
+                 status = "primary"
+              ),
+              uiOutput(ns("cluster_cut_offs")),
+              numericInput(ns("cut_off"), "Cut-off (%)", value = 50, min = 0, max = 100) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
                   content = HTML(paste0(
@@ -195,7 +202,7 @@ mod_analyte_curation_ui <- function(id){
             radioButtons(ns("download_format"),
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
-            downloadButton(ns("download"), 
+            downloadButton(ns("download"),
                            "Download analyte-curated data")
           )
         )
@@ -290,9 +297,25 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       )
     })
 
+    # Generate input boxes for cut-offs per cluster
+    cut_off_ids <- reactive({
+      req(passing_spectra(), input$cut_offs_per_cluster == TRUE)
+      unique(passing_spectra()$cluster)
+    })
+    
+    output$cluster_cut_offs <- renderUI(
+      purrr::map(cut_off_ids(), function(id) {
+        numericInput(
+          ns(id), label = paste0(id, " cut-off (%)"),
+          min = 0, max = 100, value = 50
+        )
+      })
+    )
+    
     
     # Show and hide UI based on the chosen method:
     observe({
+      shinyjs::toggle("cut-off", input$cut_offs_per_cluster == FALSE)
       shinyjs::toggle("curation_method",
                       condition = input$method == "Curate analytes based on data")
       shinyjs::toggle("analyte_list_div", 
@@ -306,18 +329,17 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                      condition = input$method == "Curate analytes based on data" & 
                      input$curation_method == "Per biological group")
       # Only enable button under right circumstances:
-      shinyjs::toggleState("curate_analytes",
-                           condition = 
-                             all(
-                               is_truthy(passing_spectra()),
-                               any(
-                                 all(input$method == "Supply an analyte list", is_truthy(analyte_list())),
-                                 all(
-                                   input$method == "Curate analytes based on data",
-                                   (input$curation_method != "Per biological group") | isTRUE(rv_resp$response)
-                                 )
-                               )
-                             )
+      shinyjs::toggleState(
+        "curate_analytes", condition = all(
+          is_truthy(passing_spectra()),
+          any(
+            all(input$method == "Supply an analyte list", is_truthy(analyte_list())),
+            all(
+              input$method == "Curate analytes based on data",
+              any(input$curation_method != "Per biological group", isTRUE(rv_resp$response))
+            )
+          )
+        )
       )
       # Only ask for analyte curation per biological group when "Curate analytes based on data"
       shinyjs::toggle("curate_per_group",
@@ -339,7 +361,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       # Don't show cut-off option when doing curation per sample.
       shinyjs::toggle(
         "cut_off",
-        condition = input$curation_method != "Per sample"
+        condition = all(input$curation_method != "Per sample", input$cut_offs_per_cluster == FALSE)
       )
       # Toggle download button
       shinyjs::toggleState(
@@ -489,6 +511,24 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       )
     })
     
+    # Create a named list with a cut-off percentage for each cluster
+    cut_offs <- reactive({
+      clusters <- unique(passing_spectra()$cluster)
+      values <- vector("list", length(clusters))
+      names(values) <- clusters
+      if (input$cut_offs_per_cluster == FALSE) {
+        # Same cut-off for each cluster
+        for (cluster in clusters) {
+          values[[cluster]] <- input$cut_off
+        }
+      } else {
+        # Separate cut-offs
+        for (cluster in clusters) {
+          values[[cluster]] <- input[[cluster]]
+        }
+      }
+      return(values)
+    })
     
     
     # Curate the analytes when user pushed the button.
@@ -509,9 +549,9 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
             tidyr::drop_na(., input$biogroup_column) %>% 
             # Drop samples in biological groups that should be ignored
             dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>%
-            curate_analytes(., input$cut_off, input$biogroup_column)
+            curate_analytes(., cut_offs(), input$biogroup_column)
         } else if (input$curation_method == "On all data") {
-            curated_analytes <- curate_analytes(checked_analytes(), input$cut_off)
+            curated_analytes <- curate_analytes(checked_analytes(), cut_offs())
         } else if (input$curation_method == "Per sample") {
             # Curation per sample
             curated_analytes <- checked_analytes() %>% 
@@ -621,7 +661,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       req(analyte_curated_data())
       list(
         curated_analytes = curated_analytes(),
-        cut_off = input$cut_off,
+        cut_offs = cut_offs(),
         analyte_curated_data = analyte_curated_data(),
         method = input$method
       )

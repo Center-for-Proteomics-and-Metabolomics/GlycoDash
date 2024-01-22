@@ -6,7 +6,7 @@
 \usage{
 curate_analytes(
   checked_analytes,
-  cut_off_percentage,
+  cut_off_percentages,
   bio_groups_colname = NULL
 )
 }
@@ -14,9 +14,9 @@ curate_analytes(
 \item{checked_analytes}{The result of the
 \code{\link{check_analyte_quality_criteria}} function.}
 
-\item{cut_off_percentage}{The minimum percentage of spectra in which an
-analyte needs to fulfill the quality criteria in order for that analyte to
-pass curation.}
+\item{cut_off_percentages}{A named list with the minimum percentages of spectra in which an
+analyte needs to fulfill the quality criteria in order for that analyte to pass curation.
+Separate cut_off for each cluster.}
 
 \item{bio_groups_colname}{The name of the column that contains the biological groups,
 as a character string. This parameter is only required when you want to perform

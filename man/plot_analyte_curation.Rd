@@ -17,10 +17,6 @@ function: A dataframe with all analytes and charge combinations in the
 data, their percentage of passing spectra and whether or not they passed
 analyte curation.}
 
-\item{cut_off_percentage}{The minimum percentage of spectra in which an
-analyte needs to fulfill the quality criteria in order for that analyte to
-pass curation.}
-
 \item{selected_cluster}{The cluster for which the analyte curation results
 should be plotted.}
 
