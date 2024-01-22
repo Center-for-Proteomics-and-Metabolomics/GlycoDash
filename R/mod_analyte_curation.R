@@ -300,13 +300,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # Generate input boxes for cut-offs per cluster
     cut_off_ids <- reactive({
       req(passing_spectra(), input$cut_offs_per_cluster == TRUE)
-      paste0(unique(passing_spectra()$cluster), "_cut_off")
+      unique(passing_spectra()$cluster)
     })
     
     output$cluster_cut_offs <- renderUI(
       purrr::map(cut_off_ids(), function(id) {
         numericInput(
-          ns(id), label = paste0(sub("_cut_off$", "", id), " cut-off (%)"),
+          ns(id), label = paste0(id, " cut-off (%)"),
           min = 0, max = 100, value = 50
         )
       })
@@ -511,6 +511,24 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       )
     })
     
+    # Create a named list with a cut-off percentage for each cluster
+    cut_offs <- reactive({
+      clusters <- unique(passing_spectra()$cluster)
+      values <- vector("list", length(clusters))
+      names(values) <- clusters
+      if (input$cut_offs_per_cluster == FALSE) {
+        # Same cut-off for each cluster
+        for (cluster in clusters) {
+          values[[cluster]] <- input$cut_off
+        }
+      } else {
+        # Separate cut-offs
+        for (cluster in clusters) {
+          values[[cluster]] <- input[[cluster]]
+        }
+      }
+      return(values)
+    })
     
     
     # Curate the analytes when user pushed the button.
