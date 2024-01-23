@@ -15,16 +15,26 @@ mod_read_lacytools_ui <- function(id){
     width = NULL,
     solidHeader = TRUE,
     status = "primary",
+    fileInput(
+      ns("summaries_input"),
+      "Upload one or more LaCyTools summary text files:",
+      multiple = TRUE
+    ),
+    tableOutput(ns("uploaded_files")),
+    ###########################################################################
+    ###########################################################################
     numericInput(
       ns("n_summaries"),
       "How many LaCyTools summary.txt files do you want to upload?",
       value = 1, min = 1, max = 50
     ),
     uiOutput(ns("summaries")),
+    ###########################################################################
+    ###########################################################################
     shinyWidgets::awesomeRadio(ns("contains_total_and_specific_samples"),
-                               "Does your data contain total and specific immunoglobulin samples?",
-                               choices = c("Yes", "No"),
-                               selected = "No"),
+    "Does your data contain total and specific immunoglobulin samples?",
+    choices = c("Yes", "No"),
+    selected = "No"),
     div(id = ns("keywords_specific_total"),
         # Set the width of popovers in this div to 200px:
         tags$style(HTML(paste0("#",
@@ -58,6 +68,38 @@ mod_read_lacytools_ui <- function(id){
 mod_read_lacytools_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    # Show the uploaded LaCyTools files in the table
+    output$uploaded_files <- renderTable({
+      uploaded_files <- input$summaries_input
+      uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
+      uploaded_files
+    }, striped = TRUE, bordered = TRUE, align = "c")
+    
+    
+    # Check the file extensions of the uploaded summaries.
+    all_txt_files <- reactive({
+      req(input$summaries_input)
+      non_txt_files <- subset(input$summaries_input, !grepl("\\.txt$", name, ignore.case = TRUE))
+      if (nrow(non_txt_files) > 0) {
+        FALSE
+      } else {
+        TRUE
+      }
+    })
+    
+    # Show a warning when non-text files are uploaded
+    observe({
+      req(input$summaries_input)
+      shinyFeedback::feedbackDanger(
+        inputId = "summaries_input",
+        show = !is_truthy(all_txt_files()),
+        text = "Please only upload text files."
+      )
+    })
+
+    
+    
     
     # Create inputIds for the LaCyTools summaries
     summary_inputIds <- reactive({
