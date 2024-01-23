@@ -1,3 +1,9 @@
+# v1.3.5
+## Adjustments
+* Multiple LaCyTools summary files can now be uploaded at once, rather than one by one.
+* In analyte curation, it is now possible to choose separate cut-offs for different clusters.
+
+
 # v1.3.4
 ## Bug fixes
 * The redesigned option to automatically calculate traits now works when running GlycoDash in a Docker container.

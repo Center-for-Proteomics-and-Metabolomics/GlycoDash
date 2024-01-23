@@ -108,9 +108,9 @@ throw_out_samples <- function(passing_spectra,
 #' 
 #' @param checked_analytes The result of the
 #'   \code{\link{check_analyte_quality_criteria}} function.
-#' @param cut_off_percentage The minimum percentage of spectra in which an
-#'   analyte needs to fulfill the quality criteria in order for that analyte to
-#'   pass curation.
+#' @param cut_off_percentages A named list with the minimum percentages of spectra in which an
+#'   analyte needs to fulfill the quality criteria in order for that analyte to pass curation.
+#'   Separate cut_off for each cluster.
 #' @param bio_groups_colname The name of the column that contains the biological groups,
 #'   as a character string. This parameter is only required when you want to perform
 #'   analyte curation per biological group. When this parameter is not specified, it is 
@@ -188,7 +188,7 @@ throw_out_samples <- function(passing_spectra,
 #' curate_analytes(checked_analytes = checked_analytes,
 #'                 cut_off_percentage = 25)
 #' 
-curate_analytes <- function(checked_analytes, cut_off_percentage, 
+curate_analytes <- function(checked_analytes, cut_off_percentages, 
                             bio_groups_colname = NULL) {
   
   required_columns <- c("cluster", 
@@ -204,7 +204,7 @@ curate_analytes <- function(checked_analytes, cut_off_percentage,
                                  "are not present in the data.",
                                  "Attention: curate_analytes() can only be used after spectra curation has been performed with curate_spectra()"))
   }
-  
+
   curated_analytes <- checked_analytes %>%
     {
       if (is.null(bio_groups_colname)) {
@@ -217,7 +217,8 @@ curate_analytes <- function(checked_analytes, cut_off_percentage,
     } %>%
     dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cut_off_percentage)
+    dplyr::mutate(cluster_cut_off = cut_off_percentages[cluster]) %>% 
+    dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cluster_cut_off)
   
   return(curated_analytes)
 }

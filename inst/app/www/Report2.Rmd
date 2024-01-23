@@ -22,7 +22,7 @@ params:
   analyte_curation_choice: NA
   ignore_samples: NA
   groups_to_ignore: NA
-  cut_off_percentage: NA
+  cut_offs: NA
   analyte_list: NA
   analyte_curation_tab_contents: NA
   derived_traits: NA
@@ -171,16 +171,16 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
       cat(
       "- Curation method: based on all data\n",
       paste("- Samples excluded from analyte curation:", text, "\n"),
-      "- Cut-off percentage:",
-      paste0(params$cut_off, "%")
+      "- Cut-off percentages:",
+      paste(names(params$cut_offs), ": ", params$cut_offs, "%, ", sep = "", collapse = "\n")
       )
   } else if (params$analyte_curation_choice == "Per biological group") {
     text <- paste0(params$groups_to_ignore, collapse = ", ")
     cat(
       "- Curation method: per biological group\n",
       paste("- Biological groups excluded from analyte curation:", text, "\n"),
-      "- Cut-off percentage:",
-      paste0(params$cut_off, "%")
+      "- Cut-off percentages:",
+      paste(names(params$cut_offs), ": ", params$cut_offs, "%, ", sep = "", collapse = "\n")
     )
   } else if (params$analyte_curation_choice == "Per sample") {
     cat("Curation method: per sample")
