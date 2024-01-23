@@ -743,7 +743,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       curation_method = reactive(input$curation_method),
       ignore_samples = reactive({ input$ignore_samples }),
       groups_to_ignore = reactive(input$groups_to_ignore),
-      cut_off_percentage = reactive({ input$cut_off }),
+      cut_offs = cut_offs,
       analyte_list = reactive({ input$analyte_list$name }),
       objects = reactive({ r$mod_results })
     ))
