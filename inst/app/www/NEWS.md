@@ -1,3 +1,8 @@
+# v1.3.6
+## Adjustments
+* Peptides/clusters in the data are now detected automatically.
+
+
 # v1.3.5
 ## Adjustments
 * Multiple LaCyTools summary files can now be uploaded at once, rather than one by one.
