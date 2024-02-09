@@ -52,7 +52,7 @@ mod_clusters_ui <- function(id) {
     ),
     selectInput(
       ns("IgG1_cluster_GPS"),
-      "Which peptide/cluster corresponds to the natural IgG1 peptideGPSVFPLAPSSK?",
+      "Which peptide/cluster corresponds to the natural IgG1 peptide GPSVFPLAPSSK?",
       choices = c("")
     ),
     actionButton(ns("button"), "Add clusters to the data")
