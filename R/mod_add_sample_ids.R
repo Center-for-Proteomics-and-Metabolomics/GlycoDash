@@ -12,31 +12,14 @@ mod_add_sample_ids_ui <- function(id){
   ns <- NS(id)
   tagList(
     tags$style(HTML(paste0(
-      "#",
-      ns("box_header"),
-      " .awesome-checkbox {padding-top: 7px}",
-      "#",
-      ns("box_header"),
-      " .popover {max-width: 400px !important; color: #333}",
-      "#",
-      ns("box"),
-      " .box-title {width: 100%}",
-      "#",
-      ns("box_header"),
-      # changed all .fa to .fas  because of fontawesome version update
-      " .fas {float: right; margin-right: 5px; font-size: 18px}",
-      "#",
-      ns("box_header"),
-      " .direct-chat-contacts {right: 0; background: #222d32!important}",
-      "#",
-      ns("box_header"),
-      " .btn {float: right; border-width: 0px; margin-right: 10px}",
-      "#",
-      ns("box"),
-      " .dropdown {display: inline-block; float: right; width: 330px}",
-      "#",
-      ns("box_header"),
-      " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+      "#", ns("box_header")," .awesome-checkbox {padding-top: 7px}",
+      "#", ns("box_header"), " .popover {max-width: 400px !important; color: #333}",
+      "#", ns("box")," .box-title {width: 100%}",
+      "#", ns("box_header"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#", ns("box_header"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#", ns("box_header"), " .btn {float: right; border-width: 0px; margin-right: 10px}",
+      "#", ns("box"), " .dropdown {display: inline-block; float: right; width: 330px}",
+      "#", ns("box_header"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
     ))),
     shinydashboardPlus::box(
       id = ns("box"),
