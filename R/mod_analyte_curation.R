@@ -173,7 +173,7 @@ mod_analyte_curation_ui <- function(id){
                 ns("cut_offs_per_cluster"),
                 "Choose cut-offs per cluster",
                  right = TRUE,
-                 status = "primary"
+                 status = "success"
               ),
               uiOutput(ns("cluster_cut_offs")),
               numericInput(ns("cut_off"), "Cut-off (%)", value = 50, min = 0, max = 100) %>% 

@@ -222,7 +222,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
                       ))
       shinyjs::toggle("switch_two_plate_designs",
                       condition = all(
-                        contains_total_and_specific_samples() == "Yes",
+                        contains_total_and_specific_samples() == TRUE,
                         input$sample_id_method == "Upload a plate design"
                       ))
     })

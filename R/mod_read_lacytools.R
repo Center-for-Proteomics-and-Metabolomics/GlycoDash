@@ -21,10 +21,12 @@ mod_read_lacytools_ui <- function(id){
       multiple = TRUE
     ),
     tableOutput(ns("uploaded_files")),
-    shinyWidgets::awesomeRadio(ns("contains_total_and_specific_samples"),
-    "Does your data contain total and specific immunoglobulin samples?",
-    choices = c("Yes", "No"),
-    selected = "No"),
+    shinyWidgets::materialSwitch(
+      ns("contains_total_and_specific_samples"),
+      "Specify total and specific immunoglobulin samples",
+      status = "success",
+      right = TRUE
+    ),
     div(id = ns("keywords_specific_total"),
         # Set the width of popovers in this div to 200px:
         tags$style(HTML(paste0("#",
@@ -95,7 +97,7 @@ mod_read_lacytools_server <- function(id){
     # are shown.
     observe({
       shinyjs::toggle("keywords_specific_total",
-                      condition = input$contains_total_and_specific_samples == "Yes")
+                      condition = input$contains_total_and_specific_samples == TRUE)
     })
     
     
@@ -109,7 +111,7 @@ mod_read_lacytools_server <- function(id){
       updateTextInput("keyword_total",
                       value = "",
                       session = session)
-    }) %>% bindEvent(input$contains_total_and_specific_samples == "No")
+    }) %>% bindEvent(input$contains_total_and_specific_samples == FALSE)
     
     
     
@@ -245,11 +247,11 @@ mod_read_lacytools_server <- function(id){
         id = "button",
         condition = any(
           all(
-            input$contains_total_and_specific_samples == "No",
+            input$contains_total_and_specific_samples == FALSE,
             is_truthy(lacytools_summaries_combined())
           ),
           all(
-            input$contains_total_and_specific_samples == "Yes",
+            input$contains_total_and_specific_samples == TRUE,
             is_truthy(lacytools_summaries_total_and_specific())
           )))
     })

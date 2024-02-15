@@ -29,11 +29,11 @@ mod_clusters_ui <- function(id) {
       ")
     ),
     tableOutput(ns("clusters_table")),
-    shinyWidgets::awesomeRadio(
+    shinyWidgets::materialSwitch(
       ns("contains_silumab"),
-      "Do your samples contain SILuMAb for IgG1 quantitation?",
-      choices = c("Yes", "No"),
-      selected = "No"
+      "Samples contain SILuMAb for IgG1 quantitation",
+      status = "success",
+      right = TRUE
     ),
     selectInput(
       ns("silumab_cluster_glyco"),
@@ -102,7 +102,7 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
     
     # Get the cluster names required for IgG1 quantitation, if applicable.
     quantitation_clusters <- reactive({
-      req(LaCyTools_summary(), input$contains_silumab == "Yes")
+      req(LaCyTools_summary(), input$contains_silumab == TRUE)
       list(
         "silumab_cluster_glyco" = input$silumab_cluster_glyco,
         "silumab_cluster_GPS" = input$silumab_cluster_GPS,
@@ -121,7 +121,7 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
       }
       
       for (i in c("silumab_cluster_glyco", "IgG1_cluster_glyco", "silumab_cluster_GPS", "IgG1_cluster_GPS")) {
-        shinyjs::toggle(i, condition = input$contains_silumab == "Yes")
+        shinyjs::toggle(i, condition = input$contains_silumab == TRUE)
       }
       
       shinyjs::toggleState(
