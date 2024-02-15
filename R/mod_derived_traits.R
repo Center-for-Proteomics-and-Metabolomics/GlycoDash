@@ -10,7 +10,6 @@
 mod_derived_traits_ui <- function(id){
   ns <- NS(id)
   tagList(
-    shinyFeedback::useShinyFeedback(),  # Needed for warning message when non-xlsx file is uploaded.
     tags$style(HTML(paste0(
       "#",
       ns("box_header"),

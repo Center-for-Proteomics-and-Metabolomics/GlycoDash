@@ -9,6 +9,10 @@ app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     
+    # Use packages for feedback and popovers
+    shinyFeedback::useShinyFeedback(),
+    bsplus::use_bs_popover(),
+    
     # Your application UI logic 
     shinydashboard::dashboardPage(
       

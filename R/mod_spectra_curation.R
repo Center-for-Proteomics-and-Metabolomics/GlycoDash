@@ -10,7 +10,6 @@
 mod_spectra_curation_ui <- function(id){
   ns <- NS(id)
   tagList(
-    bsplus::use_bs_popover(),
     fluidPage(
       fluidRow(
         h1("Spectra curation") 
