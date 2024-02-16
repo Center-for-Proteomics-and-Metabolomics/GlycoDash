@@ -363,6 +363,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       unique(data_to_check()$cluster)
     })
     
+    
     observeEvent(clusters(), {
       # Remove tabs in case they have been created before. Still not ideal cause
       # if cluster names are changed then the old tabs won't be removed
@@ -503,7 +504,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
         )
       }
     })
-    
     
 
     # Perform spectra curation when button is clicked:

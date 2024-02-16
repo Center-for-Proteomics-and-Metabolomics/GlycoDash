@@ -101,7 +101,7 @@ mod_read_lacytools_server <- function(id){
     })
     
     
-    # If the user changes input$contains_total_and_specific_samples to "No"  the
+    # If the user changes input$contains_total_and_specific_samples to FALSE  the
     # textInputs for the keywords are reset to empty strings "". This is needed
     # in case the user first fills in keywords but then changes their mind.
     observe({
