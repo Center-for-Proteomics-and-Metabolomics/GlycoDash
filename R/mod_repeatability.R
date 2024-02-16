@@ -15,17 +15,11 @@ mod_repeatability_ui <- function(id){
         h1("Repeatability")
       ),
       fluidRow(
-        tags$style(
-          HTML(paste0("#",
-                      ns("box_title"),
-                      " .btn {float: right; padding-top: 2px; border-color: #fff; border: 1.5px solid; padding-bottom: 2px}",
-                      "#",
-                      ns("tabbed_box"),
-                      " .box-title {width: 100%;}",
-                      "#",
-                      ns("box_title"),
-                      " .fas {float: right; margin-top: 3px; margin-left: 5px; font-size: 12px;}"))
-        ),
+        tags$style(HTML(paste0(
+          "#", ns("box_title"), " .btn {float: right; padding-top: 2px; border-color: #fff; border: 1.5px solid; padding-bottom: 2px}",
+          "#", ns("tabbed_box"),  " .box-title {width: 100%;}",
+          "#", ns("box_title"), " .fas {float: right; margin-top: 3px; margin-left: 5px; font-size: 12px;}"
+        ))),
         div(
           id = ns("tabbed_box"),
           shinydashboard::box(
@@ -50,6 +44,8 @@ mod_repeatability_ui <- function(id){
     )
   )
 }
+
+
 
 #' repeatability Server Functions
 #'
