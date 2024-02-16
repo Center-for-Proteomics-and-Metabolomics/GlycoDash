@@ -23,7 +23,7 @@ mod_read_lacytools_ui <- function(id){
     tableOutput(ns("uploaded_files")),
     shinyWidgets::materialSwitch(
       ns("contains_total_and_specific_samples"),
-      "Specify total and specific immunoglobulin samples",
+      HTML("<i> <strong> Optional: </strong> Specify total and specific immunoglobulin samples </i>"),
       status = "success",
       right = TRUE
     ),
