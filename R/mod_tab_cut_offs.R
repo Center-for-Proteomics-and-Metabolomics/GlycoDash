@@ -78,18 +78,18 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
 
       shinyjs::toggle("cut_off_sum_intensity",
                       condition = all(is_truthy(input$switch_to_manual),
-                                      contains_total_and_specific_samples() == "No"))
+                                      contains_total_and_specific_samples() == FALSE))
       shinyjs::toggle("cut_off_passing_analyte_percentage",
                       condition = all(is_truthy(input$switch_to_manual),
-                                      contains_total_and_specific_samples() == "No"))
+                                      contains_total_and_specific_samples() == FALSE))
 
       shinyjs::toggle("spike_manual_cut_offs",
                       condition = all(is_truthy(input$switch_to_manual),
-                                      contains_total_and_specific_samples() == "Yes"))
+                                      contains_total_and_specific_samples() == TRUE))
 
       shinyjs::toggle("total_manual_cut_offs",
                       condition = all(is_truthy(input$switch_to_manual),
-                                      contains_total_and_specific_samples() == "Yes"))
+                                      contains_total_and_specific_samples() == TRUE))
       
       shinyjs::toggle("switch_to_manual",
                       condition = curation_method() != "Skip spectra curation")
@@ -105,7 +105,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     #   req(is_truthy(input$switch_to_manual))
     #   req(!is_truthy(manual_cut_offs()))
     # 
-    #   if (contains_total_and_specific_samples() == "Yes") {
+    #   if (contains_total_and_specific_samples() == TRUE) {
     #     calculated_sum_intensity_cut_off_specific <- calculated_cut_offs() %>% 
     #       dplyr::filter(group == keyword_specific()) %>% 
     #       dplyr::pull(cut_off_sum_intensity)
@@ -138,7 +138,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     #                        inputId = "cut_off_passing_analyte_percentage_total",
     #                        value = calculated_passing_analyte_percentage_cut_off_total)
     #       
-    #   } else if (contains_total_and_specific_samples() == "No") {
+    #   } else if (contains_total_and_specific_samples() == FALSE) {
     #     
     #     calculated_sum_intensity_cut_off <- calculated_cut_offs() %>% 
     #       dplyr::pull(cut_off_sum_intensity)
@@ -160,7 +160,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     
     manual_cut_offs <- reactive({
       
-      if (contains_total_and_specific_samples() == "Yes") {
+      if (contains_total_and_specific_samples() == TRUE) {
         req(input$cut_off_sum_intensity_specific,
             input$cut_off_sum_intensity_total,
             input$cut_off_passing_analyte_percentage_specific,

@@ -10,7 +10,7 @@ plot_spectra_curation_results(curated_data, total_and_specific)
 \item{curated_data}{The return value from the function
 \code{\link{curate_spectra}}.}
 
-\item{total_and_specific}{Character string, "Yes" or "No". This argument
+\item{total_and_specific}{Character string, TRUE or NO. This argument
 indicates whether there are total and specific Ig samples in the data.}
 }
 \value{
@@ -57,7 +57,7 @@ curated_data <- curate_spectra(checked_data = checked_data,
                                cut_offs = cut_offs)
                                
 plot <- plot_spectra_curation_results(curated_data = curated_data,
-                                      total_and_specific = "Yes")
+                                      total_and_specific = TRUE)
                                       
 # The plot can be made interactive with plotly. Use the "text" aesthetic to
 # show hover info:

@@ -10,7 +10,6 @@
 mod_spectra_curation_ui <- function(id){
   ns <- NS(id)
   tagList(
-    bsplus::use_bs_popover(),
     fluidPage(
       fluidRow(
         h1("Spectra curation") 
@@ -21,30 +20,14 @@ mod_spectra_curation_ui <- function(id){
           div(
             id = ns("qc"),
             tags$style(HTML(paste0(
-              "#",
-              ns("box_header2"),
-              " .awesome-checkbox {padding-top: 7px}",
-              "#",
-              ns("box_header2"),
-              " .popover {max-width: 400px !important; color: #333}",
-              "#",
-              ns("qc"),
-              " .box-title {width: 100%}",
-              "#",
-              ns("box_header2"),
-              " .fas {float: right; margin-right: 5px; font-size: 18px}",
-              "#",
-              ns("box_header2"),
-              " .direct-chat-contacts {right: 0; background: #222d32!important}",
-              "#",
-              ns("box_header2"),
-              " .btn {float: right; border-width: 0px; margin-right: 2px}",
-              "#",
-              ns("qc"),
-              " .dropdown {display: inline-block; float: right;}",
-              "#",
-              ns("box_header2"),
-              " .dropdown-menu {background: #333; right: -33px; left: auto; top: 28px;}"
+              "#", ns("box_header2"), " .awesome-checkbox {padding-top: 7px}",
+              "#", ns("box_header2"), " .popover {max-width: 400px !important; color: #333}",
+              "#", ns("qc"), " .box-title {width: 100%}",
+              "#", ns("box_header2"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+              "#", ns("box_header2"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+              "#", ns("box_header2"), " .btn {float: right; border-width: 0px; margin-right: 2px}",
+              "#", ns("qc"), " .dropdown {display: inline-block; float: right;}",
+              "#", ns("box_header2"), " .dropdown-menu {background: #333; right: -33px; left: auto; top: 28px;}"
             ))),
             shinydashboard::box(
               title = div(
@@ -121,32 +104,15 @@ mod_spectra_curation_ui <- function(id){
           div(
             id = ns("popover_cut_off"),
             tags$style(HTML(paste0(
-              "#",
-              ns("box_header"),
-              " .awesome-checkbox {padding-top: 7px}",
-              "#",
-              ns("box_header"),
-              " .popover {max-width: 400px !important; color: #333}",
-              "#",
-              ns("popover_cut_off"),
-              " .box-title {width: 100%}",
-              "#",
-              ns("box_header"),
-              " .fas {float: right; margin-right: 5px; font-size: 18px}",
-              "#",
-              ns("box_header"),
-              " .direct-chat-contacts {right: 0; background: #222d32!important}",
-              "#",
-              ns("box_header"),
-              " .btn {float: right; border-width: 0px; margin-right: 0px}",
-              "#",
-              ns("popover_cut_off"),
-              " .dropdown {display: inline-block; float: right; width: 330px}",
-              "#",
-              ns("box_header"),
-              " .dropdown-menu {background: #333; right: -10px; left: auto; top: 28px;}"
-            ))
-            ),
+              "#", ns("box_header"), " .awesome-checkbox {padding-top: 7px}",
+              "#", ns("box_header"), " .popover {max-width: 400px !important; color: #333}",
+              "#", ns("popover_cut_off"), " .box-title {width: 100%}",
+              "#", ns("box_header"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+              "#", ns("box_header"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+              "#", ns("box_header"), " .btn {float: right; border-width: 0px; margin-right: 0px}",
+              "#", ns("popover_cut_off"), " .dropdown {display: inline-block; float: right; width: 330px}",
+              "#", ns("box_header"), " .dropdown-menu {background: #333; right: -10px; left: auto; top: 28px;}"
+            ))),
             shinydashboard::box(
               title = div("Calculate spectra curation cut-offs",
                           id = ns("box_header"),
@@ -397,6 +363,7 @@ mod_spectra_curation_server <- function(id, results_data_import){
       unique(data_to_check()$cluster)
     })
     
+    
     observeEvent(clusters(), {
       # Remove tabs in case they have been created before. Still not ideal cause
       # if cluster names are changed then the old tabs won't be removed
@@ -537,7 +504,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
         )
       }
     })
-    
     
 
     # Perform spectra curation when button is clicked:

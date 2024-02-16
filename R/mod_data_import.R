@@ -10,8 +10,6 @@
 mod_data_import_ui <- function(id){
   ns <- NS(id)
   tagList(
-    shinyFeedback::useShinyFeedback(), # Needed to use the shinyFeedback package.
-    bsplus::use_bs_popover(), # Needed to use the popovers from the bsplus package.
     fluidPage(
       fluidRow(
         h1("Data Import")

@@ -9,12 +9,16 @@ app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     
+    # Use packages for feedback and popovers
+    shinyFeedback::useShinyFeedback(),
+    bsplus::use_bs_popover(),
+    
     # Your application UI logic 
     shinydashboard::dashboardPage(
       
       # Title header, with button that links to GitHub
       header = shinydashboard::dashboardHeader(
-        title = "GlycoDash v1.3.5",
+        title = "GlycoDash v1.3.6",
         tags$li(a(
           onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash')",
           href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"

@@ -822,7 +822,7 @@ create_cut_off_plot <- function(summarized_checks) {
 #'
 #' @param curated_data The return value from the function
 #'   \code{\link{curate_spectra}}.
-#' @param total_and_specific Character string, "Yes" or "No". This argument
+#' @param total_and_specific Character string, TRUE or NO. This argument
 #'   indicates whether there are total and specific Ig samples in the data.
 #'
 #' @return A ggplot object.
@@ -856,7 +856,7 @@ create_cut_off_plot <- function(summarized_checks) {
 #'                                cut_offs = cut_offs)
 #'                                
 #' plot <- plot_spectra_curation_results(curated_data = curated_data,
-#'                                       total_and_specific = "Yes")
+#'                                       total_and_specific = TRUE)
 #'                                       
 #' # The plot can be made interactive with plotly. Use the "text" aesthetic to
 #' # show hover info:
@@ -921,13 +921,13 @@ plot_spectra_curation_results <- function(curated_data,
   
   more_than_4_clusters <- length(unique(curated_data$cluster)) > 4
   
-  if (total_and_specific == "Yes" & !more_than_4_clusters) {
+  if (total_and_specific == TRUE & !more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(cluster ~ group)
-  } else if (total_and_specific == "Yes" & more_than_4_clusters) {
+  } else if (total_and_specific == TRUE & more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(~ group)
-  } else if (total_and_specific == "No" & !more_than_4_clusters) {
+  } else if (total_and_specific == FALSE & !more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(~ cluster)
   }
