@@ -1,4 +1,9 @@
 # v1.3.6
+## Bug fixes
+* Minor bug fixes in analyte curation and quantitation.
+
+
+# v1.3.6
 ## Adjustments
 * Peptides/clusters in the data are now detected automatically.
 
