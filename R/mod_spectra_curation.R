@@ -362,18 +362,18 @@ mod_spectra_curation_server <- function(id, results_data_import){
       unique(data_to_check()$cluster)
     })
     
-    created_tabs <- reactiveValues(cluster = c(""))
+    created_tabs <- reactiveValues(clusters = c(""))
     
     observeEvent(clusters(), {
       # Remove tabs in case they have been created before. 
-      purrr::map(created_tabs$cluster,
+      purrr::map(created_tabs$clusters,
                  function(cluster) {
                    removeTab("tabs",
                              target = cluster)
                  })
       
       # Update created_cluster_tabs with new clusters
-      created_tabs$cluster <- clusters()
+      created_tabs$clusters <- clusters()
       
       # Create one tab for each cluster.
       purrr::map(clusters(),
