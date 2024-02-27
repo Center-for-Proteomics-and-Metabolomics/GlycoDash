@@ -309,7 +309,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     
-    
     # Analyte quality criteria checks summarized per cluster per sample: 
     summarized_checks <- reactive({
       req(checked_data())
@@ -363,17 +362,20 @@ mod_spectra_curation_server <- function(id, results_data_import){
       unique(data_to_check()$cluster)
     })
     
+    created_tabs <- reactiveValues(cluster = c(""))
     
     observeEvent(clusters(), {
-      # Remove tabs in case they have been created before. Still not ideal cause
-      # if cluster names are changed then the old tabs won't be removed
-      purrr::map(clusters(),
+      # Remove tabs in case they have been created before. 
+      purrr::map(created_tabs$cluster,
                  function(cluster) {
                    removeTab("tabs",
                              target = cluster)
                  })
-
-      # Create one tab for each cluster:
+      
+      # Update created_cluster_tabs with new clusters
+      created_tabs$cluster <- clusters()
+      
+      # Create one tab for each cluster.
       purrr::map(clusters(),
                  function(cluster) {
                    appendTab("tabs",
