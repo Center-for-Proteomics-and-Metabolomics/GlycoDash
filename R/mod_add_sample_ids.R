@@ -171,14 +171,8 @@ mod_add_sample_ids_ui <- function(id){
               tags$p("For an example, click on the paperclip icon.")
             ))
           )
-      ),
-      fluidRow(
-        column(
-          width = 12,
-          actionButton(ns("button"), 
-                       "Add sample ID's to the data")
-        ))
       )
+    )
   )
 }
     
@@ -365,12 +359,6 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
       
     })
     
-    # This observe call ensures that the add_sample_ids actionButton is only
-    # enabled under the right circumstances
-    observe({
-      shinyjs::toggleState("button",
-                           condition = is_truthy(data_with_sample_ids()))
-    })
     
     output$download_ex_plate_design <- downloadHandler(
       filename = "Example plate design file.xlsx",
@@ -394,9 +382,9 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
       }
     )
     
+    
     return(list(
       data = data_with_sample_ids,
-      button = reactive({ input$button }),
       filenames_plate_design = plate_design_filenames,
       filename_sample_list = sample_list$filename
     ))

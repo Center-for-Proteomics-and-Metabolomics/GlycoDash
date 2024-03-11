@@ -125,7 +125,7 @@ mod_add_sample_types_ui <- function(id){
 #' add_sample_types Server Functions
 #'
 #' @noRd 
-mod_add_sample_types_server <- function(id, LaCyTools_summary, sample_ids_button){
+mod_add_sample_types_server <- function(id, LaCyTools_summary){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
