@@ -125,7 +125,7 @@ mod_add_sample_types_ui <- function(id){
 #' add_sample_types Server Functions
 #'
 #' @noRd 
-mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_button, sample_ids_button){
+mod_add_sample_types_server <- function(id, LaCyTools_summary, sample_ids_button){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -162,12 +162,11 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_bu
     
     observe({
       if (is_truthy(r$show_reset_warning)) {
-        showNotification("The sample types need to be readded to the data.",
-                         type = "warning")
+        showNotification("Please re-add the sample types to your data.",
+                         type = "warning", duration = 10)
         r$show_reset_warning <- FALSE
       }
-    }) %>% bindEvent(read_lacytools_button(),
-                     sample_ids_button())
+    }) %>% bindEvent(LaCyTools_summary())
     
     observe({
       req(LaCyTools_summary(),

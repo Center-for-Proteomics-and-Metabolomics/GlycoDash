@@ -186,7 +186,7 @@ mod_add_sample_ids_ui <- function(id){
 #'
 #' @noRd 
 mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, contains_total_and_specific_samples, 
-                                      summary_filenames, LaCyTools_summary, read_lacytools_button) {
+                                      summary_filenames, LaCyTools_summary) {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -213,6 +213,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
     r <- reactiveValues(resetter = 0,
                         show_reset_warning = FALSE)
     
+    
     # Whenever a new (correct) LaCyTools summary file is uploaded and sample
     # ID's had already been added to the old summary, the resetter counter is
     # increased with 1 and show_reset_warning is set to TRUE:
@@ -225,12 +226,13 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
     # instead of LaCyTools_summary(), because LaCyTools_summary() also changes when total and 
     # specific keywords are entered/changed.
     
+    
     observe({
       if (r$show_reset_warning == TRUE) {
-        showNotification("The sample ID's need to be readded to the data.",
-                         type = "warning")
+        showNotification("Please re-upload your plate design or sample list.",
+                         type = "warning", duration = 10)
       }
-    }) %>% bindEvent(read_lacytools_button())
+    })
     
     observe({
       # When sample ID's have been readded to the data (r$show_reset_warning is TRUE and
@@ -305,10 +307,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
     )
     
     data_with_sample_ids <- reactive({
-      req(LaCyTools_summary(),
-          read_lacytools_button() > 0) # Showing the plate_well_NAs feedback 
-      # before the "Load LaCyTools summary" button has been clicked might be
-      # confusing for the user.
+      req(LaCyTools_summary())
       
       shinyFeedback::hideFeedback("sample_id_method")
       
