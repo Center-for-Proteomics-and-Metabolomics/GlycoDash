@@ -1,3 +1,8 @@
+# v1.3.7
+## Adjustments
+* The GlycoDash version is now shown in the data processing report.
+
+
 # v1.3.6
 ## Bug fixes
 * Minor bug fixes in analyte curation and quantitation.
