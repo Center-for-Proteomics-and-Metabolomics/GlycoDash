@@ -83,31 +83,17 @@ mod_data_import_server <- function(id){
 
       if (is_truthy(data_incl_metadata$data())) {
         show_in_table <- data_incl_metadata$data()
-        showNotification("The metadata was added to the data.",
-                         type = "message")
       } else if (is_truthy(data_incl_clusters$data())) {
         show_in_table <- data_incl_clusters$data()
-        showNotification("The clusters were added to the data.",
-                         type = "message")
       } else if (is_truthy(data_incl_sample_types$data())) {
           show_in_table <- data_incl_sample_types$data()
-          showNotification("The sample types were added to the data.",
-                           type = "message")
       } else if (is_truthy(data_incl_sample_ids$data())) {
         show_in_table <- data_incl_sample_ids$data()
-        showNotification("The sample ID's were added to the data.",
-                         type = "message")
       } else if (is_truthy(LaCyTools_summary$data())) {
           show_in_table <- LaCyTools_summary$data()
-          showNotification("The LaCyTools summaries have been loaded.",
-                           type = "message")
       }
       return(show_in_table)
-    }) #%>% bindEvent(LaCyTools_summary$data(),
-                    # data_incl_sample_ids$data(),
-                    # data_incl_sample_types$button(),
-                    # data_incl_clusters$button(),
-                    # data_incl_metadata$button())
+    })
     
     
     

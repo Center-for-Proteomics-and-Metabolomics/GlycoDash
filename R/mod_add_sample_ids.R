@@ -104,7 +104,7 @@ mod_add_sample_ids_ui <- function(id){
         ),
       shinyWidgets::materialSwitch(ns("switch_two_plate_designs"),
                                    "Add separate plate design files for specific and and for total Ig samples.",
-                                   status = "primary",
+                                   status = "success",
                                    right = TRUE),
       div(id = ns("one_plate_design"),
           mod_process_plate_design_ui(

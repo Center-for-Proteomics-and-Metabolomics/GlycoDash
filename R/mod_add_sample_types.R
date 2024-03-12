@@ -116,8 +116,7 @@ mod_add_sample_types_ui <- function(id){
             ))
           )
       ),
-      actionButton(ns("button"),
-                   "Determine the sample types")
+      actionButton(ns("button"), "Determine the sample types")
     )
   )
 }
@@ -130,25 +129,39 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     ns <- session$ns
     
     observe({
-      shinyjs::toggle(id = "upload_div",
-                      condition = input$method == "Upload a list with sample ID's and corresponding sample types")
+      # Show file upload when user chooses sample type list option, and hide the button.
+      if (input$method == "Upload a list with sample ID's and corresponding sample types") {
+        shinyjs::show("upload_div")
+        shinyjs::hide("button")
+      } else {
+        shinyjs::hide("upload_div")
+        shinyjs::show("button")
+      }
+      # Toggle state of the button
+      shinyjs::toggleState(
+        "button", condition = all(
+          input$method == "Automatically determine sample types based on sample ID's",
+          is_truthy(LaCyTools_summary())
+        )
+      )
     })
     
-    observe({
-      shinyjs::toggleState(id = "button",
-                           condition = all(
-                             any(
-                               input$method == "Automatically determine sample types based on sample ID's",
-                               all(
-                                 input$method == "Upload a list with sample ID's and corresponding sample types",
-                                 is_truthy(manual_sample_types$list()),
-                                 !is_truthy(unmatched_sample_ids()),
-                                 !is_truthy(duplicate_sample_ids())
-                               )
-                             ),
-                             is_truthy(LaCyTools_summary())
-                           ))
-    })
+    # observe({
+    #   shinyjs::toggleState(
+    #     "button", condition = all(
+    #       any(
+    #         input$method == "Automatically determine sample types based on sample ID's",
+    #         all(
+    #           input$method == "Upload a list with sample ID's and corresponding sample types",
+    #           is_truthy(manual_sample_types$list()),
+    #           !is_truthy(unmatched_sample_ids()),
+    #           !is_truthy(duplicate_sample_ids())
+    #         )
+    #       ),
+    #       is_truthy(LaCyTools_summary())
+    #     )
+    #   )
+    # })
     
     r <- reactiveValues()
     
@@ -231,6 +244,11 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
         confirmButtonCol = "tomato",
         showCancelButton = FALSE,
         showConfirmButton = TRUE
+      )
+      shinyFeedback::feedbackDanger(
+        inputId = "summaries_input",
+        show = !is_truthy(all_txt_files()),
+        text = "Please only upload text files."
       )
     })
     
