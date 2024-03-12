@@ -507,3 +507,24 @@ getOrdinalSuffix <- function(num) {
     return(paste0(num, "th"))
   }
 }
+
+
+
+
+#' read_skyline_csv
+#'
+#' @param path_to_file Path to Skyline CSV file
+#'
+#' @return Dataframe with raw data read from CSV
+read_skyline_csv <- function(path_to_file) {
+  # Try reading with comma as separator
+  raw_data <- tryCatch(
+    read.csv(path_to_file, header = TRUE, sep = ","),
+    error = function(e) {
+      # In case of error: use semicolon as separator
+      read.csv(path_to_file, header = TRUE, sep = ";")
+    }
+  )
+  return(raw_data)
+}
+

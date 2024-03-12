@@ -15,10 +15,20 @@ mod_read_lacytools_ui <- function(id){
     width = NULL,
     solidHeader = TRUE,
     status = "primary",
+    selectInput(
+      ns("data_type"),
+      "Choose which type of data you want to upload:",
+      choices = c("LaCyTools data", "Skyline data"),
+      selected = "LaCyTools data"
+    ),
     fileInput(
-      ns("summaries_input"),
+      ns("lacytools_input"),
       "Upload one or more LaCyTools summary text files:",
       multiple = TRUE
+    ),
+    fileInput(
+      ns("skyline_input"),
+      "Upload your Skyline CSV output file:"
     ),
     tableOutput(ns("uploaded_files")),
     shinyWidgets::materialSwitch(
@@ -61,33 +71,68 @@ mod_read_lacytools_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    # Show the uploaded LaCyTools files in the table
-    output$uploaded_files <- renderTable({
-      uploaded_files <- input$summaries_input
-      uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
-      uploaded_files
-    }, striped = TRUE, bordered = TRUE, rownames = TRUE, align = "c")
+    # Visibility of fileInputs
+    observe({
+      if (input$data_type == "LaCyTools data") {
+        shinyjs::show("lacytools_input")
+        shinyjs::hide("skyline_input")
+      } else if (input$data_type == "Skyline data") {
+        shinyjs::hide("lacytools_input")
+        shinyjs::show("skyline_input")
+      }
+    })
+    
     
     # Check the file extensions of the uploaded summaries.
-    all_txt_files <- reactive({
-      req(input$summaries_input)
-      non_txt_files <- subset(input$summaries_input, !grepl("\\.txt$", name, ignore.case = TRUE))
-      if (nrow(non_txt_files) > 0) {
+    correct_file_ext <- reactive({
+      if (input$data_type == "LaCyTools data") {
+        # LaCyTools --> require text file
+        req(input$lacytools_input)
+        wrong_file_ext <- subset(input$lacytools_input, !grepl("\\.txt$", name, ignore.case = TRUE))
+      } else if (input$data_type == "Skyline data") {
+        # Skyline --> require CSV file
+        req(input$skyline_input)
+        wrong_file_ext <- subset(input$skyline_input, !grepl("\\.csv$", name, ignore.case = TRUE))
+      }
+      if (nrow(wrong_file_ext) > 0) {
         FALSE
       } else {
         TRUE
       }
     })
     
-    # Show a warning when non-text files are uploaded
+    
+    # Show a warning when files with wrong extension are uploaded
     observe({
-      req(input$summaries_input)
-      shinyFeedback::feedbackDanger(
-        inputId = "summaries_input",
-        show = !is_truthy(all_txt_files()),
-        text = "Please only upload text files."
-      )
+      if (input$data_type == "LaCyTools data") {
+        req(input$lacytools_input)
+        shinyFeedback::feedbackDanger(
+          inputId = "lacytools_input",
+          show = !is_truthy(correct_file_ext()),
+          text = "Please upload text files."
+        )
+      } else if (input$data_type == "Skyline data") {
+        req(input$skyline_input)
+        shinyFeedback::feedbackDanger(
+          inputId = "skyline_input",
+          show = !is_truthy(correct_file_ext()),
+          text = "Please upload a CSV file."
+        )
+      }
     })
+    
+    
+    # Show the uploaded LaCyTools files in the table
+    output$uploaded_files <- renderTable({
+      req(correct_file_ext())
+      if (input$data_type == "LaCyTools data") {
+        uploaded_files <- input$lacytools_input
+      } else if (input$data_type == "Skyline data") {
+        uploaded_files <- input$skyline_input
+      }
+      uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
+      uploaded_files
+    }, striped = TRUE, bordered = TRUE, rownames = TRUE, align = "c")
     
     
     # If the user changes input$contains_total_and_specific_samples to FALSE  the
@@ -106,21 +151,21 @@ mod_read_lacytools_server <- function(id){
     
     # Create a vector that contains the raw LaCyTools summary files
     raw_lacytools_summaries <- reactive({
-      req(all_txt_files())
-      summaries <- vector("list", length = nrow(input$summaries_input))
-      for (i in seq(nrow(input$summaries_input))) {
+      req(correct_file_ext())
+      summaries <- vector("list", length = nrow(input$lacytools_input))
+      for (i in seq(nrow(input$lacytools_input))) {
         summaries[[i]] <- tryCatch(
-          expr = read_non_rectangular(input$summaries_input$datapath[i]),
+          expr = read_non_rectangular(input$lacytools_input$datapath[i]),
           embedded_null = function(c) {
-            shinyFeedback::feedbackDanger("summaries_input", TRUE, c$message)
+            shinyFeedback::feedbackDanger("lacytools_input", TRUE, c$message)
             NULL
           },
           empty_file = function(c) {
-            shinyFeedback::feedbackDanger("summaries_input", TRUE, c$message)
+            shinyFeedback::feedbackDanger("lacytools_input", TRUE, c$message)
             NULL
           },
           wrong_delim = function(c) {
-            shinyFeedback::feedbackDanger("summaries_input", TRUE, c$message)
+            shinyFeedback::feedbackDanger("lacytools_input", TRUE, c$message)
             NULL
           }
         )
@@ -245,7 +290,7 @@ mod_read_lacytools_server <- function(id){
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
       contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
-      summary_filenames = reactive({input$summaries_input$name})
+      summary_filenames = reactive({input$lacytools_input$name})
     ))
     
   })
