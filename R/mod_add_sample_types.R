@@ -116,8 +116,7 @@ mod_add_sample_types_ui <- function(id){
             ))
           )
       ),
-      actionButton(ns("button"),
-                   "Determine the sample types")
+      actionButton(ns("button"), "Determine the sample types")
     )
   )
 }
@@ -125,29 +124,26 @@ mod_add_sample_types_ui <- function(id){
 #' add_sample_types Server Functions
 #'
 #' @noRd 
-mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_button, sample_ids_button){
+mod_add_sample_types_server <- function(id, LaCyTools_summary){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
     observe({
-      shinyjs::toggle(id = "upload_div",
-                      condition = input$method == "Upload a list with sample ID's and corresponding sample types")
-    })
-    
-    observe({
-      shinyjs::toggleState(id = "button",
-                           condition = all(
-                             any(
-                               input$method == "Automatically determine sample types based on sample ID's",
-                               all(
-                                 input$method == "Upload a list with sample ID's and corresponding sample types",
-                                 is_truthy(manual_sample_types$list()),
-                                 !is_truthy(unmatched_sample_ids()),
-                                 !is_truthy(duplicate_sample_ids())
-                               )
-                             ),
-                             is_truthy(LaCyTools_summary())
-                           ))
+      # Show file upload when user chooses sample type list option, and hide the button.
+      if (input$method == "Upload a list with sample ID's and corresponding sample types") {
+        shinyjs::show("upload_div")
+        shinyjs::hide("button")
+      } else {
+        shinyjs::hide("upload_div")
+        shinyjs::show("button")
+      }
+      # Toggle state of the button
+      shinyjs::toggleState(
+        "button", condition = all(
+          input$method == "Automatically determine sample types based on sample ID's",
+          is_truthy(LaCyTools_summary())
+        )
+      )
     })
     
     r <- reactiveValues()
@@ -162,12 +158,11 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_bu
     
     observe({
       if (is_truthy(r$show_reset_warning)) {
-        showNotification("The sample types need to be readded to the data.",
-                         type = "warning")
+        showNotification("Please re-add the sample types to your data.",
+                         type = "warning", duration = 10)
         r$show_reset_warning <- FALSE
       }
-    }) %>% bindEvent(read_lacytools_button(),
-                     sample_ids_button())
+    }) %>% bindEvent(LaCyTools_summary())
     
     observe({
       req(LaCyTools_summary(),
@@ -291,8 +286,7 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_bu
 
       dplyr::left_join(LaCyTools_summary(), sample_types_as_factor) %>%
         dplyr::relocate(sample_type, .after = sample_id)
-    }) %>% 
-      bindEvent(input$button)
+    })
     
     
     # Show popup with automatically determined sample types if automatic method
@@ -359,18 +353,6 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_bu
       }
     })
     
-    r$master_button <- 0
-    
-    observe({
-      if (is_truthy(r$response) & isolate(input$method) == "Automatically determine sample types based on sample ID's") {
-        r$master_button <- isolate(r$master_button) + 1
-      } else {
-        if (is_truthy(input$button) & isolate(input$method) == "Upload a list with sample ID's and corresponding sample types") {
-          r$master_button <- isolate(r$master_button) + 1
-        }
-      }
-    })
-    
     output$download_ex_sample_types <- downloadHandler(
       filename = "Example sample types file.xlsx",
       content = function(file) {
@@ -384,7 +366,6 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary, read_lacytools_bu
     
     return(list(
       data = to_return,
-      button = reactive({ r$master_button }),
       popup = reactive({ r$response }),
       method = reactive({ input$method }),
       filename_sample_types = manual_sample_types$filename

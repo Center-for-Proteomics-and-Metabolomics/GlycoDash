@@ -104,7 +104,7 @@ mod_add_sample_ids_ui <- function(id){
         ),
       shinyWidgets::materialSwitch(ns("switch_two_plate_designs"),
                                    "Add separate plate design files for specific and and for total Ig samples.",
-                                   status = "primary",
+                                   status = "success",
                                    right = TRUE),
       div(id = ns("one_plate_design"),
           mod_process_plate_design_ui(
@@ -171,14 +171,8 @@ mod_add_sample_ids_ui <- function(id){
               tags$p("For an example, click on the paperclip icon.")
             ))
           )
-      ),
-      fluidRow(
-        column(
-          width = 12,
-          actionButton(ns("button"), 
-                       "Add sample ID's to the data")
-        ))
       )
+    )
   )
 }
     
@@ -186,7 +180,7 @@ mod_add_sample_ids_ui <- function(id){
 #'
 #' @noRd 
 mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, contains_total_and_specific_samples, 
-                                      summary_filenames, LaCyTools_summary, read_lacytools_button) {
+                                      summary_filenames, LaCyTools_summary) {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -213,6 +207,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
     r <- reactiveValues(resetter = 0,
                         show_reset_warning = FALSE)
     
+    
     # Whenever a new (correct) LaCyTools summary file is uploaded and sample
     # ID's had already been added to the old summary, the resetter counter is
     # increased with 1 and show_reset_warning is set to TRUE:
@@ -225,12 +220,13 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
     # instead of LaCyTools_summary(), because LaCyTools_summary() also changes when total and 
     # specific keywords are entered/changed.
     
+    
     observe({
       if (r$show_reset_warning == TRUE) {
-        showNotification("The sample ID's need to be readded to the data.",
-                         type = "warning")
+        showNotification("Please re-upload your plate design or sample list.",
+                         type = "warning", duration = 10)
       }
-    }) %>% bindEvent(read_lacytools_button())
+    })
     
     observe({
       # When sample ID's have been readded to the data (r$show_reset_warning is TRUE and
@@ -305,10 +301,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
     )
     
     data_with_sample_ids <- reactive({
-      req(LaCyTools_summary(),
-          read_lacytools_button() > 0) # Showing the plate_well_NAs feedback 
-      # before the "Load LaCyTools summary" button has been clicked might be
-      # confusing for the user.
+      req(LaCyTools_summary())
       
       shinyFeedback::hideFeedback("sample_id_method")
       
@@ -366,12 +359,6 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
       
     })
     
-    # This observe call ensures that the add_sample_ids actionButton is only
-    # enabled under the right circumstances
-    observe({
-      shinyjs::toggleState("button",
-                           condition = is_truthy(data_with_sample_ids()))
-    })
     
     output$download_ex_plate_design <- downloadHandler(
       filename = "Example plate design file.xlsx",
@@ -395,9 +382,9 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
       }
     )
     
+    
     return(list(
       data = data_with_sample_ids,
-      button = reactive({ input$button }),
       filenames_plate_design = plate_design_filenames,
       filename_sample_list = sample_list$filename
     ))

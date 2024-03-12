@@ -49,8 +49,6 @@ mod_read_lacytools_ui <- function(id){
             trigger = "hover",
             placement = "right")
     ),
-    actionButton(ns("button"),
-                 "Load the LaCyTools summary files")
   )
 }
   
@@ -89,15 +87,6 @@ mod_read_lacytools_server <- function(id){
         show = !is_truthy(all_txt_files()),
         text = "Please only upload text files."
       )
-    })
-  
-    
-    # If the user indicates (via input$contains_total_and_specific_samples) that the data contains total and
-    # specific Ig samples, the textInputs for the specific and total keywords
-    # are shown.
-    observe({
-      shinyjs::toggle("keywords_specific_total",
-                      condition = input$contains_total_and_specific_samples == TRUE)
     })
     
     
@@ -176,6 +165,8 @@ mod_read_lacytools_server <- function(id){
       shinybusy::remove_modal_spinner()
     })
     
+    
+    
     # Detect total and specific samples if applicable.
     lacytools_summaries_total_and_specific <- reactive({
       
@@ -225,6 +216,16 @@ mod_read_lacytools_server <- function(id){
     })
     
     
+    # Toggle UI elements
+    observeEvent(input$contains_total_and_specific_samples, {
+      # I use show/hide because toggle causes problems
+      if (input$contains_total_and_specific_samples == TRUE) {
+        shinyjs::show("keywords_specific_total")
+      } else {
+        shinyjs::hide("keywords_specific_total")
+      }
+    })
+  
     
     # Return combined lacytools summaries.
     to_return <- reactive({
@@ -235,31 +236,12 @@ mod_read_lacytools_server <- function(id){
           lacytools_summaries_combined()
         }
       )
-    })  # can't use bindEvent(input$button), because then re-adding sample ID's 
-        # to a newly uploaded summary is faster then resetting the plate_design to NULL,
-        # which results in an empty sample_id column added to the new summary
-    
-    
- 
-    # Control the state of the "Load" actionButton
-    observe({
-      shinyjs::toggleState(
-        id = "button",
-        condition = any(
-          all(
-            input$contains_total_and_specific_samples == FALSE,
-            is_truthy(lacytools_summaries_combined())
-          ),
-          all(
-            input$contains_total_and_specific_samples == TRUE,
-            is_truthy(lacytools_summaries_total_and_specific())
-          )))
     })
+    
     
     
     return(list(
       data = to_return,
-      button = reactive({input$button}),
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
       contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
