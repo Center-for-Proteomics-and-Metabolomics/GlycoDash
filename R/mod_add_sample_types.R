@@ -146,23 +146,6 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
       )
     })
     
-    # observe({
-    #   shinyjs::toggleState(
-    #     "button", condition = all(
-    #       any(
-    #         input$method == "Automatically determine sample types based on sample ID's",
-    #         all(
-    #           input$method == "Upload a list with sample ID's and corresponding sample types",
-    #           is_truthy(manual_sample_types$list()),
-    #           !is_truthy(unmatched_sample_ids()),
-    #           !is_truthy(duplicate_sample_ids())
-    #         )
-    #       ),
-    #       is_truthy(LaCyTools_summary())
-    #     )
-    #   )
-    # })
-    
     r <- reactiveValues()
     
     observe({
@@ -245,11 +228,6 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
         showCancelButton = FALSE,
         showConfirmButton = TRUE
       )
-      shinyFeedback::feedbackDanger(
-        inputId = "summaries_input",
-        show = !is_truthy(all_txt_files()),
-        text = "Please only upload text files."
-      )
     })
     
         
@@ -308,8 +286,7 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
 
       dplyr::left_join(LaCyTools_summary(), sample_types_as_factor) %>%
         dplyr::relocate(sample_type, .after = sample_id)
-    }) %>% 
-      bindEvent(input$button)
+    })
     
     
     # Show popup with automatically determined sample types if automatic method
@@ -376,18 +353,6 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
       }
     })
     
-    r$master_button <- 0
-    
-    observe({
-      if (is_truthy(r$response) & isolate(input$method) == "Automatically determine sample types based on sample ID's") {
-        r$master_button <- isolate(r$master_button) + 1
-      } else {
-        if (is_truthy(input$button) & isolate(input$method) == "Upload a list with sample ID's and corresponding sample types") {
-          r$master_button <- isolate(r$master_button) + 1
-        }
-      }
-    })
-    
     output$download_ex_sample_types <- downloadHandler(
       filename = "Example sample types file.xlsx",
       content = function(file) {
@@ -401,7 +366,6 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     
     return(list(
       data = to_return,
-      button = reactive({ r$master_button }),
       popup = reactive({ r$response }),
       method = reactive({ input$method }),
       filename_sample_types = manual_sample_types$filename
