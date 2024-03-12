@@ -203,7 +203,9 @@ mod_spectra_curation_ui <- function(id){
             tabsetPanel(id = ns("tabs")),
             br(),
             actionButton(ns("button"),
-                         "Perform spectra curation")
+                         "Perform spectra curation",
+                         style = "font-size: 16px; padding: 10px 20px; font-weight: bold; 
+                                 border: 1px solid black;")
           )
         ) 
       ),
