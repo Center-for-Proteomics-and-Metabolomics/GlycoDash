@@ -65,8 +65,7 @@ mod_add_metadata_ui <- function(id){
       div(
         id = ns("metadata_menu"),
         uiOutput(ns("sample_id"))
-      ),
-      actionButton(ns("button"), "Add the metadata")
+      )
     )
   )
 }
@@ -150,18 +149,6 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
     })
     
     
-    # This observe call ensures that the actionButton is only enabled under the
-    # right circumstances
-    observe({
-      shinyjs::toggleState("button",
-                           condition = all(
-                             is_truthy(metadata_list()),
-                             is_truthy(LaCyTools_summary()),
-                             sample_id_inputs_completed()
-                           ))
-    })
-    
-    
     # Merge the metadata dataframes in metadata_list() together:
     merged_metadata <- reactive({
       req(
@@ -237,12 +224,12 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
           showCancelButton = FALSE,
           showConfirmButton = TRUE
         )
-
-        shinybusy::remove_modal_spinner()
+        
+        shinyFeedback::feedbackDanger("file", show = TRUE, text = "Please adjust your metadata file.")
 
         return(NULL)
       } else return(merged_metadata)
-    }) %>% bindEvent(input$button)
+    })
     
     
     # Check for duplicate sample IDs
@@ -282,8 +269,8 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
           showConfirmButton = TRUE
         )
         
-        # Remove the spinner and return FALSE
-        shinybusy::remove_modal_spinner()
+        shinyFeedback::feedbackDanger("file", show = TRUE, text = "Please adjust your metadata file.")
+        
         return(FALSE)
       }
     })
@@ -328,18 +315,6 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
     })
     
     
-    r <- reactiveValues(master_button = 0)
-    
-    observe({
-      if (!isTRUE(all.equal(unmatched_ids(), "none")) & is_truthy(input$popup)) {
-        r$master_button <- isolate(r$master_button) + 1
-      } else {
-        if (isTRUE(all.equal(unmatched_ids(), "none"))) {
-          r$master_button <- isolate(r$master_button) + 1
-        }
-      }
-    }, priority = 5) %>% bindEvent(input$popup, input$button)
-    
     with_metadata <- reactive({
       req(unmatched_ids(), !is.null(merged_metadata()), unique_sample_ids() == TRUE)
       if(any(
@@ -378,29 +353,6 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
     server = FALSE)
     
     
-    
-    # Show a spinner while the metadata is being processed.
-    observeEvent(input$button, {
-      shinybusy::show_modal_spinner(
-        spin = "cube-grid", color = "#0275D8", 
-        text = HTML("<br/><strong>Processing metadata...")
-      )
-    }, priority = 50)
-
-    # Remove the spinner when metadata is added.
-    observeEvent(with_metadata(), {
-      shinybusy::remove_modal_spinner()
-    })
-    
-    # Remove spinner when user cancels after warning popup
-    # This takes too long
-    observeEvent(input$popup, {
-      if (input$popup == FALSE) {
-        shinybusy::remove_modal_spinner()
-      }
-    }, priority = 20)
-    
-    
     # Download example metadata file
     output$download_example_metadata <- downloadHandler(
       filename = "metadata_example.xlsx",
@@ -421,7 +373,6 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
     
     return(list(
       data = with_metadata,
-      button = reactive({r$master_button}),
       filenames_metadata = filenames_metadata, # pass the filenames along for the report
       merged_metadata = merged_metadata_to_return  # for combining with normalized data
       ))

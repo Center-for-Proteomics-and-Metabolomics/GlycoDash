@@ -92,6 +92,7 @@ mod_process_sample_type_file_server <- function(id, allowed){
       return(sample_types)
     }) %>% bindEvent(input$file)
     
+    
     return(list(
       list = sample_type_list,
       filename = reactive({ input$file$name })

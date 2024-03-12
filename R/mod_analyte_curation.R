@@ -511,6 +511,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       )
     })
     
+    
     # Create a named list with a cut-off percentage for each cluster
     cut_offs <- reactive({
       clusters <- unique(passing_spectra()$cluster)
@@ -587,7 +588,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       
       return(curated_analytes)
     }) %>% bindEvent(input$curate_analytes)  # Execute code when button is pushed.
-    
     
     
     # analyte_curated_data is a dataframe with the LaCyTools output of the
@@ -691,7 +691,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     with_analytes_to_include <- reactive({
       if (input$curation_method == "Per sample") {
         # Analyte curation per sample
-        # req(analyte_curated_data())
+        # req() below is required to prevent the code from running too soon
+        # when switching to "Per sample" from a different method. 
+        # analyte_curated_data() needs to update first.
+        req("uncalibrated" %in% colnames(analyte_curated_data())) 
         to_return <- analyte_curated_data() %>% 
           dplyr::filter(has_passed_analyte_curation == TRUE) %>%
           dplyr::select(-has_passed_analyte_curation, -uncalibrated)
@@ -734,7 +737,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
                                                   path = file))
       }
     )
-
     
     
     return(list(

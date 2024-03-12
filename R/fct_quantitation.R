@@ -43,8 +43,8 @@ calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
     dplyr::select(-total_absolute_intensity) %>% 
     # Select data that's needed
     dplyr::select(
-      sample_name, plate_well, sample_id, sample_type, cluster, sum_intensity,
-      tidyselect::any_of("group")
+      sample_name, sample_id, sample_type, cluster, sum_intensity,
+      tidyselect::any_of(c("group", "plate_well"))
     ) %>% 
     dplyr::distinct() %>% 
     # Create wide format
@@ -127,7 +127,7 @@ create_quantitation_plot <- function(IgG1_amounts) {
       text = paste0(
         "Sample name: ", sample_name, "\n",
         "Sample ID: ", sample_id, "\n",
-        "Plate well: ", plate_well, "\n",
+        # "Plate well: ", plate_well, "\n",
         "Amount of IgG1 (ng): ", IgG1_median_amount
       )
     )) +
@@ -205,8 +205,7 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
       color = sample_type, alpha = 0.5,
       text = paste0(
         "Sample name: ", sample_name, "\n",
-        "Sample ID: ", sample_id, "\n",
-        "Plate well: ", plate_well
+        "Sample ID: ", sample_id, "\n"
       )
     ), size = 1, alpha = 0.7) +
     ggplot2::xlab(dplyr::case_when(

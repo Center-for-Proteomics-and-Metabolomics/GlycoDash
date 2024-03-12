@@ -1,3 +1,14 @@
+# v1.3.7
+## Adjustments
+* The GlycoDash version is now shown in the data processing report.
+* Unnecessary buttons were removed from the “Data Import” tab.
+
+
+# v1.3.6
+## Bug fixes
+* Minor bug fixes in analyte curation and quantitation.
+
+
 # v1.3.6
 ## Adjustments
 * Peptides/clusters in the data are now detected automatically.
