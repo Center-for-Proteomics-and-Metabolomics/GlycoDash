@@ -54,8 +54,7 @@ mod_clusters_ui <- function(id) {
       ns("IgG1_cluster_GPS"),
       "Which peptide/cluster corresponds to the natural IgG1 peptide GPSVFPLAPSSK?",
       choices = c("")
-    ),
-    actionButton(ns("button"), "Add clusters to the data")
+    )
   )
 }
 
@@ -89,7 +88,7 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
         tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge",
                         remove = FALSE) %>% 
         dplyr::select(-glycan)
-    }) %>% bindEvent(input$button)
+    })
     
     
     # Add clusters as choices to the SILuMAb selectInputs
@@ -123,23 +122,12 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
       for (i in c("silumab_cluster_glyco", "IgG1_cluster_glyco", "silumab_cluster_GPS", "IgG1_cluster_GPS")) {
         shinyjs::toggle(i, condition = input$contains_silumab == TRUE)
       }
-      
-      shinyjs::toggleState(
-        id = "button",
-        condition = all(
-          is_truthy(clusters()),
-          if (is_truthy(quantitation_clusters())) {
-            length(unlist(quantitation_clusters())) == length(unique(unlist(quantitation_clusters())))
-          }
-        )
-      )
     })
     
     
     return(list(
       data = data_with_clusters,
-      quantitation_clusters = quantitation_clusters,
-      button = reactive(input$button)
+      quantitation_clusters = quantitation_clusters
     ))
     
   })
