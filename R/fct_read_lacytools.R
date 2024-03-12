@@ -528,3 +528,88 @@ read_skyline_csv <- function(path_to_file) {
   return(raw_data)
 }
 
+
+
+
+#' transform_skyline_data
+#'
+#' @param raw_skyline_data Raw skyline data, read into R with 
+#' the read_skyline_csv() function above.
+#'
+#'
+#' @return A clean dataframe in a similar format as a transformed
+#' LaCyTools summary. The dataframe contains the following columns:
+#' - sample_name
+#' - analyte
+#' - charge
+#' - absolute_intensity_background_subtracted
+#' - mass_accuracy_ppm
+#' - isotope_dot_product
+transform_skyline_data <- function(raw_skyline_data) {
+  # Select required columns
+  raw_data_required <- raw_skyline_data %>% 
+    dplyr::select(
+      "Protein.Name",
+      "Peptide",
+      "Precursor.Charge",
+      tidyselect::contains("Total.Area.MS1"),
+      tidyselect::contains("Isotope.Dot.Product"),
+      tidyselect::contains("Average.Mass.Error.PPM")
+    )
+  # Make columns numeric except for first three
+  raw_data_required[raw_data_required == "#N/A"] <- NA
+  raw_data_required <- dplyr::mutate_at(raw_data_required, dplyr::vars(-1, -2, -3), as.numeric)
+  # Transform the data
+  cols_to_pivot <- colnames(raw_data_required)[-(1:3)]
+  raw_data_long <- raw_data_required %>% 
+    tidyr::pivot_longer(tidyselect::all_of(cols_to_pivot))
+  variables <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM")
+  # Initiate empty list to store DFs
+  var_dfs <- vector("list", length = length(variables))
+  # Loop over the variables
+  # Create separate dataframe for each variable
+  # Create columns sample_name and variable
+  for (i in seq(length(variables))) {
+    var <- variables[i]
+    var_data_long <- raw_data_long %>% 
+      dplyr::filter(grepl(var, name)) %>% 
+      tidyr::separate(
+        name,
+        sep = paste0(".", var),
+        into = c("sample_name", "variable")
+      ) %>% 
+      dplyr::mutate(variable = var) %>% 
+      # Combine Protein.Name and Peptide into analyte
+      dplyr::mutate(analyte = paste0(Protein.Name, "1", Peptide)) %>% 
+      dplyr::select(-Protein.Name, -Peptide)
+    var_dfs[[i]] <- var_data_long
+  }
+  # Combine required data and turn into wide format
+  data_clean <- dplyr::bind_rows(var_dfs) %>% 
+    dplyr::group_by(variable) %>% 
+    dplyr::mutate(row = dplyr::row_number()) %>% 
+    tidyr::pivot_wider(names_from = variable, values_from = value) %>% 
+    dplyr::select(-row) %>% 
+    dplyr::ungroup() %>% 
+    # Get into same format as processed LaCyTools summary
+    dplyr::rename(
+      charge = Precursor.Charge,
+      # Total Area = Raw Area - Total Background, so rename like LaCyTools
+      absolute_intensity_background_subtracted = Total.Area.MS1,
+      isotope_dot_product = Isotope.Dot.Product,
+      mass_accuracy_ppm = Average.Mass.Error.PPM
+    ) %>% 
+    dplyr::mutate(charge = paste0(charge, "+")) %>% 
+    dplyr::relocate(charge, .after = analyte) %>% 
+    dplyr::relocate(absolute_intensity_background_subtracted, .after = charge) %>% 
+    dplyr::relocate(mass_accuracy_ppm, .after = absolute_intensity_background_subtracted)
+  
+  return(data_clean)
+}
+
+
+
+
+
+
+

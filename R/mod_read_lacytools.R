@@ -120,9 +120,9 @@ mod_read_lacytools_server <- function(id){
         )
       }
     })
+  
     
-    
-    # Show the uploaded LaCyTools files in the table
+    # Show the uploaded files in the table
     output$uploaded_files <- renderTable({
       req(correct_file_ext())
       if (input$data_type == "LaCyTools data") {
@@ -133,6 +133,7 @@ mod_read_lacytools_server <- function(id){
       uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
       uploaded_files
     }, striped = TRUE, bordered = TRUE, rownames = TRUE, align = "c")
+    
     
     
     # If the user changes input$contains_total_and_specific_samples to FALSE  the
@@ -149,9 +150,13 @@ mod_read_lacytools_server <- function(id){
     
     
     
+    #########################################################################
+    #################### LaCyTools ##########################################
+    #########################################################################
+    
     # Create a vector that contains the raw LaCyTools summary files
     raw_lacytools_summaries <- reactive({
-      req(correct_file_ext())
+      req(correct_file_ext(), input$data_type == "LaCyTools data", input$lacytools_input)
       summaries <- vector("list", length = nrow(input$lacytools_input))
       for (i in seq(nrow(input$lacytools_input))) {
         summaries[[i]] <- tryCatch(
@@ -209,6 +214,27 @@ mod_read_lacytools_server <- function(id){
     observeEvent(lacytools_summaries_combined(), {
       shinybusy::remove_modal_spinner()
     })
+    
+    
+    
+    #########################################################################
+    ####################  Skyline  ##########################################
+    #########################################################################
+    
+    raw_skyline_data <- reactive({
+      req(correct_file_ext(), input$data_type == "Skyline data", input$skyline_input)
+      read_skyline_csv(input$skyline_input$datapath)
+    })
+    
+    skyline_data <- reactive({
+      req(raw_skyline_data())
+      transform_skyline_data(raw_skyline_data())
+    })
+    
+    
+    
+    
+    
     
     
     
