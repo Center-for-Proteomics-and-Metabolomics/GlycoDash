@@ -1,6 +1,7 @@
 # v1.3.7
 ## Adjustments
 * The GlycoDash version is now shown in the data processing report.
+* Unnecessary buttons were removed from the “Data Import” tab.
 
 
 # v1.3.6
