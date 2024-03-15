@@ -79,7 +79,7 @@ mod_spectra_curation_ui <- function(id){
               solidHeader = TRUE,
               width = NULL,
               sliderInput(ns("mass_accuracy"), 
-                          "Acceptable mass accuracy range:",
+                          "Acceptable mass accuracy range (ppm):",
                           min = -50,
                           max = 50,
                           value = c(-20, 20)
