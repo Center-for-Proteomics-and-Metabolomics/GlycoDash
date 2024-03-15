@@ -594,15 +594,14 @@ transform_skyline_data <- function(raw_skyline_data) {
     # Get into same format as processed LaCyTools summary
     dplyr::rename(
       charge = Precursor.Charge,
-      # Total Area = Raw Area - Total Background, so rename like LaCyTools
-      absolute_intensity_background_subtracted = Total.Area.MS1,
+      total_area = Total.Area.MS1,
       isotope_dot_product = Isotope.Dot.Product,
       mass_accuracy_ppm = Average.Mass.Error.PPM
     ) %>% 
     dplyr::mutate(charge = paste0(charge, "+")) %>% 
     dplyr::relocate(charge, .after = analyte) %>% 
-    dplyr::relocate(absolute_intensity_background_subtracted, .after = charge) %>% 
-    dplyr::relocate(mass_accuracy_ppm, .after = absolute_intensity_background_subtracted)
+    dplyr::relocate(total_area, .after = charge) %>% 
+    dplyr::relocate(mass_accuracy_ppm, .after = total_area)
   
   return(data_clean)
 }

@@ -221,6 +221,9 @@ mod_read_lacytools_server <- function(id){
     ####################  Skyline  ##########################################
     #########################################################################
     
+    # TODO: implement warning when the required variables are not present
+    # in the CSV file.
+    
     raw_skyline_data <- reactive({
       req(correct_file_ext(), input$data_type == "Skyline data", input$skyline_input)
       read_skyline_csv(input$skyline_input$datapath)
@@ -230,31 +233,32 @@ mod_read_lacytools_server <- function(id){
       req(raw_skyline_data())
       transform_skyline_data(raw_skyline_data())
     })
-    
-    
-    
-    
-    
-    
+  
     
     
     # Detect total and specific samples if applicable.
-    lacytools_summaries_total_and_specific <- reactive({
+    data_total_and_specific <- reactive({
       
       shinyFeedback::hideFeedback("keyword_specific")
       shinyFeedback::hideFeedback("keyword_total")
       
       # Pause here until lacytools_summaries_combined() is Truthy, and until the inputs for
       # the keywords are not empty:
-      req(lacytools_summaries_combined(),
+      req(any(lacytools_summaries_combined(), skyline_data()),
           input$keyword_specific,
           input$keyword_total)
+      
+      if (is_truthy(lacytools_summaries_combined())) {
+        data_to_check <- lacytools_summaries_combined()
+      } else if (is_truthy(skyline_data())) {
+        data_to_check <- skyline_data()
+      }
       
       summary <- tryCatch(
         expr = {
           # Detect based on sample names which samples are Total Ig and which are
           # Specific Ig samples
-          detect_group(data = lacytools_summaries_combined(),
+          detect_group(data = data_to_check,
                        keyword_specific = input$keyword_specific,
                        keyword_total = input$keyword_total)
         },
@@ -298,17 +302,23 @@ mod_read_lacytools_server <- function(id){
     })
   
     
-    # Return combined lacytools summaries.
+    # Return combined lacytools summaries or skyline data
     to_return <- reactive({
-      req(lacytools_summaries_combined())
+      req(any(
+        is_truthy(lacytools_summaries_combined()),
+        is_truthy(skyline_data())
+      ))
       tryCatch(
-        lacytools_summaries_total_and_specific(),
+        data_total_and_specific(),
         error = function(e) {
-          lacytools_summaries_combined()
+          if (is_truthy(lacytools_summaries_combined())) {
+            lacytools_summaries_combined()
+          } else if (is_truthy(skyline_data())) {
+            skyline_data()
+          }
         }
       )
     })
-    
     
     
     return(list(
