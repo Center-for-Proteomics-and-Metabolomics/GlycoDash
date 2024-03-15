@@ -242,11 +242,12 @@ mod_read_lacytools_server <- function(id){
       shinyFeedback::hideFeedback("keyword_specific")
       shinyFeedback::hideFeedback("keyword_total")
       
-      # Pause here until lacytools_summaries_combined() is Truthy, and until the inputs for
-      # the keywords are not empty:
-      req(any(lacytools_summaries_combined(), skyline_data()),
-          input$keyword_specific,
-          input$keyword_total)
+      # Require data and non-empty keywords
+      req(
+        any(is_truthy(lacytools_summaries_combined()), is_truthy(skyline_data())),
+        input$keyword_specific,
+        input$keyword_total
+      )
       
       if (is_truthy(lacytools_summaries_combined())) {
         data_to_check <- lacytools_summaries_combined()
