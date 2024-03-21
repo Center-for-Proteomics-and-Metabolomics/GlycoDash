@@ -4,11 +4,13 @@
 \alias{summarize_spectra_checks}
 \title{Summarize analyte quality criteria checks}
 \usage{
-summarize_spectra_checks(checked_data)
+summarize_spectra_checks(checked_data, data_type)
 }
 \arguments{
 \item{checked_data}{The dataframe that is returned by
-\code{\link{check_analyte_quality_criteria}}.}
+\code{\link{check_analyte_quality_criteria_lacytools}} or \code{\link{check_analyte_quality_criteria_skyline}}.}
+
+\item{data_type}{"LaCyTools data" or "Skyline data", determined by file input.}
 }
 \value{
 A dataframe that contains one row per spectrum for each cluster (
@@ -25,8 +27,8 @@ A dataframe that contains one row per spectrum for each cluster (
 \description{
 \code{summarize_spectra_checks()} calculates the percentage of passing
 analytes per spectrum and the sum intensity of passing analytes per spectrum.
-\code{summarize_spectra_checks()} should be used after
-\code{\link{check_analyte_quality_criteria}} has been used to perform analyte quality
+\code{summarize_spectra_checks()} should be used after \code{\link{check_analyte_quality_criteria_lacytools}} or 
+\code{\link{check_analyte_quality_criteria_skyline}} has been used to perform analyte quality
 criteria checks for every spectrum and analyte combination in the data.
 }
 \examples{
@@ -41,5 +43,5 @@ checked_data <- check_analyte_quality_criteria(my_data = example_data,
                                                           "S/N",
                                                           "IPQ"))
 
-summarize_spectra_checks(checked_data = checked_data)
+summarize_spectra_checks(checked_data = checked_data, data_type = results_data_import$data_type())
 }

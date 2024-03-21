@@ -43,8 +43,7 @@ mod_spectra_curation_ui <- function(id){
                       tags$p(paste(
                         "The analyte quality criteria are used to curate the analytes",
                         "within each spectrum. To pass, an analyte needs to meet all",
-                        "three criteria (for the mass accuracy, for the isotopic pattern", 
-                        "quality (IPQ) and for the signal-to-noise ratio (S/N))."
+                        "three criteria."
                       )),
                       tags$p(paste(
                         "For each spectrum, the sum intensity of all passing",
@@ -61,13 +60,8 @@ mod_spectra_curation_ui <- function(id){
                   shinyWidgets::awesomeCheckboxGroup(
                     ns("qc_to_include"),
                     "Which analyte quality criteria should be taken into account during spectra curation?",
-                    choices = c("Mass accuracy",
-                                "IPQ",
-                                "S/N"),
-                    selected = c("Mass accuracy",
-                                 "IPQ",
-                                 "S/N"),
-                    status = "primary"),
+                    # Choices determined in server based on data type
+                    choices = c(""), selected = c(""), status = "primary"),
                   icon = icon("gears",
                               class = "ml"),
                   tooltip = shinyWidgets::tooltipOptions(placement = "top",
@@ -84,15 +78,18 @@ mod_spectra_curation_ui <- function(id){
                           max = 50,
                           value = c(-20, 20)
               ),
+              # IPQ and S/N in case of LaCyTools
               numericInput(ns("ipq"),
-                           "Max. IPQ value:",
-                           value = 0.2,
-                           step = 0.1,
-                           min = 0.0),
+                           "Max. isotopic pattern quality (IPQ) value:",
+                           value = 0.2, step = 0.1, min = 0.0),
               numericInput(ns("sn"),
-                           "Min. S/N ratio:",
-                           value = 9,
-                           min = 0.0)
+                           "Min. signal-to-noise (S/N) ratio:",
+                           value = 9, min = 0.0),
+              # IDP and Total area in case of Skyline
+              numericInput(ns("idp"),
+                           "Min. isotope dot product (IDP) value:",
+                           val = 0.9, max = 1.0, step = 0.1),
+              numericInput(ns("total_area"), "Min. total area", val = 0)
             )
           )
         ),
@@ -275,9 +272,38 @@ mod_spectra_curation_ui <- function(id){
 #' spectra_curation Server Functions
 #'
 #' @noRd 
-mod_spectra_curation_server <- function(id, results_data_import){
-  moduleServer( id, function(input, output, session){
+mod_spectra_curation_server <- function(id, results_data_import) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    
+    # Update user interface based on data type (LaCyTools or Skyline)
+    observeEvent(results_data_import$data_type(), {
+      if (results_data_import$data_type() == "Skyline data") {
+        # Checkboxes to include QC
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "qc_to_include",
+          choices = c("Mass accuracy", "Isotope dot product", "Total area"),
+          selected = c("Mass accuracy", "Isotope dot product", "Total area")
+        )
+        # Show IDP and Total area options
+        shinyjs::hide("ipq")
+        shinyjs::hide("sn")
+        shinyjs::show("idp")
+        shinyjs::show("total_area")
+      } else if (results_data_import$data_type() == "LaCyTools data") {
+        # Checkboxes to include QC
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "qc_to_include",
+          choices = c("Mass accuracy", "Isotopic pattern quality", "S/N"),
+          selected = c("Mass accuracy", "Isotopic pattern quality", "S/N")
+        )
+        # Show IPQ and SN
+        shinyjs::show("ipq")
+        shinyjs::show("sn")
+        shinyjs::hide("idp")
+        shinyjs::hide("total_area")
+      }
+    })
     
     # If quantitation is done: exlude quantitation clusters except IgG1 glycopeptides
     data_to_check <- reactive({
@@ -296,25 +322,42 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     # Data with criteria checks for each analyte in each sample.
     checked_data <- reactive({
-      req(data_to_check(), input$sn, input$ipq, length(input$qc_to_include) > 0)
+      req(data_to_check(), length(input$qc_to_include) > 0)
       
       r$tab_contents <- NULL # Reset the tab contents so that 
       # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
       
-      check_analyte_quality_criteria(my_data = data_to_check(),
-                                     min_ppm_deviation = input$mass_accuracy[1],
-                                     max_ppm_deviation = input$mass_accuracy[2],
-                                     max_ipq = input$ipq,
-                                     min_sn = input$sn,
-                                     criteria_to_consider = input$qc_to_include)
-      
+      if (results_data_import$data_type() == "LaCyTools data") {
+        req(input$sn, input$ipq)
+        # Check analyte quality criteria for LaCyTools data
+        check_analyte_quality_criteria_lacytools(
+          my_data = data_to_check(),
+          min_ppm_deviation = input$mass_accuracy[1],
+          max_ppm_deviation = input$mass_accuracy[2],
+          max_ipq = input$ipq,
+          min_sn = input$sn,
+          criteria_to_consider = input$qc_to_include
+        )
+      } else if (results_data_import$data_type() == "Skyline data") {
+        req(input$total_area, input$idp)
+        # Check analyte quality criteria for Skyline data
+        check_analyte_quality_criteria_skyline(
+          my_data = data_to_check(),
+          min_ppm_deviation = input$mass_accuracy[1],
+          max_ppm_deviation = input$mass_accuracy[2],
+          min_idp = input$idp,
+          min_total_area = input$total_area,
+          criteria_to_consider = input$qc_to_include
+        )
+      }
     })
+    
     
     
     # Analyte quality criteria checks summarized per cluster per sample: 
     summarized_checks <- reactive({
       req(checked_data())
-      summarize_spectra_checks(checked_data())
+      summarize_spectra_checks(checked_data(), results_data_import$data_type())
     })
     
     observe({

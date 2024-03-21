@@ -4,15 +4,13 @@
 \alias{report_failed_criteria}
 \title{Report which analyte quality criteria were not met}
 \usage{
-report_failed_criteria(my_data, criteria_to_consider)
+report_failed_criteria(my_data, criteria_to_consider, data_type)
 }
 \arguments{
 \item{my_data}{The return value of the function
 \code{\link{apply_chosen_criteria}}.}
 
-\item{criteria_to_consider}{A character vector that indicates which quality
-criteria should be taken into account during spectra curation. The analyte 
-quality criteria that can be included are "Mass accuracy", "S/N" and "IPQ".}
+\item{data_type}{"LaCyTools" or "Skyline", determined by file input.}
 }
 \value{
 The original dataframe my_data with an additional column
@@ -25,19 +23,20 @@ Report which analyte quality criteria were not met
 \examples{
 data(example_data)
 
-checked <- check_each_criterium(my_data = example_data,
+checked <- check_criteria_lacytools(my_data = example_data,
                      min_ppm_deviation = -20,
                      max_ppm_deviation = 20,
                      max_ipq = 0.2,
                      min_sn = 9)
 
-applied <- apply_chosen_criteria(my_data = checked,
-                                 criteria_to_consider = c("Mass accuracy",
-                                                          "S/N",
-                                                          "IPQ"))
+applied <- apply_chosen_criteria_lacytools(my_data = checked,
+                                          criteria_to_consider = c("Mass accuracy",
+                                                                   "S/N",
+                                                                   "IPQ"))
 
 report_failed_criteria(my_data = applied,
                        criteria_to_consider = c("Mass accuracy",
                                                "S/N",
-                                               "IPQ"))
+                                               "IPQ"),
+                       data_type = "LaCyTools")
 }

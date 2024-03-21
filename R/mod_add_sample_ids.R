@@ -300,6 +300,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
       reset = r
     )
     
+    
     data_with_sample_ids <- reactive({
       req(LaCyTools_summary())
       

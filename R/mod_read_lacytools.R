@@ -221,9 +221,6 @@ mod_read_lacytools_server <- function(id){
     ####################  Skyline  ##########################################
     #########################################################################
     
-    # TODO: implement warning when the required variables are not present
-    # in the CSV file.
-    
     raw_skyline_data <- reactive({
       req(correct_file_ext(), input$data_type == "Skyline data", input$skyline_input)
       read_skyline_csv(input$skyline_input$datapath)
@@ -303,6 +300,20 @@ mod_read_lacytools_server <- function(id){
     })
   
     
+    # filenames for report
+    filenames <- reactive({
+      req(any(
+        is_truthy(lacytools_summaries_combined()),
+        is_truthy(skyline_data())
+      ))
+      if (is_truthy(lacytools_summaries_combined())) {
+        input$lacytools_input$name
+      } else if (is_truthy(skyline_data())) {
+        input$skyline_input$name
+      }
+    })
+    
+    
     # Return combined lacytools summaries or skyline data
     to_return <- reactive({
       req(any(
@@ -324,10 +335,11 @@ mod_read_lacytools_server <- function(id){
     
     return(list(
       data = to_return,
+      data_type = reactive(input$data_type),
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
       contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
-      summary_filenames = reactive({input$lacytools_input$name})
+      summary_filenames = filenames
     ))
     
   })
