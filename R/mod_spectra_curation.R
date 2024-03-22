@@ -788,6 +788,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       mass_acc = reactive({ input$mass_accuracy }),
       ipq = reactive({ input$ipq }),
       sn = reactive({ input$sn }),
+      idp = reactive(input$idp),
+      total_area = reactive(input$total_area),
       included_qc = reactive({ input$qc_to_include }),
       uncalibrated_as_NA = reactive({ input$uncalibrated_as_na }),
       cut_off = reactive({input$cut_off_basis}),

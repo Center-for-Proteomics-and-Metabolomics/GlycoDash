@@ -188,7 +188,8 @@ throw_out_samples <- function(passing_spectra,
 #' curate_analytes(checked_analytes = checked_analytes,
 #'                 cut_off_percentage = 25)
 #' 
-curate_analytes <- function(checked_analytes, cut_off_percentages, 
+curate_analytes <- function(checked_analytes, 
+                            cut_off_percentages, 
                             bio_groups_colname = NULL) {
   
   required_columns <- c("cluster", 

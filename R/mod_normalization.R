@@ -42,7 +42,7 @@ mod_normalization_ui <- function(id){
 #' normalization Server Functions
 #'
 #' @noRd 
-mod_normalization_server <- function(id, results_analyte_curation, merged_metadata){
+mod_normalization_server <- function(id, results_analyte_curation, merged_metadata, data_type) {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -59,13 +59,15 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     total_intensities <- reactive({
       req(analyte_curated_data())
-      calculate_total_intensity(data = analyte_curated_data())
+      calculate_total_intensity(data = analyte_curated_data(), data_type = data_type())
     })
+    
     
     normalized_data <- reactive({
       req(total_intensities())
       normalize_data(total_intensities = total_intensities())
     })
+  
     
     normalized_data_wide <- reactive({
       req(normalized_data())
