@@ -20,15 +20,144 @@ mod_read_lacytools_ui <- function(id){
       "Choose which type of data you want to upload:",
       choices = c("LaCyTools data", "Skyline data"),
       selected = "LaCyTools data"
-    ),
-    fileInput(
-      ns("lacytools_input"),
-      "Upload one or more LaCyTools summary text files:",
-      multiple = TRUE
-    ),
-    fileInput(
-      ns("skyline_input"),
-      "Upload your Skyline CSV output file:"
+    ), # %>% bsplus::bs_embed_popover(
+    #   title = "Data types",
+    #   content = HTML(
+    #     "
+        # <b> LaCyTools </b>
+        # <br>
+        # You can upload one or more LaCyTools summary text files. The following
+        # outputs should at least be present in your files for each analyte
+        # (per charge state):
+        # <ul>
+        #     <li> Absolute Intensity (Background Subtracted) </li>
+        #     <li> Mass Accuracy [ppm] </li>
+        #     <li> Isotopic Pattern Quality </li>
+        #     <li> S/N </li>
+        # </ul>
+        # <br>
+    #     <b> Skyline </b>
+    #     <br>
+        # You can upload one Skyline output CSV file. The file should contain
+        # the following columns:
+        # <ul>
+        #     <li>
+        #     <i> Protein Name </i> <br>
+        #     The entries in this column should consist only of letters. They must
+        #     specify the peptide to which the glycan is attached (see below).
+        #     </li>
+        #     <li>
+        #     <i> Peptide </i> <br>
+        #     This column should contain the <b> glycan compositions </b> attached to the peptides
+        #     specified in <i> Protein Name </i>, the same way they would be specified in LaCyTools.
+        #     </li>
+        #     <li>
+        #     <i> Precursor </i> <br>
+        #     A number specifying the charge state of the glycopeptide.
+        #     </li>
+        # </ul>
+        # Additionally, it should contain columns with the <i> Total Area MS1 </i>,
+        # <i> Isotope Dot Product </i> and <i> Average Mass Error PPM </i> for each sample name.
+    #     "
+    #   ),
+    #   html = "true",
+    #   trigger = "hover",
+    #   placement = "right"
+    # ),
+    
+    fluidRow(
+      column(
+        width = 11,
+        fileInput(
+          ns("lacytools_input"),
+          "Upload one or more LaCyTools summary text files:",
+          multiple = TRUE
+        ),
+        fileInput(
+          ns("skyline_input"),
+          "Upload your Skyline CSV output file:"
+        ),
+      ),
+      column(
+        width = 1,
+        tags$style(
+          HTML(paste0(
+            "#",
+            ns("info_icon_div1"),
+            " .fas {margin-top:28px; color: #3c8dbc;}",
+            " .popover {width: 400px}",
+            " .col-sm-1 {padding-left: 0px}",
+            "#",
+            ns("info_icon_div2"),
+            " .fas {margin-top:28px; color: #3c8dbc;}",
+            " .popover {width: 400px}",
+            " .col-sm-1 {padding-left: 0px}"
+          ))
+      ),
+        div(
+          id = ns("info_icon_div1"),
+          icon("info-circle", class = "fa-2x") %>% 
+            bsplus::bs_embed_popover(
+              id = ns("popover"),
+              title = "LaCyTools data",
+              content = HTML(
+                "
+                You can upload one or more LaCyTools summary text files. The following
+                outputs should at least be present in your files for each analyte
+                (per charge state):
+                <ul>
+                    <li> Absolute Intensity (Background Subtracted) </li>
+                    <li> Mass Accuracy [ppm] </li>
+                    <li> Isotopic Pattern Quality </li>
+                    <li> S/N </li>
+                </ul>
+                "
+              ),
+              trigger = "hover",
+              placement = "right",
+              html = "true",
+              container = "body"
+            )
+        ),
+      div(
+        id = ns("info_icon_div2"),
+        icon("info-circle", class = "fa-2x") %>% 
+          bsplus::bs_embed_popover(
+            id = ns("popover"),
+            title = "Skyline data",
+            content = HTML(
+              "
+              You can upload one Skyline output CSV file. The file should contain
+              the following columns:
+              <ul>
+                  <li>
+                  <i> Protein Name </i> <br>
+                  The entries in this column should consist only of letters. They must
+                  specify the peptide to which the glycan is attached (see below).
+                  </li>
+                  <li>
+                  <i> Peptide </i> <br>
+                  This column should contain the <b> glycan compositions </b> attached to the peptides
+                  specified in <i>Protein Name</i>, the same way they would be specified in LaCyTools 
+                  (e.g. \"H5N2\", \"H4N4F1S1\").
+                  </li>
+                  <li>
+                  <i> Precursor </i> <br>
+                  A number specifying the charge state of the glycopeptide.
+                  </li>
+              </ul>
+              Additionally, it should contain columns with \"<i>Total Area MS1</i>\",
+              \"<i>Isotope Dot Product</i>\" and \"<i>Average Mass Error PPM</i>\" 
+              for each sample name.
+              "
+            ),
+            trigger = "hover",
+            placement = "right",
+            html = "true",
+            container = "body"
+          )
+        )
+      )
     ),
     tableOutput(ns("uploaded_files")),
     shinyWidgets::materialSwitch(
@@ -75,10 +204,14 @@ mod_read_lacytools_server <- function(id){
     observe({
       if (input$data_type == "LaCyTools data") {
         shinyjs::show("lacytools_input")
+        shinyjs::show("info_icon_div1")
         shinyjs::hide("skyline_input")
+        shinyjs::hide("info_icon_div2")
       } else if (input$data_type == "Skyline data") {
         shinyjs::hide("lacytools_input")
+        shinyjs::hide("info_icon_div1")
         shinyjs::show("skyline_input")
+        shinyjs::show("info_icon_div2")
       }
     })
     
