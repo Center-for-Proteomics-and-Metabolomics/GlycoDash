@@ -53,7 +53,7 @@ mod_spectra_curation_ui <- function(id){
                       and on the percentage of passing analytes in the spectra.
                       <br> <br>
                       It is possible to exclude one or two quality criteria from this assessment,
-                      by clicking the gear icon.
+                      by clicking the gears icon.
                       "
                     ),
                     trigger = "hover",

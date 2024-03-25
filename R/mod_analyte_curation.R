@@ -10,6 +10,16 @@
 mod_analyte_curation_ui <- function(id){
   ns <- NS(id)
   tagList(
+    tags$style(HTML(paste0(
+      "#", ns("box_header")," .awesome-checkbox {padding-top: 7px}",
+      "#", ns("box_header"), " .popover {max-width: 400px !important; color: #333}",
+      "#", ns("box")," .box-title {width: 100%}",
+      "#", ns("box_header"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#", ns("box_header"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#", ns("box_header"), " .btn {float: right; border-width: 0px; margin-right: 10px}",
+      "#", ns("box"), " .dropdown {display: inline-block; float: right; width: 330px}",
+      "#", ns("box_header"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+    ))),
     fluidPage(
       fluidRow(
         h1("Analyte curation")
@@ -18,8 +28,40 @@ mod_analyte_curation_ui <- function(id){
         column(
           width = 6,
           # Box with settings for the analyte curation
-          shinydashboard::box(
-            title = "Method for analyte curation",
+          shinydashboardPlus::box(
+            id = ns("box"),
+            title = div(
+              id = ns("box_header"),
+              "Method for analyte curation",
+              icon("info-circle", class = "ml") %>% 
+                bsplus::bs_embed_popover(
+                  title = "Explanation",
+                  content = HTML(
+                    "
+                    Analyte curation will be performed based on the settings that were chosen
+                    for the three quality criteria in the \"Spectra Curation\" tab.
+                    <br> <br>
+                    You can exclude one or two of the quality criteria from the assessment
+                    by clicking the gears icon.
+                    "
+                  ),
+                  trigger = "hover",
+                  placement = "right",
+                  html = "true",
+                  container = "body"),
+              shinyWidgets::dropdownButton(
+                shinyWidgets::awesomeCheckboxGroup(
+                  ns("qc_to_include"),
+                  "Which analyte quality criteria should be taken into account during analyte curation?",
+                  # Choices determined in server based on data type
+                  choices = c(""), selected = c(""), status = "primary"
+                ),
+                icon = icon("gears", class = "ml"),
+                tooltip = shinyWidgets::tooltipOptions(placement = "top", title = "Advanced settings"),
+                width = "250px",
+                size = "xs"
+              )
+            ),
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
@@ -222,6 +264,23 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
+    # Checkboxes based on data type (LaCyTools or Skyline)
+    observeEvent(data_type(), {
+      if (data_type() == "LaCyTools data") {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "qc_to_include",
+          choices = c("Mass accuracy", "Isotopic pattern quality", "S/N"),
+          selected = c("Mass accuracy", "Isotopic pattern quality", "S/N")
+        )
+      } else if (data_type() == "Skyline data") {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "qc_to_include",
+          choices = c("Mass accuracy", "Isotope dot product", "Total area"),
+          selected = c("Mass accuracy", "Isotope dot product", "Total area")
+        )
+      }
+    })
+    
     # passing_spectra contains the LaCyTools output for all the spectra
     # that passed curation.
     passing_spectra <- reactive({
@@ -322,6 +381,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       shinyjs::toggleState(
         "curate_analytes", condition = all(
           is_truthy(passing_spectra()),
+          length(input$qc_to_include) > 0,
           any(
             all(input$method == "Supply an analyte list", is_truthy(analyte_list())),
             all(
@@ -499,7 +559,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           max_ppm_deviation = results_spectra_curation$mass_acc()[2],
           max_ipq = results_spectra_curation$ipq(),
           min_sn = results_spectra_curation$sn(),
-          criteria_to_consider = c("Mass accuracy", "Isotopic pattern quality", "S/N")
+          criteria_to_consider = input$qc_to_include
         )
       } else if (data_type() == "Skyline data") {
         check_analyte_quality_criteria_skyline(
@@ -508,7 +568,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           max_ppm_deviation = results_spectra_curation$mass_acc()[2],
           min_idp = results_spectra_curation$idp(),
           min_total_area = results_spectra_curation$total_area(),
-          criteria_to_consider = c("Mass accuracy", "Isotope dot product", "Total area")
+          criteria_to_consider = input$qc_to_include
         )
       }
       
