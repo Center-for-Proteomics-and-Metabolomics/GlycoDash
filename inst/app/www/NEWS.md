@@ -1,3 +1,12 @@
+# v1.4.0
+## New features
+* Option to upload Skyline data.
+* Option to exclude quality criteria in analyte curation.
+
+## Adjustments
+* More info boxes in the user interface.
+
+
 # v1.3.7
 ## Adjustments
 * The GlycoDash version is now shown in the data processing report.
