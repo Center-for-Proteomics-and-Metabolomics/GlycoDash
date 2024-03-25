@@ -20,51 +20,7 @@ mod_read_lacytools_ui <- function(id){
       "Choose which type of data you want to upload:",
       choices = c("LaCyTools data", "Skyline data"),
       selected = "LaCyTools data"
-    ), # %>% bsplus::bs_embed_popover(
-    #   title = "Data types",
-    #   content = HTML(
-    #     "
-        # <b> LaCyTools </b>
-        # <br>
-        # You can upload one or more LaCyTools summary text files. The following
-        # outputs should at least be present in your files for each analyte
-        # (per charge state):
-        # <ul>
-        #     <li> Absolute Intensity (Background Subtracted) </li>
-        #     <li> Mass Accuracy [ppm] </li>
-        #     <li> Isotopic Pattern Quality </li>
-        #     <li> S/N </li>
-        # </ul>
-        # <br>
-    #     <b> Skyline </b>
-    #     <br>
-        # You can upload one Skyline output CSV file. The file should contain
-        # the following columns:
-        # <ul>
-        #     <li>
-        #     <i> Protein Name </i> <br>
-        #     The entries in this column should consist only of letters. They must
-        #     specify the peptide to which the glycan is attached (see below).
-        #     </li>
-        #     <li>
-        #     <i> Peptide </i> <br>
-        #     This column should contain the <b> glycan compositions </b> attached to the peptides
-        #     specified in <i> Protein Name </i>, the same way they would be specified in LaCyTools.
-        #     </li>
-        #     <li>
-        #     <i> Precursor </i> <br>
-        #     A number specifying the charge state of the glycopeptide.
-        #     </li>
-        # </ul>
-        # Additionally, it should contain columns with the <i> Total Area MS1 </i>,
-        # <i> Isotope Dot Product </i> and <i> Average Mass Error PPM </i> for each sample name.
-    #     "
-    #   ),
-    #   html = "true",
-    #   trigger = "hover",
-    #   placement = "right"
-    # ),
-    
+    ),
     fluidRow(
       column(
         width = 11,
@@ -75,7 +31,8 @@ mod_read_lacytools_ui <- function(id){
         ),
         fileInput(
           ns("skyline_input"),
-          "Upload your Skyline CSV output file:"
+          "Upload one or more Skyline CSV output files:",
+          multiple = TRUE
         ),
       ),
       column(
@@ -249,7 +206,7 @@ mod_read_lacytools_server <- function(id){
         shinyFeedback::feedbackDanger(
           inputId = "skyline_input",
           show = !is_truthy(correct_file_ext()),
-          text = "Please upload a CSV file."
+          text = "Please upload CSV files."
         )
       }
     })
@@ -356,14 +313,41 @@ mod_read_lacytools_server <- function(id){
     
     raw_skyline_data <- reactive({
       req(correct_file_ext(), input$data_type == "Skyline data", input$skyline_input)
-      read_skyline_csv(input$skyline_input$datapath)
+      data <- vector("list", length = nrow(input$skyline_input))
+      for (i in seq(nrow(input$skyline_input))) {
+        # TODO: implement checks and use tryCatch()
+        data[[i]] <- read_skyline_csv(input$skyline_input$datapath[[i]])
+      }
+      return(data)
     })
+    
+    
+    observe({
+      req(raw_skyline_data())
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8",
+        text = HTML("<br/><strong>Processing Skyline data...")
+      )
+    }, priority = 5)
+    
     
     skyline_data <- reactive({
       req(raw_skyline_data())
-      transform_skyline_data(raw_skyline_data())
+      data <- vector("list", length = length(raw_skyline_data()))
+      for (i in seq(length(raw_skyline_data()))) {
+        # TODO: implement checks and use tryCatch()
+        data[[i]] <- transform_skyline_data(raw_skyline_data()[[i]])
+      }
+      combined <- do.call(dplyr::bind_rows, data)
+      return(combined)
     })
   
+    
+    observeEvent(skyline_data(), {
+      shinybusy::remove_modal_spinner()
+    })
+    
+    
     
     
     # Detect total and specific samples if applicable.
@@ -472,7 +456,7 @@ mod_read_lacytools_server <- function(id){
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
       contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
-      summary_filenames = filenames
+      filenames = filenames
     ))
     
   })
