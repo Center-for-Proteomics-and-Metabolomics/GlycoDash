@@ -282,29 +282,27 @@ mod_read_lacytools_server <- function(id){
     # Create a list with tidy LaCyTools summaries
     lacytools_summaries <- reactive({
       req(raw_lacytools_summaries())
-      tidy_summaries <- purrr::imap(raw_lacytools_summaries(), function(summary, i) {
+      purrr::imap(raw_lacytools_summaries(), function(summary, i) {
         tryCatch(
-          expr = convert_lacytools_summary(data = raw_lacytools_summaries()[[i]]),
+          expr = convert_lacytools_summary(data = summary),
           no_outputs_present = function(c) {
             showNotification(paste("In summary file", i, c$message), type = "error", duration = NULL)
-            NULL
+            shinybusy::remove_modal_spinner()
+            return(NULL)
           }
         )
       })
     })
-
     
     # Combine the LaCyTools_summaries using dplyr::bind_rows
     lacytools_summaries_combined <- reactive({
-      req(lacytools_summaries())
+      req(lacytools_summaries(), !any(sapply(lacytools_summaries(), is.null)))
       do.call(dplyr::bind_rows, lacytools_summaries())
     })
     
-    # Hide spinner
     observeEvent(lacytools_summaries_combined(), {
       shinybusy::remove_modal_spinner()
     })
-    
     
     
     #########################################################################
@@ -315,7 +313,6 @@ mod_read_lacytools_server <- function(id){
       req(correct_file_ext(), input$data_type == "Skyline data", input$skyline_input)
       data <- vector("list", length = nrow(input$skyline_input))
       for (i in seq(nrow(input$skyline_input))) {
-        # TODO: implement checks and use tryCatch()
         data[[i]] <- read_skyline_csv(input$skyline_input$datapath[[i]])
       }
       return(data)
@@ -333,17 +330,25 @@ mod_read_lacytools_server <- function(id){
     
     skyline_data <- reactive({
       req(raw_skyline_data())
-      data <- vector("list", length = length(raw_skyline_data()))
-      for (i in seq(length(raw_skyline_data()))) {
-        # TODO: implement checks and use tryCatch()
-        data[[i]] <- transform_skyline_data(raw_skyline_data()[[i]])
-      }
-      combined <- do.call(dplyr::bind_rows, data)
-      return(combined)
+      purrr::imap(raw_skyline_data(), function(data, i) {
+        tryCatch(
+          expr = transform_skyline_data(data),
+          missing_columns = function(c) {
+            showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
+            shinybusy::remove_modal_spinner()
+            return(NULL)
+          }
+        )
+      })
     })
-  
     
-    observeEvent(skyline_data(), {
+    skyline_data_combined <- reactive({
+      req(skyline_data(), !any(sapply(skyline_data(), is.null)))
+      do.call(dplyr::bind_rows, skyline_data())
+    })
+    
+  
+    observeEvent(skyline_data_combined(), {
       shinybusy::remove_modal_spinner()
     })
     
@@ -358,15 +363,15 @@ mod_read_lacytools_server <- function(id){
       
       # Require data and non-empty keywords
       req(
-        any(is_truthy(lacytools_summaries_combined()), is_truthy(skyline_data())),
+        any(is_truthy(lacytools_summaries_combined()), is_truthy(skyline_data_combined())),
         input$keyword_specific,
         input$keyword_total
       )
       
       if (is_truthy(lacytools_summaries_combined())) {
         data_to_check <- lacytools_summaries_combined()
-      } else if (is_truthy(skyline_data())) {
-        data_to_check <- skyline_data()
+      } else if (is_truthy(skyline_data_combined())) {
+        data_to_check <- skyline_data_combined()
       }
       
       summary <- tryCatch(
@@ -421,11 +426,11 @@ mod_read_lacytools_server <- function(id){
     filenames <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data())
+        is_truthy(skyline_data_combined())
       ))
       if (is_truthy(lacytools_summaries_combined())) {
         input$lacytools_input$name
-      } else if (is_truthy(skyline_data())) {
+      } else if (is_truthy(skyline_data_combined())) {
         input$skyline_input$name
       }
     })
@@ -435,15 +440,15 @@ mod_read_lacytools_server <- function(id){
     to_return <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data())
+        is_truthy(skyline_data_combined())
       ))
       tryCatch(
         data_total_and_specific(),
         error = function(e) {
           if (is_truthy(lacytools_summaries_combined())) {
             lacytools_summaries_combined()
-          } else if (is_truthy(skyline_data())) {
-            skyline_data()
+          } else if (is_truthy(skyline_data_combined())) {
+            skyline_data_combined()
           }
         }
       )

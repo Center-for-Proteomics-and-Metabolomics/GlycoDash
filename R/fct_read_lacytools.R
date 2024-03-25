@@ -546,12 +546,24 @@ read_skyline_csv <- function(path_to_file) {
 #' - mass_accuracy_ppm
 #' - isotope_dot_product
 transform_skyline_data <- function(raw_skyline_data) {
+  # Check if required data is present in the file
+  required_cols <- c("Protein.Name", "Peptide", "Precursor.Charge")
+  cols_check <- required_cols %in% colnames(raw_skyline_data)
+  missing_cols <- required_cols[!cols_check]
+  if (length(missing_cols) > 0) {
+    rlang::abort(
+      class = "missing_columns",
+      message = paste0(
+        "the following columns are missing from your data: ",
+        paste0(missing_cols, collapse = ", "),
+        "\nPlease read the requirements for the structure of your Skyline CSV file."
+      )
+    )
+  }
   # Select required columns
   raw_data_required <- raw_skyline_data %>% 
     dplyr::select(
-      "Protein.Name",
-      "Peptide",
-      "Precursor.Charge",
+      required_cols,
       tidyselect::contains("Total.Area.MS1"),
       tidyselect::contains("Isotope.Dot.Product"),
       tidyselect::contains("Average.Mass.Error.PPM")
