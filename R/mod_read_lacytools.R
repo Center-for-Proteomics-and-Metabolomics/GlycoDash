@@ -456,7 +456,7 @@ mod_read_lacytools_server <- function(id){
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
       contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
-      filenames = filenames
+      summary_filenames = filenames
     ))
     
   })
