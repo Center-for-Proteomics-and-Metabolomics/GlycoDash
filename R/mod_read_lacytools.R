@@ -89,8 +89,9 @@ mod_read_lacytools_ui <- function(id){
               <ul>
                   <li>
                   <i> Protein Name </i> <br>
-                  The entries in this column should consist only of letters. They must
-                  specify the peptide to which the glycan is attached (see below).
+                  The entries in this column should consist only of letters
+                  <b> (no numbers or spaces). </b>
+                  They must specify the peptide to which the glycan is attached (see below).
                   </li>
                   <li>
                   <i> Peptide </i> <br>
@@ -247,25 +248,23 @@ mod_read_lacytools_server <- function(id){
     # Create a vector that contains the raw LaCyTools summary files
     raw_lacytools_summaries <- reactive({
       req(correct_file_ext(), input$data_type == "LaCyTools data", input$lacytools_input)
-      summaries <- vector("list", length = nrow(input$lacytools_input))
-      for (i in seq(nrow(input$lacytools_input))) {
-        summaries[[i]] <- tryCatch(
-          expr = read_non_rectangular(input$lacytools_input$datapath[i]),
+      purrr::imap(input$lacytools_input$datapath, function(datapath, i) {
+        tryCatch(
+          expr = read_non_rectangular(datapath),
           embedded_null = function(c) {
-            shinyFeedback::feedbackDanger("lacytools_input", TRUE, c$message)
+            showNotification(paste("Summary file", i, ":", c$message), type = "error", duration = NULL)
             NULL
           },
           empty_file = function(c) {
-            shinyFeedback::feedbackDanger("lacytools_input", TRUE, c$message)
+            showNotification(paste("Summary file", i, ":", c$message), type = "error", duration = NULL)
             NULL
           },
           wrong_delim = function(c) {
-            shinyFeedback::feedbackDanger("lacytools_input", TRUE, c$message)
+            showNotification(paste("Summary file", i, ":", c$message), type = "error", duration = NULL)
             NULL
           }
         )
-      }
-      return(summaries)
+      })
     })
     
     
@@ -311,13 +310,10 @@ mod_read_lacytools_server <- function(id){
     
     raw_skyline_data <- reactive({
       req(correct_file_ext(), input$data_type == "Skyline data", input$skyline_input)
-      data <- vector("list", length = nrow(input$skyline_input))
-      for (i in seq(nrow(input$skyline_input))) {
-        data[[i]] <- read_skyline_csv(input$skyline_input$datapath[[i]])
-      }
-      return(data)
+      purrr::map(input$skyline_input$datapath, function(datapath) {
+        read_skyline_csv(datapath)
+      })
     })
-    
     
     observe({
       req(raw_skyline_data())
@@ -336,7 +332,17 @@ mod_read_lacytools_server <- function(id){
           missing_columns = function(c) {
             showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
             shinybusy::remove_modal_spinner()
-            return(NULL)
+            NULL
+          },
+          missing_variables = function(c) {
+            showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
+            shinybusy::remove_modal_spinner()
+            NULL
+          },
+          numbers_or_spaces = function(c) {
+            showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
+            shinybusy::remove_modal_spinner()
+            NULL
           }
         )
       })

@@ -546,27 +546,13 @@ read_skyline_csv <- function(path_to_file) {
 #' - mass_accuracy_ppm
 #' - isotope_dot_product
 transform_skyline_data <- function(raw_skyline_data) {
-  # Check if required data is present in the file
-  required_cols <- c("Protein.Name", "Peptide", "Precursor.Charge")
-  cols_check <- required_cols %in% colnames(raw_skyline_data)
-  missing_cols <- required_cols[!cols_check]
-  if (length(missing_cols) > 0) {
-    rlang::abort(
-      class = "missing_columns",
-      message = paste0(
-        "the following columns are missing from your data: ",
-        paste0(missing_cols, collapse = ", "),
-        "\nPlease read the requirements for the structure of your Skyline CSV file."
-      )
-    )
-  }
+  # Check structure of skyline data
+  check_skyline_data(raw_skyline_data)
   # Select required columns
   raw_data_required <- raw_skyline_data %>% 
     dplyr::select(
-      required_cols,
-      tidyselect::contains("Total.Area.MS1"),
-      tidyselect::contains("Isotope.Dot.Product"),
-      tidyselect::contains("Average.Mass.Error.PPM")
+      "Protein.Name", "Peptide", "Precursor.Charge",
+      tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"))
     )
   # Make columns numeric except for first three
   raw_data_required[raw_data_required == "#N/A"] <- NA
@@ -619,6 +605,46 @@ transform_skyline_data <- function(raw_skyline_data) {
 }
 
 
+
+# Function to check the structure of Skyline CSV files.
+check_skyline_data <- function(raw_skyline_data) {
+  # Check if required columns are present in the file
+  required_cols <- c("Protein.Name", "Peptide", "Precursor.Charge")
+  cols_check <- required_cols %in% colnames(raw_skyline_data)
+  missing_cols <- required_cols[!cols_check]
+  if (length(missing_cols) > 0) {
+    rlang::abort(
+      class = "missing_columns",
+      message = paste0(
+        "the following columns are missing from your data: ",
+        paste0(gsub("\\.", " ", missing_cols), collapse = ", ")
+      )
+    )
+  }
+  # Check if required variables per sample name are present in the file
+  required_vars <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM") 
+  vars_check <- sapply(required_vars, function(x) any(grepl(x, colnames(raw_skyline_data))))
+  missing_vars <- required_vars[!vars_check]
+  if (length(missing_vars) > 0) {
+    rlang::abort(
+      class = "missing_variables",
+      message = paste0(
+        "the following variables are missing from your data: ",
+        paste0(gsub("\\.", " ", missing_vars), collapse = ", ")
+      )
+    )
+  }
+  # Check if Protein.Name contains spaces or letters
+  contains_numbers_or_spaces <- grepl("[0-9 ]", raw_skyline_data$Protein.Name)
+  if (any(contains_numbers_or_spaces)) {
+    rlang::abort(
+      class = "numbers_or_spaces",
+      message = paste0(
+        "please remove any numbers or spaces from all entries in the column \"Protein Name\"."
+      )
+    )
+  }
+}
 
 
 
