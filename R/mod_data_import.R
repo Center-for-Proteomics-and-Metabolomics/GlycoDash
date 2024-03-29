@@ -10,8 +10,6 @@
 mod_data_import_ui <- function(id){
   ns <- NS(id)
   tagList(
-    shinyFeedback::useShinyFeedback(), # Needed to use the shinyFeedback package.
-    bsplus::use_bs_popover(), # Needed to use the popovers from the bsplus package.
     fluidPage(
       fluidRow(
         h1("Data Import")
@@ -65,13 +63,10 @@ mod_data_import_server <- function(id){
                                                       keyword_total = LaCyTools_summary$keyword_total,
                                                       contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
                                                       LaCyTools_summary = LaCyTools_summary$data,
-                                                      summary_filenames = LaCyTools_summary$summary_filenames,
-                                                      read_lacytools_button = LaCyTools_summary$button)
+                                                      summary_filenames = LaCyTools_summary$summary_filenames)
     
     data_incl_sample_types <- mod_add_sample_types_server("add_sample_types_ui_1",
-                                                          LaCyTools_summary = data_incl_sample_ids$data,
-                                                          read_lacytools_button = LaCyTools_summary$button,
-                                                          sample_ids_button = data_incl_sample_ids$button)
+                                                          LaCyTools_summary = data_incl_sample_ids$data)
     
     data_incl_clusters <- mod_clusters_server("clusters_ui_1",
                                               LaCyTools_summary = data_incl_sample_types$data)
@@ -79,40 +74,30 @@ mod_data_import_server <- function(id){
     data_incl_metadata <- mod_add_metadata_server("add_metadata_ui_1",
                                                   LaCyTools_summary = data_incl_clusters$data)
     
+    
+    
     # Update the data shown in the datatable according to the steps that have
-    # been completed by the user:
+    # been completed by the user
     show_in_table <- reactive({
       req(LaCyTools_summary$data())
-      
+
       if (is_truthy(data_incl_metadata$data())) {
         show_in_table <- data_incl_metadata$data()
-        showNotification("The metadata was added to the data.",
-                         type = "message")
       } else if (is_truthy(data_incl_clusters$data())) {
         show_in_table <- data_incl_clusters$data()
-        showNotification("The clusters were added to the data.",
-                         type = "message")
       } else if (is_truthy(data_incl_sample_types$data())) {
           show_in_table <- data_incl_sample_types$data()
-          showNotification("The sample types were added to the data.",
-                           type = "message")
       } else if (is_truthy(data_incl_sample_ids$data())) {
         show_in_table <- data_incl_sample_ids$data()
-        showNotification("The sample ID's were added to the data.",
-                         type = "message")
       } else if (is_truthy(LaCyTools_summary$data())) {
           show_in_table <- LaCyTools_summary$data()
-          showNotification("The LaCyTools summaries have been loaded.",
-                           type = "message")
       }
       return(show_in_table)
-    }) %>% bindEvent(LaCyTools_summary$button(), 
-                    data_incl_sample_ids$button(),
-                    data_incl_sample_types$button(),
-                    data_incl_clusters$button(),
-                    data_incl_metadata$button())
+    })
     
-    # When the lacytools summary has been read in, the converted data is shown
+    
+    
+    # When the LaCyTools summary has been read in, the converted data is shown
     # in the data table
     output$data_table <- DT::renderDT({
       req(show_in_table())

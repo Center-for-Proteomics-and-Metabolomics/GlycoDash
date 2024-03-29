@@ -94,7 +94,7 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
     selected_group <- reactive({
       req(input$sample_menu)
       req(my_data())
-      if (contains_total_and_specific_samples() == "Yes") {
+      if (contains_total_and_specific_samples() == TRUE) {
         group <- stringr::str_extract(
           string = input$sample_menu,
           pattern = "(?<=group: ).+(?= sample_id: .+)") %>% 

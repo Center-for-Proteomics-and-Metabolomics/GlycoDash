@@ -96,7 +96,7 @@ find_widest_row <- function(path, delim) {
   if (rlang::is_empty(lines)) {
     rlang::abort(
       class = "empty_file",
-      message = "The uploaded file is empty."
+      message = "One or more of the uploaded files are empty."
     )
   }
   
@@ -106,10 +106,9 @@ find_widest_row <- function(path, delim) {
   
   if (max_n_columns == 1) {
     rlang::warn(class = "wrong_delim",
-                message = paste(
-                  "The file seems to consist of a single column.",
-                  "Are you sure that you chose the correct delimiter for your file?"
-                ))
+                message = 
+                  "One or more files seem to consist of a single column.
+                  Please make sure that you chose the correct delimiter for your files.")
   }
   
   return(max_n_columns)

@@ -17,22 +17,16 @@ mod_curate_based_on_controls_ui <- function(id){
                    multiple = TRUE),
     div(
       id = ns("cut_off_basis_total_and_specific"),
-      column(
-        width = 6,
-        selectInput(ns("cut_off_basis_specific"),
-                    "Choose which specific Ig spectra should be used as negative controls:",
-                    choices = c(""),
-                    selected = NULL,
-                    multiple = TRUE)
-      ),
-      column(
-        width = 6,
-        selectizeInput(ns("cut_off_basis_total"),
-                       "Choose which total Ig spectra should be used as negative controls:",
-                       choices = c(""),
-                       selected = NULL,
-                       multiple = TRUE)
-      )
+      selectInput(ns("cut_off_basis_specific"),
+                  "Choose which specific Ig spectra should be used as negative controls:",
+                  choices = c(""),
+                  selected = NULL,
+                  multiple = TRUE),
+      selectInput(ns("cut_off_basis_total"),
+                     "Choose which total Ig spectra should be used as negative controls:",
+                     choices = c(""),
+                     selected = NULL,
+                     multiple = TRUE)
     ),
     numericInput(ns("percentile"),
                  "At what percentile of the negative controls should the cut-offs be set?",
@@ -90,10 +84,10 @@ mod_curate_based_on_controls_server <- function(id,
     
     observe({
       shinyjs::toggle("cut_off_basis_total_and_specific",
-                      condition = results_data_import$contains_total_and_specific_samples() == "Yes")
+                      condition = results_data_import$contains_total_and_specific_samples() == TRUE)
       
       shinyjs::toggle("cut_off_basis",
-                      condition = results_data_import$contains_total_and_specific_samples() == "No")
+                      condition = results_data_import$contains_total_and_specific_samples() == FALSE)
     })
     
     observe({
@@ -126,7 +120,7 @@ mod_curate_based_on_controls_server <- function(id,
     # data.
     observe({
       req(r$sample_types)
-      if (results_data_import$contains_total_and_specific_samples() == "No") {
+      if (results_data_import$contains_total_and_specific_samples() == FALSE) {
         options <- unique(r$sample_types$sample_type)
         
         names(options) <- paste(options, "samples")
@@ -158,13 +152,13 @@ mod_curate_based_on_controls_server <- function(id,
     cut_offs <- reactive({
       req(summarized_checks(),
           input$percentile,
-          any(all(results_data_import$contains_total_and_specific_samples() == "No",
+          any(all(results_data_import$contains_total_and_specific_samples() == FALSE,
                   is_truthy(input$cut_off_basis)),
-              all(results_data_import$contains_total_and_specific_samples() == "Yes",
+              all(results_data_import$contains_total_and_specific_samples() == TRUE,
                   is_truthy(input$cut_off_basis_specific),
                   is_truthy(input$cut_off_basis_total))))
       
-      if (results_data_import$contains_total_and_specific_samples() == "Yes") {
+      if (results_data_import$contains_total_and_specific_samples() == TRUE) {
         
         cut_offs_specific <- calculate_cut_offs(
           summarized_checks(),

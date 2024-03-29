@@ -1,3 +1,44 @@
+# v1.3.7
+## Adjustments
+* The GlycoDash version is now shown in the data processing report.
+* Unnecessary buttons were removed from the “Data Import” tab.
+
+
+# v1.3.6
+## Bug fixes
+* Minor bug fixes in analyte curation and quantitation.
+
+
+# v1.3.6
+## Adjustments
+* Peptides/clusters in the data are now detected automatically.
+
+
+# v1.3.5
+## Adjustments
+* Multiple LaCyTools summary files can now be uploaded at once, rather than one by one.
+* In analyte curation, it is now possible to choose separate cut-offs for different clusters.
+
+
+# v1.3.4
+## Bug fixes
+* The redesigned option to automatically calculate traits now works when running GlycoDash in a Docker container.
+
+
+# v1.3.3
+## New features
+* The option to automatically calculate glycosylation traits has been redesigned. Calculations are now performed based on a 
+  reference list containing known glycan compositions. Mouse IgG traits were added, as well as extra human IgG traits.
+
+## Adjustments
+* Changed required formatting of custom traits Excel files to be consistent with the automatic trait calculations.
+* Normalization now happens automatically after analyte curation. 
+* Added the option to export data in the “Normalized data” tab.
+
+## Bug fixes
+* GlycoDash can now handle plate designs containing plate numbers with two digits.
+
+
 # v1.3.2
 ## Adjustments
 * Exclude TTP peptide from the IgG1 quantitation.

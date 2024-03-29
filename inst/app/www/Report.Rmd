@@ -17,7 +17,7 @@ params:
   spectra_curation_plot: NA
   analyte_curation_method: NA
   ignore_samples: NA
-  cut_off_percentage: NA
+  cut_offs: NA
   analyte_list: NA
   analyte_curation_objects: NA
   derived_traits: NA
@@ -78,8 +78,7 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
       "- Samples excluded from analyte curation:",
       text,
       "\n- Cut-off percentage:",
-      params$cut_off,
-      "%")
+      paste(names(params$cut_offs), ": ", params$cut_offs, "%, ", sep = "", collapse = "\n"))
 }
 
 if (params$analyte_curation_method == "Supply an analyte list") {

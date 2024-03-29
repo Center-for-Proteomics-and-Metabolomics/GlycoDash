@@ -300,7 +300,7 @@ process_plate_design <- function (plate_design) {
         sample_id = as.character(sample_id),
         plate = stringr::str_match(
           plate, 
-          "[Pp][Ll](?:[Aa][Tt][Ee])?.*(\\d+|[A-Z])")[ , 2],
+          "[Pp][Ll](?:[Aa][Tt][Ee])?\\s*(\\d+|[A-Z]+)")[ , 2],
         well = stringr::str_extract(well, "[A-H]\\d+"))
   }
   

@@ -9,12 +9,16 @@ app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     
+    # Use packages for feedback and popovers
+    shinyFeedback::useShinyFeedback(),
+    bsplus::use_bs_popover(),
+    
     # Your application UI logic 
     shinydashboard::dashboardPage(
       
       # Title header, with button that links to GitHub
       header = shinydashboard::dashboardHeader(
-        title = "GlycoDash v1.3.2",
+        title = "GlycoDash v1.3.7",
         tags$li(a(
           onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash')",
           href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"
@@ -32,7 +36,7 @@ app_ui <- function(request) {
                                    tabName = "spectra_curation"),
           shinydashboard::menuItem("Analyte Curation", 
                                    tabName = "analyte_curation"),
-          shinydashboard::menuItem("Normalization", 
+          shinydashboard::menuItem("Normalized data", 
                                    tabName = "normalization"),
           shinydashboard::menuItem("IgG1 quantitation (optional)",
                                    tabName = "quantitation"),

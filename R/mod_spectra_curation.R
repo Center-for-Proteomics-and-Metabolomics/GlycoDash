@@ -10,7 +10,6 @@
 mod_spectra_curation_ui <- function(id){
   ns <- NS(id)
   tagList(
-    bsplus::use_bs_popover(),
     fluidPage(
       fluidRow(
         h1("Spectra curation") 
@@ -21,30 +20,14 @@ mod_spectra_curation_ui <- function(id){
           div(
             id = ns("qc"),
             tags$style(HTML(paste0(
-              "#",
-              ns("box_header2"),
-              " .awesome-checkbox {padding-top: 7px}",
-              "#",
-              ns("box_header2"),
-              " .popover {max-width: 400px !important; color: #333}",
-              "#",
-              ns("qc"),
-              " .box-title {width: 100%}",
-              "#",
-              ns("box_header2"),
-              " .fas {float: right; margin-right: 5px; font-size: 18px}",
-              "#",
-              ns("box_header2"),
-              " .direct-chat-contacts {right: 0; background: #222d32!important}",
-              "#",
-              ns("box_header2"),
-              " .btn {float: right; border-width: 0px; margin-right: 2px}",
-              "#",
-              ns("qc"),
-              " .dropdown {display: inline-block; float: right;}",
-              "#",
-              ns("box_header2"),
-              " .dropdown-menu {background: #333; right: -33px; left: auto; top: 28px;}"
+              "#", ns("box_header2"), " .awesome-checkbox {padding-top: 7px}",
+              "#", ns("box_header2"), " .popover {max-width: 400px !important; color: #333}",
+              "#", ns("qc"), " .box-title {width: 100%}",
+              "#", ns("box_header2"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+              "#", ns("box_header2"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+              "#", ns("box_header2"), " .btn {float: right; border-width: 0px; margin-right: 2px}",
+              "#", ns("qc"), " .dropdown {display: inline-block; float: right;}",
+              "#", ns("box_header2"), " .dropdown-menu {background: #333; right: -33px; left: auto; top: 28px;}"
             ))),
             shinydashboard::box(
               title = div(
@@ -121,32 +104,15 @@ mod_spectra_curation_ui <- function(id){
           div(
             id = ns("popover_cut_off"),
             tags$style(HTML(paste0(
-              "#",
-              ns("box_header"),
-              " .awesome-checkbox {padding-top: 7px}",
-              "#",
-              ns("box_header"),
-              " .popover {max-width: 400px !important; color: #333}",
-              "#",
-              ns("popover_cut_off"),
-              " .box-title {width: 100%}",
-              "#",
-              ns("box_header"),
-              " .fas {float: right; margin-right: 5px; font-size: 18px}",
-              "#",
-              ns("box_header"),
-              " .direct-chat-contacts {right: 0; background: #222d32!important}",
-              "#",
-              ns("box_header"),
-              " .btn {float: right; border-width: 0px; margin-right: 0px}",
-              "#",
-              ns("popover_cut_off"),
-              " .dropdown {display: inline-block; float: right; width: 330px}",
-              "#",
-              ns("box_header"),
-              " .dropdown-menu {background: #333; right: -10px; left: auto; top: 28px;}"
-            ))
-            ),
+              "#", ns("box_header"), " .awesome-checkbox {padding-top: 7px}",
+              "#", ns("box_header"), " .popover {max-width: 400px !important; color: #333}",
+              "#", ns("popover_cut_off"), " .box-title {width: 100%}",
+              "#", ns("box_header"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+              "#", ns("box_header"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+              "#", ns("box_header"), " .btn {float: right; border-width: 0px; margin-right: 0px}",
+              "#", ns("popover_cut_off"), " .dropdown {display: inline-block; float: right; width: 330px}",
+              "#", ns("box_header"), " .dropdown-menu {background: #333; right: -10px; left: auto; top: 28px;}"
+            ))),
             shinydashboard::box(
               title = div("Calculate spectra curation cut-offs",
                           id = ns("box_header"),
@@ -237,7 +203,9 @@ mod_spectra_curation_ui <- function(id){
             tabsetPanel(id = ns("tabs")),
             br(),
             actionButton(ns("button"),
-                         "Perform spectra curation")
+                         "Perform spectra curation",
+                         style = "font-size: 16px; padding: 10px 20px; font-weight: bold; 
+                                 border: 1px solid black;")
           )
         ) 
       ),
@@ -254,6 +222,7 @@ mod_spectra_curation_ui <- function(id){
             tabsetPanel(id = ns("more_than_4_clusters")),
             br(),
             tabsetPanel(
+              id = ns("result_tables"),
               tabPanel(title = "Details of passing spectra per analyte",
                        column(width = 12,
                               br(),
@@ -272,7 +241,7 @@ mod_spectra_curation_ui <- function(id){
       ),
       fluidRow(
         column(
-          width = 12,
+          width = 6,
           shinydashboard::box(
             title = "Export results",
             width = NULL,
@@ -342,7 +311,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
     })
     
     
-    
     # Analyte quality criteria checks summarized per cluster per sample: 
     summarized_checks <- reactive({
       req(checked_data())
@@ -396,16 +364,20 @@ mod_spectra_curation_server <- function(id, results_data_import){
       unique(data_to_check()$cluster)
     })
     
+    created_tabs <- reactiveValues(clusters = c(""))
+    
     observeEvent(clusters(), {
-      # Remove tabs in case they have been created before. Still not ideal cause
-      # if cluster names are changed then the old tabs won't be removed
-      purrr::map(clusters(),
+      # Remove tabs in case they have been created before. 
+      purrr::map(created_tabs$clusters,
                  function(cluster) {
                    removeTab("tabs",
                              target = cluster)
                  })
-
-      # Create one tab for each cluster:
+      
+      # Update created_cluster_tabs with new clusters
+      created_tabs$clusters <- clusters()
+      
+      # Create one tab for each cluster.
       purrr::map(clusters(),
                  function(cluster) {
                    appendTab("tabs",
@@ -536,7 +508,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
         )
       }
     })
-    
     
 
     # Perform spectra curation when button is clicked:
@@ -685,9 +656,24 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     
     
-    # Download buttons
     # TODO: shorten this code
     observe({
+      # Toggle visibility of tabs
+      tab_names <- c(
+        "Details of failed spectra per analyte",
+        "Overview of failed spectra",
+        "Details of passing spectra per analyte"
+      )
+      if (is_truthy(to_return())) {
+        purrr::map(tab_names, function(tab_name) {
+          showTab(inputId = "result_tables", target = tab_name, select = TRUE)
+        })
+      } else {
+        purrr::map(tab_names, function(tab_name) {
+          hideTab(inputId = "result_tables", target = tab_name)
+        })
+      }
+      # Download buttons
       shinyjs::toggleState("download1", is_truthy(to_return()))
       shinyjs::toggleState("download2", is_truthy(curated_data()))
       shinyjs::toggleState("download3", is_truthy(curated_data()))

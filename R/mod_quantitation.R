@@ -258,7 +258,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     # Create peptide correlation plots.
     r <- reactiveValues(created_tab_titles = vector("character"))
     observeEvent(IgG1_amounts(), {
-      
+
       # Remove previously created tabs
       purrr::map(r$created_tab_titles, function(tab_title) {
         removeTab(inputId = "tabs", target = tab_title, session = session)
