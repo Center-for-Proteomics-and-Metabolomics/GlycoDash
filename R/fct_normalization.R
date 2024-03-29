@@ -10,6 +10,8 @@
 #'   combination per spectrum). The data should contain at least the columns
 #'   \code{absolute_intensity_background_subtracted}, \code{fraction},
 #'   \code{sample_name} and \code{analyte}.
+#'   
+#' @param data_type "LaCyTools data" or "Skyline data"
 #'
 #' @return This function returns a tibble with the columns "sample_name",
 #'   "analyte", "cluster", "group" (a factor), "sample_type" (a factor),
@@ -23,14 +25,14 @@
 #' # First spectra curation has to be performed:
 #' data("example_data")
 #'
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#' checked_data <- check_analyte_quality_criteria_lacytools(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
 #'                                                max_ppm_deviation = 20,
 #'                                                max_ipq = 0.2,
 #'                                                min_sn = 9,
 #'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "S/N",
-#'                                                                         "IPQ"))
+#'                                                                         "Isotopic pattern quality",
+#'                                                                         "S/N"))
 #'
 #' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
 #'
@@ -69,14 +71,14 @@
 #'    samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
 #' )
 #'
-#' checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
+#' checked_analytes <- check_analyte_quality_criteria_lacytools(my_data = without_samples_to_ignore,
 #'                                                    min_ppm_deviation = -20,
 #'                                                    max_ppm_deviation = 20,
 #'                                                    max_ipq = 0.2,
 #'                                                    min_sn = 9,
 #'                                                    criteria_to_consider = c("Mass accuracy",
 #'                                                                             "S/N",
-#'                                                                             "IPQ"))
+#'                                                                             "Isotopic pattern quality"))
 #'
 #' curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
 #'                                     cut_off_percentage = 25)
@@ -86,14 +88,16 @@
 #'    dplyr::filter(has_passed_analyte_curation) %>%
 #'    dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
 #'
-#' calculate_total_intensity(analyte_curated_data)
+#' calculate_total_intensity(analyte_curated_data, "LaCyTools_data")
 #' 
-calculate_total_intensity <- function(data) {
+calculate_total_intensity <- function(data, data_type) {
   
-  required_columns <- c("absolute_intensity_background_subtracted",
-                        "fraction",
-                        "sample_name", 
-                        "analyte")
+  # Check for missing columns
+  if (data_type == "LaCyTools data") {
+    required_columns <- c("absolute_intensity_background_subtracted", "fraction", "sample_name", "analyte")
+  } else if (data_type == "Skyline data") {
+    required_columns <- c("total_area", "sample_name", "analyte")
+  }
   
   missing_columns <- required_columns[!(required_columns %in% colnames(data))]
   
@@ -104,34 +108,44 @@ calculate_total_intensity <- function(data) {
                                  "are not present in the data."))
   }
   
-  total_intensities <- data %>% 
-    dplyr::mutate(intensity_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
-    # For each sample + analyte combination, the intensities for all charge
-    # states should be added together:
-    dplyr::group_by(
-      dplyr::across(tidyselect::any_of(
-        c("sample_name", 
-          "analyte",
-          # The remaining grouping variables are only there to ensure they
-          # remain in the dataframe after summarize()
-          "cluster",
-          "group",
-          "sample_type",
-          "sample_id",
-          "plate_well",
-          "sum_intensity",
-          "number_of_replicates",
-          "replicates")
-      ))
-    ) %>% 
-
-    dplyr::summarize(total_absolute_intensity = sum(intensity_by_fraction,
-                                                    na.rm = TRUE # check if this is needed?
-                                                    )) %>%
-    dplyr::ungroup()
+  # Calculations
+  if (data_type == "LaCyTools data") {
+    total_intensities <- data %>% 
+      dplyr::mutate(intensity_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
+      dplyr::group_by(
+        dplyr::across(tidyselect::any_of(
+          c("sample_name", "analyte",
+            # The remaining grouping variables are only there to ensure they
+            # remain in the dataframe after summarize()
+            "cluster",
+            "group",
+            "sample_type",
+            "sample_id",
+            "plate_well",
+            "sum_intensity",
+            "number_of_replicates",
+            "replicates")
+        ))
+      ) %>% 
+      dplyr::summarize(total_absolute_intensity = sum(intensity_by_fraction, na.rm = TRUE)) %>% 
+      dplyr::ungroup()
+  } else if (data_type == "Skyline data") {
+    # No fraction in case of skyline data
+    total_intensities <- data %>% 
+      dplyr::group_by(
+        dplyr::across(tidyselect::any_of(
+          c("sample_name", "analyte", "cluster", "group", "sample_type", 
+            "sample_id", "plate_well", "sum_intensity", "number_of_replicates", "replicates")
+        ))
+      ) %>% 
+      dplyr::summarize(total_absolute_intensity = sum(total_area, na.rm = TRUE)) %>% 
+      dplyr::ungroup()
+  }
   
   return(total_intensities)
 }
+
+
 
 #' Perform total area normalization
 #'

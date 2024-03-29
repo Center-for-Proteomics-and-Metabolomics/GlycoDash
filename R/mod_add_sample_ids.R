@@ -30,20 +30,18 @@ mod_add_sample_ids_ui <- function(id){
              class = "ml") %>% 
           bsplus::bs_embed_popover(
             title = "Explanation",
-            content = HTML(paste0(
-              tags$p(paste(
-                "Adding sample ID's to your data allows you to see", 
-                "which measurement corresponds to which sample.")),
-              "Sample ID's will be used in later steps to:",
-              tags$ul(tags$li(paste(
-                "Determine the sample type (e.g. blank, standard,", 
-                "negative control, patient)."
-              )), 
-              tags$li(paste(
-                "Link metadata to your data (e.g. age, sex,", 
-                "biological group)."
-              ))
-              ))),
+            content = HTML(
+              "
+              Adding sample ID's to your data allows you to see which measurement
+              corresponds to which sample.
+              <br> <br>
+              Sample ID's are used in later steps to:
+              <ul>
+                  <li> Determine sample types (e.g. blank, standard, negative control, patient). </li>
+                  <li> Optionally, link metadata to your data (e.g. age, sex, biological group). </li>
+              </ul>
+              "
+            ),
             # Don't use body = container here, because then the custom CSS
             # styling for .popover won't be applied
             trigger = "hover", # if trigger = "focus" use tabindex: 0 on icon
@@ -79,25 +77,25 @@ mod_add_sample_ids_ui <- function(id){
                               "Upload a sample list")) %>% 
         bsplus::bs_embed_popover(
           title = "Method to add sample ID's",
-          content = HTML(paste0(
-            tags$b("Plate design"),
-            tags$p(paste(
-              "You can only use this method when your sample names contain",
-              "information on the plate and well position of the sample,", 
-              "in the correct format:"
-            )),
-            "<p>plate<i>[insert plate number here]</i>_<i>[insert well position here]</i></p>",
-            "An example of a valid sample name is:",
-            "<p>\"38160_38161_IM5_<b>plate1_A8</b>_01_\nSpike_20210409_000237.raw\"</P",
-            br(),
-            br(),
-            tags$p(tags$b("Sample list"),
-                   br(),
-                   paste(
-                     "Use this method when your samples were not measured on plates",
-                     "or when your sample names don't meet the requirements described above."
-                   ))
-          )),
+          content = HTML(
+            "
+            <b> Plate design </b>
+            <br>
+            You can only use this method when your sample names contain information
+            on the plate and well position of the sample, in the correct format.
+            <br> <br>
+            Examples of valid formatting for sample names are:
+            <ul>
+                <li> MS_<b>plate1_A8</b>_01.raw </li>
+                <li> IM1_<b>PL02_B09</b>_01_2020.raw </li>
+            </ul>
+            <br>
+            <b> Sample list </b>
+            <br>
+            Use this method when your samples were not measured on 96-well plates,
+            or when your sample names are not formatted correctly as described above.
+            "
+          ),
           html = "true",
           trigger = "hover",
           placement = "right"
@@ -111,22 +109,23 @@ mod_add_sample_ids_ui <- function(id){
             id = ns("plate_design"),
             fileInput_label = "Upload a plate design Excel file:",
             popover_width = "400px",
-            popover_title = "Plate design format:",
-            popover_content_html = HTML(paste0(
-              tags$p(paste(
-                "The top-left cell of the Excel sheet should contain",
-                "the plate number (e.g. \"Plate 1\"). The cells to the",
-                "right of the top-left cell need to be labelled 1-12,", 
-                "while the cells below the top-left cell need to be",
-                "labelled A-H (for a 96-well plate). The cells",
-                "within the plate should contain the sample ID's.",
-                "Sample ID's must not contain commas (,) or line breaks."
-              )),
-              tags$p(paste("At the bottom of the plate, leave one row", 
-                           "blank and then add the next plate in the", 
-                           "same format.")),
-              tags$p("For an example, click on the paperclip icon.")
-            ))
+            popover_title = "Plate design format",
+            popover_content_html = HTML(
+              "
+              The top-left cell of the Excel sheet should contain the plate
+              number (e.g. \"Plate 1\" or \"Plate 01\"). The cells to the
+              right of the top-left cell need to be labelled 1-12. The cells 
+              below the top-left cell should be labeld A-H. The cells within
+              the plate should contain the sample ID's. These sample ID's 
+              should not contain commas or line breaks.
+              <br> <br>
+              When the plate design contains multiple 96-well plates,
+              place them underneath each other in the Excel file with one
+              blank row between two plates.
+              <br> <br>
+              For an example plate design, click on the paperclip icon.
+              "
+            )
           )
       ),
       div(id = ns("two_plate_designs"),
@@ -134,22 +133,23 @@ mod_add_sample_ids_ui <- function(id){
             id = ns("plate_design_specific"),
             fileInput_label = "Upload a plate design Excel file for the specific Ig samples:",
             popover_width = "400px",
-            popover_title = "Plate design format:",
-            popover_content_html = HTML(paste0(
-              tags$p(paste(
-                "The top-left cell of the Excel sheet should contain",
-                "the plate number (e.g. \"Plate 1\"). The cells to the",
-                "right of the top-left cell need to be labelled 1-12,", 
-                "while the cells below the top-left cell need to be",
-                "labelled A-H (for a 96-well plate). The cells",
-                "within the plate should contain the sample ID's.",
-                "Sample ID's must not contain commas (,) or line breaks."
-              )),
-              tags$p(paste("At the bottom of the plate, leave one row", 
-                           "blank and then add the next plate in the", 
-                           "same format.")),
-              tags$p("For an example, click on the paperclip icon.")
-            ))
+            popover_title = "Plate design format",
+            popover_content_html = HTML(
+              "
+              The top-left cell of the Excel sheet should contain the plate
+              number (e.g. \"Plate 1\" or \"Plate 01\"). The cells to the
+              right of the top-left cell need to be labelled 1-12. The cells 
+              below the top-left cell should be labeld A-H. The cells within
+              the plate should contain the sample ID's. These sample ID's 
+              should not contain commas or line breaks.
+              <br> <br>
+              When the plate design contains multiple 96-well plates,
+              place them underneath each other in the Excel file with one
+              blank row between two plates.
+              <br> <br>
+              For an example plate design, click on the paperclip icon.
+              "
+            )
           ),
           mod_process_plate_design_ui(
             id = ns("plate_design_total"),
@@ -299,6 +299,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
       allowed = c("xlsx", "xls"),
       reset = r
     )
+    
     
     data_with_sample_ids <- reactive({
       req(LaCyTools_summary())

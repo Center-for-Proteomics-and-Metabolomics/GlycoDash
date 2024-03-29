@@ -31,12 +31,13 @@ mod_add_sample_types_ui <- function(id){
              class = "ml") %>% 
           bsplus::bs_embed_popover(
             title = "Explanation",
-            content = HTML(paste0(
-              tags$p(paste(
-                "Your samples need to be divided into categories (sample types)",
-                "like blanks, negative controls, patients, standards etc.")),
-              tags$p("This step cannot be skipped, because sample types are needed in later steps.")
-            )),
+            content = HTML(
+              "
+              Your samples need to be divided into categories (sample types),
+              such as blanks, negative controls, patients, standards, etc.
+              
+              "
+            ),
             # Don't use body = container here, because then the custom CSS
             # styling for .popover won't be applied
             trigger = "hover", # if trigger = "focus" use tabindex: 0 on icon
@@ -70,28 +71,25 @@ mod_add_sample_types_ui <- function(id){
                               "Upload a list with sample ID's and corresponding sample types")) %>% 
         bsplus::bs_embed_popover(
           title = "Method to add sample types",
-          content = HTML(paste0(
-            tags$b("Automatically"),
-            tags$p(paste(
-              "For each sample the first string of letters within the sample ID is", 
-              "assumed to be the sample type."
-            )),
-            tags$p(paste(
-              "For example, if the sample ID is",
-              "\"36_patient_67b\", then the automatically determined sample type",
-              "will be \"patient\"."
-            )),
-            tags$p(paste(
-              "Sample ID's that don't contain any letters will get the sample type",
-              "\"undetermined\"."
-            )),
-            tags$p(tags$b("Upload a list"),
-                   br(),
-                   paste(
-                     "If your sample ID's are not suitable for automatic sample type",
-                     "determination, use this method instead."
-                   ))
-          )),
+          content = HTML(
+            "
+            <b> Automatically </b>
+            <br>
+            For each sample, the first substring of letters within the sample ID is
+            assumed to be the sample type. For example, if the sample ID is
+            \"<i>36_patient_67b</i>\", then the automatically determined sample type 
+            will be \"patient\". Sample ID's that don't contain any letters will be assigned
+            \"undetermined\".
+            <br> <br>
+            <b> Upload a list </b>
+            <br>
+            If your sample ID's are not suitable for automatically determine sample types,
+            use this method instead. Your list should be an Excel file that contains 
+            one column called \"sample_id\", and one column called \"sample_type\". 
+            Each sample ID should be present once in your file. For an example file,
+            click the paperclip button.
+            "
+          ),
           html = "true",
           trigger = "hover",
           placement = "right"
@@ -102,18 +100,20 @@ mod_add_sample_types_ui <- function(id){
             fileInput_label = "Upload an Excel file with your sample types:",
             popover_width = "400px",
             popover_title = "Format of sample type list",
-            popover_content_html = HTML(paste0(
-              tags$p(paste(
-                "The Excel file should contain only one sheet.",
-                "This sheet should contain one column named \"sample_id\"",
-                "and one column named \"sample_type\". The \"sample_id\" column should",
-                "contain all your sample ID's including blanks and standards.",
-                "The \"sample_type\" column should contain the corresponding sample",
-                "type of each sample."
-              )),
-              tags$p("Each sample ID should be present only once (even if it is present multiple times in your plate design)."),
-              tags$p("For an example, click on the paperclip icon.")
-            ))
+            popover_content_html = HTML(
+              "
+              The Excel file should contain only one sheet. This sheet should
+              contain one column named \"sample_id\" and one column named \"sample_type\".
+              The \"sample_id\" column should contain all your sample ID's, including blanks
+              and standards. The \"sample_type\" column should contain the corresponding sample
+              type of each sample.
+              <br> <br>
+              Each sample ID should be present only once in your file, even if it is present
+              multiple times in your plate design.
+              <br> <br>
+              For an example file, click on the paperclip icon.
+              "
+            )
           )
       ),
       actionButton(ns("button"), "Determine the sample types")

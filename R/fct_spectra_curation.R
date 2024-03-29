@@ -3,9 +3,9 @@
 # mod_curate_based_on_percentiles.R, mod_tab_cut_offs.R and mod_tab_curated_spectra_plot.R.
 
 
-#' Perform an analyte quality criteria check for every spectrum in the data.
+#' Perform an analyte quality criteria check for every spectrum in LaCyTools data.
 #'
-#' \code{check_analyte_quality_criteria()} performs an analyte quality criteria check for
+#' \code{check_analyte_quality_criteria_lacytools()} performs an analyte quality criteria check for
 #' every spectrum in the data.
 #'
 #' @param my_data A dataframe in long format (one row for each analyte + sample
@@ -42,14 +42,14 @@
 #'                                max_ipq = 0.2,
 #'                                min_sn = 9,
 #'                                criteria_to_consider = c("Mass accuracy",
-#'                                                         "S/N",
-#'                                                         "IPQ"))
-check_analyte_quality_criteria <- function(my_data, 
-                                           min_ppm_deviation, 
-                                           max_ppm_deviation, 
-                                           max_ipq, 
-                                           min_sn,
-                                           criteria_to_consider) {
+#'                                                         "Isotopic pattern quality",
+#'                                                         "S/N"))
+check_analyte_quality_criteria_lacytools <- function(my_data, 
+                                                    min_ppm_deviation, 
+                                                    max_ppm_deviation, 
+                                                    max_ipq, 
+                                                    min_sn,
+                                                    criteria_to_consider) {
   
   data_checked <- my_data %>% 
     dplyr::group_by(sample_name,  cluster) %>% 
@@ -60,26 +60,98 @@ check_analyte_quality_criteria <- function(my_data,
       all(is.na(sn))
     )) %>% 
     dplyr::ungroup() %>% 
-    check_each_criterium(., 
-                         min_ppm_deviation,
-                         max_ppm_deviation,
-                         max_ipq,
-                         min_sn) %>% 
+    check_criteria_lacytools(., 
+                            min_ppm_deviation,
+                            max_ppm_deviation,
+                            max_ipq,
+                            min_sn) %>% 
     apply_chosen_criteria(.,
                           criteria_to_consider) %>%
     report_failed_criteria(.,
-                           criteria_to_consider)
+                           criteria_to_consider,
+                           "LaCyTools")
   
   return(data_checked)
 }
 
-#' Check all analyte quality criteria
+
+
+#' Perform an analyte quality criteria check for every spectrum in Skyline data.
 #'
-#' \code{check_each_criterium()} checks for each analyte quality criterium
-#' separately if it is fulfilled, and is used in the function
-#' \code{\link{check_analyte_quality_criteria}}.
+#' \code{check_analyte_quality_criteria_skyline()} performs an analyte quality criteria check for
+#' every spectrum in the data.
 #'
-#' @inheritParams check_analyte_quality_criteria
+#' @param my_data A dataframe in long format (one row for each analyte + sample
+#'   + charge combination).
+#' @param min_ppm_deviation The lowest allowed value for the mass accuracy (in
+#'   ppm).
+#' @param max_ppm_deviation The highest allowed value for the mass accuracy (in
+#'   ppm).
+#' @param min_idp The lowest allowed value for the Isotope Dot Product
+#'   (IDP). The IDP indicates how much the isotopic pattern deviates from the
+#'   theoretic isotopic pattern.
+#' @param min_total_area The lowest allowed value for the total analyte area (per charge state).
+#' @param criteria_to_consider A character vector that indicates which quality
+#'  criteria should be taken into account during spectra curation.
+#'
+#' @return The original dataframe given as the my_data argument, but with 3
+#'   additional columns: \describe{\item{analyte_meets_criteria}{A Boolean:
+#'   \code{TRUE} indicates that the analyte + charge combination in that sample fulfilled
+#'   the quality criteria in criteria_to_consider, whereas \code{FALSE} indicates that 
+#'   one or more criteria were not fulfilled.}\item{uncalibrated}{A Boolean:
+#'   \code{TRUE} if the combination of cluster and sample failed calibration in LaCyTools}
+#'   \item{failed_criteria}{A character string describing which criteria in 
+#'   criteria_to_consider were not fulfilled. If all criteria were fulfilled 
+#'   failed_criteria is \code{NA}}}
+#' @export
+#'
+#' @examples
+#' data(example_data)
+#' 
+#' check_analyte_quality_criteria(my_data = example_data,
+#'                                min_ppm_deviation = -20,
+#'                                max_ppm_deviation = 20,
+#'                                min_idp = 0.9,
+#'                                min_total_area = 0,
+#'                                criteria_to_consider = c("Mass accuracy",
+#'                                                         "Isotope dot product",
+#'                                                         "Total area"))
+check_analyte_quality_criteria_skyline <- function(my_data, 
+                                                  min_ppm_deviation, 
+                                                  max_ppm_deviation, 
+                                                  min_idp, 
+                                                  min_total_area,
+                                                  criteria_to_consider) {
+  
+  data_checked <- my_data %>% 
+    dplyr::group_by(sample_name,  cluster) %>%
+    dplyr::mutate(uncalibrated = all(
+      all(is.na(total_area)),
+      all(is.na(mass_accuracy_ppm)),
+      all(is.na(isotope_dot_product))
+    )) %>%
+    dplyr::ungroup() %>%
+    check_criteria_skyline(.,
+                          min_ppm_deviation,
+                          max_ppm_deviation,
+                          min_idp,
+                          min_total_area) %>%
+    apply_chosen_criteria(.,
+                          criteria_to_consider) %>%
+    report_failed_criteria(.,
+                           criteria_to_consider,
+                           "Skyline")
+
+  return(data_checked)
+}
+
+
+
+#' Check all analyte quality criteria for LaCyTools data.
+#'
+#' \code{check_criteria_lacytools()} checks for each analyte quality criterium
+#' separately if it is fulfilled, and is used in the functions
+#' \code{\link{check_analyte_quality_criteria_lacytools}} and #' \code{\link{check_analyte_quality_criteria_skyline}}.
 #'
 #' @return The original dataframe, but with an extra column for each quality
 #'   criterium that is \code{TRUE} or \code{FALSE}.
@@ -94,21 +166,61 @@ check_analyte_quality_criteria <- function(my_data,
 #'                      max_ipq = 0.2,
 #'                      min_sn = 9)
 #' 
-check_each_criterium <- function(my_data, 
-                                 min_ppm_deviation,
-                                 max_ppm_deviation,
-                                 max_ipq,
-                                 min_sn) {
+check_criteria_lacytools <- function(my_data, 
+                                    min_ppm_deviation,
+                                    max_ppm_deviation,
+                                    max_ipq,
+                                    min_sn) {
   my_data %>% 
     dplyr::mutate(`Mass accuracy` = dplyr::between(mass_accuracy_ppm, 
                                                    min_ppm_deviation, 
                                                    max_ppm_deviation),
-                  IPQ = isotopic_pattern_quality < max_ipq,
-                  `S/N` = sn > min_sn,
-                  dplyr::across(c(`Mass accuracy`, IPQ, `S/N`),
+                  `Isotopic pattern quality` = isotopic_pattern_quality <= max_ipq,
+                  `S/N` = sn >= min_sn,
+                  dplyr::across(c(`Mass accuracy`, `Isotopic pattern quality`, `S/N`),
                                 ~ tidyr::replace_na(.x, FALSE))
     )
 }
+
+
+
+#' Check all analyte quality criteria for LaCyTools data.
+#'
+#' \code{check_criteria_lacytools()} checks for each analyte quality criterium
+#' separately if it is fulfilled, and is used in the functions
+#' \code{\link{check_analyte_quality_criteria_lacytools}} and #' \code{\link{check_analyte_quality_criteria_skyline}}.
+#'
+#' @return The original dataframe, but with an extra column for each quality
+#'   criterium that is \code{TRUE} or \code{FALSE}.
+#' @export
+#'
+#' @examples
+#' data(example_data)
+#' 
+#' check_each_criterium(my_data = example_data,
+#'                      min_ppm_deviation = -20,
+#'                      max_ppm_deviation = 20,
+#'                      max_ipq = 0.2,
+#'                      min_sn = 9)
+#' 
+check_criteria_skyline <- function(my_data, 
+                                  min_ppm_deviation,
+                                  max_ppm_deviation,
+                                  min_idp,
+                                  min_total_area) {
+  my_data %>% 
+    dplyr::mutate(`Mass accuracy` = dplyr::between(mass_accuracy_ppm, 
+                                                   min_ppm_deviation, 
+                                                   max_ppm_deviation),
+                  `Isotope dot product` = isotope_dot_product >= min_idp,
+                  `Total area` = total_area > min_total_area,
+                  dplyr::across(c(`Mass accuracy`, `Isotope dot product`, `Total area`),
+                                ~ tidyr::replace_na(.x, FALSE))
+    )
+}
+
+
+
 
 #' Apply chosen analyte quality criteria
 #'
@@ -118,7 +230,6 @@ check_each_criterium <- function(my_data,
 #'
 #' @param my_data The return value of the function
 #'   \code{\link{check_each_criterium}}.
-#' @inheritParams check_analyte_quality_criteria
 #'
 #' @return The original dataframe my_data with an additional column
 #'   \code{analyte_meets_criteria} that is \code{TRUE} if the analyte fulfills
@@ -129,7 +240,7 @@ check_each_criterium <- function(my_data,
 #' @examples
 #' data(example_data)
 #' 
-#' checked <- check_each_criterium(my_data = example_data,
+#' checked <- check_criteria_lacytools(my_data = example_data,
 #'                      min_ppm_deviation = -20,
 #'                      max_ppm_deviation = 20,
 #'                      max_ipq = 0.2,
@@ -154,11 +265,14 @@ apply_chosen_criteria <- function(my_data,
   return(to_return)
 }
 
+
+
 #' Report which analyte quality criteria were not met
 #'
 #' @param my_data The return value of the function
 #'   \code{\link{apply_chosen_criteria}}.
-#' @inheritParams check_analyte_quality_criteria
+#'   
+#'@param data_type "LaCyTools" or "Skyline", determined by file input.
 #'
 #' @return The original dataframe my_data with an additional column
 #'   \code{failed_criteria} that describes which criteria from criteria_to_consider
@@ -168,23 +282,25 @@ apply_chosen_criteria <- function(my_data,
 #' @examples
 #' data(example_data)
 #' 
-#' checked <- check_each_criterium(my_data = example_data,
+#' checked <- check_criteria_lacytools(my_data = example_data,
 #'                      min_ppm_deviation = -20,
 #'                      max_ppm_deviation = 20,
 #'                      max_ipq = 0.2,
 #'                      min_sn = 9)
 #' 
-#' applied <- apply_chosen_criteria(my_data = checked,
-#'                                  criteria_to_consider = c("Mass accuracy",
-#'                                                           "S/N",
-#'                                                           "IPQ"))
+#' applied <- apply_chosen_criteria_lacytools(my_data = checked,
+#'                                           criteria_to_consider = c("Mass accuracy",
+#'                                                                    "S/N",
+#'                                                                    "IPQ"))
 #' 
 #' report_failed_criteria(my_data = applied,
 #'                        criteria_to_consider = c("Mass accuracy",
 #'                                                "S/N",
-#'                                                "IPQ"))
+#'                                                "IPQ"),
+#'                        data_type = "LaCyTools")
 report_failed_criteria <- function(my_data,
-                                   criteria_to_consider) {
+                                   criteria_to_consider,
+                                   data_type) {
   
   failed_criteria_dataframe <- my_data %>% 
     # Only criteria in criteria_to_consider will be reported as failed criteria:
@@ -195,20 +311,29 @@ report_failed_criteria <- function(my_data,
     dplyr::group_by(sample_name, analyte, charge) %>% 
     dplyr::summarize(failed_criteria = comma_and(criterium))
   
-  dplyr::full_join(my_data, failed_criteria_dataframe) %>% 
-    dplyr::select(-c(`Mass accuracy`, IPQ, `S/N`))
+  if (data_type == "LaCyTools") {
+    to_return <- dplyr::full_join(my_data, failed_criteria_dataframe) %>% 
+      dplyr::select(-c(`Mass accuracy`, `Isotopic pattern quality`, `S/N`))
+  } else if (data_type == "Skyline") {
+    to_return <- dplyr::full_join(my_data, failed_criteria_dataframe) %>% 
+      dplyr::select(-c(`Mass accuracy`, `Isotope dot product`, `Total area`))
+  }
+  
+  return(to_return)
 }
 
 #' Summarize analyte quality criteria checks
 #'
 #' \code{summarize_spectra_checks()} calculates the percentage of passing
 #' analytes per spectrum and the sum intensity of passing analytes per spectrum.
-#' \code{summarize_spectra_checks()} should be used after
-#' \code{\link{check_analyte_quality_criteria}} has been used to perform analyte quality
+#' \code{summarize_spectra_checks()} should be used after \code{\link{check_analyte_quality_criteria_lacytools}} or 
+#' \code{\link{check_analyte_quality_criteria_skyline}} has been used to perform analyte quality
 #' criteria checks for every spectrum and analyte combination in the data.
 #'
 #' @param checked_data The dataframe that is returned by
-#'   \code{\link{check_analyte_quality_criteria}}.
+#'   \code{\link{check_analyte_quality_criteria_lacytools}} or \code{\link{check_analyte_quality_criteria_skyline}}.
+#'
+#'@param data_type "LaCyTools data" or "Skyline data", determined by file input.
 #'
 #' @return A dataframe that contains one row per spectrum for each cluster (
 #'   Thus the number of rows is equal to the number of spectra times the number
@@ -234,29 +359,39 @@ report_failed_criteria <- function(my_data,
 #'                                                           "S/N",
 #'                                                           "IPQ"))
 #'
-#' summarize_spectra_checks(checked_data = checked_data)
-summarize_spectra_checks <- function(checked_data) {
-  
-  # TODO: Change name to calculate_spectra_curation_metrics?
+#' summarize_spectra_checks(checked_data = checked_data, data_type = results_data_import$data_type())
+summarize_spectra_checks <- function(checked_data, data_type) {
   
   grouping_variables <- c("sample_name", "group", "sample_type", "cluster", "sample_id")
   
-  summarized_checks <- checked_data %>% 
-    dplyr::mutate(intensity_divided_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
-    # I'm using across() and any_of() because if the data does not contain total
-    # and specific samples, the column "group" doesn't exist:
-    dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
-    dplyr::summarise(passing_analyte_percentage = sum(analyte_meets_criteria)/dplyr::n() * 100, 
-                     sum_intensity = sum(
-                       intensity_divided_by_fraction[analyte_meets_criteria == TRUE],
-                       na.rm = TRUE # needed for spectra that did calibrate but where 
-                       # absolute_intensity still has one or more NAs 
-                     ),
-                     uncalibrated = unique(uncalibrated)) %>% 
-    dplyr::ungroup(.)
+  if (data_type == "LaCyTools data") {
+    summarized_checks <- checked_data %>% 
+      dplyr::mutate(intensity_divided_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
+      dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
+      dplyr::summarise(
+        passing_analyte_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100,
+        sum_intensity = sum(
+          intensity_divided_by_fraction[analyte_meets_criteria == TRUE], na.rm = TRUE
+        ),
+        uncalibrated = unique(uncalibrated)
+      ) %>% 
+      dplyr::ungroup(.)
+  } else if (data_type == "Skyline data") {
+    # Don't have fraction, so just use total area
+    summarized_checks <- checked_data %>% 
+      dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
+      dplyr::summarise(
+        passing_analyte_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100,
+        sum_intensity = sum(total_area[analyte_meets_criteria == TRUE], na.rm = TRUE),
+        uncalibrated = unique(uncalibrated)
+      ) %>% 
+      dplyr::ungroup(.)
+  }
   
   return(summarized_checks)
 }
+
+
 
 #' Calculate cut-off values
 #'
@@ -309,7 +444,7 @@ summarize_spectra_checks <- function(checked_data) {
 #' @examples
 #' data("example_data")
 #'
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
+#' checked_data <- check_analyte_quality_criteria_lacytools(my_data = example_data,
 #'                                                min_ppm_deviation = -20,
 #'                                                max_ppm_deviation = 20,
 #'                                                max_ipq = 0.2,
@@ -318,7 +453,7 @@ summarize_spectra_checks <- function(checked_data) {
 #'                                                                         "S/N",
 #'                                                                         "IPQ"))
 #'
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data, data_type == "LaCyTools")
 #'
 #' # In this example we calculate cut-offs for total Ig samples, using PBS
 #' # samples as negative controls. Both cut-offs are set at the 97th percentile
@@ -475,6 +610,7 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
   return(curated_data)
 }
 
+
 determine_reason_for_failure <- function(data) {
   with_reasons <- data %>% 
     dplyr::mutate(reason_for_failure = dplyr::case_when(
@@ -488,6 +624,7 @@ determine_reason_for_failure <- function(data) {
   
   return(with_reasons)
 }
+
 
 #' Filter out spectra that failed spectra curation
 #'
@@ -535,6 +672,8 @@ kick_out_spectra <- function(curated_spectra) {
   
   return(passing_spectra)
 }
+
+
 
 #' Remove columns no longer needed after spectra curation
 #'
@@ -611,6 +750,9 @@ remove_unneeded_columns <- function(passing_spectra) {
   return(without_extra_columns)
 }
 
+
+
+
 #' Create the dataframe for next steps when spectra curation is skipped
 #'
 #' @inheritParams curate_spectra
@@ -649,6 +791,9 @@ return_when_spectra_curation_is_skipped <- function(checked_data,
   # Leave 'sum_intensity' for the relative abundance
   # calculation 
 }
+
+
+
 
 #' Get the sample types to put in the menu for negative control samples
 #'
@@ -700,6 +845,7 @@ get_sample_type_options <- function(summarized_checks,
                                    "samples")
   return(options_for_group)
 }
+
 
 
 #'Visualize the spectra curation process

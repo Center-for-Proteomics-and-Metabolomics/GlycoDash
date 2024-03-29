@@ -153,10 +153,12 @@ mod_derived_traits_ui <- function(id){
                   The Excel file must contain one column called \"trait\" that
                   specifies the names of the traits. The second column must be called
                   \"formula\" and should contain the formulas for the traits. Analyte names
-                  in the formula should include both the cluster and glycan composition, 
+                  in the formula should include both the peptide name and glycan composition, 
                   e.g. \"IgGI1H4N4F1\".
-                  <br><br>
+                  <br> <br>
                   <strong>Trait names should not contain any spaces.</strong>
+                  <br> <br>
+                  For an example file, click the paperclip icon.
                   "
                 ),
                 trigger = "hover",
