@@ -10,6 +10,16 @@
 mod_analyte_curation_ui <- function(id){
   ns <- NS(id)
   tagList(
+    tags$style(HTML(paste0(
+      "#", ns("box_header")," .awesome-checkbox {padding-top: 7px}",
+      "#", ns("box_header"), " .popover {max-width: 400px !important; color: #333}",
+      "#", ns("box")," .box-title {width: 100%}",
+      "#", ns("box_header"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#", ns("box_header"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#", ns("box_header"), " .btn {float: right; border-width: 0px; margin-right: 10px}",
+      "#", ns("box"), " .dropdown {display: inline-block; float: right; width: 330px}",
+      "#", ns("box_header"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+    ))),
     fluidPage(
       fluidRow(
         h1("Analyte curation")
@@ -18,8 +28,40 @@ mod_analyte_curation_ui <- function(id){
         column(
           width = 6,
           # Box with settings for the analyte curation
-          shinydashboard::box(
-            title = "Method for analyte curation",
+          shinydashboardPlus::box(
+            id = ns("box"),
+            title = div(
+              id = ns("box_header"),
+              "Method for analyte curation",
+              icon("info-circle", class = "ml") %>% 
+                bsplus::bs_embed_popover(
+                  title = "Explanation",
+                  content = HTML(
+                    "
+                    Analyte curation will be performed based on the settings that were chosen
+                    for the three quality criteria in the \"Spectra Curation\" tab.
+                    <br> <br>
+                    You can exclude one or two of the quality criteria from the assessment
+                    by clicking the gears icon.
+                    "
+                  ),
+                  trigger = "hover",
+                  placement = "right",
+                  html = "true",
+                  container = "body"),
+              shinyWidgets::dropdownButton(
+                shinyWidgets::awesomeCheckboxGroup(
+                  ns("qc_to_include"),
+                  "Which analyte quality criteria should be taken into account during analyte curation?",
+                  # Choices determined in server based on data type
+                  choices = c(""), selected = c(""), status = "primary"
+                ),
+                icon = icon("gears", class = "ml"),
+                tooltip = shinyWidgets::tooltipOptions(placement = "top", title = "Advanced settings"),
+                width = "250px",
+                size = "xs"
+              )
+            ),
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
@@ -48,29 +90,25 @@ mod_analyte_curation_ui <- function(id){
                           "Upload an Excel file or R object with an analyte list") %>% 
                   bsplus::bs_embed_popover(
                     title = "Explanation",
-                    content = HTML(paste(
-                      tags$b("Excel file"),
-                      tags$p(paste(
-                        'The file should consist of one column called "analyte",',
-                        'followed by the names of the analytes that you want to keep.'
-                      )),
-                      tags$b("R object"),
-                      tags$p(paste(
-                        "The R object should be a character vector or a list of",
-                        "character strings (not a dataframe!) with the names of",
-                        "the analytes that you want to keep."
-                      ))
-                    )),
+                    content = HTML(
+                      "
+                      <b> Excel file </b> 
+                      <br>
+                      The file should consist of one column called \"analyte\",
+                      which contains the names of the analytes that you want to keep.
+                      <br> <br>
+                      <b> R object </b>
+                      <br>
+                      The R object should be a character vector or a list of 
+                      character strings (not a dataframe), with the names of the
+                      analytes that you want to keep.
+                      "
+                    ),
                     html = "true",
                     trigger = "hover",
                     placement = "right")
             ),
-            tags$style(
-              HTML(paste0("#",
-                          ns("curation_based_on_data"),
-                          " .popover {width: 400px;}"))
-            ),
-            
+            tags$style(HTML(paste0("#", ns("curation_based_on_data"), " .popover {width: 400px;}"))),
             selectInput(ns("curation_method"), 
                         "How do you want to perform analyte curation based on the data?",
                         choices = c("On all data",
@@ -148,24 +186,19 @@ mod_analyte_curation_ui <- function(id){
                              multiple = TRUE) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
-                  content = HTML(paste0(
-                    tags$p(paste(
-                      "Analytes are curated based on the percentage of spectra",
-                      "in which they pass the analyte quality criteria (go to \"",
-                      "Spectra curation\" to choose these criteria)."
-                    )),
-                    tags$p(paste(
-                      "However, some sample type (e.g. blanks and standards)", 
-                      "should not be included in this assessment.",
-                      "When your data contains total and specific Ig,",
-                      "you can also exlude either total or specific samples",
-                      "from the assessment."
-                    )),
-                    tags$p(paste(
-                      "Select here which samples should be ignored with regards",
-                      "to analyte curation."
-                    ))
-                  )),
+                    content = HTML(
+                      "
+                      Analytes are curated based on the percentage of spectra
+                      in which they pass the analyte criteria (go back to the 
+                      \"Spectra Curation\" tab to choose these criteria).
+                      <br> <br>
+                      You may want to exclude some sample types from this assessment
+                      (e.g. blanks and standards). If your data contains total and specific
+                      Ig samples, you can also exclude one of these.
+                      <br> <br>
+                      Select here which samples should be ignored with regards to analyte curation.
+                      "
+                    ),
                   placement = "right",
                   trigger = "hover",
                   html = "true"),
@@ -179,13 +212,12 @@ mod_analyte_curation_ui <- function(id){
               numericInput(ns("cut_off"), "Cut-off (%)", value = 50, min = 0, max = 100) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
-                  content = HTML(paste0(
-                    tags$p(paste(
-                      "Choose the percentage of spectra in which an analyte",
-                      "needs to fulfill the quality criteria in order to pass", 
-                      "analyte curation."
-                    ))
-                  )),
+                  content = HTML(
+                    "
+                    Choose the percentage of spectra in which an analyte should
+                    fulfill the quality criteria in order to pass analyte curation.
+                    "
+                  ),
                   placement = "right",
                   trigger = "hover",
                   html = "true")
@@ -228,9 +260,26 @@ mod_analyte_curation_ui <- function(id){
 #' analyte_curation Server Functions
 #'
 #' @noRd 
-mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_cols){
-  moduleServer( id, function(input, output, session){
+mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_cols, data_type) {
+  moduleServer( id, function(input, output, session) {
     ns <- session$ns
+    
+    # Checkboxes based on data type (LaCyTools or Skyline)
+    observeEvent(data_type(), {
+      if (data_type() == "LaCyTools data") {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "qc_to_include",
+          choices = c("Mass accuracy", "Isotopic pattern quality", "S/N"),
+          selected = c("Mass accuracy", "Isotopic pattern quality", "S/N")
+        )
+      } else if (data_type() == "Skyline data") {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "qc_to_include",
+          choices = c("Mass accuracy", "Isotope dot product", "Total area"),
+          selected = c("Mass accuracy", "Isotope dot product", "Total area")
+        )
+      }
+    })
     
     # passing_spectra contains the LaCyTools output for all the spectra
     # that passed curation.
@@ -332,6 +381,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       shinyjs::toggleState(
         "curate_analytes", condition = all(
           is_truthy(passing_spectra()),
+          length(input$qc_to_include) > 0,
           any(
             all(input$method == "Supply an analyte list", is_truthy(analyte_list())),
             all(
@@ -495,20 +545,33 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       }
     })
     
+    
     # checked_analytes is the same as without_samples_to_ignore, but with new 
     # columns describing whether an analyte fulfills all three quality criteria.
     checked_analytes <- reactive({
       req(input$method == "Curate analytes based on data")
       req(without_samples_to_ignore())
       
-      check_analyte_quality_criteria(
-        without_samples_to_ignore(),
-        min_ppm_deviation = results_spectra_curation$mass_acc()[1],
-        max_ppm_deviation = results_spectra_curation$mass_acc()[2],
-        max_ipq = results_spectra_curation$ipq(),
-        min_sn = results_spectra_curation$sn(),
-        criteria_to_consider = c("IPQ", "S/N", "Mass accuracy")
-      )
+      if (data_type() == "LaCyTools data") {
+        check_analyte_quality_criteria_lacytools(
+          without_samples_to_ignore(),
+          min_ppm_deviation = results_spectra_curation$mass_acc()[1],
+          max_ppm_deviation = results_spectra_curation$mass_acc()[2],
+          max_ipq = results_spectra_curation$ipq(),
+          min_sn = results_spectra_curation$sn(),
+          criteria_to_consider = input$qc_to_include
+        )
+      } else if (data_type() == "Skyline data") {
+        check_analyte_quality_criteria_skyline(
+          without_samples_to_ignore(),
+          min_ppm_deviation = results_spectra_curation$mass_acc()[1],
+          max_ppm_deviation = results_spectra_curation$mass_acc()[2],
+          min_idp = results_spectra_curation$idp(),
+          min_total_area = results_spectra_curation$total_area(),
+          criteria_to_consider = input$qc_to_include
+        )
+      }
+      
     })
     
     
@@ -590,6 +653,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     }) %>% bindEvent(input$curate_analytes)  # Execute code when button is pushed.
     
     
+    
     # analyte_curated_data is a dataframe with the LaCyTools output of the
     # passing spectra, but with only the analytes that passed curation.
     analyte_curated_data <- reactive({
@@ -611,7 +675,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         # when curated_analytes() changes. Not when input$curation_method changes.
         # curated_analytes() changes when the "Perform analyte curation" button is pushed.
     }) %>% bindEvent(curated_analytes())
-    
     
     
     # Show a notification when analyte curation is finished.

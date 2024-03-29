@@ -73,7 +73,7 @@ intensity and percentage of passing analytes during spectra curation.
 \examples{
 data("example_data")
 
-checked_data <- check_analyte_quality_criteria(my_data = example_data,
+checked_data <- check_analyte_quality_criteria_lacytools(my_data = example_data,
                                                min_ppm_deviation = -20,
                                                max_ppm_deviation = 20,
                                                max_ipq = 0.2,
@@ -82,7 +82,7 @@ checked_data <- check_analyte_quality_criteria(my_data = example_data,
                                                                         "S/N",
                                                                         "IPQ"))
 
-summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
+summarized_checks <- summarize_spectra_checks(checked_data = checked_data, data_type == "LaCyTools")
 
 # In this example we calculate cut-offs for total Ig samples, using PBS
 # samples as negative controls. Both cut-offs are set at the 97th percentile

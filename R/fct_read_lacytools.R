@@ -507,3 +507,146 @@ getOrdinalSuffix <- function(num) {
     return(paste0(num, "th"))
   }
 }
+
+
+
+
+#' read_skyline_csv
+#'
+#' @param path_to_file Path to Skyline CSV file
+#'
+#' @return Dataframe with raw data read from CSV
+read_skyline_csv <- function(path_to_file) {
+  # Try reading with comma as separator
+  raw_data <- tryCatch(
+    read.csv(path_to_file, header = TRUE, sep = ","),
+    error = function(e) {
+      # In case of error: use semicolon as separator
+      read.csv(path_to_file, header = TRUE, sep = ";")
+    }
+  )
+  return(raw_data)
+}
+
+
+
+
+#' transform_skyline_data
+#'
+#' @param raw_skyline_data Raw skyline data, read into R with 
+#' the read_skyline_csv() function above.
+#'
+#'
+#' @return A clean dataframe in a similar format as a transformed
+#' LaCyTools summary. The dataframe contains the following columns:
+#' - sample_name
+#' - analyte
+#' - charge
+#' - absolute_intensity_background_subtracted
+#' - mass_accuracy_ppm
+#' - isotope_dot_product
+transform_skyline_data <- function(raw_skyline_data) {
+  # Check structure of skyline data
+  check_skyline_data(raw_skyline_data)
+  # Select required columns
+  raw_data_required <- raw_skyline_data %>% 
+    dplyr::select(
+      "Protein.Name", "Peptide", "Precursor.Charge",
+      tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"))
+    )
+  # Make columns numeric except for first three
+  raw_data_required[raw_data_required == "#N/A"] <- NA
+  raw_data_required <- dplyr::mutate_at(raw_data_required, dplyr::vars(-1, -2, -3), as.numeric)
+  # Transform the data
+  cols_to_pivot <- colnames(raw_data_required)[-(1:3)]
+  raw_data_long <- raw_data_required %>% 
+    tidyr::pivot_longer(tidyselect::all_of(cols_to_pivot))
+  variables <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM")
+  # Initiate empty list to store DFs
+  var_dfs <- vector("list", length = length(variables))
+  # Loop over the variables
+  # Create separate dataframe for each variable
+  # Create columns sample_name and variable
+  for (i in seq(length(variables))) {
+    var <- variables[i]
+    var_data_long <- raw_data_long %>% 
+      dplyr::filter(grepl(var, name)) %>% 
+      tidyr::separate(
+        name,
+        sep = paste0(".", var),
+        into = c("sample_name", "variable")
+      ) %>% 
+      dplyr::mutate(variable = var) %>% 
+      # Combine Protein.Name and Peptide into analyte
+      dplyr::mutate(analyte = paste0(Protein.Name, "1", Peptide)) %>% 
+      dplyr::select(-Protein.Name, -Peptide)
+    var_dfs[[i]] <- var_data_long
+  }
+  # Combine required data and turn into wide format
+  data_clean <- dplyr::bind_rows(var_dfs) %>% 
+    dplyr::group_by(variable) %>% 
+    dplyr::mutate(row = dplyr::row_number()) %>% 
+    tidyr::pivot_wider(names_from = variable, values_from = value) %>% 
+    dplyr::select(-row) %>% 
+    dplyr::ungroup() %>% 
+    # Get into same format as processed LaCyTools summary
+    dplyr::rename(
+      charge = Precursor.Charge,
+      total_area = Total.Area.MS1,
+      isotope_dot_product = Isotope.Dot.Product,
+      mass_accuracy_ppm = Average.Mass.Error.PPM
+    ) %>% 
+    dplyr::mutate(charge = paste0(charge, "+")) %>% 
+    dplyr::relocate(charge, .after = analyte) %>% 
+    dplyr::relocate(total_area, .after = charge) %>% 
+    dplyr::relocate(mass_accuracy_ppm, .after = total_area)
+  
+  return(data_clean)
+}
+
+
+
+# Function to check the structure of Skyline CSV files.
+check_skyline_data <- function(raw_skyline_data) {
+  # Check if required columns are present in the file
+  required_cols <- c("Protein.Name", "Peptide", "Precursor.Charge")
+  cols_check <- required_cols %in% colnames(raw_skyline_data)
+  missing_cols <- required_cols[!cols_check]
+  if (length(missing_cols) > 0) {
+    rlang::abort(
+      class = "missing_columns",
+      message = paste0(
+        "the following columns are missing from your data: ",
+        paste0(gsub("\\.", " ", missing_cols), collapse = ", ")
+      )
+    )
+  }
+  # Check if required variables per sample name are present in the file
+  required_vars <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM") 
+  vars_check <- sapply(required_vars, function(x) any(grepl(x, colnames(raw_skyline_data))))
+  missing_vars <- required_vars[!vars_check]
+  if (length(missing_vars) > 0) {
+    rlang::abort(
+      class = "missing_variables",
+      message = paste0(
+        "the following variables are missing from your data: ",
+        paste0(gsub("\\.", " ", missing_vars), collapse = ", ")
+      )
+    )
+  }
+  # Check if Protein.Name contains spaces or letters
+  contains_numbers_or_spaces <- grepl("[0-9 ]", raw_skyline_data$Protein.Name)
+  if (any(contains_numbers_or_spaces)) {
+    rlang::abort(
+      class = "numbers_or_spaces",
+      message = paste0(
+        "please remove any numbers or spaces from all entries in the column \"Protein Name\"."
+      )
+    )
+  }
+}
+
+
+
+
+
