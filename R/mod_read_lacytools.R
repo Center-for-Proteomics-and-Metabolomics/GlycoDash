@@ -23,6 +23,25 @@ mod_read_lacytools_ui <- function(id){
     ),
     fluidRow(
       column(
+        width = 12,
+        shinyjs::hidden(div(
+          id = ns("uploaded_lacytools"),
+          strong("You uploaded LaCyTools data. 
+                 To upload a different data type, reload the dashboard."),
+          br(),
+          br(),
+          style = "color:#0021B8; font-size: 15px"
+        )),
+        shinyjs::hidden(div(
+          id = ns("uploaded_skyline"),
+          strong("You uploaded Skyline data. 
+                 To upload a different data type, reload the dashboard."),
+          br(),
+          br(),
+          style = "color:#0021B8; font-size: 15px"
+        )),
+      ),
+      column(
         width = 11,
         fileInput(
           ns("lacytools_input"),
@@ -458,6 +477,16 @@ mod_read_lacytools_server <- function(id){
           }
         }
       )
+    })
+    
+    # Prevent people from changing input$data_type after uploading data
+    observeEvent(to_return(), {
+      shinyjs::hide("data_type")
+      if (input$data_type == "LaCyTools data") {
+        shinyjs::show("uploaded_lacytools")
+      } else if (input$data_type == "Skyline data") {
+        shinyjs::show("uploaded_skyline")
+      }
     })
     
     
