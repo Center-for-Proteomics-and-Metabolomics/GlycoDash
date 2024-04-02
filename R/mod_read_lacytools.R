@@ -103,8 +103,8 @@ mod_read_lacytools_ui <- function(id){
             title = "Skyline data",
             content = HTML(
               "
-              You can upload one Skyline output CSV file. The file should contain
-              the following columns:
+              You can upload one or more Skyline output CSV file. 
+              The file should contain the following columns:
               <ul>
                   <li>
                   <i> Protein Name </i> <br>

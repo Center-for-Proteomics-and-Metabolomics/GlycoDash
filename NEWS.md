@@ -1,3 +1,9 @@
+# v1.4.1
+## Bug fixes
+* Automatically detect comma or semicolon separation in Skyline CSV files. 
+* Show Skyline quality criteria in the generated report.
+
+
 # v1.4.0
 ## New features
 * Option to upload Skyline data.

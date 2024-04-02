@@ -5,6 +5,7 @@ output:
     toc: TRUE
     toc_float: TRUE
 params: 
+  data_type: NA
   summary_filenames: NA
   plate_design: NA
   filenames_metadata: NA
@@ -13,6 +14,8 @@ params:
   mass_acc: NA
   ipq: NA
   sn: NA
+  idp: NA
+  total_area: NA
   spectra_curation_cut_off: NA
   spectra_curation_plot: NA
   analyte_curation_method: NA
@@ -34,7 +37,7 @@ library(magrittr)
 
 ## Data import
 
--   LaCyTools summary files: `r paste0("\"", params$summary_filenames, "\"")`
+-   Uploaded files: `r paste0("\"", params$summary_filenames, "\"")`
 -   Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
 -   Metadata file(s): `r ifelse(is.null(params$filenames_metadata), "none", paste0("\"", params$filenames_metadata, "\""))`
 
@@ -53,9 +56,23 @@ if (params$sample_types_method == "Automatically determine sample types based on
 ## Spectra curation
 
 -   Analyte quality criteria:
-    -   Acceptable mass accuracy range: `r min(params$mass_acc)` - `r max(params$mass_acc)`
-    -   Max. IPQ value: `r params$ipq`
-    -   Min. S/N ratio: `r params$sn`
+
+    ```{r results='asis'}
+    if (params$data_type == "LaCyTools data:") {
+      cat(
+        "Acceptable mass accuracy range:", min(params$mass_acc)-max(params$mass_acc), "\n",
+        "Max. IPQ value:", params$ipq, "\n",
+        "Min. S/N ratio:", params$sn, "\n"
+      )
+    } else if (params$data_type == "Skyline data") {
+      cat(
+        "Acceptable mass accuracy range:", min(params$mass_acc)-max(params$mass_acc), "\n",
+        "Min. IDP value:", params$idp, "\n",
+        "Min. total area:", params$total_area, "\n"
+      )
+    }
+    ```
+
 -   Basis for spectra curation cut-off: `r params$spectra_curation_cut_off`
 
 Show if manual cut-offs were used instead, show separately for specific and total if contains_total_and_specific_samples is TRUE For each cluster: show the plot and table with cut-offs

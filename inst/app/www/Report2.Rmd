@@ -1,11 +1,12 @@
 ---
 title: "GlycoDash data processing report"
-subtitle: "GlycoDash version: 1.3.7"
+subtitle: "GlycoDash version: 1.4.1"
 output: 
   html_document:
     toc: TRUE
     toc_float: TRUE
 params: 
+  data_type: NA
   summary_filenames: NA
   plate_design: NA
   sample_list: NA
@@ -15,12 +16,15 @@ params:
   mass_acc: NA
   ipq: NA
   sn: NA
-  included_qc: NA
+  idp: NA
+  total_area: NA
+  included_qc_spectra: NA
   spectra_curation_tab_contents: NA
   curated_spectra_plot: NA
   curated_spectra_plots: NA
   analyte_curation_method: NA
   analyte_curation_choice: NA
+  included_qc_analytes: NA
   ignore_samples: NA
   groups_to_ignore: NA
   cut_offs: NA
@@ -51,7 +55,7 @@ htmltools::tagList(plotly::ggplotly(ggplot2::ggplot()))
 
 ## Data import
 
--   LaCyTools summary files: `r paste0("\"", params$summary_filenames, "\"")`
+-   Uploaded files: `r paste0("\"", params$summary_filenames, "\"")`
 -   Plate design file(s): `r paste0("\"", params$plate_design, "\"")`
 -   Sample list file: `r ifelse(is.null(params$metadata), "none", paste0("\"", params$sample_list, "\""))`
 -   Metadata file(s): `r ifelse(is.null(params$filenames_metadata), "none", paste0("\"", params$filenames_metadata, "\""))`
@@ -71,11 +75,23 @@ if (params$sample_types_method != "Automatically determine sample types based on
 ## Spectra curation
 
 -   Analyte quality criteria:
-    -   Acceptable mass accuracy range: `r min(params$mass_acc)` - `r max(params$mass_acc)`
-    -   Max. IPQ value: `r params$ipq`
-    -   Min. S/N ratio: `r params$sn`
 
-The following analyte quality criteria were taken into account in the calculation of the cut-off for the percentage of passing analytes: `r params$included_qc`
+    ```{r results='asis'}
+
+    if (params$data_type == "LaCyTools data") {
+      cat("- Acceptable mass accuracy range (ppm): ", min(params$mass_acc), 
+          "-", max(params$mass_acc))
+      cat("\n- Max. IPQ value: ", params$ipq)
+      cat("\n- Min. S/N ratio: ", params$sn)
+    } else if (params$data_type == "Skyline data") {
+      cat("- Acceptable mass accuracy range (ppm): ", min(params$mass_acc), 
+          "-", max(params$mass_acc))
+      cat("\n- Min. IDP value: ", params$idp)
+      cat("\n- Min. total area: ", params$total_area)
+    }
+    ```
+
+The following analyte quality criteria were taken into account in the calculation of the cut-off for the percentage of passing analytes: `r params$included_qc_spectra`
 
 ### Spectra curation cut-offs
 
@@ -154,6 +170,8 @@ if (!is.null(params$curated_spectra_plot)) {
 ```
 
 ## Analyte curation
+
+The following analyte quality criteria were taken into account in the analyte curation: `r params$included_qc_analytes`
 
 ```{r analyte-curation, results='asis'}
 
