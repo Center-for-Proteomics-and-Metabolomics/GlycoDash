@@ -306,7 +306,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     observe({
       req(input$curation_method == "Per biological group")
       shinyalert::shinyalert(
-        inputId = "popup",
+        inputId = ns("popup"),
         html = TRUE,
         text = tagList(
           "The following biological groups were detected:",
