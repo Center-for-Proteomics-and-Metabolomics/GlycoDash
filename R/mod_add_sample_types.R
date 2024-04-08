@@ -188,6 +188,7 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
                                                                allowed = c("rds", "xlsx", "xls"))
     
     
+    
     # In the case of manual sample types: make sure that the sample IDs are unique
     duplicate_sample_ids <- reactive({
       req(manual_sample_types$list())
@@ -203,24 +204,13 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     
     observe({
       req(duplicate_sample_ids())
-      duplicates_table <- DT::datatable(data.frame(duplicate_sample_ids()),
-                                        options = list(
-                                          scrollY = "150px",
-                                          paging = FALSE,
-                                          searching = FALSE,
-                                          columnDefs = list(
-                                            list(
-                                              className = 'dt-center',
-                                              targets = "_all"))),
-                                        colnames = "sample_id",
-                                        rownames = FALSE)
       shinyalert::shinyalert(
+        inputId = "popup_duplicates",
         html = TRUE,
-        text = tagList(
+        text = paste(
           "The following sample ID's are present more than once in your file:",
-          duplicates_table,
-          br(),
-          "Please change your file such that each sample ID is present only once, and try again."
+          shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_duplicates"))),
+          "<br>Please change your file such that each sample ID is present only once, and try again."
         ),
         size = "m",
         confirmButtonText = "OK",
@@ -229,6 +219,11 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
         showConfirmButton = TRUE
       )
     })
+    
+    output$popup_table_duplicates <- render_my_datatable(
+      data.frame(duplicate_sample_ids()), "Sample ID"
+    )
+    
     
         
     # In the case of manual sample types: check for unmatched ID's
@@ -242,33 +237,26 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     
     observe({
       req(unmatched_sample_ids())
-      # Show a pop-up table if there are unmatched sample ID's
-      unmatched_table <- DT::datatable(data.frame(unmatched_sample_ids()),
-                                        options = list(
-                                          scrollY = "150px",
-                                          paging = FALSE,
-                                          searching = FALSE,
-                                          columnDefs = list(
-                                            list(
-                                              className = 'dt-center',
-                                              targets = "_all"))),
-                                        colnames = "sample_id",
-                                        rownames = FALSE)
-        shinyalert::shinyalert(
-          html = TRUE,
-          text = tagList(
-            "The following sample ID's from your data are not present in your sample type list:",
-            unmatched_table,
-            br(),
-            "Please add these sample ID's to your file, and try again."
-          ),
-          size = "m",
-          confirmButtonText = "OK",
-          confirmButtonCol = "tomato",
-          showCancelButton = FALSE,
-          showConfirmButton = TRUE
-        )
+      shinyalert::shinyalert(
+        inputId = "popup_unmatched",
+        html = TRUE,
+        text = paste(
+          "The following sample ID's from your data are not present in your sample type list:",
+          shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_unmatched"))),
+          "<br>Please add these sample ID's to your file, and try again."
+        ),
+        size = "m",
+        confirmButtonText = "OK",
+        confirmButtonCol = "tomato",
+        showCancelButton = FALSE,
+        showConfirmButton = TRUE
+      )
     })
+    
+    output$popup_table_unmatched <- render_my_datatable(
+      data.frame(unmatched_sample_ids()), "Sample ID"
+    )
+    
     
     
     # Combine manual sample types with data
@@ -294,16 +282,13 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     observe({
       req(r$with_auto_sample_types,
           input$method == "Automatically determine sample types based on sample ID's")
-      
       shinyalert::shinyalert(
-        inputId = "popup",
+        inputId = "popup_sampletypes",
         html = TRUE,
-        text = tagList(
-          paste("Based on the sample ID's the following",
-                length(unique(r$with_auto_sample_types$sample_type)),
-                "sample types were defined:"),
-          shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table")))
-        ),
+        text = paste("Based on the sample ID's the following",
+                     length(unique(r$with_auto_sample_types$sample_type)),
+                     "sample types were defined:",
+                     shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_sampletypes")))),
         size = "m",
         confirmButtonText = "Accept these sample types",
         showCancelButton = TRUE,
@@ -317,21 +302,10 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     
     # This datatable with the automatically determined sample_types is shown in
     # the pop-up:
-    output$popup_table <- DT::renderDataTable({
-      sample_types <- data.frame(unique(r$with_auto_sample_types$sample_type))
-      DT::datatable(sample_types,
-                    options = list(
-                      scrollY = "150px",
-                      paging = FALSE,
-                      searching = FALSE,
-                      columnDefs = list(
-                        list(
-                          className = 'dt-center',
-                          targets = "_all"))),
-                    colnames = "Sample type",
-                    rownames = FALSE
-      )
-    })
+    output$popup_table_sampletypes <- render_my_datatable(
+      data.frame(unique(r$with_auto_sample_types$sample_type)), "Sample type"
+    )
+    
     
     observe({
       req(!is.null(r$response))

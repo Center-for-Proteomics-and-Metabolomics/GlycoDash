@@ -342,8 +342,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         NULL
       })
     })
-
-
+    
 
     ####################  Default glycosylation traits  ####################
     
