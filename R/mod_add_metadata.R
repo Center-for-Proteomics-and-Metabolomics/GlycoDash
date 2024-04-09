@@ -211,7 +211,6 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
         rv$forbidden_colnames <- forbidden_colnames
         
         shinyalert::shinyalert(
-          inputId = ns("popup"),
           html = TRUE,
           text = paste(
             "The following column names in your metadata are not allowed:",
@@ -295,6 +294,7 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
     observe({
       req(!isTRUE(all.equal(unmatched_ids(), "none")))
       shinyalert::shinyalert(
+        inputId = "popup",
         html = TRUE,
         text = paste(
           length(unmatched_ids()),
@@ -333,7 +333,6 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
     
     
     
-    
     with_metadata <- reactive({
       req(unmatched_ids(), !is.null(merged_metadata()), unique_sample_ids() == TRUE)
       if(any(
@@ -348,9 +347,6 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
         NULL
       }
     })
-
-    
-  
     
     
     # Download example metadata file
