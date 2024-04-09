@@ -205,7 +205,6 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     observe({
       req(duplicate_sample_ids())
       shinyalert::shinyalert(
-        inputId = ns("popup_duplicates"),
         html = TRUE,
         text = paste(
           "The following sample ID's are present more than once in your file:",
@@ -238,7 +237,6 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     observe({
       req(unmatched_sample_ids())
       shinyalert::shinyalert(
-        inputId = ns("popup_unmatched"),
         html = TRUE,
         text = paste(
           "The following sample ID's from your data are not present in your sample type list:",
@@ -283,7 +281,6 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
       req(r$with_auto_sample_types,
           input$method == "Automatically determine sample types based on sample ID's")
       shinyalert::shinyalert(
-        inputId = ns("popup_sampletypes"),
         html = TRUE,
         text = paste("Based on the sample ID's the following",
                      length(unique(r$with_auto_sample_types$sample_type)),
