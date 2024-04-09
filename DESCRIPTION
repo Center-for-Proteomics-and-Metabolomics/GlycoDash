@@ -26,7 +26,7 @@ Imports:
     RLumShiny,
     scales,
     shiny (>= 1.7.1),
-    shinyalert,
+    shinyalert (>= 3.0.0),
     shinyBS,
 	shinybusy,
 	shinycssloaders,
@@ -55,4 +55,4 @@ Config/testthat/edition: 3
 Language: en-US
 VignetteBuilder: knitr
 Depends: 
-    R (>= 2.10)
+    R (>= 4.0)
