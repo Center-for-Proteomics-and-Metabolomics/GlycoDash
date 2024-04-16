@@ -126,6 +126,8 @@ mod_read_lacytools_ui <- function(id){
               Additionally, it should contain columns with \"<i>Total Area MS1</i>\",
               \"<i>Isotope Dot Product</i>\" and \"<i>Average Mass Error PPM</i>\" 
               for each sample name.
+              <br> <br>
+              <b>Sample names should not start with a number, and should not contain any spaces.</b>
               "
             ),
             trigger = "hover",
@@ -376,8 +378,6 @@ mod_read_lacytools_server <- function(id){
     observeEvent(skyline_data_combined(), {
       shinybusy::remove_modal_spinner()
     })
-    
-    
     
     
     # Detect total and specific samples if applicable.
