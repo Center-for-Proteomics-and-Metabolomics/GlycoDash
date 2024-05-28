@@ -4,7 +4,7 @@
 #' trait reference file and a trait name that is present in the reference file as a column,
 #' 
 #' @param cluster Cluster name, e.g. "IgGI"
-#' @param cluster_ref_df Reference file for traits, e.g. human_IgG_ref filtered with only glycans
+#' @param cluster_ref_df Reference file for traits, e.g. human_IgG_N_ref filtered with only glycans
 # that passed the analyte curation.
 #' @param target_trait   # Trait for which a formula should be created, e.g. "galactosylation"
 #'
@@ -46,14 +46,14 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   # Divide by the sum of all complex-type glycans if necessary
   # Or by the sum of all oligomannose glycans
   if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation", 
-                          "mono_antennary", "alpha_galactosylation")) {
+                          "sialylation_per_galactose", "mono_antennary", "alpha_galactosylation")) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::select(glycan, complex) %>% 
       dplyr::filter(complex == 1)
     # String with sum of complex type glycans
     complex_sum <- paste0(cluster, "1", complex_types_df$glycan, collapse = " + ")
     # Adjust clean_formula_string to divide by complex_types
-    clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ")")
+    clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ") * 100")  # 100 to get percentages
   } else if (target_trait == "oligomannose_average") {
     oligomannose_df <- cluster_ref_df %>%
       dplyr::select(glycan, oligomannose_average) %>%
@@ -83,19 +83,20 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
 
 #' match_human_IgG_traits
 #'
-#' Matches human IgG traits descriptions from UI to column names in human_IgG_ref
+#' Matches human IgG traits descriptions from UI to column names in human_IgG_N_ref
 #'
 #' @param human_traits_ui_input Character vector from the UI human IgG traits input.
 #'
 #' @return A character vector with short names of IgG traits, which correspond to column names
-# in the human_IgG_ref file.
+# in the human_IgG_N_ref file.
 #'
 match_human_IgG_traits <- function(human_traits_ui_input) {
   traits <- c(
     "Fucosylation of complex-type glycans" = "fucosylation",
     "Bisection of complex-type glycans" = "bisection",
     "Galactosylation of complex-type glycans" = "galactosylation",
-    "Sialylation of complex type-glycans" = "sialylation",
+    "Sialylation per antenna of complex-type glycans" = "sialylation",
+    "Sialylation per galactose of complex-type glycans" = "sialylation_per_galactose",
     "Percentage of monoantennary complex-type glycans" = "mono_antennary",
     "Percentage of hybrid-type glycans" = "hybrid",
     "Percentage of oligomannose-type glycans" = "oligomannose_relative",
@@ -155,7 +156,7 @@ match_mouse_IgG_traits <- function(mouse_traits_ui_input) {
 #' @param normalized_data  normalized_data in long format
 #' @param chosen_traits Character vector, e.g.  c("fucosylation", "sialylation")
 #' @param chosen_clusters  Character vector, e.g. c("IgGI", "IgGII")
-#' @param reference Reference file for traits, e.g. human_IgG_ref.
+#' @param reference Reference file for traits, e.g. human_IgG_N_ref.
 #' 
 create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters, reference) {
   # Create an empty vector to store possible analytes with unknown glycan compositions

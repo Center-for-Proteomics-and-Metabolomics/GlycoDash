@@ -9,7 +9,7 @@ generate_formula(cluster, cluster_ref_df, target_trait)
 \arguments{
 \item{cluster}{Cluster name, e.g. "IgGI"}
 
-\item{cluster_ref_df}{Reference file for traits, e.g. human_IgG_ref filtered with only glycans}
+\item{cluster_ref_df}{Reference file for traits, e.g. human_IgG_N_ref filtered with only glycans}
 
 \item{target_trait}{# Trait for which a formula should be created, e.g. "galactosylation"}
 }

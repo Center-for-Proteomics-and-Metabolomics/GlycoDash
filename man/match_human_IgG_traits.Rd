@@ -13,5 +13,5 @@ match_human_IgG_traits(human_traits_ui_input)
 A character vector with short names of IgG traits, which correspond to column names
 }
 \description{
-Matches human IgG traits descriptions from UI to column names in human_IgG_ref
+Matches human IgG traits descriptions from UI to column names in human_IgG_N_ref
 }

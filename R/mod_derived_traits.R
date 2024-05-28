@@ -79,7 +79,8 @@ mod_derived_traits_ui <- function(id){
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
                   "Galactosylation of complex-type glycans",
-                  "Sialylation of complex type-glycans",
+                  "Sialylation per antenna of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
                   "Percentage of oligomannose-type glycans",
@@ -364,12 +365,12 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     }, priority = 50)
     
     human_IgG_trait_formulas <- reactive({
-      load(system.file("app", "www", "human_IgG_ref.rda", package = "GlycoDash"))
+      load(system.file("app", "www", "human_IgG_N_ref.rda", package = "GlycoDash"))
       formula_list <- create_formula_list(
         normalized_data = normalized_data(),
         chosen_traits = human_IgG_traits(),
         chosen_clusters = input$human_IgG_clusters,
-        reference = human_IgG_ref
+        reference = human_IgG_N_ref
       )
       purrr::reduce(formula_list, c)  # c = concatenate
     }) %>% bindEvent(input$do_calculation)
@@ -512,7 +513,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         writexl::write_xlsx(formulas_table(), path = file)
       }
     )
-    
     
     return(
       list(
