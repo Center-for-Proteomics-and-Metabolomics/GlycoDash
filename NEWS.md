@@ -1,3 +1,10 @@
+# v1.4.2
+## Adjustments
+* April 2024: Make GlycoDash compatible with R 4.3.3, and most recent package versions.
+* Include sialylation per galactose as a trait for human IgG.
+* Automatic derived traits are now calculated in percentages instead of fractions.
+
+
 # v1.4.1
 ## Bug fixes
 * Automatically detect comma or semicolon separation in Skyline CSV files. 

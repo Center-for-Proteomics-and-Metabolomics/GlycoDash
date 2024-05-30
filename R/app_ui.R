@@ -18,7 +18,7 @@ app_ui <- function(request) {
       
       # Title header, with button that links to GitHub
       header = shinydashboard::dashboardHeader(
-        title = "GlycoDash v1.4.1",
+        title = "GlycoDash v1.4.2",
         tags$li(a(
           onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash')",
           href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"

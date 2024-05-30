@@ -306,11 +306,10 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     observe({
       req(input$curation_method == "Per biological group")
       shinyalert::shinyalert(
-        inputId = "popup",
         html = TRUE,
-        text = tagList(
+        text = paste(
           "The following biological groups were detected:",
-          DT::dataTableOutput(ns("popup_table"))
+          shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table")))
         ),
         size = "m",
         confirmButtonText = "Accept these as biological groups",
@@ -331,21 +330,12 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     
     # The data table that is shown in the pop-up
-    output$popup_table <- DT::renderDataTable({
-      biological_groups <- data.frame(unique(passing_spectra()[input$biogroup_column])) %>% tidyr::drop_na()
-      DT::datatable(biological_groups,
-                    options = list(
-                      scrollY = "150px",
-                      paging = FALSE,
-                      searching = FALSE,
-                      columnDefs = list(
-                        list(
-                          className = 'dt-center',
-                          targets = "_all"))),
-                    rownames = FALSE
-      )
-    })
+    output$popup_table <- render_my_datatable(
+      data.frame(unique(passing_spectra()[input$biogroup_column])) %>% tidyr::drop_na(),
+      ""
+    )
 
+    
     # Generate input boxes for cut-offs per cluster
     cut_off_ids <- reactive({
       req(passing_spectra(), input$cut_offs_per_cluster == TRUE)

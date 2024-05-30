@@ -356,3 +356,28 @@ customDownloadbutton <- function(outputId, label = "Changelog"){
   tags$a(id = outputId, class = "btn shiny-download-link", href = "", 
          download = NA, icon("download"), label)
 }
+
+
+
+
+render_my_datatable <- function(df, colnames) {
+  DT::renderDataTable({
+    DT::datatable(
+      df,
+      options = list(
+        scrollY = "150px",
+        paging = FALSE,
+        searching = FALSE,
+        columnDefs = list(
+          list(
+            className = 'dt-center',
+            targets = "_all"))),
+      colnames = colnames,
+      rownames = FALSE
+    )
+  }) 
+}
+
+
+
+
