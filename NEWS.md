@@ -1,3 +1,6 @@
+# v1.4.3
+
+
 # v1.4.2
 ## Adjustments
 * April 2024: Make GlycoDash compatible with R 4.3.3, and most recent package versions.
