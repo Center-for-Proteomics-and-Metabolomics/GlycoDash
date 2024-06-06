@@ -329,12 +329,15 @@ mod_read_lacytools_server <- function(id){
     ####################  Skyline  ##########################################
     #########################################################################
     
+    # Read raw Skyline data from CSV files.
+    # Isomers are renamed.
     raw_skyline_data <- reactive({
       req(correct_file_ext(), input$data_type == "Skyline data", input$skyline_input)
       purrr::map(input$skyline_input$datapath, function(datapath) {
         read_skyline_csv(datapath)
       })
     })
+    
     
     observe({
       req(raw_skyline_data())

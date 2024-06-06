@@ -511,6 +511,59 @@ getOrdinalSuffix <- function(num) {
 
 
 
+#' rename_skyline_isomers
+#' 
+#' This function detects the presence of isomers in a Skyline CSV file.
+#' When an analyte is present twice in a given charge state, the two duplicate
+#' analytes are assumed to be isomers with the same glycan composision. The glycan
+#' compositions are renamed to distinguish them.
+#'
+#' @param raw_skyline_data 
+#' Imported skyline CSV data from the read_skyline_csv() function.
+#'
+#' @return
+#' Skyline CSV data with glycan compositions of isomers renamed using "_a", "_b", etc.
+#' 
+rename_skyline_isomers <- function(raw_skyline_data) {
+  
+  # Look for isomers in the glycan compositions, per peptide.
+  data <- raw_skyline_data %>% 
+    dplyr::group_by(Protein.Name, Peptide, Precursor.Charge) %>% 
+    dplyr::mutate(n = dplyr::n()) %>% 
+    dplyr::ungroup() %>% 
+    dplyr::relocate(n, .after = Precursor.Charge)
+  
+  # n == 1 implies unique glycan composition
+  data_unique <- data %>% 
+    dplyr::filter(n == 1)
+  
+  # n > 1 implies presence of isomers
+  data_isomers <- data %>% 
+    dplyr::filter(n > 1) %>% 
+    dplyr::group_by(Protein.Name, Precursor.Charge, Peptide) %>% 
+    dplyr::mutate(Peptide = make.unique(Peptide)) %>% 
+    dplyr::ungroup() %>% 
+    # Instead of ".1", ".2", etc at the end of duplicates, add "_a","_b", to 
+    # the ends of all isomers, including the first one.
+    dplyr::mutate(
+      Peptide = dplyr::case_when(
+        endsWith(Peptide, ".1") ~ paste0(Peptide, "_b"),
+        endsWith(Peptide, ".2") ~ paste0(Peptide, "_c"),
+        endsWith(Peptide, ".3") ~ paste0(Peptide, "_d"),
+        endsWith(Peptide, ".4") ~ paste0(Peptide, "_e"),
+        .default = paste0(Peptide, "_a")
+      )
+    )
+  
+  # Combine the data again
+  data_renamed <- dplyr::bind_rows(data_unique, data_isomers)
+  
+  return(data_renamed)
+}
+
+
+
+
 #' read_skyline_csv
 #'
 #' @param path_to_file Path to Skyline CSV file
@@ -523,8 +576,14 @@ read_skyline_csv <- function(path_to_file) {
   } else {
     raw_data <- read.csv(path_to_file, header = TRUE, sep = ",")
   }
-  return(raw_data)
+  
+  # Check for isomers and rename them
+  data_renamed <- rename_skyline_isomers(raw_data)
+  
+  return(data_renamed)
 }
+
+
 
 
 
