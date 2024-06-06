@@ -551,6 +551,11 @@ rename_skyline_isomers <- function(raw_skyline_data) {
         endsWith(Peptide, ".2") ~ paste0(Peptide, "_c"),
         endsWith(Peptide, ".3") ~ paste0(Peptide, "_d"),
         endsWith(Peptide, ".4") ~ paste0(Peptide, "_e"),
+        endsWith(Peptide, ".5") ~ paste0(Peptide, "_f"),
+        endsWith(Peptide, ".6") ~ paste0(Peptide, "_g"),
+        endsWith(Peptide, ".7") ~ paste0(Peptide, "_h"),
+        endsWith(Peptide, ".8") ~ paste0(Peptide, "_i"),
+        endsWith(Peptide, ".9") ~ paste0(Peptide, "_j")
         .default = paste0(Peptide, "_a")
       )
     )
