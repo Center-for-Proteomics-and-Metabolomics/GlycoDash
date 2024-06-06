@@ -1,4 +1,6 @@
 # v1.4.3
+## Adjustments
+* Detect and automatically rename isomers in Skyline data.
 
 
 # v1.4.2
