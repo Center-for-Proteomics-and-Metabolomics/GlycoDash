@@ -4,11 +4,14 @@
 \alias{transform_skyline_data}
 \title{transform_skyline_data}
 \usage{
-transform_skyline_data(raw_skyline_data)
+transform_skyline_data(raw_skyline_data, i)
 }
 \arguments{
 \item{raw_skyline_data}{Raw skyline data, read into R with 
 the read_skyline_csv() function above.}
+
+\item{i}{Number of the Skyline CSV file that is being processed (1, 2, 3, etc)
+Required for the rename_skyline_isomers() function to display notifications.}
 }
 \value{
 A clean dataframe in a similar format as a transformed

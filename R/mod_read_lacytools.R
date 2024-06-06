@@ -338,7 +338,6 @@ mod_read_lacytools_server <- function(id){
       })
     })
     
-    
     observe({
       req(raw_skyline_data())
       shinybusy::show_modal_spinner(
@@ -352,7 +351,7 @@ mod_read_lacytools_server <- function(id){
       req(raw_skyline_data())
       purrr::imap(raw_skyline_data(), function(data, i) {
         tryCatch(
-          expr = transform_skyline_data(data),
+          expr = transform_skyline_data(data, i),
           missing_columns = function(c) {
             showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
             shinybusy::remove_modal_spinner()
