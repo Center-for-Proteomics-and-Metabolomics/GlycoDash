@@ -10,6 +10,16 @@
 mod_normalization_ui <- function(id){
   ns <- NS(id)
   tagList(
+    tags$style(HTML(paste0(
+      "#", ns("box_header")," .awesome-checkbox {padding-top: 7px}",
+      "#", ns("box_header"), " .popover {max-width: 400px !important; color: #333}",
+      "#", ns("box")," .box-title {width: 100%}",
+      "#", ns("box_header"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#", ns("box_header"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#", ns("box_header"), " .btn {float: right; border-width: 0px; margin-right: 10px}",
+      "#", ns("box"), " .dropdown {display: inline-block; float: right; width: 330px}",
+      "#", ns("box_header"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+    ))),
     fluidPage(
       fluidRow(
         h1("Normalized data")
@@ -27,7 +37,38 @@ mod_normalization_ui <- function(id){
         shinydashboardPlus::box(
           id = ns("box"),
           title = div(
-            "Visualize normalized data"
+            id = ns("box_header"),
+            "Visualize normalized data",
+            shinyWidgets::dropdownButton(
+              colourpicker::colourInput(
+                ns("color_low"),
+                "Lowest value color",
+                value = "blue",
+                returnName = TRUE,
+                palette = "limited",
+                closeOnClick = TRUE
+              ),
+              colourpicker::colourInput(
+                ns("color_mid"),
+                "Middle value color",
+                value = "white",
+                returnName = TRUE,
+                palette = "limited",
+                closeOnClick = TRUE
+              ),
+              colourpicker::colourInput(
+                ns("color_high"),
+                "Highest value color",
+                value = "red",
+                returnName = TRUE,
+                palette = "limited",
+                closeOnClick = TRUE
+              ),
+              icon = icon("paintbrush", class = "ml"),
+              tooltip = shinyWidgets::tooltipOptions(placement = "top", title = "Colors"),
+              width = "250px",
+              size = "xs"
+            )
           ),
           width = 12,
           solidHeader = TRUE,
@@ -122,21 +163,27 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     
     # Create heatmap plots
-    r <- reactiveValues(created_tab_titles = vector("character"))
-    observeEvent(normalized_data(), {
+    r <- reactiveValues(
+      created_tab_titles = vector("character"),
+      heatmaps = list()
+    )
+    
+    observe({
+      req(normalized_data())
       
       # Remove previously created tabs
       purrr::map(r$created_tab_titles, function(tab_title) {
         removeTab(inputId = "tabs", target = tab_title, session = session)
       })
-      
-      # Use the cluster names as tab IDs and titles
+
+      # Generate new tab titles
       cluster_names <- unique(normalized_data()$cluster)
       r$created_tab_titles <- cluster_names
       
-      # Create list for heatmaps, to show in the report.
-      r$heatmaps <- vector("list", length = length(cluster_names))
-      
+      # Temporary list for storing heatmaps
+      # This is necessary to prevent infinite looping
+      temp_heatmaps <- vector("list", length = length(cluster_names))
+
       # Create tabs and plots
       purrr::imap(cluster_names, function(cluster, i) {
         
@@ -145,24 +192,29 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
           cluster_name = cluster,
           # TODO: make the options below interactive
           exclude_sample_types = c(),
-          color_low = "white",
-          color_high = "darkblue",
-          color_mid = NA
+          color_low = input$color_low,
+          color_mid = input$color_mid,
+          color_high = input$color_high
         )
         
-        r$heatmaps[[i]] <- plot  # Store in vector for the report
-        
-        # Show plots in UI
-        output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text")) 
+        temp_heatmaps[[i]] <- plot  # Store plot in the temporary list
+
+        # Show plot in UI
+        output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
         appendTab(
           inputId = "tabs",
           select = TRUE,
           tab = tabPanel(
             title = cluster_names[[i]],
-            plotly::plotlyOutput(ns(cluster), height = "700px")
+            plotly::plotlyOutput(ns(cluster), height = "600px", width = "1350px")
           )
         )
         
+        # Update reactive heatmaps list
+        isolate({
+          r$heatmaps <- temp_heatmaps
+        })
+
       })
     })
     

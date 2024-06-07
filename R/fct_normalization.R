@@ -264,16 +264,16 @@ normalize_data <- function(total_intensities) {
 #' @param exclude_sample_types Character vector with sample types to exclude.
 #' Empty vector is not applicable.
 #' @param color_low Color for lowest value.
+#' @param color_mid Color for middle value
 #' @param color_high Color for highest value. 
-#' @param color_mid Optional: color for mid value. 
 #'
 #' @return A ggplot heatmap.
 create_heatmap <- function(normalized_data,
                            cluster_name, 
                            exclude_sample_types,
                            color_low,
-                           color_high,
-                           color_mid) {
+                           color_mid,
+                           color_high) {
   
   # Clean data to plot
   to_plot <- normalized_data %>% 
@@ -304,20 +304,11 @@ create_heatmap <- function(normalized_data,
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
       axis.text.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank()
+    ) +
+    ggplot2::scale_fill_gradientn(
+      colors = c(color_low, color_mid, color_high),
+      values = scales::rescale(c(0, 50, 100))
     )
-  
-  # Determine colors
-  if (!is.na(color_mid)) {
-    colors <- c(color_low, color_mid, color_high)
-    values <- scales::rescale(c(0, 50, 100))
-  } else {
-    colors <- c(color_low, color_high)
-    values <- scales::rescale(c(0, 100))
-  }
-  
-  # Add colors to the plot
-  p <- p + 
-    ggplot2::scale_fill_gradientn(colors = colors, values = values)
   
   return(p)
 }
