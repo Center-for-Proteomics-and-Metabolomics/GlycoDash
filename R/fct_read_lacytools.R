@@ -559,24 +559,25 @@ rename_skyline_isomers <- function(raw_skyline_data, i) {
   data_isomers <- data %>% 
     dplyr::filter(n > 1) %>% 
     dplyr::group_by(Protein.Name, Precursor.Charge, Peptide) %>% 
-    dplyr::mutate(Peptide = make.unique(Peptide)) %>% 
+    dplyr::mutate(Peptide_unique = make.unique(Peptide)) %>% 
     dplyr::ungroup() %>% 
     # Instead of ".1", ".2", etc at the end of duplicates, add "_a","_b", to 
     # the ends of all isomers, including the first one.
     dplyr::mutate(
       Peptide = dplyr::case_when(
-        endsWith(Peptide, ".1") ~ paste0(Peptide, "_b"),
-        endsWith(Peptide, ".2") ~ paste0(Peptide, "_c"),
-        endsWith(Peptide, ".3") ~ paste0(Peptide, "_d"),
-        endsWith(Peptide, ".4") ~ paste0(Peptide, "_e"),
-        endsWith(Peptide, ".5") ~ paste0(Peptide, "_f"),
-        endsWith(Peptide, ".6") ~ paste0(Peptide, "_g"),
-        endsWith(Peptide, ".7") ~ paste0(Peptide, "_h"),
-        endsWith(Peptide, ".8") ~ paste0(Peptide, "_i"),
-        endsWith(Peptide, ".9") ~ paste0(Peptide, "_j"),
+        endsWith(Peptide_unique, ".1") ~ paste0(Peptide, "_b"),
+        endsWith(Peptide_unique, ".2") ~ paste0(Peptide, "_c"),
+        endsWith(Peptide_unique, ".3") ~ paste0(Peptide, "_d"),
+        endsWith(Peptide_unique, ".4") ~ paste0(Peptide, "_e"),
+        endsWith(Peptide_unique, ".5") ~ paste0(Peptide, "_f"),
+        endsWith(Peptide_unique, ".6") ~ paste0(Peptide, "_g"),
+        endsWith(Peptide_unique, ".7") ~ paste0(Peptide, "_h"),
+        endsWith(Peptide_unique, ".8") ~ paste0(Peptide, "_i"),
+        endsWith(Peptide_unique, ".9") ~ paste0(Peptide, "_j"),
         .default = paste0(Peptide, "_a")
       )
-    )
+    ) %>% 
+    dplyr::select(-Peptide_unique)
   
   # Combine the data again
   data_renamed <- dplyr::bind_rows(data_unique, data_isomers)
