@@ -587,13 +587,14 @@ rename_skyline_isomers <- function(raw_skyline_data, i) {
     # Get vector with the compositions for which isomers were detected
     isomeric <- data %>% 
       dplyr::filter(n > 1) %>% 
-      dplyr::select(Peptide) %>% 
+      dplyr::select(Protein.Name, Peptide) %>% 
       dplyr::distinct() %>% 
-      dplyr::pull(Peptide)
+      dplyr::mutate(analyte = paste0(Protein.Name, "1", Peptide)) %>% 
+      dplyr::pull(analyte)
     # Show notification with message
     message <- paste0(
       "In CSV file ", i, ", the following ", length(isomeric), 
-      " isomeric glycan compositions were detected and renamed: ",
+      " analytes with isomeric glycan compositions were detected and renamed: ",
       paste0(isomeric , collapse = ", ")
     )
     showNotification(message, type = "warning", duration = 30)
