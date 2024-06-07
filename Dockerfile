@@ -41,7 +41,6 @@ RUN Rscript -e 'remotes::install_version("RLumShiny",upgrade="never", version = 
 RUN Rscript -e 'remotes::install_version("plotly",upgrade="never", version = "4.10.4")'
 RUN Rscript -e 'remotes::install_version("plater",upgrade="never", version = "1.0.4")'
 RUN Rscript -e 'remotes::install_version("kableExtra",upgrade="never", version = "1.4.0")'
-RUN Rscript -e 'remotes::install_version("InteractiveComplexHeatmap",upgrade="never", version = "1.10.0")'
 RUN Rscript -e 'remotes::install_version("golem",upgrade="never", version = "0.4.1")'
 RUN Rscript -e 'remotes::install_version("bsplus",upgrade="never", version = "0.1.4")'
 RUN mkdir /build_zone
