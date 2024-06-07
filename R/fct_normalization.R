@@ -248,3 +248,77 @@ normalize_data <- function(total_intensities) {
 
   return(normalized_data)
 }
+
+
+
+
+
+#' creat_heatmap
+#' 
+#' Creates a simple heatmap for normalized data of a cluster.
+#' Sample names are on the y-axis, glycans are on the x-axis.
+#' 
+#'
+#' @param normalized_data Normalized data in long format.
+#' @param cluster_name Cluster name (character) for which to make the plot
+#' @param exclude_sample_types Character vector with sample types to exclude.
+#' Empty vector is not applicable.
+#' @param color_low Color for lowest value.
+#' @param color_high Color for highest value. 
+#' @param color_mid Optional: color for mid value. 
+#'
+#' @return A ggplot heatmap.
+create_heatmap <- function(normalized_data,
+                           cluster_name, 
+                           exclude_sample_types,
+                           color_low,
+                           color_high,
+                           color_mid) {
+  
+  # Clean data to plot
+  to_plot <- normalized_data %>% 
+    dplyr::select(-cluster) %>% 
+    tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
+                    extra = "merge", remove = FALSE) %>% 
+    dplyr::filter(
+      cluster == cluster_name,
+      !sample_type %in% exclude_sample_types
+    )
+  
+  # Create simple plot
+  p <- ggplot2::ggplot(to_plot, ggplot2::aes(
+    x = glycan, y = sample_name, fill = relative_abundance,
+    text = paste(
+      "Sample name:", sample_name,
+      "\nSample ID:", sample_id,
+      "\nSample type:", sample_type,
+      "\nGlycan:", glycan,
+      "\nRelative abundance:", paste0(format(round(relative_abundance, digits = 2), nsmall = 2), "%")
+    )
+  )) +
+    ggplot2::geom_tile() +
+    ggplot2::labs(x = "", y = "Sample", fill = "Relative abundance (%)") +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks.y = ggplot2::element_blank()
+    )
+  
+  # Determine colors
+  if (!is.na(color_mid)) {
+    colors <- c(color_low, color_mid, color_high)
+    values <- scales::rescale(c(0, 50, 100))
+  } else {
+    colors <- c(color_low, color_high)
+    values <- scales::rescale(c(0, 100))
+  }
+  
+  # Add colors to the plot
+  p <- p + 
+    ggplot2::scale_fill_gradientn(colors = colors, values = values)
+  
+  return(p)
+}
+

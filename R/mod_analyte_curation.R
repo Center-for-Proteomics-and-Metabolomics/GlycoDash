@@ -204,7 +204,7 @@ mod_analyte_curation_ui <- function(id){
                   html = "true"),
               shinyWidgets::materialSwitch(
                 ns("cut_offs_per_cluster"),
-                HTML("<i> <strong> Optional: </strong> Choose cut-offs per cluster </i>"),
+                HTML("<i style='font-size:15px;'> Choose cut-offs per cluster </i>"),
                 right = TRUE,
                 status = "success"
               ),

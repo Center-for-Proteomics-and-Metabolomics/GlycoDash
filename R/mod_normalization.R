@@ -24,6 +24,29 @@ mod_normalization_ui <- function(id){
         )
       ),
       fluidRow(
+        shinydashboardPlus::box(
+          id = ns("box"),
+          title = div(
+            "Visualize normalized data"
+          ),
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          shinyWidgets::materialSwitch(
+            ns("facet_per_group"),
+            HTML("<i style='font-size:15px;'> Show heatmaps per biological group </i>"),
+            status = "success",
+            right = TRUE
+          ),
+          selectInput(
+            ns("exclude_sample_types"),
+            "Select sample types to exclude from the heatmaps:",
+            choices = ""
+          ),
+          tabsetPanel(id = ns("tabs"))
+        )
+      ),
+      fluidRow(
         shinydashboard::box(
           title = "Export results",
           width = 6,
@@ -95,6 +118,56 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       DT::datatable(data = normalized_data_wide(),
                     options = list(scrollX = TRUE))
     })
+    
+    
+    
+    # Create heatmap plots
+    r <- reactiveValues(created_tab_titles = vector("character"))
+    observeEvent(normalized_data(), {
+      
+      # Remove previously created tabs
+      purrr::map(r$created_tab_titles, function(tab_title) {
+        removeTab(inputId = "tabs", target = tab_title, session = session)
+      })
+      
+      # Use the cluster names as tab IDs and titles
+      cluster_names <- unique(normalized_data()$cluster)
+      r$created_tab_titles <- cluster_names
+      
+      # Create list for heatmaps, to show in the report.
+      r$heatmaps <- vector("list", length = length(cluster_names))
+      
+      # Create tabs and plots
+      purrr::imap(cluster_names, function(cluster, i) {
+        
+        plot <- create_heatmap(
+          normalized_data = normalized_data(),
+          cluster_name = cluster,
+          # TODO: make the options below interactive
+          exclude_sample_types = c(),
+          color_low = "white",
+          color_high = "darkblue",
+          color_mid = NA
+        )
+        
+        r$heatmaps[[i]] <- plot  # Store in vector for the report
+        
+        # Show plots in UI
+        output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text")) 
+        appendTab(
+          inputId = "tabs",
+          select = TRUE,
+          tab = tabPanel(
+            title = cluster_names[[i]],
+            plotly::plotlyOutput(ns(cluster), height = "700px")
+          )
+        )
+        
+      })
+    })
+    
+    
+    
     
     
     # Download normalized data

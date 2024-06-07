@@ -21,7 +21,7 @@ mod_tab_cut_offs_ui <- function(id){
     DT::dataTableOutput(ns("table")),
     br(),
     shinyWidgets::materialSwitch(ns("switch_to_manual"),
-                                 "Choose cut-off values manually instead",
+                                 HTML("<i style='font-size:15px;'> Choose cut-off values manually instead </i>"),
                                  right = TRUE,
                                  status = "primary"),
     shinyjs::hidden(numericInput(ns("cut_off_sum_intensity"),
