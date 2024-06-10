@@ -86,17 +86,19 @@ mod_normalization_ui <- function(id){
             "Variable to plot on y-axis:",
             choices = c("Sample", "Cluster")
           ),
-          # shinyWidgets::materialSwitch(
-          #   ns("facet_per_group"),
-          #   HTML("<i style='font-size:15px;'> Show heatmaps per biological group </i>"),
-          #   status = "success",
-          #   right = TRUE
-          # ),
-          # selectInput(
-          #   ns("exclude_sample_types"),
-          #   "Select sample types to exclude from the heatmaps:",
-          #   choices = ""
-          # ),
+          shinyWidgets::materialSwitch(
+            ns("facet_per_group"),
+            HTML("<i style='font-size:15px;'> Show heatmaps per biological group </i>"),
+            status = "success",
+            right = TRUE,
+            value = TRUE  # TRUE by default
+          ),
+          selectizeInput(
+            ns("exclude_sample_types"),
+            "Select sample types to exclude from the heatmaps:",
+            choices = "",
+            multiple = TRUE
+          ),
           tabsetPanel(id = ns("tabs"))
         )
       ),
@@ -123,10 +125,6 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    # observeEvent(results_analyte_curation$biogroups_colname(), {
-    #   browser()
-    # })
-    
     analyte_curated_data <- reactive({
       # req() considers an empty dataframe Truthy, and because of the way that
       # results_analyte_curation$analyte_curated_data() is created in
@@ -143,16 +141,20 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       calculate_total_intensity(data = analyte_curated_data(), data_type = data_type())
     })
     
-    
+    # Normalized data is in long format
     normalized_data <- reactive({
       req(total_intensities())
-      normalize_data(total_intensities = total_intensities())
+      normalize_data(total_intensities = total_intensities()) %>% 
+        { # Combine with metadata if it exists
+          if (is_truthy(merged_metadata())) {
+            dplyr::left_join(., merged_metadata(), by = "sample_id")
+          } else .
+        }
     })
-  
     
+    # Turn normalized data into wide format
     normalized_data_wide <- reactive({
       req(normalized_data())
-      
       normalized_data() %>% 
         tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity, 
                            names_glue = "{cluster}_sum_intensity") %>% 
@@ -160,14 +162,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         dplyr::group_by(sample_name) %>% 
         tidyr::fill(replicates:last_col(), .direction = "downup") %>% 
         dplyr::ungroup() %>% 
-        dplyr::distinct() %>% 
-        
-        { # Combine with metadata if it exists
-          if (is_truthy(merged_metadata())) {
-            dplyr::left_join(., merged_metadata(), by = "sample_id") %>% 
-            dplyr::relocate(colnames(merged_metadata())[-1], .after = sample_id)
-          } else .
-        }
+        dplyr::distinct()
     })
     
     output$data_table <- DT::renderDT({
@@ -186,9 +181,18 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     )
     
     # TODO:
+    # - info box explaining median relative abundance
     # - option to exclude sample types
-    # - samples on y-axis --> option to facet by biological group
     # - Option to plot cluster on y-axis and generate tabs for biological groups
+    # - Make it work with spike vs total
+    # - Make it work with analyte curation per sample.
+    # - When switching analyte curation method from all data to pre group, fix error:
+    #     Warning: Error in map2: ℹ In index: 1.
+    #      Caused by error in `dplyr::filter()`:
+    #      ℹ In argument: `!is.na()`.
+    #     Caused by error in `is.na()`:
+    #      ! argument 1 is empty
+    
     
     observe({
       req(normalized_data())
@@ -214,11 +218,16 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
           
           plot <- sample_heatmap(
             normalized_data = normalized_data(),
-            #############################
             cluster_name = cluster,
-            exclude_sample_types = c(),
-            facet_per_group = FALSE,
-            #############################
+            exclude_sample_types = input$exclude_sample_types,
+            group_facet = dplyr::case_when(
+              .default = NA,
+              ( # Only when switch is on, and curation was done per biological group.
+                # Second check is required, because switch is on by default.
+                input$facet_per_group == TRUE &
+                results_analyte_curation$curation_method() == "Per biological group"
+              ) ~ results_analyte_curation$biogroups_colname()
+            ),
             color_low = input$color_low,
             color_mid = input$color_mid,
             color_high = input$color_high,
@@ -254,13 +263,37 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     
     
+    # Determine choices for excluding sample types
+    observe({
+      req(normalized_data())
+      updateSelectizeInput(
+        inputId = "exclude_sample_types",
+        choices = as.character(unique(normalized_data()$sample_type))
+      )
+    })
     
-    
-    # Download normalized data
+    # Toggle UI
     observe({
       shinyjs::toggleState("download", is_truthy(normalized_data_wide()))
+      
+      if (results_analyte_curation$curation_method() == "Per biological group" &
+          input$heatmap_yaxis == "Sample") {
+        shinyjs::show("facet_per_group")
+      } else {
+        shinyjs::hide("facet_per_group")
+      }
+      
+      if (results_analyte_curation$curation_method() == "Per biological group" &
+          input$facet_per_group == TRUE) {
+        shinyjs::hide("exclude_sample_types")
+      } else {
+        shinyjs::show("exclude_sample_types")
+      }
+      
     })
 
+    
+    # Download data
     output$download <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))

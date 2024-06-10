@@ -260,7 +260,7 @@ normalize_data <- function(total_intensities) {
 #' Heatmap is created for a specific cluster.
 #' 
 #'
-#' @param normalized_data Normalized data in long format.
+#' @param normalized_data_wide Normalized data in long format.
 #' @param cluster_name Cluster name (character) for which to make the plot
 #' @param exclude_sample_types Character vector with sample types to exclude.
 #' Empty vector is not applicable.
@@ -272,13 +272,13 @@ normalize_data <- function(total_intensities) {
 #'
 #' @return A ggplot heatmap.
 sample_heatmap <- function(normalized_data,
-                            cluster_name, 
-                            exclude_sample_types,
-                            facet_per_group,
-                            color_low,
-                            color_mid,
-                            color_high,
-                            color_na) {
+                           cluster_name, 
+                           exclude_sample_types,
+                           group_facet,
+                           color_low,
+                           color_mid,
+                           color_high,
+                           color_na) {
   
   # Clean data to plot
   to_plot <- normalized_data %>% 
@@ -289,6 +289,13 @@ sample_heatmap <- function(normalized_data,
       cluster == cluster_name,
       !sample_type %in% exclude_sample_types
     )
+  
+  # Check if the plot should be facetted by biological group.
+  # In that case, remove samples that have no biological group assigned.
+  if (!is.na(group_facet)) {
+    to_plot <- to_plot %>% 
+      dplyr::filter(!is.na(!!dplyr::sym(group_facet)))
+  }
   
   # Create simple plot
   p <- ggplot2::ggplot(to_plot, ggplot2::aes(
@@ -308,13 +315,18 @@ sample_heatmap <- function(normalized_data,
       panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
       panel.background = ggplot2::element_rect(fill = color_na),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
-      axis.text.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank()
+      axis.text.y = ggplot2::element_blank()
     ) +
     ggplot2::scale_fill_gradientn(
       colors = c(color_low, color_mid, color_high),
       values = scales::rescale(c(0, 50, 100))
     )
+  
+  # Check for biological groups facetting
+  if (!is.na(group_facet)) {
+    p <- p + 
+      ggplot2::facet_wrap(~get(group_facet), scales = "free_y")  # Need get() because group_facet is a character
+  }
   
   return(p)
 }
