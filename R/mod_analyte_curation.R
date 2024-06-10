@@ -287,11 +287,12 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       req(results_spectra_curation$passing_spectra())
       results_spectra_curation$passing_spectra()
     })
-
+    
     
     # Create reactiveValues. 
     # Below, rv_resp$response is created when analyte curation is performed per biological group.
-    rv_resp <- reactiveValues(response = NULL)
+    # Also store colum name of biological groups, to pass on to normalized data
+    rv_resp <- reactiveValues(response = NULL, biogroups_colname = c(""))
     
     # Show potential column names with biological groups
     observe({
@@ -316,8 +317,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         showCancelButton = TRUE,
         cancelButtonText = "Cancel",
         confirmButtonCol = "#3c8dbc",
-        callbackR = function(response){
+        callbackR = function(response) {
           rv_resp$response <- response  # TRUE or FALSE, depending on whether user accepts biol. groups.
+          if (response == TRUE) {
+            rv_resp$biogroups_colname <- input$biogroup_column
+          } else {
+            rv_resp$biogroups_colname <- c("")
+          }
         }
       )
     }) %>% bindEvent(input$determine_groups_button) # Show pop-up window when button is clicked.
@@ -326,14 +332,24 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # When user decides to change curation method, set rv_resp$response to NULL
     observeEvent(input$curation_method, {
       rv_resp$response <- NULL
+      rv_resp$biogroups_colnames <- c("")
     })
     
-    
-    # The data table that is shown in the pop-up
-    output$popup_table <- render_my_datatable(
-      data.frame(unique(passing_spectra()[input$biogroup_column])) %>% tidyr::drop_na(),
-      ""
-    )
+    output$popup_table <- DT::renderDataTable({
+      DT::datatable(
+        data.frame(unique(passing_spectra()[input$biogroup_column])) %>% tidyr::drop_na(),
+        options = list(
+          scrollY = "150px",
+          paging = FALSE,
+          searching = FALSE,
+          columnDefs = list(
+            list(
+              className = 'dt-center',
+              targets = "_all"))),
+        colnames = "",
+        rownames = FALSE
+      )
+    }) 
 
     
     # Generate input boxes for cut-offs per cluster
@@ -794,6 +810,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     return(list(
       analyte_curated_data = with_analytes_to_include,
+      biogroups_colname = reactive(rv_resp$biogroups_colname),
       included_qc = reactive(input$qc_to_include),
       method = reactive({ input$method }), # based on data or analyte list,
       curation_method = reactive(input$curation_method),
