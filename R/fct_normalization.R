@@ -253,27 +253,32 @@ normalize_data <- function(total_intensities) {
 
 
 
-#' creat_heatmap
+#' sample_heatmap
 #' 
-#' Creates a simple heatmap for normalized data of a cluster.
+#' Creates a simple heatmap for normalized data. 
 #' Sample names are on the y-axis, glycans are on the x-axis.
+#' Heatmap is created for a specific cluster.
 #' 
 #'
 #' @param normalized_data Normalized data in long format.
 #' @param cluster_name Cluster name (character) for which to make the plot
 #' @param exclude_sample_types Character vector with sample types to exclude.
 #' Empty vector is not applicable.
+#' @param facet_group Boolean: whether to facet by biological group.
 #' @param color_low Color for lowest value.
 #' @param color_mid Color for middle value
 #' @param color_high Color for highest value. 
+#' @param color_na Color to for the background / missing values.
 #'
 #' @return A ggplot heatmap.
-create_heatmap <- function(normalized_data,
-                           cluster_name, 
-                           exclude_sample_types,
-                           color_low,
-                           color_mid,
-                           color_high) {
+sample_heatmap <- function(normalized_data,
+                            cluster_name, 
+                            exclude_sample_types,
+                            facet_per_group,
+                            color_low,
+                            color_mid,
+                            color_high,
+                            color_na) {
   
   # Clean data to plot
   to_plot <- normalized_data %>% 
@@ -301,6 +306,7 @@ create_heatmap <- function(normalized_data,
     ggplot2::theme_classic() +
     ggplot2::theme(
       panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+      panel.background = ggplot2::element_rect(fill = color_na),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
       axis.text.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank()

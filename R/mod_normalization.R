@@ -64,6 +64,14 @@ mod_normalization_ui <- function(id){
                 palette = "limited",
                 closeOnClick = TRUE
               ),
+              colourpicker::colourInput(
+                ns("color_na"),
+                "Background/missing values color",
+                value = "gray70",
+                returnName = TRUE,
+                palette = "limited",
+                closeOnClick = TRUE
+              ),
               icon = icon("paintbrush", class = "ml"),
               tooltip = shinyWidgets::tooltipOptions(placement = "top", title = "Colors"),
               width = "250px",
@@ -73,17 +81,22 @@ mod_normalization_ui <- function(id){
           width = 12,
           solidHeader = TRUE,
           status = "primary",
-          shinyWidgets::materialSwitch(
-            ns("facet_per_group"),
-            HTML("<i style='font-size:15px;'> Show heatmaps per biological group </i>"),
-            status = "success",
-            right = TRUE
-          ),
           selectInput(
-            ns("exclude_sample_types"),
-            "Select sample types to exclude from the heatmaps:",
-            choices = ""
+            ns("heatmap_yaxis"),
+            "Variable to plot on y-axis:",
+            choices = c("Sample", "Cluster")
           ),
+          # shinyWidgets::materialSwitch(
+          #   ns("facet_per_group"),
+          #   HTML("<i style='font-size:15px;'> Show heatmaps per biological group </i>"),
+          #   status = "success",
+          #   right = TRUE
+          # ),
+          # selectInput(
+          #   ns("exclude_sample_types"),
+          #   "Select sample types to exclude from the heatmaps:",
+          #   choices = ""
+          # ),
           tabsetPanel(id = ns("tabs"))
         )
       ),
@@ -109,6 +122,10 @@ mod_normalization_ui <- function(id){
 mod_normalization_server <- function(id, results_analyte_curation, merged_metadata, data_type) {
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    # observeEvent(results_analyte_curation$biogroups_colname(), {
+    #   browser()
+    # })
     
     analyte_curated_data <- reactive({
       # req() considers an empty dataframe Truthy, and because of the way that
@@ -168,6 +185,11 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       heatmaps = list()
     )
     
+    # TODO:
+    # - option to exclude sample types
+    # - samples on y-axis --> option to facet by biological group
+    # - Option to plot cluster on y-axis and generate tabs for biological groups
+    
     observe({
       req(normalized_data())
       
@@ -175,47 +197,59 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       purrr::map(r$created_tab_titles, function(tab_title) {
         removeTab(inputId = "tabs", target = tab_title, session = session)
       })
-
-      # Generate new tab titles
-      cluster_names <- unique(normalized_data()$cluster)
-      r$created_tab_titles <- cluster_names
       
-      # Temporary list for storing heatmaps
-      # This is necessary to prevent infinite looping
-      temp_heatmaps <- vector("list", length = length(cluster_names))
-
-      # Create tabs and plots
-      purrr::imap(cluster_names, function(cluster, i) {
+      ########## SAMPLE ON Y-AXIS, ONE TAB PER CLUSTER #############
+      if (input$heatmap_yaxis == "Sample") {
         
-        plot <- create_heatmap(
-          normalized_data = normalized_data(),
-          cluster_name = cluster,
-          # TODO: make the options below interactive
-          exclude_sample_types = c(),
-          color_low = input$color_low,
-          color_mid = input$color_mid,
-          color_high = input$color_high
-        )
+        # Generate new tab titles
+        cluster_names <- unique(normalized_data()$cluster)
+        r$created_tab_titles <- cluster_names
         
-        temp_heatmaps[[i]] <- plot  # Store plot in the temporary list
-
-        # Show plot in UI
-        output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
-        appendTab(
-          inputId = "tabs",
-          select = TRUE,
-          tab = tabPanel(
-            title = cluster_names[[i]],
-            plotly::plotlyOutput(ns(cluster), height = "600px", width = "1350px")
+        # Temporary list for storing heatmaps
+        # This is necessary to prevent infinite looping
+        temp_heatmaps <- vector("list", length = length(cluster_names))
+        
+        # Create tabs and plots
+        purrr::imap(cluster_names, function(cluster, i) {
+          
+          plot <- sample_heatmap(
+            normalized_data = normalized_data(),
+            #############################
+            cluster_name = cluster,
+            exclude_sample_types = c(),
+            facet_per_group = FALSE,
+            #############################
+            color_low = input$color_low,
+            color_mid = input$color_mid,
+            color_high = input$color_high,
+            color_na = input$color_na
           )
-        )
-        
-        # Update reactive heatmaps list
-        isolate({
-          r$heatmaps <- temp_heatmaps
+          
+          temp_heatmaps[[i]] <- plot  # Store plot in the temporary list
+          
+          # Show plot in UI
+          output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
+          appendTab(
+            inputId = "tabs",
+            select = TRUE,
+            tab = tabPanel(
+              title = cluster_names[[i]],
+              plotly::plotlyOutput(ns(cluster), height = "600px", width = "1350px")
+            )
+          )
+          
+          # Update reactive heatmaps list
+          isolate({
+            r$heatmaps <- temp_heatmaps
+          })
+          
         })
+    
+        #### CLUSTER ON Y-AXIS, ONE TAB PER BIOLOGICAL GROUP IF APPLICABLE #### 
+      } else if (input$heatmap_yaxis == "Cluster") {
+        print("Test")
+      }
 
-      })
     })
     
     
