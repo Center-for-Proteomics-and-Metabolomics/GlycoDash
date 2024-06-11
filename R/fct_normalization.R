@@ -296,12 +296,20 @@ sample_heatmap <- function(normalized_data,
     return("Oops, you excluded all sample types! There is no data to show...")
   }
   
-  # Check if the plot should be facetted by biological group.
-  # In that case, remove samples that have no biological group assigned.
+  # Check if the plot should be faceted by biological group, and/or Total vs Specific
+  # In that case, remove samples that have no (biological) group assigned.
   if (group_facet != "") {
     to_plot <- to_plot %>% 
       dplyr::filter(!is.na(!!dplyr::sym(group_facet)))
   }
+  
+  # Check if the plot should be faceted by Total vs Specific
+  # In that case, remove samples that have no group assigned.
+  if ("group" %in% colnames(normalized_data)) {
+    to_plot <- to_plot %>% 
+      dplyr::filter(!is.na(group))
+  }
+  
   
   # Create simple plot
   p <- ggplot2::ggplot(to_plot, ggplot2::aes(
@@ -328,10 +336,19 @@ sample_heatmap <- function(normalized_data,
       values = scales::rescale(c(0, 50, 100))
     )
   
-  # Check for biological groups facetting
-  if (group_facet != "") {
-    p <- p + 
-      ggplot2::facet_wrap(~get(group_facet), scales = "free_y")  # Need get() because group_facet is a character
+  # Check for faceting
+  if (group_facet != "" & "group" %in% colnames(normalized_data)) {
+    # Facet by biological group and specific/total
+    p <- p +
+      ggplot2::facet_wrap(group ~ get(group_facet), scales = "free_y")
+  } else if (group_facet != "") {
+    # Facet only by biological group
+    p <- p +
+      ggplot2::facet_wrap(~get(group_facet), scales = "free_y")
+  } else if ("group" %in% colnames(normalized_data)) {
+    # Facet only by specific/total
+    p <- p +
+      ggplot2::facet_wrap(~group, scales = "free_y")
   }
   
   return(p)
@@ -364,9 +381,25 @@ cluster_heatmap <- function(normalized_data,
                             color_high,
                             color_na) {
   
-  # Calculate median relative abundances of each analyte
-  # Check for faceting per group
-  if (group_facet != "") {
+  # Calculate median relative abundances of each analyte.
+  # Check for faceting by biological group or specific/total.
+  if (group_facet != "" & "group" %in% colnames(normalized_data)) {
+    # Biological groups + Specific/Total
+    to_plot <- normalized_data %>% 
+      dplyr::filter(
+        !is.na(!!dplyr::sym(group_facet)),
+        !is.na(group),
+        !sample_type %in% exclude_sample_types
+      ) %>% 
+      dplyr::select(-cluster) %>% 
+      tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
+                      extra = "merge", remove = FALSE) %>% 
+      dplyr::group_by(!!dplyr::sym(group_facet), group, cluster, glycan) %>% 
+      dplyr::summarize(
+        median_relative_abundance = median(relative_abundance, na.rm = TRUE)
+      )
+  } else if (group_facet != "") {
+    # Biological groups
     to_plot <- normalized_data %>% 
       dplyr::filter(
         !is.na(!!dplyr::sym(group_facet)),
@@ -379,7 +412,22 @@ cluster_heatmap <- function(normalized_data,
       dplyr::summarize(
         median_relative_abundance = median(relative_abundance, na.rm = TRUE)
       )
+  } else if ("group" %in% colnames(normalized_data)) {
+    # Specific/Total
+    to_plot <- normalized_data %>% 
+      dplyr::filter(
+        !is.na(group),
+        !sample_type %in% exclude_sample_types
+      ) %>% 
+      dplyr::select(-cluster) %>% 
+      tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
+                      extra = "merge", remove = FALSE) %>% 
+      dplyr::group_by(group, cluster, glycan) %>% 
+      dplyr::summarize(
+        median_relative_abundance = median(relative_abundance, na.rm = TRUE)
+      )
   } else {
+    # No faceting
     to_plot <- normalized_data %>% 
       dplyr::filter(!sample_type %in% exclude_sample_types) %>% 
       dplyr::select(-cluster) %>% 
@@ -391,9 +439,10 @@ cluster_heatmap <- function(normalized_data,
       )
   }
   
+  
   # Check if the data is empty
   if (nrow(to_plot) == 0) {
-    return("Oops, you excluded all sample types! There is no data to show...")
+    return("Oops, there is no data to show...")
   }
   
   # Simple plot
@@ -425,6 +474,20 @@ cluster_heatmap <- function(normalized_data,
       ggplot2::facet_wrap(~get(group_facet))
   }
   
+  # Check for faceting
+  if (group_facet != "" & "group" %in% colnames(normalized_data)) {
+    # Biological groups + Specific/Total
+    p <- p +
+      ggplot2::facet_wrap(group ~ get(group_facet))
+  } else if (group_facet != "") {
+    # Biological groups
+    p <- p +
+      ggplot2::facet_wrap(~get(group_facet))
+  } else if ("group" %in% colnames(normalized_data)) {
+    # Specific/Total
+    p <- p +
+      ggplot2::facet_wrap(~group)
+  } 
   
   return(p)
 }
