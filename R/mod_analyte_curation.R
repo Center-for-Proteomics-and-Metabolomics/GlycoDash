@@ -292,7 +292,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # Create reactiveValues. 
     # Below, rv_resp$response is created when analyte curation is performed per biological group.
     # Also store colum name of biological groups, to pass on to normalized data
-    rv_resp <- reactiveValues(response = NULL, biogroups_colname = c(""))
+    rv_resp <- reactiveValues(response = NULL, biogroups_colname = "")
     
     # Show potential column names with biological groups
     observe({
@@ -322,7 +322,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
           if (response == TRUE) {
             rv_resp$biogroups_colname <- input$biogroup_column
           } else {
-            rv_resp$biogroups_colname <- c("")
+            rv_resp$biogroups_colname <- ""
           }
         }
       )
@@ -332,7 +332,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # When user decides to change curation method, set rv_resp$response to NULL
     observeEvent(input$curation_method, {
       rv_resp$response <- NULL
-      rv_resp$biogroups_colnames <- c("")
+      rv_resp$biogroups_colnames <- ""
     })
     
     output$popup_table <- DT::renderDataTable({

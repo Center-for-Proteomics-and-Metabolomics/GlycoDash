@@ -264,7 +264,8 @@ normalize_data <- function(total_intensities) {
 #' @param cluster_name Cluster name (character) for which to make the plot
 #' @param exclude_sample_types Character vector with sample types to exclude.
 #' Empty vector is not applicable.
-#' @param facet_group Boolean: whether to facet by biological group.
+#' @param group_facet Character: name of column that contains biological groups for facets.
+#' Use an empty character ("") when not applicable. 
 #' @param color_low Color for lowest value.
 #' @param color_mid Color for middle value
 #' @param color_high Color for highest value. 
@@ -292,7 +293,7 @@ sample_heatmap <- function(normalized_data,
   
   # Check if the plot should be facetted by biological group.
   # In that case, remove samples that have no biological group assigned.
-  if (!is.na(group_facet)) {
+  if (group_facet != "") {
     to_plot <- to_plot %>% 
       dplyr::filter(!is.na(!!dplyr::sym(group_facet)))
   }
@@ -323,7 +324,7 @@ sample_heatmap <- function(normalized_data,
     )
   
   # Check for biological groups facetting
-  if (!is.na(group_facet)) {
+  if (group_facet != "") {
     p <- p + 
       ggplot2::facet_wrap(~get(group_facet), scales = "free_y")  # Need get() because group_facet is a character
   }

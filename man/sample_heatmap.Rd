@@ -21,6 +21,9 @@ sample_heatmap(
 \item{exclude_sample_types}{Character vector with sample types to exclude.
 Empty vector is not applicable.}
 
+\item{group_facet}{Character: name of column that contains biological groups for facets.
+Use an empty character ("") when not applicable.}
+
 \item{color_low}{Color for lowest value.}
 
 \item{color_mid}{Color for middle value}
@@ -30,8 +33,6 @@ Empty vector is not applicable.}
 \item{color_na}{Color to for the background / missing values.}
 
 \item{normalized_data_wide}{Normalized data in long format.}
-
-\item{facet_group}{Boolean: whether to facet by biological group.}
 }
 \value{
 A ggplot heatmap.

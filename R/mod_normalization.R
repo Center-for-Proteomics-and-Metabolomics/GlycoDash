@@ -182,21 +182,15 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     # TODO:
     # - info box explaining median relative abundance
-    # - option to exclude sample types
     # - Option to plot cluster on y-axis and generate tabs for biological groups
     # - Make it work with spike vs total
     # - Make it work with analyte curation per sample.
-    # - When switching analyte curation method from all data to pre group, fix error:
-    #     Warning: Error in map2: ℹ In index: 1.
-    #      Caused by error in `dplyr::filter()`:
-    #      ℹ In argument: `!is.na()`.
-    #     Caused by error in `is.na()`:
-    #      ! argument 1 is empty
+    # - Prevent making heatmaps when all sample types are excluded
     
     
     observe({
       req(normalized_data())
-      
+
       # Remove previously created tabs
       purrr::map(r$created_tab_titles, function(tab_title) {
         removeTab(inputId = "tabs", target = tab_title, session = session)
@@ -221,7 +215,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
             cluster_name = cluster,
             exclude_sample_types = input$exclude_sample_types,
             group_facet = dplyr::case_when(
-              .default = NA,
+              .default = "", 
               ( # Only when switch is on, and curation was done per biological group.
                 # Second check is required, because switch is on by default.
                 input$facet_per_group == TRUE &
@@ -259,7 +253,13 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         print("Test")
       }
 
-    })
+    }) %>% 
+      # Bind to events to prevent updating heatmaps when only analyte curation
+      # settings are changed. 
+      bindEvent(c(
+        normalized_data(), input$facet_per_group, input$heatmap_yaxis, input$exclude_sample_types,
+        input$color_low, input$color_mid, input$color_high, input$color_na
+      ))
     
     
     
@@ -277,14 +277,14 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       shinyjs::toggleState("download", is_truthy(normalized_data_wide()))
       
       if (results_analyte_curation$curation_method() == "Per biological group" &
-          input$heatmap_yaxis == "Sample") {
+          input$heatmap_yaxis == "Sample" & results_analyte_curation$biogroups_colname() != "") {
         shinyjs::show("facet_per_group")
       } else {
         shinyjs::hide("facet_per_group")
       }
       
       if (results_analyte_curation$curation_method() == "Per biological group" &
-          input$facet_per_group == TRUE) {
+          input$facet_per_group == TRUE & results_analyte_curation$biogroups_colname() != "") {
         shinyjs::hide("exclude_sample_types")
       } else {
         shinyjs::show("exclude_sample_types")
