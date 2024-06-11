@@ -230,16 +230,28 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
           
           temp_heatmaps[[i]] <- plot  # Store plot in the temporary list
           
-          # Show plot in UI
-          output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
-          appendTab(
-            inputId = "tabs",
-            select = TRUE,
-            tab = tabPanel(
-              title = cluster_names[[i]],
-              plotly::plotlyOutput(ns(cluster), height = "600px", width = "1350px")
+          # Show plot in UI, or message if there is no data
+          if (is.character(plot)) {
+            output[[cluster]] <- renderText(plot)
+            appendTab(
+              inputId = "tabs",
+              select = TRUE,
+              tab = tabPanel(
+                title = cluster_names[[i]],
+                textOutput(ns(cluster))
+              )
             )
-          )
+          } else {
+            output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
+            appendTab(
+              inputId = "tabs",
+              select = TRUE,
+              tab = tabPanel(
+                title = cluster_names[[i]],
+                plotly::plotlyOutput(ns(cluster), height = "600px", width = "1350px")
+              )
+            )
+          }
           
           # Update reactive heatmaps list
           isolate({
@@ -260,6 +272,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         normalized_data(), input$facet_per_group, input$heatmap_yaxis, input$exclude_sample_types,
         input$color_low, input$color_mid, input$color_high, input$color_na
       ))
+    
     
     
     
