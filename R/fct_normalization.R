@@ -293,7 +293,7 @@ sample_heatmap <- function(normalized_data,
   
   # Check if the data is empty
   if (nrow(to_plot) == 0) {
-    return("Oops, you excluded all sample types! There is no data to show...")
+    return("Oops, there is no data to show...")
   }
   
   # Check if the plot should be faceted by biological group, and/or Total vs Specific
