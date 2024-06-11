@@ -177,17 +177,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     
     # Create heatmap plots
-    r <- reactiveValues(
-      created_tab_titles = vector("character"),
-      heatmaps = list()
-    )
-    
-    # TODO:
-    # - Option to plot cluster on y-axis
-    # - Make it work with spike vs total
-    # - Make it work with analyte curation per sample.
-    # - Prevent making heatmaps when all sample types are excluded
-    
+    r <- reactiveValues(created_tab_titles = vector("character"))
     
     observe({
       req(normalized_data())
@@ -203,10 +193,6 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         # Generate new tab titles
         cluster_names <- unique(normalized_data()$cluster)
         r$created_tab_titles <- cluster_names
-        
-        # Temporary list for storing heatmaps
-        # This is necessary to prevent infinite looping
-        temp_heatmaps <- vector("list", length = length(cluster_names))
         
         # Create tabs and plots
         purrr::imap(cluster_names, function(cluster, i) {
@@ -228,8 +214,6 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
             color_high = input$color_high,
             color_na = input$color_na
           )
-          
-          temp_heatmaps[[i]] <- plot  # Store plot in the temporary list
           
           # Show plot in UI, or message if there is no data
           if (is.character(plot)) {
@@ -253,9 +237,6 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
               )
             )
           }
-          
-          # Update reactive heatmaps list
-          isolate(r$heatmaps <- temp_heatmaps)
           
         })
     
