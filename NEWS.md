@@ -1,3 +1,8 @@
+# v1.5.0
+## New features
+* Visualization of normalized data with heatmaps.
+
+
 # v1.4.3
 ## Adjustments
 * Detect and automatically rename isomers in Skyline data.
