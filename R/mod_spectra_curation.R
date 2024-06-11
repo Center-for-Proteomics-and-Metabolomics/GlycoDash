@@ -212,7 +212,7 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            plotly::plotlyOutput(ns("curated_spectra_plot")),
+            plotly::plotlyOutput(ns("curated_spectra_plot"), width = "1350px"),
             tabsetPanel(id = ns("more_than_4_clusters")),
             br(),
             tabsetPanel(

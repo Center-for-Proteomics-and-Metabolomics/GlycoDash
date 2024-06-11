@@ -10,7 +10,7 @@
 mod_tab_repeatability_plot_ui <- function(id){
   ns <- NS(id)
   tagList(
-    shinycssloaders::withSpinner(plotly::plotlyOutput(ns("plot")))
+    shinycssloaders::withSpinner(plotly::plotlyOutput(ns("plot"), width = "1300px"))
   )
 }
     

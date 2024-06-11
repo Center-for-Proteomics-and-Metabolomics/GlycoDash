@@ -157,7 +157,7 @@ mod_quantitation_ui <- function(id) {
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            shinycssloaders::withSpinner(plotly::plotlyOutput(ns("quantitation_plot")))
+            shinycssloaders::withSpinner(plotly::plotlyOutput(ns("quantitation_plot"), width = "1350px"))
           )
         )
       ),
