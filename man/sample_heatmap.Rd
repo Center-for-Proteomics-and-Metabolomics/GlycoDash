@@ -16,6 +16,8 @@ sample_heatmap(
 )
 }
 \arguments{
+\item{normalized_data}{Normalized data in long format.}
+
 \item{cluster_name}{Cluster name (character) for which to make the plot}
 
 \item{exclude_sample_types}{Character vector with sample types to exclude.
@@ -31,8 +33,6 @@ Use an empty character ("") when not applicable.}
 \item{color_high}{Color for highest value.}
 
 \item{color_na}{Color to for the background / missing values.}
-
-\item{normalized_data_wide}{Normalized data in long format.}
 }
 \value{
 A ggplot heatmap.

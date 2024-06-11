@@ -84,7 +84,7 @@ mod_normalization_ui <- function(id){
           selectInput(
             ns("heatmap_yaxis"),
             "Variable to plot on y-axis:",
-            choices = c("Sample", "Cluster")
+            choices = c("Cluster", "Sample")
           ),
           shinyWidgets::materialSwitch(
             ns("facet_per_group"),
@@ -99,7 +99,9 @@ mod_normalization_ui <- function(id){
             choices = "",
             multiple = TRUE
           ),
-          tabsetPanel(id = ns("tabs"))
+          tabsetPanel(id = ns("tabs")),
+          plotly::plotlyOutput(ns("clusters_plot"), height = "500px", width = "1350px"),
+          textOutput(ns("no_data"))
         )
       ),
       fluidRow(
@@ -122,7 +124,7 @@ mod_normalization_ui <- function(id){
 #'
 #' @noRd 
 mod_normalization_server <- function(id, results_analyte_curation, merged_metadata, data_type) {
-  moduleServer( id, function(input, output, session){
+  moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
     analyte_curated_data <- reactive({
@@ -181,8 +183,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     )
     
     # TODO:
-    # - info box explaining median relative abundance
-    # - Option to plot cluster on y-axis and generate tabs for biological groups
+    # - Option to plot cluster on y-axis
     # - Make it work with spike vs total
     # - Make it work with analyte curation per sample.
     # - Prevent making heatmaps when all sample types are excluded
@@ -190,7 +191,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     observe({
       req(normalized_data())
-
+      
       # Remove previously created tabs
       purrr::map(r$created_tab_titles, function(tab_title) {
         removeTab(inputId = "tabs", target = tab_title, session = session)
@@ -254,15 +255,41 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
           }
           
           # Update reactive heatmaps list
-          isolate({
-            r$heatmaps <- temp_heatmaps
-          })
+          isolate(r$heatmaps <- temp_heatmaps)
           
         })
     
-        #### CLUSTER ON Y-AXIS, ONE TAB PER BIOLOGICAL GROUP IF APPLICABLE #### 
+        #### CLUSTER ON Y-AXIS #### 
       } else if (input$heatmap_yaxis == "Cluster") {
-        print("Test")
+
+        # Make the plot
+        plot <- cluster_heatmap(
+          normalized_data = normalized_data(),
+          exclude_sample_types = input$exclude_sample_types,
+          group_facet = dplyr::case_when(
+            .default = "",
+            (
+              input$facet_per_group == TRUE &
+              results_analyte_curation$curation_method() == "Per biological group"
+            ) ~ results_analyte_curation$biogroups_colname()
+          ),
+          color_low = input$color_low,
+          color_mid = input$color_mid,
+          color_high = input$color_high,
+          color_na = input$color_na
+        )
+        
+        # Show plot in UI, or message if there is no data.
+        if (is.character(plot)) {
+          shinyjs::hide("clusters_plot")
+          shinyjs::show("no_data")
+          output$no_data <- renderText(plot)
+        } else {
+          shinyjs::show("clusters_plot")
+          shinyjs::hide("no_data")
+          output$clusters_plot <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
+        }
+        
       }
 
     }) %>% 
@@ -290,17 +317,26 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       shinyjs::toggleState("download", is_truthy(normalized_data_wide()))
       
       if (results_analyte_curation$curation_method() == "Per biological group" &
-          input$heatmap_yaxis == "Sample" & results_analyte_curation$biogroups_colname() != "") {
+          results_analyte_curation$biogroups_colname() != "") {
         shinyjs::show("facet_per_group")
       } else {
         shinyjs::hide("facet_per_group")
       }
+      
       
       if (results_analyte_curation$curation_method() == "Per biological group" &
           input$facet_per_group == TRUE & results_analyte_curation$biogroups_colname() != "") {
         shinyjs::hide("exclude_sample_types")
       } else {
         shinyjs::show("exclude_sample_types")
+      }
+      
+      if (input$heatmap_yaxis == "Sample") {
+        shinyjs::show("tabs")
+        shinyjs::hide("clusters_plot")
+      } else if (input$heatmap_yaxis == "Cluster") {
+        shinyjs::hide("tabs")
+        shinyjs::show("clusters_plot")
       }
       
     })
