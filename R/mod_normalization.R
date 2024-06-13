@@ -177,7 +177,10 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     
     # Create heatmap plots
-    r <- reactiveValues(created_tab_titles = vector("character"))
+    r <- reactiveValues(
+      created_tab_titles = vector("character"),  # To store names of tabs'
+      heatmaps = list()  # To store the heatmaps for the report
+    )
     
     observe({
       req(normalized_data())
@@ -215,7 +218,14 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
             color_na = input$color_na
           )
           
-          # Show plot in UI, or message if there is no data
+          # Store plot in list, give it name of the cluster.
+          # Need isolate() to prevent infinite loop
+          isolate({
+            r$heatmaps[[i]] <- plot
+            names(r$heatmaps)[[i]] <- cluster
+          })
+          
+          # Show plot in UI, or show message if there is no data
           if (is.character(plot)) {
             output[[cluster]] <- renderText(plot)
             appendTab(
@@ -237,9 +247,8 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
               )
             )
           }
-          
         })
-    
+        
         #### CLUSTER ON Y-AXIS #### 
       } else if (input$heatmap_yaxis == "Cluster") {
 
@@ -260,7 +269,10 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
           color_na = input$color_na
         )
         
-        # Show plot in UI, or message if there is no data.
+        # Store plot in list
+        isolate(r$heatmaps <- list(plot))
+        
+        # Show plot in UI and store in list, or show message if there is no data.
         if (is.character(plot)) {
           shinyjs::hide("clusters_plot")
           shinyjs::show("no_data")
@@ -270,9 +282,8 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
           shinyjs::hide("no_data")
           output$clusters_plot <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
         }
-        
       }
-
+      
     }) %>% 
       # Bind to events to prevent updating heatmaps when only analyte curation
       # settings are changed. 
@@ -280,7 +291,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         normalized_data(), input$facet_per_group, input$heatmap_yaxis, input$exclude_sample_types,
         input$color_low, input$color_mid, input$color_high, input$color_na
       ))
-    
+
     
     
     
@@ -343,7 +354,8 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     return(list(
       normalized_data = normalized_data,
-      normalized_data_wide = normalized_data_wide
+      normalized_data_wide = normalized_data_wide,
+      heatmaps = reactive(r$heatmaps)
     ))
  
   })
