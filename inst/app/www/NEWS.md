@@ -2,6 +2,9 @@
 ## New features
 * Visualization of normalized data with heatmaps.
 
+## Adjustments
+* Disable the “Generate report” button until normalization is performed.
+
 
 # v1.4.3
 ## Adjustments

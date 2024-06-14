@@ -79,8 +79,10 @@ mod_export_server <- function(id,
     })
     
     # Disable the "Download processed data" button until normalized data is available
+    # Also the Generate report button
     observe({
       shinyjs::toggleState("download", is_truthy(x$data))
+      shinyjs::toggleState("report", is_truthy(x$data))
     })
     
     # Display the final data table
