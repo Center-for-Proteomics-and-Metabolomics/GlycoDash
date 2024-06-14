@@ -39,6 +39,25 @@ mod_normalization_ui <- function(id){
           title = div(
             id = ns("box_header"),
             "Visualize normalized data",
+            icon("info-circle", class = "ml") %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "
+                  When plotting \"Cluster\" on the y-axis, the median relative abundance
+                  for each analyte is shown in one heatmap. When plotting \"Sample\" 
+                  on the y-axis, a heatmap is shown for each cluster, with the relative
+                  abundances of all glycans per sample.
+                  <br> <br>
+                  If analyte curation was performed per biological group, separate
+                  heatmaps can be shown per group. In that case, sample types without 
+                  a biological group assigned (e.g. blanks and pools) are automatically excluded.
+                  "
+                ),
+                trigger = "hover",
+                placement = "left",
+                html = "true",
+                container = "body"),
             shinyWidgets::dropdownButton(
               colourpicker::colourInput(
                 ns("color_low"),
