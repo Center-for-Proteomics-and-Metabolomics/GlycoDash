@@ -183,6 +183,7 @@ mod_quantitation_ui <- function(id) {
 #' @noRd 
 mod_quantitation_server <- function(id, quantitation_clusters,
                                     LaCyTools_summary,
+                                    data_type,
                                     analyte_curated_data,
                                     results_normalization) {
   moduleServer(id, function(input, output, session) {
@@ -236,23 +237,22 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     })
     
     
-    
     # Calculate ratios of peptides.
     IgG1_ratios <- reactive({
       req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
       IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
-        LaCyTools_summary(), quantitation_clusters(), analyte_curated_data()
+        LaCyTools_summary(), data_type(), quantitation_clusters(), analyte_curated_data()
       )
       ratios <- calculate_IgG1_ratios(IgG1_sum_intensities, quantitation_clusters())
       return(ratios)
     })
+    
     
     # Calculate IgG1 amounts based on chosen peptides.
     IgG1_amounts <- reactive({
       req(IgG1_ratios(), input$silumab_amount)
       calculate_IgG1_amounts(IgG1_ratios(), input$chosen_peptides, input$silumab_amount)
     }) %>% bindEvent(input$quantify_IgG1)
-    
     
     
     # Create peptide correlation plots.
