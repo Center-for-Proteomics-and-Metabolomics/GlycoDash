@@ -294,6 +294,25 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
 
     
     
+    # Excluded sample types, to pass on to report
+    heatmaps_excluded_sample_types <- reactive({
+      if (results_analyte_curation$curation_method() == "Per biological group") {
+        if (input$facet_per_group == TRUE) {
+          c("")
+        } else if (length(input$exclude_sample_types) == 0) {
+          c("None")
+        } else {
+          input$exclude_sample_types
+        }
+      } else {
+        if (length(input$exclude_sample_types) == 0) {
+          c("None")
+        } else {
+          input$exclude_sample_types
+        }
+      }
+    })
+
     
     # Determine choices for excluding sample types
     observe({
@@ -352,10 +371,13 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       }
     )
     
+
+    
     return(list(
       normalized_data = normalized_data,
       normalized_data_wide = normalized_data_wide,
-      heatmaps = reactive(r$heatmaps)
+      heatmaps = reactive(r$heatmaps),
+      heatmaps_excluded_sample_types = heatmaps_excluded_sample_types
     ))
  
   })

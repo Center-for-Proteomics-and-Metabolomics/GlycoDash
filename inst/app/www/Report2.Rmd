@@ -30,6 +30,7 @@ params:
   analyte_list: NA
   analyte_curation_tab_contents: NA
   heatmaps: NA
+  heatmaps_excluded_sample_types: NA
   derived_traits: NA
   custom_traits_colnames: NA
   formulas: NA
@@ -247,9 +248,16 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
 
 ```
 
-## Normalized data
+## Normalized data heatmaps
 
 ```{r heatmaps, results='asis'}
+
+if (params$heatmaps_excluded_sample_types != c("")) {
+  cat(paste(
+    "Sample types excluded from heatmaps:",
+    paste(params$heatmaps_excluded_sample_types, collapse = ", ")
+  ))
+}
 
 if (!is.null(names(params$heatmaps))) {
   # Heatmaps were made were cluster
