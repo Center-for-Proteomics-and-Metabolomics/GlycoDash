@@ -30,6 +30,13 @@ mod_normalization_ui <- function(id){
           width = 12,
           solidHeader = TRUE,
           status = "primary",
+          shinyWidgets::materialSwitch(
+            ns("separate_charges"),
+            HTML("<i style='font-size:15px;'> Normalize charge states separately </i>"),
+            status = "success",
+            right = TRUE,
+            value = FALSE
+          ),
           DT::dataTableOutput(ns("data_table"))
         )
       ),
@@ -153,10 +160,15 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       # Solution -> wait until results_analyte_curation$analyte_curated_data()
       # is not empty:
       req(!rlang::is_empty(results_analyte_curation$analyte_curated_data()))
-      results_analyte_curation$analyte_curated_data()
-    })
+      # Check if charge states should be treated separately
+      if (input$separate_charges == TRUE) {
+        results_analyte_curation$analyte_curated_data() %>% 
+          tidyr::unite("analyte", analyte:charge, sep = "_", remove = FALSE)
+      } else {
+        results_analyte_curation$analyte_curated_data()
+      }
+    }) 
 
-    
     total_intensities <- reactive({
       req(analyte_curated_data())
       calculate_total_intensity(data = analyte_curated_data(), data_type = data_type())

@@ -1,6 +1,7 @@
 # v1.5.0
 ## New features
 * Visualization of normalized data with heatmaps.
+* Option to normalize charge states of analytes separately.
 
 ## Adjustments
 * Disable the “Generate report” button until normalization is performed.
