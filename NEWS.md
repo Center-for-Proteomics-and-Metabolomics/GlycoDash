@@ -5,6 +5,9 @@
 ## Adjustments
 * Disable the “Generate report” button until normalization is performed.
 
+## Bug fixes
+* Minor bug fixes.
+
 
 # v1.4.3
 ## Adjustments
