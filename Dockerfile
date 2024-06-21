@@ -3,6 +3,7 @@ RUN apt-get update && apt-get install -y   && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /usr/local/lib/R/etc/ /usr/lib/R/etc/
 RUN echo "options(repos = c(CRAN = 'https://cran.rstudio.com/'), download.file.method = 'libcurl', Ncpus = 4)" | tee /usr/local/lib/R/etc/Rprofile.site | tee /usr/lib/R/etc/Rprofile.site
 RUN R -e 'install.packages("remotes")'
+RUN Rscript -e 'remotes::install_version("colourpicker",upgrade="never", version = "1.3.0")'
 RUN Rscript -e 'remotes::install_version("magrittr",upgrade="never", version = "2.0.3")'
 RUN Rscript -e 'remotes::install_version("tibble",upgrade="never", version = "3.2.1")'
 RUN Rscript -e 'remotes::install_version("rlang",upgrade="never", version = "1.1.3")'

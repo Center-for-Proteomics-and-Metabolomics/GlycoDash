@@ -127,7 +127,11 @@ mod_normalization_ui <- function(id){
           ),
           tabsetPanel(id = ns("tabs")),
           plotly::plotlyOutput(ns("clusters_plot"), height = "500px", width = "1350px"),
-          textOutput(ns("no_data"))
+          textOutput(ns("no_data")),
+          shinyjs::hidden(div(
+            id = ns("cat"),
+            tags$img(src = "www/cat.jpg")
+          ))
         )
       ),
       fluidRow(
@@ -259,6 +263,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
           # Show plot in UI, or show message if there is no data
           if (is.character(plot)) {
             output[[cluster]] <- renderText(plot)
+            shinyjs::show("cat")
             appendTab(
               inputId = "tabs",
               select = TRUE,
@@ -269,6 +274,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
             )
           } else {
             output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
+            shinyjs::hide("cat")
             appendTab(
               inputId = "tabs",
               select = TRUE,
@@ -308,10 +314,12 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
           shinyjs::hide("clusters_plot")
           shinyjs::show("no_data")
           output$no_data <- renderText(plot)
+          shinyjs::show("cat")
         } else {
           shinyjs::show("clusters_plot")
           shinyjs::hide("no_data")
           output$clusters_plot <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
+          shinyjs::hide("cat")
         }
       }
       
