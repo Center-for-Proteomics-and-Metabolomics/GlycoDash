@@ -1,3 +1,8 @@
+# v1.4.3
+## Adjustments
+* Detect and automatically rename isomers in Skyline data.
+
+
 # v1.4.2
 ## Adjustments
 * April 2024: Make GlycoDash compatible with R 4.3.3, and most recent package versions.

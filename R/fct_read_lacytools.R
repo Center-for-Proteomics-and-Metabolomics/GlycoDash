@@ -510,7 +510,6 @@ getOrdinalSuffix <- function(num) {
 
 
 
-
 #' read_skyline_csv
 #'
 #' @param path_to_file Path to Skyline CSV file
@@ -528,12 +527,91 @@ read_skyline_csv <- function(path_to_file) {
 
 
 
+#' rename_skyline_isomers
+#' 
+#' This function detects the presence of isomers in a Skyline CSV file.
+#' When an analyte is present twice in a given charge state, the two duplicate
+#' analytes are assumed to be isomers with the same glycan composision. The glycan
+#' compositions are renamed to distinguish them.
+#' 
+#' @param raw_skyline_data 
+#' Imported skyline CSV data from the read_skyline_csv() function.
+#' 
+#' @param i Number of the Skyline CSV file that is being processed
+#'
+#' @return
+#' Skyline CSV data with glycan compositions of isomers renamed using "_a", "_b", etc.
+#' 
+rename_skyline_isomers <- function(raw_skyline_data, i) {
+  
+  # Look for isomers in the glycan compositions, per peptide.
+  data <- raw_skyline_data %>% 
+    dplyr::group_by(Protein.Name, Peptide, Precursor.Charge) %>% 
+    dplyr::mutate(n = dplyr::n()) %>% 
+    dplyr::ungroup() %>% 
+    dplyr::relocate(n, .after = Precursor.Charge)
+  
+  # n == 1 implies unique glycan composition
+  data_unique <- data %>% 
+    dplyr::filter(n == 1)
+  
+  # n > 1 implies presence of isomers
+  data_isomers <- data %>% 
+    dplyr::filter(n > 1) %>% 
+    dplyr::group_by(Protein.Name, Precursor.Charge, Peptide) %>% 
+    dplyr::mutate(Peptide_unique = make.unique(Peptide)) %>% 
+    dplyr::ungroup() %>% 
+    # Instead of ".1", ".2", etc at the end of duplicates, add "_a","_b", to 
+    # the ends of all isomers, including the first one.
+    dplyr::mutate(
+      Peptide = dplyr::case_when(
+        endsWith(Peptide_unique, ".1") ~ paste0(Peptide, "_b"),
+        endsWith(Peptide_unique, ".2") ~ paste0(Peptide, "_c"),
+        endsWith(Peptide_unique, ".3") ~ paste0(Peptide, "_d"),
+        endsWith(Peptide_unique, ".4") ~ paste0(Peptide, "_e"),
+        endsWith(Peptide_unique, ".5") ~ paste0(Peptide, "_f"),
+        endsWith(Peptide_unique, ".6") ~ paste0(Peptide, "_g"),
+        endsWith(Peptide_unique, ".7") ~ paste0(Peptide, "_h"),
+        endsWith(Peptide_unique, ".8") ~ paste0(Peptide, "_i"),
+        endsWith(Peptide_unique, ".9") ~ paste0(Peptide, "_j"),
+        .default = paste0(Peptide, "_a")
+      )
+    ) %>% 
+    dplyr::select(-Peptide_unique)
+  
+  # Combine the data again
+  data_renamed <- dplyr::bind_rows(data_unique, data_isomers)
+  
+  # Show a notification if isomers were detected
+  if (length(data_isomers$Peptide > 0)) {
+    # Get vector with the compositions for which isomers were detected
+    isomeric <- data %>% 
+      dplyr::filter(n > 1) %>% 
+      dplyr::select(Protein.Name, Peptide) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(analyte = paste0(Protein.Name, "1", Peptide)) %>% 
+      dplyr::pull(analyte)
+    # Show notification with message
+    message <- paste0(
+      "In CSV file ", i, ", the following ", length(isomeric), 
+      " analytes with isomeric glycan compositions were detected and renamed: ",
+      paste0(isomeric , collapse = ", ")
+    )
+    showNotification(message, type = "warning", duration = 30)
+  }
+  
+  return(data_renamed)
+}
+
+
 
 #' transform_skyline_data
 #'
 #' @param raw_skyline_data Raw skyline data, read into R with 
 #' the read_skyline_csv() function above.
-#'
+#' 
+#' @param i Number of the Skyline CSV file that is being processed (1, 2, 3, etc)
+#' Required for the rename_skyline_isomers() function to display notifications.
 #'
 #' @return A clean dataframe in a similar format as a transformed
 #' LaCyTools summary. The dataframe contains the following columns:
@@ -543,11 +621,14 @@ read_skyline_csv <- function(path_to_file) {
 #' - absolute_intensity_background_subtracted
 #' - mass_accuracy_ppm
 #' - isotope_dot_product
-transform_skyline_data <- function(raw_skyline_data) {
+#' 
+transform_skyline_data <- function(raw_skyline_data, i) {
   # Check structure of skyline data
   check_skyline_data(raw_skyline_data)
+  # Check for isomers and rename them if they are present
+  renamed_data <- rename_skyline_isomers(raw_skyline_data, i)
   # Select required columns
-  raw_data_required <- raw_skyline_data %>% 
+  raw_data_required <- renamed_data %>% 
     dplyr::select(
       "Protein.Name", "Peptide", "Precursor.Charge",
       tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"))
