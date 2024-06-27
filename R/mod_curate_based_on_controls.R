@@ -195,9 +195,13 @@ mod_curate_based_on_controls_server <- function(id,
       }
     })
     
-    return(
-      cut_offs
-    )
+    cut_offs_with_percentile <- reactive({
+      req(cut_offs())
+      cut_offs() %>% 
+        dplyr::mutate(percentile = input$percentile)
+    })
+    
+    return(cut_offs_with_percentile)
  
   })
 }
