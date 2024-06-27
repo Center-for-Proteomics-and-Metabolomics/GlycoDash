@@ -8,7 +8,7 @@ GlycoDash is an R Shiny dashboard for processing glycomics data obtained from [L
 ## Installation
 
 ### Option 1: Run GlycoDash using Docker (recommended)
-* Note: it is recommended that you have at least 16 GB of RAM.*
+_Note: it is recommended that you have at least 16 GB of RAM._
 1. Download and install [Docker desktop](https://www.docker.com/products/docker-desktop/).
 2. Start Docker desktop on your computer.
 3. Open Command Prompt.
