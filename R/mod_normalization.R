@@ -127,11 +127,7 @@ mod_normalization_ui <- function(id){
           ),
           tabsetPanel(id = ns("tabs")),
           plotly::plotlyOutput(ns("clusters_plot"), height = "500px", width = "1350px"),
-          textOutput(ns("no_data")),
-          shinyjs::hidden(div(
-            id = ns("cat"),
-            tags$img(src = "www/cat.jpg")
-          ))
+          textOutput(ns("no_data"))
         )
       ),
       fluidRow(
@@ -260,30 +256,16 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
             names(r$heatmaps)[[i]] <- cluster
           })
           
-          # Show plot in UI, or show message if there is no data
-          if (is.character(plot)) {
-            output[[cluster]] <- renderText(plot)
-            shinyjs::show("cat")
-            appendTab(
-              inputId = "tabs",
-              select = TRUE,
-              tab = tabPanel(
-                title = cluster_names[[i]],
-                textOutput(ns(cluster))
-              )
+          # Show plot in UI
+          output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
+          appendTab(
+            inputId = "tabs",
+            select = TRUE,
+            tab = tabPanel(
+              title = cluster_names[[i]],
+              plotly::plotlyOutput(ns(cluster), height = "600px", width = "1350px")
             )
-          } else {
-            output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
-            shinyjs::hide("cat")
-            appendTab(
-              inputId = "tabs",
-              select = TRUE,
-              tab = tabPanel(
-                title = cluster_names[[i]],
-                plotly::plotlyOutput(ns(cluster), height = "600px", width = "1350px")
-              )
-            )
-          }
+          )
         })
         
         #### CLUSTER ON Y-AXIS #### 
@@ -309,18 +291,8 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         # Store plot in list
         isolate(r$heatmaps <- list(plot))
         
-        # Show plot in UI and store in list, or show message if there is no data.
-        if (is.character(plot)) {
-          shinyjs::hide("clusters_plot")
-          shinyjs::show("no_data")
-          output$no_data <- renderText(plot)
-          shinyjs::show("cat")
-        } else {
-          shinyjs::show("clusters_plot")
-          shinyjs::hide("no_data")
-          output$clusters_plot <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
-          shinyjs::hide("cat")
-        }
+        # Show plot in UI and store in list
+        output$clusters_plot <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
       }
       
     }) %>% 
@@ -358,7 +330,8 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       req(normalized_data())
       updateSelectizeInput(
         inputId = "exclude_sample_types",
-        choices = as.character(unique(normalized_data()$sample_type))
+        choices = as.character(unique(normalized_data()$sample_type)),
+        options = list(maxItems = length(as.character(unique(normalized_data()$sample_type))) - 1)
       )
     })
     
