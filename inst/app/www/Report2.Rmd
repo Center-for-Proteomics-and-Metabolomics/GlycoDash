@@ -250,36 +250,31 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
 
 ## Normalized data heatmaps
 
-```{r heatmaps, results='asis'}
+```{r excluded_sample_types, results='asis'}
 
-if (params$heatmaps_excluded_sample_types != c("")) {
-  cat(paste(
-    "Sample types excluded from heatmaps:",
-    paste(params$heatmaps_excluded_sample_types, collapse = ", ")
-  ))
-}
+cat(paste(
+  "Sample types excluded from heatmaps: ",
+  paste(params$heatmaps_excluded_sample_types, collapse = ", ")
+))
+```
+
+```{r heatmaps, results='asis'}
 
 if (!is.null(names(params$heatmaps))) {
   # Heatmaps were made were cluster
   purrr::iwalk(params$heatmaps, function(plot, name) {
     cat("###", name, "\n")
-    if (is.character(plot)) {
-      cat(plot)
-    } else {
-      p <- plotly::ggplotly(plot, tooltip = "text")
-      print(htmltools::tagList(p))
-    }
+    p <- plotly::ggplotly(plot, tooltip = "text")
+    print(htmltools::tagList(p))
   })
 } else {
   # One heatmap with clusters on y-axis
-  if (is.character(plot)) {
-    cat(plot)
-  } else {
-    p <- plotly::ggplotly(params$heatmaps[[1]], tooltip = "text")
-    print(htmltools::tagList(p))
-  }
+  p <- plotly::ggplotly(params$heatmaps[[1]], tooltip = "text")
+  print(htmltools::tagList(p))
 }
+
 ```
+
 
 ## IgG1 quantitation
 
