@@ -121,10 +121,7 @@ mod_derived_traits_ui <- function(id){
                 multiple = TRUE
               )
             ))
-          ),
-          br(),
-          actionButton(ns("do_calculation"),
-                       "Calculate glycosylation traits")
+          )
         ),
         shinydashboard::box(
           title = "Formulas used to automatically calculate the glycosylation traits",
@@ -266,20 +263,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         updateSelectizeInput(id, choices = clusters(), session = session)
       }
     })
-    
-    
-    # Toggle calculation button
-    observe({
-      shinyjs::toggleState("do_calculation", condition = all(
-        !is.null(input$antibody_types),
-        if ("Human IgG: N-glycans" %in% input$antibody_types) {
-          !is.null(input$human_IgG_traits) & !is.null(input$human_IgG_clusters)
-        },
-        if ("Mouse IgG: N-glycans" %in% input$antibody_types) {
-          !is.null(input$mouse_IgG_traits) & !is.null(input$mouse_IgG_clusters)
-        }
-      ))
-    })
 
     
     ####################  Custom glycosylation traits  ####################
@@ -377,13 +360,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       req(input$mouse_IgG_traits)
       match_mouse_IgG_traits(input$mouse_IgG_traits)
     })
-    
-    observeEvent(input$do_calculation, {
-      shinybusy::show_modal_spinner(
-        spin = "cube-grid", color = "#0275D8",
-        text = HTML("<br/><strong>Calculating traits...")
-      )
-    }, priority = 50)
+  
     
     human_IgG_trait_formulas <- reactive({
       load(system.file("app", "www", "human_IgG_N_ref.rda", package = "GlycoDash"))
@@ -394,9 +371,9 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         reference = human_IgG_N_ref
       )
       purrr::reduce(formula_list, c)  # c = concatenate
-    }) %>% bindEvent(input$do_calculation)
+    }) 
     
-   mouse_IgG_trait_formulas <- reactive({
+    mouse_IgG_trait_formulas <- reactive({
      load(system.file("app", "www", "mouse_IgG_ref.rda", package = "GlycoDash"))
      formula_list <- create_formula_list(
        normalized_data = normalized_data(),
@@ -405,17 +382,33 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
        reference = mouse_IgG_ref
      )
      purrr::reduce(formula_list, c)
-   }) %>% bindEvent(input$do_calculation)
+   })
    
+    
     trait_formulas <- reactive({
       req(any(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas())))
+      # Combine generated trait formulas
       if (all(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas()))) {
-        c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
+        formulas <- c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
       } else if (is_truthy(human_IgG_trait_formulas())) {
-        human_IgG_trait_formulas()
+        formulas <- human_IgG_trait_formulas()
       } else if (is_truthy(mouse_IgG_trait_formulas())) {
-        mouse_IgG_trait_formulas()
+        formulas <- mouse_IgG_trait_formulas()
       }
+      # Check if terminal galactosylation should be calculated for human IgG
+      if (is_truthy(human_IgG_trait_formulas())) {
+        if ("Terminal galactosylation of complex-type glycans (calculated as 1 - [Sialylation per antenna] / [Galactosylation per antenna])" %in% input$human_IgG_traits) {
+          new_formulas <- c()
+          for (cluster in input$human_IgG_clusters) {
+            new_formulas <- c(
+              new_formulas,
+              paste0(cluster, "_terminal_galactosylation = (1 - ", cluster, "_sialylation / ", cluster, "_galactosylation) * 100")
+            )
+          }
+          formulas <- c(formulas, new_formulas)
+        }
+      }
+      return(formulas)
     })
     
     data_with_derived_traits <- reactive({
@@ -492,7 +485,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                                   searching = FALSE))
     })
     
-    
     # Display the formulas of the default traits
     formulas_table <- reactive({
       req(data_with_traits())
@@ -513,10 +505,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                     options = list(paging = FALSE,
                                    ordering = FALSE,
                                    searching = FALSE))
-    })
-    
-    observeEvent(formulas_table(), {
-      shinybusy::remove_modal_spinner()
     })
     
     

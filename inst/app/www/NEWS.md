@@ -4,6 +4,8 @@
 * Option to normalize charge states of analytes separately.
 
 ## Adjustments
+* Add terminal galactosylation as an automatically calculated trait for human IgG.
+* Remove the “Calculate glycosylation traits” button.
 * Disable the “Generate report” button until normalization is performed.
 
 ## Bug fixes
