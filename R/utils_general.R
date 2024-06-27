@@ -360,24 +360,3 @@ customDownloadbutton <- function(outputId, label = "Changelog"){
 
 
 
-render_my_datatable <- function(df, colnames) {
-  DT::renderDataTable({
-    DT::datatable(
-      df,
-      options = list(
-        scrollY = "150px",
-        paging = FALSE,
-        searching = FALSE,
-        columnDefs = list(
-          list(
-            className = 'dt-center',
-            targets = "_all"))),
-      colnames = colnames,
-      rownames = FALSE
-    )
-  }) 
-}
-
-
-
-

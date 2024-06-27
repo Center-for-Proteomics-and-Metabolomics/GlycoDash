@@ -233,9 +233,21 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
       }
     })
     
-    output$popup_table <- render_my_datatable(
-      data.frame(rv$forbidden_colnames), "Column name"
-    )
+    output$popup_table <- DT::renderDataTable({
+      DT::datatable(
+        data.frame(rv$forbidden_colnames),
+        options = list(
+          scrollY = "150px",
+          paging = FALSE,
+          searching = FALSE,
+          columnDefs = list(
+            list(
+              className = 'dt-center',
+              targets = "_all"))),
+        colnames = "Column name",
+        rownames = FALSE
+      )
+    }) 
     
     
     
@@ -269,10 +281,21 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
       }
     })
     
-    output$popup_table_duplicates <- render_my_datatable(
-      data.frame(rv$non_unique_ids), "sample_id"
-    )
-    
+    output$popup_table_duplicates <- DT::renderDataTable({
+      DT::datatable(
+        data.frame(rv$non_unique_ids),
+        options = list(
+          scrollY = "150px",
+          paging = FALSE,
+          searching = FALSE,
+          columnDefs = list(
+            list(
+              className = 'dt-center',
+              targets = "_all"))),
+        colnames = "sample_id",
+        rownames = FALSE
+      )
+    }) 
     
     
     # Check for unmatched id's

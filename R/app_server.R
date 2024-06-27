@@ -47,6 +47,7 @@ app_server <- function( input, output, session ) {
     id = "quantitation_ui_1",
     quantitation_clusters = results_data_import$quantitation_clusters,
     LaCyTools_summary = results_data_import$LaCyTools_summary,
+    data_type = results_data_import$data_type,
     analyte_curated_data = results_analyte_curation$analyte_curated_data,
     results_normalization = results_normalization
   )
@@ -68,6 +69,8 @@ app_server <- function( input, output, session ) {
     results_quantitation = results_quantitation,
     results_normalization = results_normalization)
   
+  
+
   mod_export_server(
     id = "export_ui_1",
     results_derived_traits = results_derived_traits,

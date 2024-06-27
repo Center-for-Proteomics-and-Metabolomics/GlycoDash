@@ -219,9 +219,22 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
       )
     })
     
-    output$popup_table_duplicates <- render_my_datatable(
-      data.frame(duplicate_sample_ids()), "Sample ID"
-    )
+
+    output$popup_table_duplicates <- DT::renderDataTable({
+      DT::datatable(
+        data.frame(duplicate_sample_ids()),
+        options = list(
+          scrollY = "150px",
+          paging = FALSE,
+          searching = FALSE,
+          columnDefs = list(
+            list(
+              className = 'dt-center',
+              targets = "_all"))),
+        colnames = "Sample ID",
+        rownames = FALSE
+      )
+    }) 
     
     
         
@@ -250,11 +263,23 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
         showConfirmButton = TRUE
       )
     })
+
     
-    output$popup_table_unmatched <- render_my_datatable(
-      data.frame(unmatched_sample_ids()), "Sample ID"
-    )
-    
+    output$popup_table_unmatched <- DT::renderDataTable({
+      DT::datatable(
+        data.frame(unmatched_sample_ids()),
+        options = list(
+          scrollY = "150px",
+          paging = FALSE,
+          searching = FALSE,
+          columnDefs = list(
+            list(
+              className = 'dt-center',
+              targets = "_all"))),
+        colnames = "Sample ID",
+        rownames = FALSE
+      )
+    }) 
     
     
     # Combine manual sample types with data
@@ -299,9 +324,21 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     
     # This datatable with the automatically determined sample_types is shown in
     # the pop-up:
-    output$popup_table_sampletypes <- render_my_datatable(
-      data.frame(unique(r$with_auto_sample_types$sample_type)), "Sample type"
-    )
+    output$popup_table_sampletypes <- DT::renderDataTable({
+      DT::datatable(
+        data.frame(unique(r$with_auto_sample_types$sample_type)),
+        options = list(
+          scrollY = "150px",
+          paging = FALSE,
+          searching = FALSE,
+          columnDefs = list(
+            list(
+              className = 'dt-center',
+              targets = "_all"))),
+        colnames = "Sample type",
+        rownames = FALSE
+      )
+    }) 
     
     
     observe({

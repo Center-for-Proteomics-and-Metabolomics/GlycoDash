@@ -13,7 +13,7 @@ mod_tab_curated_spectra_plot_ui <- function(id){
     column(
       width = 12,
       br(),
-      plotly::plotlyOutput(ns("plot"))
+      plotly::plotlyOutput(ns("plot"), width = "1350px")
     )
   )
 }

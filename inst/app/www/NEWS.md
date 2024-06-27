@@ -1,3 +1,19 @@
+# v1.5.0
+## New features
+* Visualization of normalized data with heatmaps.
+* Option to normalize charge states of analytes separately.
+
+## Adjustments
+* Show a simple warning message when required variables are missing from LaCyTools data.
+* Add terminal galactosylation as an automatically calculated trait for human IgG.
+* Remove the “Calculate glycosylation traits” button.
+* Disable the “Generate report” button until normalization is performed.
+* Show chosen percentiles from spectra curation in the report.
+
+## Bug fixes
+* Minor bug fixes.
+
+
 # v1.4.3
 ## Adjustments
 * Detect and automatically rename isomers in Skyline data.

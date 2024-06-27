@@ -94,9 +94,10 @@ match_human_IgG_traits <- function(human_traits_ui_input) {
   traits <- c(
     "Fucosylation of complex-type glycans" = "fucosylation",
     "Bisection of complex-type glycans" = "bisection",
-    "Galactosylation of complex-type glycans" = "galactosylation",
+    "Galactosylation per antenna of complex-type glycans" = "galactosylation",
     "Sialylation per antenna of complex-type glycans" = "sialylation",
     "Sialylation per galactose of complex-type glycans" = "sialylation_per_galactose",
+    "Terminal galactosylation of complex-type glycans (calculated as 1 - [Sialylation per antenna] / [Galactosylation per antenna])" = "terminal_galactosylation",
     "Percentage of monoantennary complex-type glycans" = "mono_antennary",
     "Percentage of hybrid-type glycans" = "hybrid",
     "Percentage of oligomannose-type glycans" = "oligomannose_relative",
@@ -159,6 +160,9 @@ match_mouse_IgG_traits <- function(mouse_traits_ui_input) {
 #' @param reference Reference file for traits, e.g. human_IgG_N_ref.
 #' 
 create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters, reference) {
+  # Remove terminal galactosylation from the vector with chosen traits
+  # Terminal galactosylation is calculated manually in the server part.
+  chosen_traits <- chosen_traits[chosen_traits != "terminal_galactosylation"]
   # Create an empty vector to store possible analytes with unknown glycan compositions
   unknown_glycans <- c()
   # Initiate an empty list
@@ -172,7 +176,8 @@ create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters,
       substr(chosen_cluster, 1, nchar(chosen_cluster) - 1),
       chosen_cluster
     )
-    # Create an empty list to store the traits formulas for the cluster
+    # Create an empty list to store the traits formulas for the cluster.
+    # Exclude terminal galactosylation, this is added later if it is chosen.
     cluster_trait_formulas <- vector("character", length(chosen_traits))
     # Get the normalized data for the cluster
     cluster_normalized_data <- normalized_data %>% 
@@ -193,7 +198,7 @@ create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters,
     # Get a subset of the reference file with only the passing analytes
     cluster_ref <- reference %>% 
       dplyr::filter(glycan %in% cluster_glycans)
-    # Loop over the chosen traits
+    # Loop over the chosen traits to automatically generate formulas based on reference list.
     for (k in seq(length(chosen_traits))) {
       trait <- chosen_traits[[k]]
       trait_formula <- generate_formula(cluster_name, cluster_ref, trait)
