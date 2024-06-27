@@ -324,6 +324,28 @@ mod_read_lacytools_server <- function(id){
       shinybusy::remove_modal_spinner()
     })
     
+    # Check if required data is missing
+    observe({
+      req(lacytools_summaries_combined())
+      required <- c(
+        "absolute_intensity_background_subtracted",
+        "mass_accuracy_ppm",
+        "isotopic_pattern_quality",
+        "sn"
+      )
+      missing <- required[!required %in% colnames(lacytools_summaries_combined())]
+      if (length(missing) > 0) {
+        showNotification(
+          paste(
+            "The following required variables are missing in your data:",
+            paste0(missing, collapse = ", ")
+          ),
+          type = "error",
+          duration = NULL
+        )
+      }
+    })
+    
     
     #########################################################################
     ####################  Skyline  ##########################################
@@ -375,7 +397,6 @@ mod_read_lacytools_server <- function(id){
       req(skyline_data(), !any(sapply(skyline_data(), is.null)))
       do.call(dplyr::bind_rows, skyline_data())
     })
-    
   
     observeEvent(skyline_data_combined(), {
       shinybusy::remove_modal_spinner()
