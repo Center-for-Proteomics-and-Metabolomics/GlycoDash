@@ -79,8 +79,10 @@ mod_export_server <- function(id,
     })
     
     # Disable the "Download processed data" button until normalized data is available
+    # Also the Generate report button
     observe({
       shinyjs::toggleState("download", is_truthy(x$data))
+      shinyjs::toggleState("report", is_truthy(x$data))
     })
     
     # Display the final data table
@@ -245,6 +247,8 @@ mod_export_server <- function(id,
           cut_offs = results_analyte_curation$cut_offs(),
           analyte_list = results_analyte_curation$analyte_list(),
           analyte_curation_tab_contents = analyte_curation_tab_contents,
+          heatmaps = results_normalization$heatmaps(),
+          heatmaps_excluded_sample_types = results_normalization$heatmaps_excluded_sample_types(),
           derived_traits = try_call(results_derived_traits$derived_traits),
           formulas = try_call(results_derived_traits$formulas),
           custom_formulas = try_call(results_derived_traits$custom_formulas),

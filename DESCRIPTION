@@ -1,13 +1,12 @@
 Package: GlycoDash
 Title: GlycoDash
-Version: 1.0.0
-Authors@R: person('Sterre', 'Siekman', email = 's.l.siekman@lumc.nl', role = c('cre', 'aut'))
+Version: 1.5.0
+Authors@R: person('Steinar', 'Gijze', email = 's.gijze@lumc.nl', role = c('cre', 'aut'))
 Description: Package for processing glycomics data.
 License: MIT + file LICENSE
 Imports: 
     bsplus,
     config (>= 0.3.1),
-    dashboardthemes,
     dplyr (>= 1.1.0),
     DT,
     ggplot2 (>= 3.4.1),

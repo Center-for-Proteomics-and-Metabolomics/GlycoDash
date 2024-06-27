@@ -50,7 +50,7 @@ mod_tab_data_exploration_ui <- function(id){
       br(),
       fluidRow(
         width = 12,
-        shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot")))
+        shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot"), width = "1300px"))
       )
     )
   )

@@ -248,3 +248,241 @@ normalize_data <- function(total_intensities) {
 
   return(normalized_data)
 }
+
+
+
+
+
+#' sample_heatmap
+#' 
+#' Creates a simple heatmap for normalized data. 
+#' Sample names are on the y-axis, glycans are on the x-axis.
+#' Heatmap is created for a specific cluster.
+#' 
+#'
+#' @param normalized_data Normalized data in long format.
+#' @param cluster_name Cluster name (character) for which to make the plot
+#' @param exclude_sample_types Character vector with sample types to exclude.
+#' Empty vector is not applicable.
+#' @param group_facet Character: name of column that contains biological groups for facets.
+#' Use an empty character ("") when not applicable. 
+#' @param color_low Color for lowest value.
+#' @param color_mid Color for middle value
+#' @param color_high Color for highest value. 
+#' @param color_na Color to for the background / missing values.
+#'
+#' @return A ggplot heatmap.
+sample_heatmap <- function(normalized_data,
+                           cluster_name, 
+                           exclude_sample_types,
+                           group_facet,
+                           color_low,
+                           color_mid,
+                           color_high,
+                           color_na) {
+  
+  # Clean data to plot
+  to_plot <- normalized_data %>% 
+    dplyr::select(-cluster) %>% 
+    tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
+                    extra = "merge", remove = FALSE) %>% 
+    dplyr::filter(
+      cluster == cluster_name,
+      !sample_type %in% exclude_sample_types
+    )
+  
+  # Check if the plot should be faceted by biological group, and/or Total vs Specific
+  # In that case, remove samples that have no (biological) group assigned.
+  if (group_facet != "") {
+    to_plot <- to_plot %>% 
+      dplyr::filter(!is.na(!!dplyr::sym(group_facet)))
+  }
+  
+  # Check if the plot should be faceted by Total vs Specific
+  # In that case, remove samples that have no group assigned.
+  if ("group" %in% colnames(normalized_data)) {
+    to_plot <- to_plot %>% 
+      dplyr::filter(!is.na(group))
+  }
+  
+  
+  # Create simple plot
+  p <- ggplot2::ggplot(to_plot, ggplot2::aes(
+    x = glycan, y = sample_name, fill = relative_abundance,
+    text = paste(
+      "Sample name:", sample_name,
+      "\nSample ID:", sample_id,
+      "\nSample type:", sample_type,
+      "\nGlycan:", glycan,
+      "\nRelative abundance:", paste0(format(round(relative_abundance, digits = 2), nsmall = 2), "%")
+    )
+  )) +
+    ggplot2::geom_tile() +
+    ggplot2::labs(x = "", y = "Sample", fill = "Relative abundance (%)") +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+      panel.background = ggplot2::element_rect(fill = color_na),
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
+      axis.text.y = ggplot2::element_blank()
+    ) +
+    ggplot2::scale_fill_gradientn(
+      colors = c(color_low, color_mid, color_high),
+      values = scales::rescale(c(0, 50, 100))
+    )
+  
+  # Check for faceting
+  if (group_facet != "" & "group" %in% colnames(normalized_data)) {
+    # Facet by biological group and specific/total
+    p <- p +
+      ggplot2::facet_wrap(group ~ get(group_facet), scales = "free_y")
+  } else if (group_facet != "") {
+    # Facet only by biological group
+    p <- p +
+      ggplot2::facet_wrap(~get(group_facet), scales = "free_y")
+  } else if ("group" %in% colnames(normalized_data)) {
+    # Facet only by specific/total
+    p <- p +
+      ggplot2::facet_wrap(~group, scales = "free_y")
+  }
+  
+  return(p)
+}
+
+
+
+
+#' cluster_heatmap
+#' 
+#' Creates a heatmap with glycan on x-axis and cluster on y-axis. The median
+#' relative abundance is calculated and shown for each analyte.
+#'
+#' @param normalized_data Normalized data in long format.
+#' @param exclude_sample_types Character vector with sample types to exclude.
+#' Empty character vector when not applicable.
+#' @param group_facet Character: name of column that contains biological groups for facets.
+#' Use an empty character ("") when not applicable. 
+#' @param color_low Color of lowest value
+#' @param color_mid Color of middle value
+#' @param color_high Color of highest value
+#' @param color_na Color of background/missing values.
+#'
+#' @return A heatmap
+cluster_heatmap <- function(normalized_data,
+                            exclude_sample_types,
+                            group_facet,
+                            color_low,
+                            color_mid,
+                            color_high,
+                            color_na) {
+  
+  # Calculate median relative abundances of each analyte.
+  # Check for faceting by biological group or specific/total.
+  if (group_facet != "" & "group" %in% colnames(normalized_data)) {
+    # Biological groups + Specific/Total
+    to_plot <- normalized_data %>% 
+      dplyr::filter(
+        !is.na(!!dplyr::sym(group_facet)),
+        !is.na(group),
+        !sample_type %in% exclude_sample_types
+      ) %>% 
+      dplyr::select(-cluster) %>% 
+      tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
+                      extra = "merge", remove = FALSE) %>% 
+      dplyr::group_by(!!dplyr::sym(group_facet), group, cluster, glycan) %>% 
+      dplyr::summarize(
+        median_relative_abundance = median(relative_abundance, na.rm = TRUE)
+      )
+  } else if (group_facet != "") {
+    # Biological groups
+    to_plot <- normalized_data %>% 
+      dplyr::filter(
+        !is.na(!!dplyr::sym(group_facet)),
+        !sample_type %in% exclude_sample_types
+      ) %>% 
+      dplyr::select(-cluster) %>% 
+      tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
+                      extra = "merge", remove = FALSE) %>% 
+      dplyr::group_by(!!dplyr::sym(group_facet), cluster, glycan) %>% 
+      dplyr::summarize(
+        median_relative_abundance = median(relative_abundance, na.rm = TRUE)
+      )
+  } else if ("group" %in% colnames(normalized_data)) {
+    # Specific/Total
+    to_plot <- normalized_data %>% 
+      dplyr::filter(
+        !is.na(group),
+        !sample_type %in% exclude_sample_types
+      ) %>% 
+      dplyr::select(-cluster) %>% 
+      tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
+                      extra = "merge", remove = FALSE) %>% 
+      dplyr::group_by(group, cluster, glycan) %>% 
+      dplyr::summarize(
+        median_relative_abundance = median(relative_abundance, na.rm = TRUE)
+      )
+  } else {
+    # No faceting
+    to_plot <- normalized_data %>% 
+      dplyr::filter(!sample_type %in% exclude_sample_types) %>% 
+      dplyr::select(-cluster) %>% 
+      tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
+                      extra = "merge", remove = FALSE) %>% 
+      dplyr::group_by(cluster, glycan) %>% 
+      dplyr::summarize(
+        median_relative_abundance = median(relative_abundance, na.rm = TRUE)
+      )
+  }
+  
+  
+  # Check if the data is empty
+  if (nrow(to_plot) == 0) {
+    return("Oops, there is no data to show...")
+  }
+  
+  # Simple plot
+  p <- ggplot2::ggplot(to_plot, ggplot2::aes(
+    x = glycan, y = cluster, fill = median_relative_abundance,
+    text = paste(
+      "Glycan:", glycan,
+      "\nCluster", cluster,
+      "\nMedian relative abundance:", paste0(format(round(median_relative_abundance, digits = 2), nsmall = 2), "%")
+    )
+  )) +
+    ggplot2::geom_tile() +
+    ggplot2::labs(x = "", y = "", fill = "Median relative abundance (%)") +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      panel.border = ggplot2::element_rect(color = "black", fill = NA, size = 0.5),
+      panel.background = ggplot2::element_rect(fill = color_na),
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
+      axis.text.y = ggplot2::element_text(size = 11)
+    ) +
+    ggplot2::scale_fill_gradientn(
+      colors = c(color_low, color_mid, color_high),
+      values = scales::rescale(c(0, 50, 100))
+    )
+    
+  # Check for biological groups faceting
+  if (group_facet != "") {
+    p <- p + 
+      ggplot2::facet_wrap(~get(group_facet))
+  }
+  
+  # Check for faceting
+  if (group_facet != "" & "group" %in% colnames(normalized_data)) {
+    # Biological groups + Specific/Total
+    p <- p +
+      ggplot2::facet_wrap(group ~ get(group_facet))
+  } else if (group_facet != "") {
+    # Biological groups
+    p <- p +
+      ggplot2::facet_wrap(~get(group_facet))
+  } else if ("group" %in% colnames(normalized_data)) {
+    # Specific/Total
+    p <- p +
+      ggplot2::facet_wrap(~group)
+  } 
+  
+  return(p)
+}

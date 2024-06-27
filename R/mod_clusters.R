@@ -31,7 +31,7 @@ mod_clusters_ui <- function(id) {
     tableOutput(ns("clusters_table")),
     shinyWidgets::materialSwitch(
       ns("contains_silumab"),
-      HTML("<i> <strong> Optional: </strong> Samples contain SILuMAb for IgG1 quantitation </i>"),
+      HTML("<i style='font-size:15px;'> Samples contain SILuMAb for IgG1 quantitation </i>"),
       status = "success",
       right = TRUE
     ),

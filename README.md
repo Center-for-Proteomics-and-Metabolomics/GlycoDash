@@ -3,13 +3,12 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 
 <!-- badges: end -->
 
-GlycoDash is an R Shiny dashboard for processing protein
-glycosylation data obtained from [LaCyTools](<https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00171>)
+GlycoDash is an R Shiny dashboard for processing glycomics data obtained from [LaCyTools](<https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00171>) or [Skyline](<https://skyline.ms>).
 
 ## Installation
 
-### Option 1: Run GlycoDash using Docker
-
+### Option 1: Run GlycoDash using Docker (recommended)
+_Note: it is recommended that you have at least 16 GB of RAM._
 1. Download and install [Docker desktop](https://www.docker.com/products/docker-desktop/).
 2. Start Docker desktop on your computer.
 3. Open Command Prompt.
