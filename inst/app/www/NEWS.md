@@ -7,6 +7,7 @@
 * Add terminal galactosylation as an automatically calculated trait for human IgG.
 * Remove the “Calculate glycosylation traits” button.
 * Disable the “Generate report” button until normalization is performed.
+* Show chosen percentiles from spectra curation in the report.
 
 ## Bug fixes
 * Minor bug fixes.
