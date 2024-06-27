@@ -4,6 +4,7 @@
 * Option to normalize charge states of analytes separately.
 
 ## Adjustments
+* Show a simple warning message when required variables are missing from LaCyTools data.
 * Add terminal galactosylation as an automatically calculated trait for human IgG.
 * Remove the “Calculate glycosylation traits” button.
 * Disable the “Generate report” button until normalization is performed.
