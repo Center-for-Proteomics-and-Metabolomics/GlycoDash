@@ -67,7 +67,8 @@ mod_curate_based_on_percentiles_server <- function(id,
         percentile = input$percentile,
         exclude_sample_types = input$exclude_sample_types,
         uncalibrated_as_NA = uncalibrated_as_NA()
-      )
+      ) %>% 
+        dplyr::mutate(percentile = input$percentile)
     })
     
     return(cut_offs)
