@@ -75,12 +75,14 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgG_traits"),
                 "Select the traits you want to calculate for human IgG N-glycans:",
+                "Complex-type glycans:",
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
-                  "Galactosylation of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
                   "Sialylation per antenna of complex-type glycans",
                   "Sialylation per galactose of complex-type glycans",
+                  "Terminal galactosylation of complex-type glycans (calculated as 1 - [Sialylation per antenna] / [Galactosylation per antenna])",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
                   "Percentage of oligomannose-type glycans",
@@ -346,6 +348,25 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
 
     ####################  Default glycosylation traits  ####################
+    
+    # If user selects terminal galactosylation, then sialylation and galactosylation
+    # must both be selected automatically if not yet done so.
+    observeEvent(input$human_IgG_traits, {
+      selected <- input$human_IgG_traits
+      if ("Terminal galactosylation of complex-type glycans (calculated as 1 - [Sialylation per antenna] / [Galactosylation per antenna])" %in% selected) {
+        if (!("Galactosylation per antenna of complex-type glycans" %in% selected &
+              "Sialylation per antenna of complex-type glycans" %in% selected)) {
+          shinyWidgets::updateAwesomeCheckboxGroup(
+            inputId = "human_IgG_traits",
+            selected = unique(c(
+              selected,
+              "Galactosylation per antenna of complex-type glycans",
+              "Sialylation per antenna of complex-type glycans"
+            ))
+          )
+        }
+      }
+    })
     
     human_IgG_traits <- reactive({
       req(input$human_IgG_traits)
