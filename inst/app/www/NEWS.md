@@ -1,3 +1,8 @@
+# v1.5.1.
+## Adjustments
+* Remove the human IgG trait “terminal galactosylation”, as it is redundant.
+
+
 # v1.5.0
 ## New features
 * Visualization of normalized data with heatmaps.

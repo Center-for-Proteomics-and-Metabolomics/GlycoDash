@@ -82,7 +82,6 @@ mod_derived_traits_ui <- function(id){
                   "Galactosylation per antenna of complex-type glycans",
                   "Sialylation per antenna of complex-type glycans",
                   "Sialylation per galactose of complex-type glycans",
-                  "Terminal galactosylation of complex-type glycans (calculated as 1 - [Sialylation per antenna] / [Galactosylation per antenna])",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
                   "Percentage of oligomannose-type glycans",
@@ -332,25 +331,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
 
     ####################  Default glycosylation traits  ####################
     
-    # If user selects terminal galactosylation, then sialylation and galactosylation
-    # must both be selected automatically if not yet done so.
-    observeEvent(input$human_IgG_traits, {
-      selected <- input$human_IgG_traits
-      if ("Terminal galactosylation of complex-type glycans (calculated as 1 - [Sialylation per antenna] / [Galactosylation per antenna])" %in% selected) {
-        if (!("Galactosylation per antenna of complex-type glycans" %in% selected &
-              "Sialylation per antenna of complex-type glycans" %in% selected)) {
-          shinyWidgets::updateAwesomeCheckboxGroup(
-            inputId = "human_IgG_traits",
-            selected = unique(c(
-              selected,
-              "Galactosylation per antenna of complex-type glycans",
-              "Sialylation per antenna of complex-type glycans"
-            ))
-          )
-        }
-      }
-    })
-    
     human_IgG_traits <- reactive({
       req(input$human_IgG_traits)
       match_human_IgG_traits(input$human_IgG_traits)
@@ -389,26 +369,12 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       req(any(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas())))
       # Combine generated trait formulas
       if (all(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas()))) {
-        formulas <- c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
+        c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
       } else if (is_truthy(human_IgG_trait_formulas())) {
-        formulas <- human_IgG_trait_formulas()
+        human_IgG_trait_formulas()
       } else if (is_truthy(mouse_IgG_trait_formulas())) {
-        formulas <- mouse_IgG_trait_formulas()
+        mouse_IgG_trait_formulas()
       }
-      # Check if terminal galactosylation should be calculated for human IgG
-      if (is_truthy(human_IgG_trait_formulas())) {
-        if ("Terminal galactosylation of complex-type glycans (calculated as 1 - [Sialylation per antenna] / [Galactosylation per antenna])" %in% input$human_IgG_traits) {
-          new_formulas <- c()
-          for (cluster in input$human_IgG_clusters) {
-            new_formulas <- c(
-              new_formulas,
-              paste0(cluster, "_terminal_galactosylation = (1 - ", cluster, "_sialylation / ", cluster, "_galactosylation) * 100")
-            )
-          }
-          formulas <- c(formulas, new_formulas)
-        }
-      }
-      return(formulas)
     })
     
     data_with_derived_traits <- reactive({
