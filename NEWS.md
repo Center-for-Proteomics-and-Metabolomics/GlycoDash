@@ -1,4 +1,4 @@
-# v1.5.1.
+# v1.5.1
 ## Adjustments
 * Remove the human IgG trait “terminal galactosylation”, as it is redundant.
 
