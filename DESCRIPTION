@@ -1,6 +1,6 @@
 Package: GlycoDash
 Title: GlycoDash
-Version: 1.5.1
+Version: 1.5.2
 Authors@R: person('Steinar', 'Gijze', email = 's.gijze@lumc.nl', role = c('cre', 'aut'))
 Description: Package for processing glycomics data.
 License: MIT + file LICENSE
