@@ -81,7 +81,7 @@ mod_derived_traits_ui <- function(id){
                   "Bisection of complex-type glycans",
                   "Galactosylation per antenna of complex-type glycans",
                   "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans (calculated as [Sialylation per antenna] / [Galactosylation per antenna] \u00D7 100%)",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
                   "Percentage of oligomannose-type glycans",
@@ -331,6 +331,25 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
 
     ####################  Default glycosylation traits  ####################
     
+    # If user selects sialylation per galactose, then sialylation and galactosylation
+    # must both be selected automatically if not yet done so.
+    observeEvent(input$human_IgG_traits, {
+      selected <- input$human_IgG_traits
+      if ("Sialylation per galactose of complex-type glycans (calculated as [Sialylation per antenna] / [Galactosylation per antenna] \u00D7 100%)" %in% selected) {
+        if (!("Galactosylation per antenna of complex-type glycans" %in% selected &
+              "Sialylation per antenna of complex-type glycans" %in% selected)) {
+          shinyWidgets::updateAwesomeCheckboxGroup(
+            inputId = "human_IgG_traits",
+            selected = unique(c(
+              selected,
+              "Galactosylation per antenna of complex-type glycans",
+              "Sialylation per antenna of complex-type glycans"
+            ))
+          )
+        }
+      }
+    })
+    
     human_IgG_traits <- reactive({
       req(input$human_IgG_traits)
       match_human_IgG_traits(input$human_IgG_traits)
@@ -340,9 +359,9 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       req(input$mouse_IgG_traits)
       match_mouse_IgG_traits(input$mouse_IgG_traits)
     })
-  
     
     human_IgG_trait_formulas <- reactive({
+      req(length(input$human_IgG_clusters) > 0)
       load(system.file("app", "www", "human_IgG_N_ref.rda", package = "GlycoDash"))
       formula_list <- create_formula_list(
         normalized_data = normalized_data(),
@@ -354,12 +373,13 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     }) 
     
     mouse_IgG_trait_formulas <- reactive({
-     load(system.file("app", "www", "mouse_IgG_ref.rda", package = "GlycoDash"))
-     formula_list <- create_formula_list(
-       normalized_data = normalized_data(),
-       chosen_traits = mouse_IgG_traits(),
-       chosen_clusters = input$mouse_IgG_clusters,
-       reference = mouse_IgG_ref
+      req(length(input$mouse_IgG_clusters) > 0)
+      load(system.file("app", "www", "mouse_IgG_ref.rda", package = "GlycoDash"))
+      formula_list <- create_formula_list(
+        normalized_data = normalized_data(),
+        chosen_traits = mouse_IgG_traits(),
+        chosen_clusters = input$mouse_IgG_clusters,
+        reference = mouse_IgG_ref
      )
      purrr::reduce(formula_list, c)
    })
@@ -369,12 +389,26 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       req(any(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas())))
       # Combine generated trait formulas
       if (all(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas()))) {
-        c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
+        formulas <- c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
       } else if (is_truthy(human_IgG_trait_formulas())) {
-        human_IgG_trait_formulas()
+        formulas <- human_IgG_trait_formulas()
       } else if (is_truthy(mouse_IgG_trait_formulas())) {
-        mouse_IgG_trait_formulas()
+        formulas <- mouse_IgG_trait_formulas()
       }
+      # Check if sialylation per galactose should be calculated for human IgG
+      if (is_truthy(human_IgG_trait_formulas())) {
+        if ("Sialylation per galactose of complex-type glycans (calculated as [Sialylation per antenna] / [Galactosylation per antenna] \u00D7 100%)" %in% input$human_IgG_traits) {
+          new_formulas <- c()
+          for (cluster in input$human_IgG_clusters) {
+            new_formulas <- c(
+              new_formulas,
+              paste0(cluster, "_sialylation_per_galactose = ", cluster, "_sialylation / ", cluster, "_galactosylation * 100")
+            )
+          }
+          formulas <- c(formulas, new_formulas)
+        }
+      }
+      return(formulas)
     })
     
     data_with_derived_traits <- reactive({

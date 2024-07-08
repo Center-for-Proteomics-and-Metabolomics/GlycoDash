@@ -1,3 +1,10 @@
+# v1.5.2
+## Adjustments
+* Change the calculation of “sialylation per galactose”.
+It is now calculated as “Sialylation per antenna” divided by “Galactosylation per antenna”,
+multiplied by 100%.
+
+
 # v1.5.1
 ## Adjustments
 * Remove the human IgG trait “terminal galactosylation”, as it is redundant.
