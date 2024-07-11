@@ -1,4 +1,4 @@
-# v1.5.2
+# v1.5.3
 ## Adjustments
 * Change the calculation of “sialylation per galactose”.
 It is now calculated as “Sialylation per antenna” divided by “Galactosylation per antenna”,
