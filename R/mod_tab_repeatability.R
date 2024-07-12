@@ -123,9 +123,9 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
           NULL
         }
       )
-      
       return(repeatability)
     }) %>% bindEvent(input$assess_repeatability)
+    
     
     variation_df <- reactive({
       req(repeatability())
@@ -135,6 +135,7 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
         dplyr::group_by(plate) %>% 
         dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
     })
+    
     
     plot <- reactive({
       req(length(clusters()) <= 4)
