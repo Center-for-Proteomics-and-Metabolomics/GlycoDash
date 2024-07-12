@@ -1,5 +1,13 @@
 # v1.5.3
 ## Adjustments
+* Make plots resizable.
+
+## Bug fixes
+* Fix incorrect error message about no data being available.
+
+
+# v1.5.2
+## Adjustments
 * Change the calculation of “sialylation per galactose”.
 It is now calculated as “Sialylation per antenna” divided by “Galactosylation per antenna”,
 multiplied by 100%.
