@@ -3,7 +3,7 @@
 * Make plots resizable.
 
 ## Bug fixes
-* Fix incorrect error message about no data being available.
+* Repeatability: fix incorrect error message about no data being available.
 
 
 # v1.5.2
