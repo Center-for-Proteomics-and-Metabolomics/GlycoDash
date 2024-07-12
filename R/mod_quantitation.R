@@ -157,7 +157,7 @@ mod_quantitation_ui <- function(id) {
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            shinycssloaders::withSpinner(plotly::plotlyOutput(ns("quantitation_plot"), width = "1350px"))
+            shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("quantitation_plot")))
           )
         )
       ),
@@ -302,7 +302,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
             select = TRUE,
             tab = tabPanel(
               title = tab_titles[[i]],
-              plotly::plotlyOutput(ns(tab_id))
+              shinyjqui::jqui_resizable(plotly::plotlyOutput(ns(tab_id)))
             )
           )
         })

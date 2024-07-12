@@ -126,7 +126,7 @@ mod_normalization_ui <- function(id){
             multiple = TRUE
           ),
           tabsetPanel(id = ns("tabs")),
-          plotly::plotlyOutput(ns("clusters_plot"), height = "500px", width = "1350px"),
+          shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("clusters_plot"))),
           textOutput(ns("no_data"))
         )
       ),
@@ -263,7 +263,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
             select = TRUE,
             tab = tabPanel(
               title = cluster_names[[i]],
-              plotly::plotlyOutput(ns(cluster), height = "600px", width = "1350px")
+              shinyjqui::jqui_resizable(plotly::plotlyOutput(ns(cluster)))
             )
           )
         })

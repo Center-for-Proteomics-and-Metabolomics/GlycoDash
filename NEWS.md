@@ -1,3 +1,11 @@
+# v1.5.3
+## Adjustments
+* Make plots resizable.
+
+## Bug fixes
+* Fix incorrect error message about no data being available.
+
+
 # v1.5.2
 ## Adjustments
 * Change the calculation of “sialylation per galactose”.
