@@ -38,7 +38,7 @@ mod_tab_repeatability_ui <- function(id){
             status = "primary",
             column(
               width = 9,
-              shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot"), width = "1300px")),
+              shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot"))),
               tabsetPanel(id = ns("plot_tabs"))
             ),
             column(
