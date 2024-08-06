@@ -1,3 +1,5 @@
+# GlycoDash <img src="man/figures/glycodash_logo.png" align="right" height="138" /></a>
+
 GlycoDash is an R Shiny dashboard for processing glycomics data obtained from [LaCyTools](<https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00171>) or [Skyline](<https://skyline.ms>).
 
 ## Installation
