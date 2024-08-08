@@ -16,17 +16,25 @@ _Note: it is recommended that you have at least 16 GB of RAM._
    Docker will now build an image which can take some time.
 6. The image should now be loaded in Docker. Click the Run button. Then click optional settings, and for "host port" fill in 80. Then click "Run".
 
-![afbeelding](https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/assets/105744767/1f626535-66c9-419e-9ca9-447213bef07d)
-
-![afbeelding](https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/assets/105744767/439a415e-5d35-4180-a9c1-4457853e3f42)
+<div style="text-align: center;">
+    <img src="man/figures/docker_A.png" height="auto" width="85%" style="margin-bottom: 20px;"/>
+    <img src="man/figures/docker_B.png" height="auto" width="70%"/>
+</div>
+<br>
 
 7. Under the "Containers" tab in Docker, you should now see something like this:
    
-![afbeelding](https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/assets/105744767/30c51e52-6e99-429c-bc14-edd9687dd25f)
+<div style="text-align: center;">
+    <img src="man/figures/docker_C.png" height="auto" width="85%"/>
+</div>
+<br>
 
 8. To use the dashboard: open your browser, type "localhost" in the search bar and hit enter. You should now be able to use the dashboard:
 
-![afbeelding](https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/assets/105744767/7c838f22-c035-4d7c-bd06-20f92174df1d)
+<div style="text-align: center;">
+    <img src="man/figures/localhost.png" height="auto" width="85%"/>
+</div>
+<br>
 
 
 9. When you are done using GlycoDash, simply stop the container in Docker by clicking the stop button.
