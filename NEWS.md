@@ -1,6 +1,6 @@
 # v1.5.4
 ## Adjustments
-* Show GlycoDash icon in browser tab.
+* Created a more appealing user interface.
 * When visualizing repeatability per plate, calculate intra-plate variations and 
 inter-plate variation using median values instead of mean.
 
