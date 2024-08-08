@@ -16,25 +16,25 @@ _Note: it is recommended that you have at least 16 GB of RAM._
    Docker will now build an image which can take some time.
 6. The image should now be loaded in Docker. Click the Run button. Then click optional settings, and for "host port" fill in 80. Then click "Run".
 
-<div style="text-align: center;">
-    <img src="man/figures/docker_A.png" height="auto" width="85%" style="margin-bottom: 20px;"/>
-    <img src="man/figures/docker_B.png" height="auto" width="70%"/>
-</div>
-<br>
+<p align="center";">
+    <img src="man/figures/docker_A.png" height="auto" width="85%"/>\
+    <img src="man/figures/docker_B.png" height="auto" width="60%"/>
+</p>
+<br />
 
 7. Under the "Containers" tab in Docker, you should now see something like this:
    
-<div style="text-align: center;">
+<p align="center";">
     <img src="man/figures/docker_C.png" height="auto" width="85%"/>
-</div>
-<br>
+</p>
+<br />
 
 8. To use the dashboard: open your browser, type "localhost" in the search bar and hit enter. You should now be able to use the dashboard:
 
-<div style="text-align: center;">
+<p align="center";">
     <img src="man/figures/localhost.png" height="auto" width="85%"/>
-</div>
-<br>
+</p>
+<br />
 
 
 9. When you are done using GlycoDash, simply stop the container in Docker by clicking the stop button.
