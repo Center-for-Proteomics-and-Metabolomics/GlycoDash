@@ -15,10 +15,12 @@ mod_tab_curated_analytes_ui <- function(id){
       width= 12,
       shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot"))),
       br(),
-      shinyWidgets::materialSwitch(ns("check_all"),
-                                   "If one charge state has passed curation, also select all other charge states for further analysis.",
-                                   right = TRUE,
-                                   status = "primary"),
+      shinyWidgets::materialSwitch(
+        ns("check_all"),
+        HTML("<i style='font-size:15px;'> If one charge state has passed curation, also select all other charge states for further analysis </i>"),
+        right = TRUE,
+        status = "success"
+      ),
       br(),
       shinycssloaders::withSpinner(DT::dataTableOutput(ns("table")))
     )

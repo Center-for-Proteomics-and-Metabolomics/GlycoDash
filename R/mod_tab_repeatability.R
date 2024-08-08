@@ -21,9 +21,9 @@ mod_tab_repeatability_ui <- function(id){
           status = "primary",
           uiOutput(ns("standards_menu")),
           shinyWidgets::materialSwitch(ns("by_plate"),
-                                       "Group samples by plate.",
+                                       HTML("<i style='font-size:15px;'> Group samples by plate </i>"),
                                        right = TRUE,
-                                       status = "primary"),
+                                       status = "success"),
           actionButton(ns("assess_repeatability"),
                        label = "Assess repeatability")
         )

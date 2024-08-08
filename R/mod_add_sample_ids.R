@@ -100,10 +100,12 @@ mod_add_sample_ids_ui <- function(id){
           trigger = "hover",
           placement = "right"
         ),
-      shinyWidgets::materialSwitch(ns("switch_two_plate_designs"),
-                                   "Add separate plate design files for specific and and for total Ig samples.",
-                                   status = "success",
-                                   right = TRUE),
+      shinyWidgets::materialSwitch(
+        ns("switch_two_plate_designs"),
+        HTML("<i style='font-size:15px;'> Add separate plate design files for specific and for total Ig samples </i>"),
+        status = "success",
+        right = TRUE
+      ),
       div(id = ns("one_plate_design"),
           mod_process_plate_design_ui(
             id = ns("plate_design"),
