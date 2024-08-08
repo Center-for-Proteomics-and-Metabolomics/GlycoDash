@@ -28,11 +28,6 @@ app_ui <- function(request) {
       
       sidebar = shinydashboardPlus::dashboardSidebar(
         minified = TRUE,  # To keep icons visible when collapsing sidebar
-        div(
-          # class = "sidebar-header",
-          style = "text-align: center; padding: 10px;",
-          img(src = "www/glycodash_logo.png", style = "width: 70%; height: auto;")
-        ),
         shinydashboard::sidebarMenu(
           id = "tabs",
           # HTML with &nbsp is to add some space between icon and text
