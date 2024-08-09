@@ -41,12 +41,9 @@ mod_curate_based_on_controls_ui <- function(id){
       id = ns("advanced_settings"),
       shinyWidgets::materialSwitch(
         ns("use_mean_SD"),
-        label = paste(
-          "To calculate the sum intensity cut-off use the mean", 
-          "and standard deviation (SD) instead of percentiles."
-        ),
+        HTML("<i style='font-size:15px;'> To calculate the sum intensity cut-off use the mean and standard deviation (SD) instead of percentiles </i>"),
         right = TRUE,
-        status = "primary"),
+        status = "success"),
       div(
         id = ns("mean_sd_settings"),
         tags$p(icon("warning"), "Using this method at low sample sizes can", 

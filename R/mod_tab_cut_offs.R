@@ -23,7 +23,7 @@ mod_tab_cut_offs_ui <- function(id){
     shinyWidgets::materialSwitch(ns("switch_to_manual"),
                                  HTML("<i style='font-size:15px;'> Choose cut-off values manually instead </i>"),
                                  right = TRUE,
-                                 status = "primary"),
+                                 status = "success"),
     shinyjs::hidden(numericInput(ns("cut_off_sum_intensity"),
                  "Enter a cut-off value for the sum intensity:",
                  value = 0, min = 0)),

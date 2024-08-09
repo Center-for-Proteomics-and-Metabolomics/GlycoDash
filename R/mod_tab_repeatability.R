@@ -21,9 +21,9 @@ mod_tab_repeatability_ui <- function(id){
           status = "primary",
           uiOutput(ns("standards_menu")),
           shinyWidgets::materialSwitch(ns("by_plate"),
-                                       "Group samples by plate.",
+                                       HTML("<i style='font-size:15px;'> Group samples by plate </i>"),
                                        right = TRUE,
-                                       status = "primary"),
+                                       status = "success"),
           actionButton(ns("assess_repeatability"),
                        label = "Assess repeatability")
         )
@@ -133,7 +133,7 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
       # Calculate the intra-plate variations to show in the table:
       repeatability() %>% 
         dplyr::group_by(plate) %>% 
-        dplyr::summarise(intra_plate_variation = mean(RSD, na.rm = TRUE))
+        dplyr::summarise(intra_plate_variation = median(RSD, na.rm = TRUE))
     })
     
     
@@ -243,7 +243,7 @@ mod_tab_repeatability_server <- function(id, my_data, contains_total_and_specifi
       sketch <- htmltools::withTags(table(
         DT::tableHeader(c("Plate", "Intra-plate variation (%)")),
         DT::tableFooter(c("Inter-plate variation (%)", 
-                          signif(mean(for_table()$intra_plate_variation, 
+                          signif(median(for_table()$intra_plate_variation, 
                                       na.rm = TRUE),
                                  digits = 3)))
       ))
