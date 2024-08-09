@@ -681,18 +681,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         # when curated_analytes() changes. Not when input$curation_method changes.
         # curated_analytes() changes when the "Perform analyte curation" button is pushed.
     }) %>% bindEvent(curated_analytes())
-    
-    
-    # Show a notification when analyte curation is finished.
-    observe({
-      showNotification(ui = paste("Analyte curation has been performed",
-                                  ifelse(
-                                    input$method == "Curate analytes based on data",
-                                    "based on the data.",
-                                    "based on the analyte list."
-                                  )),
-                       type = "message")
-    }) %>% bindEvent(analyte_curated_data())
    
     
     

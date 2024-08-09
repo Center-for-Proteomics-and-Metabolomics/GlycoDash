@@ -558,12 +558,6 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     }) %>% bindEvent(input$button)
     
     
-    observe({
-      showNotification("Spectra curation has been performed.",
-                       type = "message")
-    }) %>% bindEvent(curated_data())
-    
-    
     passing_spectra <- reactive({
       req(curated_data())
       kick_out_spectra(curated_spectra = curated_data())
