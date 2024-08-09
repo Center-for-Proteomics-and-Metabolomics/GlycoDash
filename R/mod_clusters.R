@@ -10,28 +10,28 @@
 mod_clusters_ui <- function(id) {
   ns <- NS(id)
   shinydashboard::box(
-    title = "Peptides/clusters",
+    title = "Glycosylation sites",
     width = NULL,
     solidHeader = TRUE,
     status = "primary",
     div(
       id = ns("info_detection"),
       HTML("
-        <strong> Peptides/clusters in your data will be detected automatically after adding the sample types. </strong>
+        <strong> Glycosylation sites in your data will be detected automatically after adding the sample types. </strong>
         <br> <br>
       ")
     ),
     div(
       id = ns("info_clusters"),
       HTML("
-        <strong> The following peptides/clusters were detected in your data: </strong>
+        <strong> The following glycosylation sites were detected in your data: </strong>
         <br> <br>
       ")
     ),
     tableOutput(ns("clusters_table")),
     shinyWidgets::materialSwitch(
       ns("contains_silumab"),
-      HTML("<i> <strong> Optional: </strong> Samples contain SILuMAb for IgG1 quantitation </i>"),
+      HTML("<i style='font-size:15px;'> Samples contain SILuMAb for IgG1 quantitation </i>"),
       status = "success",
       right = TRUE
     ),

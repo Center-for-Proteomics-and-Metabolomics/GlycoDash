@@ -13,7 +13,7 @@ create_formula_list(normalized_data, chosen_traits, chosen_clusters, reference)
 
 \item{chosen_clusters}{Character vector, e.g. c("IgGI", "IgGII")}
 
-\item{reference}{Reference file for traits, e.g. human_IgG_ref.}
+\item{reference}{Reference file for traits, e.g. human_IgG_N_ref.}
 }
 \description{
 Creates a list of formulas for human IgG traits.

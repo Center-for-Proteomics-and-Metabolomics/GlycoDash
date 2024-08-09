@@ -11,7 +11,7 @@ mod_tab_cut_offs_ui <- function(id){
   ns <- NS(id)
   tagList(
     br(),
-    shinycssloaders::withSpinner(plotly::plotlyOutput(ns("plot"))),
+    shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot"))),
     br(),
     tags$style(HTML(paste0(
       "#",
@@ -21,9 +21,9 @@ mod_tab_cut_offs_ui <- function(id){
     DT::dataTableOutput(ns("table")),
     br(),
     shinyWidgets::materialSwitch(ns("switch_to_manual"),
-                                 "Choose cut-off values manually instead",
+                                 HTML("<i style='font-size:15px;'> Choose cut-off values manually instead </i>"),
                                  right = TRUE,
-                                 status = "primary"),
+                                 status = "success"),
     shinyjs::hidden(numericInput(ns("cut_off_sum_intensity"),
                  "Enter a cut-off value for the sum intensity:",
                  value = 0, min = 0)),

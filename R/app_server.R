@@ -34,17 +34,20 @@ app_server <- function( input, output, session ) {
   results_analyte_curation <- mod_analyte_curation_server(
     id = "analyte_curation_ui_1",
     results_spectra_curation = results_spectra_curation,
-    biogroup_cols = results_data_import$biogroup_cols)
+    biogroup_cols = results_data_import$biogroup_cols,
+    data_type = results_data_import$data_type)
   
   results_normalization <- mod_normalization_server(
     id = "normalization_ui_1",
     results_analyte_curation = results_analyte_curation,
-    merged_metadata = results_data_import$merged_metadata)
+    merged_metadata = results_data_import$merged_metadata,
+    data_type = results_data_import$data_type)
   
   results_quantitation <- mod_quantitation_server(
     id = "quantitation_ui_1",
     quantitation_clusters = results_data_import$quantitation_clusters,
     LaCyTools_summary = results_data_import$LaCyTools_summary,
+    data_type = results_data_import$data_type,
     analyte_curated_data = results_analyte_curation$analyte_curated_data,
     results_normalization = results_normalization
   )
@@ -66,6 +69,8 @@ app_server <- function( input, output, session ) {
     results_quantitation = results_quantitation,
     results_normalization = results_normalization)
   
+  
+
   mod_export_server(
     id = "export_ui_1",
     results_derived_traits = results_derived_traits,

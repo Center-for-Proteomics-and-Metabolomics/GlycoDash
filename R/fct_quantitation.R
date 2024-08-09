@@ -8,6 +8,7 @@
 #' @param quantitation_clusters
 #' A named list with the cluster names of the peptides that are used
 #' for IgG1 quantitation. This list is created in the data import tab.
+#' @param data_type "LaCyTools data" or "Skyline data"
 #' @param analyte_curated_data 
 #' The analyte curated data from the analyte curation tab.
 #'
@@ -15,6 +16,7 @@
 #' for IgG1 quantitation. 
 #' 
 calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
+                                          data_type,
                                           quantitation_clusters,
                                           analyte_curated_data) {
   
@@ -35,7 +37,7 @@ calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
     dplyr::filter(sample_name %in% passing_IgG1_spectra) %>% 
     dplyr::bind_rows(passing_IgG1_analytes_data) %>% 
     # Use function from normalization to calculate total intensities of analytes
-    calculate_total_intensity(.) %>% 
+    calculate_total_intensity(., data_type) %>% 
     # Then calculate the sum intensities (code below is part of normalization function)
     dplyr::group_by(cluster, sample_name) %>%
     dplyr::reframe(sum_intensity = sum(total_absolute_intensity),

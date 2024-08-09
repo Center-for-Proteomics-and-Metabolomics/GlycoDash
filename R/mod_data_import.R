@@ -171,6 +171,7 @@ mod_data_import_server <- function(id){
     
     return(list(
       LaCyTools_summary = to_return,  # Calling this LaCyTools_summary is a bit confusing
+      data_type = LaCyTools_summary$data_type,
       biogroup_cols = biogroup_cols,
       quantitation_clusters = quantitation_clusters,
       contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,

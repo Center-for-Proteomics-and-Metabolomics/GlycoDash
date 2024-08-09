@@ -14,11 +14,11 @@ app_ui <- function(request) {
     bsplus::use_bs_popover(),
     
     # Your application UI logic 
-    shinydashboard::dashboardPage(
+    shinydashboardPlus::dashboardPage(
       
       # Title header, with button that links to GitHub
       header = shinydashboard::dashboardHeader(
-        title = "GlycoDash v1.3.7",
+        title = "GlycoDash v1.5.4",
         tags$li(a(
           onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash')",
           href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"
@@ -26,36 +26,61 @@ app_ui <- function(request) {
         tags$li(customDownloadbutton("download_md"), class = "dropdown")
       ),
       
-      sidebar = shinydashboard::dashboardSidebar(
+      sidebar = shinydashboardPlus::dashboardSidebar(
+        minified = TRUE,  # To keep icons visible when collapsing sidebar
         shinydashboard::sidebarMenu(
           id = "tabs",
-          
-          shinydashboard::menuItem("Data Import", 
-                                   tabName = "data_import"),
-          shinydashboard::menuItem("Spectra Curation", 
-                                   tabName = "spectra_curation"),
-          shinydashboard::menuItem("Analyte Curation", 
-                                   tabName = "analyte_curation"),
-          shinydashboard::menuItem("Normalized data", 
-                                   tabName = "normalization"),
-          shinydashboard::menuItem("IgG1 quantitation (optional)",
-                                   tabName = "quantitation"),
-          shinydashboard::menuItem("Glycosylation Traits (optional)", 
-                                   tabName = "derived_traits"),
-          shinydashboard::menuItem("Repeatability (optional)", 
-                                   tabName = "repeatability"),
-          shinydashboard::menuItem("Data Exploration (optional)", 
-                                   tabName = "data_exploration"),
-          shinydashboard::menuItem("Export results",
-                                   tabName = "export")
+          # HTML with &nbsp is to add some space between icon and text
+          div(class = "sidebar-header", style = "font-weight: bold; padding: 10px; margin-left: 10px; text-decoration: underline;", "Required steps"),
+          shinydashboard::menuItem(HTML("&nbspData import"), 
+                                   tabName = "data_import",
+                                   icon = icon("upload")),
+          shinydashboard::menuItem(HTML("&nbspSpectra curation"), 
+                                   tabName = "spectra_curation",
+                                   icon = icon("area-chart")),
+          shinydashboard::menuItem(HTML("&nbspAnalyte curation"), 
+                                   tabName = "analyte_curation",
+                                   icon = icon("bar-chart")),
+          shinydashboard::menuItem(HTML("&nbspNormalized data"), 
+                                   tabName = "normalization",
+                                   icon = icon("table")),
+          div(class = "sidebar-header", style = "font-weight: bold; padding: 10px; margin-left: 10px; text-decoration: underline;", "Optional steps"),
+          shinydashboard::menuItem(HTML("&nbspIgG1 quantitation"),
+                                   tabName = "quantitation",
+                                   icon = icon("balance-scale")),
+          shinydashboard::menuItem(HTML("&nbsp&nbspGlycosylation traits"), 
+                                   tabName = "derived_traits",
+                                   icon = icon("flask")),
+          shinydashboard::menuItem(HTML("&nbspRepeatability"), 
+                                   tabName = "repeatability",
+                                   icon = icon("eye")),
+          shinydashboard::menuItem(HTML("&nbspData exploration"), 
+                                   tabName = "data_exploration",
+                                   icon = icon("magnifying-glass")),
+          div(class = "sidebar-header", style = "font-weight: bold; padding: 10px; margin-left: 10px; text-decoration: underline;", "Data export"),
+          shinydashboard::menuItem(HTML("&nbspExport results"),
+                                   tabName = "export",
+                                   icon = icon("download"))
           )
         ),
       
       body = shinydashboard::dashboardBody(
+        # Below causes the title to remain visible entirely when collapsing
+        # the sidebar. Only tab names are collapsed, icons remain visible.
+        # Taken from: https://stackoverflow.com/questions/69591309/shinydashboard-vs-shinydashboardplus-dashboardsidebar-title-differences
+        tags$style(
+            '
+          @media (min-width: 768px){
+            .sidebar-mini.sidebar-collapse .main-header .logo {
+                width: 230px; 
+            }
+            .sidebar-mini.sidebar-collapse .main-header .navbar {
+                margin-left: 230px;
+            }
+          }
+          '
+        ),
         shinyjs::useShinyjs(),
-        
-        #dashboardthemes::shinyDashboardThemes(theme = "poor_mans_flatly"),
-        
         shinydashboard::tabItems(
           shinydashboard::tabItem(
             "data_import",
@@ -93,9 +118,19 @@ app_ui <- function(request) {
             "export",
             mod_export_ui("export_ui_1")
           )
-        )
+        ),
       ),
       title = "GlycoDash"
+    ),
+    # Add the CSS for hiding the headers when the sidebar is collapsed.
+    # Written by GPT-4
+    tags$head(
+      tags$style(HTML("
+        /* Hide the sidebar headers when the sidebar is collapsed */
+        .sidebar-collapse .sidebar-header {
+          display: none;  /* Hide the headers when the sidebar is collapsed */
+        }
+      "))
     )
   )
 }
@@ -115,7 +150,10 @@ golem_add_external_resources <- function(){
   )
  
   tags$head(
-    favicon(),
+    favicon(
+      ico = "glycodash_logo",
+      ext = "png"
+    ),
     bundle_resources(
       path = app_sys('app/www'),
       app_title = 'GlycoDash'

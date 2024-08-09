@@ -39,20 +39,23 @@ mod_spectra_curation_ui <- function(id){
                 ) %>% 
                   bsplus::bs_embed_popover(
                     title = "Explanation",
-                    content = HTML(paste0(
-                      tags$p(paste(
-                        "The analyte quality criteria are used to curate the analytes",
-                        "within each spectrum. To pass, an analyte needs to meet all",
-                        "three criteria (for the mass accuracy, for the isotopic pattern", 
-                        "quality (IPQ) and for the signal-to-noise ratio (S/N))."
-                      )),
-                      tags$p(paste(
-                        "For each spectrum, the sum intensity of all passing",
-                        "analytes as well as the percentage of passing analytes",
-                        "are calculated. These values are shown in the", 
-                        "interactive plot below."
-                      ))
-                    )),
+                    content = HTML(
+                      "
+                      Here you can select analyte quality criteria that will be used for 
+                      spectra curation. These values will also be used in the \"Analyte Curation\"
+                      tab. For an analyte to pass in a spectrum, it has to fulfill all three
+                      quality criteria.
+                      <br> <br>
+                      For each spectrum, the intensities of all passing analytes are summed.
+                      The percentage of passing analytes is also calculated per spectrum. 
+                      These values are shown in the interactive scatter plots. 
+                      Spectra curation is performed based on the sum intensity of passing analytes 
+                      and on the percentage of passing analytes in the spectra.
+                      <br> <br>
+                      It is possible to exclude one or two quality criteria from this assessment,
+                      by clicking the gears icon.
+                      "
+                    ),
                     trigger = "hover",
                     placement = "right",
                     html = "true",
@@ -61,13 +64,8 @@ mod_spectra_curation_ui <- function(id){
                   shinyWidgets::awesomeCheckboxGroup(
                     ns("qc_to_include"),
                     "Which analyte quality criteria should be taken into account during spectra curation?",
-                    choices = c("Mass accuracy",
-                                "IPQ",
-                                "S/N"),
-                    selected = c("Mass accuracy",
-                                 "IPQ",
-                                 "S/N"),
-                    status = "primary"),
+                    # Choices determined in server based on data type
+                    choices = c(""), selected = c(""), status = "primary"),
                   icon = icon("gears",
                               class = "ml"),
                   tooltip = shinyWidgets::tooltipOptions(placement = "top",
@@ -79,20 +77,23 @@ mod_spectra_curation_ui <- function(id){
               solidHeader = TRUE,
               width = NULL,
               sliderInput(ns("mass_accuracy"), 
-                          "Acceptable mass accuracy range:",
+                          "Acceptable mass accuracy range (ppm):",
                           min = -50,
                           max = 50,
                           value = c(-20, 20)
               ),
+              # IPQ and S/N in case of LaCyTools
               numericInput(ns("ipq"),
-                           "Max. IPQ value:",
-                           value = 0.2,
-                           step = 0.1,
-                           min = 0.0),
+                           "Max. isotopic pattern quality (IPQ) value:",
+                           value = 0.2, step = 0.1, min = 0.0),
               numericInput(ns("sn"),
-                           "Min. S/N ratio:",
-                           value = 9,
-                           min = 0.0)
+                           "Min. signal-to-noise (S/N) ratio:",
+                           value = 9, min = 0.0),
+              # IDP and Total area in case of Skyline
+              numericInput(ns("idp"),
+                           "Min. isotope dot product (IDP) value:",
+                           val = 0.9, max = 1.0, step = 0.1),
+              numericInput(ns("total_area"), "Min. total area", val = 0)
             )
           )
         ),
@@ -122,31 +123,24 @@ mod_spectra_curation_ui <- function(id){
                           ) %>% 
                             bsplus::bs_embed_popover(
                               title = "Spectra curation methods",
-                              content = HTML(paste0(
-                                tags$p(
-                                  tags$b("Negative control spectra"),
-                                  br(),
-                                  paste(
-                                    "Choose a group of samples that should not pass spectra",
-                                    "curation (negative controls). The spectra curation", 
-                                    "cut-offs will be set at a chosen percentile", 
-                                    "of the sum intensities and percentages of passing", 
-                                    "analytes in those negative control samples."
-                                  )
-                                ),
-                                tags$p(
-                                  tags$b("Percentiles"),
-                                  br(),
-                                  paste(
-                                    "The cut-offs will be set at a chosen percentile", 
-                                    "of the sum intensities and percentages of passing",
-                                    "analytes in all spectra (except for in the sample",
-                                    "types to exclude). For example, if the chosen",
-                                    "percentile is 5, then the lowest 5% of all spectra will fail",
-                                    "curation."
-                                  )
-                                )
-                              )),
+                              content = HTML(
+                                "
+                                <b> Negative control spectra </b>
+                                <br>
+                                Choose a group of negative controls that should not pass
+                                spectra curation. The curation cut-offs will be set at a chosen
+                                percentile of the sum intensities and passing analyte percentages
+                                in the negative control spectra.
+                                <br> <br> 
+                                <b> Percentiles </b>
+                                <br>
+                                The cut-offs will be set at a chosen percentile of the sum intensities
+                                and passing analyte percentages in all spectra, except for those belonging
+                                to sample types that you choose to exclude from the assessment. For example,
+                                when the chosen percentile is 5, then the lowest 5% of all spectra will fail
+                                curation.
+                                "
+                              ),
                               trigger = "hover",
                               placement = "left",
                               html = "true",
@@ -218,7 +212,7 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            plotly::plotlyOutput(ns("curated_spectra_plot")),
+            shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("curated_spectra_plot"))),
             tabsetPanel(id = ns("more_than_4_clusters")),
             br(),
             tabsetPanel(
@@ -275,9 +269,38 @@ mod_spectra_curation_ui <- function(id){
 #' spectra_curation Server Functions
 #'
 #' @noRd 
-mod_spectra_curation_server <- function(id, results_data_import){
-  moduleServer( id, function(input, output, session){
+mod_spectra_curation_server <- function(id, results_data_import) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    
+    # Update user interface based on data type (LaCyTools or Skyline)
+    observeEvent(results_data_import$data_type(), {
+      if (results_data_import$data_type() == "Skyline data") {
+        # Checkboxes to include QC
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "qc_to_include",
+          choices = c("Mass accuracy", "Isotope dot product", "Total area"),
+          selected = c("Mass accuracy", "Isotope dot product", "Total area")
+        )
+        # Show IDP and Total area options
+        shinyjs::hide("ipq")
+        shinyjs::hide("sn")
+        shinyjs::show("idp")
+        shinyjs::show("total_area")
+      } else if (results_data_import$data_type() == "LaCyTools data") {
+        # Checkboxes to include QC
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "qc_to_include",
+          choices = c("Mass accuracy", "Isotopic pattern quality", "S/N"),
+          selected = c("Mass accuracy", "Isotopic pattern quality", "S/N")
+        )
+        # Show IPQ and SN
+        shinyjs::show("ipq")
+        shinyjs::show("sn")
+        shinyjs::hide("idp")
+        shinyjs::hide("total_area")
+      }
+    })
     
     # If quantitation is done: exlude quantitation clusters except IgG1 glycopeptides
     data_to_check <- reactive({
@@ -296,25 +319,42 @@ mod_spectra_curation_server <- function(id, results_data_import){
     
     # Data with criteria checks for each analyte in each sample.
     checked_data <- reactive({
-      req(data_to_check(), input$sn, input$ipq, length(input$qc_to_include) > 0)
+      req(data_to_check(), length(input$qc_to_include) > 0)
       
       r$tab_contents <- NULL # Reset the tab contents so that 
       # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
       
-      check_analyte_quality_criteria(my_data = data_to_check(),
-                                     min_ppm_deviation = input$mass_accuracy[1],
-                                     max_ppm_deviation = input$mass_accuracy[2],
-                                     max_ipq = input$ipq,
-                                     min_sn = input$sn,
-                                     criteria_to_consider = input$qc_to_include)
-      
+      if (results_data_import$data_type() == "LaCyTools data") {
+        req(input$sn, input$ipq)
+        # Check analyte quality criteria for LaCyTools data
+        check_analyte_quality_criteria_lacytools(
+          my_data = data_to_check(),
+          min_ppm_deviation = input$mass_accuracy[1],
+          max_ppm_deviation = input$mass_accuracy[2],
+          max_ipq = input$ipq,
+          min_sn = input$sn,
+          criteria_to_consider = input$qc_to_include
+        )
+      } else if (results_data_import$data_type() == "Skyline data") {
+        req(input$total_area, input$idp)
+        # Check analyte quality criteria for Skyline data
+        check_analyte_quality_criteria_skyline(
+          my_data = data_to_check(),
+          min_ppm_deviation = input$mass_accuracy[1],
+          max_ppm_deviation = input$mass_accuracy[2],
+          min_idp = input$idp,
+          min_total_area = input$total_area,
+          criteria_to_consider = input$qc_to_include
+        )
+      }
     })
+    
     
     
     # Analyte quality criteria checks summarized per cluster per sample: 
     summarized_checks <- reactive({
       req(checked_data())
-      summarize_spectra_checks(checked_data())
+      summarize_spectra_checks(checked_data(), results_data_import$data_type())
     })
     
     observe({
@@ -516,12 +556,6 @@ mod_spectra_curation_server <- function(id, results_data_import){
                      summarized_checks = summarized_checks(),
                      cut_offs = cut_offs_to_use_all_clusters())
     }) %>% bindEvent(input$button)
-    
-    
-    observe({
-      showNotification("Spectra curation has been performed.",
-                       type = "message")
-    }) %>% bindEvent(curated_data())
     
     
     passing_spectra <- reactive({
@@ -745,6 +779,8 @@ mod_spectra_curation_server <- function(id, results_data_import){
       mass_acc = reactive({ input$mass_accuracy }),
       ipq = reactive({ input$ipq }),
       sn = reactive({ input$sn }),
+      idp = reactive(input$idp),
+      total_area = reactive(input$total_area),
       included_qc = reactive({ input$qc_to_include }),
       uncalibrated_as_NA = reactive({ input$uncalibrated_as_na }),
       cut_off = reactive({input$cut_off_basis}),

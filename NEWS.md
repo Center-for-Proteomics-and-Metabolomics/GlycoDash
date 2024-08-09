@@ -1,3 +1,73 @@
+# v1.5.4
+## Adjustments
+* Created a more appealing user interface.
+* When visualizing repeatability per plate, calculate intra-plate variations and 
+inter-plate variation using median values instead of mean.
+
+
+# v1.5.3
+## Adjustments
+* Make plots resizable.
+
+## Bug fixes
+* Repeatability: fix incorrect error message about no data being available.
+
+
+# v1.5.2
+## Adjustments
+* Change the calculation of “sialylation per galactose”.
+It is now calculated as “Sialylation per antenna” divided by “Galactosylation per antenna”,
+multiplied by 100%.
+
+
+# v1.5.1
+## Adjustments
+* Remove the human IgG trait “terminal galactosylation”, as it is redundant.
+
+
+# v1.5.0
+## New features
+* Visualization of normalized data with heatmaps.
+* Option to normalize charge states of analytes separately.
+
+## Adjustments
+* Show a simple warning message when required variables are missing from LaCyTools data.
+* Add terminal galactosylation as an automatically calculated trait for human IgG.
+* Remove the “Calculate glycosylation traits” button.
+* Disable the “Generate report” button until normalization is performed.
+* Show chosen percentiles from spectra curation in the report.
+
+## Bug fixes
+* Minor bug fixes.
+
+
+# v1.4.3
+## Adjustments
+* Detect and automatically rename isomers in Skyline data.
+
+
+# v1.4.2
+## Adjustments
+* April 2024: Make GlycoDash compatible with R 4.3.3, and most recent package versions.
+* Include sialylation per galactose as a trait for human IgG.
+* Automatic derived traits are now calculated in percentages instead of fractions.
+
+
+# v1.4.1
+## Bug fixes
+* Automatically detect comma or semicolon separation in Skyline CSV files. 
+* Show Skyline quality criteria in the generated report.
+
+
+# v1.4.0
+## New features
+* Option to upload Skyline data.
+* Option to exclude quality criteria in analyte curation.
+
+## Adjustments
+* More info boxes in the user interface.
+
+
 # v1.3.7
 ## Adjustments
 * The GlycoDash version is now shown in the data processing report.

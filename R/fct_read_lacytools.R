@@ -507,3 +507,225 @@ getOrdinalSuffix <- function(num) {
     return(paste0(num, "th"))
   }
 }
+
+
+
+#' read_skyline_csv
+#'
+#' @param path_to_file Path to Skyline CSV file
+#'
+#' @return Dataframe with raw data read from CSV
+read_skyline_csv <- function(path_to_file) {
+  L <- readLines(path_to_file, n = 1)
+  if (grepl(";", L)) {
+    raw_data <- read.csv(path_to_file, header = TRUE, sep = ";")
+  } else {
+    raw_data <- read.csv(path_to_file, header = TRUE, sep = ",")
+  }
+  return(raw_data)
+}
+
+
+
+#' rename_skyline_isomers
+#' 
+#' This function detects the presence of isomers in a Skyline CSV file.
+#' When an analyte is present twice in a given charge state, the two duplicate
+#' analytes are assumed to be isomers with the same glycan composision. The glycan
+#' compositions are renamed to distinguish them.
+#' 
+#' @param raw_skyline_data 
+#' Imported skyline CSV data from the read_skyline_csv() function.
+#' 
+#' @param i Number of the Skyline CSV file that is being processed
+#'
+#' @return
+#' Skyline CSV data with glycan compositions of isomers renamed using "_a", "_b", etc.
+#' 
+rename_skyline_isomers <- function(raw_skyline_data, i) {
+  
+  # Look for isomers in the glycan compositions, per peptide.
+  data <- raw_skyline_data %>% 
+    dplyr::group_by(Protein.Name, Peptide, Precursor.Charge) %>% 
+    dplyr::mutate(n = dplyr::n()) %>% 
+    dplyr::ungroup() %>% 
+    dplyr::relocate(n, .after = Precursor.Charge)
+  
+  # n == 1 implies unique glycan composition
+  data_unique <- data %>% 
+    dplyr::filter(n == 1)
+  
+  # n > 1 implies presence of isomers
+  data_isomers <- data %>% 
+    dplyr::filter(n > 1) %>% 
+    dplyr::group_by(Protein.Name, Precursor.Charge, Peptide) %>% 
+    dplyr::mutate(Peptide_unique = make.unique(Peptide)) %>% 
+    dplyr::ungroup() %>% 
+    # Instead of ".1", ".2", etc at the end of duplicates, add "_a","_b", to 
+    # the ends of all isomers, including the first one.
+    dplyr::mutate(
+      Peptide = dplyr::case_when(
+        endsWith(Peptide_unique, ".1") ~ paste0(Peptide, "_b"),
+        endsWith(Peptide_unique, ".2") ~ paste0(Peptide, "_c"),
+        endsWith(Peptide_unique, ".3") ~ paste0(Peptide, "_d"),
+        endsWith(Peptide_unique, ".4") ~ paste0(Peptide, "_e"),
+        endsWith(Peptide_unique, ".5") ~ paste0(Peptide, "_f"),
+        endsWith(Peptide_unique, ".6") ~ paste0(Peptide, "_g"),
+        endsWith(Peptide_unique, ".7") ~ paste0(Peptide, "_h"),
+        endsWith(Peptide_unique, ".8") ~ paste0(Peptide, "_i"),
+        endsWith(Peptide_unique, ".9") ~ paste0(Peptide, "_j"),
+        .default = paste0(Peptide, "_a")
+      )
+    ) %>% 
+    dplyr::select(-Peptide_unique)
+  
+  # Combine the data again
+  data_renamed <- dplyr::bind_rows(data_unique, data_isomers)
+  
+  # Show a notification if isomers were detected
+  if (length(data_isomers$Peptide > 0)) {
+    # Get vector with the compositions for which isomers were detected
+    isomeric <- data %>% 
+      dplyr::filter(n > 1) %>% 
+      dplyr::select(Protein.Name, Peptide) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(analyte = paste0(Protein.Name, "1", Peptide)) %>% 
+      dplyr::pull(analyte)
+    # Show notification with message
+    message <- paste0(
+      "In CSV file ", i, ", the following ", length(isomeric), 
+      " analytes with isomeric glycan compositions were detected and renamed: ",
+      paste0(isomeric , collapse = ", ")
+    )
+    showNotification(message, type = "warning", duration = 30)
+  }
+  
+  return(data_renamed)
+}
+
+
+
+#' transform_skyline_data
+#'
+#' @param raw_skyline_data Raw skyline data, read into R with 
+#' the read_skyline_csv() function above.
+#' 
+#' @param i Number of the Skyline CSV file that is being processed (1, 2, 3, etc)
+#' Required for the rename_skyline_isomers() function to display notifications.
+#'
+#' @return A clean dataframe in a similar format as a transformed
+#' LaCyTools summary. The dataframe contains the following columns:
+#' - sample_name
+#' - analyte
+#' - charge
+#' - absolute_intensity_background_subtracted
+#' - mass_accuracy_ppm
+#' - isotope_dot_product
+#' 
+transform_skyline_data <- function(raw_skyline_data, i) {
+  # Check structure of skyline data
+  check_skyline_data(raw_skyline_data)
+  # Check for isomers and rename them if they are present
+  renamed_data <- rename_skyline_isomers(raw_skyline_data, i)
+  # Select required columns
+  raw_data_required <- renamed_data %>% 
+    dplyr::select(
+      "Protein.Name", "Peptide", "Precursor.Charge",
+      tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"))
+    )
+  # Make columns numeric except for first three
+  raw_data_required[raw_data_required == "#N/A"] <- NA
+  raw_data_required <- dplyr::mutate_at(raw_data_required, dplyr::vars(-1, -2, -3), as.numeric)
+  # Transform the data
+  cols_to_pivot <- colnames(raw_data_required)[-(1:3)]
+  raw_data_long <- raw_data_required %>% 
+    tidyr::pivot_longer(tidyselect::all_of(cols_to_pivot))
+  variables <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM")
+  # Initiate empty list to store DFs
+  var_dfs <- vector("list", length = length(variables))
+  # Loop over the variables
+  # Create separate dataframe for each variable
+  # Create columns sample_name and variable
+  for (i in seq(length(variables))) {
+    var <- variables[i]
+    var_data_long <- raw_data_long %>% 
+      dplyr::filter(grepl(var, name)) %>% 
+      tidyr::separate(
+        name,
+        sep = paste0(".", var),
+        into = c("sample_name", "variable")
+      ) %>% 
+      dplyr::mutate(variable = var) %>% 
+      # Combine Protein.Name and Peptide into analyte
+      dplyr::mutate(analyte = paste0(Protein.Name, "1", Peptide)) %>% 
+      dplyr::select(-Protein.Name, -Peptide)
+    var_dfs[[i]] <- var_data_long
+  }
+  # Combine required data and turn into wide format
+  data_clean <- dplyr::bind_rows(var_dfs) %>% 
+    dplyr::group_by(variable) %>% 
+    dplyr::mutate(row = dplyr::row_number()) %>% 
+    tidyr::pivot_wider(names_from = variable, values_from = value) %>% 
+    dplyr::select(-row) %>% 
+    dplyr::ungroup() %>% 
+    # Get into same format as processed LaCyTools summary
+    dplyr::rename(
+      charge = Precursor.Charge,
+      total_area = Total.Area.MS1,
+      isotope_dot_product = Isotope.Dot.Product,
+      mass_accuracy_ppm = Average.Mass.Error.PPM
+    ) %>% 
+    dplyr::mutate(charge = paste0(charge, "+")) %>% 
+    dplyr::relocate(charge, .after = analyte) %>% 
+    dplyr::relocate(total_area, .after = charge) %>% 
+    dplyr::relocate(mass_accuracy_ppm, .after = total_area)
+  
+  return(data_clean)
+}
+
+
+
+# Function to check the structure of Skyline CSV files.
+check_skyline_data <- function(raw_skyline_data) {
+  # Check if required columns are present in the file
+  required_cols <- c("Protein.Name", "Peptide", "Precursor.Charge")
+  cols_check <- required_cols %in% colnames(raw_skyline_data)
+  missing_cols <- required_cols[!cols_check]
+  if (length(missing_cols) > 0) {
+    rlang::abort(
+      class = "missing_columns",
+      message = paste0(
+        "the following columns are missing from your data: ",
+        paste0(gsub("\\.", " ", missing_cols), collapse = ", ")
+      )
+    )
+  }
+  # Check if required variables per sample name are present in the file
+  required_vars <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM") 
+  vars_check <- sapply(required_vars, function(x) any(grepl(x, colnames(raw_skyline_data))))
+  missing_vars <- required_vars[!vars_check]
+  if (length(missing_vars) > 0) {
+    rlang::abort(
+      class = "missing_variables",
+      message = paste0(
+        "the following variables are missing from your data: ",
+        paste0(gsub("\\.", " ", missing_vars), collapse = ", ")
+      )
+    )
+  }
+  # Check if Protein.Name contains spaces or letters
+  contains_numbers_or_spaces <- grepl("[0-9 ]", raw_skyline_data$Protein.Name)
+  if (any(contains_numbers_or_spaces)) {
+    rlang::abort(
+      class = "numbers_or_spaces",
+      message = paste0(
+        "please remove any numbers or spaces from all entries in the column \"Protein Name\"."
+      )
+    )
+  }
+}
+
+
+
+
+

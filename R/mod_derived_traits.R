@@ -75,11 +75,13 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgG_traits"),
                 "Select the traits you want to calculate for human IgG N-glycans:",
+                "Complex-type glycans:",
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
-                  "Galactosylation of complex-type glycans",
-                  "Sialylation of complex type-glycans",
+                  "Galactosylation per antenna of complex-type glycans",
+                  "Sialylation per antenna of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans (calculated as [Sialylation per antenna] / [Galactosylation per antenna] \u00D7 100%)",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
                   "Percentage of oligomannose-type glycans",
@@ -118,10 +120,7 @@ mod_derived_traits_ui <- function(id){
                 multiple = TRUE
               )
             ))
-          ),
-          br(),
-          actionButton(ns("do_calculation"),
-                       "Calculate glycosylation traits")
+          )
         ),
         shinydashboard::box(
           title = "Formulas used to automatically calculate the glycosylation traits",
@@ -153,10 +152,12 @@ mod_derived_traits_ui <- function(id){
                   The Excel file must contain one column called \"trait\" that
                   specifies the names of the traits. The second column must be called
                   \"formula\" and should contain the formulas for the traits. Analyte names
-                  in the formula should include both the cluster and glycan composition, 
+                  in the formula should include both the peptide name and glycan composition, 
                   e.g. \"IgGI1H4N4F1\".
-                  <br><br>
+                  <br> <br>
                   <strong>Trait names should not contain any spaces.</strong>
+                  <br> <br>
+                  For an example file, click the paperclip icon.
                   "
                 ),
                 trigger = "hover",
@@ -261,20 +262,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         updateSelectizeInput(id, choices = clusters(), session = session)
       }
     })
-    
-    
-    # Toggle calculation button
-    observe({
-      shinyjs::toggleState("do_calculation", condition = all(
-        !is.null(input$antibody_types),
-        if ("Human IgG: N-glycans" %in% input$antibody_types) {
-          !is.null(input$human_IgG_traits) & !is.null(input$human_IgG_clusters)
-        },
-        if ("Mouse IgG: N-glycans" %in% input$antibody_types) {
-          !is.null(input$mouse_IgG_traits) & !is.null(input$mouse_IgG_clusters)
-        }
-      ))
-    })
 
     
     ####################  Custom glycosylation traits  ####################
@@ -340,10 +327,28 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         NULL
       })
     })
-
-
+    
 
     ####################  Default glycosylation traits  ####################
+    
+    # If user selects sialylation per galactose, then sialylation and galactosylation
+    # must both be selected automatically if not yet done so.
+    observeEvent(input$human_IgG_traits, {
+      selected <- input$human_IgG_traits
+      if ("Sialylation per galactose of complex-type glycans (calculated as [Sialylation per antenna] / [Galactosylation per antenna] \u00D7 100%)" %in% selected) {
+        if (!("Galactosylation per antenna of complex-type glycans" %in% selected &
+              "Sialylation per antenna of complex-type glycans" %in% selected)) {
+          shinyWidgets::updateAwesomeCheckboxGroup(
+            inputId = "human_IgG_traits",
+            selected = unique(c(
+              selected,
+              "Galactosylation per antenna of complex-type glycans",
+              "Sialylation per antenna of complex-type glycans"
+            ))
+          )
+        }
+      }
+    })
     
     human_IgG_traits <- reactive({
       req(input$human_IgG_traits)
@@ -355,44 +360,55 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       match_mouse_IgG_traits(input$mouse_IgG_traits)
     })
     
-    observeEvent(input$do_calculation, {
-      shinybusy::show_modal_spinner(
-        spin = "cube-grid", color = "#0275D8",
-        text = HTML("<br/><strong>Calculating traits...")
-      )
-    }, priority = 50)
-    
     human_IgG_trait_formulas <- reactive({
-      load(system.file("app", "www", "human_IgG_ref.rda", package = "GlycoDash"))
+      req(length(input$human_IgG_clusters) > 0)
+      load(system.file("app", "www", "human_IgG_N_ref.rda", package = "GlycoDash"))
       formula_list <- create_formula_list(
         normalized_data = normalized_data(),
         chosen_traits = human_IgG_traits(),
         chosen_clusters = input$human_IgG_clusters,
-        reference = human_IgG_ref
+        reference = human_IgG_N_ref
       )
       purrr::reduce(formula_list, c)  # c = concatenate
-    }) %>% bindEvent(input$do_calculation)
+    }) 
     
-   mouse_IgG_trait_formulas <- reactive({
-     load(system.file("app", "www", "mouse_IgG_ref.rda", package = "GlycoDash"))
-     formula_list <- create_formula_list(
-       normalized_data = normalized_data(),
-       chosen_traits = mouse_IgG_traits(),
-       chosen_clusters = input$mouse_IgG_clusters,
-       reference = mouse_IgG_ref
+    mouse_IgG_trait_formulas <- reactive({
+      req(length(input$mouse_IgG_clusters) > 0)
+      load(system.file("app", "www", "mouse_IgG_ref.rda", package = "GlycoDash"))
+      formula_list <- create_formula_list(
+        normalized_data = normalized_data(),
+        chosen_traits = mouse_IgG_traits(),
+        chosen_clusters = input$mouse_IgG_clusters,
+        reference = mouse_IgG_ref
      )
      purrr::reduce(formula_list, c)
-   }) %>% bindEvent(input$do_calculation)
+   })
    
+    
     trait_formulas <- reactive({
       req(any(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas())))
+      # Combine generated trait formulas
       if (all(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas()))) {
-        c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
+        formulas <- c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
       } else if (is_truthy(human_IgG_trait_formulas())) {
-        human_IgG_trait_formulas()
+        formulas <- human_IgG_trait_formulas()
       } else if (is_truthy(mouse_IgG_trait_formulas())) {
-        mouse_IgG_trait_formulas()
+        formulas <- mouse_IgG_trait_formulas()
       }
+      # Check if sialylation per galactose should be calculated for human IgG
+      if (is_truthy(human_IgG_trait_formulas())) {
+        if ("Sialylation per galactose of complex-type glycans (calculated as [Sialylation per antenna] / [Galactosylation per antenna] \u00D7 100%)" %in% input$human_IgG_traits) {
+          new_formulas <- c()
+          for (cluster in input$human_IgG_clusters) {
+            new_formulas <- c(
+              new_formulas,
+              paste0(cluster, "_sialylation_per_galactose = ", cluster, "_sialylation / ", cluster, "_galactosylation * 100")
+            )
+          }
+          formulas <- c(formulas, new_formulas)
+        }
+      }
+      return(formulas)
     })
     
     data_with_derived_traits <- reactive({
@@ -469,7 +485,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                                   searching = FALSE))
     })
     
-    
     # Display the formulas of the default traits
     formulas_table <- reactive({
       req(data_with_traits())
@@ -492,10 +507,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                                    searching = FALSE))
     })
     
-    observeEvent(formulas_table(), {
-      shinybusy::remove_modal_spinner()
-    })
-    
     
     # Option to download the default traits formulas as an Excel file
     observe({
@@ -511,7 +522,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         writexl::write_xlsx(formulas_table(), path = file)
       }
     )
-    
     
     return(
       list(

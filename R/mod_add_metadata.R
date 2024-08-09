@@ -29,10 +29,15 @@ mod_add_metadata_ui <- function(id){
           bsplus::bs_embed_popover(
             title = "Explanation",
             content = HTML(
-              "Your metadata Excel file should contain a column with the sample ID's, and one or more columns with metadata.",
-              "<br><br>",
-              "<strong>Each sample ID should be present only once in your Excel file</strong>",
-              "(even if it is present multiple times in your plate design)."
+              "
+              Your metadata Excel file should contain a named column that contains the sample ID's,
+              and one or more named columns with metadata (e.g. \"age\", \"sex\", \"disease\").
+              <br> <br>
+              Each sample ID should be present only once in your file, even if it is present
+              multiple times in your plate design.
+              <br> <br>
+              For an example file, click the paperclip button.
+              "
             ),
             trigger = "hover", 
             placement = "right",
@@ -149,6 +154,10 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
     })
     
     
+    
+    rv <- reactiveValues() 
+    
+    
     # Merge the metadata dataframes in metadata_list() together:
     merged_metadata <- reactive({
       req(
@@ -198,25 +207,15 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
 
       if (length(forbidden_colnames) != 0) {
         
-        forbidden_colnames_table <- DT::datatable(data.frame(forbidden_colnames),
-                                                  options = list(
-                                                    scrollY = "100px",
-                                                    paging = FALSE,
-                                                    searching = FALSE,
-                                                    columnDefs = list(
-                                                      list(
-                                                        className = 'dt-center',
-                                                        targets = "_all"))),
-                                                  colnames = "",
-                                                  rownames = FALSE)
+        # Pass to reactiveValues vector
+        rv$forbidden_colnames <- forbidden_colnames
         
         shinyalert::shinyalert(
           html = TRUE,
-          text = tagList(
+          text = paste(
             "The following column names in your metadata are not allowed:",
-            forbidden_colnames_table,
-            br(),
-            "Please rename (or remove) these columns, and try again."
+            shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table"))),
+            "<br>Please rename these columns and re-upload your metadata file."
           ),
           size = "m",
           confirmButtonText = "OK",
@@ -228,8 +227,28 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
         shinyFeedback::feedbackDanger("file", show = TRUE, text = "Please adjust your metadata file.")
 
         return(NULL)
-      } else return(merged_metadata)
+      } else {
+        rv$forbidden_colnames <- NULL
+        return(merged_metadata)
+      }
     })
+    
+    output$popup_table <- DT::renderDataTable({
+      DT::datatable(
+        data.frame(rv$forbidden_colnames),
+        options = list(
+          scrollY = "150px",
+          paging = FALSE,
+          searching = FALSE,
+          columnDefs = list(
+            list(
+              className = 'dt-center',
+              targets = "_all"))),
+        colnames = "Column name",
+        rownames = FALSE
+      )
+    }) 
+    
     
     
     # Check for duplicate sample IDs
@@ -238,29 +257,16 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
       sample_ids <- merged_metadata()$sample_id
       all_unique <- length(sample_ids) == length(unique(sample_ids))
       if (all_unique) {
+        rv$non_unique_ids <- NULL
         return(TRUE)
       } else {
         # Show table with duplicate sample IDs
-        non_unique_ids <- sample_ids[duplicated(sample_ids)]
-        duplicates_table <- DT::datatable(data.frame(non_unique_ids),
-                                          options = list(
-                                            scrollY = "150px",
-                                            paging = FALSE,
-                                            searching = FALSE,
-                                            columnDefs = list(
-                                              list(
-                                                className = 'dt-center',
-                                                targets = "_all"))),
-                                          colnames = "sample_id",
-                                          rownames = FALSE)
-
+        rv$non_unique_ids <- sample_ids[duplicated(sample_ids)]
         shinyalert::shinyalert(
           html = TRUE,
-          text = tagList(
+          text = paste(
             "The following sample ID's are present more than once in your file:",
-            duplicates_table,
-            br(),
-            "Please change your file such that each sample ID is present only once, and try again."
+            shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_duplicates")))
           ),
           size = "m",
           confirmButtonText = "OK",
@@ -274,6 +280,22 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
         return(FALSE)
       }
     })
+    
+    output$popup_table_duplicates <- DT::renderDataTable({
+      DT::datatable(
+        data.frame(rv$non_unique_ids),
+        options = list(
+          scrollY = "150px",
+          paging = FALSE,
+          searching = FALSE,
+          columnDefs = list(
+            list(
+              className = 'dt-center',
+              targets = "_all"))),
+        colnames = "sample_id",
+        rownames = FALSE
+      )
+    }) 
     
     
     # Check for unmatched id's
@@ -297,12 +319,11 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
       shinyalert::shinyalert(
         inputId = "popup",
         html = TRUE,
-        text = tagList(
-          paste(length(unmatched_ids()),
-                "sample ID's in the data had no match in the metadata:"),
-          DT::dataTableOutput(ns("unmatched_ids_table")),
-          br(),
-          "Please check: 1) Does the spelling of sample IDs in your metadata correspond to the spelling in your plate design?",
+        text = paste(
+          length(unmatched_ids()),
+          "sample ID's in the data had no match in the metadata:",
+          shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_unmatched"))),
+          "<br>Please check: 1) Does the spelling of sample IDs in your metadata correspond to the spelling in your plate design?",
           "and 2) Have you selected the correct sample ID columns?"
         ),
         size = "m",
@@ -313,6 +334,26 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
         type = ifelse(length(unmatched_ids()) > 20, "warning", "")
       )
     })
+    
+    output$popup_table_unmatched <- DT::renderDataTable({
+      req(!isTRUE(all.equal(unmatched_ids(), "none")))
+      unmatched <- matrix(unmatched_ids())
+      table <- DT::datatable(unmatched,
+                             options = list(
+                               scrollY = "150px",
+                               paging = FALSE,
+                               searching = FALSE,
+                               columnDefs = list(
+                                 list(
+                                   className = 'dt-center',
+                                   targets = "_all"))),
+                             colnames = "Sample ID",
+                             rownames = FALSE)
+
+      return(table)
+    },
+    server = FALSE)
+    
     
     
     with_metadata <- reactive({
@@ -329,28 +370,6 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
         NULL
       }
     })
-
-    
-    # This is the datatable containing the unmatched sample ID's that is shown 
-    # in the pop-up:
-    output$unmatched_ids_table <- DT::renderDataTable({
-      req(!isTRUE(all.equal(unmatched_ids(), "none")))
-      unmatched <- matrix(unmatched_ids())
-      table <- DT::datatable(unmatched,
-                             options = list(
-                               scrollY = "100px",
-                               paging = FALSE,
-                               searching = FALSE,
-                               columnDefs = list(
-                                 list(
-                                   className = 'dt-center', 
-                                   targets = "_all"))),
-                             colnames = "Sample ID",
-                             rownames = FALSE)
-      
-      return(table)
-    },
-    server = FALSE)
     
     
     # Download example metadata file

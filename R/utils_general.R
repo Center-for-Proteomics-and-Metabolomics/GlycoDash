@@ -356,3 +356,7 @@ customDownloadbutton <- function(outputId, label = "Changelog"){
   tags$a(id = outputId, class = "btn shiny-download-link", href = "", 
          download = NA, icon("download"), label)
 }
+
+
+
+

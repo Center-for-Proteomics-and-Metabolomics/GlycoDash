@@ -1,13 +1,12 @@
 Package: GlycoDash
 Title: GlycoDash
-Version: 1.0.0
-Authors@R: person('Sterre', 'Siekman', email = 's.l.siekman@lumc.nl', role = c('cre', 'aut'))
+Version: 1.5.4
+Authors@R: person('Steinar', 'Gijze', email = 's.gijze@lumc.nl', role = c('cre', 'aut'))
 Description: Package for processing glycomics data.
 License: MIT + file LICENSE
 Imports: 
     bsplus,
     config (>= 0.3.1),
-    dashboardthemes,
     dplyr (>= 1.1.0),
     DT,
     ggplot2 (>= 3.4.1),
@@ -26,7 +25,7 @@ Imports:
     RLumShiny,
     scales,
     shiny (>= 1.7.1),
-    shinyalert,
+    shinyalert (>= 3.0.0),
     shinyBS,
 	shinybusy,
 	shinycssloaders,
@@ -45,7 +44,7 @@ Imports:
     writexl
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Suggests: 
     rmarkdown,
     knitr,
@@ -55,4 +54,4 @@ Config/testthat/edition: 3
 Language: en-US
 VignetteBuilder: knitr
 Depends: 
-    R (>= 2.10)
+    R (>= 4.0)

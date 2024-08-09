@@ -522,7 +522,7 @@ visualize_repeatability_mean_bars <- function(data,
   
   to_plot <- to_plot %>%
     dplyr::group_by(analyte) %>%
-    na.omit(cols = "relative_abundance") %>%
+    dplyr::filter(!is.na(relative_abundance)) %>%
     dplyr::reframe(mean_rel_ab = mean(relative_abundance),
                      sd_rel_ab = sd(relative_abundance),
                      rsd = sd_rel_ab / mean_rel_ab * 100,

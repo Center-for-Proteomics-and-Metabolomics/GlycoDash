@@ -79,8 +79,10 @@ mod_export_server <- function(id,
     })
     
     # Disable the "Download processed data" button until normalized data is available
+    # Also the Generate report button
     observe({
       shinyjs::toggleState("download", is_truthy(x$data))
+      shinyjs::toggleState("report", is_truthy(x$data))
     })
     
     # Display the final data table
@@ -221,6 +223,7 @@ mod_export_server <- function(id,
         # other information from the dashboard to pass along to the Report.Rmd
         # markdown file:
         params <- list(
+          data_type = results_data_import$data_type(),
           summary_filenames = results_data_import$summary_filenames(),
           plate_design = try_call(results_data_import$filenames_plate_design), # trycall not needed?
           sample_list = try_call(results_data_import$filename_sample_list), # trycall not needed?
@@ -230,17 +233,22 @@ mod_export_server <- function(id,
           mass_acc = results_spectra_curation$mass_acc(),
           ipq = results_spectra_curation$ipq(),
           sn = results_spectra_curation$sn(),
-          included_qc = results_spectra_curation$included_qc(),
+          idp = results_spectra_curation$idp(),
+          total_area = results_spectra_curation$total_area(),
+          included_qc_spectra = results_spectra_curation$included_qc(),
           spectra_curation_tab_contents = spectra_curation_tab_contents,
           curated_spectra_plot = try_call(results_spectra_curation$plot),
           curated_spectra_plots = curated_spectra_plots,
           analyte_curation_method = results_analyte_curation$method(),
+          included_qc_analytes = results_analyte_curation$included_qc(),
           analyte_curation_choice = results_analyte_curation$curation_method(),
           groups_to_ignore = results_analyte_curation$groups_to_ignore(),
           ignore_samples = results_analyte_curation$ignore_samples(), # test if empty
           cut_offs = results_analyte_curation$cut_offs(),
           analyte_list = results_analyte_curation$analyte_list(),
           analyte_curation_tab_contents = analyte_curation_tab_contents,
+          heatmaps = results_normalization$heatmaps(),
+          heatmaps_excluded_sample_types = results_normalization$heatmaps_excluded_sample_types(),
           derived_traits = try_call(results_derived_traits$derived_traits),
           formulas = try_call(results_derived_traits$formulas),
           custom_formulas = try_call(results_derived_traits$custom_formulas),

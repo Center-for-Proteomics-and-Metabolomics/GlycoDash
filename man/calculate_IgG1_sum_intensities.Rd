@@ -6,12 +6,15 @@
 \usage{
 calculate_IgG1_sum_intensities(
   LaCyTools_summary,
+  data_type,
   quantitation_clusters,
   analyte_curated_data
 )
 }
 \arguments{
 \item{LaCyTools_summary}{LaCyTools summary, as created in data import.}
+
+\item{data_type}{"LaCyTools data" or "Skyline data"}
 
 \item{quantitation_clusters}{A named list with the cluster names of the peptides that are used
 for IgG1 quantitation. This list is created in the data import tab.}
