@@ -119,7 +119,7 @@ mod_read_lacytools_ui <- function(id){
                   (e.g. \"H5N2\", \"H4N4F1S1\").
                   </li>
                   <li>
-                  <i> Precursor </i> <br>
+                  <i> Precursor Charge </i> <br>
                   A number specifying the charge state of the glycopeptide.
                   </li>
               </ul>
