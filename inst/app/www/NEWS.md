@@ -1,7 +1,5 @@
 # v1.5.5
 ## Adjustments
-* Correction in info box for Skyline data import: the column with charge states should be called
-“Precursor Charge”, not “Precursor”.
 
 
 # v1.5.4
