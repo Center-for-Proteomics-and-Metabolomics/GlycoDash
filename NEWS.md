@@ -3,6 +3,10 @@
 * Added a download button for the GlycoDash manual in the top-right corner of 
 the dashboard.
 
+## Bug fixes
+* Prevent users from excluding all sample types or biological groups during analyte curation,
+which caused the dashboard to crash.
+
 
 # v1.5.4
 ## Adjustments

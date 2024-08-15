@@ -182,7 +182,6 @@ mod_analyte_curation_ui <- function(id){
               selectizeInput(ns("ignore_samples"),
                              HTML("Sample types to ignore regarding analyte curation:"),
                              choices = c(""),
-                             #choices = c("Total", "Blanks", "Negative controls"),
                              multiple = TRUE) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
@@ -430,25 +429,27 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # are sample_types and groups that are present in the data.
     observe({
       if ("group" %in% colnames(passing_spectra())) {
-        options <- c(paste(unique(passing_spectra()$sample_type), "samples"), 
+        choices <- c(paste(unique(passing_spectra()$sample_type), "samples"), 
                      paste(unique(passing_spectra()$group), "samples"))
       } else {
-        options <- c(paste(unique(passing_spectra()$sample_type), "samples"))
+        choices <- c(paste(unique(passing_spectra()$sample_type), "samples"))
       }
       
       updateSelectizeInput(inputId = "ignore_samples",
-                           choices = c(options))
+                           choices = c(choices),
+                           options = list(maxItems = length(choices) - 1))
     })
     
     
     # Update the selection menu for "Biological groups to ignore", based on the chosen columm.
     observe({
       req(is_truthy(input$biogroup_column), rv_resp$response == TRUE)
-      options <- as.character(dplyr::pull(
+      choices <- as.character(dplyr::pull(
         unique(passing_spectra()[input$biogroup_column]) %>% 
         tidyr::drop_na()
       )) # as.character() for when the column contains factors, as is the case with sample_types
-      updateSelectizeInput(inputId = "groups_to_ignore", choices = c(options))
+      updateSelectizeInput(inputId = "groups_to_ignore", choices = c(choices),
+                           options = list(maxItems = length(choices) - 1))
     })
     
     observeEvent(input$biogroup_column, {
