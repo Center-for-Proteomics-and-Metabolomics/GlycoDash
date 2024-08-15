@@ -29,7 +29,7 @@ app_server <- function( input, output, session ) {
   output$download_manual <- downloadHandler(
     filename = "GlycoDash_manual.pdf",
     content = function(file) {
-      path <- system.file("man", "documents", "GlycoDash_manual.pdf", package = "GlycoDash")
+      path <- system.file("app", "www", "GlycoDash_manual.pdf", package = "GlycoDash")
       file.copy(path, file)
     }
   )
