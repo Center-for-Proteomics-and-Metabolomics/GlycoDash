@@ -1,5 +1,7 @@
 # v1.5.5
 ## Adjustments
+* Added a download button for the GlycoDash manual in the top-right corner of 
+the dashboard.
 
 
 # v1.5.4
