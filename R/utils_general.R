@@ -351,10 +351,17 @@ color_palette <- function(n_colors) {
 }
 
 
-# Function to create a download button in the dashboard header
-customDownloadbutton <- function(outputId, label = "Changelog"){
+# Function to create a Changelog button in the dashboard header
+ChangelogButton <- function(outputId, label = "Changelog"){
   tags$a(id = outputId, class = "btn shiny-download-link", href = "", 
-         download = NA, icon("download"), label)
+         download = NA, icon("history"), label)
+}
+
+
+# Function to create a Manual button in the dashboard header
+ManualButton <- function(outputId, label = "Manual"){
+  tags$a(id = outputId, class = "btn shiny-download-link", href = "", 
+         download = NA, icon("book"), label)
 }
 
 
