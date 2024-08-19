@@ -43,30 +43,30 @@ mod_quantitation_ui <- function(id) {
                   title = "Explanation",
                   content = HTML("
                   <p>
-                  IgG1 quantitation is first performed based on two different 
+                  IgG1 quantitation is first performed based on two different
                   peptides: the Fc glycopeptides and a proteotypic peptide
                   GPS[...]. It is also possible to perform the quantitation
                   based on only one of these peptides, using the checkboxes.
-                  
+
                   <ul>
                   <li>For the glycopeptides, the summed intensity of the natural IgG1
                   glycopeptides is divided by the summed intensity of the SIL glycopeptides.
                   This ratio is then multiplied by the amount of SILuMAb in the sample.</li>
-                  
+
                   <li>For GPS[...], the intensity of the natural peptide
                   is divided by the intensity of the SIL peptide,
                   after which the ratio is multiplied by the amount of SILuMAb in the sample.</li>
                   </ul>
-                  
+
                   <p>
                   The reported amount of IgG1 in the plot and table below is the
                   median of the values calculated for the two different peptides.
                   When a sample is missing a value for one of the peptides, this
-                  peptide is excluded from calculation of the median. The calculated 
+                  peptide is excluded from calculation of the median. The calculated
                   amount of IgG1 is rounded to a whole number (ng).
                   "),
                   trigger = "hover",
-                  placement = "right",
+                  placement = "bottom",
                   html = "true"
                 )
             ),
@@ -138,7 +138,7 @@ mod_quantitation_ui <- function(id) {
                   useful for comparing two different quantitation methods.
                   "),
                   trigger = "hover",
-                  placement = "left",
+                  placement = "bottom",
                   html = "true"
                 )
             ),

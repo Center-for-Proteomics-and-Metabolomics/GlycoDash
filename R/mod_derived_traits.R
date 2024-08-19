@@ -47,7 +47,7 @@ mod_derived_traits_ui <- function(id){
                 "
                 ),
                 trigger = "hover",
-                placement = "right",
+                placement = "bottom",
                 html = "true"
               ),
           ),
