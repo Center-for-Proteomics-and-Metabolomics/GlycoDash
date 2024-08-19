@@ -473,8 +473,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                         try_call(tab[["cut_offs_to_use"]])
                      })
     })
-    
-    
+  
     
     # Check if there are clusters for which all negative controls were uncalibrated
     missing_cluster_cut_offs <- reactive({
@@ -502,7 +501,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       }
     })
     
-    
+
     # Enable or disable button based on missing cut-offs
     observe({
       if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
@@ -532,15 +531,15 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         # Show a warning message
         showNotification(
           tags$div(
-            "For the following clusters, all negative control spectra are uncalibrated: ",
+            "For the following clusters, all negative control spectra are either missing or uncalibrated: ",
             paste0(clusters_missing, collapse = ", "),
             br(),
             br(),
             "Please do one of the following:",
             tags$ul(
               tags$li("Use different or additional negative controls."),
-              tags$li("Choose to treat uncalibrated spectra as zeros, instead of missing values."),
-              tags$li("Choose manual cut-offs for these clusters.")
+              tags$li("Choose manual cut-offs for these clusters."),
+              tags$li("Choose to treat uncalibrated spectra as zeros, instead of missing values.")
             )
           ),
           type = "warning",

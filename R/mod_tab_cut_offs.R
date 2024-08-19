@@ -181,7 +181,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
         )
         
         cut_offs <- dplyr::full_join(specific, total) %>% 
-          dplyr::mutate(group = as.factor(group))
+          dplyr::mutate(group = as.factor(group), cluster = selected_cluster)
         
       } else {
         req(input$cut_off_sum_intensity,
@@ -206,6 +206,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
         req(calculated_cut_offs())
       }
     })
+    
     
     # Combine cut-offs with summarized checks
     summarized_checks_with_cut_offs <- reactive({

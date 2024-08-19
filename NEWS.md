@@ -4,6 +4,10 @@
 the dashboard.
 
 ## Bug fixes
+* When curating total and specific spectra based on negative controls that were
+missing for one or more clusters, the “Perform analyte curation” button remained
+grey even after choosing manual cut-offs. This has now been fixed.
+
 * Prevent users from excluding all sample types or biological groups during analyte curation,
 which caused the dashboard to crash.
 
