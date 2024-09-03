@@ -59,9 +59,10 @@ mod_derived_traits_ui <- function(id){
             "Select the types of antibody glycans that are present in your data:",
             choices = c(
               "Human IgG: N-glycans",
-              # "Human IgA: N-glycans",
-              # "Human IgA: O-glycans",
-              # "Human IgM: N-glycans",
+              "Human IgA: N-glycans",
+              "Human IgA: O-glycans",
+              "Human IgM: N-glycans",
+              "Human Joining Chain: N-glycans",
               "Mouse IgG: N-glycans"
             )
           ),
@@ -69,13 +70,12 @@ mod_derived_traits_ui <- function(id){
           # Tab panel for traits options
           tabsetPanel(
             id = ns("tabs"),
-            # Human IgG tab
+            # Human IgG N-glycans
             tabPanel("Human IgG: N-glycans", tagList(
               br(),
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgG_traits"),
                 "Select the traits you want to calculate for human IgG N-glycans:",
-                "Complex-type glycans:",
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
@@ -90,7 +90,75 @@ mod_derived_traits_ui <- function(id){
               ),
               selectizeInput(
                 ns("human_IgG_clusters"),
-                "For which clusters in your data should human IgG N-glycan traits be calculated?",
+                "Select glycosylation sites for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              )
+            )),
+            # Human IgA N-glycans
+            tabPanel("Human IgA: N-glycans", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgA_N_traits"),
+                "Select the traits you want to calculate for human IgA N-glycans:",
+                choices = c(
+                  "A", "B", "C"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgA_N_clusters"),
+                "Select glycosylation sites for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              )
+            )),
+            # Human IgA O-glycans
+            tabPanel("Human IgA: O-glycans", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgA_O_traits"),
+                "Select the traits you want to calculate for human IgA O-glycans:",
+                choices = c(
+                  "A", "B", "C"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgA_O_clusters"),
+                "Select glycosylation sites for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              )
+            )),
+            # Human IgM N-glycans
+            tabPanel("Human IgM: N-glycans", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgM_N_traits"),
+                "Select the traits you want to calculate for human IgM N-glycans:",
+                choices = c(
+                  "A", "B", "C"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgM_N_clusters"),
+                "Select glycosylation sites for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              )
+            )),
+            # Human JC N-glycans
+            tabPanel("Human Joining Chain: N-glycans", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_JC_N_traits"),
+                "Select the traits you want to calculate for human Joining Chain N-glycans:",
+                choices = c(
+                  "A", "B", "C"
+                )
+              ),
+              selectizeInput(
+                ns("human_JC_N_clusters"),
+                "Select glycosylation sites for which these traits should be calculated:",
                 choices = c(""),
                 multiple = TRUE
               )
@@ -115,7 +183,7 @@ mod_derived_traits_ui <- function(id){
               ),
               selectizeInput(
                 ns("mouse_IgG_clusters"),
-                "For which clusters in your data should mouse IgG N-glycan traits be calculated?",
+                "Select glycosylation sites for which these traits should be calculated:",
                 choices = c(""),
                 multiple = TRUE
               )
@@ -238,7 +306,8 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     # Toggle visibility of tabs, depending on input$antibody_types
     observeEvent(input$antibody_types, {
       purrr::map(
-        c("Human IgG: N-glycans", "Mouse IgG: N-glycans"),
+        c("Human IgG: N-glycans", "Human IgA: N-glycans", "Human IgA: O-glycans", 
+          "Human IgM: N-glycans", "Human Joining Chain: N-glycans", "Mouse IgG: N-glycans"), 
         function(antibody_type) {
           if (antibody_type %in% input$antibody_types) {
             showTab(inputId = "tabs", target = antibody_type, select = TRUE)
