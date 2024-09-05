@@ -96,7 +96,7 @@ match_human_IgG_traits <- function(human_traits_ui_input) {
     "Bisection of complex-type glycans" = "bisection",
     "Galactosylation per antenna of complex-type glycans" = "galactosylation",
     "Sialylation per antenna of complex-type glycans" = "sialylation",
-    "Sialylation per galactose of complex-type glycans (calculated as [Sialylation per antenna] / [Galactosylation per antenna] \u00D7 100%)" = "sialylation_per_galactose",
+    "Sialylation per galactose of complex-type glycans",
     "Percentage of monoantennary complex-type glycans" = "mono_antennary",
     "Percentage of hybrid-type glycans" = "hybrid",
     "Percentage of oligomannose-type glycans" = "oligomannose_relative",
