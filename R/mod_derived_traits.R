@@ -514,42 +514,42 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
     
     
-    
+    # Trait formulas for human IgG
     human_IgG_traits <- reactive({
       req(input$human_IgG_traits)
-      match_human_IgG_traits(input$human_IgG_traits)
-    })
-    
-    mouse_IgG_traits <- reactive({
-      req(input$mouse_IgG_traits)
-      match_mouse_IgG_traits(input$mouse_IgG_traits)
+      match_traits(input$human_IgG_traits)
     })
     
     human_IgG_trait_formulas <- reactive({
       req(length(input$human_IgG_clusters) > 0)
       load(system.file("app", "www", "human_IgG_N_ref.rda", package = "GlycoDash"))
-      formula_list <- create_formula_list(
-        normalized_data = normalized_data(),
-        chosen_traits = human_IgG_traits(),
-        chosen_clusters = input$human_IgG_clusters,
-        reference = human_IgG_N_ref
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgG_traits(), input$human_IgG_clusters, human_IgG_N_ref
+        ), c  # c = concatenate
       )
-      purrr::reduce(formula_list, c)  # c = concatenate
     }) 
+    
+    
+    # Trait formulas for mouse IgG
+    mouse_IgG_traits <- reactive({
+      req(input$mouse_IgG_traits)
+      match_traits(input$mouse_IgG_traits)
+    })
     
     mouse_IgG_trait_formulas <- reactive({
       req(length(input$mouse_IgG_clusters) > 0)
-      load(system.file("app", "www", "mouse_IgG_ref.rda", package = "GlycoDash"))
-      formula_list <- create_formula_list(
-        normalized_data = normalized_data(),
-        chosen_traits = mouse_IgG_traits(),
-        chosen_clusters = input$mouse_IgG_clusters,
-        reference = mouse_IgG_ref
-     )
-     purrr::reduce(formula_list, c)
-   })
-   
+      load(system.file("app", "www", "mouse_IgG_N_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), mouse_IgG_traits(), input$mouse_IgG_clusters, mouse_IgG_N_ref
+        ), c  # c = concatenate
+      )
+    }) 
     
+    
+    
+    # Combine the trait formulas
     trait_formulas <- reactive({
       req(any(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas())))
       # Combine generated trait formulas
