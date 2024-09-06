@@ -106,7 +106,7 @@ mod_derived_traits_ui <- function(id){
                   "Core fucosylation of complex-type glycans",
                   "Antennary fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
-                  "Galactosylation of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
                   "Sialylation per antenna of complex-type glycans",
                   "Sialylation per galactose of complex-type glycans",
                   "Antennarity of complex-type glycans"
@@ -126,7 +126,7 @@ mod_derived_traits_ui <- function(id){
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
-                  "Galactosylation of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
                   "Sialylation per antenna of complex-type glycans",
                   "Sialylation per galactose of complex-type glycans",
                   "Percentage of monoantennary complex-type glycans",
@@ -149,7 +149,7 @@ mod_derived_traits_ui <- function(id){
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
-                  "Galactosylation of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
                   "Sialylation per antenna of complex-type glycans",
                   "Sialylation per galactose of complex-type glycans"
                 )
@@ -159,7 +159,7 @@ mod_derived_traits_ui <- function(id){
                 "Select clusters for which these traits should be calculated:",
                 choices = c(""),
                 multiple = TRUE
-              )
+              ),
               
               br(),
               shinyWidgets::awesomeCheckboxGroup(
@@ -168,7 +168,7 @@ mod_derived_traits_ui <- function(id){
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
-                  "Galactosylation of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
                   "Sialylation per antenna of complex-type glycans",
                   "Sialylation per galactose of complex-type glycans",
                   "Antennarity of complex-type glycans",
@@ -220,7 +220,7 @@ mod_derived_traits_ui <- function(id){
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
-                  "Galactosylation of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
                   "Sialylation per antenna of complex-type glycans",
                   "Sialylation per galactose of complex-type glycans",
                   "Percentage of monoantennary complex-type glycans",
@@ -244,7 +244,7 @@ mod_derived_traits_ui <- function(id){
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
-                  "Galactosylation of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
                   "Sialylation of complex-type glycans",
                   "\u03B1-1,3-galactosylation of complex-type glycans",
                   "Percentage of monoantennary complex-type glycans",
@@ -400,7 +400,9 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     observe({
       req(clusters())
-      for (id in c("human_IgG_clusters", "mouse_IgG_clusters")) {
+      for (id in c("human_IgG_clusters", "mouse_IgG_clusters", "human_IgA_N47_clusters",
+                   "human_IgA_N144_clusters", "human_IgA_N205_clusters", "human_IgA_N340_clusters",
+                   "human_IgA_O_clusters", "human_JC_clusters")) {
         updateSelectizeInput(id, choices = clusters(), session = session)
       }
     })
@@ -475,15 +477,34 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     # If user selects sialylation per galactose, then sialylation and galactosylation
     # must both be selected automatically if not yet done so.
-    observeEvent(input$human_IgG_traits, {
-      selected <- input$human_IgG_traits
-      if ("Sialylation per galactose of complex-type glycans" %in% selected) {
-        if (!("Galactosylation per antenna of complex-type glycans" %in% selected &
-              "Sialylation per antenna of complex-type glycans" %in% selected)) {
+    to_listen <- reactive({
+      list(input$human_IgG_traits, 
+           input$human_IgA_N47_traits,
+           input$human_IgA_N144_traits, 
+           input$human_IgA_N205_traits,
+           input$human_IgA_N340_traits,
+           input$human_JC_N_traits)
+    })
+
+    
+    observeEvent(to_listen(), {
+      input_ids <- c("human_IgG_traits", 
+                     "human_IgA_N47_traits", 
+                     "human_IgA_N144_traits",
+                     "human_IgA_N205_traits", 
+                     "human_IgA_N340_traits",
+                     "human_JC_N_traits")
+      for (i in seq(length(to_listen()))) {
+        input <- to_listen()[[i]]
+        if (all(
+          "Sialylation per galactose of complex-type glycans" %in% input,
+          !"Galactosylation per antenna of complex-type glycans" %in% input,
+          !"Sialylation per antenna of complex-type glycans" %in% input
+        )) {
           shinyWidgets::updateAwesomeCheckboxGroup(
-            inputId = "human_IgG_traits",
+            inputId = input_ids[[i]],
             selected = unique(c(
-              selected,
+              input,
               "Galactosylation per antenna of complex-type glycans",
               "Sialylation per antenna of complex-type glycans"
             ))
@@ -491,6 +512,8 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         }
       }
     })
+    
+    
     
     human_IgG_traits <- reactive({
       req(input$human_IgG_traits)
