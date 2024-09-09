@@ -48,7 +48,6 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
                           "mono_antennary", "antennarity", "antennary_fucosylation",
                           "alpha_galactosylation")) {
     complex_types_df <- cluster_ref_df %>% 
-      dplyr::select(glycan, complex) %>% 
       dplyr::filter(complex == 1)
     # Check if all passing glycans were already complex-type, if not adjust formula
     if (nrow(complex_types_df) != nrow(cluster_ref_df)) {
@@ -61,7 +60,6 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   # Divide by the sum of all oligomannose type glycans if necessary
   else if (target_trait == "oligomannose_average") {
     oligomannose_df <- cluster_ref_df %>%
-      dplyr::select(glycan, oligomannose_average) %>%
       dplyr::filter(oligomannose_average != 0)
     # Check if all passing glycans are already oligomannose
     if (nrow(oligomannose_df) != nrow(cluster_ref_df)) {
@@ -69,20 +67,19 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
       clean_formula_string <- paste0("(", clean_formula_string, ") / (", oligomannose_sum, ")") 
     }
   }
-  # Divide some O-glycan traits by 100
-  else if (target_trait %in% c("sialic_acids", "galactoses", "galnacs",
-                               "Tn_antigens", "T_antigens", "sT_antigens")) {
-    clean_formula_string <- paste0("(", clean_formula_string, ") / 100")
-  }
   # Divide by sum of hybrids when calculating hybrid fucosylation or bisection
   else if (target_trait %in% c("hybrid_fucosylation", "hybrid_bisection")) {
     hybrid_df <- cluster_ref_df %>% 
-      dplyr::select(glycan, hybrid) %>% 
       dplyr::filter(hybrid == 1)
     if (nrow(hybrid_df) != nrow(cluster_ref_df)) {
       hybrid_sum <- paste0(cluster, "1", hybrid_df$glycan, collapse = " + ")
       clean_formula_string <- paste0("(", clean_formula_string, ") / (", hybrid_sum, ") * 100")
     }
+  }
+  # Divide some O-glycan traits by 100
+  else if (target_trait %in% c("sialic_acids", "galactoses", "galnacs",
+                               "Tn_antigens", "T_antigens", "sT_antigens")) {
+    clean_formula_string <- paste0("(", clean_formula_string, ") / 100")
   }
   
   # Add the left hand side of the formula
