@@ -50,18 +50,24 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::select(glycan, complex) %>% 
       dplyr::filter(complex == 1)
-    # String with sum of complex type glycans
-    complex_sum <- paste0(cluster, "1", complex_types_df$glycan, collapse = " + ")
-    # Adjust clean_formula_string to divide by complex_types
-    clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ") * 100")
+    # Check if all passing glycans were already complex-type, if not adjust formula
+    if (nrow(complex_types_df) != nrow(cluster_ref_df)) {
+      # String with sum of complex type glycans
+      complex_sum <- paste0(cluster, "1", complex_types_df$glycan, collapse = " + ")
+      # Adjust clean_formula_string to divide by complex_types
+      clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ") * 100")
+    }
   }
   # Divide by the sum of all oligomannose type glycans if necessary
   else if (target_trait == "oligomannose_average") {
     oligomannose_df <- cluster_ref_df %>%
       dplyr::select(glycan, oligomannose_average) %>%
       dplyr::filter(oligomannose_average != 0)
-    oligomannose_sum <- paste0(cluster, "1", oligomannose_df$glycan, collapse = " + ")
-    clean_formula_string <- paste0("(", clean_formula_string, ") / (", oligomannose_sum, ")")
+    # Check if all passing glycans are already oligomannose
+    if (nrow(oligomannose_df) != nrow(cluster_ref_df)) {
+      oligomannose_sum <- paste0(cluster, "1", oligomannose_df$glycan, collapse = " + ")
+      clean_formula_string <- paste0("(", clean_formula_string, ") / (", oligomannose_sum, ")") 
+    }
   }
   # Divide some O-glycan traits by 100
   else if (target_trait %in% c("sialic_acids", "galactoses", "galnacs",
