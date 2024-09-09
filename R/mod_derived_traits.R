@@ -865,21 +865,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     # Combine the trait formulas
     trait_formulas <- reactive({
-      # req(any(
-      #   is_truthy(human_IgG_formulas()),
-      #   is_truthy(human_IgA_N47_formulas()),
-      #   is_truthy(human_IgA_N144_formulas()),
-      #   is_truthy(human_IgA_N205_formulas()),
-      #   is_truthy(human_IgA_N340_formulas()),
-      #   is_truthy(human_IgA_O_formulas()),
-      #   is_truthy(human_JC_N_formulas()),
-      #   is_truthy(human_IgM_N46_formulas()),
-      #   is_truthy(human_IgM_N209_formulas()),
-      #   is_truthy(human_IgM_N272_formulas()),
-      #   is_truthy(human_IgM_N279_formulas()),
-      #   is_truthy(human_IgM_N440_formulas()),
-      #   is_truthy(mouse_IgG_formulas())
-      # ))
       
       # Initiate empty vector to append formulas to
       formulas <- c() 
@@ -999,6 +984,11 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       }
       if (is_truthy(human_IgM_N440_formulas())) {
         formulas <- c(formulas, human_IgM_N440_formulas())
+      }
+      # Mouse IgG formulas
+      # TODO: Sialylation per galactose
+      if (is_truthy(mouse_IgG_formulas())) {
+        formulas <- c(formulas, mouse_IgG_formulas())
       }
       
       return(formulas)
