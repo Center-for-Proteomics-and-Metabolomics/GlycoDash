@@ -16,5 +16,5 @@ create_formula_list(normalized_data, chosen_traits, chosen_clusters, reference)
 \item{reference}{Reference file for traits, e.g. human_IgG_N_ref.}
 }
 \description{
-Creates a list of formulas for human IgG traits.
+Creates a list of formulas for automatically calculating derived traits
 }

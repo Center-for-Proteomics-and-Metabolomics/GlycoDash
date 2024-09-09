@@ -44,22 +44,29 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   clean_formula_string <- paste(unlist(grouped_terms), collapse = " + ")
   
   # Divide by the sum of all complex-type glycans if necessary
-  # Or by the sum of all oligomannose glycans
-  if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation", 
-                          "mono_antennary", "alpha_galactosylation")) {
+  if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation",
+                          "mono_antennary", "antennarity", "antennary_fucosylation",
+                          "alpha_galactosylation")) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::select(glycan, complex) %>% 
       dplyr::filter(complex == 1)
     # String with sum of complex type glycans
     complex_sum <- paste0(cluster, "1", complex_types_df$glycan, collapse = " + ")
     # Adjust clean_formula_string to divide by complex_types
-    clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ") * 100")  # 100 to get percentages
-  } else if (target_trait == "oligomannose_average") {
+    clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ") * 100")
+  }
+  # Divide by the sum of all oligomannose type glycans if necessary
+  else if (target_trait == "oligomannose_average") {
     oligomannose_df <- cluster_ref_df %>%
       dplyr::select(glycan, oligomannose_average) %>%
       dplyr::filter(oligomannose_average != 0)
     oligomannose_sum <- paste0(cluster, "1", oligomannose_df$glycan, collapse = " + ")
     clean_formula_string <- paste0("(", clean_formula_string, ") / (", oligomannose_sum, ")")
+  }
+  # Divide some O-glycan traits by 100
+  else if (target_trait %in% c("sialic_acids", "galactoses", "galnacs",
+                               "Tn_antigens", "T_antigens", "sT_antigens")) {
+    clean_formula_string <- paste0("(", clean_formula_string, ") / 100")
   }
   
   # Add the left hand side of the formula
@@ -87,11 +94,12 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
 #'
 #' @return  Character vector with column names of traits that should be calculated,
 #'          matching those in the traits reference files. 
-
 match_traits <- function(traits_ui_input) {
   traits <- c(
+    # Trait names to replace the descriptions with
     "Fucosylation of complex-type glycans" = "fucosylation",
-    "Core fucosylation of complex-type glycans" = "fucosylation",  # IgM only
+    "Core fucosylation of complex-type glycans" = "fucosylation",
+    "Antennary fucosylation of complex-type glycans" = "antennary_fucosylation",
     "Bisection of complex-type glycans" = "bisection",
     "Galactosylation per antenna of complex-type glycans" = "galactosylation",
     "Sialylation per antenna of complex-type glycans" = "sialylation",
@@ -100,18 +108,36 @@ match_traits <- function(traits_ui_input) {
     "Percentage of hybrid-type glycans" = "hybrid",
     "Percentage of oligomannose-type glycans" = "oligomannose",
     "Oligomannose-type glycans: average number of mannoses" = "oligomannose_average",
-    "Average number of sialic acids" = "sialic_acids",
-    "Average number of galactoses" = "galactoses",
-    "Average number of GalNAcs" = "galnacs",
-    "\u03B1-1,3-galactosylation of complex-type glycans" = "alpha_galactosylation"  # Mouse IgG only
+    "Sialic acids" = "sialic_acids",
+    "Galactoses" = "galactoses",
+    "GalNAcs" = "galnacs",
+    "Tn antigens" = "Tn_antigens",
+    "Sialyl-Tn (sTn) antigens" = "sTn_antigens",
+    "T antigens" = "T_antigens",
+    "Sialyl-T (sT) antigens" = "sT_antigens",
+    "Disialylated O-antigens" = "disialylated_O_antigens",
+    "\u03B1-1,3-galactosylation of complex-type glycans" = "alpha_galactosylation" 
   )
+  matched_traits <- traits_ui_input
+  for (description in names(traits)) {
+    matched_traits[matched_traits == description] <- traits[[description]]
+  }
+  # Remove traits that are calculated based on other traits
+  to_remove <- c(
+    "Sialylation per galactose of complex-type glycans",
+    "Sialic acids per galactose",
+    "Galactoses per GalNAc"
+  )
+  matched_traits_clean <- matched_traits[!matched_traits %in% to_remove]
+  
+  return(matched_traits_clean)
 }
 
 
 
 #' create_formula_list
 #'
-#' Creates a list of formulas for human IgG traits.
+#' Creates a list of formulas for automatically calculating derived traits
 #'
 #' @param normalized_data  normalized_data in long format
 #' @param chosen_traits Character vector, e.g.  c("fucosylation", "sialylation")
