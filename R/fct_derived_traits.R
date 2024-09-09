@@ -45,8 +45,8 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   
   # Divide by the sum of all complex-type glycans if necessary
   if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation",
-                          "mono_antennary", "antennarity", "antennary_fucosylation",
-                          "alpha_galactosylation")) {
+                          "mono_antennary", "tri_antennary", "antennarity", 
+                          "antennary_fucosylation", "alpha_galactosylation")) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::filter(complex == 1)
     # Check if all passing glycans were already complex-type, if not adjust formula
@@ -57,24 +57,19 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
       clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ") * 100")
     }
   }
-  # Divide by the sum of all oligomannose type glycans if necessary
+  # Divide by the sum of all oligomannose type glycans
   else if (target_trait == "oligomannose_average") {
     oligomannose_df <- cluster_ref_df %>%
       dplyr::filter(oligomannose_average != 0)
-    # Check if all passing glycans are already oligomannose
-    if (nrow(oligomannose_df) != nrow(cluster_ref_df)) {
-      oligomannose_sum <- paste0(cluster, "1", oligomannose_df$glycan, collapse = " + ")
-      clean_formula_string <- paste0("(", clean_formula_string, ") / (", oligomannose_sum, ")") 
-    }
+    oligomannose_sum <- paste0(cluster, "1", oligomannose_df$glycan, collapse = " + ")
+    clean_formula_string <- paste0("(", clean_formula_string, ") / (", oligomannose_sum, ")") 
   }
   # Divide by sum of hybrids when calculating hybrid fucosylation or bisection
   else if (target_trait %in% c("hybrid_fucosylation", "hybrid_bisection")) {
     hybrid_df <- cluster_ref_df %>% 
       dplyr::filter(hybrid == 1)
-    if (nrow(hybrid_df) != nrow(cluster_ref_df)) {
-      hybrid_sum <- paste0(cluster, "1", hybrid_df$glycan, collapse = " + ")
-      clean_formula_string <- paste0("(", clean_formula_string, ") / (", hybrid_sum, ") * 100")
-    }
+    hybrid_sum <- paste0(cluster, "1", hybrid_df$glycan, collapse = " + ")
+    clean_formula_string <- paste0("(", clean_formula_string, ") / (", hybrid_sum, ") * 100")
   }
   # Divide some O-glycan traits by 100
   else if (target_trait %in% c("sialic_acids", "galactoses", "galnacs",
@@ -118,7 +113,10 @@ match_traits <- function(traits_ui_input) {
     "Sialylation per antenna of complex-type glycans" = "sialylation",
     "Antennarity of complex-type glycans" = "antennarity",
     "Percentage of monoantennary complex-type glycans" = "mono_antennary",
+    "Percentage of triantennary complex-type glycans" = "tri_antennary",
     "Percentage of hybrid-type glycans" = "hybrid",
+    "Fucosylation of hybrid-type glycans" = "hybrid_fucosylation",
+    "Bisection of hybrid-type glycans" = "hybrid_bisection",
     "Percentage of oligomannose-type glycans" = "oligomannose",
     "Oligomannose-type glycans: average number of mannoses" = "oligomannose_average",
     "Sialic acids" = "sialic_acids",
