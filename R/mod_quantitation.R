@@ -341,8 +341,13 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     
     output$data_table <- DT::renderDT({
       req(with_data())
-      DT::datatable(data = with_data(),
-                    options = list(scrollX = TRUE))
+      DT::datatable(data = with_data() %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 6,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ))
     })
     
     

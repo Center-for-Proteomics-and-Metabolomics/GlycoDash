@@ -817,8 +817,13 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     output$data_table <- DT::renderDT({
       req(data_with_traits())
-      DT::datatable(data = data_with_traits(),
-                    options = list(scrollX = TRUE))
+      DT::datatable(data = data_with_traits() %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 5,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ))
     })
 
     

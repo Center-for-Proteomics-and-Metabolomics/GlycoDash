@@ -580,8 +580,12 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     output$passing_spectra_details <- DT::renderDataTable({
       req(to_return())
-      DT::datatable(to_return(),
-                    options = list(scrollX = TRUE, searching = TRUE))
+      DT::datatable(to_return() %>% dplyr::mutate_if(is.numeric, ~ round(., 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 5,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ))
     })
     
     
@@ -593,9 +597,13 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         dplyr::distinct() %>% 
         dplyr::filter(!has_passed_spectra_curation)
       
-      DT::datatable(for_table,
-                    options = list(scrollX = TRUE,
-                                   filter = "top"))
+      DT::datatable(for_table %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 5,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ))
     })
     
     
@@ -605,9 +613,13 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       DT::datatable(curated_data() %>% 
                       dplyr::select(-(passing_analyte_percentage:replicates)) %>% 
                       dplyr::distinct() %>% 
-                      dplyr::filter(has_passed_spectra_curation == FALSE),
-                    options = list(scrollX = TRUE,
-                                   searching = TRUE))
+                      dplyr::filter(has_passed_spectra_curation == FALSE) %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 5,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ))
     })
     
     

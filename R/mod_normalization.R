@@ -200,9 +200,13 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     output$data_table <- DT::renderDT({
       req(normalized_data_wide())
-      
-      DT::datatable(data = normalized_data_wide(),
-                    options = list(scrollX = TRUE))
+      DT::datatable(data = normalized_data_wide() %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 5,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ))
     })
     
     

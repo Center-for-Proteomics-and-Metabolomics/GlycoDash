@@ -88,8 +88,13 @@ mod_export_server <- function(id,
     # Display the final data table
     output$data_table <- DT::renderDT({
       req(x$data)
-      DT::datatable(data = x$data,
-                    options = list(scrollX = TRUE))
+      DT::datatable(data = x$data %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 6,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ))
     })
     
     
