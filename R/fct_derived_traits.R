@@ -74,6 +74,16 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
                                "Tn_antigens", "T_antigens", "sT_antigens")) {
     clean_formula_string <- paste0("(", clean_formula_string, ") / 100")
   }
+  # Divide by sum of hybrids when calculating hybrid fucosylation or bisection
+  else if (target_trait %in% c("hybrid_fucosylation", "hybrid_bisection")) {
+    hybrid_df <- cluster_ref_df %>% 
+      dplyr::select(glycan, hybrid) %>% 
+      dplyr::filter(hybrid == 1)
+    if (nrow(hybrid_df) != nrow(cluster_ref_df)) {
+      hybrid_sum <- paste0(cluster, "1", hybrid_df$glycan, collapse = " + ")
+      clean_formula_string <- paste0("(", clean_formula_string, ") / (", hybrid_sum, ") * 100")
+    }
+  }
   
   # Add the left hand side of the formula
   final_formula_string <- ifelse(
