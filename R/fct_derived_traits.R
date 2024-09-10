@@ -127,7 +127,8 @@ match_traits <- function(traits_ui_input) {
     "T antigens" = "T_antigens",
     "Sialyl-T (sT) antigens" = "sT_antigens",
     "Disialylated O-antigens" = "disialylated_O_antigens",
-    "\u03B1-1,3-galactosylation of complex-type glycans" = "alpha_galactosylation" 
+    "\u03B1-1,3-galactosylation of complex-type glycans" = "alpha_galactosylation",
+    "Sialylation (N-glycolylneuraminic acid) per antenna of complex-type glycans" = "sialylation"
   )
   matched_traits <- traits_ui_input
   for (description in names(traits)) {

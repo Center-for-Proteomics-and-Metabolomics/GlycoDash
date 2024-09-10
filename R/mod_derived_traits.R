@@ -351,7 +351,7 @@ mod_derived_traits_ui <- function(id){
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
                   "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation of complex-type glycans",
+                  "Sialylation (N-glycolylneuraminic acid) per antenna of complex-type glycans",
                   "\u03B1-1,3-galactosylation of complex-type glycans",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
