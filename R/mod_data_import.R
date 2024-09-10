@@ -105,7 +105,7 @@ mod_data_import_server <- function(id){
                       dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
                     options = list(
                       scrollX = TRUE,
-                      pageLength = 5,  # Shows 5 rows
+                      pageLength = 6,  # Shows 5 rows
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
                     ),
                     filter = "top")
