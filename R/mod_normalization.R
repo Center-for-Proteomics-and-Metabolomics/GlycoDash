@@ -110,7 +110,7 @@ mod_normalization_ui <- function(id){
           selectInput(
             ns("heatmap_yaxis"),
             "Variable to plot on y-axis:",
-            choices = c("Cluster", "Sample")
+            choices = c("Glycosylation site", "Sample")
           ),
           shinyWidgets::materialSwitch(
             ns("facet_per_group"),
@@ -204,7 +204,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
                       dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
                     options = list(
                       scrollX = TRUE,
-                      pageLength = 5,
+                      pageLength = 6,
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
                     ))
     })
@@ -273,7 +273,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         })
         
         #### CLUSTER ON Y-AXIS #### 
-      } else if (input$heatmap_yaxis == "Cluster") {
+      } else if (input$heatmap_yaxis == "Glycosylation site") {
 
         # Make the plot
         plot <- cluster_heatmap(
@@ -361,7 +361,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       if (input$heatmap_yaxis == "Sample") {
         shinyjs::show("tabs")
         shinyjs::hide("clusters_plot")
-      } else if (input$heatmap_yaxis == "Cluster") {
+      } else if (input$heatmap_yaxis == "Glycosylation site") {
         shinyjs::hide("tabs")
         shinyjs::show("clusters_plot")
       }
