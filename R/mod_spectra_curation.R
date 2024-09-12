@@ -585,7 +585,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                       scrollX = TRUE,
                       pageLength = 5,
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ))
+                    ), filter = "top")
     })
     
     
@@ -603,7 +603,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                       scrollX = TRUE,
                       pageLength = 5,
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ))
+                    ), filter = "top")
     })
     
     
@@ -619,7 +619,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                       scrollX = TRUE,
                       pageLength = 5,
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ))
+                    ), filter = "top")
     })
     
     

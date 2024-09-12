@@ -347,7 +347,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
                       scrollX = TRUE,
                       pageLength = 6,
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ))
+                    ), filter = "top")
     })
     
     

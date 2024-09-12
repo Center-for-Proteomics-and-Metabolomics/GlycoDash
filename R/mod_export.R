@@ -94,7 +94,7 @@ mod_export_server <- function(id,
                       scrollX = TRUE,
                       pageLength = 6,
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ))
+                    ), filter = "top")
     })
     
     

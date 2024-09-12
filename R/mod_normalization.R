@@ -206,7 +206,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
                       scrollX = TRUE,
                       pageLength = 6,
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ))
+                    ), filter = "top")
     })
     
     

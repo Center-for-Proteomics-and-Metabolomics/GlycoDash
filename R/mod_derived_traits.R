@@ -376,6 +376,7 @@ mod_derived_traits_ui <- function(id){
           status = "primary",
           downloadButton(ns("download_formulas"), "Download as Excel file"),
           br(),
+          br(),
           DT::dataTableOutput(ns("formulas"))
         ),
       ),
@@ -611,7 +612,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                      "human_IgM_N209_traits",
                      "human_IgM_N272_traits",
                      "human_JC_N_traits")
-      for (i in seq(length(to_listen()))) {
+      for (i in seq(length(input_ids))) {
         input <- to_listen()[[i]]
         if ("Sialylation per galactose of complex-type glycans" %in% input) {
           shinyWidgets::updateAwesomeCheckboxGroup(
@@ -1040,7 +1041,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                       scrollX = TRUE,
                       pageLength = 5,
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ))
+                    ), filter = "top")
     })
 
     
@@ -1085,11 +1086,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     output$formulas <- DT::renderDT({
       req(formulas_table())
-      DT::datatable(formulas_table(),
-                    rownames = FALSE,
-                    options = list(paging = FALSE,
-                                   ordering = FALSE,
-                                   searching = FALSE))
+      DT::datatable(tidyr::tibble(formulas_table()), rownames = FALSE, filter = "top")
     })
     
     
