@@ -1086,7 +1086,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     output$formulas <- DT::renderDT({
       req(formulas_table())
-      DT::datatable(tidyr::tibble(formulas_table()), rownames = FALSE, filter = "top")
+      DT::datatable(formulas_table(), rownames = FALSE, filter = "top")
     })
     
     
