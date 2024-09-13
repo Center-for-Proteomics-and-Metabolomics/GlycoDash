@@ -2,8 +2,12 @@
 ## Adjustments
 * Added a download button for the GlycoDash manual in the top-right corner of 
 the dashboard.
+* Added a button that takes the user to the GlycoDash GitHub page for reporting bugs 
+(this requires a GitHub account).
 * Changed the location of some info boxes with respect to their info icons,
 because they were partly covered by the dashboard header.
+* Add the option to automatically calculate glycosylation traits for IgA and IgM,
+including joining chain (JC).
 
 ## Bug fixes
 * When curating total and specific spectra based on negative controls that were
