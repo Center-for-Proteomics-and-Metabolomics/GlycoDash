@@ -589,69 +589,117 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     # If user selects sialylation per galactose, then sialylation and galactosylation
     # must both be selected automatically if not yet done so.
+    # (Perhaps this is not the most optimal code)
     to_listen <- reactive({
-      list(input$human_IgG_N_traits, 
-           input$human_IgA_N47_traits,
-           input$human_IgA_N144_traits, 
-           input$human_IgA_N205_traits,
-           input$human_IgA_N340_traits,
-           input$human_IgM_N46_traits,
-           input$human_IgM_N209_traits,
-           input$human_IgM_N272_traits,
-           input$human_JC_N_traits)
+      list(
+        input$human_IgG_N_traits,
+        input$human_IgA_N47_traits,
+        input$human_IgA_N144_traits,
+        input$human_IgA_N205_traits,
+        input$human_IgA_N340_traits,
+        input$human_IgM_N46_traits,
+        input$human_IgM_N209_traits,
+        input$human_IgM_N272_traits,
+        input$human_JC_N_traits
+      )
     })
-
     
     observeEvent(to_listen(), {
-      input_ids <- c("human_IgG_N_traits", 
-                     "human_IgA_N47_traits", 
-                     "human_IgA_N144_traits",
-                     "human_IgA_N205_traits", 
-                     "human_IgA_N340_traits",
-                     "human_IgM_N46_traits",
-                     "human_IgM_N209_traits",
-                     "human_IgM_N272_traits",
-                     "human_JC_N_traits")
-      for (i in seq(length(input_ids))) {
-        input <- to_listen()[[i]]
-        if ("Sialylation per galactose of complex-type glycans" %in% input) {
+      ids <- c(
+        "human_IgG_N_traits",
+        "human_IgA_N47_traits",
+        "human_IgA_N144_traits",
+        "human_IgA_N205_traits",
+        "human_IgA_N340_traits",
+        "human_IgM_N46_traits",
+        "human_IgM_N209_traits",
+        "human_IgM_N272_traits",
+        "human_JC_N_traits"
+      )
+      for (i in seq(length(ids))) {
+        id <- ids[[i]]
+        selected_traits <- input[[id]]
+        if ("Sialylation per galactose of complex-type glycans" %in% selected_traits) {
+          if (!all("Sialylation per antenna of complex-type glycans" %in% selected_traits,
+                   "Galactosylation per antenna of complex-type glycans" %in% selected_traits)) {
+            shinyWidgets::updateAwesomeCheckboxGroup(
+              inputId = id,
+              selected = unique(c(
+                selected_traits,
+                "Sialylation per antenna of complex-type glycans",
+                "Galactosylation per antenna of complex-type glycans"
+              ))
+            )
+          }
+        }
+      }
+    })
+    
+    
+    # Also check O-glycans: sialic acids per galactose, and galactoses per GalNAc
+    observeEvent(input$human_IgA_O_traits, {
+      selected_traits <- input$human_IgA_O_traits
+      if (all("Sialic acids per galactose" %in% selected_traits,
+              "Galactoses per GalNAc" %in% selected_traits)) {
+        if (!all("Sialic acids" %in% selected_traits,
+                 "Galactoses" %in% selected_traits,
+                 "GalNAcs" %in% selected_traits)) {
           shinyWidgets::updateAwesomeCheckboxGroup(
-            inputId = input_ids[[i]],
-            selected = unique(c(
-              input,
-              "Galactosylation per antenna of complex-type glycans",
-              "Sialylation per antenna of complex-type glycans"
-            ))
+            inputId = "human_IgA_O_traits",
+            selected = unique(c(selected_traits, "Sialic acids", "Galactoses", "GalNAcs"))
+          )
+        }
+      }
+      else if ("Sialic acids per galactose" %in% selected_traits) {
+        if (!all("Sialic acids" %in% selected_traits, "Galactoses" %in% selected_traits)) {
+          shinyWidgets::updateAwesomeCheckboxGroup(
+            inputId = "human_IgA_O_traits",
+            selected = unique(c(selected_traits, "Sialic acids", "Galactoses"))
+          )
+        }
+      }
+      else if ("Galactoses per GalNAc" %in% selected_traits) {
+        if (!all("Galactoses" %in% selected_traits, "GalNAcs" %in% selected_traits)) {
+          shinyWidgets::updateAwesomeCheckboxGroup(
+            inputId = "human_IgA_O_traits",
+            selected = unique(c(selected_traits, "Galactoses", "GalNAcs"))
           )
         }
       }
     })
     
-    # The same for O-glycans sialic acids per galactose and galactoses per GalNAc
-    observeEvent(input$human_IgA_O_traits, {
-      if (all(
-        "Sialic acids per galactose" %in% input$human_IgA_O_traits,
-        "Galactoses per GalNAc" %in% input$human_IgA_O_traits
-      )) {
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_O_traits",
-          selected = unique(c(input$human_IgA_O_traits, "Sialic acids" , "Galactoses", "GalNAcs"))
-        )
-      } else if ("Sialic acids per galactose" %in% input$human_IgA_O_traits) {
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_O_traits",
-          selected = unique(c(input$human_IgA_O_traits, "Sialic acids" , "Galactoses"))
-        )
-      } else if ("Galactoses per GalNAc" %in% input$human_IgA_O_traits) {
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_O_traits",
-          selected = unique(c(input$human_IgA_O_traits, "Galactoses", "GalNAcs"))
-        )
-      }
-    })
+    
+    
+    # # The same for O-glycans sialic acids per galactose and galactoses per GalNAc
+    # observeEvent(input$human_IgA_O_traits, {
+    #   isolate({
+    #     if (all(
+    #       "Sialic acids per galactose" %in% input$human_IgA_O_traits,
+    #       "Galactoses per GalNAc" %in% input$human_IgA_O_traits
+    #     )) {
+    #       shinyWidgets::updateAwesomeCheckboxGroup(
+    #         inputId = "human_IgA_O_traits",
+    #         selected = unique(c(input$human_IgA_O_traits, "Sialic acids", "Galactoses", "GalNAcs"))
+    #       )
+    #     } else if ("Sialic acids per galactose" %in% input$human_IgA_O_traits) {
+    #       shinyWidgets::updateAwesomeCheckboxGroup(
+    #         inputId = "human_IgA_O_traits",
+    #         selected = unique(c(input$human_IgA_O_traits, "Sialic acids", "Galactoses"))
+    #       )
+    #     } else if ("Galactoses per GalNAc" %in% input$human_IgA_O_traits) {
+    #       shinyWidgets::updateAwesomeCheckboxGroup(
+    #         inputId = "human_IgA_O_traits",
+    #         selected = unique(c(input$human_IgA_O_traits, "Galactoses", "GalNAcs"))
+    #       )
+    #     }
+    #   })
+    # })
+    
     
   
-    ################# DETERMINE FORMULAS FOR TRAITS #########################
+    ################# DETERMINE FORMULAS FOR DEFAULT TRAITS #########################
+    
+    #TODO: Reduce the code below with function
     
     # Trait formulas for human IgG
     human_IgG_N_traits <- reactive({
@@ -1033,13 +1081,18 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       }
     })
     
+    
     output$data_table <- DT::renderDT({
       req(data_with_traits())
+      # Disabling server-side rendering seems to prevent error messages being
+      # thrown by the browser, when quickly selecting and deselecting traits.
+      # But it does make rendering somewhat slower.
+      server = FALSE
       DT::datatable(data = data_with_traits() %>% 
                       dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
                     options = list(
                       scrollX = TRUE,
-                      pageLength = 5,
+                      pageLength = 6,
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
                     ), filter = "top")
     })
