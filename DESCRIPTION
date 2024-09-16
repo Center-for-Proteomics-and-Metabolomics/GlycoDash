@@ -1,9 +1,13 @@
 Package: GlycoDash
 Title: GlycoDash
 Version: 1.5.4
-Authors@R: person('Steinar', 'Gijze', email = 's.gijze@lumc.nl', role = c('cre', 'aut'))
-Description: Package for processing glycomics data.
-License: MIT + file LICENSE
+Authors@R: c(
+    person("Steinar", "Gijze", email = "s.gijze@lumc.nl", role = c("aut", "cre")),
+    person("Sterre", "Siekman", role = c("aut")),
+    person("Leiden University Medical Center", role = "fnd")
+  )
+Description: An R Shiny dashboard for processing protein glycosylation data obtained from LaCyTools or SkyLine. 
+License: MIT
 Imports: 
     bsplus,
     config (>= 0.3.1),
