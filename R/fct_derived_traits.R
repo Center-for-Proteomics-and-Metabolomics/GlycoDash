@@ -15,6 +15,17 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   df <- cluster_ref_df %>% 
     dplyr::select(glycan, tidyselect::all_of(target_trait)) %>%   # target_trait is just one trait
     dplyr::filter(!!rlang::sym(target_trait) != 0)
+  
+  
+  # Check the number of glycans used for calculating the trait.
+  if (nrow(df) == 0) {  # 0 glycans --> remove
+    showNotification(
+      paste0(cluster, "_", target_trait, " is zero for all samples and therefore not reported."),
+      type = "warning", duration = 5, id = paste0(cluster, target_trait)
+    )
+    return(paste0(cluster, "_", target_trait, " = Not Reported: zero for all samples"))
+  } 
+  
 
   # Create a string with the right hand side of the formula
   formula_string <- paste0(df[[target_trait]], " * ", paste0(cluster, "1", df$glycan), collapse = " + ")
@@ -157,9 +168,6 @@ match_traits <- function(traits_ui_input) {
 #' @param reference Reference file for traits, e.g. human_IgG_N_ref.
 #' 
 create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters, reference) {
-  # Remove sialylation per galactose from the vector with chosen traits
-  # Sialylation per galactose is calculated manually in the server part.
-  chosen_traits <- chosen_traits[chosen_traits != "sialylation_per_galactose"]
   # Create an empty vector to store possible analytes with unknown glycan compositions
   unknown_glycans <- c()
   # Initiate an empty list
@@ -255,7 +263,12 @@ calculate_traits <- function(normalized_data_wide, trait_formulas) {
 create_expr_ls <- function(str_expr) {
   expr_nm <- stringr::str_extract(str_expr, "^\\w+")
   expr_code <- stringr::str_replace_all(str_expr, "(^\\w+\\s?=\\s?)(.*)", "\\2")
-  rlang::set_names(list(str2lang(expr_code)), expr_nm)
+  tryCatch(
+    return(rlang::set_names(list(str2lang(expr_code)), expr_nm)),
+    error = function(e) {
+      return(rlang::set_names(list(expr_code), expr_nm))
+    }
+  )
 }
 
 

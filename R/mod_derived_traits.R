@@ -669,33 +669,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
     
     
-    
-    # # The same for O-glycans sialic acids per galactose and galactoses per GalNAc
-    # observeEvent(input$human_IgA_O_traits, {
-    #   isolate({
-    #     if (all(
-    #       "Sialic acids per galactose" %in% input$human_IgA_O_traits,
-    #       "Galactoses per GalNAc" %in% input$human_IgA_O_traits
-    #     )) {
-    #       shinyWidgets::updateAwesomeCheckboxGroup(
-    #         inputId = "human_IgA_O_traits",
-    #         selected = unique(c(input$human_IgA_O_traits, "Sialic acids", "Galactoses", "GalNAcs"))
-    #       )
-    #     } else if ("Sialic acids per galactose" %in% input$human_IgA_O_traits) {
-    #       shinyWidgets::updateAwesomeCheckboxGroup(
-    #         inputId = "human_IgA_O_traits",
-    #         selected = unique(c(input$human_IgA_O_traits, "Sialic acids", "Galactoses"))
-    #       )
-    #     } else if ("Galactoses per GalNAc" %in% input$human_IgA_O_traits) {
-    #       shinyWidgets::updateAwesomeCheckboxGroup(
-    #         inputId = "human_IgA_O_traits",
-    #         selected = unique(c(input$human_IgA_O_traits, "Galactoses", "GalNAcs"))
-    #       )
-    #     }
-    #   })
-    # })
-    
-    
   
     ################# DETERMINE FORMULAS FOR DEFAULT TRAITS #########################
     
@@ -716,7 +689,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         ), c  # c = concatenate
       )
     })
-
 
     # Trait formulas for human IgA N-glycans
     human_IgA_N47_traits <- reactive({
@@ -1039,10 +1011,10 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       return(formulas)
     })
     
-    
     data_with_derived_traits <- reactive({
       req(trait_formulas())
-      calculate_traits(normalized_data_wide(), trait_formulas())
+      trait_formulas_toreport <- trait_formulas()[!grepl(" = Not Reported", trait_formulas())]
+      calculate_traits(normalized_data_wide(), trait_formulas_toreport)
     })
 
     
@@ -1080,7 +1052,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         with_data()
       }
     })
-    
     
     output$data_table <- DT::renderDT({
       req(data_with_traits())
@@ -1137,9 +1108,21 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       purrr::reduce(formula_dfs, dplyr::full_join)
     })
     
+    
     output$formulas <- DT::renderDT({
       req(formulas_table())
-      DT::datatable(formulas_table(), rownames = FALSE, filter = "top")
+      DT::datatable(formulas_table(), rownames = FALSE, filter = "top") %>% 
+        # Highlight traits that are not reported
+        DT::formatStyle(
+          "formula",
+          target = "row",
+          backgroundColor = DT::styleEqual(
+            levels = c(
+              "Not Reported: zero for all samples"
+            ),
+            values = c("gold")
+          )
+        )
     })
     
     
@@ -1154,7 +1137,11 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         paste0(current_datetime, "_glycosylation_traits_formulas.xlsx")
       },
       content = function(file) {
-        writexl::write_xlsx(formulas_table(), path = file)
+        writexl::write_xlsx(
+          formulas_table() %>% 
+            dplyr::filter(!grepl("Not Reported", formula)), 
+          path = file
+        )
       }
     )
     
