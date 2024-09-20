@@ -16,15 +16,23 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     dplyr::select(glycan, tidyselect::all_of(target_trait)) %>%   # target_trait is just one trait
     dplyr::filter(!!rlang::sym(target_trait) != 0)
   
-  
   # Check the number of glycans used for calculating the trait.
-  if (nrow(df) == 0) {  # 0 glycans --> remove
+  if (nrow(df) == 0) { 
     showNotification(
       paste0(cluster, "_", target_trait, " is zero for all samples and therefore not reported."),
       type = "warning", duration = 5, id = paste0(cluster, target_trait)
     )
     return(paste0(cluster, "_", target_trait, " = Not Reported: zero for all samples"))
   } 
+  else if (nrow(df) == 1) {
+    # TODO: mention here specific glycan
+    showNotification(
+      paste0(cluster, "_", target_trait, 
+             " would be calculated using only one glycan and is therefore not reported."),
+      type = "warning", duration = 5, id = paste0(cluster, target_trait)
+    )
+    return(paste0(cluster, "_", target_trait, " = Not Reported: only one relevant glycan"))
+  }
   
 
   # Create a string with the right hand side of the formula

@@ -1108,19 +1108,17 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       purrr::reduce(formula_dfs, dplyr::full_join)
     })
     
-    
     output$formulas <- DT::renderDT({
       req(formulas_table())
+      levels <- c("", unique(formulas_table()$formula[grepl("Not Reported", formulas_table()$formula)]))
       DT::datatable(formulas_table(), rownames = FALSE, filter = "top") %>% 
         # Highlight traits that are not reported
         DT::formatStyle(
           "formula",
           target = "row",
           backgroundColor = DT::styleEqual(
-            levels = c(
-              "Not Reported: zero for all samples"
-            ),
-            values = c("gold")
+            levels = levels, # This contains "" to prevent character(0)
+            rep("gold", length(levels))
           )
         )
     })
