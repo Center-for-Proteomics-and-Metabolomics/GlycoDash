@@ -32,6 +32,19 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     )
     return(paste0(cluster, "_", target_trait, " = Not Reported: only one relevant glycan ", df$glycan))
   }
+  else if (nrow(df) == nrow(cluster_ref_df)) {
+    # All glycans are used for the traits. 
+    # For some traits this always gives 100, because they are all counted equally.
+    if (target_trait %in% c("fucosylation", "core_fucosylation", "antennary_fucosylation",
+                            "bisection", "mono_antennary", "hybrid", "hybrid_fucosylation",
+                            "hybrid_bisection", "oligomannose", "tri_antennary")) {
+      showNotification(
+        paste0(cluster, "_", target_trait, " equals 100 for all samples and is therefore not reported."),
+        type = "warning", duration = 5, id = paste0(cluster, target_trait)
+      )
+      return(paste0(cluster, "_", target_trait, " = Not Reported: 100 for all samples"))
+    }
+  }
   
 
   # Create a string with the right hand side of the formula
