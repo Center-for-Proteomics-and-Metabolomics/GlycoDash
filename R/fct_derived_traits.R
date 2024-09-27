@@ -24,14 +24,12 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     )
     return(paste0(cluster, "_", target_trait, " = Not Reported: zero for all samples"))
   } 
-  else if (nrow(df) == 1) {
-    # TODO: mention here specific glycan
     showNotification(
       paste0(cluster, "_", target_trait, 
              " would be calculated using only one glycan and is therefore not reported."),
       type = "warning", duration = 5, id = paste0(cluster, target_trait)
     )
-    return(paste0(cluster, "_", target_trait, " = Not Reported: only one relevant glycan"))
+    return(paste0(cluster, "_", target_trait, " = Not Reported: only one relevant glycan ", df$glycan))
   }
   
 
