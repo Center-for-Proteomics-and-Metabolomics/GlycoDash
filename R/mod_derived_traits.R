@@ -998,7 +998,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         }
       }
       if (is_truthy(human_IgM_N279_formulas())) {
-        formulas <- c(formulas, human_IgM_N272_formulas())
+        formulas <- c(formulas, human_IgM_N279_formulas())
       }
       if (is_truthy(human_IgM_N440_formulas())) {
         formulas <- c(formulas, human_IgM_N440_formulas())
