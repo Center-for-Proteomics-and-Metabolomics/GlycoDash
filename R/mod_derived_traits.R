@@ -129,7 +129,6 @@ mod_derived_traits_ui <- function(id){
                   "Galactosylation per antenna of complex-type glycans",
                   "Sialylation per antenna of complex-type glycans",
                   "Sialylation per galactose of complex-type glycans",
-                  "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
                   "Percentage of oligomannose-type glycans",
                   "Oligomannose-type glycans: average number of mannoses"
