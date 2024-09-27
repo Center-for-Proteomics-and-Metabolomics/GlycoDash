@@ -24,6 +24,7 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     )
     return(paste0(cluster, "_", target_trait, " = Not Reported: zero for all samples"))
   } 
+  else if (nrow(df) == 1) {
     showNotification(
       paste0(cluster, "_", target_trait, 
              " would be calculated using only one glycan and is therefore not reported."),
