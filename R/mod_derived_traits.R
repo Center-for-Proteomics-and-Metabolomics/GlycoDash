@@ -1012,7 +1012,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     data_with_derived_traits <- reactive({
       req(trait_formulas())
-      trait_formulas_toreport <- trait_formulas()[!grepl(" = Not Reported", trait_formulas())]
+      trait_formulas_toreport <- trait_formulas()[!grepl(" = Not reported", trait_formulas())]
       calculate_traits(normalized_data_wide(), trait_formulas_toreport)
     })
 
@@ -1109,7 +1109,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     output$formulas <- DT::renderDT({
       req(formulas_table())
-      levels <- c("", unique(formulas_table()$formula[grepl("Not Reported", formulas_table()$formula)]))
+      levels <- c("", unique(formulas_table()$formula[grepl("Not reported", formulas_table()$formula)]))
       DT::datatable(formulas_table(), rownames = FALSE, filter = "top") %>% 
         # Highlight traits that are not reported
         DT::formatStyle(
@@ -1136,7 +1136,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       content = function(file) {
         writexl::write_xlsx(
           formulas_table() %>% 
-            dplyr::filter(!grepl("Not Reported", formula)), 
+            dplyr::filter(!grepl("Not reported", formula)), 
           path = file
         )
       }

@@ -22,7 +22,7 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
       paste0(cluster, "_", target_trait, " is zero for all samples and therefore not reported."),
       type = "warning", duration = 5, id = paste0(cluster, target_trait)
     )
-    return(paste0(cluster, "_", target_trait, " = Not Reported: zero for all samples"))
+    return(paste0(cluster, "_", target_trait, " = Not reported: zero for all samples"))
   } 
   else if (nrow(df) == 1) {
     showNotification(
@@ -30,7 +30,7 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
              " would be calculated using only one glycan and is therefore not reported."),
       type = "warning", duration = 5, id = paste0(cluster, target_trait)
     )
-    return(paste0(cluster, "_", target_trait, " = Not Reported: only one relevant glycan ", df$glycan))
+    return(paste0(cluster, "_", target_trait, " = Not reported: only one relevant glycan ", df$glycan))
   }
   else if (nrow(df) == nrow(cluster_ref_df)) {
     # All glycans are used for the traits. 
@@ -42,10 +42,11 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
         paste0(cluster, "_", target_trait, " equals 100 for all samples and is therefore not reported."),
         type = "warning", duration = 5, id = paste0(cluster, target_trait)
       )
-      return(paste0(cluster, "_", target_trait, " = Not Reported: 100 for all samples"))
+      return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
     }
   }
-  
+  # TODO: check for use of all glycans minus 1 --> not always a problem?
+
 
   # Create a string with the right hand side of the formula
   formula_string <- paste0(df[[target_trait]], " * ", paste0(cluster, "1", df$glycan), collapse = " + ")
