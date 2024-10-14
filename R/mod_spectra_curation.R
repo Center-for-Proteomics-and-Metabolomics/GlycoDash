@@ -245,17 +245,17 @@ mod_spectra_curation_ui <- function(id){
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
             downloadButton(ns("download1"), 
-                           "Download details of passing spectra per analyte",
+                           "Details of passing spectra per analyte",
                            style = "width: 330px;"),
             br(),
             br(),
             downloadButton(ns("download2"),
-                           "Download overview of failed spectra",
+                           "Overview of failed spectra",
                            style = "Width: 330px;"),
             br(),
             br(),
             downloadButton(ns("download3"),
-                           "Download details of failed spectra per analyte",
+                           "Details of failed spectra per analyte",
                            style = "Width: 330px;")
           )
         )
