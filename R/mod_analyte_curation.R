@@ -775,12 +775,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       return(to_return)
     })
     
-    observe({
-      req(length(r$mod_results) > 0)
-      browser()
-    })
-    
-    
 
     # Make downloading analyte_curated_data possible:
     output$download <- downloadHandler(
