@@ -726,7 +726,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     }) %>% bindEvent(analyte_curated_data())
     
     
-    
     observeEvent(info()$analyte_curated_data, {
       req(clusters())
       req(input$curation_method != "Per sample")
@@ -774,6 +773,11 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       shinybusy::remove_modal_spinner()
       # Return
       return(to_return)
+    })
+    
+    observe({
+      req(length(r$mod_results) > 0)
+      browser()
     })
     
     
