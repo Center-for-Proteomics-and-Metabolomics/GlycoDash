@@ -7,7 +7,7 @@ or when a trait would be calculated using only one glycan.
 
 ## Adjustments
 * Notes on analytes in Skyline data are now kept and displayed in a separate
-tabs when downloading normalized data as an Excel file.
+tab when downloading normalized data as an Excel file.
 * Added a download button for the GlycoDash manual in the top-right corner of 
 the dashboard.
 * Added a button that takes the user to the GlycoDash GitHub page for reporting bugs 
