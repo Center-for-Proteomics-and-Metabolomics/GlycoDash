@@ -448,6 +448,22 @@ mod_derived_traits_ui <- function(id){
         )
       ),
       
+      fluidRow(
+        shinydashboard::box(
+          id = ns("tabbed_box"),
+          title = "Traits plotted against total spectrum intensities",
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          # TODO
+          # - Info box
+          # - Generate tab for each glycosylation site
+          # - Per tab: plot facetted per trait, color points by sample type
+          # - Option to add/remove traits or analytes from the plots
+          # - Deal with total/specific antibodies
+          tabsetPanel(id = ns("intensity_plots"))
+        )
+      ),
       
       fluidRow(
         shinydashboard::box(
@@ -1066,6 +1082,44 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
                     ), filter = "top")
     })
+    
+    
+    ########## Plot the traits vs total spectrum intensities #################
+    
+    # List with names of traits per cluster
+    cluster_traits <- reactive({
+      req(data_with_traits())
+      columns <- colnames(data_with_traits())
+      # Use map to create a list of trait names for each cluster
+      cluster_traits <- purrr::map(clusters(), function(cluster) {
+        substring <- paste0(cluster, "_")
+        columns[grepl(substring, columns) & !grepl("_sum_intensity", columns)
+                & !grepl("_quantity_ng", columns)]
+      })
+      # Turn into a named list
+      names(cluster_traits) <- clusters()
+      return(cluster_traits)
+    })
+    
+    # Create a tab for each name in cluster_traits that is not empty
+    # created_tabs <- reactiveValues(tabs = )
+    observeEvent(cluster_traits(), {
+      for (cluster in clusters()) {
+        removeTab(inputId = "intensity_plots", target = cluster)
+      } # Remove previously generated tabs
+      non_empty_clusters <- names(purrr::keep(cluster_traits(), ~ length(.x) > 0))
+      # browser()
+      for (cluster in non_empty_clusters) {
+        appendTab(
+          inputId = "intensity_plots", 
+          select = TRUE,
+          session = session,
+          tab = tabPanel(title = cluster)
+        )
+      }
+    })
+    
+    
 
     
     ########## Download example Excel of custom traits ##########
