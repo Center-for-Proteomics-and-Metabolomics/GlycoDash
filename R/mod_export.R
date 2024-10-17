@@ -111,7 +111,6 @@ mod_export_server <- function(id,
     output$download <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
-        
         if (grepl("R object", input$download_format)) {
           paste0(current_datetime, "_normalized_data.rds")
         } else {
@@ -120,16 +119,16 @@ mod_export_server <- function(id,
       },
       content = function(file) {
         if (grepl("R object", input$download_format)) {
-          save(data_to_download, file = file)
-        } else {
-          data_list <- dplyr::case_when(
-            is_truthy(results_normalization$notes()) ~ list("Data" = x$data, "Notes" = results_normalization$notes()),
-            !is_truthy(results_normalization$notes()) ~ list("Data" = x$data)
-          )
+          save(x$data, file = file)
+        } else if (is_truthy(results_normalization$notes())) {
+          data_list <- list("Data" = x$data, "Notes" = results_normalization$notes())
           writexl::write_xlsx(data_list, path = file)
+        } else {
+          writexl::write_xlsx(x$data, path = file)
         }
       }
     )
+    
     
     output$report <- downloadHandler(
       filename = function() {

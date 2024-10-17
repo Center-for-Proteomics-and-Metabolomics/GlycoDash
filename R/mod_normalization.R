@@ -394,7 +394,6 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     output$download <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
-        
         if (grepl("R object", input$download_format)) {
           paste0(current_datetime, "_normalized_data.rds")
         } else {
@@ -403,13 +402,12 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       },
       content = function(file) {
         if (grepl("R object", input$download_format)) {
-          save(data_to_download, file = file)
-        } else {
-          data_list <- dplyr::case_when(
-            is_truthy(notes()) ~ list("Data" = normalized_data_wide(), "Notes" = notes()),
-            !is_truthy(notes()) ~ list("Data" = normalized_data_wide())
-          )
+          save(normalized_data_wide(), file = file)
+        } else if (is_truthy(notes())) {
+          data_list <- list("Data" = normalized_data_wide(), "Notes" = notes())
           writexl::write_xlsx(data_list, path = file)
+        } else{
+          writexl::write_xlsx(normalized_data_wide(), path = file)
         }
       }
     )
