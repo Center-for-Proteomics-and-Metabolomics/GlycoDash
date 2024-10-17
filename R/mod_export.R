@@ -97,22 +97,37 @@ mod_export_server <- function(id,
                     ), filter = "top")
     })
     
+    observe({
+      if (is_truthy(results_normalization$notes())) {
+        updateRadioButtons(
+          inputId = "download_format",
+          choices = c("Excel file (data and notes)", "R object (data only)")
+        )
+      }
+    })
     
-    # Download the final data
+    
+    # Download processed data
     output$download <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
-        switch(input$download_format,
-               "R object" = paste0(current_datetime, "_processed_data.rds"),
-               "Excel file" = paste0(current_datetime, "_processed_data.xlsx"))
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        
+        if (grepl("R object", input$download_format)) {
+          paste0(current_datetime, "_normalized_data.rds")
+        } else {
+          paste0(current_datetime, "_normalized_data.xlsx")
+        }
       },
       content = function(file) {
-        data_to_download <- x$data
-        switch(input$download_format,
-               "R object" = save(data_to_download, 
-                                 file = file),
-               "Excel file" = writexl::write_xlsx(data_to_download, 
-                                                  path = file))
+        if (grepl("R object", input$download_format)) {
+          save(data_to_download, file = file)
+        } else {
+          data_list <- dplyr::case_when(
+            is_truthy(results_normalization$notes()) ~ list("Data" = x$data, "Notes" = results_normalization$notes()),
+            !is_truthy(results_normalization$notes()) ~ list("Data" = x$data)
+          )
+          writexl::write_xlsx(data_list, path = file)
+        }
       }
     )
     

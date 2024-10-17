@@ -202,7 +202,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       if (is_truthy(notes())) {
         updateRadioButtons(
           inputId = "download_format",
-          choices = c("Excel file (data and notes)", "R objects (data only)")
+          choices = c("Excel file (data and notes)", "R object (data only)")
         )
       }
     })
@@ -419,6 +419,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     return(list(
       normalized_data = normalized_data,
       normalized_data_wide = normalized_data_wide,
+      notes = notes,
       heatmaps = reactive(r$heatmaps),
       heatmaps_excluded_sample_types = heatmaps_excluded_sample_types
     ))
