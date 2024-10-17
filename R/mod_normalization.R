@@ -185,6 +185,28 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         }
     })
     
+    # Notes from data per analyte (Skyline)
+    notes <- reactive({
+      req(analyte_curated_data())
+      if ("note" %in% colnames(analyte_curated_data())) {
+        notes <- analyte_curated_data() %>% 
+          dplyr::select(analyte, note) %>% 
+          dplyr::filter(note != "") %>% 
+          dplyr::distinct(analyte, .keep_all = TRUE)
+      } else NULL
+    })
+    
+    # When notes exist: tell user that downloading Excel includes notes
+    # R object does not include notes.
+    observe({
+      if (is_truthy(notes())) {
+        updateRadioButtons(
+          inputId = "download_format",
+          choices = c("Excel file (data and notes)", "R objects (data only)")
+        )
+      }
+    })
+    
     # Turn normalized data into wide format
     normalized_data_wide <- reactive({
       req(normalized_data())
@@ -208,7 +230,6 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
                     ), filter = "top")
     })
-    
     
     
     # Create heatmap plots
@@ -369,25 +390,31 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     })
 
     
-    # Download data
+    # Download normalized data
     output$download <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
-        switch(input$download_format,
-               "R object" = paste0(current_datetime, "_normalized_data.rds"),
-               "Excel file" = paste0(current_datetime, "_normalized_data.xlsx"))
+        
+        if (grepl("R object", input$download_format)) {
+          paste0(current_datetime, "_normalized_data.rds")
+        } else {
+          paste0(current_datetime, "_normalized_data.xlsx")
+        }
       },
       content = function(file) {
-        data_to_download <- normalized_data_wide()
-        switch(input$download_format,
-               "R object" = save(data_to_download,
-                                 file = file),
-               "Excel file" = writexl::write_xlsx(data_to_download,
-                                                  path = file))
+        if (grepl("R object", input$download_format)) {
+          save(data_to_download, file = file)
+        } else {
+          data_list <- dplyr::case_when(
+            is_truthy(notes()) ~ list("Data" = normalized_data_wide(), "Notes" = notes()),
+            !is_truthy(notes()) ~ list("Data" = normalized_data_wide())
+          )
+          writexl::write_xlsx(data_list, path = file)
+        }
       }
     )
     
-
+    
     
     return(list(
       normalized_data = normalized_data,
