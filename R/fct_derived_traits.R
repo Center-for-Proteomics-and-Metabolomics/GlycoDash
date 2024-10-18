@@ -329,5 +329,37 @@ calculate_custom_traits <- function(traits_excel, normalized_data_wide) {
 
 
 
+traits_vs_intensity_plot <- function(data_to_plot, cluster) {
+  
+  my_palette <- color_palette(length(unique(data_to_plot$sample_type)))
+  
+  xvar <- paste0(cluster, "_sum_intensity")
+  
+  p <- ggplot2::ggplot(data_to_plot, ggplot2::aes(
+    x = .data[[xvar]], y = .data[["relative_abundance"]],
+    text = paste0(
+      "Sample name: ", sample_name, "\n",
+      "Sample ID: ", sample_id, "\n",
+      "Relative abundance: ", format(round(relative_abundance, digits = 2), nsmall = 2), "\n",
+      paste(cluster, "sum intensity: "), round(.data[[xvar]], digits = 0)
+    )
+  )) +
+    ggplot2::geom_point(ggplot2::aes(color = sample_type), size = 1, alpha = 0.7) +
+    ggplot2::labs(x = paste(cluster, "sum intensity"), y = "Relative abundance") +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      panel.border = ggplot2::element_rect(color = "black", fill = NA, size = 0.5),
+      strip.background = ggplot2::element_rect(fill = "#F6F6F8")
+    ) +
+    ggplot2::scale_color_manual(values = my_palette, name = "Sample type")
+  
+  if ("group" %in% colnames(data_to_plot)) {
+    p <- p + ggplot2::facet_grid(trait ~ group, scales = "free")
+  } else {
+    p <- p + ggplot2::facet_wrap(~trait, scales = "free", ncol = 2)
+  }
+  
+  return(p)
+}
 
-
+  

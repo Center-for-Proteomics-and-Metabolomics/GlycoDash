@@ -449,18 +449,12 @@ mod_derived_traits_ui <- function(id){
       ),
       
       fluidRow(
-        shinydashboard::box(
+        shinydashboardPlus::box(
           id = ns("tabbed_box"),
           title = "Traits plotted against total spectrum intensities",
           width = 12,
           solidHeader = TRUE,
           status = "primary",
-          # TODO
-          # - Info box
-          # - Generate tab for each glycosylation site
-          # - Per tab: plot facetted per trait, color points by sample type
-          # - Option to add/remove traits or analytes from the plots
-          # - Deal with total/specific antibodies
           tabsetPanel(id = ns("intensity_plots"))
         )
       ),
@@ -1128,8 +1122,9 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
           )
           # Create plot
           mod_tab_intensities_server(
-            id = cluster
-            # params = params()
+            id = cluster,
+            data = data_with_traits(),
+            traits = cluster_traits()[[cluster]]
           )
         }
       }

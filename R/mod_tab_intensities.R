@@ -11,24 +11,59 @@ mod_tab_intensities_ui <- function(id) {
   ns <- NS(id)
   tagList(
     column(
-      width= 12,
-      shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot")))
-    )
+      width = 12,
+      plotly::plotlyOutput(ns("plot"))
+    ),
+    # shinyjqui_resizable() does not work here somehow
+    # So need this JS code to make resizing work properly
+    tags$script(HTML(paste0("
+      $(document).ready(function() {
+        $('#", ns("plot"), "').resizable({
+          handles: 'e, s, se',
+          minHeight: 300,
+          minWidth: 300
+        });
+      });
+    ")))
   )
 }
+
+
     
 #' tab_intensities Server Functions
 #'
 #' @noRd 
-mod_tab_intensities_server <- function(id) {
+mod_tab_intensities_server <- function(id, data, traits) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    # Example plot
-    output$plot <- plotly::renderPlotly(
-      ggplot2::ggplot(mtcars, ggplot2::aes(mpg, disp)) +
-        ggplot2::geom_point()
-    )
+    cluster <- id
+    
+    
+    data_to_plot <- reactive({
+      req(data)
+      data_to_plot <- data %>%
+        dplyr::select(
+          sample_name, sample_type, sample_id, tidyselect::contains(paste0(cluster, "_")),
+          tidyselect::any_of("group") # specific Ig data
+        ) %>% 
+        tidyr::pivot_longer(
+          cols = tidyselect::matches(paste0(cluster, "_")) & 
+                 !tidyselect::matches(paste0(cluster, "_sum_intensity")),
+          names_to = "trait", values_to = "relative_abundance"
+        )
+    })
+    
+    
+    intensity_plot <- reactive({
+      traits_vs_intensity_plot(data_to_plot(), cluster)
+    })
+    
+    
+    output$plot <- plotly::renderPlotly({
+      req(intensity_plot())
+      plotly::ggplotly(intensity_plot(),  tooltip = "text")
+    })
     
   })
 }
