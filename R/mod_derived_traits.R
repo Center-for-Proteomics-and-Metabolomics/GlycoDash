@@ -1047,6 +1047,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     # If only default traits were calculated: use "data_with_derived_traits()" here
     # If only custom traits were calculated: use "data_with_custom_traits()" here
     # If both default and custom traits were calculated: use "data_with_all_traits()" here
+    # Otherwise: just normalized data in wide format
     with_data <- reactive({
       if (is_truthy(data_with_all_traits())) {
         data_with_all_traits()
@@ -1054,6 +1055,8 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         data_with_derived_traits()
       } else if (is_truthy(data_with_custom_traits())) {
         data_with_custom_traits()
+      } else if (is_truthy(normalized_data_wide())) {
+        normalized_data_wide()
       }
     })
     
@@ -1101,21 +1104,34 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       return(cluster_traits)
     })
     
+    
     # Create a tab for each name in cluster_traits that is not empty
     # created_tabs <- reactiveValues(tabs = )
     observeEvent(cluster_traits(), {
+      # Remove previously generated tabs
       for (cluster in clusters()) {
         removeTab(inputId = "intensity_plots", target = cluster)
-      } # Remove previously generated tabs
+      } 
+      # Generate tabs with plots
       non_empty_clusters <- names(purrr::keep(cluster_traits(), ~ length(.x) > 0))
-      # browser()
-      for (cluster in non_empty_clusters) {
-        appendTab(
-          inputId = "intensity_plots", 
-          select = TRUE,
-          session = session,
-          tab = tabPanel(title = cluster)
-        )
+      if (length(non_empty_clusters) > 0) {
+        for (cluster in non_empty_clusters) {
+          # Create tab
+          appendTab(
+            inputId = "intensity_plots", 
+            select = TRUE,
+            session = session,
+            tab = tabPanel(
+              title = cluster,
+              mod_tab_intensities_ui(ns(cluster))  # Might need counter?
+            )
+          )
+          # Create plot
+          mod_tab_intensities_server(
+            id = cluster
+            # params = params()
+          )
+        }
       }
     })
     
@@ -1148,9 +1164,10 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                                   searching = FALSE))
     })
     
+    
     # Display the formulas of the default traits
     formulas_table <- reactive({
-      req(data_with_traits())
+      req(trait_formulas())
       formula_dfs <- vector("list", length = length(trait_formulas()))
       for (i in seq(length(trait_formulas()))) {
         trait_formula <- trait_formulas()[i]

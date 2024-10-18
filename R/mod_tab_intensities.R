@@ -1,4 +1,4 @@
-#' mod_tab_intensities UI Function
+#' tab_intensities UI Function
 #'
 #' @description A shiny Module.
 #'
@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_mod_tab_intensities_ui <- function(id) {
+mod_tab_intensities_ui <- function(id) {
   ns <- NS(id)
   tagList(
     column(
@@ -17,18 +17,24 @@ mod_mod_tab_intensities_ui <- function(id) {
   )
 }
     
-#' mod_tab_intensities Server Functions
+#' tab_intensities Server Functions
 #'
 #' @noRd 
-mod_mod_tab_intensities_server <- function(id, params) {
+mod_tab_intensities_server <- function(id) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
- 
+    
+    # Example plot
+    output$plot <- plotly::renderPlotly(
+      ggplot2::ggplot(mtcars, ggplot2::aes(mpg, disp)) +
+        ggplot2::geom_point()
+    )
+    
   })
 }
     
 ## To be copied in the UI
-# mod_mod_tab_intensities_ui("mod_tab_intensities_1")
+# mod_tab_intensities_ui("tab_intensities_1")
     
 ## To be copied in the server
-# mod_mod_tab_intensities_server("mod_tab_intensities_1")
+# mod_tab_intensities_server("tab_intensities_1")
