@@ -96,68 +96,6 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     })
     
     
-    # Code below is supposed to set initial manual cut-off values to
-    # be equal to calculated cut-off values?
-    # For now I set their initial values to 0 by default
-    
-    # observe({
-    #   req(calculated_cut_offs())
-    #   req(is_truthy(input$switch_to_manual))
-    #   req(!is_truthy(manual_cut_offs()))
-    # 
-    #   if (contains_total_and_specific_samples() == TRUE) {
-    #     calculated_sum_intensity_cut_off_specific <- calculated_cut_offs() %>% 
-    #       dplyr::filter(group == keyword_specific()) %>% 
-    #       dplyr::pull(cut_off_sum_intensity)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_sum_intensity_specific",
-    #                        value = calculated_sum_intensity_cut_off_specific)
-    #     
-    #     calculated_sum_intensity_cut_off_total <- calculated_cut_offs() %>% 
-    #       dplyr::filter(group == keyword_total()) %>% 
-    #       dplyr::pull(cut_off_sum_intensity)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_sum_intensity_total",
-    #                        value = calculated_sum_intensity_cut_off_total)
-    #     
-    #     calculated_passing_analyte_percentage_cut_off_specific <- calculated_cut_offs() %>% 
-    #       dplyr::filter(group == keyword_specific()) %>% 
-    #       dplyr::pull(cut_off_passing_analyte_percentage)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_passing_analyte_percentage_specific",
-    #                        value = calculated_passing_analyte_percentage_cut_off_specific)
-    #     
-    #     calculated_passing_analyte_percentage_cut_off_total <- calculated_cut_offs() %>% 
-    #       dplyr::filter(group == keyword_total()) %>% 
-    #       dplyr::pull(cut_off_passing_analyte_percentage)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_passing_analyte_percentage_total",
-    #                        value = calculated_passing_analyte_percentage_cut_off_total)
-    #       
-    #   } else if (contains_total_and_specific_samples() == FALSE) {
-    #     
-    #     calculated_sum_intensity_cut_off <- calculated_cut_offs() %>% 
-    #       dplyr::pull(cut_off_sum_intensity)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_sum_intensity",
-    #                        value = calculated_sum_intensity_cut_off)
-    #     
-    #     calculated_passing_analyte_percentage_cut_off <- calculated_cut_offs() %>% 
-    #       dplyr::pull(cut_off_passing_analyte_percentage)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_passing_analyte_percentage",
-    #                        value = calculated_passing_analyte_percentage_cut_off)
-    #   }
-    #   
-    # })
-    
-    
     manual_cut_offs <- reactive({
       
       if (contains_total_and_specific_samples() == TRUE) {
