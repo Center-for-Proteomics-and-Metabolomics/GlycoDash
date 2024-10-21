@@ -24,8 +24,8 @@ app_ui <- function(request) {
           href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"
         ), class = "dropdown"),
         tags$li(a(
-          onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/issues/new')",
-          href = NULL, icon("bug"), title = "Report a bug (GitHub)", style = "cursor: pointer;"
+          onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/issues')",
+          href = NULL, icon("bug"), title = "Known issues", style = "cursor: pointer;"
         ), class = "dropdown"),
         tags$li(ManualButton("download_manual"), title = "Download manual", class = "dropdown"),
         tags$li(ChangelogButton("download_changelog"), title = "Download changelog", class = "dropdown")
