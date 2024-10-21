@@ -189,36 +189,6 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     })
     
     
-    # This combined manual cut-offs and calculated cut-offs for some reason,
-    # doesn't seem very useful?
-    # for_cut_off_table_both <- reactive({
-    #   req(calculated_cut_offs(),
-    #       manual_cut_offs())
-    #   
-    #   dplyr::full_join(calculated_cut_offs(),
-    #                    manual_cut_offs()) %>% 
-    #     dplyr::mutate(
-    #       `Based on samples` = purrr::map_chr(
-    #         sample_type_list,
-    #         ~ paste(ifelse(rlang::is_empty(.x),"No", "Yes,"),
-    #                 comma_and(.x$sample_type))
-    #       ),
-    #       curation_method = firstupper(
-    #         stringr::str_replace_all(curation_method,
-    #                                  pattern = "_",
-    #                                  replacement = " ")
-    #       )
-    #     ) %>% 
-    #     dplyr::ungroup() %>% 
-    #     dplyr::select(-c(cluster,
-    #                      sample_type_list)) %>% 
-    #     dplyr::rename("Sum intensity cut-off" = cut_off_sum_intensity,
-    #                   "Percentage of passing analytes cut-off" = cut_off_passing_analyte_percentage,
-    #                   "Curation method" = curation_method) %>% 
-    #     dplyr::rename_with(firstupper)
-    # })
-    
-    
     # Nicely formatted data for table with calculated cut-offs
     for_cut_off_table_calculated <- reactive({
       req(calculated_cut_offs())
@@ -256,19 +226,6 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
                       "Curation method" = curation_method) %>% 
         dplyr::rename_with(firstupper)
     })
-    
-    
-    # show_in_cut_off_table <- reactive({
-    #   if (is_truthy(input$switch_to_manual)) {
-    #     if (is_truthy(for_cut_off_table_both())) {
-    #       for_cut_off_table_both()
-    #     } else {
-    #       req(for_cut_off_table_manual())
-    #     }
-    #   } else {
-    #     req(for_cut_off_table_calculated())
-    #   }
-    # })
     
     
     # Show either calculated or manual cut-offs in table, depending on switch
