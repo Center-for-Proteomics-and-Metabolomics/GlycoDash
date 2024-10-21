@@ -382,6 +382,17 @@ mod_derived_traits_ui <- function(id){
       
       fluidRow(
         shinydashboardPlus::box(
+          id = ns("tabbed_box"),
+          title = "Automatically calculated traits plotted against total spectrum intensities",
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          tabsetPanel(id = ns("intensity_plots"))
+        )
+      ),
+      
+      fluidRow(
+        shinydashboardPlus::box(
           id = ns("box"),
           title = div(
             id = ns("box_header"),
@@ -445,17 +456,6 @@ mod_derived_traits_ui <- function(id){
           solidHeader = TRUE,
           status = "primary",
           DT::dataTableOutput(ns("custom_formulas"))
-        )
-      ),
-      
-      fluidRow(
-        shinydashboardPlus::box(
-          id = ns("tabbed_box"),
-          title = "Traits plotted against total spectrum intensities",
-          width = 12,
-          solidHeader = TRUE,
-          status = "primary",
-          tabsetPanel(id = ns("intensity_plots"))
         )
       ),
       
