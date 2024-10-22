@@ -4,6 +4,7 @@
 including joining chain (JC).
 * Show notifications when an automatic trait is zero or 100 for all samples,
 or when a trait would be calculated using only one glycan.
+* Plot automatically calculated traits against total spectrum intensities.
 
 ## Adjustments
 * Notes on analytes in Skyline data are now kept and displayed in a separate
