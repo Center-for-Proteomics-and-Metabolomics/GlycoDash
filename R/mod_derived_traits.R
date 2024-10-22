@@ -1101,11 +1101,13 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     # Create a tab for each name in cluster_traits that is not empty
     # created_tabs <- reactiveValues(tabs = )
+    intensity_plots <- reactiveValues(plots = NULL)
     observeEvent(cluster_traits(), {
-      # Remove previously generated tabs
+      # Remove previously generated tabs and plots
       for (cluster in clusters()) {
         removeTab(inputId = "intensity_plots", target = cluster)
       } 
+      intensity_plots$plots <- NULL
       # Generate tabs with plots
       non_empty_clusters <- names(purrr::keep(cluster_traits(), ~ length(.x) > 0))
       if (length(non_empty_clusters) > 0) {
@@ -1117,15 +1119,15 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
             session = session,
             tab = tabPanel(
               title = cluster,
-              mod_tab_intensities_ui(ns(cluster))  # Might need counter?
+              mod_tab_intensities_ui(ns(cluster))
             )
           )
           # Create plot
-          mod_tab_intensities_server(
+          intensity_plots$plots[[cluster]] <- mod_tab_intensities_server(
             id = cluster,
             data = data_with_traits(),
             traits = cluster_traits()[[cluster]]
-          )
+          )$intensity_plot()
         }
       }
     })
@@ -1214,7 +1216,8 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         normalized_data = normalized_data,
         derived_traits = reactive({ input$traits_menu }),
         formulas = formulas_table,
-        custom_traits_excel = traits_excel
+        custom_traits_excel = traits_excel,
+        intensity_plots = reactive(intensity_plots$plots)
       )
     )
  

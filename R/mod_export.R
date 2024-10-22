@@ -59,8 +59,8 @@ mod_export_server <- function(id,
                               results_analyte_curation,
                               results_normalization,
                               results_repeatability,
-                              results_data_exploration){
-  moduleServer( id, function(input, output, session){
+                              results_data_exploration) {
+  moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
     x <- reactiveValues()
@@ -244,9 +244,9 @@ mod_export_server <- function(id,
         params <- list(
           data_type = results_data_import$data_type(),
           summary_filenames = results_data_import$summary_filenames(),
-          plate_design = try_call(results_data_import$filenames_plate_design), # trycall not needed?
-          sample_list = try_call(results_data_import$filename_sample_list), # trycall not needed?
-          filenames_metadata = try_call(results_data_import$filenames_metadata), # trycall not needed?
+          plate_design = try_call(results_data_import$filenames_plate_design), 
+          sample_list = try_call(results_data_import$filename_sample_list), 
+          filenames_metadata = try_call(results_data_import$filenames_metadata), 
           sample_types_method = results_data_import$sample_types_method(),
           filename_sample_types = try_call(results_data_import$filename_sample_types),
           mass_acc = results_spectra_curation$mass_acc(),
@@ -262,7 +262,7 @@ mod_export_server <- function(id,
           included_qc_analytes = results_analyte_curation$included_qc(),
           analyte_curation_choice = results_analyte_curation$curation_method(),
           groups_to_ignore = results_analyte_curation$groups_to_ignore(),
-          ignore_samples = results_analyte_curation$ignore_samples(), # test if empty
+          ignore_samples = results_analyte_curation$ignore_samples(),
           cut_offs = results_analyte_curation$cut_offs(),
           analyte_list = results_analyte_curation$analyte_list(),
           analyte_curation_tab_contents = analyte_curation_tab_contents,
@@ -271,6 +271,7 @@ mod_export_server <- function(id,
           derived_traits = try_call(results_derived_traits$derived_traits),
           formulas = try_call(results_derived_traits$formulas),
           custom_formulas = try_call(results_derived_traits$custom_formulas),
+          intensity_plots = results_derived_traits$intensity_plots(),
           repeatability = repeatability_tab_contents,
           data_exploration = data_exploration_tab_contents,
           silumab_amount = try_call(results_quantitation$silumab_amount),

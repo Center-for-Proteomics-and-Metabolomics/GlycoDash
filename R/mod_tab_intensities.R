@@ -65,6 +65,11 @@ mod_tab_intensities_server <- function(id, data, traits) {
       plotly::ggplotly(intensity_plot(),  tooltip = "text")
     })
     
+
+    return(list(
+      intensity_plot = intensity_plot
+    ))
+    
   })
 }
     
