@@ -196,7 +196,6 @@ mod_derived_traits_ui <- function(id){
                   "Sialic acids per galactose",
                   "Galactoses per GalNAc",
                   "Tn antigens",
-                  "Sialyl-Tn (sTn) antigens",
                   "T antigens",
                   "Sialyl-T (sT) antigens",
                   "Disialylated O-antigens"

@@ -155,7 +155,6 @@ match_traits <- function(traits_ui_input) {
     "Galactoses" = "galactoses",
     "GalNAcs" = "galnacs",
     "Tn antigens" = "Tn_antigens",
-    "Sialyl-Tn (sTn) antigens" = "sTn_antigens",
     "T antigens" = "T_antigens",
     "Sialyl-T (sT) antigens" = "sT_antigens",
     "Disialylated O-antigens" = "disialylated_O_antigens",
