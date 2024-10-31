@@ -27,7 +27,6 @@ mod_derived_traits_ui <- function(id){
       fluidRow(
         shinydashboardPlus::box(
           id = ns("box"),
-          # title = "Calculate glycosylation traits automatically",
           title = div(
             id = ns("box_header"),
             "Calculate glycosylation traits automatically",
@@ -59,9 +58,10 @@ mod_derived_traits_ui <- function(id){
             "Select the types of antibody glycans that are present in your data:",
             choices = c(
               "Human IgG: N-glycans",
-              # "Human IgA: N-glycans",
-              # "Human IgA: O-glycans",
-              # "Human IgM: N-glycans",
+              "Human IgA: N-glycans",
+              "Human IgA: O-glycans",
+              "Human IgM: N-glycans",
+              "Human Joining Chain: N-glycans",
               "Mouse IgG: N-glycans"
             )
           ),
@@ -69,19 +69,19 @@ mod_derived_traits_ui <- function(id){
           # Tab panel for traits options
           tabsetPanel(
             id = ns("tabs"),
-            # Human IgG tab
+            
+            # Human IgG N-glycans
             tabPanel("Human IgG: N-glycans", tagList(
               br(),
               shinyWidgets::awesomeCheckboxGroup(
-                ns("human_IgG_traits"),
-                "Select the traits you want to calculate for human IgG N-glycans:",
-                "Complex-type glycans:",
+                ns("human_IgG_N_traits"),
+                "Select traits to calculate:",
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
                   "Galactosylation per antenna of complex-type glycans",
                   "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans (calculated as [Sialylation per antenna] / [Galactosylation per antenna] \u00D7 100%)",
+                  "Sialylation per galactose of complex-type glycans",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
                   "Percentage of oligomannose-type glycans",
@@ -89,23 +89,267 @@ mod_derived_traits_ui <- function(id){
                 )
               ),
               selectizeInput(
-                ns("human_IgG_clusters"),
-                "For which clusters in your data should human IgG N-glycan traits be calculated?",
+                ns("human_IgG_N_clusters"),
+                "Select clusters for which these traits should be calculated:",
                 choices = c(""),
                 multiple = TRUE
               )
             )),
+            
+            # Human IgA N-glycans per glycosylation site
+            tabPanel("Human IgA: N-glycans", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgA_N47_traits"),
+                "Select traits to calculate for IgA2 glycosylation site N47:",
+                choices = c(
+                  "Core fucosylation of complex-type glycans",
+                  "Antennary fucosylation of complex-type glycans",
+                  "Bisection of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
+                  "Sialylation per antenna of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans",
+                  "Percentage of triantennary complex-type glycans"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgA_N47_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              ),
+              
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgA_N144_traits"),
+                "Select traits to calculate for IgA1/2 glycosylation site N144/N131:",
+                choices = c(
+                  "Fucosylation of complex-type glycans",
+                  "Bisection of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
+                  "Sialylation per antenna of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans",
+                  "Percentage of hybrid-type glycans",
+                  "Percentage of oligomannose-type glycans",
+                  "Oligomannose-type glycans: average number of mannoses"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgA_N144_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              ),
+              
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgA_N205_traits"),
+                "Select traits want to calculate for IgA2 glycosylation site N205:",
+                choices = c(
+                  "Fucosylation of complex-type glycans",
+                  "Bisection of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
+                  "Sialylation per antenna of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgA_N205_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              ),
+              
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgA_N340_traits"),
+                "Select traits to calculate for IgA1/2 glycosylation site N340/N327:",
+                choices = c(
+                  "Fucosylation of complex-type glycans",
+                  "Bisection of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
+                  "Sialylation per antenna of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans",
+                  "Percentage of triantennary complex-type glycans",
+                  "Percentage of oligomannose-type glycans",
+                  "Oligomannose-type glycans: average number of mannoses"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgA_N340_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              )
+            )),
+            
+            # Human IgA O-glycans
+            tabPanel("Human IgA: O-glycans", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgA_O_traits"),
+                "Select traits to calculate:",
+                choices = c(
+                  "Sialic acids",
+                  "Galactoses",
+                  "GalNAcs",
+                  "Sialic acids per galactose",
+                  "Galactoses per GalNAc",
+                  "Tn antigens",
+                  "T antigens",
+                  "Sialyl-T (sT) antigens",
+                  "Disialylated O-antigens"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgA_O_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              )
+            )),
+            
+            # Human IgM N-glycans per glycosylation site
+            tabPanel("Human IgM: N-glycans", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgM_N46_traits"),
+                "Select traits to calculate for IgM glycosylation site N46:",
+                choices = c(
+                  "Fucosylation of complex-type glycans",
+                  "Bisection of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
+                  "Sialylation per antenna of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans",
+                  "Antennarity of complex-type glycans",
+                  "Percentage of hybrid-type glycans",
+                  "Fucosylation of hybrid-type glycans",
+                  "Bisection of hybrid-type glycans",
+                  "Percentage of oligomannose-type glycans",
+                  "Oligomannose-type glycans: average number of mannoses"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgM_N46_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              ),
+              
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgM_N209_traits"),
+                "Select traits to calculate for IgM glycosylation site N209:",
+                choices = c(
+                  "Core fucosylation of complex-type glycans",
+                  "Antennary fucosylation of complex-type glycans",
+                  "Bisection of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
+                  "Sialylation per antenna of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans",
+                  "Percentage of triantennary complex-type glycans"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgM_N209_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              ),
+              
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgM_N272_traits"),
+                "Select traits to calculate for IgM glycosylation site N272:",
+                choices = c(
+                  "Core fucosylation of complex-type glycans",
+                  "Antennary fucosylation of complex-type glycans",
+                  "Bisection of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
+                  "Sialylation per antenna of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans",
+                  "Percentage of triantennary complex-type glycans"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgM_N272_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              ),
+              
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgM_N279_traits"),
+                "Select traits to calculate for IgM glycosylation site N279:",
+                choices = c(
+                  "Fucosylation of complex-type glycans",
+                  "Antennarity of complex-type glycans",
+                  "Percentage of hybrid-type glycans",
+                  "Fucosylation of hybrid-type glycans",
+                  "Percentage of oligomannose-type glycans",
+                  "Oligomannose-type glycans: average number of mannoses"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgM_N279_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              ),
+              
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_IgM_N440_traits"),
+                "Select traits to calculate for IgM glycosylation site N440:",
+                choices = c(
+                  "Oligomannose-type glycans: average number of mannoses"
+                )
+              ),
+              selectizeInput(
+                ns("human_IgM_N440_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              )
+            )),
+            
+            
+            # Human JC N-glycans
+            tabPanel("Human Joining Chain: N-glycans", tagList(
+              br(),
+              shinyWidgets::awesomeCheckboxGroup(
+                ns("human_JC_N_traits"),
+                "Select traits to calculate:",
+                choices = c(
+                  "Fucosylation of complex-type glycans",
+                  "Bisection of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
+                  "Sialylation per antenna of complex-type glycans",
+                  "Sialylation per galactose of complex-type glycans",
+                  "Percentage of monoantennary complex-type glycans",
+                  "Percentage of hybrid-type glycans"
+                )
+              ),
+              selectizeInput(
+                ns("human_JC_N_clusters"),
+                "Select clusters for which these traits should be calculated:",
+                choices = c(""),
+                multiple = TRUE
+              )
+            )),
+            
             # Mouse IgG tab
             tabPanel("Mouse IgG: N-glycans", tagList(
               br(),
               shinyWidgets::awesomeCheckboxGroup(
-                ns("mouse_IgG_traits"),
-                "Select the traits you want to calculate for mouse IgG N-glycans:",
+                ns("mouse_IgG_N_traits"),
+                "Select traits to calculate:",
                 choices = c(
                   "Fucosylation of complex-type glycans",
                   "Bisection of complex-type glycans",
-                  "Galactosylation of complex-type glycans",
-                  "Sialylation of complex-type glycans",
+                  "Galactosylation per antenna of complex-type glycans",
+                  "Sialylation (N-glycolylneuraminic acid) per antenna of complex-type glycans",
                   "\u03B1-1,3-galactosylation of complex-type glycans",
                   "Percentage of monoantennary complex-type glycans",
                   "Percentage of hybrid-type glycans",
@@ -114,14 +358,17 @@ mod_derived_traits_ui <- function(id){
                 )
               ),
               selectizeInput(
-                ns("mouse_IgG_clusters"),
-                "For which clusters in your data should mouse IgG N-glycan traits be calculated?",
+                ns("mouse_IgG_N_clusters"),
+                "Select clusters for which these traits should be calculated:",
                 choices = c(""),
                 multiple = TRUE
               )
             ))
-          )
+          ),
+          br(),
+          actionButton(ns("button"), "Calculate traits")
         ),
+        
         shinydashboard::box(
           title = "Formulas used to automatically calculate the glycosylation traits",
           width = 7,
@@ -129,8 +376,41 @@ mod_derived_traits_ui <- function(id){
           status = "primary",
           downloadButton(ns("download_formulas"), "Download as Excel file"),
           br(),
+          br(),
           DT::dataTableOutput(ns("formulas"))
         ),
+      ),
+      
+      fluidRow(
+        shinydashboardPlus::box(
+          id = ns("box"),
+          title = div(
+            id = ns("box_header"),
+            "Automatically calculated traits plotted against total spectrum intensities",
+            icon("info-circle", class = "ml") %>%
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "
+                As a sanity check, automatically calculated glycosylation traits
+                are plotted against total spectrum intensities. Correlations
+                between traits and total spectrum intensities for standards
+                (e.g. VisuCon or Pool) indicate that differences in traits between
+                samples are (at least partly) a technical artefact, rather than 
+                a biological effect.
+                "
+                ),
+                trigger = "hover",
+                placement = "left",
+                html = "true",
+                container = "body"
+              )
+            ),
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          tabsetPanel(id = ns("intensity_plots"))
+        )
       ),
       
       fluidRow(
@@ -201,7 +481,6 @@ mod_derived_traits_ui <- function(id){
         )
       ),
       
-      
       fluidRow(
         shinydashboard::box(
           title = "View data with glycosylation traits",
@@ -238,7 +517,8 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     # Toggle visibility of tabs, depending on input$antibody_types
     observeEvent(input$antibody_types, {
       purrr::map(
-        c("Human IgG: N-glycans", "Mouse IgG: N-glycans"),
+        c("Human IgG: N-glycans", "Human IgA: N-glycans", "Human IgA: O-glycans", 
+          "Human IgM: N-glycans", "Human Joining Chain: N-glycans", "Mouse IgG: N-glycans"), 
         function(antibody_type) {
           if (antibody_type %in% input$antibody_types) {
             showTab(inputId = "tabs", target = antibody_type, select = TRUE)
@@ -258,10 +538,17 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     observe({
       req(clusters())
-      for (id in c("human_IgG_clusters", "mouse_IgG_clusters")) {
+      for (id in c("human_IgG_N_clusters", "mouse_IgG_N_clusters", 
+                   "human_IgA_N47_clusters", "human_IgA_N144_clusters", 
+                   "human_IgA_N205_clusters", "human_IgA_N340_clusters", 
+                   "human_IgA_O_clusters", "human_JC_N_clusters",
+                   "human_IgM_N46_clusters", "human_IgM_N209_clusters", 
+                   "human_IgM_N272_clusters", "human_IgM_N279_clusters", 
+                   "human_IgM_N440_clusters")) {
         updateSelectizeInput(id, choices = clusters(), session = session)
       }
     })
+    
 
     
     ####################  Custom glycosylation traits  ####################
@@ -333,88 +620,439 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     # If user selects sialylation per galactose, then sialylation and galactosylation
     # must both be selected automatically if not yet done so.
-    observeEvent(input$human_IgG_traits, {
-      selected <- input$human_IgG_traits
-      if ("Sialylation per galactose of complex-type glycans (calculated as [Sialylation per antenna] / [Galactosylation per antenna] \u00D7 100%)" %in% selected) {
-        if (!("Galactosylation per antenna of complex-type glycans" %in% selected &
-              "Sialylation per antenna of complex-type glycans" %in% selected)) {
+    # (Perhaps this is not the most optimal code)
+    to_listen <- reactive({
+      list(
+        input$human_IgG_N_traits,
+        input$human_IgA_N47_traits,
+        input$human_IgA_N144_traits,
+        input$human_IgA_N205_traits,
+        input$human_IgA_N340_traits,
+        input$human_IgM_N46_traits,
+        input$human_IgM_N209_traits,
+        input$human_IgM_N272_traits,
+        input$human_JC_N_traits
+      )
+    })
+    
+    observeEvent(to_listen(), {
+      ids <- c(
+        "human_IgG_N_traits",
+        "human_IgA_N47_traits",
+        "human_IgA_N144_traits",
+        "human_IgA_N205_traits",
+        "human_IgA_N340_traits",
+        "human_IgM_N46_traits",
+        "human_IgM_N209_traits",
+        "human_IgM_N272_traits",
+        "human_JC_N_traits"
+      )
+      for (i in seq(length(ids))) {
+        id <- ids[[i]]
+        selected_traits <- input[[id]]
+        if ("Sialylation per galactose of complex-type glycans" %in% selected_traits) {
+          if (!all("Sialylation per antenna of complex-type glycans" %in% selected_traits,
+                   "Galactosylation per antenna of complex-type glycans" %in% selected_traits)) {
+            shinyWidgets::updateAwesomeCheckboxGroup(
+              inputId = id,
+              selected = unique(c(
+                selected_traits,
+                "Sialylation per antenna of complex-type glycans",
+                "Galactosylation per antenna of complex-type glycans"
+              ))
+            )
+          }
+        }
+      }
+    })
+    
+    
+    # Also check O-glycans: sialic acids per galactose, and galactoses per GalNAc
+    observeEvent(input$human_IgA_O_traits, {
+      selected_traits <- input$human_IgA_O_traits
+      if (all("Sialic acids per galactose" %in% selected_traits,
+              "Galactoses per GalNAc" %in% selected_traits)) {
+        if (!all("Sialic acids" %in% selected_traits,
+                 "Galactoses" %in% selected_traits,
+                 "GalNAcs" %in% selected_traits)) {
           shinyWidgets::updateAwesomeCheckboxGroup(
-            inputId = "human_IgG_traits",
-            selected = unique(c(
-              selected,
-              "Galactosylation per antenna of complex-type glycans",
-              "Sialylation per antenna of complex-type glycans"
-            ))
+            inputId = "human_IgA_O_traits",
+            selected = unique(c(selected_traits, "Sialic acids", "Galactoses", "GalNAcs"))
+          )
+        }
+      }
+      else if ("Sialic acids per galactose" %in% selected_traits) {
+        if (!all("Sialic acids" %in% selected_traits, "Galactoses" %in% selected_traits)) {
+          shinyWidgets::updateAwesomeCheckboxGroup(
+            inputId = "human_IgA_O_traits",
+            selected = unique(c(selected_traits, "Sialic acids", "Galactoses"))
+          )
+        }
+      }
+      else if ("Galactoses per GalNAc" %in% selected_traits) {
+        if (!all("Galactoses" %in% selected_traits, "GalNAcs" %in% selected_traits)) {
+          shinyWidgets::updateAwesomeCheckboxGroup(
+            inputId = "human_IgA_O_traits",
+            selected = unique(c(selected_traits, "Galactoses", "GalNAcs"))
           )
         }
       }
     })
     
-    human_IgG_traits <- reactive({
-      req(input$human_IgG_traits)
-      match_human_IgG_traits(input$human_IgG_traits)
-    })
     
-    mouse_IgG_traits <- reactive({
-      req(input$mouse_IgG_traits)
-      match_mouse_IgG_traits(input$mouse_IgG_traits)
-    })
+  
+    ################# DETERMINE FORMULAS FOR DEFAULT TRAITS #########################
     
-    human_IgG_trait_formulas <- reactive({
-      req(length(input$human_IgG_clusters) > 0)
+    #TODO: Reduce the code below with function
+    
+    # Trait formulas for human IgG
+    human_IgG_N_traits <- reactive({
+      req(input$human_IgG_N_traits)
+      match_traits(input$human_IgG_N_traits)
+    })
+
+    human_IgG_N_formulas <- reactive({
+      req(length(input$human_IgG_N_clusters) > 0)
       load(system.file("app", "www", "human_IgG_N_ref.rda", package = "GlycoDash"))
-      formula_list <- create_formula_list(
-        normalized_data = normalized_data(),
-        chosen_traits = human_IgG_traits(),
-        chosen_clusters = input$human_IgG_clusters,
-        reference = human_IgG_N_ref
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgG_N_traits(), input$human_IgG_N_clusters, human_IgG_N_ref
+        ), c  # c = concatenate
       )
-      purrr::reduce(formula_list, c)  # c = concatenate
-    }) 
+    })
+
+    # Trait formulas for human IgA N-glycans
+    human_IgA_N47_traits <- reactive({
+      req(input$human_IgA_N47_traits)
+      match_traits(input$human_IgA_N47_traits)
+    })
+
+    human_IgA_N47_formulas <- reactive({
+      req(length(input$human_IgA_N47_clusters) > 0)
+      load(system.file("app", "www", "human_IgA_N47_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgA_N47_traits(), input$human_IgA_N47_clusters, human_IgA_N47_ref
+        ), c  # c = concatenate
+      )
+    })
+
+    human_IgA_N144_traits <- reactive({
+      req(input$human_IgA_N144_traits)
+      match_traits(input$human_IgA_N144_traits)
+    })
+
+    human_IgA_N144_formulas <- reactive({
+      req(length(input$human_IgA_N144_clusters) > 0)
+      load(system.file("app", "www", "human_IgA_N144_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgA_N144_traits(), input$human_IgA_N144_clusters, human_IgA_N144_ref
+        ), c  # c = concatenate
+      )
+    })
+
+    human_IgA_N205_traits <- reactive({
+      req(input$human_IgA_N205_traits)
+      match_traits(input$human_IgA_N205_traits)
+    })
+
+    human_IgA_N205_formulas <- reactive({
+      req(length(input$human_IgA_N205_clusters) > 0)
+      load(system.file("app", "www", "human_IgA_N205_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgA_N205_traits(), input$human_IgA_N205_clusters, human_IgA_N205_ref
+        ), c  # c = concatenate
+      )
+    })
+
+    human_IgA_N340_traits <- reactive({
+      req(input$human_IgA_N340_traits)
+      match_traits(input$human_IgA_N340_traits)
+    })
+
+    human_IgA_N340_formulas <- reactive({
+      req(length(input$human_IgA_N340_clusters) > 0)
+      load(system.file("app", "www", "human_IgA_N340_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgA_N340_traits(), input$human_IgA_N340_clusters, human_IgA_N340_ref
+        ), c  # c = concatenate
+      )
+    })
+
+
+    # Trait formulas for human IgA O-glycans
+    human_IgA_O_traits <- reactive({
+      req(input$human_IgA_O_traits)
+      match_traits(input$human_IgA_O_traits)
+    })
+
+    human_IgA_O_formulas <- reactive({
+      req(length(input$human_IgA_O_clusters) > 0)
+      load(system.file("app", "www", "human_IgA_O_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgA_O_traits(), input$human_IgA_O_clusters, human_IgA_O_ref
+        ), c  # c = concatenate
+      )
+    })
+  
     
-    mouse_IgG_trait_formulas <- reactive({
-      req(length(input$mouse_IgG_clusters) > 0)
-      load(system.file("app", "www", "mouse_IgG_ref.rda", package = "GlycoDash"))
-      formula_list <- create_formula_list(
-        normalized_data = normalized_data(),
-        chosen_traits = mouse_IgG_traits(),
-        chosen_clusters = input$mouse_IgG_clusters,
-        reference = mouse_IgG_ref
-     )
-     purrr::reduce(formula_list, c)
-   })
-   
+    # Trait formulas for human IgM N-glycans
+    human_IgM_N46_traits <- reactive({
+      req(input$human_IgM_N46_traits)
+      match_traits(input$human_IgM_N46_traits)
+    })
     
+    human_IgM_N46_formulas <- reactive({
+      req(length(input$human_IgM_N46_clusters) > 0)
+      load(system.file("app", "www", "human_IgM_N46_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgM_N46_traits(), input$human_IgM_N46_clusters, human_IgM_N46_ref
+        ), c  # c = concatenate
+      )
+    })
+    
+    human_IgM_N209_traits <- reactive({
+      req(input$human_IgM_N209_traits)
+      match_traits(input$human_IgM_N209_traits)
+    })
+    
+    human_IgM_N209_formulas <- reactive({
+      req(length(input$human_IgM_N209_clusters) > 0)
+      load(system.file("app", "www", "human_IgM_N209_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgM_N209_traits(), input$human_IgM_N209_clusters, human_IgM_N209_ref
+        ), c  # c = concatenate
+      )
+    })
+    
+    human_IgM_N272_traits <- reactive({
+      req(input$human_IgM_N272_traits)
+      match_traits(input$human_IgM_N272_traits)
+    })
+    
+    human_IgM_N272_formulas <- reactive({
+      req(length(input$human_IgM_N272_clusters) > 0)
+      load(system.file("app", "www", "human_IgM_N272_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgM_N272_traits(), input$human_IgM_N272_clusters, human_IgM_N272_ref
+        ), c  # c = concatenate
+      )
+    })
+    
+    human_IgM_N279_traits <- reactive({
+      req(input$human_IgM_N279_traits)
+      match_traits(input$human_IgM_N279_traits)
+    })
+    
+    human_IgM_N279_formulas <- reactive({
+      req(length(input$human_IgM_N279_clusters) > 0)
+      load(system.file("app", "www", "human_IgM_N279_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgM_N279_traits(), input$human_IgM_N279_clusters, human_IgM_N279_ref
+        ), c  # c = concatenate
+      )
+    })
+    
+    human_IgM_N440_traits <- reactive({
+      req(input$human_IgM_N440_traits)
+      match_traits(input$human_IgM_N440_traits)
+    })
+    
+    human_IgM_N440_formulas <- reactive({
+      req(length(input$human_IgM_N440_clusters) > 0)
+      load(system.file("app", "www", "human_IgM_N440_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_IgM_N440_traits(), input$human_IgM_N440_clusters, human_IgM_N440_ref
+        ), c  # c = concatenate
+      )
+    })
+    
+
+    # Trait formulas for human JC
+    human_JC_N_traits <- reactive({
+      req(input$human_JC_N_traits)
+      match_traits(input$human_JC_N_traits)
+    })
+
+    human_JC_N_formulas <- reactive({
+      req(length(input$human_JC_N_clusters) > 0)
+      load(system.file("app", "www", "human_JC_N_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), human_JC_N_traits(), input$human_JC_N_clusters, human_JC_N_ref
+        ), c  # c = concatenate
+      )
+    })
+
+
+    # Trait formulas for mouse IgG
+    mouse_IgG_N_traits <- reactive({
+      req(input$mouse_IgG_N_traits)
+      match_traits(input$mouse_IgG_N_traits)
+    })
+
+    mouse_IgG_N_formulas <- reactive({
+      req(length(input$mouse_IgG_N_clusters) > 0)
+      load(system.file("app", "www", "mouse_IgG_N_ref.rda", package = "GlycoDash"))
+      purrr::reduce(
+        create_formula_list(
+          normalized_data(), mouse_IgG_N_traits(), input$mouse_IgG_N_clusters, mouse_IgG_N_ref
+        ), c  # c = concatenate
+      )
+    })
+    
+    ##########################################################################
+    
+    
+    # Combine the trait formulas
     trait_formulas <- reactive({
-      req(any(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas())))
-      # Combine generated trait formulas
-      if (all(is_truthy(human_IgG_trait_formulas()), is_truthy(mouse_IgG_trait_formulas()))) {
-        formulas <- c(human_IgG_trait_formulas(), mouse_IgG_trait_formulas())
-      } else if (is_truthy(human_IgG_trait_formulas())) {
-        formulas <- human_IgG_trait_formulas()
-      } else if (is_truthy(mouse_IgG_trait_formulas())) {
-        formulas <- mouse_IgG_trait_formulas()
-      }
-      # Check if sialylation per galactose should be calculated for human IgG
-      if (is_truthy(human_IgG_trait_formulas())) {
-        if ("Sialylation per galactose of complex-type glycans (calculated as [Sialylation per antenna] / [Galactosylation per antenna] \u00D7 100%)" %in% input$human_IgG_traits) {
-          new_formulas <- c()
-          for (cluster in input$human_IgG_clusters) {
-            new_formulas <- c(
-              new_formulas,
-              paste0(cluster, "_sialylation_per_galactose = ", cluster, "_sialylation / ", cluster, "_galactosylation * 100")
-            )
-          }
-          formulas <- c(formulas, new_formulas)
+      
+      # Initiate empty vector to append formulas to
+      formulas <- c() 
+      
+      # Check each possible "formulas" reactive.
+      # N-glycans: check if sialylation per galactose should be calculated.
+      # O-glycans: check if sialic acids per galactose or galactose per GalNAc should be calculated.
+      if (is_truthy(human_IgG_N_formulas())) {
+        formulas <- c(formulas, human_IgG_N_formulas())
+        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgG_N_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_IgG_N_clusters, ~ paste0(
+              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
+            ))
+          )
         }
       }
+      if (is_truthy(human_IgA_N47_formulas())) {
+        formulas <- c(formulas, human_IgA_N47_formulas())
+        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N47_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_IgA_N47_clusters, ~ paste0(
+              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
+            ))
+          )
+        }
+      }
+      if (is_truthy(human_IgA_N144_formulas())) {
+        formulas <- c(formulas, human_IgA_N144_formulas())
+        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N144_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_IgA_N144_clusters, ~ paste0(
+              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
+            ))
+          )
+        }
+      }
+      if (is_truthy(human_IgA_N205_formulas())) {
+        formulas <- c(formulas, human_IgA_N205_formulas())
+        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N205_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_IgA_N205_clusters, ~ paste0(
+              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
+            ))
+          )
+        }
+      }
+      if (is_truthy(human_IgA_N340_formulas())) {
+        formulas <- c(formulas, human_IgA_N340_formulas())
+        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N340_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_IgA_N340_clusters, ~ paste0(
+              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
+            ))
+          )
+        }
+      }
+      if (is_truthy(human_IgA_O_formulas())) {
+        formulas <- c(formulas, human_IgA_O_formulas())
+        if ("Sialic acids per galactose" %in% input$human_IgA_O_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_IgA_O_clusters, ~ paste0(
+              .x, "_sialic_acids_per_galactose = ", .x, "_sialic_acids / ", .x, "_galactoses"
+            ))
+          )
+        }
+        if ("Galactoses per GalNAc" %in% input$human_IgA_O_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_IgA_O_clusters, ~ paste0(
+              .x, "_galactoses_per_galnac = ", .x, "_galactoses / ", .x, "_galnacs"
+            ))
+          )
+        }
+      }
+      if (is_truthy(human_JC_N_formulas())) {
+        formulas <- c(formulas, human_JC_N_formulas())
+        if ("Sialylation per galactose of complex-type glycans" %in% input$human_JC_N_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_JC_N_clusters, ~ paste0(
+              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
+            ))
+          )
+        }
+      }
+      if (is_truthy(human_IgM_N46_formulas())) {
+        formulas <- c(formulas, human_IgM_N46_formulas())
+        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgM_N46_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_IgM_N46_clusters, ~ paste0(
+              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
+            ))
+          )
+        }
+      }
+      if (is_truthy(human_IgM_N209_formulas())) {
+        formulas <- c(formulas, human_IgM_N209_formulas())
+        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgM_N209_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_IgM_N209_clusters, ~ paste0(
+              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
+            ))
+          )
+        }
+      }
+      if (is_truthy(human_IgM_N272_formulas())) {
+        formulas <- c(formulas, human_IgM_N272_formulas())
+        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgM_N272_traits) {
+          formulas <- c(
+            formulas, purrr::map(input$human_IgM_N272_clusters, ~ paste0(
+              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
+            ))
+          )
+        }
+      }
+      if (is_truthy(human_IgM_N279_formulas())) {
+        formulas <- c(formulas, human_IgM_N279_formulas())
+      }
+      if (is_truthy(human_IgM_N440_formulas())) {
+        formulas <- c(formulas, human_IgM_N440_formulas())
+      }
+      if (is_truthy(mouse_IgG_N_formulas())) {
+        formulas <- c(formulas, mouse_IgG_N_formulas())
+      }
+      
       return(formulas)
     })
     
+    # Set button status
+    observe({
+      shinyjs::toggleState("button", length(trait_formulas()) > 0)
+    })
+    
+    # Calculate traits when user pushes button
     data_with_derived_traits <- reactive({
       req(trait_formulas())
-      calculate_traits(normalized_data_wide(), trait_formulas())
-    })
+      trait_formulas_toreport <- trait_formulas()[!grepl(" = Not reported", trait_formulas())]
+      calculate_traits(normalized_data_wide(), trait_formulas_toreport)
+    }) %>% bindEvent(input$button)  # Calculate after pushing button
 
     
     ############### Combined default + custom traits ###############
@@ -431,6 +1069,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     # If only default traits were calculated: use "data_with_derived_traits()" here
     # If only custom traits were calculated: use "data_with_custom_traits()" here
     # If both default and custom traits were calculated: use "data_with_all_traits()" here
+    # Otherwise: just normalized data in wide format
     with_data <- reactive({
       if (is_truthy(data_with_all_traits())) {
         data_with_all_traits()
@@ -438,6 +1077,8 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         data_with_derived_traits()
       } else if (is_truthy(data_with_custom_traits())) {
         data_with_custom_traits()
+      } else if (is_truthy(normalized_data_wide())) {
+        normalized_data_wide()
       }
     })
     
@@ -454,9 +1095,72 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     output$data_table <- DT::renderDT({
       req(data_with_traits())
-      DT::datatable(data = data_with_traits(),
-                    options = list(scrollX = TRUE))
+      # Disabling server-side rendering seems to prevent error messages being
+      # thrown by the browser, when quickly selecting and deselecting traits.
+      # But it does make rendering somewhat slower.
+      server = FALSE
+      DT::datatable(data = data_with_traits() %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 6,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ), filter = "top")
     })
+    
+    
+    ########## Plot the traits vs total spectrum intensities #################
+    
+    # List with names of traits per cluster
+    cluster_traits <- reactive({
+      req(data_with_traits())
+      columns <- colnames(data_with_traits())
+      # Use map to create a list of trait names for each cluster
+      cluster_traits <- purrr::map(clusters(), function(cluster) {
+        substring <- paste0(cluster, "_")
+        columns[grepl(substring, columns) & !grepl("_sum_intensity", columns)
+                & !grepl("_quantity_ng", columns)]
+      })
+      # Turn into a named list
+      names(cluster_traits) <- clusters()
+      return(cluster_traits)
+    })
+    
+    
+    # Create a tab for each name in cluster_traits that is not empty
+    # created_tabs <- reactiveValues(tabs = )
+    intensity_plots <- reactiveValues(plots = NULL)
+    observeEvent(cluster_traits(), {
+      # Remove previously generated tabs and plots
+      for (cluster in clusters()) {
+        removeTab(inputId = "intensity_plots", target = cluster)
+      } 
+      intensity_plots$plots <- NULL
+      # Generate tabs with plots
+      non_empty_clusters <- names(purrr::keep(cluster_traits(), ~ length(.x) > 0))
+      if (length(non_empty_clusters) > 0) {
+        for (cluster in non_empty_clusters) {
+          # Create tab
+          appendTab(
+            inputId = "intensity_plots", 
+            select = TRUE,
+            session = session,
+            tab = tabPanel(
+              title = cluster,
+              mod_tab_intensities_ui(ns(cluster))
+            )
+          )
+          # Create plot
+          intensity_plots$plots[[cluster]] <- mod_tab_intensities_server(
+            id = cluster,
+            data = data_with_traits(),
+            traits = cluster_traits()[[cluster]]
+          )$intensity_plot()
+        }
+      }
+    })
+    
+    
 
     
     ########## Download example Excel of custom traits ##########
@@ -485,9 +1189,10 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
                                   searching = FALSE))
     })
     
+    
     # Display the formulas of the default traits
     formulas_table <- reactive({
-      req(data_with_traits())
+      req(trait_formulas())
       formula_dfs <- vector("list", length = length(trait_formulas()))
       for (i in seq(length(trait_formulas()))) {
         trait_formula <- trait_formulas()[i]
@@ -496,15 +1201,21 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         formula_dfs[[i]] <- data.frame(trait = trait_name, formula = calculation)
       }
       purrr::reduce(formula_dfs, dplyr::full_join)
-    })
+    }) %>% bindEvent(data_with_derived_traits()) # Update table after calculation of traits
     
     output$formulas <- DT::renderDT({
       req(formulas_table())
-      DT::datatable(formulas_table(),
-                    rownames = FALSE,
-                    options = list(paging = FALSE,
-                                   ordering = FALSE,
-                                   searching = FALSE))
+      levels <- c("", unique(formulas_table()$formula[grepl("Not reported", formulas_table()$formula)]))
+      DT::datatable(formulas_table(), rownames = FALSE, filter = "top") %>% 
+        # Highlight traits that are not reported
+        DT::formatStyle(
+          "formula",
+          target = "row",
+          backgroundColor = DT::styleEqual(
+            levels = levels, # This contains "" to prevent character(0)
+            rep("gold", length(levels))
+          )
+        )
     })
     
     
@@ -519,7 +1230,11 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         paste0(current_datetime, "_glycosylation_traits_formulas.xlsx")
       },
       content = function(file) {
-        writexl::write_xlsx(formulas_table(), path = file)
+        writexl::write_xlsx(
+          formulas_table() %>% 
+            dplyr::filter(!grepl("Not reported", formula)), 
+          path = file
+        )
       }
     )
     
@@ -529,7 +1244,8 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         normalized_data = normalized_data,
         derived_traits = reactive({ input$traits_menu }),
         formulas = formulas_table,
-        custom_traits_excel = traits_excel
+        custom_traits_excel = traits_excel,
+        intensity_plots = reactive(intensity_plots$plots)
       )
     )
  

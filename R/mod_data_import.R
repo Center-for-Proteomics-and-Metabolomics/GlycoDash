@@ -101,8 +101,13 @@ mod_data_import_server <- function(id){
     # in the data table
     output$data_table <- DT::renderDT({
       req(show_in_table())
-      DT::datatable(show_in_table(),
-                    options = list(scrollX = TRUE),
+      DT::datatable(show_in_table() %>% # Round numbers to 2 decimals
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 6,  # Shows 5 rows
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ),
                     filter = "top")
     })
     

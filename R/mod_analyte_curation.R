@@ -203,7 +203,7 @@ mod_analyte_curation_ui <- function(id){
                   html = "true"),
               shinyWidgets::materialSwitch(
                 ns("cut_offs_per_cluster"),
-                HTML("<i style='font-size:15px;'> Choose cut-offs per cluster </i>"),
+                HTML("<i style='font-size:15px;'> Choose cut-offs per glycosylation site </i>"),
                 right = TRUE,
                 status = "success"
               ),
@@ -245,7 +245,7 @@ mod_analyte_curation_ui <- function(id){
             width = 12,
             solidHeader = TRUE,
             status = "primary",
-            title = "Analyte curation results per cluster",
+            title = "Analyte curation results per glycosylation site",
             tabsetPanel(id = ns("tabs"))
           )
         )
@@ -726,7 +726,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     }) %>% bindEvent(analyte_curated_data())
     
     
-    
     observeEvent(info()$analyte_curated_data, {
       req(clusters())
       req(input$curation_method != "Per sample")
@@ -775,7 +774,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       # Return
       return(to_return)
     })
-    
     
 
     # Make downloading analyte_curated_data possible:

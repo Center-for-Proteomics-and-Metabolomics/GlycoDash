@@ -631,8 +631,17 @@ transform_skyline_data <- function(raw_skyline_data, i) {
   raw_data_required <- renamed_data %>% 
     dplyr::select(
       "Protein.Name", "Peptide", "Precursor.Charge",
-      tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"))
+      tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM")), 
     )
+  # Select notes
+  # Will have 3 cols if notes exist, otherwise 2 cols
+  notes <- renamed_data %>% 
+    dplyr::select("Protein.Name", "Peptide", "Precursor.Charge", tidyselect::contains("Note")) %>% 
+    dplyr::mutate(analyte = paste0(Protein.Name, "1", Peptide), .after = Peptide) %>% 
+    dplyr::select(-Protein.Name, -Peptide) %>% 
+    dplyr::rename(charge = Precursor.Charge) %>% 
+    dplyr::mutate(charge = paste0(charge, "+")) %>% 
+    dplyr::rename(note = tidyselect::contains("Note"))
   # Make columns numeric except for first three
   raw_data_required[raw_data_required == "#N/A"] <- NA
   raw_data_required <- dplyr::mutate_at(raw_data_required, dplyr::vars(-1, -2, -3), as.numeric)
@@ -679,6 +688,11 @@ transform_skyline_data <- function(raw_skyline_data, i) {
     dplyr::relocate(charge, .after = analyte) %>% 
     dplyr::relocate(total_area, .after = charge) %>% 
     dplyr::relocate(mass_accuracy_ppm, .after = total_area)
+  # Add notes if they exist
+  if (ncol(notes) == 3) {
+    data_clean <- dplyr::left_join(data_clean, notes) %>% 
+      dplyr::relocate(note, .after = charge)
+  }
   
   return(data_clean)
 }
