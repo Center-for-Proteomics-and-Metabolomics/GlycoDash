@@ -381,8 +381,29 @@ mod_derived_traits_ui <- function(id){
       
       fluidRow(
         shinydashboardPlus::box(
-          id = ns("tabbed_box"),
-          title = "Automatically calculated traits plotted against total spectrum intensities",
+          id = ns("box"),
+          title = div(
+            id = ns("box_header"),
+            "Automatically calculated traits plotted against total spectrum intensities",
+            icon("info-circle", class = "ml") %>%
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "
+                As a sanity check, automatically calculated glycosylation traits
+                are plotted against total spectrum intensities. Correlations
+                between traits and total spectrum intensities for standards
+                (e.g. VisuCon or Pool) indicate that differences in traits between
+                samples are (at least partly) a technical artefact, rather than 
+                a biological effect.
+                "
+                ),
+                trigger = "hover",
+                placement = "left",
+                html = "true",
+                container = "body"
+              )
+            ),
           width = 12,
           solidHeader = TRUE,
           status = "primary",
