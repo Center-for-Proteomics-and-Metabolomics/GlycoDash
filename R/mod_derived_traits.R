@@ -364,7 +364,9 @@ mod_derived_traits_ui <- function(id){
                 multiple = TRUE
               )
             ))
-          )
+          ),
+          br(),
+          actionButton(ns("button"), "Calculate traits")
         ),
         
         shinydashboard::box(
@@ -1040,11 +1042,17 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       return(formulas)
     })
     
+    # Set button status
+    observe({
+      shinyjs::toggleState("button", length(trait_formulas()) > 0)
+    })
+    
+    # Calculate traits when user pushes button
     data_with_derived_traits <- reactive({
       req(trait_formulas())
       trait_formulas_toreport <- trait_formulas()[!grepl(" = Not reported", trait_formulas())]
       calculate_traits(normalized_data_wide(), trait_formulas_toreport)
-    })
+    }) %>% bindEvent(input$button)  # Calculate after pushing button
 
     
     ############### Combined default + custom traits ###############
@@ -1193,7 +1201,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         formula_dfs[[i]] <- data.frame(trait = trait_name, formula = calculation)
       }
       purrr::reduce(formula_dfs, dplyr::full_join)
-    })
+    }) %>% bindEvent(data_with_derived_traits()) # Update table after calculation of traits
     
     output$formulas <- DT::renderDT({
       req(formulas_table())
