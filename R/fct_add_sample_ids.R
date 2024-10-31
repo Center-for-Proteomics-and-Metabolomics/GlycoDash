@@ -112,7 +112,10 @@ detect_plate_and_well <- function(data) {
                          sep = "_")
     ) %>% 
     dplyr::select(-c(plate, well)) %>% 
-    dplyr::relocate(plate_well, .after = sample_name)
+    dplyr::relocate(plate_well, .after = sample_name) %>%
+    # Remove leading zeros from the plate_well entries, to merge later with 
+    # the plate design.
+    dplyr::mutate(plate_well = gsub("^0+", "", plate_well))
   
   return(data)
 }
@@ -157,12 +160,12 @@ detect_plate_and_well <- function(data) {
 read_and_process_plate_design <- function(plate_design_file) {
   plate_design <- tryCatch(
     expr = {
-    read_plate_design(plate_design_file)
-  },
-  incorrect_formatting = function(c) {
-    rlang::abort(message = c$message,
-                 class = "incorrect_formatting")
-  })
+      read_plate_design(plate_design_file)
+    },
+    incorrect_formatting = function(c) {
+      rlang::abort(message = c$message,
+                   class = "incorrect_formatting")
+    })
   
   plate_design <- process_plate_design(plate_design)
   
@@ -278,42 +281,11 @@ read_plate_design <- function(plate_design_file) {
 #' plate_design <- read_plate_design(path)
 #' process_plate_design(plate_design)
 process_plate_design <- function (plate_design) {
-  # TODO: test what happens when there are symbols or newlines within the sample ID's.
   
-  plate_design_contains_just_1_plate <- ncol(plate_design) == 2
-  
-  # If there is only one plate, give this plate the number 1 (in case the plate
-  # number) was not indicated in the Excel file:
-  if (plate_design_contains_just_1_plate) {
-    plate_design <- plate_design %>%
-      tidyr::pivot_longer(cols = -well,
-                          names_to = "plate",
-                          values_to = "sample_id") %>%
-      dplyr::mutate(plate = "1",
-                    sample_id = as.character(sample_id))
-  } else {
-    plate_design <- plate_design %>%
-      tidyr::pivot_longer(cols = -well,
-                          names_to = "plate",
-                          values_to = "sample_id") %>%
-      dplyr::mutate(
-        sample_id = as.character(sample_id),
-        plate = stringr::str_match(
-          plate, 
-          "[Pp][Ll](?:[Aa][Tt][Ee])?\\s*(\\d+|[A-Z]+)")[ , 2],
-        well = stringr::str_extract(well, "[A-H]\\d+"))
-  }
-  
-  if (any(is.na(plate_design$plate))) {
-    rlang::abort(class = "plate_numbers",
-                 message = paste(
-                   "The plate numbers could not be detected. Please check if",
-                   "your plate design Excel file is in the correct format."))
-  }
-  
+  colnames(plate_design)[-1] <- as.character(1:(ncol(plate_design) - 1))
   plate_design <- plate_design %>% 
+    tidyr::pivot_longer(cols = -well, names_to = "plate", values_to = "sample_id") %>% 
     dplyr::mutate(plate_well = paste(plate, well, sep = "_")) %>% 
-    dplyr::arrange(plate_well) %>% 
     dplyr::select(-c(plate, well)) %>% 
     tidyr::replace_na(list(
       sample_id = "empty cell in plate design"

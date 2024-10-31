@@ -11,7 +11,7 @@ app_server <- function( input, output, session ) {
   options(shiny.maxRequestSize=200*1024^2)
   
   # Download changelog
-  output$download_md <- downloadHandler(
+  output$download_changelog <- downloadHandler(
     filename = function() {
       "GlycoDash_changelog.html"
     },
@@ -25,6 +25,16 @@ app_server <- function( input, output, session ) {
     }
   )
   
+  # Download manual
+  output$download_manual <- downloadHandler(
+    filename = "GlycoDash_manual.pdf",
+    content = function(file) {
+      path <- system.file("app", "www", "GlycoDash_manual.pdf", package = "GlycoDash")
+      file.copy(path, file)
+    }
+  )
+  
+    
   results_data_import <- mod_data_import_server("data_import_ui_1")
   
   results_spectra_curation <- mod_spectra_curation_server(
@@ -70,7 +80,6 @@ app_server <- function( input, output, session ) {
     results_normalization = results_normalization)
   
   
-
   mod_export_server(
     id = "export_ui_1",
     results_derived_traits = results_derived_traits,

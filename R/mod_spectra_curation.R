@@ -245,17 +245,17 @@ mod_spectra_curation_ui <- function(id){
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
             downloadButton(ns("download1"), 
-                           "Download details of passing spectra per analyte",
+                           "Details of passing spectra per analyte",
                            style = "width: 330px;"),
             br(),
             br(),
             downloadButton(ns("download2"),
-                           "Download overview of failed spectra",
+                           "Overview of failed spectra",
                            style = "Width: 330px;"),
             br(),
             br(),
             downloadButton(ns("download3"),
-                           "Download details of failed spectra per analyte",
+                           "Details of failed spectra per analyte",
                            style = "Width: 330px;")
           )
         )
@@ -473,8 +473,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                         try_call(tab[["cut_offs_to_use"]])
                      })
     })
-    
-    
+  
     
     # Check if there are clusters for which all negative controls were uncalibrated
     missing_cluster_cut_offs <- reactive({
@@ -502,7 +501,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       }
     })
     
-    
+
     # Enable or disable button based on missing cut-offs
     observe({
       if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
@@ -532,15 +531,15 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         # Show a warning message
         showNotification(
           tags$div(
-            "For the following clusters, all negative control spectra are uncalibrated: ",
+            "For the following clusters, all negative control spectra are either missing or uncalibrated: ",
             paste0(clusters_missing, collapse = ", "),
             br(),
             br(),
             "Please do one of the following:",
             tags$ul(
               tags$li("Use different or additional negative controls."),
-              tags$li("Choose to treat uncalibrated spectra as zeros, instead of missing values."),
-              tags$li("Choose manual cut-offs for these clusters.")
+              tags$li("Choose manual cut-offs for these clusters."),
+              tags$li("Choose to treat uncalibrated spectra as zeros, instead of missing values.")
             )
           ),
           type = "warning",
@@ -581,8 +580,12 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     output$passing_spectra_details <- DT::renderDataTable({
       req(to_return())
-      DT::datatable(to_return(),
-                    options = list(scrollX = TRUE, searching = TRUE))
+      DT::datatable(to_return() %>% dplyr::mutate_if(is.numeric, ~ round(., 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 5,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ), filter = "top")
     })
     
     
@@ -594,9 +597,13 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         dplyr::distinct() %>% 
         dplyr::filter(!has_passed_spectra_curation)
       
-      DT::datatable(for_table,
-                    options = list(scrollX = TRUE,
-                                   filter = "top"))
+      DT::datatable(for_table %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 5,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ), filter = "top")
     })
     
     
@@ -606,9 +613,13 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       DT::datatable(curated_data() %>% 
                       dplyr::select(-(passing_analyte_percentage:replicates)) %>% 
                       dplyr::distinct() %>% 
-                      dplyr::filter(has_passed_spectra_curation == FALSE),
-                    options = list(scrollX = TRUE,
-                                   searching = TRUE))
+                      dplyr::filter(has_passed_spectra_curation == FALSE) %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 5,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ), filter = "top")
     })
     
     

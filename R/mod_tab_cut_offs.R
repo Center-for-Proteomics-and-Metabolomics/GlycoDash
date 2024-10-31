@@ -96,68 +96,6 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     })
     
     
-    # Code below is supposed to set initial manual cut-off values to
-    # be equal to calculated cut-off values?
-    # For now I set their initial values to 0 by default
-    
-    # observe({
-    #   req(calculated_cut_offs())
-    #   req(is_truthy(input$switch_to_manual))
-    #   req(!is_truthy(manual_cut_offs()))
-    # 
-    #   if (contains_total_and_specific_samples() == TRUE) {
-    #     calculated_sum_intensity_cut_off_specific <- calculated_cut_offs() %>% 
-    #       dplyr::filter(group == keyword_specific()) %>% 
-    #       dplyr::pull(cut_off_sum_intensity)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_sum_intensity_specific",
-    #                        value = calculated_sum_intensity_cut_off_specific)
-    #     
-    #     calculated_sum_intensity_cut_off_total <- calculated_cut_offs() %>% 
-    #       dplyr::filter(group == keyword_total()) %>% 
-    #       dplyr::pull(cut_off_sum_intensity)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_sum_intensity_total",
-    #                        value = calculated_sum_intensity_cut_off_total)
-    #     
-    #     calculated_passing_analyte_percentage_cut_off_specific <- calculated_cut_offs() %>% 
-    #       dplyr::filter(group == keyword_specific()) %>% 
-    #       dplyr::pull(cut_off_passing_analyte_percentage)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_passing_analyte_percentage_specific",
-    #                        value = calculated_passing_analyte_percentage_cut_off_specific)
-    #     
-    #     calculated_passing_analyte_percentage_cut_off_total <- calculated_cut_offs() %>% 
-    #       dplyr::filter(group == keyword_total()) %>% 
-    #       dplyr::pull(cut_off_passing_analyte_percentage)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_passing_analyte_percentage_total",
-    #                        value = calculated_passing_analyte_percentage_cut_off_total)
-    #       
-    #   } else if (contains_total_and_specific_samples() == FALSE) {
-    #     
-    #     calculated_sum_intensity_cut_off <- calculated_cut_offs() %>% 
-    #       dplyr::pull(cut_off_sum_intensity)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_sum_intensity",
-    #                        value = calculated_sum_intensity_cut_off)
-    #     
-    #     calculated_passing_analyte_percentage_cut_off <- calculated_cut_offs() %>% 
-    #       dplyr::pull(cut_off_passing_analyte_percentage)
-    #     
-    #     updateNumericInput(session = session,
-    #                        inputId = "cut_off_passing_analyte_percentage",
-    #                        value = calculated_passing_analyte_percentage_cut_off)
-    #   }
-    #   
-    # })
-    
-    
     manual_cut_offs <- reactive({
       
       if (contains_total_and_specific_samples() == TRUE) {
@@ -181,7 +119,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
         )
         
         cut_offs <- dplyr::full_join(specific, total) %>% 
-          dplyr::mutate(group = as.factor(group))
+          dplyr::mutate(group = as.factor(group), cluster = selected_cluster)
         
       } else {
         req(input$cut_off_sum_intensity,
@@ -206,6 +144,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
         req(calculated_cut_offs())
       }
     })
+    
     
     # Combine cut-offs with summarized checks
     summarized_checks_with_cut_offs <- reactive({
@@ -250,36 +189,6 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     })
     
     
-    # This combined manual cut-offs and calculated cut-offs for some reason,
-    # doesn't seem very useful?
-    # for_cut_off_table_both <- reactive({
-    #   req(calculated_cut_offs(),
-    #       manual_cut_offs())
-    #   
-    #   dplyr::full_join(calculated_cut_offs(),
-    #                    manual_cut_offs()) %>% 
-    #     dplyr::mutate(
-    #       `Based on samples` = purrr::map_chr(
-    #         sample_type_list,
-    #         ~ paste(ifelse(rlang::is_empty(.x),"No", "Yes,"),
-    #                 comma_and(.x$sample_type))
-    #       ),
-    #       curation_method = firstupper(
-    #         stringr::str_replace_all(curation_method,
-    #                                  pattern = "_",
-    #                                  replacement = " ")
-    #       )
-    #     ) %>% 
-    #     dplyr::ungroup() %>% 
-    #     dplyr::select(-c(cluster,
-    #                      sample_type_list)) %>% 
-    #     dplyr::rename("Sum intensity cut-off" = cut_off_sum_intensity,
-    #                   "Percentage of passing analytes cut-off" = cut_off_passing_analyte_percentage,
-    #                   "Curation method" = curation_method) %>% 
-    #     dplyr::rename_with(firstupper)
-    # })
-    
-    
     # Nicely formatted data for table with calculated cut-offs
     for_cut_off_table_calculated <- reactive({
       req(calculated_cut_offs())
@@ -317,19 +226,6 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
                       "Curation method" = curation_method) %>% 
         dplyr::rename_with(firstupper)
     })
-    
-    
-    # show_in_cut_off_table <- reactive({
-    #   if (is_truthy(input$switch_to_manual)) {
-    #     if (is_truthy(for_cut_off_table_both())) {
-    #       for_cut_off_table_both()
-    #     } else {
-    #       req(for_cut_off_table_manual())
-    #     }
-    #   } else {
-    #     req(for_cut_off_table_calculated())
-    #   }
-    # })
     
     
     # Show either calculated or manual cut-offs in table, depending on switch

@@ -19,14 +19,14 @@
 ## to change the name in the app_sys() function in app_config.R /!\
 ## 
 golem::fill_desc(
-  pkg_name = "GlycoDash", # The Name of the package containing the App 
-  pkg_title = "GlycoDash", # The Title of the package containing the App 
-  pkg_description = "Package for processing glycomics data.", # The Description of the package containing the App 
+  pkg_name = "GlycoDash", # The Name of the package containing the App
+  pkg_title = "GlycoDash", # The Title of the package containing the App
+  pkg_description = "Package for processing glycomics data.", # The Description of the package containing the App
   author_first_name = "Steinar", # Your First Name
   author_last_name = "Gijze", # Your Last Name
   author_email = "s.gijze@lumc.nl", # Your Email
-  repo_url = NULL # The URL of the GitHub Repo (optional) 
-)     
+  repo_url = NULL # The URL of the GitHub Repo (optional)
+)
 
 ## Set {golem} options ----
 golem::set_golem_options()

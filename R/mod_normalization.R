@@ -110,7 +110,7 @@ mod_normalization_ui <- function(id){
           selectInput(
             ns("heatmap_yaxis"),
             "Variable to plot on y-axis:",
-            choices = c("Cluster", "Sample")
+            choices = c("Glycosylation site", "Sample")
           ),
           shinyWidgets::materialSwitch(
             ns("facet_per_group"),
@@ -185,6 +185,28 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         }
     })
     
+    # Notes from data per analyte (Skyline)
+    notes <- reactive({
+      req(analyte_curated_data())
+      if ("note" %in% colnames(analyte_curated_data())) {
+        notes <- analyte_curated_data() %>% 
+          dplyr::select(analyte, note) %>% 
+          dplyr::filter(note != "") %>% 
+          dplyr::distinct(analyte, .keep_all = TRUE)
+      } else NULL
+    })
+    
+    # When notes exist: tell user that downloading Excel includes notes
+    # R object does not include notes.
+    observe({
+      if (is_truthy(notes())) {
+        updateRadioButtons(
+          inputId = "download_format",
+          choices = c("Excel file (data and notes)", "R object (data only)")
+        )
+      }
+    })
+    
     # Turn normalized data into wide format
     normalized_data_wide <- reactive({
       req(normalized_data())
@@ -200,11 +222,14 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     output$data_table <- DT::renderDT({
       req(normalized_data_wide())
-      
-      DT::datatable(data = normalized_data_wide(),
-                    options = list(scrollX = TRUE))
+      DT::datatable(data = normalized_data_wide() %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 6,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ), filter = "top")
     })
-    
     
     
     # Create heatmap plots
@@ -269,7 +294,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         })
         
         #### CLUSTER ON Y-AXIS #### 
-      } else if (input$heatmap_yaxis == "Cluster") {
+      } else if (input$heatmap_yaxis == "Glycosylation site") {
 
         # Make the plot
         plot <- cluster_heatmap(
@@ -357,7 +382,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       if (input$heatmap_yaxis == "Sample") {
         shinyjs::show("tabs")
         shinyjs::hide("clusters_plot")
-      } else if (input$heatmap_yaxis == "Cluster") {
+      } else if (input$heatmap_yaxis == "Glycosylation site") {
         shinyjs::hide("tabs")
         shinyjs::show("clusters_plot")
       }
@@ -365,29 +390,34 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     })
 
     
-    # Download data
+    # Download normalized data
     output$download <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
-        switch(input$download_format,
-               "R object" = paste0(current_datetime, "_normalized_data.rds"),
-               "Excel file" = paste0(current_datetime, "_normalized_data.xlsx"))
+        if (grepl("R object", input$download_format)) {
+          paste0(current_datetime, "_normalized_data.rds")
+        } else {
+          paste0(current_datetime, "_normalized_data.xlsx")
+        }
       },
       content = function(file) {
-        data_to_download <- normalized_data_wide()
-        switch(input$download_format,
-               "R object" = save(data_to_download,
-                                 file = file),
-               "Excel file" = writexl::write_xlsx(data_to_download,
-                                                  path = file))
+        if (grepl("R object", input$download_format)) {
+          save(normalized_data_wide(), file = file)
+        } else if (is_truthy(notes())) {
+          data_list <- list("Data" = normalized_data_wide(), "Notes" = notes())
+          writexl::write_xlsx(data_list, path = file)
+        } else{
+          writexl::write_xlsx(normalized_data_wide(), path = file)
+        }
       }
     )
     
-
+    
     
     return(list(
       normalized_data = normalized_data,
       normalized_data_wide = normalized_data_wide,
+      notes = notes,
       heatmaps = reactive(r$heatmaps),
       heatmaps_excluded_sample_types = heatmaps_excluded_sample_types
     ))

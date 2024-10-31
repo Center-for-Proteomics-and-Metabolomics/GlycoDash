@@ -114,16 +114,15 @@ mod_add_sample_ids_ui <- function(id){
             popover_title = "Plate design format",
             popover_content_html = HTML(
               "
-              The top-left cell of the Excel sheet should contain the plate
-              number (e.g. \"Plate 1\" or \"Plate 01\"). The cells to the
-              right of the top-left cell need to be labelled 1-12. The cells 
-              below the top-left cell should be labeld A-H. The cells within
-              the plate should contain the sample ID's. These sample ID's 
-              should not contain commas or line breaks.
-              <br> <br>
               When the plate design contains multiple 96-well plates,
               place them underneath each other in the Excel file with one
               blank row between two plates.
+              <br> <br>
+              Plates in your plate design are numbered automatically.
+              <br> <br>
+              Each plate layout should contain columns labelled 1-12, and
+              rows labelled A-H. The plate positions should contain the sample ID's.
+              These sample ID's should not contain commas or line breaks.
               <br> <br>
               For an example plate design, click on the paperclip icon.
               "
@@ -138,16 +137,15 @@ mod_add_sample_ids_ui <- function(id){
             popover_title = "Plate design format",
             popover_content_html = HTML(
               "
-              The top-left cell of the Excel sheet should contain the plate
-              number (e.g. \"Plate 1\" or \"Plate 01\"). The cells to the
-              right of the top-left cell need to be labelled 1-12. The cells 
-              below the top-left cell should be labeld A-H. The cells within
-              the plate should contain the sample ID's. These sample ID's 
-              should not contain commas or line breaks.
-              <br> <br>
               When the plate design contains multiple 96-well plates,
               place them underneath each other in the Excel file with one
               blank row between two plates.
+              <br> <br>
+              Plates in your plate design are numbered automatically.
+              <br> <br>
+              Each plate layout should contain columns labelled 1-12, and
+              rows labelled A-H. The plate positions should contain the sample ID's.
+              These sample ID's should not contain commas or line breaks.
               <br> <br>
               For an example plate design, click on the paperclip icon.
               "
@@ -301,7 +299,6 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
       allowed = c("xlsx", "xls"),
       reset = r
     )
-    
     
     data_with_sample_ids <- reactive({
       req(LaCyTools_summary())

@@ -1,3 +1,32 @@
+# v1.6.0
+## New features
+* Option to automatically calculate glycosylation traits for IgA and IgM,
+including joining chain (JC).
+* Show notifications when an automatic trait is zero or 100 for all samples,
+or when a trait would be calculated using only one glycan.
+* Plot automatically calculated traits against total spectrum intensities.
+
+## Adjustments
+* Added a download button for the GlycoDash manual in the top-right corner of 
+the dashboard.
+* Added a button that links to known issues (GitHub).
+* Notes on analytes in Skyline data are now kept and displayed in a separate
+tab when downloading normalized data as an Excel file.
+* Plates in a plate design are now automatically numbered, irrespective of how
+they are named in the Excel file.
+* Add filter options to all tables, and round numbers when displaying data
+(rounding is NOT applied to downloaded data).
+
+## Bug fixes
+* Leading zeros in plate numbers sometimes caused issues when trying to merge
+data with a plate design. This has now been fixed.
+* When curating total and specific spectra based on negative controls that were
+missing for one or more clusters, the “Perform analyte curation” button remained
+grey even after choosing manual cut-offs. This has now been fixed.
+* Prevent users from excluding all sample types or biological groups during analyte curation,
+which caused the dashboard to crash.
+
+
 # v1.5.4
 ## Adjustments
 * Created a more appealing user interface.
