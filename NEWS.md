@@ -1,4 +1,7 @@
 # v1.6.1
+## Adjustments
+* Show a loading spinner while generating HTML report.
+
 ## Bug fixes
 * Minor bug fixes in automatic traits calculations.
 
