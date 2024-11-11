@@ -44,7 +44,7 @@ mod_tab_intensities_server <- function(id, data, traits) {
       req(data)
       data_to_plot <- data %>%
         dplyr::select(
-          sample_name, sample_type, sample_id, tidyselect::contains(paste0(cluster, "_")),
+          sample_name, sample_type, sample_id, tidyselect::starts_with(paste0(cluster, "_")),
           tidyselect::any_of("group") # specific Ig data
         ) %>% 
         tidyr::pivot_longer(
