@@ -73,7 +73,11 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
       # String with sum of complex type glycans
       complex_sum <- paste0(cluster, "1", complex_types_df$glycan, collapse = " + ")
       # Adjust clean_formula_string to divide by complex_types
-      clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ") * 100")
+      # Multiple by 100 if trait is not antennarity
+      clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ")")
+      if (target_trait != "antennarity") {
+        clean_formula_string <- paste0(clean_formula_string, " * 100")
+      }
     }
   }
   # Divide by the sum of all oligomannose type glycans
