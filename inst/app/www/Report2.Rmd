@@ -1,5 +1,5 @@
 ---
-title: "GlycoDash v1.6.0 data processing report"
+title: "GlycoDash v1.6.1 data processing report"
 output: 
   html_document:
     toc: TRUE

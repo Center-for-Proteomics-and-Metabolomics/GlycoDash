@@ -1,3 +1,8 @@
+# v1.6.1
+## Bug fixes
+* Minor bug fixes in automatic traits calculations.
+
+
 # v1.6.0
 ## New features
 * Option to automatically calculate glycosylation traits for IgA and IgM,
