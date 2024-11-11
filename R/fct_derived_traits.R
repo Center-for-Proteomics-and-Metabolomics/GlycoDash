@@ -346,7 +346,7 @@ traits_vs_intensity_plot <- function(data_to_plot, cluster) {
   if ("group" %in% colnames(data_to_plot)) {
     p <- p + ggplot2::facet_grid(trait ~ group, scales = "free")
   } else {
-    p <- p + ggplot2::facet_wrap(~trait, scales = "free", ncol = 2)
+    p <- p + ggplot2::facet_wrap(~trait, scales = "free", ncol = 3)
   }
   
   return(p)
