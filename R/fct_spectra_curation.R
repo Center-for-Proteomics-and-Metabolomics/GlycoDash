@@ -889,16 +889,13 @@ get_sample_type_options <- function(summarized_checks,
 #' plotly::ggplotly(plot,
 #'                  tooltip = "text")
 #' 
-create_cut_off_plot <- function(summarized_checks) {
+create_cut_off_plot <- function(summarized_checks, color_palette) {
   
   for_plot <- summarized_checks %>% 
     # in case there are NAs when uncalibrated_as_NA is TRUE:
     # TODO: check if this is still needed
     tidyr::replace_na(replace = list(sum_intensity = 0,
                                      passing_analyte_percentage = 0))
-  
-  n_colors <- length(unique(for_plot$sample_type))
-  my_palette <- color_palette(n_colors)
   
   p <- for_plot %>% 
     ggplot2::ggplot(
@@ -935,7 +932,7 @@ create_cut_off_plot <- function(summarized_checks) {
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
-    ggplot2::scale_color_manual(values = my_palette,
+    ggplot2::scale_color_manual(values = color_palette,
                                 name = "Sample type") +
     ggplot2::labs(y = "Sum intensity of passing analytes") +
     ggplot2::scale_x_continuous(labels = function(x) paste0(x, "%"), 

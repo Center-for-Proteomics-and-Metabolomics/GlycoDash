@@ -435,7 +435,11 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     observe({
       req(clusters(), summarized_checks())
-      
+      # Generate color palette
+      sample_types <- unique(summarized_checks()$sample_type)
+      colors <- color_palette(length(sample_types))
+      color_palette <- setNames(colors, sample_types)
+      # Generate tabs with plots
       r$tab_contents <- rlang::set_names(clusters()) %>% 
         purrr::map(
           .,
@@ -447,6 +451,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                 summarized_checks() %>%
                   dplyr::filter(cluster == current_cluster)
               }),
+              color_palette = color_palette,
               contains_total_and_specific_samples = results_data_import$contains_total_and_specific_samples,
               keyword_specific = results_data_import$keyword_specific,
               keyword_total = results_data_import$keyword_total,
