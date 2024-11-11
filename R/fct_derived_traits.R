@@ -18,18 +18,9 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   
   # Check the number of glycans used for calculating the trait.
   if (nrow(df) == 0) { 
-    # showNotification(
-    #   paste0(cluster, "_", target_trait, " would be zero for all samples and will therefore not be reported."),
-    #   type = "warning", duration = 5, id = paste0(cluster, target_trait)
-    # )
     return(paste0(cluster, "_", target_trait, " = Not reported: zero for all samples"))
   } 
   else if (nrow(df) == 1) {
-    # showNotification(
-    #   paste0(cluster, "_", target_trait,
-    #          " would be calculated using only one glycan and will therefore not be reported."),
-    #   type = "warning", duration = 5, id = paste0(cluster, target_trait)
-    # )
     return(paste0(cluster, "_", target_trait, " = Not reported: only one relevant glycan ", df$glycan))
   }
   else if (nrow(df) == nrow(cluster_ref_df)) {
@@ -38,10 +29,6 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     if (target_trait %in% c("fucosylation", "core_fucosylation", "antennary_fucosylation",
                             "bisection", "mono_antennary", "hybrid", "hybrid_fucosylation",
                             "hybrid_bisection", "oligomannose", "tri_antennary")) {
-      # showNotification(
-      #   paste0(cluster, "_", target_trait, " would equal 100 for all samples and will therefore not be reported."),
-      #   type = "warning", duration = 5, id = paste0(cluster, target_trait)
-      # )
       return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
     }
   }
