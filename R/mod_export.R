@@ -137,6 +137,11 @@ mod_export_server <- function(id,
       },
       content = function(file) {
         
+        shinybusy::show_modal_spinner(
+          spin = "cube-grid", color = "#0275D8",
+          text = HTML("<br/><strong>Generating HTML report...")
+        )
+        
         # The contents of the spectra curation tabs need to be retrieved:
         # results_spectra_curation$tab_contents() is a reactive expression
         # containing a list. In that list there is one list for each tab in
@@ -302,6 +307,8 @@ mod_export_server <- function(id,
           envir = new.env(parent = globalenv()),
           params = params # We're passing along the params that are listed above
         )
+        
+        shinybusy::remove_modal_spinner()
       }
     )
     
