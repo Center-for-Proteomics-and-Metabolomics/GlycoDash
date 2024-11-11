@@ -73,20 +73,16 @@ mod_derived_traits_ui <- function(id){
             # Human IgG N-glycans
             tabPanel("Human IgG: N-glycans", tagList(
               br(),
+              shinyWidgets::materialSwitch(
+                ns("all_IgG_N_traits"),
+                HTML("<i style='font-size:15px;'> Select all traits </i>"),
+                status = "success",
+                right = TRUE
+              ),
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgG_N_traits"),
                 "Select traits to calculate:",
-                choices = c(
-                  "Fucosylation of complex-type glycans",
-                  "Bisection of complex-type glycans",
-                  "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans",
-                  "Percentage of monoantennary complex-type glycans",
-                  "Percentage of hybrid-type glycans",
-                  "Percentage of oligomannose-type glycans",
-                  "Oligomannose-type glycans: average number of mannoses"
-                )
+                choices = traits_choices$human_IgG_N
               ),
               selectizeInput(
                 ns("human_IgG_N_clusters"),
@@ -102,15 +98,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgA_N47_traits"),
                 "Select traits to calculate for IgA2 glycosylation site N47:",
-                choices = c(
-                  "Core fucosylation of complex-type glycans",
-                  "Antennary fucosylation of complex-type glycans",
-                  "Bisection of complex-type glycans",
-                  "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans",
-                  "Percentage of triantennary complex-type glycans"
-                )
+                choices = traits_choices$human_IgA_N47,
               ),
               selectizeInput(
                 ns("human_IgA_N47_clusters"),
@@ -123,16 +111,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgA_N144_traits"),
                 "Select traits to calculate for IgA1/2 glycosylation site N144/N131:",
-                choices = c(
-                  "Fucosylation of complex-type glycans",
-                  "Bisection of complex-type glycans",
-                  "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans",
-                  "Percentage of hybrid-type glycans",
-                  "Percentage of oligomannose-type glycans",
-                  "Oligomannose-type glycans: average number of mannoses"
-                )
+                choices = traits_choices$human_IgA_N144
               ),
               selectizeInput(
                 ns("human_IgA_N144_clusters"),
@@ -145,13 +124,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgA_N205_traits"),
                 "Select traits want to calculate for IgA2 glycosylation site N205:",
-                choices = c(
-                  "Fucosylation of complex-type glycans",
-                  "Bisection of complex-type glycans",
-                  "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans"
-                )
+                choices = traits_choices$human_IgA_N205
               ),
               selectizeInput(
                 ns("human_IgA_N205_clusters"),
@@ -164,16 +137,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgA_N340_traits"),
                 "Select traits to calculate for IgA1/2 glycosylation site N340/N327:",
-                choices = c(
-                  "Fucosylation of complex-type glycans",
-                  "Bisection of complex-type glycans",
-                  "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans",
-                  "Percentage of triantennary complex-type glycans",
-                  "Percentage of oligomannose-type glycans",
-                  "Oligomannose-type glycans: average number of mannoses"
-                )
+                choices = traits_choices$human_IgA_N340
               ),
               selectizeInput(
                 ns("human_IgA_N340_clusters"),
@@ -189,17 +153,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgA_O_traits"),
                 "Select traits to calculate:",
-                choices = c(
-                  "Sialic acids",
-                  "Galactoses",
-                  "GalNAcs",
-                  "Sialic acids per galactose",
-                  "Galactoses per GalNAc",
-                  "Tn antigens",
-                  "T antigens",
-                  "Sialyl-T (sT) antigens",
-                  "Disialylated O-antigens"
-                )
+                choices = traits_choices$human_IgA_O
               ),
               selectizeInput(
                 ns("human_IgA_O_clusters"),
@@ -215,19 +169,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgM_N46_traits"),
                 "Select traits to calculate for IgM glycosylation site N46:",
-                choices = c(
-                  "Fucosylation of complex-type glycans",
-                  "Bisection of complex-type glycans",
-                  "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans",
-                  "Antennarity of complex-type glycans",
-                  "Percentage of hybrid-type glycans",
-                  "Fucosylation of hybrid-type glycans",
-                  "Bisection of hybrid-type glycans",
-                  "Percentage of oligomannose-type glycans",
-                  "Oligomannose-type glycans: average number of mannoses"
-                )
+                choices = traits_choices$human_IgM_N46
               ),
               selectizeInput(
                 ns("human_IgM_N46_clusters"),
@@ -240,15 +182,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgM_N209_traits"),
                 "Select traits to calculate for IgM glycosylation site N209:",
-                choices = c(
-                  "Core fucosylation of complex-type glycans",
-                  "Antennary fucosylation of complex-type glycans",
-                  "Bisection of complex-type glycans",
-                  "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans",
-                  "Percentage of triantennary complex-type glycans"
-                )
+                choices = traits_choices$human_IgM_N209
               ),
               selectizeInput(
                 ns("human_IgM_N209_clusters"),
@@ -261,15 +195,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgM_N272_traits"),
                 "Select traits to calculate for IgM glycosylation site N272:",
-                choices = c(
-                  "Core fucosylation of complex-type glycans",
-                  "Antennary fucosylation of complex-type glycans",
-                  "Bisection of complex-type glycans",
-                  "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans",
-                  "Percentage of triantennary complex-type glycans"
-                )
+                choices = traits_choices$human_IgM_N272
               ),
               selectizeInput(
                 ns("human_IgM_N272_clusters"),
@@ -282,14 +208,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgM_N279_traits"),
                 "Select traits to calculate for IgM glycosylation site N279:",
-                choices = c(
-                  "Fucosylation of complex-type glycans",
-                  "Antennarity of complex-type glycans",
-                  "Percentage of hybrid-type glycans",
-                  "Fucosylation of hybrid-type glycans",
-                  "Percentage of oligomannose-type glycans",
-                  "Oligomannose-type glycans: average number of mannoses"
-                )
+                choices = traits_choices$human_IgM_N279
               ),
               selectizeInput(
                 ns("human_IgM_N279_clusters"),
@@ -302,9 +221,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgM_N440_traits"),
                 "Select traits to calculate for IgM glycosylation site N440:",
-                choices = c(
-                  "Oligomannose-type glycans: average number of mannoses"
-                )
+                choices = traits_choices$human_IgM_N440
               ),
               selectizeInput(
                 ns("human_IgM_N440_clusters"),
@@ -321,15 +238,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_JC_N_traits"),
                 "Select traits to calculate:",
-                choices = c(
-                  "Fucosylation of complex-type glycans",
-                  "Bisection of complex-type glycans",
-                  "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation per antenna of complex-type glycans",
-                  "Sialylation per galactose of complex-type glycans",
-                  "Percentage of monoantennary complex-type glycans",
-                  "Percentage of hybrid-type glycans"
-                )
+                choices = traits_choices$human_JC_N
               ),
               selectizeInput(
                 ns("human_JC_N_clusters"),
@@ -345,17 +254,7 @@ mod_derived_traits_ui <- function(id){
               shinyWidgets::awesomeCheckboxGroup(
                 ns("mouse_IgG_N_traits"),
                 "Select traits to calculate:",
-                choices = c(
-                  "Fucosylation of complex-type glycans",
-                  "Bisection of complex-type glycans",
-                  "Galactosylation per antenna of complex-type glycans",
-                  "Sialylation (N-glycolylneuraminic acid) per antenna of complex-type glycans",
-                  "\u03B1-1,3-galactosylation of complex-type glycans",
-                  "Percentage of monoantennary complex-type glycans",
-                  "Percentage of hybrid-type glycans",
-                  "Percentage of oligomannose-type glycans",
-                  "Oligomannose-type glycans: average number of mannoses"
-                )
+                choices = traits_choices$mouse_IgG_N
               ),
               selectizeInput(
                 ns("mouse_IgG_N_clusters"),

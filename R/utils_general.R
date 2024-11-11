@@ -366,4 +366,135 @@ ManualButton <- function(outputId, label = ""){
 
 
 
+# A named list with choices of traits that can be calculated automatically
+# for each glycosylation site
+traits_choices <- list(
+  "human_IgG_N" = c(
+    "Fucosylation of complex-type glycans",
+    "Bisection of complex-type glycans",
+    "Galactosylation per antenna of complex-type glycans",
+    "Sialylation per antenna of complex-type glycans",
+    "Sialylation per galactose of complex-type glycans",
+    "Percentage of monoantennary complex-type glycans",
+    "Percentage of hybrid-type glycans",
+    "Percentage of oligomannose-type glycans",
+    "Oligomannose-type glycans: average number of mannoses"
+  ),
+  "human_IgA_N47" = c(
+    "Core fucosylation of complex-type glycans",
+    "Antennary fucosylation of complex-type glycans",
+    "Bisection of complex-type glycans",
+    "Galactosylation per antenna of complex-type glycans",
+    "Sialylation per antenna of complex-type glycans",
+    "Sialylation per galactose of complex-type glycans",
+    "Percentage of triantennary complex-type glycans"
+  ),
+  "human_IgA_N144" = c(
+    "Fucosylation of complex-type glycans",
+    "Bisection of complex-type glycans",
+    "Galactosylation per antenna of complex-type glycans",
+    "Sialylation per antenna of complex-type glycans",
+    "Sialylation per galactose of complex-type glycans",
+    "Percentage of hybrid-type glycans",
+    "Percentage of oligomannose-type glycans",
+    "Oligomannose-type glycans: average number of mannoses"
+  ),
+  "human_IgA_N205" = c(
+    "Fucosylation of complex-type glycans",
+    "Bisection of complex-type glycans",
+    "Galactosylation per antenna of complex-type glycans",
+    "Sialylation per antenna of complex-type glycans",
+    "Sialylation per galactose of complex-type glycans"
+  ),
+  "human_IgA_N340" = c(
+    "Fucosylation of complex-type glycans",
+    "Bisection of complex-type glycans",
+    "Galactosylation per antenna of complex-type glycans",
+    "Sialylation per antenna of complex-type glycans",
+    "Sialylation per galactose of complex-type glycans",
+    "Percentage of triantennary complex-type glycans",
+    "Percentage of oligomannose-type glycans",
+    "Oligomannose-type glycans: average number of mannoses"
+  ),
+  "human_IgA_O" = c(
+    "Sialic acids",
+    "Galactoses",
+    "GalNAcs",
+    "Sialic acids per galactose",
+    "Galactoses per GalNAc",
+    "Tn antigens",
+    "T antigens",
+    "Sialyl-T (sT) antigens",
+    "Disialylated O-antigens"
+  ),
+  "human_IgM_N46" = c(
+    "Fucosylation of complex-type glycans",
+    "Bisection of complex-type glycans",
+    "Galactosylation per antenna of complex-type glycans",
+    "Sialylation per antenna of complex-type glycans",
+    "Sialylation per galactose of complex-type glycans",
+    "Antennarity of complex-type glycans",
+    "Percentage of hybrid-type glycans",
+    "Fucosylation of hybrid-type glycans",
+    "Bisection of hybrid-type glycans",
+    "Percentage of oligomannose-type glycans",
+    "Oligomannose-type glycans: average number of mannoses"
+  ),
+  "human_IgM_N209" = c(
+    "Core fucosylation of complex-type glycans",
+    "Antennary fucosylation of complex-type glycans",
+    "Bisection of complex-type glycans",
+    "Galactosylation per antenna of complex-type glycans",
+    "Sialylation per antenna of complex-type glycans",
+    "Sialylation per galactose of complex-type glycans",
+    "Percentage of triantennary complex-type glycans"
+  ),
+  "human_IgM_N272" = c(
+    "Core fucosylation of complex-type glycans",
+    "Antennary fucosylation of complex-type glycans",
+    "Bisection of complex-type glycans",
+    "Galactosylation per antenna of complex-type glycans",
+    "Sialylation per antenna of complex-type glycans",
+    "Sialylation per galactose of complex-type glycans",
+    "Percentage of triantennary complex-type glycans"
+  ),
+  "human_IgM_N279" = c(
+    "Fucosylation of complex-type glycans",
+    "Antennarity of complex-type glycans",
+    "Percentage of hybrid-type glycans",
+    "Fucosylation of hybrid-type glycans",
+    "Percentage of oligomannose-type glycans",
+    "Oligomannose-type glycans: average number of mannoses"
+  ),
+  "human_IgM_N440" = c(
+    "Oligomannose-type glycans: average number of mannoses"
+  ),
+  "human_JC_N" = c(
+    "Fucosylation of complex-type glycans",
+    "Bisection of complex-type glycans",
+    "Galactosylation per antenna of complex-type glycans",
+    "Sialylation per antenna of complex-type glycans",
+    "Sialylation per galactose of complex-type glycans",
+    "Percentage of monoantennary complex-type glycans",
+    "Percentage of hybrid-type glycans"
+  ),
+  "mouse_IgG_N" = c(
+    "Fucosylation of complex-type glycans",
+    "Bisection of complex-type glycans",
+    "Galactosylation per antenna of complex-type glycans",
+    "Sialylation (N-glycolylneuraminic acid) per antenna of complex-type glycans",
+    "\u03B1-1,3-galactosylation of complex-type glycans",
+    "Percentage of monoantennary complex-type glycans",
+    "Percentage of hybrid-type glycans",
+    "Percentage of oligomannose-type glycans",
+    "Oligomannose-type glycans: average number of mannoses"
+  )
+)
+
+
+
+
+
+
+
 
