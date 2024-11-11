@@ -1,5 +1,8 @@
 # v1.6.1
 ## Adjustments
+* Spectra curation: make the coloring of sample types consistent between
+scatter plots for different glycosylation sites.
+* Analyte curation: option to select all traits at once for each antibody glycans type.
 * Show a loading spinner while generating HTML report.
 
 ## Bug fixes

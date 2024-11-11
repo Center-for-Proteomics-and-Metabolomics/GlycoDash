@@ -74,7 +74,7 @@ mod_derived_traits_ui <- function(id){
             tabPanel("Human IgG: N-glycans", tagList(
               br(),
               shinyWidgets::materialSwitch(
-                ns("all_IgG_N_traits"),
+                ns("human_IgG_N_all"),
                 HTML("<i style='font-size:15px;'> Select all traits </i>"),
                 status = "success",
                 right = TRUE
@@ -95,6 +95,12 @@ mod_derived_traits_ui <- function(id){
             # Human IgA N-glycans per glycosylation site
             tabPanel("Human IgA: N-glycans", tagList(
               br(),
+              shinyWidgets::materialSwitch(
+                ns("human_IgA_N_all"),
+                HTML("<i style='font-size:15px;'> Select all traits </i>"),
+                status = "success",
+                right = TRUE
+              ),
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgA_N47_traits"),
                 "Select traits to calculate for IgA2 glycosylation site N47:",
@@ -150,6 +156,12 @@ mod_derived_traits_ui <- function(id){
             # Human IgA O-glycans
             tabPanel("Human IgA: O-glycans", tagList(
               br(),
+              shinyWidgets::materialSwitch(
+                ns("human_IgA_O_all"),
+                HTML("<i style='font-size:15px;'> Select all traits </i>"),
+                status = "success",
+                right = TRUE
+              ),
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgA_O_traits"),
                 "Select traits to calculate:",
@@ -166,6 +178,12 @@ mod_derived_traits_ui <- function(id){
             # Human IgM N-glycans per glycosylation site
             tabPanel("Human IgM: N-glycans", tagList(
               br(),
+              shinyWidgets::materialSwitch(
+                ns("human_IgM_N_all"),
+                HTML("<i style='font-size:15px;'> Select all traits </i>"),
+                status = "success",
+                right = TRUE
+              ),
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_IgM_N46_traits"),
                 "Select traits to calculate for IgM glycosylation site N46:",
@@ -235,6 +253,12 @@ mod_derived_traits_ui <- function(id){
             # Human JC N-glycans
             tabPanel("Human Joining Chain: N-glycans", tagList(
               br(),
+              shinyWidgets::materialSwitch(
+                ns("human_JC_N_all"),
+                HTML("<i style='font-size:15px;'> Select all traits </i>"),
+                status = "success",
+                right = TRUE
+              ),
               shinyWidgets::awesomeCheckboxGroup(
                 ns("human_JC_N_traits"),
                 "Select traits to calculate:",
@@ -251,6 +275,12 @@ mod_derived_traits_ui <- function(id){
             # Mouse IgG tab
             tabPanel("Mouse IgG: N-glycans", tagList(
               br(),
+              shinyWidgets::materialSwitch(
+                ns("mouse_IgG_N_all"),
+                HTML("<i style='font-size:15px;'> Select all traits </i>"),
+                status = "success",
+                right = TRUE
+              ),
               shinyWidgets::awesomeCheckboxGroup(
                 ns("mouse_IgG_N_traits"),
                 "Select traits to calculate:",
@@ -448,7 +478,159 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       }
     })
     
-
+    ########## Check if all traits should be selected #####################
+    observeEvent(input$human_IgG_N_all, {
+      if (input$human_IgG_N_all) {
+        # Select all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgG_N_traits",
+          selected = traits_choices$human_IgG_N
+        )
+      } else if (!input$human_IgG_N_all) {
+        # Deselect all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgG_N_traits",
+          selected = c("")
+        )
+      }
+    })
+    
+    observeEvent(input$human_IgA_N_all, {
+      if (input$human_IgA_N_all) {
+        # Select all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_N47_traits",
+          selected = traits_choices$human_IgA_N47
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_N144_traits",
+          selected = traits_choices$human_IgA_N144
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_N205_traits",
+          selected = traits_choices$human_IgA_N205
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_N340_traits",
+          selected = traits_choices$human_IgA_N340
+        )
+      } else if (!input$human_IgA_N_all) {
+        # Deselect all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_N47_traits",
+          selected = c("")
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_N144_traits",
+          selected = c("")
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_N205_traits",
+          selected = c("")
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_N340_traits",
+          selected = c("")
+        )
+      }
+    })
+    
+    observeEvent(input$human_IgA_O_all, {
+      if (input$human_IgA_O_all) {
+        # Select all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_O_traits",
+          selected = traits_choices$human_IgA_O
+        )
+      } else if (!input$human_IgA_O_all) {
+        # Deselect all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_O_traits",
+          selected = c("")
+        )
+      }
+    })
+    
+    observeEvent(input$human_IgM_N_all, {
+      if (input$human_IgM_N_all) {
+        # Select all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgM_N46_traits",
+          selected = traits_choices$human_IgM_N46
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgM_N209_traits",
+          selected = traits_choices$human_IgM_N209
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgM_N272_traits",
+          selected = traits_choices$human_IgM_N272
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgM_N279_traits",
+          selected = traits_choices$human_IgM_N279
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgM_N440_traits",
+          selected = traits_choices$human_IgM_N440
+        )
+      } else if (!input$human_IgM_N_all) {
+        # Deselect all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgM_N46_traits",
+          selected = c("")
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgM_N209_traits",
+          selected = c("")
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgM_N272_traits",
+          selected = c("")
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgM_N279_traits",
+          selected = c("")
+        )
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgM_N440_traits",
+          selected = c("")
+        )
+      }
+    })
+    
+    observeEvent(input$human_JC_N_all, {
+      if (input$human_JC_N_all) {
+        # Select all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_JC_N_traits",
+          selected = traits_choices$human_JC_N
+        )
+      } else if (!input$human_JC_N_all) {
+        # Deselect all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_JC_N_traits",
+          selected = c("")
+        )
+      }
+    })
+    
+    observeEvent(input$mouse_IgG_N_all, {
+      if (input$mouse_IgG_N_all) {
+        # Select all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "mouse_IgG_N_traits",
+          selected = traits_choices$mouse_IgG_N
+        )
+      } else if (!input$mouse_IgG_N_all) {
+        # Deselect all traits
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "mouse_IgG_N_traits",
+          selected = c("")
+        )
+      }
+    })
+    
     
     ####################  Custom glycosylation traits  ####################
     
