@@ -703,7 +703,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
   
     ################# DETERMINE FORMULAS FOR DEFAULT TRAITS #########################
     
-    #TODO: Reduce the code below with function
+    #TODO: Reduce the code below
     
     # Trait formulas for human IgG
     human_IgG_N_traits <- reactive({
@@ -712,7 +712,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
 
     human_IgG_N_formulas <- reactive({
-      req(length(input$human_IgG_N_clusters) > 0)
+      req(length(input$human_IgG_N_clusters) > 0, is_truthy(human_IgG_N_traits()))
       load(system.file("app", "www", "human_IgG_N_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -728,7 +728,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
 
     human_IgA_N47_formulas <- reactive({
-      req(length(input$human_IgA_N47_clusters) > 0)
+      req(length(input$human_IgA_N47_clusters) > 0, is_truthy(human_IgA_N47_traits()))
       load(system.file("app", "www", "human_IgA_N47_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -743,7 +743,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
 
     human_IgA_N144_formulas <- reactive({
-      req(length(input$human_IgA_N144_clusters) > 0)
+      req(length(input$human_IgA_N144_clusters) > 0, is_truthy(human_IgA_N144_traits()))
       load(system.file("app", "www", "human_IgA_N144_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -758,7 +758,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
 
     human_IgA_N205_formulas <- reactive({
-      req(length(input$human_IgA_N205_clusters) > 0)
+      req(length(input$human_IgA_N205_clusters) > 0, is_truthy(human_IgA_N205_traits()))
       load(system.file("app", "www", "human_IgA_N205_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -773,7 +773,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
 
     human_IgA_N340_formulas <- reactive({
-      req(length(input$human_IgA_N340_clusters) > 0)
+      req(length(input$human_IgA_N340_clusters) > 0, is_truthy(human_IgA_N340_traits()))
       load(system.file("app", "www", "human_IgA_N340_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -790,7 +790,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
 
     human_IgA_O_formulas <- reactive({
-      req(length(input$human_IgA_O_clusters) > 0)
+      req(length(input$human_IgA_O_clusters) > 0, is_truthy(human_IgA_O_traits()))
       load(system.file("app", "www", "human_IgA_O_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -807,7 +807,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
     
     human_IgM_N46_formulas <- reactive({
-      req(length(input$human_IgM_N46_clusters) > 0)
+      req(length(input$human_IgM_N46_clusters) > 0, is_truthy(human_IgM_N46_traits()))
       load(system.file("app", "www", "human_IgM_N46_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -822,7 +822,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
     
     human_IgM_N209_formulas <- reactive({
-      req(length(input$human_IgM_N209_clusters) > 0)
+      req(length(input$human_IgM_N209_clusters) > 0, is_truthy(human_IgM_N209_traits()))
       load(system.file("app", "www", "human_IgM_N209_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -837,7 +837,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
     
     human_IgM_N272_formulas <- reactive({
-      req(length(input$human_IgM_N272_clusters) > 0)
+      req(length(input$human_IgM_N272_clusters) > 0, is_truthy(human_IgM_N272_traits()))
       load(system.file("app", "www", "human_IgM_N272_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -852,7 +852,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
     
     human_IgM_N279_formulas <- reactive({
-      req(length(input$human_IgM_N279_clusters) > 0)
+      req(length(input$human_IgM_N279_clusters) > 0, is_truthy(human_IgM_N279_traits()))
       load(system.file("app", "www", "human_IgM_N279_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -867,7 +867,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
     
     human_IgM_N440_formulas <- reactive({
-      req(length(input$human_IgM_N440_clusters) > 0)
+      req(length(input$human_IgM_N440_clusters) > 0, is_truthy(human_IgM_N440_traits()))
       load(system.file("app", "www", "human_IgM_N440_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -884,7 +884,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
 
     human_JC_N_formulas <- reactive({
-      req(length(input$human_JC_N_clusters) > 0)
+      req(length(input$human_JC_N_clusters) > 0, is_truthy(human_JC_N_traits()))
       load(system.file("app", "www", "human_JC_N_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
@@ -901,7 +901,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     })
 
     mouse_IgG_N_formulas <- reactive({
-      req(length(input$mouse_IgG_N_clusters) > 0)
+      req(length(input$mouse_IgG_N_clusters) > 0, is_truthy(mouse_IgG_N_traits()))
       load(system.file("app", "www", "mouse_IgG_N_ref.rda", package = "GlycoDash"))
       purrr::reduce(
         create_formula_list(
