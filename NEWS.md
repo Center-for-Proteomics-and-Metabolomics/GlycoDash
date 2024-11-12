@@ -6,6 +6,8 @@ scatter plots for different glycosylation sites.
 * Show a loading spinner while generating HTML report.
 
 ## Bug fixes
+* Prevent GlycoDash from crashing when Total and Specific samples are specified
+after adding the sample types.
 * Minor bug fixes in automatic traits calculations.
 
 
