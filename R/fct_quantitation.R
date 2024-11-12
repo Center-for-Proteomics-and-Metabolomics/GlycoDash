@@ -121,8 +121,9 @@ calculate_IgG1_amounts <- function(IgG1_ratios, chosen_peptides,
 # Function to make a quantitation plot.
 create_quantitation_plot <- function(IgG1_amounts) {
   
-  n_colors <- length(unique(IgG1_amounts$sample_type))
-  my_palette <- color_palette(n_colors)
+  sample_types <- unique(IgG1_amounts$sample_type)
+  colors <- color_palette(length(sample_types))
+  color_palette <- setNames(colors, sample_types)
   
   plot <- IgG1_amounts %>%
     ggplot2::ggplot(., ggplot2::aes(
@@ -145,8 +146,7 @@ create_quantitation_plot <- function(IgG1_amounts) {
     ggplot2::theme_classic() +
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
-    ggplot2::scale_color_manual(values = my_palette,
-                                name = "Sample type") +
+    ggplot2::scale_color_manual(values = color_palette, name = "Sample type") +
     ggplot2::labs(y = "Amount of IgG1 (ng)", x = "Sample type")
   
   
@@ -163,7 +163,7 @@ create_quantitation_plot <- function(IgG1_amounts) {
 
 
 # Function to plot peptide correlations.
-plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
+plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount, color_palette) {
   
   # Determine x and y columns to plot, depending on tab_id
   ycol <- dplyr::case_when(
@@ -183,10 +183,6 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
     # Exclude points for which one or both of the values are NA
     use = "pairwise.complete.obs"
   )
-  
-  # Color palette for plot
-  n_colors <- length(unique(IgG1_amounts$sample_type))
-  my_palette <- color_palette(n_colors)
   
   # Correlation plot
   plot <- ggplot2::ggplot() + 
@@ -224,7 +220,7 @@ plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount) {
       panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
       plot.title = ggplot2::element_text(size = 12)
     ) +
-    ggplot2::scale_color_manual(values = my_palette, name = "Sample type")
+    ggplot2::scale_color_manual(values = color_palette, name = "Sample type")
   
   return(plot)
 }

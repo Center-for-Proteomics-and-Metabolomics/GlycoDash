@@ -278,6 +278,11 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         # See if sample types should be excluded from the correlation
         samples_to_exclude <- stringr::str_remove(input$exclude_samples, " samples")
         
+        # Color palette for plot
+        sample_types <- unique(IgG1_amounts()$sample_type)
+        colors <- color_palette(length(sample_types))
+        color_palette <- setNames(colors, sample_types)
+        
         if (!is_truthy(input$exclude_samples)) {
           to_plot <- IgG1_amounts()
         } else if ("group" %in% colnames(results_normalization$normalized_data())) {
@@ -291,7 +296,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         
         # Create tabs and plots.
         purrr::imap(tab_ids, function(tab_id, i) {
-          plot <- plot_peptide_correlation(to_plot, tab_id, input$silumab_amount)
+          plot <- plot_peptide_correlation(to_plot, tab_id, input$silumab_amount, color_palette)
           
           # Add the plot to reactiveValues vector, to show it in the report later.
           r$peptide_correlation_plots[[i]] <- plot
