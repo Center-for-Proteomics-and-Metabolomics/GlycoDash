@@ -379,6 +379,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     cut_offs_based_on_controls <- mod_curate_based_on_controls_server(
       "curate_based_on_controls_ui_1",
       results_data_import = results_data_import,
+      total_and_specific = total_and_specific,
       summarized_checks = summarized_checks,
       uncalibrated_as_NA = reactive({ input$uncalibrated_as_na })  
     )
@@ -430,6 +431,17 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     })
     
     
+    # Check if the data contains total and specific samples
+    total_and_specific <- reactive({
+      req(data_to_check())
+      if (results_data_import$contains_total_and_specific_samples() & 
+          "group" %in% colnames(data_to_check())) {
+        TRUE
+      } else {
+        FALSE
+      }
+    })
+    
     
     r <- reactiveValues()
     
@@ -452,7 +464,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                   dplyr::filter(cluster == current_cluster)
               }),
               color_palette = color_palette,
-              contains_total_and_specific_samples = results_data_import$contains_total_and_specific_samples,
+              contains_total_and_specific_samples = total_and_specific,
               keyword_specific = results_data_import$keyword_specific,
               keyword_total = results_data_import$keyword_total,
               calculated_cut_offs = reactive({ 
@@ -629,11 +641,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     
     curated_spectra_plot <- reactive({
-      req(curated_data(),
-          length(unique(clusters())) <= 4)
-      
-      plot_spectra_curation_results(curated_data(),
-                                    results_data_import$contains_total_and_specific_samples())
+      req(curated_data(), length(unique(clusters())) <= 4)
+      plot_spectra_curation_results(curated_data(), total_and_specific())
     })
     
     
@@ -689,7 +698,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
               curated_data() %>% 
                 dplyr::filter(cluster == current_cluster) 
             }),
-            contains_total_and_specific_samples = results_data_import$contains_total_and_specific_samples)
+            contains_total_and_specific_samples = )
         })
     })
     

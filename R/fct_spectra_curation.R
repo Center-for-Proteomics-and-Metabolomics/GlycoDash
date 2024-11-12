@@ -1009,10 +1009,6 @@ create_cut_off_plot <- function(summarized_checks, color_palette) {
 plot_spectra_curation_results <- function(curated_data,
                                           total_and_specific) {
   
-  # n_colors <- length(unique(curated_data$reason_for_failure)) - 1
-  # my_palette <- c(colorRampPalette(RColorBrewer::brewer.pal(8, "OrRd")[5:8])(n_colors),
-  #                 "#3498DB")
-  
   # Consistent fill colors.
   my_palette <- c(
     "Yes" = "#3498DB",
@@ -1064,13 +1060,13 @@ plot_spectra_curation_results <- function(curated_data,
   
   more_than_4_clusters <- length(unique(curated_data$cluster)) > 4
   
-  if (total_and_specific == TRUE & !more_than_4_clusters) {
+  if (total_and_specific & !more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(cluster ~ group)
-  } else if (total_and_specific == TRUE & more_than_4_clusters) {
+  } else if (total_and_specific & more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(~ group)
-  } else if (total_and_specific == FALSE & !more_than_4_clusters) {
+  } else if (total_and_specific & !more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(~ cluster)
   }

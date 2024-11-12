@@ -147,22 +147,22 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     })
     
     r <- reactiveValues()
-    
-    observe({
-      if (is_truthy(r$with_auto_sample_types)) {
-        r$with_auto_sample_types <- NULL
-        r$response <- NULL
-        r$show_reset_warning <- TRUE
-      }
-    }) %>% bindEvent(LaCyTools_summary())
-    
-    observe({
-      if (is_truthy(r$show_reset_warning)) {
-        showNotification("Please re-add the sample types to your data.",
-                         type = "warning", duration = 10)
-        r$show_reset_warning <- FALSE
-      }
-    }) %>% bindEvent(LaCyTools_summary())
+
+    # observe({
+    #   if (is_truthy(r$with_auto_sample_types)) {
+    #     r$with_auto_sample_types <- NULL
+    #     r$response <- NULL
+    #     r$show_reset_warning <- TRUE
+    #   }
+    # }) %>% bindEvent(LaCyTools_summary())
+    # 
+    # observe({
+    #   if (is_truthy(r$show_reset_warning)) {
+    #     showNotification("Please re-add the sample types to your data.",
+    #                      type = "warning", duration = 10)
+    #     r$show_reset_warning <- FALSE
+    #   }
+    # }) %>% bindEvent(LaCyTools_summary())
     
     observe({
       req(LaCyTools_summary(),
@@ -371,6 +371,7 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
         file.copy(example_file, file)
       }
     )
+    
     
     return(list(
       data = to_return,
