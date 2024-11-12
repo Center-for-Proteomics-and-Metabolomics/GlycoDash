@@ -1066,7 +1066,7 @@ plot_spectra_curation_results <- function(curated_data,
   } else if (total_and_specific & more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(~ group)
-  } else if (total_and_specific & !more_than_4_clusters) {
+  } else if (!total_and_specific & !more_than_4_clusters) {
     plot <- plot +
       ggplot2::facet_wrap(~ cluster)
   }

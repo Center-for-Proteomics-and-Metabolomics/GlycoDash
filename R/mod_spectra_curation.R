@@ -316,6 +316,17 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       }
     })
     
+    # Check if the data contains total and specific samples
+    total_and_specific <- reactive({
+      req(data_to_check())
+      if (results_data_import$contains_total_and_specific_samples() & 
+          "group" %in% colnames(data_to_check())) {
+        TRUE
+      } else {
+        FALSE
+      }
+    })
+    
     
     # Data with criteria checks for each analyte in each sample.
     checked_data <- reactive({
@@ -430,17 +441,6 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                  })
     })
     
-    
-    # Check if the data contains total and specific samples
-    total_and_specific <- reactive({
-      req(data_to_check())
-      if (results_data_import$contains_total_and_specific_samples() & 
-          "group" %in% colnames(data_to_check())) {
-        TRUE
-      } else {
-        FALSE
-      }
-    })
     
     
     r <- reactiveValues()
@@ -574,6 +574,25 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     }) %>% bindEvent(input$button)
     
     
+    # Tell users to re-perform spectra curation when data is updated
+    # after curating the spectra earlier.
+    observeEvent(checked_data(), {
+      req(curated_data())
+      showNotification(
+        id = ns("msg_data_changed"),
+        'Changes were made to your data after spectra curation.
+        Please curate your spectra again by clicking the 
+        "Perform spectra curation" button.',
+        type = "warning", duration = NULL
+      )
+    })
+    
+    # Remove the message automatically after curation button is clicked
+    observeEvent(input$button, {
+      removeNotification(ns("msg_data_changed"))
+    })
+    
+    
     passing_spectra <- reactive({
       req(curated_data())
       kick_out_spectra(curated_spectra = curated_data())
@@ -643,7 +662,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     curated_spectra_plot <- reactive({
       req(curated_data(), length(unique(clusters())) <= 4)
       plot_spectra_curation_results(curated_data(), total_and_specific())
-    })
+    }) %>% bindEvent(curated_data())
     
     
     observe({
@@ -655,9 +674,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     })
     
     
-    observe({
-      req(length(clusters()) > 4,
-          curated_data())
+    observeEvent(curated_data(), {
+      req(length(clusters()) > 4)
       
       # Remove tabs in case they have been created before. Still not ideal cause
       # if cluster names are changed then the old tabs won't be removed
@@ -698,7 +716,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
               curated_data() %>% 
                 dplyr::filter(cluster == current_cluster) 
             }),
-            contains_total_and_specific_samples = )
+            total_and_specific = total_and_specific())
         })
     })
     
