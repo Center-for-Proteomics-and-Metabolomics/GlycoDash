@@ -580,7 +580,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       req(curated_data())
       showNotification(
         id = ns("msg_data_changed"),
-        'Changes were made to your data after spectra curation.
+        'Changes were made to your data.
         Please curate your spectra again by clicking the 
         "Perform spectra curation" button.',
         type = "warning", duration = NULL
