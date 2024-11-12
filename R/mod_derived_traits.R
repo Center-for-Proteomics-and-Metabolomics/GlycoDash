@@ -1221,6 +1221,19 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       }
     })
     
+    
+    # Show a notification if data changes after calculating traits
+    observeEvent(normalized_data(), {
+      req(is_truthy(data_with_derived_traits()) | is_truthy(data_with_custom_traits()))
+      showNotification(
+        id = ns("msg_data_changed"),
+        "Your normalized data has changed.
+        Please re-calculate your glycosylation traits.",
+        type = "warning", duration = NULL
+      )
+    })
+    
+    
     output$data_table <- DT::renderDT({
       req(data_with_traits())
       # Disabling server-side rendering seems to prevent error messages being
