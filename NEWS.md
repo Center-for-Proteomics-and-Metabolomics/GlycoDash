@@ -5,6 +5,9 @@ changes were made to the data by adjusting settings in earlier steps.
 * Spectra curation: make the coloring of sample types consistent between
 scatter plots for different glycosylation sites.
 * Analyte curation: option to select all traits at once for each antibody glycans type.
+* Make clearer that IgG1 quantitation is meant only for antigen-specific IgG1.
+When data contains both total and specific immunoglobulin samples, perform the 
+quantitation only for the specific samples.
 * Show a loading spinner while generating HTML report.
 
 ## Bug fixes

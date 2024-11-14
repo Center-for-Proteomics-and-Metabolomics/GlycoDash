@@ -37,13 +37,13 @@ mod_quantitation_ui <- function(id) {
             id = ns("box1"),
             title = div(
               id = ns("box_header2"),
-              "IgG1 quantitation using SILuMAb",
+              "Quantitation of antigen-specific IgG1 using SILuMAb",
               icon("info-circle", class = "ml") %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
                   content = HTML("
                   <p>
-                  IgG1 quantitation is first performed based on two different
+                  Quantitation of antigen-specific IgG1 is first performed based on two different
                   peptides: the Fc glycopeptides and a proteotypic peptide
                   GPS[...]. It is also possible to perform the quantitation
                   based on only one of these peptides, using the checkboxes.
@@ -59,7 +59,7 @@ mod_quantitation_ui <- function(id) {
                   </ul>
 
                   <p>
-                  The reported amount of IgG1 in the plot and table below is the
+                  The reported amount of antigen-specific IgG1 in the plot and table below is the
                   median of the values calculated for the two different peptides.
                   When a sample is missing a value for one of the peptides, this
                   peptide is excluded from calculation of the median. The calculated
@@ -118,7 +118,7 @@ mod_quantitation_ui <- function(id) {
                   title = "Explanation",
                   content = HTML("
                   <p>
-                  When quantifying IgG1 based on different peptides,
+                  When quantifying antigen-specific IgG1 based on different peptides,
                   the amounts of IgG1 calculated based on the glycopeptides
                   should correlate well to those calculated based on GPS[...].
                   When this is not the case, you may want to exclude one of 
@@ -153,7 +153,7 @@ mod_quantitation_ui <- function(id) {
         column(
           width = 12,
           shinydashboard::box(
-            title = "IgG1 quantitation plot",
+            title = "Antigen-specific IgG1 quantitation plot",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
@@ -163,7 +163,7 @@ mod_quantitation_ui <- function(id) {
       ),
       fluidRow(
         shinydashboard::box(
-          title = "View data with IgG1 quantities",
+          title = "View data with antigen-specific IgG1 quantities",
           width = 12,
           solidHeader = TRUE,
           status = "primary",
@@ -183,6 +183,7 @@ mod_quantitation_ui <- function(id) {
 #' @noRd 
 mod_quantitation_server <- function(id, quantitation_clusters,
                                     LaCyTools_summary,
+                                    keyword_specific,
                                     data_type,
                                     analyte_curated_data,
                                     results_normalization) {
@@ -240,9 +241,20 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     # Calculate ratios of peptides.
     IgG1_ratios <- reactive({
       req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
-      IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
-        LaCyTools_summary(), data_type(), quantitation_clusters(), analyte_curated_data()
-      )
+      # First check if there are both total and specific samples
+      # If that is the case, quantify only IgG1 for specific samples
+      if ("group" %in% colnames(LaCyTools_summary())) {
+        IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
+          LaCyTools_summary() %>% dplyr::filter(group == keyword_specific()),
+          data_type(),
+          quantitation_clusters(),
+          analyte_curated_data() %>% dplyr::filter(group == keyword_specific())
+        ) 
+      } else {
+        IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
+          LaCyTools_summary(), data_type(), quantitation_clusters(), analyte_curated_data()
+        )
+      }
       ratios <- calculate_IgG1_ratios(IgG1_sum_intensities, quantitation_clusters())
       return(ratios)
     })

@@ -147,7 +147,7 @@ create_quantitation_plot <- function(IgG1_amounts) {
     ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
     ggplot2::scale_color_manual(values = color_palette, name = "Sample type") +
-    ggplot2::labs(y = "Amount of IgG1 (ng)", x = "Sample type")
+    ggplot2::labs(y = "Antigen-specific IgG1 (ng)", x = "Sample type")
   
   
   # Check for total and specific
