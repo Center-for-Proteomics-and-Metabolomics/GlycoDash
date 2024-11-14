@@ -1,5 +1,7 @@
 # v1.6.1
 ## Adjustments
+* Implement messages telling the user to re-perform processing steps in case
+changes were made to the data by adjusting settings in earlier steps.
 * Spectra curation: make the coloring of sample types consistent between
 scatter plots for different glycosylation sites.
 * Analyte curation: option to select all traits at once for each antibody glycans type.
