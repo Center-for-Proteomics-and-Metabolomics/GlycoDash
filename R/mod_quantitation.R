@@ -255,6 +255,21 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     }) %>% bindEvent(input$quantify_IgG1)
     
     
+    # If normalized data changes: tell users to re-quantify IgG1
+    observeEvent(IgG1_ratios(), {
+      req(IgG1_amounts()) # Only if quantitation was already performed
+      showNotification(
+        id = ns("msg_data_changed"),
+        'Changes were made to your data.
+        Please re-quantify your antigen-specific IgG1 by clicking the 
+        "Quantify IgG1" button',
+        type = "warning", duration = NULL
+      )
+    })
+    # Remove notification when button is pushed
+    observeEvent(input$quantify_IgG1, removeNotification(ns("msg_data_changed")))
+    
+    
     # Create peptide correlation plots.
     r <- reactiveValues(created_tab_titles = vector("character"))
     observeEvent(IgG1_amounts(), {

@@ -316,6 +316,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       }
     })
     
+    
     # Check if the data contains total and specific samples
     total_and_specific <- reactive({
       req(data_to_check())
@@ -325,7 +326,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       } else {
         FALSE
       }
-    })
+    }) %>% bindEvent(results_data_import$LaCyTools_summary())
     
     
     # Data with criteria checks for each analyte in each sample.
