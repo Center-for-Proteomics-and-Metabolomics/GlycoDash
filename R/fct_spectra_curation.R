@@ -1025,7 +1025,18 @@ plot_spectra_curation_results <- function(curated_data,
                                                        "sample_name", 
                                                        "has_passed_spectra_curation",
                                                        "reason_for_failure")))) %>% 
-    create_nicer_reason_labels() %>%
+    dplyr::mutate(
+      `Passed curation?` = dplyr::case_when(
+        is.na(reason_for_failure) ~ "Yes",
+        reason_for_failure == "Percentage of passing analytes and sum intensity below cut-offs." ~ 
+                           "No, percentage of passing\nanalytes and sum\nintensity below cut-offs.",
+        reason_for_failure == "Percentage of passing analytes below cut-off." ~ 
+                           "No, percentage of passing\nanalytes below\ncut-off.",
+        reason_for_failure == "Sum intensity below cut-off." ~ 
+                           "No, sum intensity below\ncut-off.",
+        .default = "No, calibration failed."
+      )
+    ) %>% 
     calculate_number_and_percentage_per_reason()
   
   plot <- my_data %>% 
@@ -1037,7 +1048,6 @@ plot_spectra_curation_results <- function(curated_data,
           "\nPercentage of spectra:",
           percentage,
           "\nPassed curation:",
-          # reason_for_failure  # need if else statement
           ifelse(
             !is.na(reason_for_failure),
             paste("No", tolower(reason_for_failure), sep = ", "),
@@ -1058,8 +1068,6 @@ plot_spectra_curation_results <- function(curated_data,
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
   
-  # more_than_4_clusters <- length(unique(curated_data$cluster)) > 4
-  
   if (total_and_specific) {
     plot <- plot +
       ggplot2::facet_wrap(cluster ~ group)
@@ -1072,53 +1080,8 @@ plot_spectra_curation_results <- function(curated_data,
   return(plot)
 }
 
-# Below are two helper functions that are used within the function 
-# plot_spectra_curation_results:
 
-create_nicer_reason_labels <- function(curated_data) {
-  
-  #TODO: this function is overcomplicated, hardcode the nicer labels instead.
-  
-  reasons <- unique(curated_data$reason_for_failure)
-  reason_labels <- firstlower(reasons) %>% 
-    tidyr::replace_na(., "Yes")
-  
-  reason_labels[reason_labels != "Yes"] <- paste("No,", reason_labels[reason_labels != "Yes"])
-  
-  # Insert a linebreak after 20 characters
-  reason_labels <- purrr::map_chr(
-    reason_labels,
-    function(label) {
-      if (nchar(label) > 20) {
-        from_char_20 <- substr(label, 20, nchar(label))
-        replacement <- stringr::str_replace(from_char_20, 
-                                            " ",
-                                            "\n")
-        substr(label, 20, nchar(label)) <- replacement
-      }
-      if (nchar(label) > 40) {
-        from_char_40 <- substr(label, 40, nchar(label))
-        replacement <- stringr::str_replace(from_char_40, 
-                                            " ",
-                                            "\n")
-        substr(label, 40, nchar(label)) <- replacement
-      }
-      return(label)
-    })
-  
-  # Set the names to the 'old' values in the data, so that this named vector can
-  # be used to recode reason_for_failure with nicer labels:
-  names(reason_labels) <- paste(reasons) # paste() converts NA to "NA"
-  
-  curated_data %>% 
-    dplyr::mutate(
-      `Passed curation?` = dplyr::recode(
-        paste(reason_for_failure), # to convert NA to "NA"
-        !!!reason_labels
-      ) # recode() can't take a named vector as an argument, use !!! to 'unlist' it
-    )
-}
-
+# Helper function
 calculate_number_and_percentage_per_reason <- function(curated_data) {
   
   curated_data %>% 
