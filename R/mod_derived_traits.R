@@ -1229,7 +1229,8 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         id = ns("msg_data_changed"),
         "Your normalized data has changed.
         Please re-calculate your glycosylation traits.",
-        type = "warning", duration = NULL
+        type = "warning", duration = NULL,
+        closeButton = FALSE
       )
     })
     

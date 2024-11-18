@@ -696,7 +696,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         'Changes were made to your data.
         Please curate your analytes again by clicking the 
         "Perform analyte curation" button.',
-        type = "warning", duration = NULL
+        type = "warning", duration = NULL,
+        closeButton = FALSE
       )
     })
     

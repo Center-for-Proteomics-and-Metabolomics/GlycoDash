@@ -274,7 +274,8 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         'Changes were made to your data.
         Please re-quantify your antigen-specific IgG1 by clicking the
         "Quantify IgG1" button',
-        type = "warning", duration = NULL
+        type = "warning", duration = NULL,
+        closeButton = FALSE
       )
     })
     # Remove notification when button is pushed

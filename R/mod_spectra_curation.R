@@ -583,7 +583,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         'Changes were made to your data.
         Please curate your spectra again by clicking the 
         "Perform spectra curation" button.',
-        type = "warning", duration = NULL
+        type = "warning", duration = NULL,
+        closeButton = FALSE
       )
     })
     
