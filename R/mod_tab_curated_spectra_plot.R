@@ -24,7 +24,7 @@ mod_tab_curated_spectra_plot_ui <- function(id){
 mod_tab_curated_spectra_plot_server <- function(id,
                                                 curated_data,
                                                 total_and_specific){
-  moduleServer( id, function(input, output, session){
+  moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
     curated_spectra_plot <- reactive({

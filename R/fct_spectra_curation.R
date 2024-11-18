@@ -1058,18 +1058,16 @@ plot_spectra_curation_results <- function(curated_data,
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
   
-  more_than_4_clusters <- length(unique(curated_data$cluster)) > 4
+  # more_than_4_clusters <- length(unique(curated_data$cluster)) > 4
   
-  if (total_and_specific & !more_than_4_clusters) {
+  if (total_and_specific) {
     plot <- plot +
       ggplot2::facet_wrap(cluster ~ group)
-  } else if (total_and_specific & more_than_4_clusters) {
-    plot <- plot +
-      ggplot2::facet_wrap(~ group)
-  } else if (!total_and_specific & !more_than_4_clusters) {
+  } else if (!total_and_specific) {
     plot <- plot +
       ggplot2::facet_wrap(~ cluster)
-  }
+  } 
+  
   
   return(plot)
 }

@@ -325,7 +325,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       } else {
         FALSE
       }
-    }) # %>% bindEvent(results_data_import$LaCyTools_summary())
+    })
     
     
     # Data with criteria checks for each analyte in each sample.
@@ -659,15 +659,23 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     })
 
     
+    # Create a counter to track how many times analyte curation is performed.
+    # This is used to generate unique tab ids each curation round.
+    counter <- reactiveValues(count = 0)
+    
     # Create curation results plots
     observeEvent(curated_data(), {
+      # Up the counter by one
+      counter$count <- counter$count + 1
       # Remove tabs in case they have been created before. 
       purrr::map(names(r$curated_spectra_plots),
                  function(current_cluster) {
                    removeTab("plots_curation_results",
                              target = current_cluster)
                  })
-      
+      # Reset
+      r$curated_spectra_plots <- NULL
+      # Create new tabs with clusters as titles
       purrr::map(clusters(),
                  function(current_cluster) {
                    appendTab("plots_curation_results",
@@ -678,23 +686,24 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                                  # Already using ns(cluster) somewhere else in
                                  # mod_spectra_curation, so need to use a
                                  # different namespace here:
-                                 ns(paste0(current_cluster, "_results")))
+                                 ns(paste0(current_cluster, "_", counter$count)))
                              )
                    )
                  })
-      
+      # Generate the plots for the tabs
       r$curated_spectra_plots <- rlang::set_names(clusters()) %>% 
         purrr::map(
           .,
           function(current_cluster) {
             mod_tab_curated_spectra_plot_server(
-              id = paste0(current_cluster, "_results"), 
+              id = paste0(current_cluster, "_", counter$count), 
               curated_data = reactive({ 
                 curated_data() %>% 
                   dplyr::filter(cluster == current_cluster) 
               }),
               total_and_specific = total_and_specific())
           })
+
     })
     
     
