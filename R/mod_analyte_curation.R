@@ -689,7 +689,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # Tell users to re-perform analyte curation when data is updated
     # after curating the analytes earlier.
     # It is removed in code above.
-    observeEvent(checked_analytes(), {
+    observeEvent(passing_spectra(), {
       req(analyte_curated_data())
       showNotification(
         id = ns("msg_data_changed"),
