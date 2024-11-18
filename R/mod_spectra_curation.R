@@ -212,8 +212,8 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("curated_spectra_plot"))),
-            tabsetPanel(id = ns("more_than_4_clusters")),
+            # shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("curated_spectra_plot"))),
+            tabsetPanel(id = ns("plot_curation_results")),
             br(),
             tabsetPanel(
               id = ns("result_tables"),
@@ -326,7 +326,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       } else {
         FALSE
       }
-    }) %>% bindEvent(results_data_import$LaCyTools_summary())
+    }) # %>% bindEvent(results_data_import$LaCyTools_summary())
     
     
     # Data with criteria checks for each analyte in each sample.
@@ -658,78 +658,45 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
                     ), filter = "top")
     })
+
     
-    
-    curated_spectra_plot <- reactive({
-      req(curated_data(), length(unique(clusters())) <= 4)
-      plot_spectra_curation_results(curated_data(), total_and_specific())
-    }) %>% bindEvent(curated_data())
-    
-    
-    observe({
-      req(clusters())
-      shinyjs::toggle(id = "more_than_4_clusters",
-                      condition = length(clusters()) > 4)
-      shinyjs::toggle(id = "curated_spectra_plot",
-                      condition = length(clusters()) <= 4)
-    })
-    
-    
+    # Create curation results plots
     observeEvent(curated_data(), {
-      req(length(clusters()) > 4)
-      
-      # Remove tabs in case they have been created before. Still not ideal cause
+      # Remove tabs in case they have been created before. Still not ideal because
       # if cluster names are changed then the old tabs won't be removed
       purrr::map(clusters(),
                  function(current_cluster) {
-                   removeTab("more_than_4_clusters",
+                   removeTab("plot_curation_results",
                              target = current_cluster)
                  })
       
       purrr::map(clusters(),
                  function(current_cluster) {
-                   appendTab("more_than_4_clusters",
-                             #select = TRUE, #leads to some plotlys being too narrow
+                   appendTab("plot_curation_results",
+                             select = TRUE,
                              tabPanel(
                                title = current_cluster,
                                mod_tab_curated_spectra_plot_ui(
-                                 # I already use ns(cluster) somewhere else in
-                                 # mod_spectra_curation, so I need to use a
+                                 # Already using ns(cluster) somewhere else in
+                                 # mod_spectra_curation, so need to use a
                                  # different namespace here:
                                  ns(paste0(current_cluster, "_results")))
                              )
                    )
                  })
-    })
-    
-    
-    observe({
-      req(length(clusters()) > 4,
-          curated_data())
       
       r$curated_spectra_plots <- rlang::set_names(clusters()) %>% 
         purrr::map(
-        .,
-        function(current_cluster) {
-          mod_tab_curated_spectra_plot_server(
-            id = paste0(current_cluster, "_results"), 
-            curated_data = reactive({ 
-              curated_data() %>% 
-                dplyr::filter(cluster == current_cluster) 
-            }),
-            total_and_specific = total_and_specific())
-        })
-    })
-    
-    
-    output$curated_spectra_plot <- plotly::renderPlotly({
-      req(curated_spectra_plot())
-      
-      plotly_object <- plotly::ggplotly(curated_spectra_plot(), tooltip = "text")
-      plotly_object <- facet_strip_bigger(plotly_object)
-      plotly_object <- change_axis_title_distance(plotly_object)
-      
-      return(plotly_object)
+          .,
+          function(current_cluster) {
+            mod_tab_curated_spectra_plot_server(
+              id = paste0(current_cluster, "_results"), 
+              curated_data = reactive({ 
+                curated_data() %>% 
+                  dplyr::filter(cluster == current_cluster) 
+              }),
+              total_and_specific = total_and_specific())
+          })
     })
     
     
@@ -829,8 +796,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       uncalibrated_as_NA = reactive({ input$uncalibrated_as_na }),
       cut_off = reactive({input$cut_off_basis}),
       tab_contents = reactive({ r$tab_contents }),
-      curated_spectra_plots = reactive({ r$curated_spectra_plots }),
-      plot = curated_spectra_plot
+      curated_spectra_plots = reactive({ r$curated_spectra_plots })
     ))
     
   })

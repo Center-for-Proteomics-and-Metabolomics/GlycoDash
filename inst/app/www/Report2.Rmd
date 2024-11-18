@@ -19,7 +19,6 @@ params:
   total_area: NA
   included_qc_spectra: NA
   spectra_curation_tab_contents: NA
-  curated_spectra_plot: NA
   curated_spectra_plots: NA
   analyte_curation_method: NA
   analyte_curation_choice: NA
@@ -135,18 +134,6 @@ purrr::iwalk(params$spectra_curation_tab_contents,
 
 #TODO: add titles
 
-if (!is.null(params$curated_spectra_plot)) {
-  p <- params$curated_spectra_plot %>% 
-    plotly::ggplotly(., tooltip = "text")
-  
-  p <- GlycoDash::facet_strip_bigger(p)
-  
-  p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
-  
-  p[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -50
-  
-  print(htmltools::tagList(p))
-} else {
   purrr::iwalk(params$curated_spectra_plots,
              function(curated_spectra_plot,
                       name) {
@@ -166,7 +153,6 @@ if (!is.null(params$curated_spectra_plot)) {
                
                print(htmltools::tagList(p))
              })
-}
 
 
 ```
