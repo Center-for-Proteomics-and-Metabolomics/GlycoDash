@@ -212,8 +212,7 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            # shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("curated_spectra_plot"))),
-            tabsetPanel(id = ns("plot_curation_results")),
+            tabsetPanel(id = ns("plots_curation_results")),
             br(),
             tabsetPanel(
               id = ns("result_tables"),
@@ -662,17 +661,16 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     # Create curation results plots
     observeEvent(curated_data(), {
-      # Remove tabs in case they have been created before. Still not ideal because
-      # if cluster names are changed then the old tabs won't be removed
-      purrr::map(clusters(),
+      # Remove tabs in case they have been created before. 
+      purrr::map(names(r$curated_spectra_plots),
                  function(current_cluster) {
-                   removeTab("plot_curation_results",
+                   removeTab("plots_curation_results",
                              target = current_cluster)
                  })
       
       purrr::map(clusters(),
                  function(current_cluster) {
-                   appendTab("plot_curation_results",
+                   appendTab("plots_curation_results",
                              select = TRUE,
                              tabPanel(
                                title = current_cluster,

@@ -132,8 +132,6 @@ purrr::iwalk(params$spectra_curation_tab_contents,
 
 ```{r spectra-curation-results, results='asis'}
 
-#TODO: add titles
-
   purrr::iwalk(params$curated_spectra_plots,
              function(curated_spectra_plot,
                       name) {
@@ -153,8 +151,6 @@ purrr::iwalk(params$spectra_curation_tab_contents,
                
                print(htmltools::tagList(p))
              })
-
-
 ```
 
 ## Analyte curation
