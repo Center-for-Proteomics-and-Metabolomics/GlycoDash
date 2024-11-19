@@ -174,6 +174,7 @@ mod_data_import_server <- function(id){
       }
     )
     
+    
     return(list(
       LaCyTools_summary = to_return,  # Calling this LaCyTools_summary is a bit confusing
       data_type = LaCyTools_summary$data_type,

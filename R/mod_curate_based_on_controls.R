@@ -74,6 +74,7 @@ mod_curate_based_on_controls_ui <- function(id){
 #' @noRd 
 mod_curate_based_on_controls_server <- function(id, 
                                                 results_data_import,
+                                                total_and_specific,
                                                 summarized_checks,
                                                 uncalibrated_as_NA){
   moduleServer( id, function(input, output, session){
@@ -81,10 +82,10 @@ mod_curate_based_on_controls_server <- function(id,
     
     observe({
       shinyjs::toggle("cut_off_basis_total_and_specific",
-                      condition = results_data_import$contains_total_and_specific_samples() == TRUE)
+                      condition = total_and_specific())
       
       shinyjs::toggle("cut_off_basis",
-                      condition = results_data_import$contains_total_and_specific_samples() == FALSE)
+                      condition = !total_and_specific())
     })
     
     observe({
@@ -117,7 +118,7 @@ mod_curate_based_on_controls_server <- function(id,
     # data.
     observe({
       req(r$sample_types)
-      if (results_data_import$contains_total_and_specific_samples() == FALSE) {
+      if (!total_and_specific()) {
         options <- unique(r$sample_types$sample_type)
         
         names(options) <- paste(options, "samples")
@@ -149,13 +150,13 @@ mod_curate_based_on_controls_server <- function(id,
     cut_offs <- reactive({
       req(summarized_checks(),
           input$percentile,
-          any(all(results_data_import$contains_total_and_specific_samples() == FALSE,
+          any(all(!total_and_specific(),
                   is_truthy(input$cut_off_basis)),
-              all(results_data_import$contains_total_and_specific_samples() == TRUE,
+              all(total_and_specific(),
                   is_truthy(input$cut_off_basis_specific),
                   is_truthy(input$cut_off_basis_total))))
       
-      if (results_data_import$contains_total_and_specific_samples() == TRUE) {
+      if (total_and_specific()) {
         
         cut_offs_specific <- calculate_cut_offs(
           summarized_checks(),

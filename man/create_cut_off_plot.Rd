@@ -4,7 +4,7 @@
 \alias{create_cut_off_plot}
 \title{Visualize the spectra curation process}
 \usage{
-create_cut_off_plot(summarized_checks)
+create_cut_off_plot(summarized_checks, color_palette)
 }
 \arguments{
 \item{summarized_checks}{The return value of the function

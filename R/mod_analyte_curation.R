@@ -512,6 +512,8 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     # When user pushes the button:
     observeEvent(input$curate_analytes, {
+      # Remove message (if it exists)
+      removeNotification(ns("msg_data_changed"))
       # Update the counter
       counter$count <- counter$count + 1
       # Show spinner
@@ -683,6 +685,21 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         # curated_analytes() changes when the "Perform analyte curation" button is pushed.
     }) %>% bindEvent(curated_analytes())
    
+    
+    # Tell users to re-perform analyte curation when data is updated
+    # after curating the analytes earlier.
+    # It is removed in code above.
+    observeEvent(passing_spectra(), {
+      req(analyte_curated_data())
+      showNotification(
+        id = ns("msg_data_changed"),
+        'Changes were made to your data.
+        Please curate your analytes again by clicking the 
+        "Perform analyte curation" button.',
+        type = "warning", duration = NULL,
+        closeButton = FALSE
+      )
+    })
     
     
     

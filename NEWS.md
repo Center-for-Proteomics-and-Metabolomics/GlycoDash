@@ -1,3 +1,21 @@
+# v1.6.1
+## Adjustments
+* Implement messages telling the user to re-perform processing steps in case
+changes were made to the data by adjusting settings in earlier steps.
+* Spectra curation: make the coloring of sample types consistent between
+scatter plots for different glycosylation sites.
+* Analyte curation: option to select all traits at once for each antibody glycans type.
+* Make clearer that IgG1 quantitation is meant only for antigen-specific IgG1.
+When data contains both total and specific immunoglobulin samples, perform the 
+quantitation only for the specific samples.
+* Show a loading spinner while generating HTML report.
+
+## Bug fixes
+* Prevent GlycoDash from crashing when Total and Specific samples are specified
+after adding the sample types.
+* Minor bug fixes in automatic traits calculations.
+
+
 # v1.6.0
 ## New features
 * Option to automatically calculate glycosylation traits for IgA and IgM,

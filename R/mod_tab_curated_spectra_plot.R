@@ -23,15 +23,15 @@ mod_tab_curated_spectra_plot_ui <- function(id){
 #' @noRd 
 mod_tab_curated_spectra_plot_server <- function(id,
                                                 curated_data,
-                                                contains_total_and_specific_samples){
-  moduleServer( id, function(input, output, session){
+                                                total_and_specific){
+  moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
     curated_spectra_plot <- reactive({
-      req(curated_data())
+      req(nrow(curated_data()) > 0)
       plot_spectra_curation_results(
         curated_data = curated_data(),
-        total_and_specific = contains_total_and_specific_samples()
+        total_and_specific = total_and_specific
       )
     })
     

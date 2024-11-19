@@ -66,6 +66,7 @@ mod_tab_cut_offs_ui <- function(id){
 #'
 #' @noRd 
 mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
+                                    color_palette,
                                     contains_total_and_specific_samples, 
                                     calculated_cut_offs,
                                     keyword_specific, keyword_total,
@@ -155,7 +156,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     # Scatter plot
     my_plot <- reactive({
       req(summarized_checks())
-      plot <- create_cut_off_plot(summarized_checks())
+      plot <- create_cut_off_plot(summarized_checks(), color_palette)
       
       if (is_truthy(summarized_checks_with_cut_offs())) {
         plot <- plot +

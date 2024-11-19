@@ -484,7 +484,7 @@ mod_read_lacytools_server <- function(id){
     })
     
     
-    # Return combined lacytools summaries or skyline data
+    # Return combined LaCytools summaries or skyline data
     to_return <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),

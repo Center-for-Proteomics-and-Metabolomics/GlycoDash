@@ -212,8 +212,7 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("curated_spectra_plot"))),
-            tabsetPanel(id = ns("more_than_4_clusters")),
+            tabsetPanel(id = ns("plots_curation_results")),
             br(),
             tabsetPanel(
               id = ns("result_tables"),
@@ -317,6 +316,18 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     })
     
     
+    # Check if the data contains total and specific samples
+    total_and_specific <- reactive({
+      req(data_to_check())
+      if (results_data_import$contains_total_and_specific_samples() & 
+          "group" %in% colnames(data_to_check())) {
+        TRUE
+      } else {
+        FALSE
+      }
+    })
+    
+    
     # Data with criteria checks for each analyte in each sample.
     checked_data <- reactive({
       req(data_to_check(), length(input$qc_to_include) > 0)
@@ -379,6 +390,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     cut_offs_based_on_controls <- mod_curate_based_on_controls_server(
       "curate_based_on_controls_ui_1",
       results_data_import = results_data_import,
+      total_and_specific = total_and_specific,
       summarized_checks = summarized_checks,
       uncalibrated_as_NA = reactive({ input$uncalibrated_as_na })  
     )
@@ -435,7 +447,11 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     observe({
       req(clusters(), summarized_checks())
-      
+      # Generate color palette
+      sample_types <- unique(summarized_checks()$sample_type)
+      colors <- color_palette(length(sample_types))
+      color_palette <- setNames(colors, sample_types)
+      # Generate tabs with plots
       r$tab_contents <- rlang::set_names(clusters()) %>% 
         purrr::map(
           .,
@@ -447,7 +463,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                 summarized_checks() %>%
                   dplyr::filter(cluster == current_cluster)
               }),
-              contains_total_and_specific_samples = results_data_import$contains_total_and_specific_samples,
+              color_palette = color_palette,
+              contains_total_and_specific_samples = total_and_specific,
               keyword_specific = results_data_import$keyword_specific,
               keyword_total = results_data_import$keyword_total,
               calculated_cut_offs = reactive({ 
@@ -557,6 +574,26 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     }) %>% bindEvent(input$button)
     
     
+    # Tell users to re-perform spectra curation when data is updated
+    # after curating the spectra earlier.
+    observeEvent(checked_data(), {
+      req(curated_data())
+      showNotification(
+        id = ns("msg_data_changed"),
+        'Changes were made to your data.
+        Please curate your spectra again by clicking the 
+        "Perform spectra curation" button.',
+        type = "warning", duration = NULL,
+        closeButton = FALSE
+      )
+    })
+    
+    # Remove the message automatically after curation button is clicked
+    observeEvent(input$button, {
+      removeNotification(ns("msg_data_changed"))
+    })
+    
+    
     passing_spectra <- reactive({
       req(curated_data())
       kick_out_spectra(curated_spectra = curated_data())
@@ -621,82 +658,53 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
                     ), filter = "top")
     })
+
     
+    # Create a counter to track how many times analyte curation is performed.
+    # This is used to generate unique tab ids each curation round.
+    counter <- reactiveValues(count = 0)
     
-    curated_spectra_plot <- reactive({
-      req(curated_data(),
-          length(unique(clusters())) <= 4)
-      
-      plot_spectra_curation_results(curated_data(),
-                                    results_data_import$contains_total_and_specific_samples())
-    })
-    
-    
-    observe({
-      req(clusters())
-      shinyjs::toggle(id = "more_than_4_clusters",
-                      condition = length(clusters()) > 4)
-      shinyjs::toggle(id = "curated_spectra_plot",
-                      condition = length(clusters()) <= 4)
-    })
-    
-    
-    observe({
-      req(length(clusters()) > 4,
-          curated_data())
-      
-      # Remove tabs in case they have been created before. Still not ideal cause
-      # if cluster names are changed then the old tabs won't be removed
-      purrr::map(clusters(),
+    # Create curation results plots
+    observeEvent(curated_data(), {
+      # Up the counter by one
+      counter$count <- counter$count + 1
+      # Remove tabs in case they have been created before. 
+      purrr::map(names(r$curated_spectra_plots),
                  function(current_cluster) {
-                   removeTab("more_than_4_clusters",
+                   removeTab("plots_curation_results",
                              target = current_cluster)
                  })
-      
+      # Reset
+      r$curated_spectra_plots <- NULL
+      # Create new tabs with clusters as titles
       purrr::map(clusters(),
                  function(current_cluster) {
-                   appendTab("more_than_4_clusters",
-                             #select = TRUE, #leads to some plotlys being too narrow
+                   appendTab("plots_curation_results",
+                             select = TRUE,
                              tabPanel(
                                title = current_cluster,
                                mod_tab_curated_spectra_plot_ui(
-                                 # I already use ns(cluster) somewhere else in
-                                 # mod_spectra_curation, so I need to use a
+                                 # Already using ns(cluster) somewhere else in
+                                 # mod_spectra_curation, so need to use a
                                  # different namespace here:
-                                 ns(paste0(current_cluster, "_results")))
+                                 ns(paste0(current_cluster, "_", counter$count)))
                              )
                    )
                  })
-    })
-    
-    
-    observe({
-      req(length(clusters()) > 4,
-          curated_data())
-      
+      # Generate the plots for the tabs
       r$curated_spectra_plots <- rlang::set_names(clusters()) %>% 
         purrr::map(
-        .,
-        function(current_cluster) {
-          mod_tab_curated_spectra_plot_server(
-            id = paste0(current_cluster, "_results"), 
-            curated_data = reactive({ 
-              curated_data() %>% 
-                dplyr::filter(cluster == current_cluster) 
-            }),
-            contains_total_and_specific_samples = results_data_import$contains_total_and_specific_samples)
-        })
-    })
-    
-    
-    output$curated_spectra_plot <- plotly::renderPlotly({
-      req(curated_spectra_plot())
-      
-      plotly_object <- plotly::ggplotly(curated_spectra_plot(), tooltip = "text")
-      plotly_object <- facet_strip_bigger(plotly_object)
-      plotly_object <- change_axis_title_distance(plotly_object)
-      
-      return(plotly_object)
+          .,
+          function(current_cluster) {
+            mod_tab_curated_spectra_plot_server(
+              id = paste0(current_cluster, "_", counter$count), 
+              curated_data = reactive({ 
+                curated_data() %>% 
+                  dplyr::filter(cluster == current_cluster) 
+              }),
+              total_and_specific = total_and_specific())
+          })
+
     })
     
     
@@ -796,8 +804,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       uncalibrated_as_NA = reactive({ input$uncalibrated_as_na }),
       cut_off = reactive({input$cut_off_basis}),
       tab_contents = reactive({ r$tab_contents }),
-      curated_spectra_plots = reactive({ r$curated_spectra_plots }),
-      plot = curated_spectra_plot
+      curated_spectra_plots = reactive({ r$curated_spectra_plots })
     ))
     
   })

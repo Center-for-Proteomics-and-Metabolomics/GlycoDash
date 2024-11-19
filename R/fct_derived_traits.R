@@ -18,18 +18,9 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   
   # Check the number of glycans used for calculating the trait.
   if (nrow(df) == 0) { 
-    # showNotification(
-    #   paste0(cluster, "_", target_trait, " would be zero for all samples and will therefore not be reported."),
-    #   type = "warning", duration = 5, id = paste0(cluster, target_trait)
-    # )
     return(paste0(cluster, "_", target_trait, " = Not reported: zero for all samples"))
   } 
   else if (nrow(df) == 1) {
-    # showNotification(
-    #   paste0(cluster, "_", target_trait,
-    #          " would be calculated using only one glycan and will therefore not be reported."),
-    #   type = "warning", duration = 5, id = paste0(cluster, target_trait)
-    # )
     return(paste0(cluster, "_", target_trait, " = Not reported: only one relevant glycan ", df$glycan))
   }
   else if (nrow(df) == nrow(cluster_ref_df)) {
@@ -38,10 +29,6 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     if (target_trait %in% c("fucosylation", "core_fucosylation", "antennary_fucosylation",
                             "bisection", "mono_antennary", "hybrid", "hybrid_fucosylation",
                             "hybrid_bisection", "oligomannose", "tri_antennary")) {
-      # showNotification(
-      #   paste0(cluster, "_", target_trait, " would equal 100 for all samples and will therefore not be reported."),
-      #   type = "warning", duration = 5, id = paste0(cluster, target_trait)
-      # )
       return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
     }
   }
@@ -86,7 +73,11 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
       # String with sum of complex type glycans
       complex_sum <- paste0(cluster, "1", complex_types_df$glycan, collapse = " + ")
       # Adjust clean_formula_string to divide by complex_types
-      clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ") * 100")
+      # Multiple by 100 if trait is not antennarity
+      clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ")")
+      if (target_trait != "antennarity") {
+        clean_formula_string <- paste0(clean_formula_string, " * 100")
+      }
     }
   }
   # Divide by the sum of all oligomannose type glycans
@@ -355,7 +346,7 @@ traits_vs_intensity_plot <- function(data_to_plot, cluster) {
   if ("group" %in% colnames(data_to_plot)) {
     p <- p + ggplot2::facet_grid(trait ~ group, scales = "free")
   } else {
-    p <- p + ggplot2::facet_wrap(~trait, scales = "free", ncol = 2)
+    p <- p + ggplot2::facet_wrap(~trait, scales = "free", ncol = 3)
   }
   
   return(p)

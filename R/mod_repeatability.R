@@ -61,9 +61,11 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
     })
 
     contains_total_and_specific_samples <- reactive({
-      results_data_import$contains_total_and_specific_samples()
+      req(normalized_data())
+      results_data_import$contains_total_and_specific_samples() == TRUE &
+      "group" %in% colnames(normalized_data())
     })
-
+    
     output$first_tab <- renderUI({
       mod_tab_repeatability_ui(ns("tab1"))
     })
