@@ -223,18 +223,13 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     })
     
     
-    # The selection menu for input$exlude_samples is updated so that the choices
-    # are sample_types and groups that are present in the data.
+    # Make it possible to exclude sample types from the data
     observe({
-      if ("group" %in% colnames(results_normalization$normalized_data())) {
-        options <- c(paste(unique(results_normalization$normalized_data()$sample_type), "samples"), 
-                     paste(unique(results_normalization$normalized_data()$group), "samples"))
-      } else {
-        options <- c(paste(unique(results_normalization$normalized_data()$sample_type), "samples"))
-      }
+      req(results_normalization$normalized_data())
       
-      updateSelectizeInput(inputId = "exclude_samples",
-                           choices = c(options))
+      options <- c(paste(unique(results_normalization$normalized_data()$sample_type), "samples"))
+      
+      updateSelectizeInput(inputId = "exclude_samples", choices = c(options))
     })
     
     
