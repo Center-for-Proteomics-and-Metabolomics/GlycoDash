@@ -366,6 +366,34 @@ ManualButton <- function(outputId, label = ""){
 
 
 
+
+# Simple function to calculate cut-offs for a vector of data points,
+# based on a percentage of data points to exclude.
+percentile_cutoff <- function(data, percentage_to_exclude, remove_NA) {
+  
+  # Remove NA values if chosen
+  if (remove_NA) {
+    data <- data[!is.na(data)]
+  }
+  
+  # Order data
+  data_ordered <- sort(data)
+  
+  # Determine cut-offs
+  n_to_exclude <- round(percentage_to_exclude / 100 * length(data_ordered))
+  
+  if (n_to_exclude > 0) {
+    cutoff <- data_ordered[n_to_exclude]
+  } else {
+    cutoff <- 0
+  }
+  
+  return(cutoff)
+}
+
+
+
+
 # A named list with choices of traits that can be calculated automatically
 # for each glycosylation site
 traits_choices <- list(
@@ -490,6 +518,7 @@ traits_choices <- list(
     "Oligomannose-type glycans: average number of mannoses"
   )
 )
+
 
 
 
