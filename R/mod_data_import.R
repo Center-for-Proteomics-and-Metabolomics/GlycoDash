@@ -137,15 +137,9 @@ mod_data_import_server <- function(id){
     biogroup_cols <- reactive({
       req(data_incl_clusters$data())
       if (is_truthy(data_incl_metadata$data())) {
-        intersect(
-          c("group", "sample_id", "sample_type", colnames(data_incl_metadata$merged_metadata())),
-          colnames(data_incl_metadata$data())
-        )
+        c("sample_id", "sample_type", colnames(data_incl_metadata$merged_metadata()))
       } else if (is_truthy(data_incl_clusters$data())) {
-          intersect(
-            c("group", "sample_id", "sample_type"),
-            colnames(data_incl_clusters$data())
-          )
+          c("sample_id", "sample_type")
       } else NULL
     })
     
