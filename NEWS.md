@@ -1,4 +1,7 @@
 # v1.6.2
+## Adjustments
+In spectra curation, samples that are on the cut-off now also pass curation.
+
 ## Bug fixes
 * Various bug fixes.
 

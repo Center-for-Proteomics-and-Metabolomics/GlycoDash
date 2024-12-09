@@ -579,8 +579,8 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
   
   curated_spectra <- summarized_checks_with_cut_offs %>% 
     # Can't use all() instead of & because all() is not vectorized
-    dplyr::mutate(has_passed_spectra_curation = passing_analyte_percentage > cut_off_passing_analyte_percentage &
-                    sum_intensity > cut_off_sum_intensity,
+    dplyr::mutate(has_passed_spectra_curation = passing_analyte_percentage >= cut_off_passing_analyte_percentage &
+                    sum_intensity >= cut_off_sum_intensity,
                   has_passed_spectra_curation = ifelse(uncalibrated, 
                                                        FALSE,
                                                        has_passed_spectra_curation)) %>% 

@@ -1,3 +1,11 @@
+# v1.6.2
+## Adjustments
+In spectra curation, samples that are on the cut-off now also pass curation.
+
+## Bug fixes
+* Various bug fixes.
+
+
 # v1.6.1
 ## Adjustments
 * Implement messages telling the user to re-perform processing steps in case
