@@ -1,3 +1,8 @@
+# v1.6.2
+## Bug fixes
+* Various bug fixes.
+
+
 # v1.6.1
 ## Adjustments
 * Implement messages telling the user to re-perform processing steps in case
