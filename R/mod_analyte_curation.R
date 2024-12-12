@@ -208,7 +208,7 @@ mod_analyte_curation_ui <- function(id){
                 status = "success"
               ),
               uiOutput(ns("cluster_cut_offs")),
-              numericInput(ns("cut_off"), "Cut-off (%)", value = 50, min = 0, max = 100) %>% 
+              numericInput(ns("cut_off"), "Cut-off (%)", value = 80, min = 0, max = 100) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
                   content = HTML(
@@ -361,7 +361,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       purrr::map(cut_off_ids(), function(id) {
         numericInput(
           ns(id), label = paste0(id, " cut-off (%)"),
-          min = 0, max = 100, value = 50
+          min = 0, max = 100, value = 80
         )
       })
     )
