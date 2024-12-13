@@ -31,9 +31,15 @@ mod_clusters_ui <- function(id) {
     tableOutput(ns("clusters_table")),
     shinyWidgets::materialSwitch(
       ns("contains_silumab"),
-      HTML("<i style='font-size:15px;'> Samples contain SILuMAb for IgG1 quantitation </i>"),
+      HTML("<i style='font-size:15px;'> Samples contain SILuMAb for quantitation of antigen-specific IgG1 </i>"),
       status = "success",
       right = TRUE
+    ),
+    selectInput(
+      ns("silumab_peptides"),
+      "Choose the peptides you want to use for IgG1 quantitation:",
+      choices = c("Glycopeptides and Peptide GPSVFPLAPSSK", "Glycopeptides", "Peptide GPSVFPLAPSSK"),
+      selected = "Glycopeptides and Peptide GPSVFPLAPSSK"
     ),
     selectInput(
       ns("silumab_cluster_glyco"),
@@ -91,6 +97,37 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
     })
     
     
+    
+    # Determine visibility of UI elements.
+    observe({
+      
+      shinyjs::toggle("info_detection", condition = !is_truthy(clusters()))
+      shinyjs::toggle("info_clusters", condition = is_truthy(clusters()))
+      shinyjs::toggle("clusters_table", condition = is_truthy(clusters()))
+      shinyjs::toggle("contains_silumab", condition = is_truthy(clusters()) && length(clusters()) >= 2)
+      
+      shinyjs::toggle("silumab_peptides", condition = input$contains_silumab == TRUE)
+      
+      shinyjs::toggle("silumab_cluster_glyco", condition = input$contains_silumab == TRUE && 
+                        (input$silumab_peptides == "Glycopeptides and Peptide GPSVFPLAPSSK" ||
+                           input$silumab_peptides == "Glycopeptides"))
+      
+      shinyjs::toggle("IgG1_cluster_glyco", condition = input$contains_silumab == TRUE && 
+                        (input$silumab_peptides == "Glycopeptides and Peptide GPSVFPLAPSSK" ||
+                           input$silumab_peptides == "Glycopeptides"))
+      
+      shinyjs::toggle("silumab_cluster_GPS", condition = input$contains_silumab == TRUE && 
+                        (input$silumab_peptides == "Glycopeptides and Peptide GPSVFPLAPSSK" ||
+                           input$silumab_peptides == "Peptide GPSVFPLAPSSK"))
+      
+      shinyjs::toggle("IgG1_cluster_GPS", condition = input$contains_silumab == TRUE && 
+                        (input$silumab_peptides == "Glycopeptides and Peptide GPSVFPLAPSSK" ||
+                           input$silumab_peptides == "Peptide GPSVFPLAPSSK"))
+
+      
+    })
+    
+    
     # Add clusters as choices to the SILuMAb selectInputs
     observe({
       req(clusters())
@@ -102,25 +139,24 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
     # Get the cluster names required for IgG1 quantitation, if applicable.
     quantitation_clusters <- reactive({
       req(LaCyTools_summary(), input$contains_silumab == TRUE)
-      list(
-        "silumab_cluster_glyco" = input$silumab_cluster_glyco,
-        "silumab_cluster_GPS" = input$silumab_cluster_GPS,
-        "IgG1_cluster_glyco" = input$IgG1_cluster_glyco,
-        "IgG1_cluster_GPS" = input$IgG1_cluster_GPS
-      )
-    })
-    
-    
-    # Toggle the UI elements
-    observe({
-      shinyjs::toggle("info_detection", condition = !is_truthy(clusters()))
       
-      for (i in c("info_clusters", "clusters_table", "contains_silumab")) {
-        shinyjs::toggle(i, condition = is_truthy(clusters()))
-      }
-      
-      for (i in c("silumab_cluster_glyco", "IgG1_cluster_glyco", "silumab_cluster_GPS", "IgG1_cluster_GPS")) {
-        shinyjs::toggle(i, condition = input$contains_silumab == TRUE)
+      if (input$silumab_peptides == "Glycopeptides and Peptide GPSVFPLAPSSK") {
+        list(
+          "silumab_cluster_glyco" = input$silumab_cluster_glyco,
+          "IgG1_cluster_glyco" = input$IgG1_cluster_glyco,
+          "silumab_cluster_GPS" = input$silumab_cluster_GPS,
+          "IgG1_cluster_GPS" = input$IgG1_cluster_GPS
+        )
+      } else if (input$silumab_peptides == "Glycopeptides") {
+        list(
+          "silumab_cluster_glyco" = input$silumab_cluster_glyco,
+          "IgG1_cluster_glyco" = input$IgG1_cluster_glyco
+        )
+      } else if (input$silumab_peptides == "Peptide GPSVFPLAPSSK") {
+        list(
+          "silumab_cluster_GPS" = input$silumab_cluster_GPS,
+          "IgG1_cluster_GPS" = input$IgG1_cluster_GPS
+        )
       }
     })
     

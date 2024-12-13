@@ -1,6 +1,7 @@
 # v1.6.2
 ## Adjustments
-In spectra curation, samples that are on the cut-off now also pass curation.
+* Data import: option to specify only glycopeptide or GPS clusters for IgG1 quantitation.
+* In spectra curation, samples that are on the cut-off now also pass curation.
 
 ## Bug fixes
 * Various bug fixes.

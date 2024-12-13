@@ -301,6 +301,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       }
     })
     
+    
     # If quantitation is done: exlude quantitation clusters except IgG1 glycopeptides
     data_to_check <- reactive({
       req(results_data_import$LaCyTools_summary())
@@ -309,7 +310,11 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         exclude <- clusters[setdiff(names(clusters), "IgG1_cluster_glyco")]
         to_return <- results_data_import$LaCyTools_summary() %>% 
           dplyr::filter(!cluster %in% exclude)
-        return(to_return)
+        if (nrow(to_return) > 0) {
+          return(to_return)
+        } else {
+          return(NULL)
+        }
       } else {
         results_data_import$LaCyTools_summary()
       }

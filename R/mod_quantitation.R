@@ -89,8 +89,8 @@ mod_quantitation_ui <- function(id) {
             shinyWidgets::awesomeCheckboxGroup(
               ns("chosen_peptides"),
               "Peptides to include in the calculation:",
-              choices = c("Glycopeptides", "GPSVFPLAPSSK"),
-              selected = c("Glycopeptides", "GPSVFPLAPSSK")
+              choices = c(""),
+              selected = c("")
             ),
             # Option to exclude sample types from calculating correlations
             selectizeInput(
@@ -226,13 +226,12 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     # Make it possible to exclude sample types from the data
     observe({
       req(results_normalization$normalized_data())
-      
       options <- c(paste(unique(results_normalization$normalized_data()$sample_type), "samples"))
-      
       updateSelectizeInput(inputId = "exclude_samples", choices = c(options))
     })
     
     
+
     # Calculate ratios of peptides.
     IgG1_ratios <- reactive({
       req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
@@ -252,6 +251,31 @@ mod_quantitation_server <- function(id, quantitation_clusters,
       }
       ratios <- calculate_IgG1_ratios(IgG1_sum_intensities, quantitation_clusters())
       return(ratios)
+    })
+    
+    
+    # Update checkboxes if required
+    observeEvent(IgG1_ratios(), {
+      if ("glyco_ratio" %in% colnames(IgG1_ratios()) & 
+          "GPS_ratio" %in% colnames(IgG1_ratios())) {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "chosen_peptides",
+          choices = c("Glycopeptides", "GPSVFPLAPSSK"),
+          selected = c("Glycopeptides", "GPSVFPLAPSSK")
+        )
+      } else if ("glyco_ratio" %in% colnames(IgG1_ratios())) {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "chosen_peptides",
+          choices = c("Glycopeptides"),
+          selected = c("Glycopeptides")
+        )
+      } else {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "chosen_peptides",
+          choices = c("GPSVFPLAPSSK"),
+          selected = c("GPSVFPLAPSSK")
+        )
+      }
     })
     
     
