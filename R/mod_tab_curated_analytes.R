@@ -105,7 +105,12 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
           test = (!is.null(biogroup_column) & biogroup_column != ""),
           yes = TRUE, no = FALSE
           )
-        )
+        ) %>% 
+        # Remove clusters and then sort by glycan composition
+        dplyr::mutate(analyte = gsub(paste0(cluster, "1"), "", analyte)) %>% 
+        sort_glycans(.) %>% 
+        # Add clusters again (need it to select analyte columns)
+        dplyr::mutate(analyte = paste0(cluster, "1", analyte))
 
       charge_columns <- colnames(table)[-1]
       
@@ -130,7 +135,7 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
     
     observe({
       req(curated_analytes_table())
-      
+
       if (is_truthy(input$check_all)) {
         
         charge_columns <- stringr::str_subset(colnames(curated_analytes_table())[-1],
