@@ -352,4 +352,96 @@ traits_vs_intensity_plot <- function(data_to_plot, cluster) {
   return(p)
 }
 
+
+
+
+clean_traits <- function(trait_formulas, normalized_data_wide) {
+  
+  # Create a named list with all the trait formulas
+  formulas <- trait_formulas 
+  traits_names <- gsub(" = .*", "", formulas) 
+  names(formulas) <- traits_names
+  
+  # Sialylation per galactose traits: check if sialylation is reported.
+  # If not: don't report sialylation per galactose
+  sial_per_gal_traits <- traits_names[endsWith(traits_names, "_sialylation_per_galactose")]
+  for (trait in sial_per_gal_traits) {
+    sial_trait <- gsub("_per_galactose", "", trait)  # Corresponding sialylation trait
+    if (grepl(" = Not reported", formulas[[sial_trait]])) {
+      formulas[[trait]] <- paste0(trait, " = Not reported: sialylation not reported")
+    }
+  }
+  
+  # Get the formulas that should be used for calculating traits.
+  # Then calculate the traits.
+  formulas_calculate <- unname(formulas[!grepl(" = Not reported", formulas)])
+  data <- calculate_traits(normalized_data_wide, formulas_calculate)
+  
+  # Galactosylation traits: check if all values are the same
+  gal_traits <- traits_names[endsWith(traits_names, "_galactosylation")]
+  for (trait in gal_traits) {
+    # Get all unique values (need rounding)
+    unique <- unique(round(data[[trait]][!is.na(data[[trait]])], digits = 3))
+    if (length(unique) == 1) {
+      # Remove trait from data
+      data[[trait]] <- NULL
+      # Change trait formula
+      formulas[[trait]] <- paste0(
+        trait, " = Not reported: "#, unique, " for all samples"
+      )
+      # Remove sialylation per galactose if it exists
+      cluster <- sub("^(.*?)_.*", "\\1", trait)
+      sial_per_gal <- paste0(cluster, "_sialylation_per_galactose")
+      if (sial_per_gal %in% traits_names) {
+        data[[sial_per_gal]] <- NULL
+        formulas[[sial_per_gal]] <- paste0(
+          sial_per_gal, " = Not reported: galactosylation is not reported"
+        )
+      }
+    }
+  }
+  
+  # Sialylation traits: check if all values are the same
+  sial_traits <- traits_names[endsWith(traits_names, "_sialylation")]
+  for (trait in sial_traits) {
+    # Get all unique values (need rounding)
+    unique <- unique(round(data[[trait]][!is.na(data[[trait]])], digits = 3))
+    if (length(unique) == 1) {
+      # Remove trait from data
+      data[[trait]] <- NULL
+      # Change trait formula
+      formulas[[trait]] <- paste0(
+        trait, " = Not reported: ", unique, " for all samples"
+      )
+      # Remove sialylation per galactose if it exists
+      cluster <- sub("^(.*?)_.*", "\\1", trait)
+      sial_per_gal <- paste0(cluster, "_sialylation_per_galactose")
+      if (sial_per_gal %in% traits_names) {
+        data[[sial_per_gal]] <- NULL
+        formulas[[sial_per_gal]] <- paste0(
+          sial_per_gal, " = Not reported: sialylation is not reported"
+        )
+      }
+    }
+  }
+  
+  # Antennarity traits: check if all values are the same
+  antennarity_traits <- traits_names[endsWith(traits_names, "_antennarity")]
+  for (trait in antennarity_traits) {
+    unique <- unique(round(data[[trait]][!is.na(data[[trait]])], digits = 3))
+    if (length(unique) == 1) {
+      data[[trait]] <- NULL
+      formulas[[trait]] <- paste0(
+        trait, " = Not reported: ", unique, " for all samples"
+      )
+    }
+  }
+  
+  return(list(
+    "formulas_toshow" = unname(formulas),
+    "data" = data
+  ))
+  
+}
+
   
