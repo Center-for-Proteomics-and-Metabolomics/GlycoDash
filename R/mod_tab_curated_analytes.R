@@ -109,6 +109,7 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
         # Remove clusters and then sort by glycan composition
         dplyr::mutate(analyte = gsub(paste0(cluster, "1"), "", analyte)) %>% 
         sort_glycans(.) %>% 
+        dplyr::arrange(analyte) %>% 
         # Add clusters again (need it to select analyte columns)
         dplyr::mutate(analyte = paste0(cluster, "1", analyte))
 
