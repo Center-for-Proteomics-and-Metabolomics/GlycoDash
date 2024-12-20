@@ -253,8 +253,11 @@ calculate_traits <- function(normalized_data_wide, trait_formulas) {
       dplyr::mutate(!!! expr_ls)
   }
   # Relocate the trait columns
+  colnames <- colnames(normalized_data_wide_with_traits)
+  sum_int_colnames <- colnames[grepl("_sum_intensity", colnames)]
+  last_sum_int_colname <- tail(sum_int_colnames, 1)
   normalized_data_wide_with_traits <- normalized_data_wide_with_traits %>% 
-    dplyr::relocate(tidyselect::all_of(trait_names), .after = replicates)
+    dplyr::relocate(tidyselect::all_of(trait_names), .after = last_sum_int_colname)
   # Return normalized data with the trait columns
   return(normalized_data_wide_with_traits)
 }
@@ -310,8 +313,11 @@ calculate_custom_traits <- function(traits_excel, normalized_data_wide) {
       dplyr::mutate(!!!create_expr_ls(expr))
   }
   # Relocate the trait columns
+  colnames <- colnames(data_with_custom_traits)
+  sum_int_colnames <- colnames[grepl("_sum_intensity", colnames)]
+  last_sum_int_colname <- tail(sum_int_colnames, 1)
   data_with_custom_traits <- data_with_custom_traits %>% 
-    dplyr::relocate(tidyselect::all_of(traits_excel$trait), .after = replicates)
+    dplyr::relocate(tidyselect::all_of(traits_excel$trait), .after = last_sum_int_colname)
   
   return(data_with_custom_traits)
 }
