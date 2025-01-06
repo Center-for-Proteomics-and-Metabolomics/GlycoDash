@@ -879,7 +879,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         ), c  # c = concatenate
       )
     })
-  
+    
     
     # Trait formulas for human IgM N-glycans
     human_IgM_N46_traits <- reactive({

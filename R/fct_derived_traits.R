@@ -23,22 +23,26 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   else if (nrow(df) == 1) {
     return(paste0(cluster, "_", target_trait, " = Not reported: only one relevant glycan ", df$glycan))
   }
-  # Some traits are always 100 when all glycans are used
-  else if (nrow(cluster_ref_df %>% dplyr::filter(complex == 1)) == nrow(df)) {
-    if (target_trait %in% c(
-      "fucosylation", "core_fucosylation", "antennary_fucosylation",
-      "bisection", "mono_antennary", "tri_antennary"
-    )) {
-      return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
+  # Check if "complex" is a column in cluster_ref_df
+  else if ("complex" %in% colnames(cluster_ref_df)) {
+    # Some traits are always 100 when all glycans are used
+    if (nrow(cluster_ref_df %>% dplyr::filter(complex == 1)) == nrow(df)) {
+      if (target_trait %in% c(
+        "fucosylation", "core_fucosylation", "antennary_fucosylation",
+        "bisection", "mono_antennary", "tri_antennary"
+      )) {
+        return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
+      }
+    }
+    else if (nrow(cluster_ref_df %>% dplyr::filter(complex == 0)) == nrow(df)) {
+      if (target_trait %in% c(
+        "hybrid", "hybrid_fucosylation", "hybrid_bisection", "oligomannose" 
+      )) {
+        return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
+      }
     }
   }
-  else if (nrow(cluster_ref_df %>% dplyr::filter(complex == 0)) == nrow(df)) {
-    if (target_trait %in% c(
-      "hybrid", "hybrid_fucosylation", "hybrid_bisection", "oligomannose" 
-    )) {
-      return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
-    }
-  }
+  
   
   # TODO: check for use of all glycans minus 1 --> not always a problem?
 
