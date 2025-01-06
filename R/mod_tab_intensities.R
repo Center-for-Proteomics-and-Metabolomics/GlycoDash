@@ -39,7 +39,6 @@ mod_tab_intensities_server <- function(id, data, traits) {
     
     cluster <- id
     
-    
     data_to_plot <- reactive({
       req(data)
       data_to_plot <- data %>%
@@ -51,7 +50,8 @@ mod_tab_intensities_server <- function(id, data, traits) {
           cols = tidyselect::matches(paste0(cluster, "_")) & 
                  !tidyselect::matches(paste0(cluster, "_sum_intensity")),
           names_to = "trait", values_to = "relative_abundance"
-        )
+        ) %>% 
+        dplyr::mutate(trait = factor(trait, levels = unique(trait)))
     })
     
     

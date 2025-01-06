@@ -23,15 +23,27 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   else if (nrow(df) == 1) {
     return(paste0(cluster, "_", target_trait, " = Not reported: only one relevant glycan ", df$glycan))
   }
-  else if (nrow(df) == nrow(cluster_ref_df)) {
-    # All glycans are used for the traits. 
-    # For some traits this always gives 100, because they are all counted equally.
-    if (target_trait %in% c("fucosylation", "core_fucosylation", "antennary_fucosylation",
-                            "bisection", "mono_antennary", "hybrid", "hybrid_fucosylation",
-                            "hybrid_bisection", "oligomannose", "tri_antennary")) {
-      return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
+  # Check if "complex" is a column in cluster_ref_df
+  else if ("complex" %in% colnames(cluster_ref_df)) {
+    # Some traits are always 100 when all glycans are used
+    if (nrow(cluster_ref_df %>% dplyr::filter(complex == 1)) == nrow(df)) {
+      if (target_trait %in% c(
+        "fucosylation", "core_fucosylation", "antennary_fucosylation",
+        "bisection", "mono_antennary", "tri_antennary"
+      )) {
+        return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
+      }
+    }
+    else if (nrow(cluster_ref_df %>% dplyr::filter(complex == 0)) == nrow(df)) {
+      if (target_trait %in% c(
+        "hybrid", "hybrid_fucosylation", "hybrid_bisection", "oligomannose" 
+      )) {
+        return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
+      }
     }
   }
+  
+  
   # TODO: check for use of all glycans minus 1 --> not always a problem?
 
 
@@ -253,8 +265,11 @@ calculate_traits <- function(normalized_data_wide, trait_formulas) {
       dplyr::mutate(!!! expr_ls)
   }
   # Relocate the trait columns
+  colnames <- colnames(normalized_data_wide_with_traits)
+  sum_int_colnames <- colnames[grepl("_sum_intensity", colnames)]
+  last_sum_int_colname <- tail(sum_int_colnames, 1)
   normalized_data_wide_with_traits <- normalized_data_wide_with_traits %>% 
-    dplyr::relocate(tidyselect::all_of(trait_names), .after = replicates)
+    dplyr::relocate(tidyselect::all_of(trait_names), .after = last_sum_int_colname)
   # Return normalized data with the trait columns
   return(normalized_data_wide_with_traits)
 }
@@ -310,8 +325,11 @@ calculate_custom_traits <- function(traits_excel, normalized_data_wide) {
       dplyr::mutate(!!!create_expr_ls(expr))
   }
   # Relocate the trait columns
+  colnames <- colnames(data_with_custom_traits)
+  sum_int_colnames <- colnames[grepl("_sum_intensity", colnames)]
+  last_sum_int_colname <- tail(sum_int_colnames, 1)
   data_with_custom_traits <- data_with_custom_traits %>% 
-    dplyr::relocate(tidyselect::all_of(traits_excel$trait), .after = replicates)
+    dplyr::relocate(tidyselect::all_of(traits_excel$trait), .after = last_sum_int_colname)
   
   return(data_with_custom_traits)
 }
@@ -350,6 +368,114 @@ traits_vs_intensity_plot <- function(data_to_plot, cluster) {
   }
   
   return(p)
+}
+
+
+
+
+clean_traits <- function(trait_formulas, normalized_data_wide) {
+  
+  # Create a named list with all the trait formulas
+  formulas <- trait_formulas 
+  traits_names <- gsub(" = .*", "", formulas) 
+  names(formulas) <- traits_names
+  
+  # Sialylation per galactose traits: check if sialylation is reported.
+  # If not: don't report sialylation per galactose
+  sial_per_gal_traits <- traits_names[endsWith(traits_names, "_sialylation_per_galactose")]
+  for (trait in sial_per_gal_traits) {
+    sial_trait <- gsub("_per_galactose", "", trait)  # Corresponding sialylation trait
+    if (grepl(" = Not reported", formulas[[sial_trait]])) {
+      formulas[[trait]] <- paste0(trait, " = Not reported: sialylation not reported")
+    }
+  }
+  
+  # Get the formulas that should be used for calculating traits.
+  # Then calculate the traits.
+  formulas_calculate <- unname(formulas[!grepl(" = Not reported", formulas)])
+  if (length(formulas_calculate) > 0) {
+    
+    data <- calculate_traits(normalized_data_wide, formulas_calculate)
+    
+    # Galactosylation traits: check if all values are the same
+    gal_traits <- intersect(
+      traits_names[endsWith(traits_names, "_galactosylation")],
+      colnames(data)
+    )
+    for (trait in gal_traits) {
+      # Get all unique values (need rounding)
+      unique <- unique(round(data[[trait]][!is.na(data[[trait]])], digits = 3))
+      if (length(unique) == 1) {
+        # Remove trait from data
+        data[[trait]] <- NULL
+        # Change trait formula
+        formulas[[trait]] <- paste0(
+          trait, " = Not reported: "#, unique, " for all samples"
+        )
+        # Remove sialylation per galactose if it exists
+        cluster <- sub("^(.*?)_.*", "\\1", trait)
+        sial_per_gal <- paste0(cluster, "_sialylation_per_galactose")
+        if (sial_per_gal %in% traits_names) {
+          data[[sial_per_gal]] <- NULL
+          formulas[[sial_per_gal]] <- paste0(
+            sial_per_gal, " = Not reported: galactosylation is not reported"
+          )
+        }
+      }
+    }
+    
+    # Sialylation traits: check if all values are the same
+    sial_traits <- intersect(
+      traits_names[endsWith(traits_names, "_sialylation")],
+      colnames(data)
+    )
+    for (trait in sial_traits) {
+      # Get all unique values (need rounding)
+      unique <- unique(round(data[[trait]][!is.na(data[[trait]])], digits = 3))
+      if (length(unique) == 1) {
+        # Remove trait from data
+        data[[trait]] <- NULL
+        # Change trait formula
+        formulas[[trait]] <- paste0(
+          trait, " = Not reported: ", unique, " for all samples"
+        )
+        # Remove sialylation per galactose if it exists
+        cluster <- sub("^(.*?)_.*", "\\1", trait)
+        sial_per_gal <- paste0(cluster, "_sialylation_per_galactose")
+        if (sial_per_gal %in% traits_names) {
+          data[[sial_per_gal]] <- NULL
+          formulas[[sial_per_gal]] <- paste0(
+            sial_per_gal, " = Not reported: sialylation is not reported"
+          )
+        }
+      }
+    }
+    
+    # Antennarity traits: check if all values are the same
+    antennarity_traits <- intersect(
+      traits_names[endsWith(traits_names, "_antennarity")],
+      colnames(data)
+    )
+    for (trait in antennarity_traits) {
+      unique <- unique(round(data[[trait]][!is.na(data[[trait]])], digits = 3))
+      if (length(unique) == 1) {
+        data[[trait]] <- NULL
+        formulas[[trait]] <- paste0(
+          trait, " = Not reported: ", unique, " for all samples"
+        )
+      }
+    }
+    
+  } else {
+    # No formulas to calculate
+    data <- normalized_data_wide
+  }
+  
+  return(list(
+    "formulas_toshow" = unname(formulas),
+    "data" = data
+  ))
+  
 }
 
   

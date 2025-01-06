@@ -397,7 +397,11 @@ plot_analyte_curation <- function(curated_analytes,
       `Passed curation?` = dplyr::case_when(
         has_passed_analyte_curation == "TRUE" ~ "Yes",
         has_passed_analyte_curation == "FALSE" ~ "No"
-      ))
+      )) %>% 
+    # Remove cluster prefix from analyte for readability
+    dplyr::mutate(analyte = gsub(paste0(selected_cluster, "1"), "", analyte)) %>% 
+    # Sort the glycans by N, F, H, S
+    sort_glycans(.)
   
   plot <- ggplot2::ggplot(data_to_plot, 
                           ggplot2::aes(text = paste(
@@ -439,6 +443,42 @@ plot_analyte_curation <- function(curated_analytes,
   return(plot)
   
 }
+
+
+# Helper function to extract counts
+extract_counts <- function(x, monosaccharide) {
+  matches <- regmatches(x, regexpr(paste0(monosaccharide, "\\d+"), x))
+  if (length(matches) == 0) {
+    return(0)  # No match; return 0
+  }
+  counts <- as.numeric(sub(monosaccharide, "", matches))
+  ifelse(is.na(counts), 0, counts)
+}
+
+
+# Helper function for plot
+sort_glycans <- function(data_to_plot) {
+  
+  glycans <- unique(data_to_plot$analyte)
+  
+  # Extract counts for each component and simplify to numeric vectors
+  N_counts <- unlist(lapply(glycans, extract_counts, monosaccharide = "N"))
+  F_counts <- unlist(lapply(glycans, extract_counts, monosaccharide = "F"))
+  H_counts <- unlist(lapply(glycans, extract_counts, monosaccharide = "H"))
+  S_counts <- unlist(lapply(glycans, extract_counts, monosaccharide = "S"))
+  G_counts <- unlist(lapply(glycans, extract_counts, monosaccharide = "G"))
+  
+  # Create a sorted vector
+  sorted_glycans <- glycans[order(N_counts, F_counts, H_counts, S_counts, G_counts)]
+  
+  # Turn analyte column into factor, with levels equal to sorted glycans
+  to_return <- data_to_plot %>% 
+    dplyr::mutate(analyte = factor(analyte, levels = sorted_glycans))
+  
+  return(to_return)
+}
+
+
 
 #' Create a datatable with all analytes that passed curation.
 #'

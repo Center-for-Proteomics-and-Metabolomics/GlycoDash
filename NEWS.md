@@ -1,3 +1,13 @@
+# v1.6.2
+## Adjustments
+* Data import: option to specify only glycopeptide or GPS clusters for IgG1 quantitation.
+* In spectra curation, samples that are on the cut-off now also pass curation.
+* Sort analytes by glycan composition in the analyte curation plots and tables.
+
+## Bug fixes
+* Various bug fixes.
+
+
 # v1.6.1
 ## Adjustments
 * Implement messages telling the user to re-perform processing steps in case

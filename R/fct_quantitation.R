@@ -16,43 +16,69 @@
 #' for IgG1 quantitation. 
 #' 
 calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
-                                          data_type,
-                                          quantitation_clusters,
-                                          analyte_curated_data) {
+                                           data_type,
+                                           quantitation_clusters,
+                                           analyte_curated_data) {
   
-  # Get data of passing IgG1 analytes
-  passing_IgG1_analytes_data <- analyte_curated_data %>% 
-    dplyr::filter(cluster == quantitation_clusters$IgG1_cluster_glyco)
-  
-  # Get sample names of passing IgG1 spectra
-  passing_IgG1_spectra <- unique(passing_IgG1_analytes_data$sample_name)
-  
-  # Get data of SILuMAb glycopeptides and non-glycosylated peptides.
-  # Then select only the sample names for which the IgG1 spectra passed.
-  # Then combine with natural IgG1 glycopeptide data.
-  quantitation_data <- LaCyTools_summary %>% 
-    dplyr::filter(
-      cluster %in% quantitation_clusters[names(quantitation_clusters) != "IgG1_cluster_glyco"]
-    ) %>% 
-    dplyr::filter(sample_name %in% passing_IgG1_spectra) %>% 
-    dplyr::bind_rows(passing_IgG1_analytes_data) %>% 
-    # Use function from normalization to calculate total intensities of analytes
-    calculate_total_intensity(., data_type) %>% 
-    # Then calculate the sum intensities (code below is part of normalization function)
-    dplyr::group_by(cluster, sample_name) %>%
-    dplyr::reframe(sum_intensity = sum(total_absolute_intensity),
-                   across(everything())) %>% 
-    dplyr::select(-total_absolute_intensity) %>% 
-    # Select data that's needed
-    dplyr::select(
-      sample_name, sample_id, sample_type, cluster, sum_intensity,
-      tidyselect::any_of(c("group", "plate_well"))
-    ) %>% 
-    dplyr::distinct() %>% 
-    # Create wide format
-    tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity)
+  # Check if glycopeptides are in the data or not
+  if ("IgG1_cluster_glyco" %in% names(quantitation_clusters)) { # Glycopeptides and possibly GPS
     
+    # Get data of passing IgG1 analytes
+    passing_IgG1_analytes_data <- analyte_curated_data %>% 
+      dplyr::filter(cluster == quantitation_clusters$IgG1_cluster_glyco)
+    
+    # Get sample names of passing IgG1 spectra
+    passing_IgG1_spectra <- unique(passing_IgG1_analytes_data$sample_name)
+    
+    # Data for quantitation
+    quantitation_data <- LaCyTools_summary %>% 
+      dplyr::filter(
+        cluster %in% quantitation_clusters[names(quantitation_clusters) != "IgG1_cluster_glyco"]
+      ) %>% 
+      dplyr::filter(sample_name %in% passing_IgG1_spectra) %>% 
+      dplyr::bind_rows(passing_IgG1_analytes_data) %>% 
+      # Use function from normalization to calculate total intensities of analytes
+      calculate_total_intensity(., data_type) %>% 
+      # Then calculate the sum intensities (code below is part of normalization function)
+      dplyr::group_by(cluster, sample_name) %>%
+      dplyr::reframe(sum_intensity = sum(total_absolute_intensity),
+                     across(everything())) %>% 
+      dplyr::select(-total_absolute_intensity) %>% 
+      # Select data that's needed
+      dplyr::select(
+        sample_name, sample_id, sample_type, cluster, sum_intensity,
+        tidyselect::any_of(c("group", "plate_well"))
+      ) %>% 
+      dplyr::distinct() %>% 
+      # Create wide format
+      tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity)  # Added closing bracket here
+    
+  } else { # Only GPS
+    
+    quantitation_data <- LaCyTools_summary %>% 
+      dplyr::filter(
+        cluster %in% quantitation_clusters[names(quantitation_clusters) != "IgG1_cluster_glyco"]
+      ) %>% 
+      # Use function from normalization to calculate total intensities of analytes
+      calculate_total_intensity(., data_type) %>% 
+      # Then calculate the sum intensities (code below is part of normalization function)
+      dplyr::group_by(cluster, sample_name) %>%
+      dplyr::reframe(sum_intensity = sum(total_absolute_intensity),
+                     across(everything())) %>% 
+      dplyr::select(-total_absolute_intensity) %>% 
+      # Select data that's needed
+      dplyr::select(
+        sample_name, sample_id, sample_type, cluster, sum_intensity,
+        tidyselect::any_of(c("group", "plate_well"))
+      ) %>% 
+      dplyr::distinct() %>% 
+      # Create wide format
+      tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity)
+    
+  }
+
   return(quantitation_data)
+  
 }
 
 
@@ -62,21 +88,35 @@ calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
 calculate_IgG1_ratios <- function(IgG1_sum_intensities,
                                   quantitation_clusters) {
   
-  sum_intensity_ratios <- IgG1_sum_intensities %>% 
-    dplyr::mutate(
-      glyco_ratio = .[[quantitation_clusters$IgG1_cluster_glyco]] /
-        .[[quantitation_clusters$silumab_cluster_glyco]],
+  # Calculate ratios for glycopeptides and/or GPS
+  if (length(quantitation_clusters) == 4) {
+    sum_intensity_ratios <- IgG1_sum_intensities %>% 
+      dplyr::mutate(
+        glyco_ratio = .[[quantitation_clusters$IgG1_cluster_glyco]] /
+          .[[quantitation_clusters$silumab_cluster_glyco]],
+        
+        GPS_ratio = .[[quantitation_clusters$IgG1_cluster_GPS]] / 
+          .[[quantitation_clusters$silumab_cluster_GPS]]
+      )
+  } else if ("IgG1_cluster_glyco" %in% names(quantitation_clusters)) {
+    sum_intensity_ratios <- IgG1_sum_intensities %>% 
+      dplyr::mutate(
+        glyco_ratio = .[[quantitation_clusters$IgG1_cluster_glyco]] /
+          .[[quantitation_clusters$silumab_cluster_glyco]]
+      )
+  } else {
+    sum_intensity_ratios <- IgG1_sum_intensities %>% 
+      dplyr::mutate(
+        GPS_ratio = .[[quantitation_clusters$IgG1_cluster_GPS]] / 
+          .[[quantitation_clusters$silumab_cluster_GPS]]
+      )
+  }
       
-      GPS_ratio = .[[quantitation_clusters$IgG1_cluster_GPS]] / 
-        .[[quantitation_clusters$silumab_cluster_GPS]]
-      
-      # TTP_ratio = .[[quantitation_clusters$IgG1_cluster_TTP]] / 
-      #   .[[quantitation_clusters$silumab_cluster_GPS]]
-    ) %>% 
-    # Get rid of sum intensities
+  # Get rid of sum intensities
+  sum_intensity_ratios <- sum_intensity_ratios %>% 
     dplyr::select(sample_name:sample_type, 
-                  tidyselect::any_of("group"),
-                  tidyselect::contains("ratio"))
+    tidyselect::any_of("group"),
+    tidyselect::contains("ratio"))
   
   return(sum_intensity_ratios)
 }

@@ -177,14 +177,25 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     # Normalized data is in long format
     normalized_data <- reactive({
       req(total_intensities())
-      normalize_data(total_intensities = total_intensities()) %>% 
-        { # Combine with metadata if it exists
-          if (is_truthy(merged_metadata())) {
-            dplyr::left_join(., merged_metadata(), by = "sample_id")
-          } else .
-        }
+      data <- normalize_data(total_intensities = total_intensities()) %>% 
+        # Sort by glycan composition
+        tidyr::separate(analyte, into = c("cluster", "analyte"),
+                        sep = "1", extra = "merge") %>% 
+        sort_glycans(.) %>% 
+        dplyr::group_by(cluster) %>% 
+        dplyr::arrange(analyte) %>% 
+        dplyr::ungroup() %>% 
+        dplyr::mutate(analyte = paste0(cluster, "1", analyte))
+        
+      # Check if metadata exists
+      if (is_truthy(merged_medata())) {
+        data <- dplyr::left_join(data, merged_metadata(), by = "sample_id")
+      }
+      
+      return(data)
     })
     
+
     # Notes from data per analyte (Skyline)
     notes <- reactive({
       req(analyte_curated_data())

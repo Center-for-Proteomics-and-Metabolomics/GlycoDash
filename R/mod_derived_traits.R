@@ -879,7 +879,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         ), c  # c = concatenate
       )
     })
-  
+    
     
     # Trait formulas for human IgM N-glycans
     human_IgM_N46_traits <- reactive({
@@ -990,6 +990,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         ), c  # c = concatenate
       )
     })
+    
     
     ##########################################################################
     
@@ -1129,57 +1130,25 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       shinyjs::toggleState("button", length(trait_formulas()) > 0)
     })
     
+
     
     # Trait formulas to show in dashboard
     r <- reactiveValues(formulas_toshow = NULL)
     
-
     # Calculate traits when user pushes button
     data_with_derived_traits <- reactive({
       req(trait_formulas())
-      formulas_toshow <- trait_formulas()
-      formulas_toreport <- trait_formulas()[!grepl(" = Not reported", trait_formulas())]
-      data <- calculate_traits(normalized_data_wide(), formulas_toreport)
-      trait_names <- gsub(" = .*", "", formulas_toreport)
-      # For each galactosylation trait: check if all values are the same
-      galactosylation_traits <- trait_names[grepl("_galactosylation", trait_names)]
-      for (trait in galactosylation_traits) {
-        unique <- unique(round(data[[trait]][!is.na(data[[trait]])], digits = 3))
-        if (length(unique) == 1) {
-          # Remove trait from data
-          data[[trait]] <- NULL 
-          # Change trait formula
-          index <- which(grepl(paste0(trait, " = "), formulas_toshow))
-          formulas_toshow[index] <- paste0(
-            trait, " = Not reported: ", unique, " for all samples"
-          )
-          # Remove sialylation per galactose if it exists
-          cluster <- sub("^(.*?)_.*", "\\1", trait)
-          sial_per_gal <- paste0(cluster, "_sialylation_per_galactose")
-          if (sial_per_gal %in% trait_names) {
-            data[[sial_per_gal]] <- NULL
-            index <- which(grepl(paste0(sial_per_gal, " = "), formulas_toshow))
-            formulas_toshow[index] <- paste0(
-              sial_per_gal, " = Not reported: equals multiple of sialylation for all samples"
-            )
-          }
-        }
-      }
-      # For each antennarity trait: check if all values are equal
-      antennarity_traits <- trait_names[grepl("_antennarity", trait_names)]
-      for (trait in antennarity_traits) {
-        unique <- unique(round(data[[trait]][!is.na(data[[trait]])], digits = 3))
-        if (length(unique) == 1) {
-          data[[trait]] <- NULL
-          index <- which(grepl(paste0(trait, " = "), formulas_toshow))
-          formulas_toshow[index] <- paste0(
-            trait, " = Not reported: ", unique, " for all samples"
-          )
-        }
-      }
-      r$formulas_toshow <- formulas_toshow
-      return(data)
-    }) %>% bindEvent(input$button)  # Calculate after pushing button
+      
+      clean_traits <- clean_traits(trait_formulas(), normalized_data_wide())
+      
+      # Update reactiveValues vector with formulas to show in table
+      r$formulas_toshow <- clean_traits$formulas_toshow
+      
+      # Return the data
+      return(clean_traits$data)
+      
+    }) %>% bindEvent(input$button)
+    
     
     
     
@@ -1233,6 +1202,8 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         closeButton = FALSE
       )
     })
+    
+    observeEvent(input$button, removeNotification(ns("msg_data_changed")))
     
     
     output$data_table <- DT::renderDT({
