@@ -1,8 +1,9 @@
 FROM rocker/verse:4.3.3
-RUN apt-get update && apt-get install -y  libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libicu-dev libpng-dev libssl-dev libxml2-dev make pandoc zlib1g-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y   && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /usr/local/lib/R/etc/ /usr/lib/R/etc/
 RUN echo "options(repos = c(CRAN = 'https://cran.rstudio.com/'), download.file.method = 'libcurl', Ncpus = 4)" | tee /usr/local/lib/R/etc/Rprofile.site | tee /usr/lib/R/etc/Rprofile.site
 RUN R -e 'install.packages("remotes")'
+RUN Rscript -e 'remotes::install_version("colourpicker",upgrade="never", version = "1.3.0")'
 RUN Rscript -e 'remotes::install_version("rlang",upgrade="never", version = "1.1.4")'
 RUN Rscript -e 'remotes::install_version("glue",upgrade="never", version = "1.8.0")'
 RUN Rscript -e 'remotes::install_version("processx",upgrade="never", version = "3.8.4")'
