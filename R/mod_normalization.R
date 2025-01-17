@@ -188,7 +188,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         dplyr::mutate(analyte = paste0(cluster, "1", analyte))
         
       # Check if metadata exists
-      if (is_truthy(merged_medata())) {
+      if (is_truthy(merged_metadata())) {
         data <- dplyr::left_join(data, merged_metadata(), by = "sample_id")
       }
       
@@ -251,7 +251,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     observe({
       req(normalized_data())
-      
+
       # Remove previously created tabs
       purrr::map(r$created_tab_titles, function(tab_title) {
         removeTab(inputId = "tabs", target = tab_title, session = session)
