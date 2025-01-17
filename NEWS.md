@@ -1,3 +1,8 @@
+# v1.6.3
+## Bug fixes
+* Prevent crash after curating analytes per biological group.
+
+
 # v1.6.2
 ## Adjustments
 * Data import: option to specify only glycopeptide or GPS clusters for IgG1 quantitation.
