@@ -1,3 +1,12 @@
+# v1.6.4
+## Adjustments
+* When a trait is calculated using only one glycan, that trait is reported
+with the glycan added at the end of the trait name.
+
+## Bug fixes
+* Bug fix in calculating traits for hybrids and oligomannose glycans.
+
+
 # v1.6.3
 ## Bug fixes
 * Prevent crash after curating analytes per biological group.
