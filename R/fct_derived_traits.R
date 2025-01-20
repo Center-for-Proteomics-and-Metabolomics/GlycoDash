@@ -129,7 +129,6 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     paste0(cluster, "_", target_trait, " = ", clean_formula_string)
   )
   
-  print(final_formula_string)
   return(final_formula_string)
 }
 
