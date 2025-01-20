@@ -183,7 +183,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
                         sep = "1", extra = "merge") %>% 
         sort_glycans(.) %>% 
         dplyr::group_by(cluster) %>% 
-        dplyr::arrange(analyte) %>% 
+        dplyr::arrange(cluster, analyte) %>% 
         dplyr::ungroup() %>% 
         dplyr::mutate(analyte = paste0(cluster, "1", analyte))
         
@@ -194,7 +194,6 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       
       return(data)
     })
-    
 
     # Notes from data per analyte (Skyline)
     notes <- reactive({
