@@ -20,7 +20,8 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   if (nrow(df) == 0) { 
     return(paste0(cluster, "_", target_trait, " = Not reported: zero for all samples"))
   } 
-  else if (nrow(df) == 1) {
+  # If there is only one glycan: do not report if trait is average number of mannoses
+  else if (nrow(df) == 1 & target_trait == "oligomannose_average") {
     return(paste0(cluster, "_", target_trait, " = Not reported: only one relevant glycan ", df$glycan))
   }
   # Check if "complex" is a column in cluster_ref_df
@@ -34,18 +35,16 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
         return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
       }
     }
-    else if (nrow(cluster_ref_df %>% dplyr::filter(complex == 0)) == nrow(df)) {
+    else if (nrow(cluster_ref_df) == nrow(df)) {
       if (target_trait %in% c(
-        "hybrid", "hybrid_fucosylation", "hybrid_bisection", "oligomannose" 
+        "hybrid", "hybrid_fucosylation", "hybrid_bisection", "oligomannose"
       )) {
         return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
       }
     }
   }
   
-  
   # TODO: check for use of all glycans minus 1 --> not always a problem?
-
 
   # Create a string with the right hand side of the formula
   formula_string <- paste0(df[[target_trait]], " * ", paste0(cluster, "1", df$glycan), collapse = " + ")
@@ -112,6 +111,11 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     clean_formula_string <- paste0("(", clean_formula_string, ") / 100")
   }
   
+  # Change name of target trait if there is only one glycan used
+  if (nrow(df) == 1) {
+    target_trait <- paste0(target_trait, "_", df$glycan)
+  }
+  
   # Add the left hand side of the formula
   final_formula_string <- ifelse(
     # If there are no glycans for the trait, then the calculation is equal to 
@@ -125,6 +129,7 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     paste0(cluster, "_", target_trait, " = ", clean_formula_string)
   )
   
+  print(final_formula_string)
   return(final_formula_string)
 }
 
