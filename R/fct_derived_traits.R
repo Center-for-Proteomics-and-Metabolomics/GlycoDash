@@ -34,9 +34,9 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
         return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
       }
     }
-    else if (nrow(cluster_ref_df %>% dplyr::filter(complex == 0)) == nrow(df)) {
+    else if (nrow(cluster_ref_df) == nrow(df)) {
       if (target_trait %in% c(
-        "hybrid", "hybrid_fucosylation", "hybrid_bisection", "oligomannose" 
+        "hybrid", "hybrid_fucosylation", "hybrid_bisection", "oligomannose"
       )) {
         return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
       }
