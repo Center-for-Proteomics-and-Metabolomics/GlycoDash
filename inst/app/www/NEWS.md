@@ -1,4 +1,7 @@
-#v1.6.5
+# v1.6.5
+## Adjustments
+* Sort the glycan compositions in the heatmaps of the normalized data.
+
 ## Bug fixes
 * Bug fix in spectra curation results figures.
 

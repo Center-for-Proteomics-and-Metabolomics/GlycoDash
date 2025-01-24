@@ -283,6 +283,7 @@ sample_heatmap <- function(normalized_data,
   
   # Clean data to plot
   to_plot <- normalized_data %>% 
+    sort_glycans(.) %>% 
     dplyr::select(-cluster) %>% 
     tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
                     extra = "merge", remove = FALSE) %>% 
@@ -381,6 +382,7 @@ cluster_heatmap <- function(normalized_data,
   if (group_facet != "" & "group" %in% colnames(normalized_data)) {
     # Biological groups + Specific/Total
     to_plot <- normalized_data %>% 
+      sort_glycans(.) %>% 
       dplyr::filter(
         !is.na(!!dplyr::sym(group_facet)),
         !is.na(group),
@@ -396,6 +398,7 @@ cluster_heatmap <- function(normalized_data,
   } else if (group_facet != "") {
     # Biological groups
     to_plot <- normalized_data %>% 
+      sort_glycans(.) %>% 
       dplyr::filter(
         !is.na(!!dplyr::sym(group_facet)),
         !sample_type %in% exclude_sample_types
@@ -410,6 +413,7 @@ cluster_heatmap <- function(normalized_data,
   } else if ("group" %in% colnames(normalized_data)) {
     # Specific/Total
     to_plot <- normalized_data %>% 
+      sort_glycans(.) %>% 
       dplyr::filter(
         !is.na(group),
         !sample_type %in% exclude_sample_types
@@ -423,7 +427,8 @@ cluster_heatmap <- function(normalized_data,
       )
   } else {
     # No faceting
-    to_plot <- normalized_data %>% 
+    to_plot <- normalized_data %>%
+      sort_glycans(.) %>% 
       dplyr::filter(!sample_type %in% exclude_sample_types) %>% 
       dplyr::select(-cluster) %>% 
       tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
@@ -433,7 +438,6 @@ cluster_heatmap <- function(normalized_data,
         median_relative_abundance = median(relative_abundance, na.rm = TRUE)
       )
   }
-  
   
   # Check if the data is empty
   if (nrow(to_plot) == 0) {
