@@ -1,3 +1,8 @@
+#v1.6.5
+## Bug fixes
+* Bug fix in spectra curation results figures.
+
+
 # v1.6.4
 ## Adjustments
 * When a trait is calculated using only one glycan, that trait is reported

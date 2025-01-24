@@ -617,9 +617,9 @@ determine_reason_for_failure <- function(data) {
   with_reasons <- data %>% 
     dplyr::mutate(reason_for_failure = dplyr::case_when(
       uncalibrated ~ "Calibration failed.",
-      passing_analyte_percentage <= cut_off_passing_analyte_percentage & sum_intensity <= cut_off_sum_intensity ~ "Percentage of passing analytes and sum intensity below cut-offs.",
-      passing_analyte_percentage <= cut_off_passing_analyte_percentage ~ "Percentage of passing analytes below cut-off.",
-      sum_intensity <= cut_off_sum_intensity ~ "Sum intensity below cut-off.",
+      passing_analyte_percentage < cut_off_passing_analyte_percentage & sum_intensity < cut_off_sum_intensity ~ "Percentage of passing analytes and sum intensity below cut-offs.",
+      passing_analyte_percentage < cut_off_passing_analyte_percentage ~ "Percentage of passing analytes below cut-off.",
+      sum_intensity < cut_off_sum_intensity ~ "Sum intensity below cut-off.",
       TRUE ~ as.character(NA) # as.character(), because case_When requires that 
       # all possible values are of the same data type
     ))
