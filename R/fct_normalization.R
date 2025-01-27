@@ -239,8 +239,7 @@ calculate_total_intensity <- function(data, data_type) {
 normalize_data <- function(total_intensities) {
 
   normalized_data <- total_intensities %>%
-    dplyr::group_by(cluster,
-                    sample_name) %>%
+    dplyr::group_by(cluster, sample_name) %>%
     dplyr::reframe(sum_intensity = sum(total_absolute_intensity),
                      across(everything())) %>%
     dplyr::mutate(relative_abundance = total_absolute_intensity / sum_intensity * 100) %>% 
@@ -283,13 +282,14 @@ sample_heatmap <- function(normalized_data,
   
   # Clean data to plot
   to_plot <- normalized_data %>% 
-    dplyr::select(-cluster) %>% 
-    tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
-                    extra = "merge", remove = FALSE) %>% 
     dplyr::filter(
       cluster == cluster_name,
       !sample_type %in% exclude_sample_types
-    )
+    ) %>% 
+    dplyr::select(-cluster) %>% 
+    tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"),
+                    extra = "merge") %>% 
+    sort_glycans(.) 
   
   # Check if the plot should be faceted by biological group, and/or Total vs Specific
   # In that case, remove samples that have no (biological) group assigned.
@@ -308,12 +308,12 @@ sample_heatmap <- function(normalized_data,
   
   # Create simple plot
   p <- ggplot2::ggplot(to_plot, ggplot2::aes(
-    x = glycan, y = sample_name, fill = relative_abundance,
+    x = analyte, y = sample_name, fill = relative_abundance,
     text = paste(
       "Sample name:", sample_name,
       "\nSample ID:", sample_id,
       "\nSample type:", sample_type,
-      "\nGlycan:", glycan,
+      "\nAnalyte:", analyte,
       "\nRelative abundance:", paste0(format(round(relative_abundance, digits = 2), nsmall = 2), "%")
     )
   )) +
@@ -387,9 +387,10 @@ cluster_heatmap <- function(normalized_data,
         !sample_type %in% exclude_sample_types
       ) %>% 
       dplyr::select(-cluster) %>% 
-      tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
-                      extra = "merge", remove = FALSE) %>% 
-      dplyr::group_by(!!dplyr::sym(group_facet), group, cluster, glycan) %>% 
+      tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"),
+                      extra = "merge") %>% 
+      sort_glycans(.) %>% 
+      dplyr::group_by(!!dplyr::sym(group_facet), group, cluster, analyte) %>% 
       dplyr::summarize(
         median_relative_abundance = median(relative_abundance, na.rm = TRUE)
       )
@@ -401,9 +402,10 @@ cluster_heatmap <- function(normalized_data,
         !sample_type %in% exclude_sample_types
       ) %>% 
       dplyr::select(-cluster) %>% 
-      tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
-                      extra = "merge", remove = FALSE) %>% 
-      dplyr::group_by(!!dplyr::sym(group_facet), cluster, glycan) %>% 
+      tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"),
+                      extra = "merge") %>% 
+      sort_glycans(.) %>% 
+      dplyr::group_by(!!dplyr::sym(group_facet), cluster, analyte) %>% 
       dplyr::summarize(
         median_relative_abundance = median(relative_abundance, na.rm = TRUE)
       )
@@ -415,25 +417,25 @@ cluster_heatmap <- function(normalized_data,
         !sample_type %in% exclude_sample_types
       ) %>% 
       dplyr::select(-cluster) %>% 
-      tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
-                      extra = "merge", remove = FALSE) %>% 
-      dplyr::group_by(group, cluster, glycan) %>% 
+      tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"),
+                      extra = "merge") %>% 
+      sort_glycans(.) %>% 
+      dplyr::group_by(group, cluster, analyte) %>% 
       dplyr::summarize(
         median_relative_abundance = median(relative_abundance, na.rm = TRUE)
       )
   } else {
     # No faceting
-    to_plot <- normalized_data %>% 
+    to_plot <- normalized_data %>%
       dplyr::filter(!sample_type %in% exclude_sample_types) %>% 
-      dplyr::select(-cluster) %>% 
-      tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"),
-                      extra = "merge", remove = FALSE) %>% 
-      dplyr::group_by(cluster, glycan) %>% 
+      tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"),
+                      extra = "merge") %>% 
+      sort_glycans(.) %>%
+      dplyr::group_by(cluster, analyte) %>% 
       dplyr::summarize(
         median_relative_abundance = median(relative_abundance, na.rm = TRUE)
       )
   }
-  
   
   # Check if the data is empty
   if (nrow(to_plot) == 0) {
@@ -442,9 +444,9 @@ cluster_heatmap <- function(normalized_data,
   
   # Simple plot
   p <- ggplot2::ggplot(to_plot, ggplot2::aes(
-    x = glycan, y = cluster, fill = median_relative_abundance,
+    x = analyte, y = cluster, fill = median_relative_abundance,
     text = paste(
-      "Glycan:", glycan,
+      "Analyte:", analyte,
       "\nCluster", cluster,
       "\nMedian relative abundance:", paste0(format(round(median_relative_abundance, digits = 2), nsmall = 2), "%")
     )

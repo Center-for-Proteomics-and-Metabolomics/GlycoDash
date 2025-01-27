@@ -228,12 +228,15 @@ calculate_repeatability_stats <- function(data,
   }
   
   repeatability <- repeatability %>% 
-    dplyr::mutate(plate = stringr::str_extract(plate_well, "^[A-Z]|\\d+")) %>% 
+    dplyr::mutate(plate = stringr::str_extract(plate_well, "^[A-Z]|\\d+")) %>%
     dplyr::group_by(plate, analyte) %>% 
     dplyr::reframe(average_abundance = mean(relative_abundance),
                      RSD = sd(relative_abundance) / average_abundance * 100,
                      n = dplyr::n(),
-                     dplyr::across(cluster)) 
+                     dplyr::across(cluster)) %>% 
+    dplyr::select(-cluster) %>% 
+    tidyr::separate(analyte, into = c("cluster", "analyte"),
+                    sep = "1", extra = "merge")
   
   return(repeatability)
 }
@@ -373,7 +376,7 @@ visualize_repeatability <- function(repeatability_data,
                                    y = average_abundance, 
                                    fill = plate,
                                    text = paste0("Analyte: ",
-                                                analyte,
+                                                 analyte,
                                                 "\nPlate: ",
                                                 plate,
                                                 "\nAverage relative abundance: ",
@@ -392,7 +395,7 @@ visualize_repeatability <- function(repeatability_data,
                                      group = plate,
                                      fill = plate,
                                      text = paste0("Analyte: ",
-                                                  analyte,
+                                                   analyte,
                                                   "\nPlate: ",
                                                   plate,
                                                   "\nRSD: ",
@@ -521,13 +524,17 @@ visualize_repeatability_mean_bars <- function(data,
   }
   
   to_plot <- to_plot %>%
-    dplyr::group_by(analyte) %>%
+    tidyr::separate(analyte, into = c("cluster", "analyte"),
+                    sep = "1", extra = "merge") %>% 
+    sort_glycans(.) %>% 
+    dplyr::group_by(cluster, analyte) %>%
     dplyr::filter(!is.na(relative_abundance)) %>%
     dplyr::reframe(mean_rel_ab = mean(relative_abundance),
                      sd_rel_ab = sd(relative_abundance),
                      rsd = sd_rel_ab / mean_rel_ab * 100,
                      n = dplyr::n(),
                      dplyr::across(.cols = tidyselect::everything()))
+
 
   if (nrow(to_plot) == 0) {
     rlang::abort(
@@ -550,7 +557,7 @@ visualize_repeatability_mean_bars <- function(data,
     ggplot2::geom_col(ggplot2::aes(x = analyte,
                                    y = mean_rel_ab,
                                    text = paste0("Analyte: ",
-                                                analyte,
+                                                 analyte,
                                                 "\nMean of relative abundance: ",
                                                 format(round(mean_rel_ab, digits = 2), nsmall = 2),
                                                 # signif(mean_rel_ab, 3),
