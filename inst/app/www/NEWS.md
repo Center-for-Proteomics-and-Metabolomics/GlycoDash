@@ -1,3 +1,83 @@
+# v1.6.5
+## Adjustments
+* Sort glycan compositions in the heatmaps of the normalized data.
+* Sort glycan compositions in the repeatability figures.
+
+## Bug fixes
+* Bug fix in spectra curation results figures.
+
+
+# v1.6.4
+## Adjustments
+* When a trait is calculated using only one glycan, that trait is reported
+with the glycan added at the end of the trait name.
+
+## Bug fixes
+* Bug fix in calculating traits for hybrids and oligomannose glycans.
+
+
+# v1.6.3
+## Bug fixes
+* Prevent crash after curating analytes per biological group.
+
+
+# v1.6.2
+## Adjustments
+* Data import: option to specify only glycopeptide or GPS clusters for IgG1 quantitation.
+* In spectra curation, samples that are on the cut-off now also pass curation.
+* Sort analytes by glycan composition in the analyte curation plots and tables.
+
+## Bug fixes
+* Various bug fixes.
+
+
+# v1.6.1
+## Adjustments
+* Implement messages telling the user to re-perform processing steps in case
+changes were made to the data by adjusting settings in earlier steps.
+* Spectra curation: make the coloring of sample types consistent between
+scatter plots for different glycosylation sites.
+* Analyte curation: option to select all traits at once for each antibody glycans type.
+* Make clearer that IgG1 quantitation is meant only for antigen-specific IgG1.
+When data contains both total and specific immunoglobulin samples, perform the 
+quantitation only for the specific samples.
+* Show a loading spinner while generating HTML report.
+
+## Bug fixes
+* Prevent GlycoDash from crashing when Total and Specific samples are specified
+after adding the sample types.
+* Minor bug fixes in automatic traits calculations.
+
+
+# v1.6.0
+## New features
+* Option to automatically calculate glycosylation traits for IgA and IgM,
+including joining chain (JC).
+* Show notifications when an automatic trait is zero or 100 for all samples,
+or when a trait would be calculated using only one glycan.
+* Plot automatically calculated traits against total spectrum intensities.
+
+## Adjustments
+* Added a download button for the GlycoDash manual in the top-right corner of 
+the dashboard.
+* Added a button that links to known issues (GitHub).
+* Notes on analytes in Skyline data are now kept and displayed in a separate
+tab when downloading normalized data as an Excel file.
+* Plates in a plate design are now automatically numbered, irrespective of how
+they are named in the Excel file.
+* Add filter options to all tables, and round numbers when displaying data
+(rounding is NOT applied to downloaded data).
+
+## Bug fixes
+* Leading zeros in plate numbers sometimes caused issues when trying to merge
+data with a plate design. This has now been fixed.
+* When curating total and specific spectra based on negative controls that were
+missing for one or more clusters, the “Perform analyte curation” button remained
+grey even after choosing manual cut-offs. This has now been fixed.
+* Prevent users from excluding all sample types or biological groups during analyte curation,
+which caused the dashboard to crash.
+
+
 # v1.5.4
 ## Adjustments
 * Created a more appealing user interface.

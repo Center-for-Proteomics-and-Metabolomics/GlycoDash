@@ -18,12 +18,17 @@ app_ui <- function(request) {
       
       # Title header, with button that links to GitHub
       header = shinydashboard::dashboardHeader(
-        title = "GlycoDash v1.5.4",
+        title = "GlycoDash v1.6.5",
         tags$li(a(
           onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash')",
           href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"
         ), class = "dropdown"),
-        tags$li(customDownloadbutton("download_md"), class = "dropdown")
+        tags$li(a(
+          onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/issues')",
+          href = NULL, icon("bug"), title = "Known issues", style = "cursor: pointer;"
+        ), class = "dropdown"),
+        tags$li(ManualButton("download_manual"), title = "Download manual", class = "dropdown"),
+        tags$li(ChangelogButton("download_changelog"), title = "Download changelog", class = "dropdown")
       ),
       
       sidebar = shinydashboardPlus::dashboardSidebar(

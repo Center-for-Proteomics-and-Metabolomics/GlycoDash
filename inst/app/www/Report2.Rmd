@@ -1,5 +1,5 @@
 ---
-title: "GlycoDash v1.5.4 data processing report"
+title: "GlycoDash v1.6.5 data processing report"
 output: 
   html_document:
     toc: TRUE
@@ -19,7 +19,6 @@ params:
   total_area: NA
   included_qc_spectra: NA
   spectra_curation_tab_contents: NA
-  curated_spectra_plot: NA
   curated_spectra_plots: NA
   analyte_curation_method: NA
   analyte_curation_choice: NA
@@ -35,6 +34,7 @@ params:
   custom_traits_colnames: NA
   formulas: NA
   custom_formulas: NA
+  intensity_plots: NA
   repeatability: NA
   data_exploration: NA
   silumab_amount: NA
@@ -132,20 +132,6 @@ purrr::iwalk(params$spectra_curation_tab_contents,
 
 ```{r spectra-curation-results, results='asis'}
 
-#TODO: add titles
-
-if (!is.null(params$curated_spectra_plot)) {
-  p <- params$curated_spectra_plot %>% 
-    plotly::ggplotly(., tooltip = "text")
-  
-  p <- GlycoDash::facet_strip_bigger(p)
-  
-  p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
-  
-  p[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -50
-  
-  print(htmltools::tagList(p))
-} else {
   purrr::iwalk(params$curated_spectra_plots,
              function(curated_spectra_plot,
                       name) {
@@ -165,9 +151,6 @@ if (!is.null(params$curated_spectra_plot)) {
                
                print(htmltools::tagList(p))
              })
-}
-
-
 ```
 
 ## Analyte curation
@@ -261,7 +244,7 @@ cat(paste(
 ```{r heatmaps, results='asis'}
 
 if (!is.null(names(params$heatmaps))) {
-  # Heatmaps were made were cluster
+  # Heatmaps were made per cluster
   purrr::iwalk(params$heatmaps, function(plot, name) {
     cat("###", name, "\n")
     p <- plotly::ggplotly(plot, tooltip = "text")
@@ -274,7 +257,6 @@ if (!is.null(names(params$heatmaps))) {
 }
 
 ```
-
 
 ## IgG1 quantitation
 
@@ -341,6 +323,18 @@ if (!is.null(params$custom_formulas)) {
     htmltools::HTML() %>%
     print()
 }
+```
+
+```{r traits-intensity-plots, results='asis'}
+
+if (!is.null(params$intensity_plots)) {
+  purrr::iwalk(params$intensity_plots, function(plot, name) {
+    cat("###", name, "\n")
+    p <- plotly::ggplotly(plot, tooltip = "text")
+    print(htmltools::tagList(p))
+  })
+}
+
 ```
 
 ## Repeatability

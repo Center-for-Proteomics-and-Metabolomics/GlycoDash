@@ -101,8 +101,13 @@ mod_data_import_server <- function(id){
     # in the data table
     output$data_table <- DT::renderDT({
       req(show_in_table())
-      DT::datatable(show_in_table(),
-                    options = list(scrollX = TRUE),
+      DT::datatable(show_in_table() %>% # Round numbers to 2 decimals
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 6,  # Shows 5 rows
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ),
                     filter = "top")
     })
     
@@ -132,15 +137,9 @@ mod_data_import_server <- function(id){
     biogroup_cols <- reactive({
       req(data_incl_clusters$data())
       if (is_truthy(data_incl_metadata$data())) {
-        intersect(
-          c("group", "sample_id", "sample_type", colnames(data_incl_metadata$merged_metadata())),
-          colnames(data_incl_metadata$data())
-        )
+        c("sample_id", "sample_type", colnames(data_incl_metadata$merged_metadata()))
       } else if (is_truthy(data_incl_clusters$data())) {
-          intersect(
-            c("group", "sample_id", "sample_type"),
-            colnames(data_incl_clusters$data())
-          )
+          c("sample_id", "sample_type")
       } else NULL
     })
     
@@ -168,6 +167,7 @@ mod_data_import_server <- function(id){
                                                   path = file))
       }
     )
+    
     
     return(list(
       LaCyTools_summary = to_return,  # Calling this LaCyTools_summary is a bit confusing

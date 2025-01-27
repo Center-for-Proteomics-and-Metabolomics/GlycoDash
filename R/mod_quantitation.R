@@ -37,36 +37,36 @@ mod_quantitation_ui <- function(id) {
             id = ns("box1"),
             title = div(
               id = ns("box_header2"),
-              "IgG1 quantitation using SILuMAb",
+              "Quantitation of antigen-specific IgG1 using SILuMAb",
               icon("info-circle", class = "ml") %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
                   content = HTML("
                   <p>
-                  IgG1 quantitation is first performed based on two different 
+                  Quantitation of antigen-specific IgG1 is first performed based on two different
                   peptides: the Fc glycopeptides and a proteotypic peptide
                   GPS[...]. It is also possible to perform the quantitation
                   based on only one of these peptides, using the checkboxes.
-                  
+
                   <ul>
                   <li>For the glycopeptides, the summed intensity of the natural IgG1
                   glycopeptides is divided by the summed intensity of the SIL glycopeptides.
                   This ratio is then multiplied by the amount of SILuMAb in the sample.</li>
-                  
+
                   <li>For GPS[...], the intensity of the natural peptide
                   is divided by the intensity of the SIL peptide,
                   after which the ratio is multiplied by the amount of SILuMAb in the sample.</li>
                   </ul>
-                  
+
                   <p>
-                  The reported amount of IgG1 in the plot and table below is the
+                  The reported amount of antigen-specific IgG1 in the plot and table below is the
                   median of the values calculated for the two different peptides.
                   When a sample is missing a value for one of the peptides, this
-                  peptide is excluded from calculation of the median. The calculated 
+                  peptide is excluded from calculation of the median. The calculated
                   amount of IgG1 is rounded to a whole number (ng).
                   "),
                   trigger = "hover",
-                  placement = "right",
+                  placement = "bottom",
                   html = "true"
                 )
             ),
@@ -83,14 +83,14 @@ mod_quantitation_ui <- function(id) {
             numericInput(
               ns("silumab_amount"),
               "Amount of SILuMAb per sample (ng):",
-              value = 5, min = 0, max = NA
+              value = 2, min = 0, max = NA
             ),
             # Checkboxes to include/exclude peptides
             shinyWidgets::awesomeCheckboxGroup(
               ns("chosen_peptides"),
               "Peptides to include in the calculation:",
-              choices = c("Glycopeptides", "GPSVFPLAPSSK"),
-              selected = c("Glycopeptides", "GPSVFPLAPSSK")
+              choices = c(""),
+              selected = c("")
             ),
             # Option to exclude sample types from calculating correlations
             selectizeInput(
@@ -118,7 +118,7 @@ mod_quantitation_ui <- function(id) {
                   title = "Explanation",
                   content = HTML("
                   <p>
-                  When quantifying IgG1 based on different peptides,
+                  When quantifying antigen-specific IgG1 based on different peptides,
                   the amounts of IgG1 calculated based on the glycopeptides
                   should correlate well to those calculated based on GPS[...].
                   When this is not the case, you may want to exclude one of 
@@ -138,7 +138,7 @@ mod_quantitation_ui <- function(id) {
                   useful for comparing two different quantitation methods.
                   "),
                   trigger = "hover",
-                  placement = "left",
+                  placement = "bottom",
                   html = "true"
                 )
             ),
@@ -153,7 +153,7 @@ mod_quantitation_ui <- function(id) {
         column(
           width = 12,
           shinydashboard::box(
-            title = "IgG1 quantitation plot",
+            title = "Antigen-specific IgG1 quantitation plot",
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
@@ -163,7 +163,7 @@ mod_quantitation_ui <- function(id) {
       ),
       fluidRow(
         shinydashboard::box(
-          title = "View data with IgG1 quantities",
+          title = "View data with antigen-specific IgG1 quantities",
           width = 12,
           solidHeader = TRUE,
           status = "primary",
@@ -183,6 +183,7 @@ mod_quantitation_ui <- function(id) {
 #' @noRd 
 mod_quantitation_server <- function(id, quantitation_clusters,
                                     LaCyTools_summary,
+                                    keyword_specific,
                                     data_type,
                                     analyte_curated_data,
                                     results_normalization) {
@@ -222,29 +223,59 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     })
     
     
-    # The selection menu for input$exlude_samples is updated so that the choices
-    # are sample_types and groups that are present in the data.
+    # Make it possible to exclude sample types from the data
     observe({
-      if ("group" %in% colnames(results_normalization$normalized_data())) {
-        options <- c(paste(unique(results_normalization$normalized_data()$sample_type), "samples"), 
-                     paste(unique(results_normalization$normalized_data()$group), "samples"))
-      } else {
-        options <- c(paste(unique(results_normalization$normalized_data()$sample_type), "samples"))
-      }
-      
-      updateSelectizeInput(inputId = "exclude_samples",
-                           choices = c(options))
+      req(results_normalization$normalized_data())
+      options <- c(paste(unique(results_normalization$normalized_data()$sample_type), "samples"))
+      updateSelectizeInput(inputId = "exclude_samples", choices = c(options))
     })
     
     
+
     # Calculate ratios of peptides.
     IgG1_ratios <- reactive({
       req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
-      IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
-        LaCyTools_summary(), data_type(), quantitation_clusters(), analyte_curated_data()
-      )
+      # First check if there are both total and specific samples
+      # If that is the case, quantify only IgG1 for specific samples
+      if ("group" %in% colnames(LaCyTools_summary())) {
+        IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
+          LaCyTools_summary() %>% dplyr::filter(group == keyword_specific()),
+          data_type(),
+          quantitation_clusters(),
+          analyte_curated_data() %>% dplyr::filter(group == keyword_specific())
+        ) 
+      } else {
+        IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
+          LaCyTools_summary(), data_type(), quantitation_clusters(), analyte_curated_data()
+        )
+      }
       ratios <- calculate_IgG1_ratios(IgG1_sum_intensities, quantitation_clusters())
       return(ratios)
+    })
+    
+    
+    # Update checkboxes if required
+    observeEvent(IgG1_ratios(), {
+      if ("glyco_ratio" %in% colnames(IgG1_ratios()) & 
+          "GPS_ratio" %in% colnames(IgG1_ratios())) {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "chosen_peptides",
+          choices = c("Glycopeptides", "GPSVFPLAPSSK"),
+          selected = c("Glycopeptides", "GPSVFPLAPSSK")
+        )
+      } else if ("glyco_ratio" %in% colnames(IgG1_ratios())) {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "chosen_peptides",
+          choices = c("Glycopeptides"),
+          selected = c("Glycopeptides")
+        )
+      } else {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "chosen_peptides",
+          choices = c("GPSVFPLAPSSK"),
+          selected = c("GPSVFPLAPSSK")
+        )
+      }
     })
     
     
@@ -253,6 +284,21 @@ mod_quantitation_server <- function(id, quantitation_clusters,
       req(IgG1_ratios(), input$silumab_amount)
       calculate_IgG1_amounts(IgG1_ratios(), input$chosen_peptides, input$silumab_amount)
     }) %>% bindEvent(input$quantify_IgG1)
+    
+    # If normalized data changes: tell users to re-quantify IgG1
+    observeEvent(IgG1_ratios(), {
+      req(IgG1_amounts()) # Only if quantitation was already performed
+      showNotification(
+        id = ns("msg_data_changed"),
+        'Changes were made to your data.
+        Please re-quantify your antigen-specific IgG1 by clicking the
+        "Quantify IgG1" button.',
+        type = "warning", duration = NULL,
+        closeButton = FALSE
+      )
+    })
+    # Remove notification when button is pushed
+    observeEvent(input$quantify_IgG1, removeNotification(ns("msg_data_changed")))
     
     
     # Create peptide correlation plots.
@@ -278,6 +324,11 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         # See if sample types should be excluded from the correlation
         samples_to_exclude <- stringr::str_remove(input$exclude_samples, " samples")
         
+        # Color palette for plot
+        sample_types <- unique(IgG1_amounts()$sample_type)
+        colors <- color_palette(length(sample_types))
+        color_palette <- setNames(colors, sample_types)
+        
         if (!is_truthy(input$exclude_samples)) {
           to_plot <- IgG1_amounts()
         } else if ("group" %in% colnames(results_normalization$normalized_data())) {
@@ -291,7 +342,7 @@ mod_quantitation_server <- function(id, quantitation_clusters,
         
         # Create tabs and plots.
         purrr::imap(tab_ids, function(tab_id, i) {
-          plot <- plot_peptide_correlation(to_plot, tab_id, input$silumab_amount)
+          plot <- plot_peptide_correlation(to_plot, tab_id, input$silumab_amount, color_palette)
           
           # Add the plot to reactiveValues vector, to show it in the report later.
           r$peptide_correlation_plots[[i]] <- plot
@@ -341,8 +392,13 @@ mod_quantitation_server <- function(id, quantitation_clusters,
     
     output$data_table <- DT::renderDT({
       req(with_data())
-      DT::datatable(data = with_data(),
-                    options = list(scrollX = TRUE))
+      DT::datatable(data = with_data() %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 6,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ), filter = "top")
     })
     
     
