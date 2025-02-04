@@ -1,3 +1,8 @@
+# v1.6.6
+## Bug fixes
+* Data import: remove leading or trailing spaces from analyte names.
+
+
 # v1.6.5
 ## Adjustments
 * Sort glycan compositions in the heatmaps of the normalized data.

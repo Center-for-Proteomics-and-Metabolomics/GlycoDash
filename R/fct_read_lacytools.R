@@ -317,7 +317,9 @@ lengthen_block <- function(block, metadata = NULL) {
                         names_to = "analyte",
                         values_to = tidyselect::all_of(new_output_name)) %>% 
     dplyr::mutate(charge = charge_value) %>% 
-    dplyr::relocate(charge, .before = all_of(new_output_name))
+    dplyr::relocate(charge, .before = all_of(new_output_name)) %>% 
+    # Remove leading or trailing spaces from analyte
+    dplyr::mutate(analyte = trimws(analyte))
   
   return(long_block)
 }
@@ -422,17 +424,18 @@ get_analytes_info <- function(data, variable) {
   colnames(analytes_info) <- unlist(analytes_info[1, ])
   colnames(analytes_info)[1] <- "info_variables"
   
-  analytes_info <- suppressMessages(tibble::as_tibble(analytes_info,
-                                                      .name_repair = "universal"))
-  
+  # .name_repair is used in case of duplicate analytes
+  analytes_info <- suppressMessages(tibble::as_tibble(analytes_info,  name_repair = "universal"))
+
   # Pivot the dataframe and do some formatting:
   analytes_info <- analytes_info %>%
-    # dplyr::slice(n = -1) %>% 
     dplyr::slice(-1) %>% 
     tidyr::pivot_longer(cols = -info_variables,
                         names_to = "analyte", 
                         values_to = "value") %>%
     tidyr::pivot_wider(names_from = info_variables) %>% 
+    # Remove leading or trailing spaces from the analyte column
+    dplyr::mutate(analyte = trimws(analyte)) %>% 
     # I don't rename the columns directly using new_name = old_name, because in
     # different versions of LaCyTools these columns are named differently
     # ("Exact mass of most abundant isotopologue" in one version and
@@ -443,6 +446,7 @@ get_analytes_info <- function(data, variable) {
                                               function(x) stringr::str_remove_all(x, 
                                                                                   "[\\[\\]]"))) %>% 
     dplyr::mutate(dplyr::across(-analyte, ~ suppressWarnings(as.numeric(.x))))
+  
   return(analytes_info)
 }
 
