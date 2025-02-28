@@ -373,7 +373,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       if (input$curation_method == "Per sample") {
         shinyjs::hide("cut_offs_per_cluster")
       } else {
-        shinyjs::show("cut_offs_per_cluster")
+        shinyjs::show("cut_offs_per_")
       }
       
       shinyjs::toggle("cut-off", input$cut_offs_per_cluster == FALSE)
