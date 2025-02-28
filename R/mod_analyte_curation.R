@@ -369,6 +369,13 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     # Show and hide UI based on the chosen method:
     observe({
+      
+      if (input$curation_method == "Per sample") {
+        shinyjs::hide("cut_offs_per_cluster")
+      } else {
+        shinyjs::show("cut_offs_per_cluster")
+      }
+      
       shinyjs::toggle("cut-off", input$cut_offs_per_cluster == FALSE)
       shinyjs::toggle("curation_method",
                       condition = input$method == "Curate analytes based on data")
