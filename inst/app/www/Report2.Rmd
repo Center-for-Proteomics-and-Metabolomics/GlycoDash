@@ -1,5 +1,5 @@
 ---
-title: "GlycoDash v1.6.5 data processing report"
+title: "GlycoDash v1.6.6 data processing report"
 output: 
   html_document:
     toc: TRUE
@@ -173,15 +173,17 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
     text <- paste0(params$ignore_samples, collapse = ", ")
       cat(
       "- Curation method: based on all data\n",
-      paste("- Samples excluded from analyte curation:", text, "\n"),
+      paste("- Sample types excluded from analyte curation:", text, "\n"),
       "- Cut-off percentages:",
       paste(names(params$cut_offs), ": ", params$cut_offs, "%, ", sep = "", collapse = "\n")
       )
   } else if (params$analyte_curation_choice == "Per biological group") {
-    text <- paste0(params$groups_to_ignore, collapse = ", ")
+    text1 <- paste0(params$ignore_samples, collapse = ", ")
+    text2 <- paste0(params$groups_to_ignore, collapse = ", ")
     cat(
       "- Curation method: per biological group\n",
-      paste("- Biological groups excluded from analyte curation:", text, "\n"),
+      paste("- Sample types excluded from analyte curation:", text1, "\n"),
+      paste("- Biological groups excluded from analyte curation:", text2, "\n"),
       "- Cut-off percentages:",
       paste(names(params$cut_offs), ": ", params$cut_offs, "%, ", sep = "", collapse = "\n")
     )

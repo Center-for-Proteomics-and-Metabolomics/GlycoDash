@@ -1,3 +1,13 @@
+# v1.6.6
+## Adjustments
+* Data import: remove leading or trailing spaces from entries in character columns.
+
+# Bug fixes
+* List excluded sample types in the HTML report when curating analytes per 
+biological group.
+* Minor bug fixes in UI.
+
+
 # v1.6.5
 ## Adjustments
 * Sort glycan compositions in the heatmaps of the normalized data.
