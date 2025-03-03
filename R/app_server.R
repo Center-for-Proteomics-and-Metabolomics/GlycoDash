@@ -69,7 +69,10 @@ app_server <- function( input, output, session ) {
     results_quantitation = results_quantitation)
   
   results_site_occupancy <- mod_site_occupancy_server(
-    id = "site_occupancy_ui_1"
+    id = "site_occupancy_ui_1",
+    results_normalization = results_normalization,
+    results_quantitation = results_quantitation,
+    results_derived_traits = results_derived_traits
   )
   
   results_repeatability <- mod_repeatability_server(

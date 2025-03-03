@@ -190,7 +190,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       ) %>% 
         dplyr::select(sample_name, sample_type, sample_id, 
                       cluster, total_absolute_intensity) %>% 
-        dplyr::mutate(cluster = paste0(cluster, "_peptide_intensity")) %>% 
+        dplyr::mutate(cluster = paste0(cluster, "1_peptide_intensity")) %>% 
         tidyr::pivot_wider(names_from = cluster, 
                            values_from = total_absolute_intensity)
     })
