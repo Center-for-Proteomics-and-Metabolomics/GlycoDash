@@ -168,16 +168,38 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         results_analyte_curation$analyte_curated_data()
       }
     }) 
-
-    total_intensities <- reactive({
+    
+    # Calculate total intensities for glycans
+    total_intensities_glycans <- reactive({
       req(analyte_curated_data())
-      calculate_total_intensity(data = analyte_curated_data(), data_type = data_type())
+      calculate_total_intensity(
+        data = analyte_curated_data() %>% 
+          dplyr::filter(analyte != paste0(cluster, "1")), 
+        data_type = data_type()
+      )
     })
+    
+    # Calculate total intensities for non-glycosylated peptides.
+    # Format such that it can be merged with normalized data in wide format.
+    total_intensities_peptides <- reactive({
+      req(analyte_curated_data())
+      calculate_total_intensity(
+        data = analyte_curated_data() %>% 
+          dplyr::filter(analyte == paste0(cluster, "1")),
+        data_type = data_type()
+      ) %>% 
+        dplyr::select(sample_name, sample_type, sample_id, 
+                      cluster, total_absolute_intensity) %>% 
+        dplyr::mutate(cluster = paste0(cluster, "_peptide_intensity")) %>% 
+        tidyr::pivot_wider(names_from = cluster, 
+                           values_from = total_absolute_intensity)
+    })
+    
     
     # Normalized data is in long format
     normalized_data <- reactive({
-      req(total_intensities())
-      data <- normalize_data(total_intensities = total_intensities()) %>% 
+      req(total_intensities_glycans())
+      data <- normalize_data(total_intensities = total_intensities_glycans()) %>% 
         # Sort by glycan composition
         tidyr::separate(analyte, into = c("cluster", "analyte"),
                         sep = "1", extra = "merge") %>% 
@@ -227,7 +249,11 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         dplyr::group_by(sample_name) %>% 
         tidyr::fill(replicates:last_col(), .direction = "downup") %>% 
         dplyr::ungroup() %>% 
-        dplyr::distinct()
+        dplyr::distinct() %>% 
+        # Add non-glycosylated peptide intensities
+        dplyr::left_join(., total_intensities_peptides()) %>% 
+        dplyr::relocate(tidyselect::contains("peptide_intensity"), 
+                        .after = tidyselect::contains("sum_intensity"))
     })
     
     output$data_table <- DT::renderDT({

@@ -302,7 +302,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     })
     
     
-    # If quantitation is done: exlude quantitation clusters except IgG1 glycopeptides
+    # If quantitation is done: exlude quantitation clusters except IgG1 glycopeptides.
     data_to_check <- reactive({
       req(results_data_import$LaCyTools_summary())
       if (is_truthy(results_data_import$quantitation_clusters())) {
@@ -366,11 +366,15 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     })
     
     
-    
-    # Analyte quality criteria checks summarized per cluster per sample: 
+    # Analyte quality criteria checks summarized per cluster per sample.
+    # Exclude non-glycosylated peptides for site occupancy calculations
     summarized_checks <- reactive({
       req(checked_data())
-      summarize_spectra_checks(checked_data(), results_data_import$data_type())
+      summarize_spectra_checks(
+        checked_data = checked_data() %>% 
+          dplyr::filter(analyte != paste0(cluster, "1")), 
+        data_type = results_data_import$data_type()
+      )
     })
     
     observe({
@@ -577,7 +581,6 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                      summarized_checks = summarized_checks(),
                      cut_offs = cut_offs_to_use_all_clusters())
     }) %>% bindEvent(input$button)
-    
     
     # Tell users to re-perform spectra curation when data is updated
     # after curating the spectra earlier.
