@@ -1,6 +1,11 @@
 # v1.6.6
-## Bug fixes
-* Data import: remove leading or trailing spaces from analyte names.
+## Adjustments
+* Data import: remove leading or trailing spaces from entries in character columns.
+
+# Bug fixes
+* List excluded sample types in the HTML report when curating analytes per 
+biological group.
+* Minor bug fixes in UI.
 
 
 # v1.6.5
