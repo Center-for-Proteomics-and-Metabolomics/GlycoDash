@@ -803,7 +803,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       # Get data with non-glycosylated peptides
       non_glycosylated <- passing_spectra() %>% 
         dplyr::filter(analyte == paste0(cluster, "1")) %>% 
-        # Rearrang columns to combine with to_return
+        # Rearrange columns to combine with to_return
         dplyr::select(colnames(to_return))
       
       # Return

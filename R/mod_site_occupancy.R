@@ -32,12 +32,12 @@ mod_site_occupancy_ui <- function(id) {
       fluidRow(h1("Site occupancy")),
       fluidRow(
         column(
-          width = 5,
+          width = 6,
           shinydashboardPlus::box(
             id = ns("box1"),
             title = div(
               id = ns("box_header1"),
-              "Calculate occupancy of glycosylation sites",
+              "Non-glycosylated peptides",
               icon("info-circle", class = "ml") %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
@@ -66,87 +66,188 @@ mod_site_occupancy_ui <- function(id) {
               style = "color:#0021B8; font-size: 16px"
             ),
             # Detected clusters in table
-            div(
-              id = ns("info_clusters"),
-              HTML("
-                <strong> 
-                The following non-glycosylated peptides were detected: 
-                </strong> 
-                <br> <br>
-              ")
-            ),
-            tableOutput(ns("peptides_table")),
-            # Option to exclude peptides from calculation
-            selectizeInput(
-              ns("excluded_peptides"),
-              "Peptides to exclude from site occupancy calculations:",
-              choices = c(""), 
-              multiple = TRUE
-            )
+            DT::dataTableOutput(ns("peptides_table"))
           )
+        ),
+        column(
+          width = 6,
+          shinydashboardPlus::box(
+            id = ns("box2"),
+            title = div(
+              id = ns("box_header2"),
+              "Quality check",
+              icon("info-circle", class = "ml") %>% 
+                bsplus::bs_embed_popover(
+                  title = "Explanation",
+                  content = HTML("Text..."),
+                  trigger = "hover",
+                  placement = "bottom",
+                  html = "true"
+                )
+            ),
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot")))
+          )
+        ),
+      ),
+      fluidRow(
+        shinydashboard::box(
+          title = "View data with site occupancies",
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          DT::dataTableOutput(ns("data_table"))
         )
       )
     )
   )
 }
-    
+ 
+
+   
 #' site_occupancy Server Functions
 #'
 #' @noRd 
 mod_site_occupancy_server <- function(id,
+                                      results_analyte_curation,
                                       results_normalization,
                                       results_quantitation,
-                                      results_derived_traits ){
+                                      results_derived_traits) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
+    # Get quality info on peptides
+    peptides_quality <- reactive({
+      req(results_analyte_curation$analyte_curated_data())
+      data <- results_analyte_curation$analyte_curated_data() %>% 
+        dplyr::filter(analyte == paste0(cluster, "1")) %>% 
+        dplyr::select(sample_name, sample_id, sample_type, cluster, analyte, charge,
+                      tidyselect::any_of(c(
+                        "group",
+                        "absolute_intensity_background_subtracted",
+                        "mass_accuracy_ppm",
+                        "isotopic_pattern_quality",
+                        "sn",
+                        "fraction",
+                        "total_area",
+                        "isotope_dot_product"
+                      )))
+      if (nrow(data) > 0) {
+        data
+      } else{
+        NULL
+      }
+    })
+    
+
+    # Generate table with peptides and charge states
+    peptides_table <- reactive({
+      req(peptides_quality())
+      peptides_quality() %>%
+        dplyr::select(cluster, charge) %>%
+        dplyr::distinct() %>%
+        dplyr::rename(Peptide = cluster, Charge = charge)
+    })
+    
+    # Show detected peptides and charge states in table with checkboxes
+    output$peptides_table <- DT::renderDataTable({
+      req(peptides_table())
+      data <- peptides_table()
+      
+      # Add checkboxes
+      data$`Include in calculations` <- sapply(1:nrow(data), function(i) {
+        HTML(paste0('<input type="checkbox" id="checkbox_', i, '" checked>'))
+      })
+      
+      # Render the DataTable
+      DT::datatable(
+        data = data,
+        escape = FALSE,
+        selection = "none",
+        options = list(
+          searching = FALSE,
+          paging = FALSE
+        )
+      )
+    })
+    
+
+    # Normalized data in wide format
     normalized_data_wide <- reactive({
       req(results_normalization$normalized_data_wide())
       results_normalization$normalized_data_wide()
     })
     
     
-    # Check for non-glycosylated peptides
-    peptides <- reactive({
+    # Get intensities of peptides
+    peptides_intensities <- reactive({
       req(normalized_data_wide())
       colnames <- colnames(normalized_data_wide())[
         grepl("1_peptide_intensity", colnames(normalized_data_wide()))
       ]
-      
       peptides <- gsub("1_peptide_intensity", "", colnames)
-      
       if (length(peptides) > 0) {
-        return(peptides)
+        peptides
       } else {
-        return(NULL)
+        NULL
       }
     })
     
-    # Show the peptides in a table
-    output$peptides_table <- renderTable({
-      data.frame(peptides())
-    }, striped = TRUE, bordered = TRUE, rownames = TRUE, colnames = FALSE, align = "l")
+    
+    # Calculate site occupancies
+    site_occupancy <- reactive({
+      req(peptides_intensities())
+      include <- peptides_intensities()[!peptides_intensities() %in% input$excluded_peptides]
+      data <- normalized_data_wide()
+      for (peptide in include) {
+        formula <- create_expr_ls(paste0(
+          peptide, "_site_occupancy = ", peptide, "1_peptide_intensity / ",
+          peptide, "_sum_intensity * 100"
+        ))
+        data <- data %>% 
+          dplyr::mutate(!!! formula, .after = tidyselect::contains("_peptide_intensity"))
+      }
+      return(data)
+    })
+    
+  
+    # TODO Combine data with IgG1 quantities and/or traits
+    data_combined <- reactive({
+      req(site_occupancy())
+      site_occupancy()
+    })
     
     
+    # Show data in table
+    output$data_table <- DT::renderDT({
+      req(data_combined())
+      DT::datatable(data = data_combined() %>% 
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 6,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ), filter = "top")
+    })
     
+    
+    # Toggle UI
     observe({
-      if (is_truthy(peptides())) {
+      if (is_truthy(peptides_intensities())) {
         shinyjs::hide("no_peptides")
-        shinyjs::show("info_clusters")
-        shinyjs::show("peptides_table")
-        shinyjs::show("excluded_peptides")
-        
-        updateSelectizeInput(inputId = "excluded_peptides", 
-                             choices = peptides(),
-                             options = list(maxItems = length(peptides()) - 1))
-        
+        shinyjs::show("plot")
       } else {
         shinyjs::show("no_peptides")
-        shinyjs::hide("info_clusters")
-        shinyjs::hide("peptides_table")
-        shinyjs::hide("excluded_peptides")
+        shinyjs::hide("plot")
       }
     })
+    
     
   })
 }
+
+
+
+

@@ -70,6 +70,7 @@ app_server <- function( input, output, session ) {
   
   results_site_occupancy <- mod_site_occupancy_server(
     id = "site_occupancy_ui_1",
+    results_analyte_curation = results_analyte_curation,
     results_normalization = results_normalization,
     results_quantitation = results_quantitation,
     results_derived_traits = results_derived_traits
