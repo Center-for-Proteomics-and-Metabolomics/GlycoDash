@@ -66,7 +66,24 @@ mod_site_occupancy_ui <- function(id) {
               style = "color:#0021B8; font-size: 16px"
             ),
             # Detected clusters in table
-            DT::dataTableOutput(ns("peptides_table"))
+            div(
+              id = ns("info_clusters"),
+              HTML("
+                <strong> 
+                The following non-glycosylated peptide ions were detected
+                and can be used to calculate the corresponding site occupancies:
+                </strong> 
+                <br> <br>
+              ")
+            ),
+            tableOutput(ns("peptides_table")),
+            # Option to exclude peptides from calculation
+            selectizeInput(
+              ns("exclude_peptides"),
+              "Peptide ions to exclude from site occupancy calculations:",
+              choices = c(""), 
+              multiple = TRUE
+            )
           )
         ),
         column(
@@ -150,29 +167,23 @@ mod_site_occupancy_server <- function(id,
         dplyr::distinct() %>%
         dplyr::rename(Peptide = cluster, Charge = charge)
     })
-    
-    # Show detected peptides and charge states in table with checkboxes
-    output$peptides_table <- DT::renderDataTable({
+
+    output$peptides_table <- renderTable({
       req(peptides_table())
-      data <- peptides_table()
-      
-      # Add checkboxes
-      data$`Include in calculations` <- sapply(1:nrow(data), function(i) {
-        HTML(paste0('<input type="checkbox" id="checkbox_', i, '" checked>'))
-      })
-      
-      # Render the DataTable
-      DT::datatable(
-        data = data,
-        escape = FALSE,
-        selection = "none",
-        options = list(
-          searching = FALSE,
-          paging = FALSE
-        )
+      peptides_table()
+    }, striped = TRUE, bordered = TRUE, rownames = TRUE, align = "c")
+    
+    # Create choices for peptide ions that can be excluded
+    observeEvent(peptides_table(), {
+      choices <- peptides_table() %>% 
+        dplyr::mutate(ion = paste0(Peptide, ", ", Charge)) %>% 
+        dplyr::pull(ion)
+      updateSelectizeInput(
+        inputId = "exclude_peptides",
+        choices = choices,
+        options = list(maxItems = length(choices) - 1)
       )
     })
-    
 
     # Normalized data in wide format
     normalized_data_wide <- reactive({
@@ -237,9 +248,13 @@ mod_site_occupancy_server <- function(id,
     observe({
       if (is_truthy(peptides_intensities())) {
         shinyjs::hide("no_peptides")
+        shinyjs::show("info_clusters")
+        shinyjs::show("exclude_peptides")
         shinyjs::show("plot")
       } else {
         shinyjs::show("no_peptides")
+        shinyjs::hide("info_clusters")
+        shinyjs::hide("exclude_peptides")
         shinyjs::hide("plot")
       }
     })
