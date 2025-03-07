@@ -200,6 +200,7 @@ mod_site_occupancy_server <- function(id,
       plotly::ggplotly(quality_plot(), tooltip = "text")
     })
     
+    
     # Create choices for peptide ions that can be excluded
     observeEvent(peptides_table(), {
       choices <- peptides_table() %>% 
@@ -213,6 +214,7 @@ mod_site_occupancy_server <- function(id,
     
     
     # Calculate intensities of peptides
+    # TODO: use functions
     peptides_intensities <- reactive({
       req(peptides_quality())
       data <- peptides_quality() %>% 
@@ -259,6 +261,7 @@ mod_site_occupancy_server <- function(id,
     
     
     # Calculate site occupancies
+    # TODO: write a function
     site_occupancy <- reactive({
       req(peptides_intensities(), results_normalization$normalized_data_wide())
       peptides <- peptides_table()$Peptide
@@ -282,10 +285,19 @@ mod_site_occupancy_server <- function(id,
     })
   
   
-    # TODO Combine data with IgG1 quantities and/or traits
+    # Combine data with IgG1 quantities and/or traits
     data_combined <- reactive({
       req(site_occupancy())
-      site_occupancy()
+      if (is_truthy(results_derived_traits$data_with_traits())) {
+        dplyr::left_join(results_derived_traits$data_with_traits(), site_occupancy()) %>% 
+          dplyr::relocate(tidyselect::contains("site_occypancy"),
+                          .after = tidyselect::contains("sum_intensity"))
+      } else if (is_truthy(results_quantitation$quantitation_data())) {
+        dplyr::left_join(results_quantitation$quantitation_data(), site_occupancy()) %>% 
+          dplyr::relocate(IgG1_quantity_ng, .after = replicates)
+      } else {
+        site_occupancy()
+      }
     })
     
   
@@ -309,14 +321,15 @@ mod_site_occupancy_server <- function(id,
         shinyjs::show("info_clusters")
         shinyjs::show("exclude_peptides")
         shinyjs::show("plot")
+        shinyjs::show("mass_accuracy")
       } else {
         shinyjs::show("no_peptides")
         shinyjs::hide("info_clusters")
         shinyjs::hide("exclude_peptides")
         shinyjs::hide("plot")
+        shinyjs::hide("mass_accuracy")
       }
     })
-    
     
   })
 }
