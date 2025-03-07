@@ -215,77 +215,22 @@ mod_site_occupancy_server <- function(id,
     
     
     # Calculate intensities of peptides
-    # TODO: use functions
     peptides_intensities <- reactive({
       req(peptides_quality())
-      data <- peptides_quality() %>% 
-        dplyr::select(sample_name, sample_id, sample_type,
-                      cluster, charge, tidyselect::any_of(c(
-                        "group",
-                        "absolute_intensity_background_subtracted",
-                        "fraction",
-                        "total_area"
-                      ))) %>% 
-        # Ignore ions when applicable
-        dplyr::mutate(ion = paste0(cluster, ", ", charge), .after = charge) %>% 
-        dplyr::filter(!ion %in% input$exclude_peptides)
-      
-      if (nrow(data) == 0) {
-        return(NULL)
-      }
-      else if ("fraction" %in% colnames(data)) {
-        data <- data %>% 
-          dplyr::mutate(
-            intensity_by_fraction = absolute_intensity_background_subtracted / fraction
-          ) %>% 
-          dplyr::group_by(sample_name, cluster) %>% 
-          dplyr::mutate(total_intensity = sum(intensity_by_fraction)) %>% 
-          dplyr::ungroup() %>% 
-          dplyr::select(sample_name, sample_id, sample_type, cluster,
-                        tidyselect::any_of(c("group")), total_intensity) %>% 
-          tidyr::pivot_wider(names_from = "cluster", values_from = "total_intensity")
-        
-        return(data)
-      } 
-      else {
-        data <- data %>% 
-          dplyr::group_by(sample_name, cluster) %>% 
-          dplyr::mutate(total_intensity = sum(total_area)) %>% 
-          dplyr::ungroup() %>% 
-          dplyr::select(sample_name, sample_id, sample_type, cluster,
-                        tidyselect::any_of(c("group")), total_intensity) %>% 
-          tidyr::pivot_wider(names_from = "cluster", values_from = "total_intensity")
-        
-        return(data)
-      }
+      calculate_peptides_intensities(peptides_quality(), input$exclude_peptides)
     })
     
     
     # Calculate site occupancies
-    # TODO: write a function
     site_occupancy <- reactive({
       req(peptides_intensities(), results_normalization$normalized_data_wide())
-      peptides <- peptides_table()$Peptide
-      peptides <- peptides[peptides %in% colnames(peptides_intensities())]
-      
-      data <- results_normalization$normalized_data_wide() %>% 
-        dplyr::left_join(., peptides_intensities())
-      
-      for (peptide in peptides) {
-        formula <- create_expr_ls(paste0(
-          # Divide glycopeptides sum intensity by glycopeptide + peptide sum intensity
-          peptide, "_site_occupancy = ", peptide, "_sum_intensity / ",
-          "(", peptide, " + ", peptide, "_sum_intensity) * 100"
-        ))
-        data <- data %>% 
-          dplyr::mutate(!!! formula, .after = tidyselect::contains("sum_intensity"))
-      }
-      
-      data <- data %>% 
-        dplyr::select(-peptides)
-      
-      return(data)
+      calculate_site_occupancy(
+        peptides_intensities(), 
+        results_normalization$normalized_data_wide(),
+        peptides_table()
+      )
     })
+    
   
   
     # Combine data with IgG1 quantities and/or traits
@@ -339,7 +284,7 @@ mod_site_occupancy_server <- function(id,
       site_occupancy_data = data_combined,
       quality_plot = quality_plot,
       mass_accuracy = reactive(input$mass_accuracy),
-      excluded_peptides = reactive(input$excluded_peptides)
+      exclude_peptides = reactive(input$exclude_peptides)
     ))
     
   })

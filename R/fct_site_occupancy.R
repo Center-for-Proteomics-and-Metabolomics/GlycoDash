@@ -1,4 +1,83 @@
 
+# Calculate total intensities of non-glycosylated peptides
+calculate_peptides_intensities <- function(peptides_quality,
+                                           exclude_peptides) {
+  
+  data <- peptides_quality %>% 
+    dplyr::select(sample_name, sample_id, sample_type,
+                  cluster, charge, tidyselect::any_of(c(
+                    "group",
+                    "absolute_intensity_background_subtracted",
+                    "fraction",
+                    "total_area"
+                  ))) %>% 
+    # Ignore ions when applicable
+    dplyr::mutate(ion = paste0(cluster, ", ", charge), .after = charge) %>% 
+    dplyr::filter(!ion %in% exclude_peptides)
+  
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
+  
+  else if ("fraction" %in% colnames(data)) {
+    data <- data %>% 
+      dplyr::mutate(
+        intensity_by_fraction = absolute_intensity_background_subtracted / fraction
+      ) %>% 
+      dplyr::group_by(sample_name, cluster) %>% 
+      dplyr::mutate(total_intensity = sum(intensity_by_fraction)) %>% 
+      dplyr::ungroup() %>% 
+      dplyr::select(sample_name, sample_id, sample_type, cluster,
+                    tidyselect::any_of(c("group")), total_intensity) %>% 
+      tidyr::pivot_wider(names_from = "cluster", values_from = "total_intensity")
+    
+    return(data)
+  } 
+  
+  else {
+    data <- data %>% 
+      dplyr::group_by(sample_name, cluster) %>% 
+      dplyr::mutate(total_intensity = sum(total_area)) %>% 
+      dplyr::ungroup() %>% 
+      dplyr::select(sample_name, sample_id, sample_type, cluster,
+                    tidyselect::any_of(c("group")), total_intensity) %>% 
+      tidyr::pivot_wider(names_from = "cluster", values_from = "total_intensity")
+    
+    return(data)
+  }
+}
+
+
+
+# Calculate site occupancies
+calculate_site_occupancy <- function(peptides_intensities,
+                                     normalized_data_wide,
+                                     peptides_table) {
+  
+  peptides <- peptides_table$Peptide
+  peptides <- peptides[peptides %in% colnames(peptides_intensities)]
+  
+  data <- normalized_data_wide %>% 
+    dplyr::left_join(., peptides_intensities)
+  
+  for (peptide in peptides) {
+    formula <- create_expr_ls(paste0(
+      # Divide glycopeptides sum intensity by glycopeptide + peptide sum intensity
+      peptide, "_site_occupancy = ", peptide, "_sum_intensity / ",
+      "(", peptide, " + ", peptide, "_sum_intensity) * 100"
+    ))
+    data <- data %>% 
+      dplyr::mutate(!!! formula, .after = tidyselect::contains("sum_intensity"))
+  }
+  
+  data <- data %>% 
+    dplyr::select(-peptides)
+  
+  return(data)
+}
+
+
+
 # Summarize QC criteria per ion, and for total/specific
 summarize_peptides_quality <- function(peptides_quality,
                                        ipq,
@@ -55,6 +134,8 @@ summarize_peptides_quality <- function(peptides_quality,
 
 
 
+
+# Quality plot for the non-glycosylated peptides
 peptides_quality_plot <- function(peptides_quality_summary) {
   
   n_colors <- length(unique(peptides_quality_summary$cluster))
