@@ -44,12 +44,13 @@ mod_site_occupancy_ui <- function(id) {
                   content = HTML("
                     When a non-glycosylated peptide for a glycosylation site is
                     present in your data, the corresponding site occupancy can be
-                    calculated by the diving the sum intensity of the glycopeptides
-                    by the intensity of the non-glycosylated peptide.
+                    calculated by dividing the intensity of the glycopeptides
+                    by the summed intensity of the both the glycopeptides and the 
+                    non-glycosylated peptide, and multiplying by 100%.
                     <br><br>
-                    You can choose to exclude a non-glycosylated peptide from 
+                    You can choose to exclude non-glycosylated peptide ions from 
                     the site occupancy calculations (e.g., when the quality 
-                    of the data is insufficient.)
+                    of the data is insufficient for a charge state.)
                   "),
                   trigger = "hover",
                   placement = "bottom",
@@ -272,7 +273,9 @@ mod_site_occupancy_server <- function(id,
       
       for (peptide in peptides) {
         formula <- create_expr_ls(paste0(
-          peptide, "_site_occupancy = ", peptide, " / ", peptide, "_sum_intensity * 100"
+          # Divide glycopeptides sum intensity by glycopeptide + peptide sum intensity
+          peptide, "_site_occupancy = ", peptide, "_sum_intensity / ",
+          "(", peptide, " + ", peptide, "_sum_intensity) * 100"
         ))
         data <- data %>% 
           dplyr::mutate(!!! formula, .after = tidyselect::contains("sum_intensity"))
@@ -290,7 +293,7 @@ mod_site_occupancy_server <- function(id,
       req(site_occupancy())
       if (is_truthy(results_derived_traits$data_with_traits())) {
         dplyr::left_join(results_derived_traits$data_with_traits(), site_occupancy()) %>% 
-          dplyr::relocate(tidyselect::contains("site_occypancy"),
+          dplyr::relocate(tidyselect::contains("site_occupancy"),
                           .after = tidyselect::contains("sum_intensity"))
       } else if (is_truthy(results_quantitation$quantitation_data())) {
         dplyr::left_join(results_quantitation$quantitation_data(), site_occupancy()) %>% 
@@ -330,6 +333,14 @@ mod_site_occupancy_server <- function(id,
         shinyjs::hide("mass_accuracy")
       }
     })
+    
+    
+    return(list(
+      site_occupancy_data = data_combined,
+      quality_plot = quality_plot,
+      mass_accuracy = reactive(input$mass_accuracy),
+      excluded_peptides = reactive(input$excluded_peptides)
+    ))
     
   })
 }
