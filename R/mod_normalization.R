@@ -179,23 +179,6 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       )
     })
     
-    # Calculate total intensities for non-glycosylated peptides.
-    # Format such that it can be merged with normalized data in wide format.
-    total_intensities_peptides <- reactive({
-      req(analyte_curated_data())
-      calculate_total_intensity(
-        data = analyte_curated_data() %>% 
-          dplyr::filter(analyte == paste0(cluster, "1")),
-        data_type = data_type()
-      ) %>% 
-        dplyr::select(sample_name, sample_type, sample_id, 
-                      cluster, total_absolute_intensity) %>% 
-        dplyr::mutate(cluster = paste0(cluster, "1_peptide_intensity")) %>% 
-        tidyr::pivot_wider(names_from = cluster, 
-                           values_from = total_absolute_intensity)
-    })
-    
-    
     # Normalized data is in long format
     normalized_data <- reactive({
       req(total_intensities_glycans())
@@ -249,11 +232,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         dplyr::group_by(sample_name) %>% 
         tidyr::fill(replicates:last_col(), .direction = "downup") %>% 
         dplyr::ungroup() %>% 
-        dplyr::distinct() %>% 
-        # Add non-glycosylated peptide intensities
-        dplyr::left_join(., total_intensities_peptides()) %>% 
-        dplyr::relocate(tidyselect::contains("peptide_intensity"), 
-                        .after = tidyselect::contains("sum_intensity"))
+        dplyr::distinct()
     })
     
     output$data_table <- DT::renderDT({

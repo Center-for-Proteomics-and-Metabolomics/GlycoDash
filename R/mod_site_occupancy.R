@@ -173,6 +173,7 @@ mod_site_occupancy_server <- function(id,
       peptides_table()
     }, striped = TRUE, bordered = TRUE, rownames = TRUE, align = "c")
     
+    
     # Create choices for peptide ions that can be excluded
     observeEvent(peptides_table(), {
       choices <- peptides_table() %>% 
@@ -180,49 +181,80 @@ mod_site_occupancy_server <- function(id,
         dplyr::pull(ion)
       updateSelectizeInput(
         inputId = "exclude_peptides",
-        choices = choices,
-        options = list(maxItems = length(choices) - 1)
+        choices = choices
       )
     })
-
-    # Normalized data in wide format
-    normalized_data_wide <- reactive({
-      req(results_normalization$normalized_data_wide())
-      results_normalization$normalized_data_wide()
-    })
     
     
-    # Get intensities of peptides
+    # Calculate intensities of peptides
     peptides_intensities <- reactive({
-      req(normalized_data_wide())
-      colnames <- colnames(normalized_data_wide())[
-        grepl("1_peptide_intensity", colnames(normalized_data_wide()))
-      ]
-      peptides <- gsub("1_peptide_intensity", "", colnames)
-      if (length(peptides) > 0) {
-        peptides
-      } else {
-        NULL
+      req(peptides_quality())
+      data <- peptides_quality() %>% 
+        dplyr::select(sample_name, sample_id, sample_type,
+                      cluster, charge, tidyselect::any_of(c(
+                        "group",
+                        "absolute_intensity_background_subtracted",
+                        "fraction",
+                        "total_area"
+                      ))) %>% 
+        # Ignore ions when applicable
+        dplyr::mutate(ion = paste0(cluster, ", ", charge), .after = charge) %>% 
+        dplyr::filter(!ion %in% input$exclude_peptides)
+      
+      if (nrow(data) == 0) {
+        return(NULL)
+      }
+      else if ("fraction" %in% colnames(data)) {
+        data <- data %>% 
+          dplyr::mutate(
+            intensity_by_fraction = absolute_intensity_background_subtracted / fraction
+          ) %>% 
+          dplyr::group_by(sample_name, cluster) %>% 
+          dplyr::mutate(total_intensity = sum(intensity_by_fraction)) %>% 
+          dplyr::ungroup() %>% 
+          dplyr::select(sample_name, sample_id, sample_type, cluster,
+                        tidyselect::any_of(c("group")), total_intensity) %>% 
+          tidyr::pivot_wider(names_from = "cluster", values_from = "total_intensity")
+        
+        return(data)
+      } 
+      else {
+        data <- data %>% 
+          dplyr::group_by(sample_name, cluster) %>% 
+          dplyr::mutate(total_intensity = sum(total_area)) %>% 
+          dplyr::ungroup() %>% 
+          dplyr::select(sample_name, sample_id, sample_type, cluster,
+                        tidyselect::any_of(c("group")), total_intensity) %>% 
+          tidyr::pivot_wider(names_from = "cluster", values_from = "total_intensity")
+        
+        return(data)
       }
     })
     
     
     # Calculate site occupancies
     site_occupancy <- reactive({
-      req(peptides_intensities())
-      include <- peptides_intensities()[!peptides_intensities() %in% input$excluded_peptides]
-      data <- normalized_data_wide()
-      for (peptide in include) {
+      req(peptides_intensities(), results_normalization$normalized_data_wide())
+      peptides <- peptides_table()$Peptide
+      peptides <- peptides[peptides %in% colnames(peptides_intensities())]
+      
+      data <- results_normalization$normalized_data_wide() %>% 
+        dplyr::left_join(., peptides_intensities())
+      
+      for (peptide in peptides) {
         formula <- create_expr_ls(paste0(
-          peptide, "_site_occupancy = ", peptide, "1_peptide_intensity / ",
-          peptide, "_sum_intensity * 100"
+          peptide, "_site_occupancy = ", peptide, " / ", peptide, "_sum_intensity * 100"
         ))
         data <- data %>% 
-          dplyr::mutate(!!! formula, .after = tidyselect::contains("_peptide_intensity"))
+          dplyr::mutate(!!! formula, .after = tidyselect::contains("sum_intensity"))
       }
+      
+      data <- data %>% 
+        dplyr::select(-peptides)
+      
       return(data)
     })
-    
+  
   
     # TODO Combine data with IgG1 quantities and/or traits
     data_combined <- reactive({
@@ -230,7 +262,7 @@ mod_site_occupancy_server <- function(id,
       site_occupancy()
     })
     
-    
+  
     # Show data in table
     output$data_table <- DT::renderDT({
       req(data_combined())
@@ -246,7 +278,7 @@ mod_site_occupancy_server <- function(id,
     
     # Toggle UI
     observe({
-      if (is_truthy(peptides_intensities())) {
+      if (is_truthy(peptides_quality())) {
         shinyjs::hide("no_peptides")
         shinyjs::show("info_clusters")
         shinyjs::show("exclude_peptides")
