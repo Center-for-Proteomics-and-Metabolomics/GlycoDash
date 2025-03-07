@@ -105,7 +105,12 @@ mod_site_occupancy_ui <- function(id) {
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot")))
+            shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot"))),
+            sliderInput(
+              ns("mass_accuracy"),
+              "Acceptable mass accuracy (ppm)",
+              min = -50, max = 50, value = c(-20, 20)
+            )
           )
         ),
       ),
@@ -128,6 +133,7 @@ mod_site_occupancy_ui <- function(id) {
 #'
 #' @noRd 
 mod_site_occupancy_server <- function(id,
+                                      results_spectra_curation,
                                       results_analyte_curation,
                                       results_normalization,
                                       results_quantitation,
@@ -173,6 +179,26 @@ mod_site_occupancy_server <- function(id,
       peptides_table()
     }, striped = TRUE, bordered = TRUE, rownames = TRUE, align = "c")
     
+    
+    # Create a quality plot
+    quality_plot <- reactive({
+      req(peptides_quality())
+      summary <- summarize_peptides_quality(
+        peptides_quality = peptides_quality(),
+        ipq = results_spectra_curation$ipq(),
+        sn = results_spectra_curation$sn(),
+        idp = results_spectra_curation$idp(),
+        total_area = results_spectra_curation$total_area(),
+        mass_accuracy = input$mass_accuracy
+      )
+      plot <- peptides_quality_plot(summary)
+      return(plot)
+    })
+    
+    output$plot <- plotly::renderPlotly({
+      req(quality_plot())
+      plotly::ggplotly(quality_plot(), tooltip = "text")
+    })
     
     # Create choices for peptide ions that can be excluded
     observeEvent(peptides_table(), {
