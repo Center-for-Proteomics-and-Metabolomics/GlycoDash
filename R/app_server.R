@@ -87,6 +87,7 @@ app_server <- function( input, output, session ) {
     id = "data_exploration_ui_1",
     results_derived_traits = results_derived_traits,
     results_quantitation = results_quantitation,
+    results_site_occupancy = results_site_occupancy,
     results_normalization = results_normalization)
   
   
