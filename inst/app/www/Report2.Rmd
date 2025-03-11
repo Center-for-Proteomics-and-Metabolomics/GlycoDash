@@ -35,6 +35,9 @@ params:
   formulas: NA
   custom_formulas: NA
   intensity_plots: NA
+  site_occupancy_plot: NA
+  site_occupancy_excluded_peptides: NA
+  site_occupancy_mass_error: NA
   repeatability: NA
   data_exploration: NA
   silumab_amount: NA
@@ -338,6 +341,23 @@ if (!is.null(params$intensity_plots)) {
 }
 
 ```
+
+## Site occupancy
+```{r site_occupancy_plot, results='asis'}
+
+if (!is.null(params$site_occupancy_plot)) {
+  cat("### Non-glycosylated peptides quality plot \n")
+  print(htmltools::tagList(plotly::ggplotly(params$site_occupancy_plot)))
+  cat("\n \n Acceptable mass error range (ppm): ", 
+      min(params$site_occupancy_mass_error), 
+      " - ", max(params$site_occupancy_mass_error))
+  cat("\n \n Peptide ions excluded from site occupancy calculations: ", paste0(
+    params$site_occupancy_excluded_peptides, collaps = ", "
+  ))
+}
+
+```
+
 
 ## Repeatability
 

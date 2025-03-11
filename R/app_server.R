@@ -93,6 +93,7 @@ app_server <- function( input, output, session ) {
   
   mod_export_server(
     id = "export_ui_1",
+    results_site_occupancy = results_site_occupancy,
     results_derived_traits = results_derived_traits,
     results_quantitation = results_quantitation,
     results_data_import = results_data_import,
