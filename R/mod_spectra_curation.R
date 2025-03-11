@@ -153,7 +153,7 @@ mod_spectra_curation_ui <- function(id){
                 column(
                   width = 12,
                   tags$p(paste(
-                    "Each spectrum will be curated based on its sum intensity",
+                    "Each glycopeptide spectrum will be curated based on its sum intensity",
                     "and its percentage of passing analytes. Cut-off values",
                     "are calculated for both of these parameters.",
                     "The way this calculation is performed depends on the chosen",
@@ -377,6 +377,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       )
     })
     
+    
     observe({
 
       shinyjs::toggle("controls_module",
@@ -420,9 +421,12 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       }
     })
     
+    # Glycopeptide clusters
     clusters <- reactive({
       req(data_to_check())
-      unique(data_to_check()$cluster)
+      data <- data_to_check() %>% 
+        dplyr::filter(analyte != paste0(cluster, "1"))
+      return(unique(data$cluster))
     })
     
     created_tabs <- reactiveValues(clusters = c(""))
