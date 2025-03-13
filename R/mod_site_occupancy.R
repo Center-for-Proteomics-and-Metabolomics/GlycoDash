@@ -107,6 +107,7 @@ mod_site_occupancy_ui <- function(id) {
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
+            downloadButton(ns("download"), "Download quality details"),
             shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot"))),
             sliderInput(
               ns("mass_accuracy"),
@@ -165,6 +166,24 @@ mod_site_occupancy_server <- function(id,
         NULL
       }
     })
+    
+    # Allow for downloading of peptides quality
+    observe({
+      shinyjs::toggleState("download", is_truthy(peptides_table()))
+    })
+    
+    output$download <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        paste0(current_datetime, "_site_occupancy_peptides_quality.xlsx")
+      },
+      content = function(file) {
+        writexl::write_xlsx(
+          peptides_quality(),
+          path = file
+        )
+      }
+    )
     
 
     # Generate table with peptides and charge states
