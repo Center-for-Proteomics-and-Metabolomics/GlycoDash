@@ -124,6 +124,12 @@ mod_site_occupancy_ui <- function(id) {
               ns("mass_accuracy"),
               "Acceptable mass accuracy (ppm)",
               min = -50, max = 50, value = c(-20, 20)
+            ),
+            selectizeInput(
+              ns("exclude_sample_types"),
+              "Sample types to exclude from the quality assessment:",
+              choices = c(""), 
+              multiple = TRUE
             )
           )
         ),
@@ -212,11 +218,22 @@ mod_site_occupancy_server <- function(id,
     }, striped = TRUE, bordered = TRUE, rownames = TRUE, align = "c")
     
     
+    # Option to exclude sample types from quality assessment
+    observeEvent(peptides_quality(), {
+      sample_types <- as.character(unique(peptides_quality()$sample_type))
+      updateSelectizeInput(
+        inputId = "exclude_sample_types",
+        choices = c(sample_types),
+        options = list(maxItems = length(sample_types) - 1)
+      )
+    })
+    
     # Create a quality plot
     quality_plot <- reactive({
       req(peptides_quality())
       summary <- summarize_peptides_quality(
-        peptides_quality = peptides_quality(),
+        peptides_quality = peptides_quality() %>% 
+          dplyr::filter(!sample_type %in% input$exclude_sample_types),
         ipq = results_spectra_curation$ipq(),
         sn = results_spectra_curation$sn(),
         idp = results_spectra_curation$idp(),
