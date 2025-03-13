@@ -172,7 +172,8 @@ peptides_quality_plot <- function(peptides_quality_summary) {
       legend.position = "none"
     ) +
     ggplot2::labs(x = "", y = "Passing percentage")  + 
-    ggplot2::scale_fill_manual(values = color_palette(n_colors))
+    ggplot2::scale_fill_manual(values = color_palette(n_colors)) + 
+    ggplot2::scale_y_continuous(limits = c(0, 100))
   
   return(plot)
 }

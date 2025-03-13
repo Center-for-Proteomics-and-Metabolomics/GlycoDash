@@ -346,7 +346,7 @@ if (!is.null(params$intensity_plots)) {
 ```{r site_occupancy_plot, results='asis'}
 
 if (!is.null(params$site_occupancy_plot)) {
-  cat("### Non-glycosylated peptides quality plot \n")
+  cat("Non-glycosylated peptides quality plot \n")
   print(htmltools::tagList(plotly::ggplotly(params$site_occupancy_plot)))
   cat("\n \n Acceptable mass error range (ppm): ", 
       min(params$site_occupancy_mass_error), 
