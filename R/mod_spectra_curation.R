@@ -46,7 +46,7 @@ mod_spectra_curation_ui <- function(id){
                       tab. For an analyte to pass in a spectrum, it has to fulfill all three
                       quality criteria.
                       <br> <br>
-                      For each spectrum, the intensities of all passing analytes are summed.
+                      For each spectrum, the intensities of all passing glycopeptide analytes are summed.
                       The percentage of passing analytes is also calculated per spectrum. 
                       These values are shown in the interactive scatter plots. 
                       Spectra curation is performed based on the sum intensity of passing analytes 

@@ -98,7 +98,18 @@ mod_site_occupancy_ui <- function(id) {
               icon("info-circle", class = "ml") %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
-                  content = HTML("Text..."),
+                  content = HTML("
+                  For each non-glycosylated peptide ion in your data,
+                  the percentage of samples in which the ion fulfills three
+                  quality criteria is plotted. For S/N and IPQ (in the case 
+                  of LaCyTools data), or total area and IDP (in the case 
+                  of Skyline data), the same quality criteria that were used
+                  for spectral and analyte curation are applied.
+                  <br> <br>
+                  Because non-glycosylated peptides are often integrated without
+                  calibration, you may want to be more lenient when it comes to
+                  the acceptable mass error. This value can be set below.
+                  "),
                   trigger = "hover",
                   placement = "bottom",
                   html = "true"
