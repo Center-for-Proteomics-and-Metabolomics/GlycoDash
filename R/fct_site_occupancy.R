@@ -24,11 +24,13 @@ calculate_peptides_intensities <- function(peptides_quality,
       dplyr::mutate(
         intensity_by_fraction = absolute_intensity_background_subtracted / fraction
       ) %>% 
+      # Sum ion intensities for each peptide, per sample
       dplyr::group_by(sample_name, cluster) %>% 
       dplyr::mutate(total_intensity = sum(intensity_by_fraction)) %>% 
       dplyr::ungroup() %>% 
       dplyr::select(sample_name, sample_id, sample_type, cluster,
-                    tidyselect::any_of(c("group")), total_intensity) %>% 
+                    tidyselect::any_of(c("group")), total_intensity) %>%
+      dplyr::distinct() %>% 
       tidyr::pivot_wider(names_from = "cluster", values_from = "total_intensity")
     
     return(data)
@@ -154,10 +156,10 @@ peptides_quality_plot <- function(peptides_quality_summary) {
   
   if ("group" %in% colnames(peptides_quality_summary)) {
     plot <- plot +
-      ggplot2::facet_grid(charge ~ group)
+      ggplot2::facet_grid(charge ~ group, scales = "free_x")
   } else {
     plot <- plot + 
-      ggplot2::facet_wrap(~charge)
+      ggplot2::facet_wrap(~charge, scales = "free_x")
   }
   
   plot <- plot + 

@@ -63,7 +63,8 @@ mod_site_occupancy_ui <- function(id) {
             # Text for when there are no non-glycosylated peptides
             div(
               id = ns("no_peptides"),
-              strong("Your samples do not contain non-glycosylated peptides.\n\n"),
+              strong("Your samples do not contain non-glycosylated peptides
+                     that can be used to calculate site occupancies.\n\n"),
               style = "color:#0021B8; font-size: 16px"
             ),
             # Detected clusters in table
