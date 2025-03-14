@@ -163,7 +163,7 @@ peptides_quality_plot <- function(peptides_quality_summary) {
   }
   
   plot <- plot + 
-    ggplot2::geom_col(color = "black", ggplot2::aes(fill = charge)) +
+    ggplot2::geom_col(color = "black", ggplot2::aes(fill = cluster)) +
     ggplot2::theme_classic() + 
     ggplot2::theme(
       panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
@@ -177,3 +177,53 @@ peptides_quality_plot <- function(peptides_quality_summary) {
   
   return(plot)
 }
+
+
+
+
+# Plot site occupancies boxplot
+plot_site_occupancy <- function(site_occupancy) {
+  
+  n_colors <- length(unique(site_occupancy$sample_type))
+  
+  site_occupancy_long <- site_occupancy %>% 
+    dplyr::select(sample_name, sample_type, sample_id,
+                  tidyselect::contains("site_occupancy"),
+                  tidyselect::any_of(c("group"))) %>% 
+    tidyr::pivot_longer(tidyselect::contains("site_occupancy"),
+                        names_to = "site", values_to = "occupancy") %>% 
+    dplyr::mutate(site = gsub("_site_occupancy", "", site)) %>% 
+    dplyr::filter(!is.na(occupancy))
+  
+  plot <- ggplot2::ggplot(site_occupancy_long, ggplot2::aes(
+    x = site, y = occupancy, text = paste0(
+      "Sample name: ", sample_name, "\n",
+      "Sample ID: ", sample_id, "\n",
+      "Site: ", site, "\n",
+      "Site occupancy: ", format(round(occupancy, digits = 2), nsmall = 2), "%"
+    )
+  ))
+  
+  if ("group" %in% colnames(site_occupancy_long)) {
+    plot <- plot + 
+      ggplot2::facet_wrap(~group)
+  }
+  
+  plot <- plot + 
+    ggplot2::geom_boxplot(outlier.shape = NA) + 
+    ggplot2::geom_jitter(ggplot2::aes(color = sample_type),
+                         width = 0.2, height = 0, size = 1, alpha = 0.7) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
+      strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+      legend.position = "right"
+    ) + 
+    ggplot2::scale_color_manual(values = color_palette(n_colors)) +
+    ggplot2::labs(x = "Glycosylation site", y = "Site occupancy (%)",
+                  color = "Sample type")
+  
+  return(plot)
+}
+

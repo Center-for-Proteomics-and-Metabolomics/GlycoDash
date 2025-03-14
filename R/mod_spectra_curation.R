@@ -800,10 +800,16 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       }
     )
     
-    
-    # Get data of non-glycosylated peptides
+    # Get data of non-glycosylated peptides for passing spectra
     non_glycosylated_data <- reactive({
       req(to_return())
+
+      passing <- passing_spectra() %>% 
+        dplyr::select(sample_name, cluster) %>% 
+        dplyr::distinct() %>% 
+        dplyr::mutate(filter = paste0(cluster, "_", sample_name)) %>% 
+        dplyr::pull(filter)
+      
       peptides <- results_data_import$LaCyTools_summary() %>% 
         dplyr::select(sample_name, sample_id, sample_type,
                       cluster, analyte, charge, 
@@ -817,7 +823,12 @@ mod_spectra_curation_server <- function(id, results_data_import) {
                         "total_area",
                         "isotope_dot_product"                   
                       ))) %>% 
-        dplyr::filter(analyte == paste0(cluster, "1"))
+        dplyr::filter(analyte == paste0(cluster, "1")) %>% 
+        dplyr::mutate(filter = paste0(cluster, "_", sample_name)) %>% 
+        dplyr::filter(filter %in% passing) %>% 
+        dplyr::select(-filter)
+      
+      return(peptides)
     })
     
     return(list(

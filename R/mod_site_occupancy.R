@@ -135,6 +135,18 @@ mod_site_occupancy_ui <- function(id) {
         ),
       ),
       fluidRow(
+        column(
+          width = 12,
+          shinydashboard::box(
+            title = "Site occupancies plot",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("occupancy_plot")))
+          )
+        )
+      ),
+      fluidRow(
         shinydashboard::box(
           title = "View data with site occupancies",
           width = 12,
@@ -154,7 +166,6 @@ mod_site_occupancy_ui <- function(id) {
 #' @noRd 
 mod_site_occupancy_server <- function(id,
                                       results_spectra_curation,
-                                      results_analyte_curation,
                                       results_normalization,
                                       results_quantitation,
                                       results_derived_traits) {
@@ -163,9 +174,8 @@ mod_site_occupancy_server <- function(id,
     
     # Get quality info on peptides
     peptides_quality <- reactive({
-      req(results_analyte_curation$analyte_curated_data())
-      data <- results_analyte_curation$analyte_curated_data() %>% 
-        dplyr::filter(analyte == paste0(cluster, "1")) %>% 
+      req(results_spectra_curation$non_glycosylated_data())
+      data <- results_spectra_curation$non_glycosylated_data() %>% 
         dplyr::select(sample_name, sample_id, sample_type, cluster, analyte, charge,
                       tidyselect::any_of(c(
                         "group",
@@ -278,7 +288,6 @@ mod_site_occupancy_server <- function(id,
         peptides_table()
       )
     })
-    
   
   
     # Combine data with IgG1 quantities and/or traits
@@ -294,6 +303,19 @@ mod_site_occupancy_server <- function(id,
       } else {
         site_occupancy()
       }
+    })
+    
+    
+    # Show boxplots with site occupancies
+    occupancy_plot <- reactive({
+      req(site_occupancy())
+      plot_site_occupancy(site_occupancy())
+    })
+    
+    output$occupancy_plot <- plotly::renderPlotly({
+      req(occupancy_plot())
+      plotly::ggplotly(occupancy_plot(), tooltip = "text") %>% 
+        GlycoDash::hide_outliers(.)
     })
     
   
