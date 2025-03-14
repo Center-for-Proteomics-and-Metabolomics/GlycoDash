@@ -143,7 +143,7 @@ peptides_quality_plot <- function(peptides_quality_summary) {
   n_colors <- length(unique(peptides_quality_summary$cluster))
   
   plot <- ggplot2::ggplot(peptides_quality_summary, ggplot2::aes(
-    x = cluster, y = passing_percentage,
+    x = charge, y = passing_percentage,
     text = paste0(
       "\nPeptide: ",
       cluster,
@@ -156,14 +156,14 @@ peptides_quality_plot <- function(peptides_quality_summary) {
   
   if ("group" %in% colnames(peptides_quality_summary)) {
     plot <- plot +
-      ggplot2::facet_grid(charge ~ group, scales = "free_x")
+      ggplot2::facet_grid(cluster ~ group, scales = "free_x", ncol = 4)
   } else {
     plot <- plot + 
-      ggplot2::facet_wrap(~charge, scales = "free_x")
+      ggplot2::facet_wrap(~cluster, scales = "free_x", ncol = 4)
   }
   
   plot <- plot + 
-    ggplot2::geom_col(color = "black", ggplot2::aes(fill = cluster)) +
+    ggplot2::geom_col(color = "black", ggplot2::aes(fill = charge)) +
     ggplot2::theme_classic() + 
     ggplot2::theme(
       panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
