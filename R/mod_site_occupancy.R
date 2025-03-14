@@ -355,6 +355,7 @@ mod_site_occupancy_server <- function(id,
     return(list(
       site_occupancy_data = data_combined,
       quality_plot = quality_plot,
+      occupancy_plot = occupancy_plot,
       mass_accuracy = reactive(input$mass_accuracy),
       exclude_peptides = reactive(input$exclude_peptides)
     ))
