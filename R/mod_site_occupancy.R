@@ -318,12 +318,14 @@ mod_site_occupancy_server <- function(id,
         shinyjs::show("exclude_peptides")
         shinyjs::show("plot")
         shinyjs::show("mass_accuracy")
+        shinyjs::show("exclude_sample_types")
       } else {
         shinyjs::show("no_peptides")
         shinyjs::hide("info_clusters")
         shinyjs::hide("exclude_peptides")
         shinyjs::hide("plot")
         shinyjs::hide("mass_accuracy")
+        shinyjs::hide("exclude_sample_types")
       }
     })
     
