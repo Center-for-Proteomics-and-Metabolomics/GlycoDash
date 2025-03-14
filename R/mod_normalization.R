@@ -168,16 +168,21 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         results_analyte_curation$analyte_curated_data()
       }
     }) 
-
-    total_intensities <- reactive({
+    
+    # Calculate total intensities for glycans
+    total_intensities_glycans <- reactive({
       req(analyte_curated_data())
-      calculate_total_intensity(data = analyte_curated_data(), data_type = data_type())
+      calculate_total_intensity(
+        data = analyte_curated_data() %>% 
+          dplyr::filter(analyte != paste0(cluster, "1")), 
+        data_type = data_type()
+      )
     })
     
     # Normalized data is in long format
     normalized_data <- reactive({
-      req(total_intensities())
-      data <- normalize_data(total_intensities = total_intensities()) %>% 
+      req(total_intensities_glycans())
+      data <- normalize_data(total_intensities = total_intensities_glycans()) %>% 
         # Sort by glycan composition
         tidyr::separate(analyte, into = c("cluster", "analyte"),
                         sep = "1", extra = "merge") %>% 

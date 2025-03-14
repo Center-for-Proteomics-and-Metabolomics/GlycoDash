@@ -1,3 +1,11 @@
+# v1.7.0
+## New features
+* Option to calculate glycosylation site occupancies.
+
+## Bug fixes
+* Various minor bug fixes.
+
+
 # v1.6.6
 ## Adjustments
 * Data import: remove leading or trailing spaces from entries in character columns.

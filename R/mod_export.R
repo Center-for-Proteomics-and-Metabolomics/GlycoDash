@@ -52,6 +52,7 @@ mod_export_ui <- function(id){
 #'
 #' @noRd 
 mod_export_server <- function(id, 
+                              results_site_occupancy,
                               results_derived_traits,
                               results_quantitation,
                               results_data_import,
@@ -65,11 +66,11 @@ mod_export_server <- function(id,
     
     x <- reactiveValues()
     
-    # If data_with_derived_traits exists it is assigned to x$data, otherwise
-    # quantitation_data or normalized_data is assigned to x$data:
     observe({
       req(results_normalization$normalized_data_wide())
-      if (is_truthy(results_derived_traits$data_with_traits())) {
+      if (is_truthy(results_site_occupancy$site_occupancy_data())) {
+        x$data <- results_site_occupancy$site_occupancy_data()
+      } else if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
       } else if (is_truthy(results_quantitation$quantitation_data())) {
         x$data <- results_quantitation$quantitation_data()
@@ -276,6 +277,10 @@ mod_export_server <- function(id,
           formulas = try_call(results_derived_traits$formulas),
           custom_formulas = try_call(results_derived_traits$custom_formulas),
           intensity_plots = results_derived_traits$intensity_plots(),
+          site_occupancy_quality_plot = results_site_occupancy$quality_plot(),
+          site_occupancy_boxplot = results_site_occupancy$occupancy_plot(),
+          site_occupancy_mass_error = results_site_occupancy$mass_accuracy(),
+          site_occupancy_excluded_peptides = results_site_occupancy$exclude_peptides(),
           repeatability = repeatability_tab_contents,
           data_exploration = data_exploration_tab_contents,
           silumab_amount = try_call(results_quantitation$silumab_amount),
