@@ -303,23 +303,25 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     
     # If quantitation is done: exlude quantitation clusters except IgG1 glycopeptides.
+    # Also exclude non-glycosylated peptides;
     data_to_check <- reactive({
       req(results_data_import$LaCyTools_summary())
       if (is_truthy(results_data_import$quantitation_clusters())) {
         clusters <- results_data_import$quantitation_clusters()
         exclude <- clusters[setdiff(names(clusters), "IgG1_cluster_glyco")]
         to_return <- results_data_import$LaCyTools_summary() %>% 
-          dplyr::filter(!cluster %in% exclude)
+          dplyr::filter(!cluster %in% exclude) %>% 
+          dplyr::filter(analyte != paste0(cluster, "1"))
         if (nrow(to_return) > 0) {
           return(to_return)
         } else {
           return(NULL)
         }
       } else {
-        results_data_import$LaCyTools_summary()
+        results_data_import$LaCyTools_summary() %>% 
+          dplyr::filter(analyte != paste0(cluster, "1"))
       }
     })
-    
     
     # Check if the data contains total and specific samples
     total_and_specific <- reactive({
@@ -367,19 +369,16 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     
     # Analyte quality criteria checks summarized per cluster per sample.
-    # Exclude non-glycosylated peptides for site occupancy calculations
     summarized_checks <- reactive({
       req(checked_data())
       summarize_spectra_checks(
-        checked_data = checked_data() %>% 
-          dplyr::filter(analyte != paste0(cluster, "1")), 
+        checked_data = checked_data(),
         data_type = results_data_import$data_type()
       )
     })
     
     
     observe({
-
       shinyjs::toggle("controls_module",
                       condition = input$curation_method == "Negative control spectra")
       
@@ -394,7 +393,6 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       
       shinyjs::toggle("uncalibrated_as_na",
                       condition = input$curation_method != "Skip spectra curation")
-      
     })
     
     cut_offs_based_on_controls <- mod_curate_based_on_controls_server(
@@ -424,8 +422,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     # Glycopeptide clusters
     clusters <- reactive({
       req(data_to_check())
-      data <- data_to_check() %>% 
-        dplyr::filter(analyte != paste0(cluster, "1"))
+      data <- data_to_check()
       return(unique(data$cluster))
     })
     
@@ -804,9 +801,28 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     )
     
     
+    # Get data of non-glycosylated peptides
+    non_glycosylated_data <- reactive({
+      req(to_return())
+      peptides <- results_data_import$LaCyTools_summary() %>% 
+        dplyr::select(sample_name, sample_id, sample_type,
+                      cluster, analyte, charge, 
+                      tidyselect::any_of(c(
+                        "group",
+                        "absolute_intensity_background_subtracted",
+                        "mass_accuracy_ppm",
+                        "isotopic_pattern_quality",
+                        "sn",
+                        "fraction",
+                        "total_area",
+                        "isotope_dot_product"                   
+                      ))) %>% 
+        dplyr::filter(analyte == paste0(cluster, "1"))
+    })
     
     return(list(
       passing_spectra = to_return,
+      non_glycosylated_data = non_glycosylated_data,
       mass_acc = reactive({ input$mass_accuracy }),
       ipq = reactive({ input$ipq }),
       sn = reactive({ input$sn }),
