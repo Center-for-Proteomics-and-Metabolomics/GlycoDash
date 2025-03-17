@@ -595,6 +595,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     
     # Create a named list with a cut-off percentage for each cluster
+    # If cut-off was accidentally set below 0 or above 100, adjust
     cut_offs <- reactive({
       clusters <- unique(passing_spectra()$cluster)
       values <- vector("list", length(clusters))
@@ -602,12 +603,22 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       if (input$cut_offs_per_cluster == FALSE) {
         # Same cut-off for each cluster
         for (cluster in clusters) {
-          values[[cluster]] <- input$cut_off
+          cut_off <- dplyr::case_when(
+            input$cut_off < 0 ~ 0,
+            input$cut_off > 100 ~ 100,
+            .default = input$cut_off
+          )
+          values[[cluster]] <- cut_off
         }
       } else {
         # Separate cut-offs
         for (cluster in clusters) {
-          values[[cluster]] <- input[[cluster]]
+          cut_off <- dplyr::case_when(
+            input[[cluster]] < 0 ~ 0,
+            input[[cluster]] > 100 ~ 100,
+            .default = input[[cluster]]
+          )
+          values[[cluster]] <- cut_off
         }
       }
       return(values)
