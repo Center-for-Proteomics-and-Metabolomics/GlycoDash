@@ -1,3 +1,8 @@
+# v1.7.1
+## Bug fixes
+* Fix a bug where HTML report would not generate.
+
+
 # v1.7.0
 ## New features
 * Option to calculate glycosylation site occupancies.
