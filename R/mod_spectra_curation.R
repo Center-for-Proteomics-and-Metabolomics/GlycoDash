@@ -507,7 +507,10 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
         # Check if data contains total and specific samples
         if ("group" %in% colnames(cut_offs_to_use_all_clusters())) {
-          to_compare <- rep(clusters(), 2)
+          to_compare <- summarized_checks() %>% 
+            dplyr::select(group, cluster) %>% 
+            dplyr::distinct() %>% 
+            dplyr::pull(cluster)
         } else {
           to_compare <- clusters()
         }
