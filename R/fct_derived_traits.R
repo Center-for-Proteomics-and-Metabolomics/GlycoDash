@@ -390,8 +390,10 @@ clean_traits <- function(trait_formulas, normalized_data_wide) {
   # Sialylation per galactose traits: check if sialylation is reported.
   # If not: don't report sialylation per galactose
   sial_per_gal_traits <- traits_names[endsWith(traits_names, "_sialylation_per_galactose")]
+  other_traits <- traits_names[!endsWith(traits_names, "_sialylation_per_galactose")]
   for (trait in sial_per_gal_traits) {
-    sial_trait <- gsub("_per_galactose", "", trait)  # Corresponding sialylation trait
+    sial_trait <- gsub("_per_galactose", "", trait)  # <cluster>_sialylation
+    sial_trait <- other_traits[grep(sial_trait, other_traits)]  # Sial trait name can have suffix _<glycan>
     if (grepl(" = Not reported", formulas[[sial_trait]])) {
       formulas[[trait]] <- paste0(trait, " = Not reported: sialylation not reported")
     }
@@ -406,7 +408,7 @@ clean_traits <- function(trait_formulas, normalized_data_wide) {
     
     # Galactosylation traits: check if all values are the same
     gal_traits <- intersect(
-      traits_names[endsWith(traits_names, "_galactosylation")],
+      other_traits[grep("_galactosylation", other_traits)],
       colnames(data)
     )
     for (trait in gal_traits) {
@@ -417,7 +419,7 @@ clean_traits <- function(trait_formulas, normalized_data_wide) {
         data[[trait]] <- NULL
         # Change trait formula
         formulas[[trait]] <- paste0(
-          trait, " = Not reported: "#, unique, " for all samples"
+          trait, " = Not reported: ", unique, " for all samples"
         )
         # Remove sialylation per galactose if it exists
         cluster <- sub("^(.*?)_.*", "\\1", trait)
@@ -433,7 +435,7 @@ clean_traits <- function(trait_formulas, normalized_data_wide) {
     
     # Sialylation traits: check if all values are the same
     sial_traits <- intersect(
-      traits_names[endsWith(traits_names, "_sialylation")],
+      other_traits[grep("_sialylation", other_traits)],
       colnames(data)
     )
     for (trait in sial_traits) {
