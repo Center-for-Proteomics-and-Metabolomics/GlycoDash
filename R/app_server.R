@@ -68,6 +68,14 @@ app_server <- function( input, output, session ) {
     results_normalization = results_normalization,
     results_quantitation = results_quantitation)
   
+  results_site_occupancy <- mod_site_occupancy_server(
+    id = "site_occupancy_ui_1",
+    results_spectra_curation = results_spectra_curation,
+    results_normalization = results_normalization,
+    results_quantitation = results_quantitation,
+    results_derived_traits = results_derived_traits
+  )
+  
   results_repeatability <- mod_repeatability_server(
     id = "repeatability_ui_1",
     results_normalization = results_normalization,
@@ -78,11 +86,13 @@ app_server <- function( input, output, session ) {
     id = "data_exploration_ui_1",
     results_derived_traits = results_derived_traits,
     results_quantitation = results_quantitation,
+    results_site_occupancy = results_site_occupancy,
     results_normalization = results_normalization)
   
   
   mod_export_server(
     id = "export_ui_1",
+    results_site_occupancy = results_site_occupancy,
     results_derived_traits = results_derived_traits,
     results_quantitation = results_quantitation,
     results_data_import = results_data_import,

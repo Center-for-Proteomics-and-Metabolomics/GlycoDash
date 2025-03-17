@@ -548,16 +548,19 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     # without_samples_to_ignore contains the LaCyTools data of the passed spectra,
     # but without the sample types that the user wants to ignore in analyte curation.
+    # Non-glycosylated peptides are also excluded.
     without_samples_to_ignore <- reactive({
       req(input$method == "Curate analytes based on data")
       req(passing_spectra())
+      without_nonglycosylated <- passing_spectra() %>% 
+        dplyr::filter(analyte != paste0(cluster, "1"))
       if (input$curation_method == "Per sample") {
-        passing_spectra()
+        without_nonglycosylated
       } else if (is_truthy(input$ignore_samples)) {
-        throw_out_samples(passing_spectra = passing_spectra(), 
+        throw_out_samples(passing_spectra = without_nonglycosylated, 
                           samples_to_ignore = input$ignore_samples)
       } else {
-        passing_spectra()
+        without_nonglycosylated
       }
     })
     
@@ -592,6 +595,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     
     # Create a named list with a cut-off percentage for each cluster
+    # If cut-off was accidentally set below 0 or above 100, adjust
     cut_offs <- reactive({
       clusters <- unique(passing_spectra()$cluster)
       values <- vector("list", length(clusters))
@@ -599,12 +603,22 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       if (input$cut_offs_per_cluster == FALSE) {
         # Same cut-off for each cluster
         for (cluster in clusters) {
-          values[[cluster]] <- input$cut_off
+          cut_off <- dplyr::case_when(
+            input$cut_off < 0 ~ 0,
+            input$cut_off > 100 ~ 100,
+            .default = input$cut_off
+          )
+          values[[cluster]] <- cut_off
         }
       } else {
         # Separate cut-offs
         for (cluster in clusters) {
-          values[[cluster]] <- input[[cluster]]
+          cut_off <- dplyr::case_when(
+            input[[cluster]] < 0 ~ 0,
+            input[[cluster]] > 100 ~ 100,
+            .default = input[[cluster]]
+          )
+          values[[cluster]] <- cut_off
         }
       }
       return(values)
@@ -691,6 +705,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         # when curated_analytes() changes. Not when input$curation_method changes.
         # curated_analytes() changes when the "Perform analyte curation" button is pushed.
     }) %>% bindEvent(curated_analytes())
+  
    
     
     # Tell users to re-perform analyte curation when data is updated
@@ -795,8 +810,19 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       }
       # Remove spinner  
       shinybusy::remove_modal_spinner()
+      
+      # Get data with non-glycosylated peptides
+      non_glycosylated <- passing_spectra() %>% 
+        dplyr::filter(analyte == paste0(cluster, "1")) %>% 
+        # Rearrange columns to combine with to_return
+        dplyr::select(colnames(to_return))
+      
       # Return
-      return(to_return)
+      if (nrow(non_glycosylated) > 0) {
+        return(dplyr::bind_rows(to_return, non_glycosylated))
+      } else {
+        return(to_return)
+      }
     })
     
 

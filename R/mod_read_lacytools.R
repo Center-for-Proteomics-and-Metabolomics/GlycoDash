@@ -490,7 +490,7 @@ mod_read_lacytools_server <- function(id){
         is_truthy(lacytools_summaries_combined()),
         is_truthy(skyline_data_combined())
       ))
-      data <- tryCatch(
+      tryCatch(
         data_total_and_specific(),
         error = function(e) {
           if (is_truthy(lacytools_summaries_combined())) {
@@ -500,11 +500,6 @@ mod_read_lacytools_server <- function(id){
           }
         }
       )
-      # Remove potential leading or trailing spaces from column entries
-      data_trimmed <- data %>%
-        dplyr::mutate(dplyr::across(tidyselect::where(is.character), trimws))
-      
-      return(data_trimmed)
     })
     
     # Prevent people from changing input$data_type after uploading data
@@ -517,9 +512,16 @@ mod_read_lacytools_server <- function(id){
       }
     })
     
+    # Remove trailing/leading spaces
+    to_return_trimmed <- reactive({
+      req(to_return())
+      to_return() %>% 
+        dplyr::mutate(dplyr::across(tidyselect::where(is.character), trimws))
+    })
+    
     
     return(list(
-      data = to_return,
+      data = to_return_trimmed,
       data_type = reactive(input$data_type),
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),

@@ -1,5 +1,5 @@
 ---
-title: "GlycoDash v1.6.6 data processing report"
+title: "GlycoDash v1.7.0 data processing report"
 output: 
   html_document:
     toc: TRUE
@@ -35,6 +35,10 @@ params:
   formulas: NA
   custom_formulas: NA
   intensity_plots: NA
+  site_occupancy_quality_plot: NA
+  site_occupancy_boxplot: NA
+  site_occupancy_excluded_peptides: NA
+  site_occupancy_mass_error: NA
   repeatability: NA
   data_exploration: NA
   silumab_amount: NA
@@ -338,6 +342,30 @@ if (!is.null(params$intensity_plots)) {
 }
 
 ```
+
+## Site occupancy
+```{r site_occupancy, results='asis'}
+
+if (!is.null(params$site_occupancy_quality_plot)) {
+  cat("Non-glycosylated peptides quality plot: \n")
+  print(htmltools::tagList(plotly::ggplotly(params$site_occupancy_quality_plot)))
+  cat("\n \n Acceptable mass error range (ppm): ", 
+      min(params$site_occupancy_mass_error), 
+      " - ", max(params$site_occupancy_mass_error))
+  cat("\n \n Peptide ions excluded from site occupancy calculations: ", paste0(
+    params$site_occupancy_excluded_peptides, collaps = ", "
+  ))
+}
+
+if (!is.null(params$site_occupancy_boxplot)) {
+  cat("\n \n Site occupancies boxplots: \n")
+  plotly_object <- plotly::ggplotly(params$site_occupancy_boxplot) %>% 
+    GlycoDash::hide_outliers(.)
+  print(htmltools::tagList(plotly_object))
+}
+
+```
+
 
 ## Repeatability
 

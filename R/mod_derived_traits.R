@@ -994,7 +994,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     ##########################################################################
     
-    
     # Combine the trait formulas
     trait_formulas <- reactive({
       
@@ -1007,51 +1006,81 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       if (is_truthy(human_IgG_N_formulas())) {
         formulas <- c(formulas, human_IgG_N_formulas())
         if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgG_N_traits) {
-          formulas <- c(
-            formulas, purrr::map(input$human_IgG_N_clusters, ~ paste0(
-              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
-            ))
-          )
+          # Extract all trait names
+          trait_names <- unlist(purrr::map(human_IgG_N_formulas(), ~ names(create_expr_ls(.x))))
+          # Create new formulas, use the correct sialylation and galactosylation trait names
+          formulas <- c(formulas, purrr::map(input$human_IgG_N_clusters, function(cluster) {
+            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
+            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
+            formula <- paste0(
+              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
+            )
+            return(formula)
+          }))
         }
       }
       if (is_truthy(human_IgA_N47_formulas())) {
         formulas <- c(formulas, human_IgA_N47_formulas())
         if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N47_traits) {
-          formulas <- c(
-            formulas, purrr::map(input$human_IgA_N47_clusters, ~ paste0(
-              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
-            ))
-          )
+          # Extract all trait names
+          trait_names <- unlist(purrr::map(human_IgA_N47_formulas(), ~ names(create_expr_ls(.x))))
+          # Create new formulas, use the correct sialylation and galactosylation trait names
+          formulas <- c(formulas, purrr::map(input$human_IgA_N47_clusters, function(cluster) {
+            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
+            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
+            formula <- paste0(
+              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
+            )
+            return(formula)
+          }))
         }
       }
       if (is_truthy(human_IgA_N144_formulas())) {
         formulas <- c(formulas, human_IgA_N144_formulas())
         if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N144_traits) {
-          formulas <- c(
-            formulas, purrr::map(input$human_IgA_N144_clusters, ~ paste0(
-              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
-            ))
-          )
+          # Extract all trait names
+          trait_names <- unlist(purrr::map(human_IgA_N144_formulas(), ~ names(create_expr_ls(.x))))
+          # Create new formulas, use the correct sialylation and galactosylation trait names
+          formulas <- c(formulas, purrr::map(input$human_IgA_N144_clusters, function(cluster) {
+            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
+            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
+            formula <- paste0(
+              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
+            )
+            return(formula)
+          }))
         }
       }
       if (is_truthy(human_IgA_N205_formulas())) {
         formulas <- c(formulas, human_IgA_N205_formulas())
         if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N205_traits) {
-          formulas <- c(
-            formulas, purrr::map(input$human_IgA_N205_clusters, ~ paste0(
-              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
-            ))
-          )
+          # Extract all trait names
+          trait_names <- unlist(purrr::map(human_IgA_N204_formulas(), ~ names(create_expr_ls(.x))))
+          # Create new formulas, use the correct sialylation and galactosylation trait names
+          formulas <- c(formulas, purrr::map(input$human_IgA_N204_clusters, function(cluster) {
+            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
+            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
+            formula <- paste0(
+              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
+            )
+            return(formula)
+          }))
         }
       }
       if (is_truthy(human_IgA_N340_formulas())) {
         formulas <- c(formulas, human_IgA_N340_formulas())
         if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N340_traits) {
-          formulas <- c(
-            formulas, purrr::map(input$human_IgA_N340_clusters, ~ paste0(
-              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
-            ))
-          )
+          # Extract all trait names
+          trait_names <- unlist(purrr::map(human_IgA_N340_formulas(), ~ names(create_expr_ls(.x))))
+          # Create new formulas, use the correct sialylation and galactosylation trait names
+          formulas <- c(formulas, purrr::map(input$human_IgA_N340_clusters, function(cluster) {
+            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
+            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
+            formula <- paste0(
+              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
+            )
+            return(formula)
+          }))
         }
       }
       if (is_truthy(human_IgA_O_formulas())) {
@@ -1074,41 +1103,65 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
       if (is_truthy(human_JC_N_formulas())) {
         formulas <- c(formulas, human_JC_N_formulas())
         if ("Sialylation per galactose of complex-type glycans" %in% input$human_JC_N_traits) {
-          formulas <- c(
-            formulas, purrr::map(input$human_JC_N_clusters, ~ paste0(
-              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
-            ))
-          )
+          # Extract all trait names
+          trait_names <- unlist(purrr::map(human_JC_N_formulas(), ~ names(create_expr_ls(.x))))
+          # Create new formulas, use the correct sialylation and galactosylation trait names
+          formulas <- c(formulas, purrr::map(input$human_JC_N_clusters, function(cluster) {
+            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
+            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
+            formula <- paste0(
+              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
+            )
+            return(formula)
+          }))
         }
       }
       if (is_truthy(human_IgM_N46_formulas())) {
         formulas <- c(formulas, human_IgM_N46_formulas())
         if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgM_N46_traits) {
-          formulas <- c(
-            formulas, purrr::map(input$human_IgM_N46_clusters, ~ paste0(
-              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
-            ))
-          )
+          # Extract all trait names
+          trait_names <- unlist(purrr::map(human_IgM_N46_formulas(), ~ names(create_expr_ls(.x))))
+          # Create new formulas, use the correct sialylation and galactosylation trait names
+          formulas <- c(formulas, purrr::map(input$human_IgM_N46_clusters, function(cluster) {
+            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
+            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
+            formula <- paste0(
+              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
+            )
+            return(formula)
+          }))
         }
       }
       if (is_truthy(human_IgM_N209_formulas())) {
         formulas <- c(formulas, human_IgM_N209_formulas())
         if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgM_N209_traits) {
-          formulas <- c(
-            formulas, purrr::map(input$human_IgM_N209_clusters, ~ paste0(
-              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
-            ))
-          )
+          # Extract all trait names
+          trait_names <- unlist(purrr::map(human_IgM_N209_formulas(), ~ names(create_expr_ls(.x))))
+          # Create new formulas, use the correct sialylation and galactosylation trait names
+          formulas <- c(formulas, purrr::map(input$human_IgM_N209_clusters, function(cluster) {
+            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
+            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
+            formula <- paste0(
+              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
+            )
+            return(formula)
+          }))
         }
       }
       if (is_truthy(human_IgM_N272_formulas())) {
         formulas <- c(formulas, human_IgM_N272_formulas())
         if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgM_N272_traits) {
-          formulas <- c(
-            formulas, purrr::map(input$human_IgM_N272_clusters, ~ paste0(
-              .x, "_sialylation_per_galactose = ", .x, "_sialylation / ", .x, "_galactosylation * 100"
-            ))
-          )
+          # Extract all trait names
+          trait_names <- unlist(purrr::map(human_IgM_N272_formulas(), ~ names(create_expr_ls(.x))))
+          # Create new formulas, use the correct sialylation and galactosylation trait names
+          formulas <- c(formulas, purrr::map(input$human_IgM_N272_clusters, function(cluster) {
+            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
+            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
+            formula <- paste0(
+              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
+            )
+            return(formula)
+          }))
         }
       }
       if (is_truthy(human_IgM_N279_formulas())) {
