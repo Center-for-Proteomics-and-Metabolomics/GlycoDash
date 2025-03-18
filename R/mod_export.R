@@ -54,7 +54,6 @@ mod_export_ui <- function(id){
 mod_export_server <- function(id, 
                               results_site_occupancy,
                               results_derived_traits,
-                              results_quantitation,
                               results_data_import,
                               results_spectra_curation,
                               results_analyte_curation,
@@ -72,8 +71,8 @@ mod_export_server <- function(id,
         x$data <- results_site_occupancy$site_occupancy_data()
       } else if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
-      } else if (is_truthy(results_quantitation$quantitation_data())) {
-        x$data <- results_quantitation$quantitation_data()
+      # } else if (is_truthy(results_quantitation$quantitation_data())) {
+      #   x$data <- results_quantitation$quantitation_data()
       } else {
         x$data <- results_normalization$normalized_data_wide()
       }
@@ -282,11 +281,7 @@ mod_export_server <- function(id,
           site_occupancy_mass_error = try_call(results_site_occupancy$mass_accuracy()),
           site_occupancy_excluded_peptides = try_call(results_site_occupancy$exclude_peptides()),
           repeatability = repeatability_tab_contents,
-          data_exploration = data_exploration_tab_contents,
-          silumab_amount = try_call(results_quantitation$silumab_amount),
-          chosen_peptides = try_call(results_quantitation$chosen_peptides),
-          quantitation_plot = try_call(results_quantitation$quantitation_plot),
-          peptide_correlation_plots = try_call(results_quantitation$peptide_correlation_plots)
+          data_exploration = data_exploration_tab_contents
         )
         
         # Create a temporary file with a unique name per session to prevent

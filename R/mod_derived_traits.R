@@ -429,7 +429,7 @@ mod_derived_traits_ui <- function(id){
 #' derived_traits Server Functions
 #'
 #' @noRd 
-mod_derived_traits_server <- function(id, results_normalization, results_quantitation) {
+mod_derived_traits_server <- function(id, results_normalization) {
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -1235,12 +1235,13 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     # Check if there is quantitation data to combine with the traits.
     data_with_traits <- reactive({
       req(with_data())
-      if (is_truthy(results_quantitation$quantitation_data())) {
-        dplyr::full_join(with_data(), results_quantitation$quantitation_data()) %>%
-          dplyr::relocate(IgG1_quantity_ng, .after = replicates)
-      } else {
-        with_data()
-      }
+      # if (is_truthy(results_quantitation$quantitation_data())) {
+      #   dplyr::full_join(with_data(), results_quantitation$quantitation_data()) %>%
+      #     dplyr::relocate(IgG1_quantity_ng, .after = replicates)
+      # } else {
+      #   with_data()
+      # }
+      with_data()
     })
     
     

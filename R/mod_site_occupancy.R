@@ -167,7 +167,6 @@ mod_site_occupancy_ui <- function(id) {
 mod_site_occupancy_server <- function(id,
                                       results_spectra_curation,
                                       results_normalization,
-                                      results_quantitation,
                                       results_derived_traits) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -297,9 +296,9 @@ mod_site_occupancy_server <- function(id,
         dplyr::left_join(results_derived_traits$data_with_traits(), site_occupancy()) %>% 
           dplyr::relocate(tidyselect::contains("site_occupancy"),
                           .after = tidyselect::contains("sum_intensity"))
-      } else if (is_truthy(results_quantitation$quantitation_data())) {
-        dplyr::left_join(results_quantitation$quantitation_data(), site_occupancy()) %>% 
-          dplyr::relocate(IgG1_quantity_ng, .after = replicates)
+      # } else if (is_truthy(results_quantitation$quantitation_data())) {
+      #   dplyr::left_join(results_quantitation$quantitation_data(), site_occupancy()) %>% 
+      #     dplyr::relocate(IgG1_quantity_ng, .after = replicates)
       } else {
         site_occupancy()
       }

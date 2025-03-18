@@ -125,11 +125,6 @@ mod_data_import_server <- function(id){
       }
     })
     
-    quantitation_clusters <- reactive({
-      if (is_truthy(data_incl_clusters$quantitation_clusters())) {
-        data_incl_clusters$quantitation_clusters()
-      } else NULL
-    })
     
 
     # Create a vector with column names, from which a column can later be
@@ -170,10 +165,9 @@ mod_data_import_server <- function(id){
     
     
     return(list(
-      LaCyTools_summary = to_return,  # Calling this LaCyTools_summary is a bit confusing
+      LaCyTools_summary = to_return,
       data_type = LaCyTools_summary$data_type,
       biogroup_cols = biogroup_cols,
-      quantitation_clusters = quantitation_clusters,
       contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
       keyword_specific = LaCyTools_summary$keyword_specific,
       keyword_total = LaCyTools_summary$keyword_total,

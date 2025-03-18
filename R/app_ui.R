@@ -50,7 +50,7 @@ app_ui <- function(request) {
                                    tabName = "normalization",
                                    icon = icon("table-list")),
           div(class = "sidebar-header", style = "font-weight: bold; padding: 10px; margin-left: 10px; text-decoration: underline;", "Optional steps"),
-          shinydashboard::menuItem(HTML("&nbspIgG1 quantitation"),
+          shinydashboard::menuItem(HTML("&nbspProtein quantitation"),
                                    tabName = "quantitation",
                                    icon = icon("balance-scale")),
           shinydashboard::menuItem(HTML("&nbsp&nbspGlycosylation traits"), 
@@ -106,10 +106,10 @@ app_ui <- function(request) {
             "normalization",
             mod_normalization_ui("normalization_ui_1")
           ),
-          shinydashboard::tabItem(
-            "quantitation",
-            mod_quantitation_ui("quantitation_ui_1")
-          ),
+          # shinydashboard::tabItem(
+          #   "quantitation",
+          #   mod_quantitation_ui("quantitation_ui_1")
+          # ),
           shinydashboard::tabItem(
             "derived_traits",
             mod_derived_traits_ui("derived_traits_ui_1")
