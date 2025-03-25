@@ -1,3 +1,8 @@
+# v1.7.2
+## Bug fixes
+* Fix a bug in the automatic calculation of IgA glycosylation traits.
+
+
 # v1.7.1
 ## Bug fixes
 * Fix a bug where HTML report would not generate.

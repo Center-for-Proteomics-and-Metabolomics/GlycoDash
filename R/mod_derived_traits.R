@@ -1055,9 +1055,9 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         formulas <- c(formulas, human_IgA_N205_formulas())
         if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N205_traits) {
           # Extract all trait names
-          trait_names <- unlist(purrr::map(human_IgA_N204_formulas(), ~ names(create_expr_ls(.x))))
+          trait_names <- unlist(purrr::map(human_IgA_N205_formulas(), ~ names(create_expr_ls(.x))))
           # Create new formulas, use the correct sialylation and galactosylation trait names
-          formulas <- c(formulas, purrr::map(input$human_IgA_N204_clusters, function(cluster) {
+          formulas <- c(formulas, purrr::map(input$human_IgA_N205_clusters, function(cluster) {
             galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
             sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
             formula <- paste0(
