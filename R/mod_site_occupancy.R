@@ -331,7 +331,6 @@ mod_site_occupancy_server <- function(id,
                     ), filter = "top")
     })
     
-    
     # Toggle UI
     observe({
       if (is_truthy(peptides_quality())) {

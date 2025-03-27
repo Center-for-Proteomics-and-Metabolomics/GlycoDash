@@ -110,6 +110,7 @@ summarize_peptides_quality <- function(peptides_quality,
         ),
         pass = pass_ipq & pass_sn & pass_mass_error
       ) %>% 
+      dplyr::filter(!is.na(pass)) %>% 
       dplyr::summarize(
         passing_percentage = sum(pass) / dplyr::n() * 100
       )
