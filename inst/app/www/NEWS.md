@@ -1,4 +1,7 @@
 # v1.7.2
+## Adjustments
+* Include Joining Chain glycan H6N5S1 in automatic traits calculations.
+
 ## Bug fixes
 * Fix a bug in the automatic calculation of IgA glycosylation traits.
 

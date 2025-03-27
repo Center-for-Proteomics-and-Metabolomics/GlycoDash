@@ -973,8 +973,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
         ), c  # c = concatenate
       )
     })
-
-
+    
     # Trait formulas for mouse IgG
     mouse_IgG_N_traits <- reactive({
       req(input$mouse_IgG_N_traits)
