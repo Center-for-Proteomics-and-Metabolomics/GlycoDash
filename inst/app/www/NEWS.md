@@ -5,6 +5,7 @@
 ## Bug fixes
 * Fix a bug in the automatic calculation of IgA glycosylation traits.
 * Make site occupancy calculations work when spectra curation is skipped.
+* Fix site occupancy in HTML report.
 
 
 # v1.7.1
