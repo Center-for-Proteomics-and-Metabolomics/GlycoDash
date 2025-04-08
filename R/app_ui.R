@@ -106,10 +106,10 @@ app_ui <- function(request) {
             "normalization",
             mod_normalization_ui("normalization_ui_1")
           ),
-          # shinydashboard::tabItem(
-          #   "quantitation",
-          #   mod_quantitation_ui("quantitation_ui_1")
-          # ),
+          shinydashboard::tabItem(
+            "quantitation",
+            mod_quantitation_ui("quantitation_ui_1")
+          ),
           shinydashboard::tabItem(
             "derived_traits",
             mod_derived_traits_ui("derived_traits_ui_1")

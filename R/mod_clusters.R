@@ -109,7 +109,8 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
     
     
     return(list(
-      data = data_with_clusters
+      data = data_with_clusters,
+      peptides = peptides
     ))
     
   })

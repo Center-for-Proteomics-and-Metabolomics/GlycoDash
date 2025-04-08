@@ -652,7 +652,7 @@ mod_derived_traits_server <- function(id, results_normalization) {
     
     # Read the custom traits Excel file as a data frame.
     traits_excel <- reactive({
-      req(input$custom_traits_file, extension(), extension() == "xlsx")
+      req(input$custom_traits_file, extension(), extension() %in% c("xlsx", "xls"))
       readxl::read_excel(input$custom_traits_file$datapath, col_names = TRUE, col_types = "text")
     })
 
@@ -662,7 +662,6 @@ mod_derived_traits_server <- function(id, results_normalization) {
     observeEvent(traits_excel(), {
       r$correct_formatting <- TRUE
       # First check for correct columns
-      ncol <- ncol(traits_excel())
       colnames <- colnames(traits_excel())
       if (!all(ncol == 2, colnames[1] == "trait", colnames[2] == "formula")) {
         shinyalert::shinyalert(

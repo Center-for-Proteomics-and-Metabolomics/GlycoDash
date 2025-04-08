@@ -178,7 +178,8 @@ mod_data_import_server <- function(id){
       sample_types_method = data_incl_sample_types$method,
       filename_sample_types = data_incl_sample_types$filename_sample_types,
       colnames_metadata = data_incl_metadata$colnames_metadata,
-      merged_metadata = data_incl_metadata$merged_metadata
+      merged_metadata = data_incl_metadata$merged_metadata,
+      peptides = data_incl_clusters$peptides
     ))
     
   })

@@ -53,6 +53,13 @@ app_server <- function( input, output, session ) {
     merged_metadata = results_data_import$merged_metadata,
     data_type = results_data_import$data_type)
   
+  results_quantitation <- mod_quantitation_server(
+    id = "quantitation_ui_1",
+    results_normalization = results_normalization,
+    peptides = results_data_import$peptides
+  )
+  
+  # TODO: pass results_quantitation to modules
   results_derived_traits <- mod_derived_traits_server(
     id = "derived_traits_ui_1",
     results_normalization = results_normalization)
@@ -74,7 +81,8 @@ app_server <- function( input, output, session ) {
     id = "data_exploration_ui_1",
     results_derived_traits = results_derived_traits,
     results_site_occupancy = results_site_occupancy,
-    results_normalization = results_normalization)
+    results_normalization = results_normalization
+  )
   
   
   mod_export_server(
