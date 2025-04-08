@@ -73,6 +73,19 @@ mod_quantitation_ui <- function(id) {
                     "Upload Excel file with protein specifications:"
           )
         )
+      ),
+      fluidRow(
+        shinydashboardPlus::box(
+          id = ns("box"),
+          title = div(
+            id = ns("box_header"),
+            "Protein quantities"
+          ),
+          tabsetPanel(id = ns("protein_tabs")),
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary"
+        )
       )
     )
   )
@@ -113,10 +126,13 @@ mod_quantitation_server <- function(id,
     })
     
     # Check validity of column names and peptide entries
-    r <- reactiveValues()
+    r <- reactiveValues(
+      generated_tabs = c(),
+      correct_formatting = NULL
+    )
+    
     observeEvent(proteins_excel(), {
       req(normalized_data())
-      r$correct_formatting <- TRUE
       # Check column names
       if (!all(
         ncol(proteins_excel()) == 3, 
@@ -148,13 +164,41 @@ mod_quantitation_server <- function(id,
             confirmButtonCol = "tomato"
           )
           r$correct_formatting <- FALSE
+        } else {
+          r$correct_formatting <- TRUE
         }
       }
     })
     
     
+    # Extract protein names
+    proteins <- reactive({
+      req(proteins_excel(), r$correct_formatting == TRUE)
+      unique(proteins_excel()$Protein)
+    })
     
     
+    observeEvent(proteins(), {
+      # Remove previously generated tabs
+      for (protein in r$generated_tabs) {
+        removeTab(inputId = "protein_tabs", target = protein)
+      }
+      # Reset r$generated_tabs
+      r$generated_tabs <- c()
+      # Create new tabs for each protein
+      for (protein in proteins()) {
+        r$generated_tabs <- c(r$generated_tabs, protein)
+        appendTab(
+          inputId = "protein_tabs",
+          select = TRUE,
+          session = session,
+          tab = tabPanel(
+            title = protein,
+            mod_tab_quantitation_ui(ns(protein))
+          )
+        )
+      }
+    })
     
     
   })
