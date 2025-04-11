@@ -163,6 +163,13 @@ mod_data_import_server <- function(id){
       }
     )
     
+    # Raw data for peptides only
+    peptides_data <- reactive({
+      req(data_incl_clusters$peptides(), show_in_table())
+      show_in_table() %>%
+        dplyr::filter(cluster %in% data_incl_clusters$peptides())
+    })
+    
     
     return(list(
       LaCyTools_summary = to_return,
@@ -179,6 +186,7 @@ mod_data_import_server <- function(id){
       filename_sample_types = data_incl_sample_types$filename_sample_types,
       colnames_metadata = data_incl_metadata$colnames_metadata,
       merged_metadata = data_incl_metadata$merged_metadata,
+      peptides_data = peptides_data,
       peptides = data_incl_clusters$peptides
     ))
     

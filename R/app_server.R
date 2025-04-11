@@ -55,8 +55,9 @@ app_server <- function( input, output, session ) {
   
   results_quantitation <- mod_quantitation_server(
     id = "quantitation_ui_1",
-    results_normalization = results_normalization,
-    peptides = results_data_import$peptides
+    peptides = results_data_import$peptides,
+    peptides_data = results_data_import$peptides_data,
+    results_normalization = results_normalization
   )
   
   # TODO: pass results_quantitation to modules

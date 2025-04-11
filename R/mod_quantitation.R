@@ -97,6 +97,7 @@ mod_quantitation_ui <- function(id) {
 #' @noRd 
 mod_quantitation_server <- function(id,
                                     peptides,
+                                    peptides_data,
                                     results_normalization) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -125,12 +126,14 @@ mod_quantitation_server <- function(id,
       readxl::read_excel(input$proteins_file$datapath, col_names = TRUE, col_types = "text")
     })
     
-    # Check validity of column names and peptide entries
+    # Initiate reactiveValues vector
     r <- reactiveValues(
       generated_tabs = c(),
-      correct_formatting = NULL
+      correct_formatting = NULL,
+      quantitation_results = c()
     )
     
+    # Check validity of column names and peptide entries
     observeEvent(proteins_excel(), {
       req(normalized_data())
       # Check column names
@@ -194,10 +197,21 @@ mod_quantitation_server <- function(id,
           session = session,
           tab = tabPanel(
             title = protein,
-            mod_tab_quantitation_ui(ns(protein))
+            mod_tab_quantitation_ui(id = ns(protein))
           )
         )
       }
+      # Generate tabs contents
+      r$quantitation_results <- rlang::set_names(proteins()) %>% 
+        purrr::map(., function(protein) {
+          mod_tab_quantitation_server(
+            id = protein,
+            protein_peptides = proteins_excel() %>% 
+              dplyr::filter(Protein == protein),
+            peptides_data = peptides_data(),
+            normalized_data_wide = normalized_data_wide
+          )
+        })
     })
     
     
