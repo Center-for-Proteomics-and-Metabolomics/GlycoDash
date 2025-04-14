@@ -39,7 +39,7 @@ mod_quantitation_ui <- function(id) {
                   "
                   Text here...
                   <br> <br>
-                  Needed columns: Protein, Natural, Labeled
+                  Needed columns: protein, natural, labeled, standard_quantity
                   "
                 ),
                 trigger = "hover",
@@ -138,15 +138,16 @@ mod_quantitation_server <- function(id,
       req(normalized_data())
       # Check column names
       if (!all(
-        ncol(proteins_excel()) == 3, 
-        colnames(proteins_excel())[1] == "Protein", 
-        colnames(proteins_excel())[2] == "Natural", 
-        colnames(proteins_excel())[3] == "Labeled"
+        ncol(proteins_excel()) == 4, 
+        colnames(proteins_excel())[1] == "protein", 
+        colnames(proteins_excel())[2] == "natural", 
+        colnames(proteins_excel())[3] == "labeled",
+        colnames(proteins_excel())[4] == "standard_quantity"
       )) {
         shinyalert::shinyalert(
           text = "
-          Your Excel file should contain three columns: 
-          \"Protein\", \"Natural\" and \"Labeled\".
+          Your Excel file should contain four columns: 
+          \"protein\", \"natural\", \"labeled\" and \"standard_quantity\"
           Please adjust your file accordingly.
           ",
           confirmButtonCol = "tomato"
@@ -154,7 +155,7 @@ mod_quantitation_server <- function(id,
         r$correct_formatting <- FALSE
       } else {
         # Colnames are correct --> check peptides validity
-        clusters_specified <- c(proteins_excel()$Natural, proteins_excel()$Labeled)
+        clusters_specified <- c(proteins_excel()$natural, proteins_excel()$labeled)
         clusters_data <- c(unique(normalized_data()$cluster), peptides())
         missing <- clusters_specified[!clusters_specified %in% clusters_data]
         if (length(missing) > 0) {
@@ -177,7 +178,7 @@ mod_quantitation_server <- function(id,
     # Extract protein names
     proteins <- reactive({
       req(proteins_excel(), r$correct_formatting == TRUE)
-      unique(proteins_excel()$Protein)
+      unique(proteins_excel()$protein)
     })
     
     
@@ -207,7 +208,7 @@ mod_quantitation_server <- function(id,
           mod_tab_quantitation_server(
             id = protein,
             protein_peptides = proteins_excel() %>% 
-              dplyr::filter(Protein == protein),
+              dplyr::filter(protein == protein),
             peptides_data = peptides_data(),
             normalized_data_wide = normalized_data_wide
           )

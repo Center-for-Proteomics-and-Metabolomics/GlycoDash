@@ -23,54 +23,45 @@ mod_tab_quantitation_server <- function(id,
                                         normalized_data_wide) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
- 
+    
     # Get intensities of glycopeptides
     glycopeptide_intensities <- reactive({
-      req(protein_peptides, normalized_data_wide)
-      normalized_data_wide() %>% 
-        tidyr::pivot_longer(
-          tidyselect::contains("sum_intensity"),
-          names_to = "cluster", values_to = "sum_intensity"
-        ) %>% 
-        dplyr::mutate(cluster = gsub("_sum_intensity", "", cluster)) %>% 
-        dplyr::filter(cluster %in% c(
-          protein_peptides$Natural, protein_peptides$Labeled
-        )) %>% 
-        dplyr::select(
-          sample_name, sample_type, sample_id, tidyselect::any_of("group"),
-          cluster, sum_intensity
-        ) %>% 
-        dplyr::filter(!is.na(sum_intensity)) %>% 
-        dplyr::distinct()
+      req(protein_peptides, normalized_data_wide())
+      get_glycopeptide_intensities(protein_peptides, normalized_data_wide())
     })
     
     # Get intensities of non-glycosylated peptides
-    # peptides_data contains raw data of all non-glycosylated peptides
-    # without corresponding glycopeptides. 
     peptide_intensities <- reactive({
       req(protein_peptides, peptides_data)
-      peptides_data %>%
-        dplyr::filter(cluster %in% c(
-          protein_peptides$Natural, protein_peptides$Labeled
-        )) %>% 
-        dplyr::mutate(intensity_by_fraction = 
-                      absolute_intensity_background_subtracted / fraction) %>% 
-        dplyr::group_by(sample_name, cluster) %>% 
-        dplyr::mutate(sum_intensity = sum(intensity_by_fraction)) %>% 
-        dplyr::select(
-          sample_name, sample_type, sample_id, tidyselect::any_of("group"),
-          cluster, sum_intensity
-        ) %>% 
-        dplyr::filter(!is.na(sum_intensity)) %>% 
-        dplyr::distinct()
+      get_peptide_intensities(protein_peptides, peptides_data)
+    })
+    
+    # Get calculated quantities based on different peptides
+    protein_quantities <- reactive({
+      req(glycopeptide_intensities(), peptide_intensities())
+      get_protein_quantities(
+        glycopeptide_intensities(), peptide_intensities(), protein_peptides
+      )
+    })
+    
+    # Calculate median quantity for each protein per sample
+    median_quantities <- reactive({
+      req(protein_quantities())
+      get_median_quantities(protein_quantities())
     })
     
     observe({
-      req(peptides_data)
+      req(median_quantities())
+      # IgG <- median_quantities() %>% 
+      #   dplyr::filter(protein == "IgG1")
+      # ggplot2::ggplot(IgG, ggplot2::aes(sample_type, quantity)) +
+      #   ggplot2::geom_boxplot(outlier.shape = NA) +
+      #   ggplot2::geom_point(ggplot2::aes(color = sample_type))
       browser()
     })
     
-    # Need absolute intensities of non-glycosylated peptides
+    
+
     
     # Temporary code
     df <- reactive({
