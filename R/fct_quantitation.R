@@ -92,7 +92,7 @@ get_median_quantities <- function(protein_quantities) {
 
 
 plot_protein_quantities <- function(quantities,
-                                    log_scale = FALSE) {
+                                    log_scale) {
   
   protein_name <- unique(quantities$protein)
   

@@ -13,6 +13,13 @@ mod_tab_quantitation_ui <- function(id) {
     column(
       width = 12,
       br(),
+      shinyWidgets::materialSwitch(
+        ns("log_scale"),
+        HTML("<i style='font-size:15px;'> Plot quantities on logarithmic scale </i>"),
+        status = "success",
+        right = TRUE,
+        value = FALSE
+      ),
       shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot")))
     )
   )
@@ -28,7 +35,7 @@ mod_tab_quantitation_server <- function(id,
     
     quantities_plot <- reactive({
       req(quantities)
-      plot_protein_quantities(quantities)
+      plot_protein_quantities(quantities, input$log_scale)
     })
     
     output$plot <- plotly::renderPlotly({
