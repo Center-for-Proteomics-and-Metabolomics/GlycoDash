@@ -1,4 +1,4 @@
-get_glycopeptide_intensities <- function(protein_peptides, normalized_data_wide) {
+get_glycopeptide_intensities <- function(proteins_excel, normalized_data_wide) {
   
   data <- normalized_data_wide %>% 
     tidyr::pivot_longer(
@@ -7,7 +7,7 @@ get_glycopeptide_intensities <- function(protein_peptides, normalized_data_wide)
     ) %>% 
     dplyr::mutate(cluster = gsub("_sum_intensity", "", cluster)) %>% 
     dplyr::filter(cluster %in% c(
-      protein_peptides$natural, protein_peptides$labeled
+      proteins_excel$natural, proteins_excel$labeled
     )) %>% 
     dplyr::select(
       sample_name, sample_type, sample_id, tidyselect::any_of("group"),
@@ -21,11 +21,11 @@ get_glycopeptide_intensities <- function(protein_peptides, normalized_data_wide)
 
 
 
-get_peptide_intensities <- function(protein_peptides, peptides_data) {
+get_peptide_intensities <- function(proteins_excel, peptides_data) {
   
   data <- peptides_data %>%
     dplyr::filter(cluster %in% c(
-      protein_peptides$natural, protein_peptides$labeled
+      proteins_excel$natural, proteins_excel$labeled
     )) %>% 
     dplyr::mutate(intensity_by_fraction = 
                   absolute_intensity_background_subtracted / fraction) %>% 
@@ -45,20 +45,20 @@ get_peptide_intensities <- function(protein_peptides, peptides_data) {
 
 get_protein_quantities <- function(glycopeptide_intensities, 
                                    peptide_intensities,
-                                   protein_peptides) {
+                                   proteins_excel) {
   
-  # Go over each row in protein_peptides and calculate corresponding quantities
-  protein_quantities <- purrr::map_dfr(1:nrow(protein_peptides), function(i) {
+  # Go over each row in proteins_excel and calculate corresponding quantities
+  protein_quantities <- purrr::map_dfr(1:nrow(proteins_excel), function(i) {
     # Extract data
-    protein <- protein_peptides[i, ]$protein
-    natural <- protein_peptides[i, ]$natural
-    labeled <- protein_peptides[i, ]$labeled
-    standard_quantity <- as.numeric(protein_peptides[i, ]$standard_quantity)
+    protein_name <- proteins_excel[i, ]$protein
+    natural <- proteins_excel[i, ]$natural
+    labeled <- proteins_excel[i, ]$labeled
+    standard_quantity <- as.numeric(proteins_excel[i, ]$standard_quantity)
     # Get data for current protein peptide in wide format
     data <- dplyr::bind_rows(glycopeptide_intensities, peptide_intensities) %>% 
       dplyr::filter(cluster %in% c(natural, labeled)) %>% 
       tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity) %>% 
-      dplyr::mutate(protein = protein)
+      dplyr::mutate(protein = protein_name)
     # Calculate quantity for each sample
     data$protein_quantity <- data[[natural]] / data[[labeled]] * standard_quantity
     # Get just the quantities
@@ -87,4 +87,49 @@ get_median_quantities <- function(protein_quantities) {
                   protein, quantity)
   
   return(data)
+}
+
+
+
+plot_protein_quantities <- function(quantities,
+                                    log_scale = FALSE) {
+  
+  protein_name <- unique(quantities$protein)
+  
+  sample_types <- unique(quantities$sample_type)
+  colors <- color_palette(length(sample_types))
+  color_palette <- setNames(colors, sample_types)
+  
+  plot <- ggplot2::ggplot(quantities, ggplot2::aes(
+    x = sample_type, y = quantity,
+    text = paste0(
+      "Sample name: ", sample_name, "\n",
+      "Sample ID: ", sample_id, "\n",
+      "Protein quantity: ", format(round(quantity, digits = 2), nsmall = 2)
+    )
+  )) +
+    ggplot2::geom_boxplot() +
+    ggplot2::geom_jitter(
+      ggplot2::aes(color = sample_type),
+      height = 0, width = 0.2, size = 1, alpha = 0.7
+    ) + 
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+      strip.background = ggplot2::element_rect(fill = "#F6F6F8")
+    ) +
+    ggplot2::scale_color_manual(values = color_palette, name = "Sample type") + 
+    ggplot2::labs(x = "Sample type", y = paste(protein_name, "quantity"))
+  
+  # Check for total and specific
+  if ("group" %in% colnames(quantities)) {
+    plot <- plot + ggplot2::facet_wrap(~group)
+  } 
+  
+  # Check if logarithmic scale should be applied
+  if (log_scale) {
+    plot <- plot + ggplot2::scale_y_log10()
+  }
+  
+  return(plot)
 }

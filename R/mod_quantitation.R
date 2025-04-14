@@ -128,9 +128,8 @@ mod_quantitation_server <- function(id,
     
     # Initiate reactiveValues vector
     r <- reactiveValues(
-      generated_tabs = c(),
       correct_formatting = NULL,
-      quantitation_results = c()
+      tab_contents = NULL
     )
     
     # Check validity of column names and peptide entries
@@ -175,45 +174,77 @@ mod_quantitation_server <- function(id,
     })
     
     
+    # Get intensities of glycopeptides
+    glycopeptide_intensities <- reactive({
+      req(proteins_excel(), normalized_data_wide())
+      get_glycopeptide_intensities(proteins_excel(), normalized_data_wide())
+    })
+    
+    # Get intensities of non-glycosylated peptides
+    peptide_intensities <- reactive({
+      req(proteins_excel(), peptides_data())
+      get_peptide_intensities(proteins_excel(), peptides_data())
+    })
+    
+    # Get calculated quantities based on different peptides
+    protein_quantities <- reactive({
+      req(glycopeptide_intensities(), peptide_intensities())
+      get_protein_quantities(
+        glycopeptide_intensities(), peptide_intensities(), proteins_excel()
+      )
+    })
+    
+    # Calculate median quantity for each protein per sample
+    median_quantities <- reactive({
+      req(protein_quantities())
+      get_median_quantities(protein_quantities())
+    })
+    
+    
     # Extract protein names
     proteins <- reactive({
       req(proteins_excel(), r$correct_formatting == TRUE)
       unique(proteins_excel()$protein)
     })
     
+    # Counter used to create unique tab ids when quantitation
+    # is performed multiple times
+    counter <- reactiveValues(count = 0)
     
-    observeEvent(proteins(), {
-      # Remove previously generated tabs
-      for (protein in r$generated_tabs) {
-        removeTab(inputId = "protein_tabs", target = protein)
-      }
-      # Reset r$generated_tabs
-      r$generated_tabs <- c()
+    # Generate tabs for each protein
+    observeEvent(median_quantities(), {
+      # Up the counter by one
+      counter$count <- counter$count + 1
+      # Remove previously created tabs
+      purrr::map(names(r$tab_contents), function(current_protein) {
+        removeTab(inputId = "protein_tabs", target = current_protein)
+      })
+      # Reset r$tab_contents
+      r$tab_contents <- NULL
       # Create new tabs for each protein
-      for (protein in proteins()) {
-        r$generated_tabs <- c(r$generated_tabs, protein)
+      purrr::map(proteins(), function(current_protein) {
         appendTab(
           inputId = "protein_tabs",
           select = TRUE,
-          session = session,
           tab = tabPanel(
-            title = protein,
-            mod_tab_quantitation_ui(id = ns(protein))
+            title = current_protein,
+            mod_tab_quantitation_ui(
+              id = ns(paste0(current_protein, "_", counter$count))
+            )
           )
         )
-      }
+      })
       # Generate tabs contents
-      r$quantitation_results <- rlang::set_names(proteins()) %>% 
-        purrr::map(., function(protein) {
+      r$tab_contents <- rlang::set_names(proteins()) %>% 
+        purrr::map(., function(current_protein) {
           mod_tab_quantitation_server(
-            id = protein,
-            protein_peptides = proteins_excel() %>% 
-              dplyr::filter(protein == protein),
-            peptides_data = peptides_data(),
-            normalized_data_wide = normalized_data_wide
+            id = paste0(current_protein, "_", counter$count),
+            quantities = median_quantities() %>% 
+              dplyr::filter(protein == current_protein)
           )
         })
     })
+    
     
     
   })
