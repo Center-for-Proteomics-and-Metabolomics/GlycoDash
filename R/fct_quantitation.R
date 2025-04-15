@@ -43,8 +43,7 @@ get_peptide_intensities <- function(proteins_excel, peptides_data) {
 
 
 
-get_protein_quantities <- function(glycopeptide_intensities, 
-                                   peptide_intensities,
+get_protein_quantities <- function(combined_intensities,
                                    proteins_excel) {
   
   # Go over each row in proteins_excel and calculate corresponding quantities
@@ -55,7 +54,7 @@ get_protein_quantities <- function(glycopeptide_intensities,
     labeled <- proteins_excel[i, ]$labeled
     standard_quantity <- as.numeric(proteins_excel[i, ]$standard_quantity)
     # Get data for current protein peptide in wide format
-    data <- dplyr::bind_rows(glycopeptide_intensities, peptide_intensities) %>% 
+    data <- combined_intensities %>% 
       dplyr::filter(cluster %in% c(natural, labeled)) %>% 
       tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity) %>% 
       dplyr::mutate(protein = protein_name)

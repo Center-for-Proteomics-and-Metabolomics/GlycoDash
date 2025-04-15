@@ -186,12 +186,22 @@ mod_quantitation_server <- function(id,
       get_peptide_intensities(proteins_excel(), peptides_data())
     })
     
+    # Combine peptide and glycopeptide intensities (need at least one)
+    combined_intensities <- reactive({
+      req(is_truthy(glycopeptide_intensities()) || is_truthy(peptide_intensities()))
+      if (is_truthy(glycopeptide_intensities()) && is_truthy(peptide_intensities())) {
+        dplyr::bind_rows(glycopeptide_intensities(), peptide_intensities())
+      } else if (is_truthy(glycopeptide_intensities())) {
+        glycopeptide_intensities()
+      } else {
+        peptide_intensities()
+      }
+    })
+    
     # Get calculated quantities based on different peptides
     protein_quantities <- reactive({
-      req(glycopeptide_intensities(), peptide_intensities())
-      get_protein_quantities(
-        glycopeptide_intensities(), peptide_intensities(), proteins_excel()
-      )
+      req(combined_intensities())
+      get_protein_quantities(combined_intensities(), proteins_excel())
     })
     
     # Calculate median quantity for each protein per sample
@@ -200,12 +210,12 @@ mod_quantitation_server <- function(id,
       get_median_quantities(protein_quantities())
     })
     
-    
     # Extract protein names
     proteins <- reactive({
       req(proteins_excel(), r$correct_formatting == TRUE)
       unique(proteins_excel()$protein)
     })
+    
     
     # Counter used to create unique tab ids when quantitation
     # is performed multiple times
