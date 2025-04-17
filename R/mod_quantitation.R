@@ -79,12 +79,21 @@ mod_quantitation_ui <- function(id) {
           id = ns("box"),
           title = div(
             id = ns("box_header"),
-            "Protein quantities"
+            "Protein quantities plot"
           ),
           tabsetPanel(id = ns("protein_tabs")),
           width = 12,
           solidHeader = TRUE,
           status = "primary"
+        )
+      ),
+      fluidRow(
+        shinydashboard::box(
+          title = "View data with protein quantities",
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary",
+          DT::dataTableOutput(ns("data_table"))
         )
       )
     )
@@ -255,6 +264,35 @@ mod_quantitation_server <- function(id,
         })
     })
     
+    
+    
+    # Get protein quantities in wide format to display and pass on
+    data_with_quantities <- reactive({
+      req(median_quantities())
+      quantities_wide <- median_quantities() %>% 
+        dplyr::mutate(protein = paste0(protein, "_quantity")) %>% 
+        tidyr::pivot_wider(names_from = protein, values_from = quantity)
+      
+      data_with_quantities <- normalized_data_wide() %>% 
+        dplyr::left_join(quantities_wide) %>% 
+        dplyr::relocate(tidyselect::contains("_quantity"), 
+                        .after = tidyselect::contains("_sum_intensity"))
+      
+      return(data_with_quantities)
+    })
+    
+    
+    output$data_table <- DT::renderDT({
+      req(data_with_quantities())
+      DT::datatable(data_with_quantities() %>% # Round numbers to 2 decimals
+                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 6,  # Shows 5 rows
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ),
+                    filter = "top")
+    })
     
     
   })
