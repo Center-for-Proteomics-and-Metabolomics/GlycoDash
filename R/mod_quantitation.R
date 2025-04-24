@@ -295,6 +295,21 @@ mod_quantitation_server <- function(id,
     })
     
     
+    
+    observe({
+      req(protein_quantities())
+      browser()
+      # Get vector with all peptide pairs
+      current_protein <- "IgG1"
+      protein_data <- protein_quantities() %>% 
+        dplyr::filter(protein == current_protein)
+      # Only correlation plots if length > 1
+      if (length(unique(protein_data$peptide_pair)) > 1) {
+        plot_peptide_correlations(protein_data)
+      }
+        
+    })
+    
   })
 }
 

@@ -57,14 +57,17 @@ get_protein_quantities <- function(combined_intensities,
     data <- combined_intensities %>% 
       dplyr::filter(cluster %in% c(natural, labeled)) %>% 
       tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity) %>% 
-      dplyr::mutate(protein = protein_name)
+      dplyr::mutate(
+        protein = protein_name,
+        peptide_pair = paste(natural, "/", labeled)
+      )
     # Calculate quantity for each sample
     data$protein_quantity <- data[[natural]] / data[[labeled]] * standard_quantity
     # Get just the quantities
     quantities <- data %>% 
       dplyr::select(
         sample_name, sample_type, sample_id, tidyselect::any_of("group"),
-        protein, protein_quantity
+        protein, peptide_pair, protein_quantity
       ) %>% 
       dplyr::mutate(standard_quantity = standard_quantity)
     
@@ -83,7 +86,8 @@ get_median_quantities <- function(protein_quantities) {
     dplyr::group_by(sample_name, sample_type, sample_id, protein) %>% 
     dplyr::mutate(quantity = median(protein_quantity)) %>% 
     dplyr::select(sample_name, sample_type, sample_id, tidyselect::any_of("group"),
-                  protein, quantity)
+                  protein, quantity) %>% 
+    dplyr::distinct()
   
   return(data)
 }
@@ -131,4 +135,76 @@ plot_protein_quantities <- function(quantities,
   }
   
   return(plot)
+}
+
+
+# Plot protein quantity based on two peptide pairs
+# "pair" is pair of two peptide pairs
+quantity_correlation_plot <- function(df, pair, color_palette) {
+  # Make plot
+  plot <- ggplot2::ggplot(df, ggplot2::aes(
+    x = !!rlang::sym(pair[1]), y = !!rlang::sym(pair[2])
+  )) + 
+    # Add line of identity (y = x)
+    ggplot2::geom_abline(
+      slope = 1,
+      intercept = 0,
+      color = "#3D3D3D",
+      linetype = "dashed" 
+    ) +
+    ggplot2::geom_point(ggplot2::aes(
+      color = sample_type, text = paste0(
+        "Sample name: ", sample_name, "\n",
+        "Sample ID: ", sample_id, "\n"
+      )
+    ), alpha = 0.7, size = 1) +
+    ggplot2::labs(
+      x = paste0("Quantity (", pair[1], ")"),
+      y = paste0("Quantity (", pair[2], ")")
+    ) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+      plot.title = ggplot2::element_text(size = 12)
+    ) + 
+    ggplot2::scale_color_manual(values = color_palette, name = "Sample type") +
+    # Add Pearson correlation
+    ggpubr::stat_cor(
+      method = "pearson",
+      ggplot2::aes(label = ..r.label..),
+      na.rm = TRUE,
+      size = 3
+    )
+  
+  return(plot)
+}
+
+
+
+plot_peptide_correlations <- function(protein_data) {
+  
+  # Create color palette
+  sample_types <- unique(protein_data$sample_type)
+  colors <- color_palette(length(sample_types))
+  color_palette <- setNames(colors, sample_types)
+  
+  # Get all possible pairs of peptide pairs
+  pairs <- combn(unique(protein_data$peptide_pair), 2, simplify = FALSE)
+  
+  # Make plot for each pair
+  plots <- purrr::map(pairs, function(pair) {
+    # Reshape data to get two quantity columns
+    df_pair <- protein_data %>% 
+      dplyr::filter(peptide_pair %in% pair) %>% 
+      tidyr::pivot_wider(names_from = peptide_pair,
+                         values_from = protein_quantity)
+    quantity_correlation_plot(df_pair, pair, color_palette)
+  })
+  
+  # Combine plots into one
+  combined <- patchwork::wrap_plots(plots) +
+    patchwork::plot_layout(guides = "collect", ncol = 2)
+
+  return(combined)
 }
