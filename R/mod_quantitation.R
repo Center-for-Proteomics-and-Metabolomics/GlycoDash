@@ -79,7 +79,7 @@ mod_quantitation_ui <- function(id) {
           id = ns("box"),
           title = div(
             id = ns("box_header"),
-            "Protein quantities plot"
+            "Quantitation results"
           ),
           tabsetPanel(id = ns("protein_tabs")),
           width = 12,
@@ -259,6 +259,8 @@ mod_quantitation_server <- function(id,
           mod_tab_quantitation_server(
             id = paste0(current_protein, "_", counter$count),
             quantities = median_quantities() %>% 
+              dplyr::filter(protein == current_protein),
+            protein_data = protein_quantities() %>% 
               dplyr::filter(protein == current_protein)
           )
         })
@@ -292,22 +294,6 @@ mod_quantitation_server <- function(id,
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
                     ),
                     filter = "top")
-    })
-    
-    
-    
-    observe({
-      req(protein_quantities())
-      browser()
-      # Get vector with all peptide pairs
-      current_protein <- "IgG1"
-      protein_data <- protein_quantities() %>% 
-        dplyr::filter(protein == current_protein)
-      # Only correlation plots if length > 1
-      if (length(unique(protein_data$peptide_pair)) > 1) {
-        plot_peptide_correlations(protein_data)
-      }
-        
     })
     
   })
