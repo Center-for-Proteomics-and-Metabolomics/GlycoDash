@@ -163,13 +163,13 @@ mod_data_import_server <- function(id){
       }
     )
     
-    # Raw data for peptides only
+    # Raw data for peptides that don't have corresponding glycopeptides
     peptides_data <- reactive({
       req(data_incl_clusters$peptides(), show_in_table())
       show_in_table() %>%
         dplyr::filter(cluster %in% data_incl_clusters$peptides())
     })
-    
+
     
     return(list(
       LaCyTools_summary = to_return,

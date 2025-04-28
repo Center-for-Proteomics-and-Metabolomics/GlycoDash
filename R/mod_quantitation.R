@@ -25,25 +25,48 @@ mod_quantitation_ui <- function(id) {
         h1("Protein quantitation")
       ),
       fluidRow(
+        # Upload Excel file with proteins
         shinydashboardPlus::box(
           id = ns("box"),
           title = div(
             id = ns("box_header"),
             "Specify proteins",
-            
-            # Add info for custom traits
             icon("info-circle", class = "ml") %>% 
               bsplus::bs_embed_popover(
                 title = "Explanation",
                 content = HTML(
                   "
-                  Text here...
-                  <br> <br>
-                  Needed columns: protein, natural, labeled, standard_quantity
+                  Upload here an Excel file specifying which peptides should
+                  be used to quantify which protein. The file should contain
+                  the following columns:
+                  <ul>
+                  <li> <i> protein </i> - 
+                  Custom names of proteins that you want to quantify. If you use more
+                  than one peptide to quantify a protein, the corresponding protein
+                  name will be present multiple times in this column.
+                  </li>
+                  <li> <i> natural </i> - 
+                  For each protein, the (automatically detected) names of natural 
+                  glycosylation sites and/or non-glycosylated peptides 
+                  that you want to use for quantitation of each protein.
+                  </li>
+                  <li> <i> labeled </i> - 
+                  For each natural glycosylation site or non-glycosylated peptide:
+                  the name of the corresponding stable isotope labeled glycosylation
+                  site or peptide.
+                  </li>
+                  <li> <i> standard_quantity </i> - 
+                  The quantity of stable isotope labeled standard added to each sample.
+                  Entries in this column should be numbers. GlycoDash agnostic
+                  when it comes to the units of the quantities.
+                  </li>
+                  </ul>
+                  <br>
+                  For an example file, click the paperclip icon.
                   "
                 ),
                 trigger = "hover",
-                placement = "right",
+                placement = "bottom",
                 html = "true"
               ),
             
@@ -57,7 +80,7 @@ mod_quantitation_ui <- function(id) {
                 " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
               ))),
               div(id = ns("dropdown_content"),
-                  downloadButton(ns("download_ex_custom_formulas"),
+                  downloadButton(ns("download_example"),
                                  "Download an example Excel file")),
               icon = icon("paperclip", class = "ml"),
               tooltip = shinyWidgets::tooltipOptions(placement = "top",
@@ -72,8 +95,40 @@ mod_quantitation_ui <- function(id) {
           fileInput(ns("proteins_file"),
                     "Upload Excel file with protein specifications:"
           )
-        )
-      ),
+        ),
+        # Quality check for non-glycosylated peptides
+        shinydashboardPlus::box(
+          id = ns("box"),
+          title = div(
+            id = ns("box_header"),
+            "Quality check for non-glycosylated peptides",
+            icon("info-circle", class = "ml") %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "
+                  For each non-glycosylated peptide ion that is used for quantitation,
+                  the percentage of samples in which the ion fulfills three
+                  quality criteria is plotted. For S/N and IPQ (in the case 
+                  of LaCyTools data), or total area and IDP (in the case 
+                  of Skyline data), the same quality criteria that were used
+                  for spectral and analyte curation are applied.
+                  <br> <br>
+                  Because non-glycosylated peptides are often integrated without
+                  calibration, you may want to be more lenient when it comes to
+                  the acceptable mass error. This value can be set below.
+                  "
+                ),
+                trigger = "hover",
+                placement = "bottom",
+                html = "true"
+              )
+          ),
+          width = 7,
+          solidHeader = TRUE,
+          status = "primary"
+          )
+        ),
       fluidRow(
         shinydashboardPlus::box(
           id = ns("box"),
@@ -266,7 +321,7 @@ mod_quantitation_server <- function(id,
         })
     })
     
-    # Get protein quantities in wide format to display and pass on
+    # Get protein quantities in wide format
     data_with_quantities <- reactive({
       req(median_quantities())
       quantities_wide <- median_quantities() %>% 
@@ -282,6 +337,7 @@ mod_quantitation_server <- function(id,
     })
     
     
+    # Display data with protein quantities
     output$data_table <- DT::renderDT({
       req(data_with_quantities())
       DT::datatable(data_with_quantities() %>% # Round numbers to 2 decimals
@@ -293,6 +349,20 @@ mod_quantitation_server <- function(id,
                     ),
                     filter = "top")
     })
+    
+    
+    
+    # Download example Excel file
+    output$download_example <- downloadHandler(
+      filename = "protein_quantitation_example.xlsx",
+      content = function(file) {
+        example_file <- system.file("app",
+                                    "www",
+                                    "protein_quantitation_example.xlsx",
+                                    package = "GlycoDash")
+        file.copy(example_file, file)
+      }
+    )
     
   })
 }
