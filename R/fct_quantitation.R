@@ -1,3 +1,6 @@
+# Functions used for protein quantitation
+
+
 get_glycopeptide_intensities <- function(proteins_excel, normalized_data_wide) {
   
   data <- normalized_data_wide %>% 
@@ -140,7 +143,9 @@ plot_protein_quantities <- function(quantities,
 
 # Plot protein quantity based on two peptide pairs
 # "pair" is pair of two peptide pairs
-quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
+quantity_correlation_plot <- function(df, pair, color_palette, log_scale,
+                                      correlation = "pearson", 
+                                      correlation_symbol = "R") {
   # Make plot
   plot <- ggplot2::ggplot(df, ggplot2::aes(
     x = !!rlang::sym(pair[1]), y = !!rlang::sym(pair[2])
@@ -158,10 +163,7 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
         "Sample ID: ", sample_id, "\n"
       )
     ), alpha = 0.7, size = 1.5) +
-    ggplot2::labs(
-      x = pair[1],
-      y = pair[2]
-    ) +
+    ggplot2::labs(x = pair[1], y = pair[2]) +
     ggplot2::theme_classic() +
     ggplot2::theme(
       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
@@ -174,8 +176,9 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
     ggplot2::scale_color_manual(values = color_palette, name = "Sample type") +
     # Add Pearson correlation
     ggpubr::stat_cor(
-      method = "pearson",
-      ggplot2::aes(label = ..r.label..),
+      method = correlation,
+      cor.coef.name = correlation_symbol,
+      ggplot2::aes(label = ggplot2::after_stat(r.label)),
       na.rm = TRUE,
       size = 4
     )
@@ -195,7 +198,9 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
 
 
 
-plot_peptide_correlations <- function(protein_data, log_scale) {
+plot_peptide_correlations <- function(protein_data, 
+                                      log_scale, 
+                                      correlation_method) {
   
   # Create color palette
   sample_types <- unique(protein_data$sample_type)
@@ -212,7 +217,17 @@ plot_peptide_correlations <- function(protein_data, log_scale) {
       dplyr::filter(peptide_pair %in% pair) %>% 
       tidyr::pivot_wider(names_from = peptide_pair,
                          values_from = protein_quantity)
-    quantity_correlation_plot(df_pair, pair, color_palette, log_scale)
+    quantity_correlation_plot(
+      df_pair, pair, color_palette, log_scale,
+      correlation = dplyr::case_when(
+        correlation_method == "Pearson (linear)" ~ "pearson",
+        correlation_method == "Spearman (non-parametric)" ~ "spearman"
+      ),
+      correlation_symbol = dplyr::case_when(
+        correlation_method == "Pearson (linear)" ~ "R",
+        correlation_method == "Spearman (non-parametric)" ~ "rho"
+      )
+    )
   })
   
   # Combine plots into one

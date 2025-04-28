@@ -12,41 +12,54 @@ mod_tab_quantitation_ui <- function(id) {
   tagList(
     column(
       width = 12,
+      # Quantities boxplots
       br(),
       div(
-        id = ns("boxplots_title"),
+        id = ns("boxplots_div"),
         strong("Protein quantities per sample type"),
-        style = "font-size: 24px"
+        style = "font-size: 24px",
+        br(),
+        shinyWidgets::materialSwitch(
+          ns("log_scale_1"),
+          HTML("<i style='font-size:16px;'> Plot quantities on logarithmic scale </i>"),
+          status = "success",
+          right = TRUE,
+          value = FALSE
+        ),
+        shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("boxplots")))
       ),
+      # Correlation plots
+      # Need the div to be hidden by default for the toggling to work below
       br(),
-      shinyWidgets::materialSwitch(
-        ns("log_scale_1"),
-        HTML("<i style='font-size:15px;'> Plot quantities on logarithmic scale </i>"),
-        status = "success",
-        right = TRUE,
-        value = FALSE
-      ),
-      shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("boxplots"))),
-      br(),
-      div(
-        id = ns("corplots_title"),
+      shinyjs::hidden(div(
+        id = ns("corplots_div"),
         strong("Correlations between peptides"),
-        style = "font-size: 24px"
-      ),
-      br(),
-      shinyWidgets::materialSwitch(
-        ns("log_scale_2"),
-        HTML("<i style='font-size:15px;'> Plot quantities on logarithmic scale </i>"),
-        status = "success",
-        right = TRUE,
-        value = FALSE
-      ),
-      br(),
-      shinyjqui::jqui_resizable(plotOutput(ns("corplots")))
+        style = "font-size: 24px",
+        br(),
+        div(
+          selectInput(
+            ns("correlation_method"),
+            "Method for calculating correlations:",
+            choices = c("Pearson (linear)", "Spearman (non-parametric)"),
+            selected = "Pearson (linear)"
+          ),
+          style = "font-size: 16px; font-style: italic"
+        ),
+        shinyWidgets::materialSwitch(
+          ns("log_scale_2"),
+          HTML("<i style='font-size:16px;'> Plot quantities on logarithmic scale </i>"),
+          status = "success",
+          right = TRUE,
+          value = FALSE
+        ),
+        shinyjqui::jqui_resizable(plotOutput(ns("corplots")))
+      ))
     )
   )
 }
-    
+
+
+
 #' tab_quantitation Server Functions
 #'
 #' @noRd 
@@ -56,6 +69,7 @@ mod_tab_quantitation_server <- function(id,
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
+    # Show boxplots with quantities
     quantities_plot <- reactive({
       req(quantities)
       plot_protein_quantities(quantities, input$log_scale_1)
@@ -67,10 +81,12 @@ mod_tab_quantitation_server <- function(id,
         GlycoDash::hide_outliers(.)
     })
     
+    
+    # Show correlations between peptides if applicable
     correlation_plots <- reactive({
       req(protein_data)
       if (length(unique(protein_data$peptide_pair)) > 1) {
-        plot_peptide_correlations(protein_data, input$log_scale_2)
+        plot_peptide_correlations(protein_data, input$log_scale_2, input$correlation_method)
       } else {
         NULL
       }
@@ -80,16 +96,12 @@ mod_tab_quantitation_server <- function(id,
       req(correlation_plots())
       correlation_plots()
     }, res = 96)
-    
-    
-    # Toggle visibility of correlation
+  
     observe({
       if (is_truthy(correlation_plots())) {
-        shinyjs::show("corplots_title")
-        shinyjs::show("log_scale_2")
+        shinyjs::show("corplots_div")
       } else {
-        shinyjs::hide("corplots_title")
-        shinyjs::hide("log_scale_2")
+        shinyjs::hide("corplots_div")
       }
     })
     

@@ -266,8 +266,6 @@ mod_quantitation_server <- function(id,
         })
     })
     
-    
-    
     # Get protein quantities in wide format to display and pass on
     data_with_quantities <- reactive({
       req(median_quantities())
