@@ -31,6 +31,7 @@ mod_tab_quantitation_ui <- function(id) {
       # Correlation plots
       # Need the div to be hidden by default for the toggling to work below
       br(),
+      br(),
       shinyjs::hidden(div(
         id = ns("corplots_div"),
         strong("Correlations between peptides"),

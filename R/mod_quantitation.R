@@ -124,6 +124,7 @@ mod_quantitation_ui <- function(id) {
                 html = "true"
               )
           ),
+          tabsetPanel(id = ns("peptide_tabs")),
           width = 7,
           solidHeader = TRUE,
           status = "primary"
@@ -193,7 +194,10 @@ mod_quantitation_server <- function(id,
     # Initiate reactiveValues vector
     r <- reactiveValues(
       correct_formatting = NULL,
-      tab_contents = NULL
+      protein_tabs_contents = NULL,
+      peptide_tabs_contents = NULL,
+      peptide_tabs_names = NULL,
+      peptide_tabs_data = NULL
     )
     
     # Check validity of column names and peptide entries
@@ -290,11 +294,17 @@ mod_quantitation_server <- function(id,
       # Up the counter by one
       counter$count <- counter$count + 1
       # Remove previously created tabs
-      purrr::map(names(r$tab_contents), function(current_protein) {
+      purrr::map(names(r$protein_tabs_contents), function(current_protein) {
         removeTab(inputId = "protein_tabs", target = current_protein)
       })
-      # Reset r$tab_contents
-      r$tab_contents <- NULL
+      purrr::map(r$peptide_tabs_names, function(current_protein) {
+        removeTab(inputId = "peptide_tabs", target = current_protein)
+      })
+      # Reset tab contents in reactiveValues vector
+      r$protein_tabs_contents <- NULL
+      r$peptide_tabs_contents <- NULL
+      r$peptide_tabs_names <- NULL
+      r$peptide_tabs_data <- NULL
       # Create new tabs for each protein
       purrr::map(proteins(), function(current_protein) {
         appendTab(
@@ -307,9 +317,36 @@ mod_quantitation_server <- function(id,
             )
           )
         )
+        # Check for peptide data of this protein
+        if (!is.null(peptides_data())) {
+          peptides <- proteins_excel() %>% 
+            dplyr::filter(protein == current_protein)
+          peptides_data_current_protein <- peptides_data() %>% 
+            dplyr::filter(cluster %in% c(peptides$natural, peptides$labeled))
+          if (nrow(peptides_data_current_protein) == 0) {
+            peptides_data_current_protein <- NULL
+          }
+        } else {
+          peptides_data_current_protein <- NULL
+        }
+        # Create tabs for peptide QC
+        if (!is.null(peptides_data_current_protein)) {
+          r$peptide_tabs_names <- c(r$peptide_tabs_names, current_protein)
+          r$peptide_tabs_data[[current_protein]] <- peptides_data_current_protein
+          appendTab(
+            inputId = "peptide_tabs",
+            select = TRUE,
+            tab = tabPanel(
+              title = current_protein,
+              mod_tab_quantitation_peptides_ui(
+                id = ns(paste0(current_protein, "_peptides_", counter$count))
+              )
+            )
+          )
+        }
       })
       # Generate tabs contents
-      r$tab_contents <- rlang::set_names(proteins()) %>% 
+      r$protein_tabs_contents <- rlang::set_names(proteins()) %>% 
         purrr::map(., function(current_protein) {
           mod_tab_quantitation_server(
             id = paste0(current_protein, "_", counter$count),
@@ -319,7 +356,16 @@ mod_quantitation_server <- function(id,
               dplyr::filter(protein == current_protein)
           )
         })
+      r$peptide_tabs_contents <- rlang::set_names(r$peptide_tabs_names) %>% 
+        purrr::map(., function(current_protein) {
+          mod_tab_quantitation_peptides_server(
+            id = paste0(current_protein, "_peptides_", counter$count),
+            peptides_data = r$peptide_tabs_data[[current_protein]]
+          )
+        })
     })
+    
+    
     
     # Get protein quantities in wide format
     data_with_quantities <- reactive({

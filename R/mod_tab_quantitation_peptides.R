@@ -19,9 +19,14 @@ mod_tab_quantitation_peptides_ui <- function(id) {
 #' tab_quantitation_peptides Server Functions
 #'
 #' @noRd 
-mod_tab_quantitation_server <- function(id, peptides_data) {
+mod_tab_quantitation_peptides_server <- function(id, peptides_data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
+    
+    observe({
+      req(peptides_data)
+      browser()
+    })
     
   })
 }
