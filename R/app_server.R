@@ -57,6 +57,7 @@ app_server <- function( input, output, session ) {
     id = "quantitation_ui_1",
     peptides = results_data_import$peptides,
     peptides_data = results_data_import$peptides_data,
+    results_spectra_curation = results_spectra_curation,
     results_normalization = results_normalization
   )
   
