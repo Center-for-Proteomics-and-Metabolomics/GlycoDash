@@ -38,20 +38,26 @@ mod_tab_quantitation_ui <- function(id) {
         style = "font-size: 24px",
         br(),
         div(
+          shinyWidgets::materialSwitch(
+            ns("log_scale_2"),
+            HTML("<i style='font-size:16px;'> Plot quantities on logarithmic scale </i>"),
+            status = "success",
+            right = TRUE,
+            value = FALSE
+          ),
           selectInput(
             ns("correlation_method"),
             "Method for calculating correlations:",
             choices = c("Pearson (linear)", "Spearman (non-parametric)"),
             selected = "Pearson (linear)"
           ),
-          style = "font-size: 16px; font-style: italic"
-        ),
-        shinyWidgets::materialSwitch(
-          ns("log_scale_2"),
-          HTML("<i style='font-size:16px;'> Plot quantities on logarithmic scale </i>"),
-          status = "success",
-          right = TRUE,
-          value = FALSE
+          selectizeInput(
+            ns("exclude_sample_types"),
+            "Exclude sample types from correlations:",
+            choices = c(""),
+            multiple = TRUE
+          ),
+          style = "font-size: 15px; font-style: italic"
         ),
         shinyjqui::jqui_resizable(plotOutput(ns("corplots")))
       ))
@@ -83,11 +89,24 @@ mod_tab_quantitation_server <- function(id,
     })
     
     
-    # Show correlations between peptides if applicable
+    # Correlation plots with option to exclude sample types
+    observe({
+      req(protein_data)
+      sample_types <- levels(protein_data$sample_type)
+      updateSelectizeInput(
+        inputId = "exclude_sample_types",
+        choices = sample_types,
+        options = list(maxItems = length(sample_types) - 1)
+      )
+    })
+    
     correlation_plots <- reactive({
       req(protein_data)
       if (length(unique(protein_data$peptide_pair)) > 1) {
-        plot_peptide_correlations(protein_data, input$log_scale_2, input$correlation_method)
+        protein_data_filtered <- protein_data %>% 
+          dplyr::filter(!sample_type %in% input$exclude_sample_types)
+        plot_peptide_correlations(protein_data_filtered, input$log_scale_2, 
+                                  input$correlation_method)
       } else {
         NULL
       }
@@ -110,7 +129,8 @@ mod_tab_quantitation_server <- function(id,
     return(list(
       quantities = quantities,
       quantities_plot = quantities_plot,
-      correlation_plots = correlation_plots
+      correlation_plots = correlation_plots,
+      exclude_sample_types = reactive(input$exclude_sample_types)
     ))
   })
 }
