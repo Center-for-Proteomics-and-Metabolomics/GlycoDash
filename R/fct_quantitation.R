@@ -24,12 +24,16 @@ get_glycopeptide_intensities <- function(proteins_excel, normalized_data_wide) {
 
 
 
-get_peptide_intensities <- function(proteins_excel, peptides_data) {
+get_peptide_intensities <- function(proteins_excel, 
+                                    peptides_data,
+                                    exclude_peptides) {
   
   data <- peptides_data %>%
-    dplyr::filter(cluster %in% c(
-      proteins_excel$natural, proteins_excel$labeled
-    )) %>% 
+    dplyr::mutate(ion = paste0(cluster, ", ", charge)) %>% 
+    dplyr::filter(
+      !ion %in% exclude_peptides,
+      cluster %in% c(proteins_excel$natural, proteins_excel$labeled)
+    ) %>% 
     dplyr::mutate(intensity_by_fraction = 
                   absolute_intensity_background_subtracted / fraction) %>% 
     dplyr::group_by(sample_name, cluster) %>% 

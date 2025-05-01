@@ -94,8 +94,15 @@ mod_quantitation_ui <- function(id) {
           status = "primary",
           fileInput(ns("proteins_file"),
                     "Upload Excel file with protein specifications:"
+          ),
+          # Option to exclude peptide ions from calculations
+          shinyjs::hidden(selectizeInput(
+            ns("exclude_peptides"),
+            "Non-glycosylated peptide ions to exclude from the calculations:",
+            choices = c(""),
+            multiple = TRUE
           )
-        ),
+        )),
         # Quality check for non-glycosylated peptides
         shinydashboardPlus::box(
           id = ns("box"),
@@ -255,7 +262,7 @@ mod_quantitation_server <- function(id,
     # Get intensities of non-glycosylated peptides
     peptide_intensities <- reactive({
       req(proteins_excel(), peptides_data(), r$correct_formatting == TRUE)
-      get_peptide_intensities(proteins_excel(), peptides_data())
+      get_peptide_intensities(proteins_excel(), peptides_data(), input$exclude_peptides)
     })
     
     # Combine peptide and glycopeptide intensities (need at least one)
@@ -270,10 +277,36 @@ mod_quantitation_server <- function(id,
       }
     })
     
+    # Prevent trying quantitation when all required peptide ions are excluded
+    proteins_checked <- reactive({
+      req(combined_intensities(), proteins_excel())
+      present <- unique(combined_intensities()$cluster)
+      checked <- proteins_excel() %>% 
+        dplyr::filter(natural %in% present & labeled %in% present)
+      return(checked)
+    })
+    
+    # Warning message
+    observeEvent(proteins_checked(), {
+      difference <- dplyr::anti_join(proteins_excel(), proteins_checked())
+      if (nrow(difference) > 0) {
+        for (rownum in nrow(difference)) {
+          row <- difference[rownum, ]
+          message <- paste0(
+            "Protein ", difference$protein, 
+            " could not be quantified based on peptides ",
+            paste0(row$natural, " / ", row$labeled),
+            ", because too many ions required for the calculation were excluded."
+          )
+          showNotification(message, type = "warning", duration = 30)
+        }
+      }
+    })
+    
     # Get calculated quantities based on different peptides
     protein_quantities <- reactive({
       req(combined_intensities())
-      get_protein_quantities(combined_intensities(), proteins_excel())
+      get_protein_quantities(combined_intensities(), proteins_checked())
     })
     
     # Calculate median quantity for each protein per sample
@@ -284,8 +317,8 @@ mod_quantitation_server <- function(id,
     
     # Extract protein names
     proteins <- reactive({
-      req(proteins_excel(), r$correct_formatting == TRUE)
-      unique(proteins_excel()$protein)
+      req(proteins_checked(), r$correct_formatting == TRUE)
+      unique(proteins_checked()$protein)
     })
     
     
@@ -370,6 +403,34 @@ mod_quantitation_server <- function(id,
         })
     })
     
+    
+    # Option to exclude peptide ions from calculations
+    observe({
+      if (is_truthy(peptides_data())) {
+        shinyjs::show("exclude_peptides")
+      } else {
+        shinyjs::hide("exclude_peptides")
+      }
+    })
+    
+    peptide_ions <- reactive({
+      req(peptides_data(), proteins_excel())
+      peptides_data() %>% 
+        dplyr::filter(
+          cluster %in% c(proteins_excel()$natural, proteins_excel()$labeled)
+        ) %>% 
+        dplyr::select(cluster, charge) %>% 
+        dplyr::distinct() %>% 
+        dplyr::arrange(cluster, charge) %>% 
+        dplyr::mutate(ion = paste0(cluster, ", ", charge))
+    })
+    
+    observeEvent(peptide_ions(), {
+      updateSelectizeInput(
+        inputId = "exclude_peptides",
+        choices = peptide_ions()$ion
+      )
+    })
     
     
     # Get protein quantities in wide format
