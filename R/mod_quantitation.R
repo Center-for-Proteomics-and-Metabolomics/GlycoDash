@@ -479,7 +479,9 @@ mod_quantitation_server <- function(id,
     
     # Download peptide QC data
     observe({
-      shinyjs::toggleState("download", is_truthy(peptides_data()))
+      shinyjs::toggleState("download", condition = (
+        is_truthy(peptides_data()) & is_truthy(proteins_excel()) & is_truthy(peptide_ions())
+      ))
     })
     
     output$download <- downloadHandler(
@@ -489,7 +491,8 @@ mod_quantitation_server <- function(id,
       },
       content = function(file) {
         writexl::write_xlsx(
-          peptides_data(),
+          peptides_data() %>% 
+            dplyr::filter(cluster %in% peptide_ions()$cluster),
           path = file
         )
       }
