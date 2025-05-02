@@ -497,12 +497,12 @@ mod_quantitation_server <- function(id,
         )
       }
     )
-    
-    
+  
+
     return(list(
       data_with_quantities = data_with_quantities,
-      protein_tab_contents = reactive(r$protein_tab_contents),
-      peptide_tab_contents = reactive(r$peptide_tab_contents)
+      protein_tabs_contents = reactive(r$protein_tabs_contents),
+      peptide_tabs_contents = reactive(r$peptide_tabs_contents)
     ))
   })
 }

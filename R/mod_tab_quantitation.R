@@ -130,6 +130,7 @@ mod_tab_quantitation_server <- function(id,
       quantities = quantities,
       quantities_plot = quantities_plot,
       correlation_plots = correlation_plots,
+      correlation_method = reactive(input$correlation_method),
       exclude_sample_types = reactive(input$exclude_sample_types)
     ))
   })

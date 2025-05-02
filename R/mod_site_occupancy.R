@@ -296,9 +296,10 @@ mod_site_occupancy_server <- function(id,
         dplyr::left_join(results_derived_traits$data_with_traits(), site_occupancy()) %>% 
           dplyr::relocate(tidyselect::contains("site_occupancy"),
                           .after = tidyselect::contains("sum_intensity"))
-      # } else if (is_truthy(results_quantitation$quantitation_data())) {
-      #   dplyr::left_join(results_quantitation$quantitation_data(), site_occupancy()) %>% 
-      #     dplyr::relocate(IgG1_quantity_ng, .after = replicates)
+      } else if (is_truthy(results_quantitation$data_with_quantities())) {
+        dplyr::left_join(results_quantitation$data_with_quantities(), site_occupancy()) %>%
+          dplyr::relocate(tidyselect::contains("_quantity"),
+                          .after = tidyselect::contains("sum_intensity"))
       } else {
         site_occupancy()
       }

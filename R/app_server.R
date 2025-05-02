@@ -61,15 +61,16 @@ app_server <- function( input, output, session ) {
     results_normalization = results_normalization
   )
   
-  # TODO: pass results_quantitation to modules
   results_derived_traits <- mod_derived_traits_server(
     id = "derived_traits_ui_1",
-    results_normalization = results_normalization)
+    results_normalization = results_normalization,
+    results_quantitation = results_quantitation)
   
   results_site_occupancy <- mod_site_occupancy_server(
     id = "site_occupancy_ui_1",
     results_spectra_curation = results_spectra_curation,
     results_normalization = results_normalization,
+    results_quantitation = results_quantitation,
     results_derived_traits = results_derived_traits
   )
   
@@ -82,6 +83,7 @@ app_server <- function( input, output, session ) {
   results_data_exploration <- mod_data_exploration_server(
     id = "data_exploration_ui_1",
     results_derived_traits = results_derived_traits,
+    results_quantitation = results_quantitation,
     results_site_occupancy = results_site_occupancy,
     results_normalization = results_normalization
   )
@@ -91,6 +93,7 @@ app_server <- function( input, output, session ) {
     id = "export_ui_1",
     results_site_occupancy = results_site_occupancy,
     results_derived_traits = results_derived_traits,
+    results_quantitation = results_quantitation,
     results_data_import = results_data_import,
     results_spectra_curation = results_spectra_curation,
     results_analyte_curation = results_analyte_curation,

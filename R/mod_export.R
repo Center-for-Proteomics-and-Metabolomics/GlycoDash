@@ -71,8 +71,8 @@ mod_export_server <- function(id,
         x$data <- results_site_occupancy$site_occupancy_data()
       } else if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
-      # } else if (is_truthy(results_quantitation$quantitation_data())) {
-      #   x$data <- results_quantitation$quantitation_data()
+      } else if (is_truthy(results_quantitation$data_with_quantities())) {
+        x$data <- results_quantitation$data_with_quantities()
       } else {
         x$data <- results_normalization$normalized_data_wide()
       }
