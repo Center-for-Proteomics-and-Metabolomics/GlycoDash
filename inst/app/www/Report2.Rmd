@@ -39,6 +39,8 @@ params:
   site_occupancy_boxplot: NA
   site_occupancy_excluded_peptides: NA
   site_occupancy_mass_error: NA
+  quantitation_protein_tab_contents: NA
+  quantitation_peptide_tab_contents: NA
   repeatability: NA
   data_exploration: NA
 ---
@@ -261,6 +263,23 @@ if (!is.null(names(params$heatmaps))) {
 ```
 
 ## Protein quantitation
+
+```{r protein-tabs, results='asis'}
+
+if (!is.null(params$quantitation_protein_tab_contents)) {
+  # Quantitation results per cluster
+  cat("### Quantitation results \n")
+  purrr::iwalk(params$quantitation_protein_tab_contents, function(results, name) {
+    cat("####", name, "\n")
+    contents <- params$quantitation_protein_tab_contents[[name]]
+    # Quantities boxplot
+    boxplots <- plotly::ggplotly(contents$quantities_plot, tooltip = "text") %>% 
+      GlycoDash::hide_outliers(.)
+    print(htmltools::tagList(boxplots))
+  })
+}
+```
+
 
 
 ## Glycosylation traits

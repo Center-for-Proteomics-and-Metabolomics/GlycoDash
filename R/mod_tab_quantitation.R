@@ -127,7 +127,6 @@ mod_tab_quantitation_server <- function(id,
     
     
     return(list(
-      quantities = quantities,
       quantities_plot = quantities_plot,
       correlation_plots = correlation_plots,
       correlation_method = reactive(input$correlation_method),

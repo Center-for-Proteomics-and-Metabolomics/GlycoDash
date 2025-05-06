@@ -53,6 +53,7 @@ mod_data_exploration_ui <- function(id){
 #'
 #' @noRd 
 mod_data_exploration_server <- function(id, 
+                                        results_quantitation,
                                         results_derived_traits,
                                         results_site_occupancy,
                                         results_normalization){

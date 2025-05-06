@@ -167,6 +167,7 @@ mod_site_occupancy_ui <- function(id) {
 mod_site_occupancy_server <- function(id,
                                       results_spectra_curation,
                                       results_normalization,
+                                      results_quantitation,
                                       results_derived_traits) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns

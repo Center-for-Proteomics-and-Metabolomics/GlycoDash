@@ -52,6 +52,7 @@ mod_export_ui <- function(id){
 #'
 #' @noRd 
 mod_export_server <- function(id, 
+                              results_quantitation,
                               results_site_occupancy,
                               results_derived_traits,
                               results_data_import,
@@ -198,6 +199,38 @@ mod_export_server <- function(id,
         )
         
         
+        # Quantitation tab contents
+        quantitation_protein_tab_contents <- tryCatch(
+          expr = {
+            purrr::map(results_quantitation$protein_tabs_contents(),
+                       function(list_of_objects) {
+                         purrr::map(
+                           list_of_objects,
+                           ~ do.call(.x,
+                                     args = list()))
+                       })
+          },
+          error = function(e) {
+            NULL
+          }
+        )
+        
+        quantitation_peptide_tab_contents <- tryCatch(
+          expr = {
+            purrr::map(results_quantitation$peptide_tabs_contents(),
+                       function(list_of_objects) {
+                         purrr::map(
+                           list_of_objects,
+                           ~ do.call(.x,
+                                     args = list()))
+                       })
+          },
+          error = function(e) {
+            NULL
+          }
+        )
+        
+        
         # Repeatability
         # Mapping (or looping) a reactiveValues list is not possible. You need
         # to convert it to a regular list first. 
@@ -270,17 +303,25 @@ mod_export_server <- function(id,
           cut_offs = results_analyte_curation$cut_offs(),
           analyte_list = results_analyte_curation$analyte_list(),
           analyte_curation_tab_contents = analyte_curation_tab_contents,
+          # Normalization
           heatmaps = results_normalization$heatmaps(),
           heatmaps_excluded_sample_types = results_normalization$heatmaps_excluded_sample_types(),
+          # Traits
           derived_traits = try_call(results_derived_traits$derived_traits),
           formulas = try_call(results_derived_traits$formulas),
           custom_formulas = try_call(results_derived_traits$custom_formulas),
           intensity_plots = results_derived_traits$intensity_plots(),
+          # Site occupancy
           site_occupancy_quality_plot = try_call(results_site_occupancy$quality_plot()),
           site_occupancy_boxplot = try_call(results_site_occupancy$occupancy_plot()),
           site_occupancy_mass_error = try_call(results_site_occupancy$mass_accuracy()),
           site_occupancy_excluded_peptides = try_call(results_site_occupancy$exclude_peptides()),
+          # Quantitation
+          quantitation_protein_tab_contents = quantitation_protein_tab_contents,
+          quantitation_peptide_tab_contents = quantitation_peptide_tab_contents,
+          # Repeatability
           repeatability = repeatability_tab_contents,
+          # Data exploration
           data_exploration = data_exploration_tab_contents
         )
         
