@@ -393,14 +393,16 @@ mod_quantitation_server <- function(id,
           }
         }
       }
-      r$peptide_tabs_contents <- rlang::set_names(r$peptide_tabs_names) %>%
-        purrr::map(., function(current_protein) {
-          mod_tab_quantitation_peptides_server(
-            id = paste0(current_protein, "_peptides_", counter$count),
-            peptides_data = r$peptide_tabs_data[[current_protein]],
-            results_spectra_curation = results_spectra_curation
-          )
-        })
+      if (!is.null(r$peptide_tabs_names)) {
+        r$peptide_tabs_contents <- rlang::set_names(r$peptide_tabs_names) %>%
+          purrr::map(., function(current_protein) {
+            mod_tab_quantitation_peptides_server(
+              id = paste0(current_protein, "_peptides_", counter$count),
+              peptides_data = r$peptide_tabs_data[[current_protein]],
+              results_spectra_curation = results_spectra_curation
+            )
+          })
+      }
     })
     
     
