@@ -39,6 +39,7 @@ params:
   site_occupancy_boxplot: NA
   site_occupancy_excluded_peptides: NA
   site_occupancy_mass_error: NA
+  quantitation_exclude_peptides: NA
   quantitation_protein_tab_contents: NA
   quantitation_peptide_tab_contents: NA
   repeatability: NA
@@ -267,15 +268,38 @@ if (!is.null(names(params$heatmaps))) {
 ```{r protein-tabs, warning=FALSE, results='asis'}
 
 if (!is.null(params$quantitation_protein_tab_contents)) {
+  # Check for excluded peptide ions
+  if (!is.null(params$quantitation_exclude_peptides)) {
+    cat(
+      "Peptide ions excluded from quantitation: ",
+      paste(params$quantitation_exclude_peptides, collapse = ", ")
+    )
+    cat("\n \n")
+  }
   # Quantitation results per cluster
-  cat("### Quantitation results \n")
-  purrr::iwalk(params$quantitation_protein_tab_contents, function(results, name) {
-    cat("####", name, "\n")
-    contents <- params$quantitation_protein_tab_contents[[name]]
-    # Quantities boxplot
+  purrr::iwalk(params$quantitation_protein_tab_contents, function(results, protein) {
+    cat("###", protein, "\n")
+    contents <- params$quantitation_protein_tab_contents[[protein]]
+    peptide_qc <- params$quantitation_peptide_tab_contents[[protein]]
+    # Peptide QC
+    if (!is.null(peptide_qc)) {
+      qc_plot <- plotly::ggplotly(peptide_qc$quality_plot, tooltip = "text")
+      cat("\nPeptides quality control:\n\n")
+      # cat(names(peptide_qc))
+      print(htmltools::tagList(qc_plot))
+      cat(
+        "\n - Acceptable mass accuracy range (ppm): ",
+          min(peptide_qc$mass_accuracy), "-", max(peptide_qc$mass_accuracy)
+      )
+      cat(
+        "\n \n - Sample types excluded from quality assessment: ",
+        paste(peptide_qc$exclude_sample_types, collapse = ", ")
+      )
+    }
+    # Quantities boxplots
     boxplots <- plotly::ggplotly(contents$quantities_plot, tooltip = "text") %>% 
       GlycoDash::hide_outliers(.)
-    cat("\nProtein quantities:\n\n")
+    cat("\n\n\n Protein quantities: \n\n")
     print(htmltools::tagList(boxplots))
     # ChatGPT workaround for non-interactive correlation plot
     if (!is.null(contents$correlation_plots)) {
@@ -284,20 +308,12 @@ if (!is.null(params$quantitation_protein_tab_contents)) {
       ggplot2::ggsave(tmpfile, plot = contents$correlation_plots, width = 8, height = 6, dpi = 200)
       encoded <- base64enc::dataURI(file = tmpfile, mime = "image/png")
       cat(sprintf('<img src="%s" width="600"/>\n', encoded))
+      cat("\n Correlation method: ", contents$correlation_method)
+      cat("\n \n")
     }
   })
 }
 
-# if (!is.null(params$quantitation_peptide_tab_contents)) {
-#   cat("### Quantitation quality check \n")
-#   purrr::iwalk(params$quantitation_peptide_tab_contents, function(results, name) {
-#     cat("####", name, "\n")
-#     contents <- params$quantitation_peptide_tab_contents[[name]]
-#     quality_plot <- plotly::ggplotly(contents$quality_plot, tooltip = "text")
-#     print(htmltools::tagList(quality_plot))
-#     cat("Sample types excluded from quality plot:")
-#   })
-# }
 ```
 
 

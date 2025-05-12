@@ -78,6 +78,7 @@ mod_export_server <- function(id,
         x$data <- results_normalization$normalized_data_wide()
       }
     })
+
     
     # Disable the "Download processed data" button until normalized data is available
     # Also the Generate report button
@@ -317,6 +318,7 @@ mod_export_server <- function(id,
           site_occupancy_mass_error = try_call(results_site_occupancy$mass_accuracy()),
           site_occupancy_excluded_peptides = try_call(results_site_occupancy$exclude_peptides()),
           # Quantitation
+          quantitation_exclude_peptides = results_quantitation$exclude_peptides(),
           quantitation_protein_tab_contents = quantitation_protein_tab_contents,
           quantitation_peptide_tab_contents = quantitation_peptide_tab_contents,
           # Repeatability

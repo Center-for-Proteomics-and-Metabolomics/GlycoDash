@@ -497,10 +497,11 @@ mod_quantitation_server <- function(id,
         )
       }
     )
-  
 
+    
     return(list(
       data_with_quantities = data_with_quantities,
+      exclude_peptides = reactive(input$exclude_peptides),
       protein_tabs_contents = reactive(r$protein_tabs_contents),
       peptide_tabs_contents = reactive(r$peptide_tabs_contents)
     ))
