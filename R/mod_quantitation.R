@@ -11,159 +11,167 @@ mod_quantitation_ui <- function(id) {
   ns <- NS(id)
   tagList(
     tags$style(HTML(paste0(
-      "#", ns("box_header1"), " .awesome-checkbox {padding-top: 7px}",
-      "#", ns("box_header1"), " .popover {max-width: 400px !important; color: #333}",
-      "#", ns("box_header1"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
-      "#", ns("box_header1"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
-      "#", ns("box_header1"), " .btn {float: right; border-width: 0px; margin-right: 10px}",
-      "#", ns("box_header1"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}",
-      "#", ns("box1"), " .box-title {width: 100%}",
-      "#", ns("box1"), " .dropdown {display: inline-block; float: right; width: 330px}",
-      "#", ns("box_header2"), " .awesome-checkbox {padding-top: 7px}",
-      "#", ns("box_header2"), " .popover {max-width: 400px !important; color: #333}",
-      "#", ns("box_header2"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
-      "#", ns("box_header2"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
-      "#", ns("box_header2"), " .btn {float: right; border-width: 0px; margin-right: 10px}",
-      "#", ns("box_header2"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}",
-      "#", ns("box2"), " .box-title {width: 100%}",
-      "#", ns("box2"), " .dropdown {display: inline-block; float: right; width: 330px}"
+      "#", ns("box_header"), " .awesome-checkbox {padding-top: 7px}",
+      "#", ns("box_header"), " .popover {max-width: 400px !important; color: #333}",
+      "#", ns("box"), " .box-title {width: 100%}",
+      "#", ns("box_header"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#", ns("box_header"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#", ns("box_header"), " .btn {float: right; border-width: 0px; margin-right: 5px}",
+      "#", ns("box"), " .dropdown {display: inline-block; float: right; width: 135px}",
+      "#", ns("box_header"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
     ))),
     fluidPage(
-      fluidRow(h1("IgG1 quantitation")),
       fluidRow(
-        column(
-          width = 5,
-          shinydashboardPlus::box(
-            id = ns("box1"),
-            title = div(
-              id = ns("box_header2"),
-              "Quantitation of antigen-specific IgG1 using SILuMAb",
-              icon("info-circle", class = "ml") %>% 
-                bsplus::bs_embed_popover(
-                  title = "Explanation",
-                  content = HTML("
-                  <p>
-                  Quantitation of antigen-specific IgG1 is first performed based on two different
-                  peptides: the Fc glycopeptides and a proteotypic peptide
-                  GPS[...]. It is also possible to perform the quantitation
-                  based on only one of these peptides, using the checkboxes.
-
-                  <ul>
-                  <li>For the glycopeptides, the summed intensity of the natural IgG1
-                  glycopeptides is divided by the summed intensity of the SIL glycopeptides.
-                  This ratio is then multiplied by the amount of SILuMAb in the sample.</li>
-
-                  <li>For GPS[...], the intensity of the natural peptide
-                  is divided by the intensity of the SIL peptide,
-                  after which the ratio is multiplied by the amount of SILuMAb in the sample.</li>
-                  </ul>
-
-                  <p>
-                  The reported amount of antigen-specific IgG1 in the plot and table below is the
-                  median of the values calculated for the two different peptides.
-                  When a sample is missing a value for one of the peptides, this
-                  peptide is excluded from calculation of the median. The calculated
-                  amount of IgG1 is rounded to a whole number (ng).
-                  "),
-                  trigger = "hover",
-                  placement = "bottom",
-                  html = "true"
-                )
-            ),
-            width = NULL,
-            solidHeader = TRUE,
-            status = "primary",
-            # Text for when there is no SILuMAb
-            div(
-              id = ns("no_silumab"),
-              strong("Your samples do not contain SILuMAb for IgG1 quantitation.\n\n"),
-              style = "color:#0021B8; font-size: 16px"
-            ),
-            # Input for SILuMAb amounts.
-            numericInput(
-              ns("silumab_amount"),
-              "Amount of SILuMAb per sample (ng):",
-              value = 2, min = 0, max = NA
-            ),
-            # Checkboxes to include/exclude peptides
-            shinyWidgets::awesomeCheckboxGroup(
-              ns("chosen_peptides"),
-              "Peptides to include in the calculation:",
-              choices = c(""),
-              selected = c("")
-            ),
-            # Option to exclude sample types from calculating correlations
-            selectizeInput(
-              ns("exclude_samples"),
-              "Sample types to exclude from calculating the peptide correlations:",
-              choices = c(""),
-              multiple = TRUE
-            ),
-            # Button to quantify IgG1
-            actionButton(
-              ns("quantify_IgG1"),
-              "Quantify IgG1"
-            )
-          )
-        ),
-        column(
-          width = 7,
-          shinydashboardPlus::box(
-            id = ns("box2"),
-            title = div(
-              id = ns("box_header2"),
-              "Peptide correlations",
-              icon("info-circle", class = "ml") %>% 
-                bsplus::bs_embed_popover(
-                  title = "Explanation",
-                  content = HTML("
-                  <p>
-                  When quantifying antigen-specific IgG1 based on different peptides,
-                  the amounts of IgG1 calculated based on the glycopeptides
-                  should correlate well to those calculated based on GPS[...].
-                  When this is not the case, you may want to exclude one of 
-                  the peptides from the quantitation.
-                  
-                  <p>
-                  The Spearman correlation is calculated based
-                  on IgG1 quantities rounded to a whole number of ng.
-                  
-                  <p>
-                  Samples for which no quantity could be calculated 
-                  because of missing values are not shown in the plot, and
-                  are not used in calculating the correlation.
-                  
-                  <p>
-                  The diagonal line is the line of equality (y = x), which is
-                  useful for comparing two different quantitation methods.
-                  "),
-                  trigger = "hover",
-                  placement = "bottom",
-                  html = "true"
-                )
-            ),
-            width = NULL,
-            solidHeader = TRUE,
-            status = "primary",
-            tabsetPanel(id = ns("tabs"))
-          )
-        )
+        h1("Protein quantitation")
       ),
       fluidRow(
-        column(
-          width = 12,
-          shinydashboard::box(
-            title = "Antigen-specific IgG1 quantitation plot",
-            width = NULL,
-            solidHeader = TRUE,
-            status = "primary",
-            shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("quantitation_plot")))
+        # Upload Excel file with proteins
+        shinydashboardPlus::box(
+          id = ns("box"),
+          title = div(
+            id = ns("box_header"),
+            "Specify proteins",
+            icon("info-circle", class = "ml") %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "
+                  Upload here an Excel file specifying which peptides should
+                  be used to quantify which protein. The file should contain
+                  the following columns:
+                  <ul>
+                  <li> <i> protein </i> - 
+                  Custom names of proteins that you want to quantify. If you use more
+                  than one peptide to quantify a protein, the corresponding protein
+                  name will be present multiple times in this column.
+                  </li>
+                  <li> <i> natural </i> - 
+                  For each protein, the (automatically detected) names of natural 
+                  glycosylation sites and/or non-glycosylated peptides 
+                  that you want to use for quantitation of each protein.
+                  </li>
+                  <li> <i> labeled </i> - 
+                  For each natural glycosylation site or non-glycosylated peptide:
+                  the name of the corresponding stable isotope labeled glycosylation
+                  site or peptide.
+                  </li>
+                  <li> <i> standard_quantity </i> - 
+                  The quantity of stable isotope labeled standard added to each sample.
+                  Entries in this column should be numbers. GlycoDash agnostic
+                  when it comes to the units of the quantities.
+                  </li>
+                  </ul>
+                  <br>
+                  For an example file, click the paperclip icon.
+                  "
+                ),
+                trigger = "hover",
+                placement = "bottom",
+                html = "true"
+              ),
+            
+            shinyWidgets::dropdownButton(
+              tags$style(HTML(paste0(
+                "#",
+                ns("dropdown_content"),
+                " .fas {float: left}",
+                "#",
+                ns("dropdown_content"),
+                " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
+              ))),
+              div(id = ns("dropdown_content"),
+                  downloadButton(ns("download_example"),
+                                 "Download an example Excel file")),
+              icon = icon("paperclip", class = "ml"),
+              tooltip = shinyWidgets::tooltipOptions(placement = "top",
+                                                     title = "Example"),
+              width = "330px",
+              size = "xs"
+            )
+          ),
+          width = 5,
+          solidHeader = TRUE,
+          status = "primary",
+          fileInput(ns("proteins_file"),
+                    "Upload Excel file with protein specifications:"
+          ),
+          # Option to exclude peptide ions from calculations
+          shinyjs::hidden(selectizeInput(
+            ns("exclude_peptides"),
+            "Non-glycosylated peptide ions to exclude from the calculations:",
+            choices = c(""),
+            multiple = TRUE
           )
+        )),
+        # Quality check for non-glycosylated peptides
+        shinydashboardPlus::box(
+          id = ns("box"),
+          title = div(
+            id = ns("box_header"),
+            "Quality check for non-glycosylated peptides",
+            icon("info-circle", class = "ml") %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "
+                  For each non-glycosylated peptide ion that is used for quantitation,
+                  the percentage of samples in which the ion fulfills three
+                  quality criteria is plotted. For S/N and IPQ (in the case 
+                  of LaCyTools data), or total area and IDP (in the case 
+                  of Skyline data), the same quality criteria that were used
+                  for spectral and analyte curation are applied.
+                  <br> <br>
+                  Because non-glycosylated peptides are often integrated without
+                  calibration, you may want to be more lenient when it comes to
+                  the acceptable mass error. This value can be set below.
+                  "
+                ),
+                trigger = "hover",
+                placement = "bottom",
+                html = "true"
+              )
+          ),
+          downloadButton(ns("download"), "Download quality details"),
+          br(),
+          br(),
+          tabsetPanel(id = ns("peptide_tabs")),
+          width = 7,
+          solidHeader = TRUE,
+          status = "primary"
+          )
+        ),
+      fluidRow(
+        shinydashboardPlus::box(
+          id = ns("box"),
+          title = div(
+            id = ns("box_header"),
+            "Quantitation results",
+            icon("info-circle", class = "ml") %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "
+                  The quantities for each protein will be plotted here per sample type.
+                  When multiple labeled/natural (glyco)peptide pairs are used to quantify 
+                  a protein, the protein quantity is taken to be te median of the quantities
+                  calculated based on each pair. In that case, the correlations between the 
+                  quantities based on the individual pairs are also plotted as a sanity check.
+                  "
+                ),
+                trigger = "hover",
+                placement = "left",
+                html = "true"
+              )
+          ),
+          tabsetPanel(id = ns("protein_tabs")),
+          width = 12,
+          solidHeader = TRUE,
+          status = "primary"
         )
       ),
       fluidRow(
         shinydashboard::box(
-          title = "View data with antigen-specific IgG1 quantities",
+          title = "View data with protein quantities",
           width = 12,
           solidHeader = TRUE,
           status = "primary",
@@ -172,244 +180,349 @@ mod_quantitation_ui <- function(id) {
       )
     )
   )
-  
 }
-
-
-
-
+   
+ 
 #' quantitation Server Functions
 #'
 #' @noRd 
-mod_quantitation_server <- function(id, quantitation_clusters,
-                                    LaCyTools_summary,
-                                    keyword_specific,
-                                    data_type,
-                                    analyte_curated_data,
+mod_quantitation_server <- function(id,
+                                    peptides,
+                                    peptides_data,
+                                    results_spectra_curation,
                                     results_normalization) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    # Toggle UI elements
-    observe({
-      shinyjs::toggle(
-        id = "no_silumab",
-        condition = !is_truthy(quantitation_clusters())
+    normalized_data <- results_normalization$normalized_data
+    normalized_data_wide <- results_normalization$normalized_data_wide
+    
+    # Check file extension
+    extension <- reactive({
+      req(input$proteins_file)
+      tools::file_ext(input$proteins_file$name)
+    })
+    
+    observeEvent(extension(), {
+      shinyFeedback::hideFeedback("proteins_file") 
+      shinyFeedback::feedbackDanger(
+        "proteins_file",
+        !extension() %in% c("xlsx", "xls"),
+        "Please upload a .xlsx or .xls file."
       )
-      shinyjs::toggle(
-        id = "silumab_amount",
-        condition = is_truthy(quantitation_clusters())
-      )
-      shinyjs::toggle(
-        id = "quantify_IgG1",
-        condition = is_truthy(quantitation_clusters())
-      )
-      shinyjs::toggle(
-        id = "chosen_peptides",
-        condition = is_truthy(quantitation_clusters())
-      )
-      shinyjs::toggle(
-        id = "exclude_samples",
-        condition = is_truthy(quantitation_clusters()) 
-      )
-      shinyjs::toggleState(
-        id = "quantify_IgG1",
-        condition = all(
-          is_truthy(quantitation_clusters()),
-          is_truthy(results_normalization$normalized_data()),
-          length(input$chosen_peptides) >= 1
+    })
+    
+    # Read Excel file
+    proteins_excel <- reactive({
+      req(input$proteins_file, extension(), extension() %in% c("xlsx", "xls"))
+      readxl::read_excel(input$proteins_file$datapath, col_names = TRUE, col_types = "text")
+    })
+    
+    # Initiate reactiveValues vector
+    r <- reactiveValues(
+      correct_formatting = NULL,
+      protein_tabs_contents = NULL,
+      peptide_tabs_contents = NULL,
+      peptide_tabs_names = NULL,
+      peptide_tabs_data = NULL
+    )
+    
+    # Check validity of column names and peptide entries
+    observeEvent(proteins_excel(), {
+      req(normalized_data())
+      # Check column names
+      if (!all(
+        ncol(proteins_excel()) == 4, 
+        colnames(proteins_excel())[1] == "protein", 
+        colnames(proteins_excel())[2] == "natural", 
+        colnames(proteins_excel())[3] == "labeled",
+        colnames(proteins_excel())[4] == "standard_quantity"
+      )) {
+        shinyalert::shinyalert(
+          text = "
+          Your Excel file should contain four columns: 
+          \"protein\", \"natural\", \"labeled\" and \"standard_quantity\"
+          Please adjust your file accordingly.
+          ",
+          confirmButtonCol = "tomato"
         )
-      )
-    })
-    
-    
-    # Make it possible to exclude sample types from the data
-    observe({
-      req(results_normalization$normalized_data())
-      options <- c(paste(unique(results_normalization$normalized_data()$sample_type), "samples"))
-      updateSelectizeInput(inputId = "exclude_samples", choices = c(options))
-    })
-    
-    
-
-    # Calculate ratios of peptides.
-    IgG1_ratios <- reactive({
-      req(is_truthy(quantitation_clusters()), results_normalization$normalized_data())
-      # First check if there are both total and specific samples
-      # If that is the case, quantify only IgG1 for specific samples
-      if ("group" %in% colnames(LaCyTools_summary())) {
-        IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
-          LaCyTools_summary() %>% dplyr::filter(group == keyword_specific()),
-          data_type(),
-          quantitation_clusters(),
-          analyte_curated_data() %>% dplyr::filter(group == keyword_specific())
-        ) 
+        r$correct_formatting <- FALSE
       } else {
-        IgG1_sum_intensities <- calculate_IgG1_sum_intensities(
-          LaCyTools_summary(), data_type(), quantitation_clusters(), analyte_curated_data()
-        )
-      }
-      ratios <- calculate_IgG1_ratios(IgG1_sum_intensities, quantitation_clusters())
-      return(ratios)
-    })
-    
-    
-    # Update checkboxes if required
-    observeEvent(IgG1_ratios(), {
-      if ("glyco_ratio" %in% colnames(IgG1_ratios()) & 
-          "GPS_ratio" %in% colnames(IgG1_ratios())) {
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "chosen_peptides",
-          choices = c("Glycopeptides", "GPSVFPLAPSSK"),
-          selected = c("Glycopeptides", "GPSVFPLAPSSK")
-        )
-      } else if ("glyco_ratio" %in% colnames(IgG1_ratios())) {
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "chosen_peptides",
-          choices = c("Glycopeptides"),
-          selected = c("Glycopeptides")
-        )
-      } else {
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "chosen_peptides",
-          choices = c("GPSVFPLAPSSK"),
-          selected = c("GPSVFPLAPSSK")
-        )
-      }
-    })
-    
-    
-    # Calculate IgG1 amounts based on chosen peptides.
-    IgG1_amounts <- reactive({
-      req(IgG1_ratios(), input$silumab_amount)
-      calculate_IgG1_amounts(IgG1_ratios(), input$chosen_peptides, input$silumab_amount)
-    }) %>% bindEvent(input$quantify_IgG1)
-    
-    # If normalized data changes: tell users to re-quantify IgG1
-    observeEvent(IgG1_ratios(), {
-      req(IgG1_amounts()) # Only if quantitation was already performed
-      showNotification(
-        id = ns("msg_data_changed"),
-        'Changes were made to your data.
-        Please re-quantify your antigen-specific IgG1 by clicking the
-        "Quantify IgG1" button.',
-        type = "warning", duration = NULL,
-        closeButton = FALSE
-      )
-    })
-    # Remove notification when button is pushed
-    observeEvent(input$quantify_IgG1, removeNotification(ns("msg_data_changed")))
-    
-    
-    # Create peptide correlation plots.
-    r <- reactiveValues(created_tab_titles = vector("character"))
-    observeEvent(IgG1_amounts(), {
-
-      # Remove previously created tabs
-      purrr::map(r$created_tab_titles, function(tab_title) {
-        removeTab(inputId = "tabs", target = tab_title, session = session)
-      })
-      
-      # Create vector for correlation plots, to show in the report.
-      r$peptide_correlation_plots <- vector("list", length = length(input$chosen_peptides))
-      
-      if (length(input$chosen_peptides) > 1) {
-        # Determine new tab IDs and titles
-        tab_ids <- determine_tab_ids(input$chosen_peptides)
-        tab_titles <- determine_tab_titles(input$chosen_peptides, tab_ids)
-        
-        # Store tab titles in reactiveValues vector
-        r$created_tab_titles <- tab_titles
-        
-        # See if sample types should be excluded from the correlation
-        samples_to_exclude <- stringr::str_remove(input$exclude_samples, " samples")
-        
-        # Color palette for plot
-        sample_types <- unique(IgG1_amounts()$sample_type)
-        colors <- color_palette(length(sample_types))
-        color_palette <- setNames(colors, sample_types)
-        
-        if (!is_truthy(input$exclude_samples)) {
-          to_plot <- IgG1_amounts()
-        } else if ("group" %in% colnames(results_normalization$normalized_data())) {
-          to_plot <- IgG1_amounts() %>% 
-            dplyr::filter(!sample_type %in% samples_to_exclude) %>% 
-            dplyr::filter(!group %in% samples_to_exclude)
+        # Colnames are correct --> check peptides validity
+        clusters_specified <- c(proteins_excel()$natural, proteins_excel()$labeled)
+        clusters_data <- c(unique(normalized_data()$cluster), peptides())
+        missing <- clusters_specified[!clusters_specified %in% clusters_data]
+        if (length(missing) > 0) {
+          shinyalert::shinyalert(
+            text = paste0(
+              "The following peptides are not present in your curated data: ",
+              paste0(missing, collapse = ", "), ". ",
+              "Please adjust your Excel file."
+            ),
+            confirmButtonCol = "tomato"
+          )
+          r$correct_formatting <- FALSE
         } else {
-          to_plot <- IgG1_amounts() %>% 
-            dplyr::filter(!sample_type %in% samples_to_exclude)
+          r$correct_formatting <- TRUE
         }
-        
-        # Create tabs and plots.
-        purrr::imap(tab_ids, function(tab_id, i) {
-          plot <- plot_peptide_correlation(to_plot, tab_id, input$silumab_amount, color_palette)
-          
-          # Add the plot to reactiveValues vector, to show it in the report later.
-          r$peptide_correlation_plots[[i]] <- plot
-          # Show the plot in UI
-          output[[tab_id]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
-          appendTab(
-            inputId = "tabs",
-            select = TRUE,
-            tab = tabPanel(
-              title = tab_titles[[i]],
-              shinyjqui::jqui_resizable(plotly::plotlyOutput(ns(tab_id)))
+      }
+    })
+    
+    
+    # Get intensities of glycopeptides
+    glycopeptide_intensities <- reactive({
+      req(proteins_excel(), normalized_data_wide(), r$correct_formatting == TRUE)
+      get_glycopeptide_intensities(proteins_excel(), normalized_data_wide())
+    })
+    
+    # Get intensities of non-glycosylated peptides
+    peptide_intensities <- reactive({
+      req(proteins_excel(), peptides_data(), r$correct_formatting == TRUE)
+      get_peptide_intensities(proteins_excel(), peptides_data(), input$exclude_peptides)
+    })
+    
+    # Combine peptide and glycopeptide intensities (need at least one)
+    combined_intensities <- reactive({
+      req(is_truthy(glycopeptide_intensities()) || is_truthy(peptide_intensities()))
+      if (is_truthy(glycopeptide_intensities()) && is_truthy(peptide_intensities())) {
+        dplyr::bind_rows(glycopeptide_intensities(), peptide_intensities())
+      } else if (is_truthy(glycopeptide_intensities())) {
+        glycopeptide_intensities()
+      } else {
+        peptide_intensities()
+      }
+    })
+    
+    # Prevent trying quantitation when all required peptide ions are excluded
+    proteins_checked <- reactive({
+      req(combined_intensities(), proteins_excel())
+      present <- unique(combined_intensities()$cluster)
+      checked <- proteins_excel() %>% 
+        dplyr::filter(natural %in% present & labeled %in% present)
+      return(checked)
+    })
+    
+    # Warning message
+    observeEvent(proteins_checked(), {
+      difference <- dplyr::anti_join(proteins_excel(), proteins_checked())
+      if (nrow(difference) > 0) {
+        for (rownum in nrow(difference)) {
+          row <- difference[rownum, ]
+          message <- paste0(
+            "Protein ", difference$protein, 
+            " could not be quantified based on peptides ",
+            paste0(row$natural, " / ", row$labeled),
+            ", because too many ions required for the calculation were excluded."
+          )
+          showNotification(message, type = "warning", duration = 30)
+        }
+      }
+    })
+    
+    # Get calculated quantities based on different peptides
+    protein_quantities <- reactive({
+      req(combined_intensities())
+      get_protein_quantities(combined_intensities(), proteins_checked())
+    })
+    
+    # Calculate median quantity for each protein per sample
+    median_quantities <- reactive({
+      req(protein_quantities())
+      get_median_quantities(protein_quantities())
+    })
+    
+    # Extract protein names
+    proteins <- reactive({
+      req(proteins_checked(), r$correct_formatting == TRUE)
+      unique(proteins_checked()$protein)
+    })
+    
+    
+    # Counter used to create unique tab ids when quantitation
+    # is performed multiple times
+    counter <- reactiveValues(count = 0)
+    
+    # Generate tabs for each protein
+    observeEvent(median_quantities(), {
+      # Up the counter by one
+      counter$count <- counter$count + 1
+      # Remove previously created tabs
+      purrr::map(names(r$protein_tabs_contents), function(current_protein) {
+        removeTab(inputId = "protein_tabs", target = current_protein)
+      })
+      purrr::map(r$peptide_tabs_names, function(current_protein) {
+        removeTab(inputId = "peptide_tabs", target = current_protein)
+      })
+      # Reset tab contents in reactiveValues vector
+      r$protein_tabs_contents <- NULL
+      r$peptide_tabs_contents <- NULL
+      r$peptide_tabs_names <- NULL
+      r$peptide_tabs_data <- NULL
+      # Create new tabs with quantitation results for each protein
+      for (current_protein in proteins()) {
+        appendTab(
+          inputId = "protein_tabs",
+          select = TRUE,
+          tab = tabPanel(
+            title = current_protein,
+            mod_tab_quantitation_ui(
+              id = ns(paste0(current_protein, "_", counter$count))
             )
           )
+        )
+      }
+      r$protein_tabs_contents <- rlang::set_names(proteins()) %>% 
+        purrr::map(., function(current_protein) {
+          mod_tab_quantitation_server(
+            id = paste0(current_protein, "_", counter$count),
+            quantities = median_quantities() %>% 
+              dplyr::filter(protein == current_protein),
+            protein_data = protein_quantities() %>% 
+              dplyr::filter(protein == current_protein)
+          )
         })
+      # Generate peptide QC tabs
+      if (!is.null(peptides_data())) {
+        for (current_protein in proteins()) {
+          # Check peptide data for current protein
+          peptides <- proteins_excel() %>%
+            dplyr::filter(protein == current_protein)
+          peptides_data_current_protein <- peptides_data() %>%
+            dplyr::filter(cluster %in% c(peptides$natural, peptides$labeled))
+          if (nrow(peptides_data_current_protein) == 0) {
+            peptides_data_current_protein <- NULL
+          }
+          # If peptide data exists, generate tab
+          if (!is.null(peptides_data_current_protein)) {
+            r$peptide_tabs_names <- c(r$peptide_tabs_names, current_protein)
+            r$peptide_tabs_data[[current_protein]] <- peptides_data_current_protein
+            appendTab(
+              inputId = "peptide_tabs",
+              select = TRUE,
+              tab = tabPanel(
+                title = current_protein,
+                mod_tab_quantitation_peptides_ui(
+                  id = ns(paste0(current_protein, "_peptides_", counter$count))
+                )
+              )
+            )
+          }
+        }
+      }
+      if (!is.null(r$peptide_tabs_names)) {
+        r$peptide_tabs_contents <- rlang::set_names(r$peptide_tabs_names) %>%
+          purrr::map(., function(current_protein) {
+            mod_tab_quantitation_peptides_server(
+              id = paste0(current_protein, "_peptides_", counter$count),
+              peptides_data = r$peptide_tabs_data[[current_protein]],
+              results_spectra_curation = results_spectra_curation
+            )
+          })
       }
     })
     
     
-    
-    # Create a plot with quantitation results
-    quantitation_plot <- reactive({
-      req(IgG1_amounts())
-      create_quantitation_plot(IgG1_amounts())
+    # Option to exclude peptide ions from calculations
+    observe({
+      if (is_truthy(peptides_data())) {
+        shinyjs::show("exclude_peptides")
+      } else {
+        shinyjs::hide("exclude_peptides")
+      }
     })
     
-    output$quantitation_plot <- plotly::renderPlotly({
-      req(quantitation_plot())
-      plotly_object <- plotly::ggplotly(quantitation_plot(), tooltip = "text") %>% 
-        # plotly ignores "outlier.shape" so use function from utils
-        GlycoDash::hide_outliers(.)
-      return(plotly_object)
+    peptide_ions <- reactive({
+      req(peptides_data(), proteins_excel())
+      peptides_data() %>% 
+        dplyr::filter(
+          cluster %in% c(proteins_excel()$natural, proteins_excel()$labeled)
+        ) %>% 
+        dplyr::select(cluster, charge) %>% 
+        dplyr::distinct() %>% 
+        dplyr::arrange(cluster, charge) %>% 
+        dplyr::mutate(ion = paste0(cluster, ", ", charge))
+    })
+    
+    observeEvent(peptide_ions(), {
+      updateSelectizeInput(
+        inputId = "exclude_peptides",
+        choices = peptide_ions()$ion
+      )
     })
     
     
-    
-    # Combine the calculated IgG1 quantities with normalized data.
-    with_data <- reactive({
-      req(IgG1_amounts())
-      IgG1_quantities <- IgG1_amounts() %>% 
-        dplyr::select(sample_name:sample_type, IgG1_median_amount) %>% 
-        dplyr::rename(IgG1_quantity_ng = IgG1_median_amount) 
-    
-      dplyr::full_join(results_normalization$normalized_data_wide(),
-                       IgG1_quantities) %>% 
-        dplyr::relocate(IgG1_quantity_ng, .after = replicates)
+    # Get protein quantities in wide format
+    data_with_quantities <- reactive({
+      req(median_quantities())
+      quantities_wide <- median_quantities() %>% 
+        dplyr::mutate(protein = paste0(protein, "_quantity")) %>% 
+        tidyr::pivot_wider(names_from = protein, values_from = quantity)
+      
+      data_with_quantities <- normalized_data_wide() %>% 
+        dplyr::left_join(quantities_wide) %>% 
+        dplyr::relocate(tidyselect::contains("_quantity"), 
+                        .after = tidyselect::contains("_sum_intensity"))
+      
+      return(data_with_quantities)
     })
     
+    
+    # Display data with protein quantities
     output$data_table <- DT::renderDT({
-      req(with_data())
-      DT::datatable(data = with_data() %>% 
+      req(data_with_quantities())
+      DT::datatable(data_with_quantities() %>% # Round numbers to 2 decimals
                       dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
                     options = list(
                       scrollX = TRUE,
-                      pageLength = 6,
+                      pageLength = 6,  # Shows 5 rows
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ), filter = "top")
+                    ),
+                    filter = "top")
     })
     
     
-    # Return the data and plots
-    return(list(
-      quantitation_data = with_data,
-      silumab_amount = reactive(input$silumab_amount),
-      chosen_peptides = reactive(input$chosen_peptides),
-      quantitation_plot = quantitation_plot,
-      peptide_correlation_plots = reactive(r$peptide_correlation_plots)
-    ))
     
+    # Download example Excel file
+    output$download_example <- downloadHandler(
+      filename = "protein_quantitation_example.xlsx",
+      content = function(file) {
+        example_file <- system.file("app",
+                                    "www",
+                                    "protein_quantitation_example.xlsx",
+                                    package = "GlycoDash")
+        file.copy(example_file, file)
+      }
+    )
+    
+    
+    # Download peptide QC data
+    observe({
+      shinyjs::toggleState("download", condition = (
+        is_truthy(peptides_data()) & is_truthy(proteins_excel()) & is_truthy(peptide_ions())
+      ))
+    })
+    
+    output$download <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        paste0(current_datetime, "_quantitation_peptides_quality.xlsx")
+      },
+      content = function(file) {
+        writexl::write_xlsx(
+          peptides_data() %>% 
+            dplyr::filter(cluster %in% peptide_ions()$cluster),
+          path = file
+        )
+      }
+    )
+
+    
+    return(list(
+      data_with_quantities = data_with_quantities,
+      exclude_peptides = reactive(input$exclude_peptides),
+      protein_tabs_contents = reactive(r$protein_tabs_contents),
+      peptide_tabs_contents = reactive(r$peptide_tabs_contents)
+    ))
   })
 }
+

@@ -52,9 +52,9 @@ mod_export_ui <- function(id){
 #'
 #' @noRd 
 mod_export_server <- function(id, 
+                              results_quantitation,
                               results_site_occupancy,
                               results_derived_traits,
-                              results_quantitation,
                               results_data_import,
                               results_spectra_curation,
                               results_analyte_curation,
@@ -72,12 +72,13 @@ mod_export_server <- function(id,
         x$data <- results_site_occupancy$site_occupancy_data()
       } else if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
-      } else if (is_truthy(results_quantitation$quantitation_data())) {
-        x$data <- results_quantitation$quantitation_data()
+      } else if (is_truthy(results_quantitation$data_with_quantities())) {
+        x$data <- results_quantitation$data_with_quantities()
       } else {
         x$data <- results_normalization$normalized_data_wide()
       }
     })
+
     
     # Disable the "Download processed data" button until normalized data is available
     # Also the Generate report button
@@ -199,6 +200,38 @@ mod_export_server <- function(id,
         )
         
         
+        # Quantitation tab contents
+        quantitation_protein_tab_contents <- tryCatch(
+          expr = {
+            purrr::map(results_quantitation$protein_tabs_contents(),
+                       function(list_of_objects) {
+                         purrr::map(
+                           list_of_objects,
+                           ~ do.call(.x,
+                                     args = list()))
+                       })
+          },
+          error = function(e) {
+            NULL
+          }
+        )
+        
+        quantitation_peptide_tab_contents <- tryCatch(
+          expr = {
+            purrr::map(results_quantitation$peptide_tabs_contents(),
+                       function(list_of_objects) {
+                         purrr::map(
+                           list_of_objects,
+                           ~ do.call(.x,
+                                     args = list()))
+                       })
+          },
+          error = function(e) {
+            NULL
+          }
+        )
+        
+        
         # Repeatability
         # Mapping (or looping) a reactiveValues list is not possible. You need
         # to convert it to a regular list first. 
@@ -271,23 +304,28 @@ mod_export_server <- function(id,
           cut_offs = results_analyte_curation$cut_offs(),
           analyte_list = results_analyte_curation$analyte_list(),
           analyte_curation_tab_contents = analyte_curation_tab_contents,
+          # Normalization
           heatmaps = results_normalization$heatmaps(),
           heatmaps_excluded_sample_types = results_normalization$heatmaps_excluded_sample_types(),
+          # Traits
           derived_traits = try_call(results_derived_traits$derived_traits),
           formulas = try_call(results_derived_traits$formulas),
           custom_formulas = try_call(results_derived_traits$custom_formulas),
           intensity_plots = results_derived_traits$intensity_plots(),
+          # Site occupancy
           site_occupancy_quality_plot = try_call(results_site_occupancy$quality_plot),
           site_occupancy_excluded_sample_types = try_call(results_site_occupancy$exclude_sample_types),
           site_occupancy_boxplot = try_call(results_site_occupancy$occupancy_plot),
           site_occupancy_mass_error = try_call(results_site_occupancy$mass_accuracy),
           site_occupancy_excluded_peptides = try_call(results_site_occupancy$exclude_peptides),
+          # Quantitation
+          quantitation_exclude_peptides = results_quantitation$exclude_peptides(),
+          quantitation_protein_tab_contents = quantitation_protein_tab_contents,
+          quantitation_peptide_tab_contents = quantitation_peptide_tab_contents,
+          # Repeatability
           repeatability = repeatability_tab_contents,
-          data_exploration = data_exploration_tab_contents,
-          silumab_amount = try_call(results_quantitation$silumab_amount),
-          chosen_peptides = try_call(results_quantitation$chosen_peptides),
-          quantitation_plot = try_call(results_quantitation$quantitation_plot),
-          peptide_correlation_plots = try_call(results_quantitation$peptide_correlation_plots)
+          # Data exploration
+          data_exploration = data_exploration_tab_contents
         )
         
         # Create a temporary file with a unique name per session to prevent

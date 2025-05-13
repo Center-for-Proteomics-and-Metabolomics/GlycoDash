@@ -1,306 +1,242 @@
-# This file contains functions that are used in mod_quantitation.R
+# Functions used for protein quantitation
 
 
-#' calculate_IgG1_sum_intensities
-#'
-#' @param LaCyTools_summary 
-#' LaCyTools summary, as created in data import.
-#' @param quantitation_clusters
-#' A named list with the cluster names of the peptides that are used
-#' for IgG1 quantitation. This list is created in the data import tab.
-#' @param data_type "LaCyTools data" or "Skyline data"
-#' @param analyte_curated_data 
-#' The analyte curated data from the analyte curation tab.
-#'
-#' @return A dataframe with the sum intensities of each cluster that is required
-#' for IgG1 quantitation. 
-#' 
-calculate_IgG1_sum_intensities <- function(LaCyTools_summary,
-                                           data_type,
-                                           quantitation_clusters,
-                                           analyte_curated_data) {
+get_glycopeptide_intensities <- function(proteins_excel, normalized_data_wide) {
   
-  # Check if glycopeptides are in the data or not
-  if ("IgG1_cluster_glyco" %in% names(quantitation_clusters)) { # Glycopeptides and possibly GPS
-    
-    # Get data of passing IgG1 analytes
-    passing_IgG1_analytes_data <- analyte_curated_data %>% 
-      dplyr::filter(cluster == quantitation_clusters$IgG1_cluster_glyco)
-    
-    # Get sample names of passing IgG1 spectra
-    passing_IgG1_spectra <- unique(passing_IgG1_analytes_data$sample_name)
-    
-    # Data for quantitation
-    quantitation_data <- LaCyTools_summary %>% 
-      dplyr::filter(
-        cluster %in% quantitation_clusters[names(quantitation_clusters) != "IgG1_cluster_glyco"]
-      ) %>% 
-      dplyr::filter(sample_name %in% passing_IgG1_spectra) %>% 
-      dplyr::bind_rows(passing_IgG1_analytes_data) %>% 
-      # Use function from normalization to calculate total intensities of analytes
-      calculate_total_intensity(., data_type) %>% 
-      # Then calculate the sum intensities (code below is part of normalization function)
-      dplyr::group_by(cluster, sample_name) %>%
-      dplyr::reframe(sum_intensity = sum(total_absolute_intensity),
-                     across(everything())) %>% 
-      dplyr::select(-total_absolute_intensity) %>% 
-      # Select data that's needed
+  data <- normalized_data_wide %>% 
+    tidyr::pivot_longer(
+      tidyselect::contains("sum_intensity"),
+      names_to = "cluster", values_to = "sum_intensity"
+    ) %>% 
+    dplyr::mutate(cluster = gsub("_sum_intensity", "", cluster)) %>% 
+    dplyr::filter(cluster %in% c(
+      proteins_excel$natural, proteins_excel$labeled
+    )) %>% 
+    dplyr::select(
+      sample_name, sample_type, sample_id, tidyselect::any_of("group"),
+      cluster, sum_intensity
+    ) %>% 
+    dplyr::filter(!is.na(sum_intensity)) %>% 
+    dplyr::distinct()
+  
+  return(data)
+}
+
+
+
+get_peptide_intensities <- function(proteins_excel, 
+                                    peptides_data,
+                                    exclude_peptides) {
+  
+  data <- peptides_data %>%
+    dplyr::mutate(ion = paste0(cluster, ", ", charge)) %>% 
+    dplyr::filter(
+      !ion %in% exclude_peptides,
+      cluster %in% c(proteins_excel$natural, proteins_excel$labeled)
+    ) %>% 
+    dplyr::mutate(intensity_by_fraction = 
+                  absolute_intensity_background_subtracted / fraction) %>% 
+    dplyr::group_by(sample_name, cluster) %>% 
+    dplyr::mutate(sum_intensity = sum(intensity_by_fraction)) %>% 
+    dplyr::select(
+      sample_name, sample_type, sample_id, tidyselect::any_of("group"),
+      cluster, sum_intensity
+    ) %>% 
+    dplyr::filter(!is.na(sum_intensity)) %>% 
+    dplyr::distinct()
+  
+  return(data)
+}
+
+
+
+get_protein_quantities <- function(combined_intensities,
+                                   proteins_excel) {
+  
+  # Go over each row in proteins_excel and calculate corresponding quantities
+  protein_quantities <- purrr::map_dfr(1:nrow(proteins_excel), function(i) {
+    # Extract data
+    protein_name <- proteins_excel[i, ]$protein
+    natural <- proteins_excel[i, ]$natural
+    labeled <- proteins_excel[i, ]$labeled
+    standard_quantity <- as.numeric(proteins_excel[i, ]$standard_quantity)
+    # Get data for current protein peptide in wide format
+    data <- combined_intensities %>% 
+      dplyr::filter(cluster %in% c(natural, labeled)) %>% 
+      tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity) %>% 
+      dplyr::mutate(
+        protein = protein_name,
+        peptide_pair = paste(natural, "/", labeled)
+      )
+    # Calculate quantity for each sample
+    data$protein_quantity <- data[[natural]] / data[[labeled]] * standard_quantity
+    # Get just the quantities
+    quantities <- data %>% 
       dplyr::select(
-        sample_name, sample_id, sample_type, cluster, sum_intensity,
-        tidyselect::any_of(c("group", "plate_well"))
+        sample_name, sample_type, sample_id, tidyselect::any_of("group"),
+        protein, peptide_pair, protein_quantity
       ) %>% 
-      dplyr::distinct() %>% 
-      # Create wide format
-      tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity)  # Added closing bracket here
+      dplyr::mutate(standard_quantity = standard_quantity)
     
-  } else { # Only GPS
-    
-    quantitation_data <- LaCyTools_summary %>% 
-      dplyr::filter(
-        cluster %in% quantitation_clusters[names(quantitation_clusters) != "IgG1_cluster_glyco"]
-      ) %>% 
-      # Use function from normalization to calculate total intensities of analytes
-      calculate_total_intensity(., data_type) %>% 
-      # Then calculate the sum intensities (code below is part of normalization function)
-      dplyr::group_by(cluster, sample_name) %>%
-      dplyr::reframe(sum_intensity = sum(total_absolute_intensity),
-                     across(everything())) %>% 
-      dplyr::select(-total_absolute_intensity) %>% 
-      # Select data that's needed
-      dplyr::select(
-        sample_name, sample_id, sample_type, cluster, sum_intensity,
-        tidyselect::any_of(c("group", "plate_well"))
-      ) %>% 
-      dplyr::distinct() %>% 
-      # Create wide format
-      tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity)
-    
-  }
-
-  return(quantitation_data)
+    return(quantities)
+  })
   
+  return(protein_quantities)
 }
 
 
 
-
-# Function to calculate ratio between natural and SIL peptides
-calculate_IgG1_ratios <- function(IgG1_sum_intensities,
-                                  quantitation_clusters) {
+get_median_quantities <- function(protein_quantities) {
   
-  # Calculate ratios for glycopeptides and/or GPS
-  if (length(quantitation_clusters) == 4) {
-    sum_intensity_ratios <- IgG1_sum_intensities %>% 
-      dplyr::mutate(
-        glyco_ratio = .[[quantitation_clusters$IgG1_cluster_glyco]] /
-          .[[quantitation_clusters$silumab_cluster_glyco]],
-        
-        GPS_ratio = .[[quantitation_clusters$IgG1_cluster_GPS]] / 
-          .[[quantitation_clusters$silumab_cluster_GPS]]
-      )
-  } else if ("IgG1_cluster_glyco" %in% names(quantitation_clusters)) {
-    sum_intensity_ratios <- IgG1_sum_intensities %>% 
-      dplyr::mutate(
-        glyco_ratio = .[[quantitation_clusters$IgG1_cluster_glyco]] /
-          .[[quantitation_clusters$silumab_cluster_glyco]]
-      )
-  } else {
-    sum_intensity_ratios <- IgG1_sum_intensities %>% 
-      dplyr::mutate(
-        GPS_ratio = .[[quantitation_clusters$IgG1_cluster_GPS]] / 
-          .[[quantitation_clusters$silumab_cluster_GPS]]
-      )
-  }
-      
-  # Get rid of sum intensities
-  sum_intensity_ratios <- sum_intensity_ratios %>% 
-    dplyr::select(sample_name:sample_type, 
-    tidyselect::any_of("group"),
-    tidyselect::contains("ratio"))
+  data <- protein_quantities %>% 
+    dplyr::filter(!is.na(protein_quantity)) %>% 
+    dplyr::group_by(sample_name, sample_type, sample_id, protein) %>% 
+    dplyr::mutate(quantity = median(protein_quantity)) %>% 
+    dplyr::select(sample_name, sample_type, sample_id, tidyselect::any_of("group"),
+                  protein, quantity) %>% 
+    dplyr::distinct()
   
-  return(sum_intensity_ratios)
+  return(data)
 }
 
 
 
-
-# Calculate IgG1 amounts based on ratios of chosen peptides, and amount of SILuMAb.
-# The IgG1 is quantitied based on the median of the peptide ratios.
-# Quantities (ng) are rounded to whole numbers.
-calculate_IgG1_amounts <- function(IgG1_ratios, chosen_peptides,
-                                   silumab_amount) {
+plot_protein_quantities <- function(quantities,
+                                    log_scale) {
   
-  # Select the peptide ratios to include in calculating the median.
-  # Define a predefined list of peptides and their corresponding ratios.
-  peptide_list <- c("Glycopeptides", "GPSVFPLAPSSK")
-  ratio_list <- c("glyco_ratio", "GPS_ratio")
+  protein_name <- unique(quantities$protein)
   
-  # Use match to find indices of matching peptides.
-  indices <- match(chosen_peptides, peptide_list)
-  
-  # Create ratios_to_use based on the indices.
-  ratios_to_use <- ifelse(!is.na(indices), ratio_list[indices], NA)
-  
-  # Now calculate the median ratios, and subsequently IgG1 concentrations
-  with_medians <- IgG1_ratios %>% 
-    dplyr::mutate(
-      median_ratio = apply(
-        dplyr::select(., tidyselect::all_of(ratios_to_use)), 1, median, na.rm = TRUE
-        # na.rm = TRUE gets rid of NA values before calculating the median
-      ),
-      # Calculate amount of IgG1 (ng), rounded to whole number.
-      IgG1_median_amount = round(median_ratio * silumab_amount, digits = 0)
-    )
-  
-  return(with_medians)
-}
-
-
-
-
-# Function to make a quantitation plot.
-create_quantitation_plot <- function(IgG1_amounts) {
-  
-  sample_types <- unique(IgG1_amounts$sample_type)
+  sample_types <- unique(quantities$sample_type)
   colors <- color_palette(length(sample_types))
   color_palette <- setNames(colors, sample_types)
   
-  plot <- IgG1_amounts %>%
-    ggplot2::ggplot(., ggplot2::aes(
-      text = paste0(
-        "Sample name: ", sample_name, "\n",
-        "Sample ID: ", sample_id, "\n",
-        # "Plate well: ", plate_well, "\n",
-        "Amount of IgG1 (ng): ", IgG1_median_amount
-      )
-    )) +
-    ggplot2::geom_boxplot(ggplot2::aes(
-      x = sample_type,
-      y = IgG1_median_amount
-    )) +
-    ggplot2::geom_jitter(ggplot2::aes(
-      x = sample_type,
-      y = IgG1_median_amount,
-      color = sample_type
-    ), height = 0, width = 0.2, size = 1, alpha = 0.7) +
+  plot <- ggplot2::ggplot(quantities, ggplot2::aes(
+    x = sample_type, y = quantity,
+    text = paste0(
+      "Sample name: ", sample_name, "\n",
+      "Sample ID: ", sample_id, "\n",
+      "Protein quantity: ", format(round(quantity, digits = 2), nsmall = 2)
+    )
+  )) +
+    ggplot2::geom_boxplot() +
+    ggplot2::geom_jitter(
+      ggplot2::aes(color = sample_type),
+      height = 0, width = 0.2, size = 1, alpha = 0.7
+    ) + 
     ggplot2::theme_classic() +
-    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
-                   strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
-    ggplot2::scale_color_manual(values = color_palette, name = "Sample type") +
-    ggplot2::labs(y = "Antigen-specific IgG1 (ng)", x = "Sample type")
-  
+    ggplot2::theme(
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+      strip.background = ggplot2::element_rect(fill = "#F6F6F8")
+    ) +
+    ggplot2::scale_color_manual(values = color_palette, name = "Sample type") + 
+    ggplot2::labs(x = "Sample type", y = paste(protein_name, "quantity"))
   
   # Check for total and specific
-  if ("group" %in% colnames(IgG1_amounts)) {
-    plot <- plot + ggplot2::facet_wrap(~ group)
-  } else {
-    plot <- plot
+  if ("group" %in% colnames(quantities)) {
+    plot <- plot + ggplot2::facet_wrap(~group)
+  } 
+  
+  # Check if logarithmic scale should be applied
+  if (log_scale) {
+    plot <- plot + ggplot2::scale_y_log10()
   }
-
+  
   return(plot)
 }
 
 
-
-# Function to plot peptide correlations.
-plot_peptide_correlation <- function(IgG1_amounts, tab_id, silumab_amount, color_palette) {
-  
-  # Determine x and y columns to plot, depending on tab_id
-  ycol <- dplyr::case_when(
-    tab_id %in% c("glyco_vs_GPS", "glyco_vs_TTP") ~ "glyco_ratio",
-    tab_id == "GPS_vs_TTP" ~ "GPS_ratio"
-  )
-  xcol <- dplyr::case_when(
-    tab_id %in% c("glyco_vs_TTP", "GPS_vs_TTP") ~ "TTP_ratio",
-    tab_id == "glyco_vs_GPS" ~ "GPS_ratio"
-  )
-  
-  # Calculate Spearman's correlation based on amounts rounded to whole number of ng
-  correlation <- stats::cor(
-    x = round(IgG1_amounts[[xcol]] * silumab_amount, digits = 0),
-    y = round(IgG1_amounts[[ycol]] * silumab_amount, digits = 0),
-    method = "spearman",
-    # Exclude points for which one or both of the values are NA
-    use = "pairwise.complete.obs"
-  )
-  
-  # Correlation plot
-  plot <- ggplot2::ggplot() + 
-    ggplot2::ggtitle(paste0(
-      "Spearman correlation = ",
-      as.character(round(correlation, digits = 2))
-    )) +
-    # Plot a line of equality (y = x)
+# Plot protein quantity based on two peptide pairs
+# "pair" is pair of two peptide pairs
+quantity_correlation_plot <- function(df, pair, color_palette, log_scale,
+                                      correlation = "pearson", 
+                                      correlation_symbol = "R") {
+  # Make plot
+  plot <- ggplot2::ggplot(df, ggplot2::aes(
+    x = !!rlang::sym(pair[1]), y = !!rlang::sym(pair[2])
+  )) + 
+    # Add line of identity (y = x)
     ggplot2::geom_abline(
-      slope = 1, 
+      slope = 1,
       intercept = 0,
-      color = "#3D3D3D"
+      color = "#3D3D3D",
+      linetype = "dashed" 
     ) +
-    # Plot the points
-    ggplot2::geom_point(data = IgG1_amounts, ggplot2::aes(
-      x = round(.data[[xcol]] * silumab_amount, digits = 0),
-      y = round(.data[[ycol]] * silumab_amount, digits = 0),
-      color = sample_type, alpha = 0.5,
-      text = paste0(
+    ggplot2::geom_point(ggplot2::aes(
+      color = sample_type, text = paste0(
         "Sample name: ", sample_name, "\n",
         "Sample ID: ", sample_id, "\n"
       )
-    ), size = 1, alpha = 0.7) +
-    ggplot2::xlab(dplyr::case_when(
-      xcol == "TTP_ratio" ~ "IgG1 (ng) - Based on TTP[...]",
-      xcol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS[...]"
-    )) +
-    ggplot2::ylab(dplyr::case_when(
-      ycol == "glyco_ratio" ~ "IgG1 (ng) - Based on glycopeptides",
-      ycol == "GPS_ratio" ~ "IgG1 (ng) - Based on GPS[...]"
-    )) + 
+    ), alpha = 0.7, size = 1.5) +
+    ggplot2::labs(x = pair[1], y = pair[2]) +
     ggplot2::theme_classic() +
     ggplot2::theme(
       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
       panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
-      plot.title = ggplot2::element_text(size = 12)
-    ) +
-    ggplot2::scale_color_manual(values = color_palette, name = "Sample type")
+      axis.title = ggplot2::element_text(size = 12),
+      legend.title = ggplot2::element_text(size = 12),
+      legend.text = ggplot2::element_text(size = 11),
+      axis.text = ggplot2::element_text(size = 10)
+    ) + 
+    ggplot2::scale_color_manual(values = color_palette, name = "Sample type") +
+    # Add Pearson correlation
+    ggpubr::stat_cor(
+      method = correlation,
+      cor.coef.name = correlation_symbol,
+      ggplot2::aes(label = ggplot2::after_stat(r.label)),
+      na.rm = TRUE,
+      size = 4
+    )
+  
+  # Check for total and specific
+  if ("group" %in% colnames(df)) {
+    plot <- plot + ggplot2::facet_wrap(~group)
+  } 
+  
+  # Check if logarithmic scale should be applied
+  if (log_scale) {
+    plot <- plot + ggplot2::scale_y_log10()
+  }
   
   return(plot)
 }
 
 
 
-
-# Determine tab IDs for correlation plots, based on chosen peptides.
-determine_tab_ids <- function(chosen_peptides) {
-  peptide_list <- c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
-  id_list <- c("glyco_vs_GPS", "glyco_vs_TTP", "GPS_vs_TTP")
-  if (length(chosen_peptides) == 3) {
-    tab_ids <- id_list
-  } else {
-    tab_ids <- dplyr::case_when(
-      all(chosen_peptides == c("Glycopeptides", "GPSVFPLAPSSK")) ~ "glyco_vs_GPS",
-      all(chosen_peptides == c("Glycopeptides", "TTPVLDSDGSFFLYSK")) ~ "glyco_vs_TTP",
-      all(chosen_peptides == c("GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")) ~ "GPS_vs_TTP"
+plot_peptide_correlations <- function(protein_data, 
+                                      log_scale, 
+                                      correlation_method) {
+  
+  # Create color palette
+  sample_types <- unique(protein_data$sample_type)
+  colors <- color_palette(length(sample_types))
+  color_palette <- setNames(colors, sample_types)
+  
+  # Get all possible pairs of peptide pairs
+  pairs <- combn(unique(protein_data$peptide_pair), 2, simplify = FALSE)
+  
+  # Make plot for each pair
+  plots <- purrr::map(pairs, function(pair) {
+    # Reshape data to get two quantity columns
+    df_pair <- protein_data %>% 
+      dplyr::filter(peptide_pair %in% pair) %>% 
+      tidyr::pivot_wider(names_from = peptide_pair,
+                         values_from = protein_quantity)
+    quantity_correlation_plot(
+      df_pair, pair, color_palette, log_scale,
+      correlation = dplyr::case_when(
+        correlation_method == "Pearson (linear)" ~ "pearson",
+        correlation_method == "Spearman (non-parametric)" ~ "spearman"
+      ),
+      correlation_symbol = dplyr::case_when(
+        correlation_method == "Pearson (linear)" ~ "R",
+        correlation_method == "Spearman (non-parametric)" ~ "rho"
+      )
     )
-  }
-  return(tab_ids)
+  })
+  
+  # Combine plots into one
+  combined <- patchwork::wrap_plots(plots) +
+    patchwork::plot_layout(guides = "collect", ncol = 2)
+
+  return(combined)
 }
-
-# Determine tab titles for correlation plots, based on chosen peptides and created tab IDs.
-determine_tab_titles <- function(chosen_peptides, tab_ids) {
-  peptide_list <- c("Glycopeptides", "GPSVFPLAPSSK", "TTPVLDSDGSFFLYSK")
-  title_list <- c("Glycopeptides vs GPS[...]", "Glycopeptides vs TTP[...]", 
-                  "GPS[...] vs TTP[...]")
-  if (length(chosen_peptides) == 3) {
-    tab_titles <- title_list
-  } else {
-    tab_titles <- dplyr::case_when(
-      tab_ids == "glyco_vs_GPS" ~ "Glycopeptides vs GPS",
-      tab_ids == "glyco_vs_TTP" ~ "Glycopeptides vs TTP",
-      tab_ids == "GPS_vs_TTP" ~ "GPS vs TTP"
-    )
-  }
-  return(tab_titles)
-}
-
-
-
-

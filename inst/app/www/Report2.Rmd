@@ -40,12 +40,11 @@ params:
   site_occupancy_boxplot: NA
   site_occupancy_excluded_peptides: NA
   site_occupancy_mass_error: NA
+  quantitation_exclude_peptides: NA
+  quantitation_protein_tab_contents: NA
+  quantitation_peptide_tab_contents: NA
   repeatability: NA
   data_exploration: NA
-  silumab_amount: NA
-  chosen_peptides: NA
-  quantitation_plot: NA
-  peptide_correlation_plots: NA
 ---
 
 ```{r setup, include=FALSE}
@@ -265,37 +264,57 @@ if (!is.null(names(params$heatmaps))) {
 
 ```
 
-## IgG1 quantitation
+## Protein quantitation
 
-```{r IgG1-quantitation-peptides, results='asis'}
+```{r protein-tabs, warning=FALSE, results='asis'}
 
-if (is.null(params$quantitation_plot)) {
-  cat("Antigen-specific IgG1 was not quantified.")
-} else {
-  cat("Antigen-specific IgG1 was quantified with SILuMAb based on the following peptides:",
-      paste(params$chosen_peptides, collapse = ", "))
-}
-```
-
-```{r IgG1-peptide-correlations, results='asis'}
-
-if (length(params$peptide_correlation_plots) > 0) {
-  cat("Peptide correlation plot: \n")
-  for (plot in params$peptide_correlation_plots) {
-    p <- plotly::ggplotly(plot, tooltip = "text")
-    print(htmltools::tagList(p))
+if (!is.null(params$quantitation_protein_tab_contents)) {
+  # Check for excluded peptide ions
+  if (!is.null(params$quantitation_exclude_peptides)) {
+    cat(
+      "Peptide ions excluded from quantitation: ",
+      paste(params$quantitation_exclude_peptides, collapse = ", ")
+    )
+    cat("\n \n")
   }
+  # Quantitation results per cluster
+  purrr::iwalk(params$quantitation_protein_tab_contents, function(results, protein) {
+    cat("###", protein, "\n")
+    contents <- params$quantitation_protein_tab_contents[[protein]]
+    peptide_qc <- params$quantitation_peptide_tab_contents[[protein]]
+    # Peptide QC
+    if (!is.null(peptide_qc)) {
+      qc_plot <- plotly::ggplotly(peptide_qc$quality_plot, tooltip = "text")
+      cat("\nPeptides quality control:\n\n")
+      # cat(names(peptide_qc))
+      print(htmltools::tagList(qc_plot))
+      cat(
+        "\n - Acceptable mass accuracy range (ppm): ",
+          min(peptide_qc$mass_accuracy), "-", max(peptide_qc$mass_accuracy)
+      )
+      cat(
+        "\n \n - Sample types excluded from quality assessment: ",
+        paste(peptide_qc$exclude_sample_types, collapse = ", ")
+      )
+    }
+    # Quantities boxplots
+    boxplots <- plotly::ggplotly(contents$quantities_plot, tooltip = "text") %>% 
+      GlycoDash::hide_outliers(.)
+    cat("\n\n\n Protein quantities: \n\n")
+    print(htmltools::tagList(boxplots))
+    # ChatGPT workaround for non-interactive correlation plot
+    if (!is.null(contents$correlation_plots)) {
+      cat("\nPeptide correlation plots:\n\n")
+      tmpfile <- tempfile(fileext = ".png")
+      ggplot2::ggsave(tmpfile, plot = contents$correlation_plots, width = 8, height = 6, dpi = 200)
+      encoded <- base64enc::dataURI(file = tmpfile, mime = "image/png")
+      cat(sprintf('<img src="%s" width="600"/>\n', encoded))
+      cat("\n Correlation method: ", contents$correlation_method)
+      cat("\n \n")
+    }
+  })
 }
-```
 
-```{r IgG1-quantitation-plot, results='asis'}
-
-if (!is.null(params$quantitation_plot)) {
-  cat("IgG1 quantitation plot: \n")
-  p <- plotly::ggplotly(params$quantitation_plot, tooltip = "text") %>% 
-    GlycoDash::hide_outliers(.)
-  print(htmltools::tagList(p))
-}
 ```
 
 ## Glycosylation traits

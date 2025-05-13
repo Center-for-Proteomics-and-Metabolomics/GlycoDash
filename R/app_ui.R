@@ -50,7 +50,7 @@ app_ui <- function(request) {
                                    tabName = "normalization",
                                    icon = icon("table-list")),
           div(class = "sidebar-header", style = "font-weight: bold; padding: 10px; margin-left: 10px; text-decoration: underline;", "Optional steps"),
-          shinydashboard::menuItem(HTML("&nbspIgG1 quantitation"),
+          shinydashboard::menuItem(HTML("&nbspProtein quantitation"),
                                    tabName = "quantitation",
                                    icon = icon("balance-scale")),
           shinydashboard::menuItem(HTML("&nbsp&nbspGlycosylation traits"), 
