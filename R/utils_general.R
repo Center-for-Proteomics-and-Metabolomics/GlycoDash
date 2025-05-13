@@ -503,7 +503,7 @@ traits_choices <- list(
     "Galactosylation per antenna of complex-type glycans",
     "Sialylation per antenna of complex-type glycans",
     "Sialylation per galactose of complex-type glycans",
-    "Percentage of monoantennary complex-type glycans",
+    "Antennarity of complex-type glycans",
     "Percentage of hybrid-type glycans"
   ),
   "mouse_IgG_N" = c(

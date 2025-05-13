@@ -332,7 +332,6 @@ mod_site_occupancy_server <- function(id,
                     ), filter = "top")
     })
     
-    
     # Toggle UI
     observe({
       if (is_truthy(peptides_quality())) {
@@ -356,6 +355,7 @@ mod_site_occupancy_server <- function(id,
     return(list(
       site_occupancy_data = data_combined,
       quality_plot = quality_plot,
+      exclude_sample_types = reactive(input$exclude_sample_types),
       occupancy_plot = occupancy_plot,
       mass_accuracy = reactive(input$mass_accuracy),
       exclude_peptides = reactive(input$exclude_peptides)
