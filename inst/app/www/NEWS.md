@@ -1,3 +1,8 @@
+# v1.8.0
+## New features
+* Option to quantify proteins based on stable isotope labeled (glyco)peptides.
+
+
 # v1.7.2
 ## Adjustments
 * Include Joining Chain glycan H6N5S1 in automatic traits calculations.
