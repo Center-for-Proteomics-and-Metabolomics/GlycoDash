@@ -145,7 +145,23 @@ mod_quantitation_ui <- function(id) {
           id = ns("box"),
           title = div(
             id = ns("box_header"),
-            "Quantitation results"
+            "Quantitation results",
+            icon("info-circle", class = "ml") %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML(
+                  "
+                  The quantities for each protein will be plotted here per sample type.
+                  When multiple labeled/natural (glyco)peptide pairs are used to quantify 
+                  a protein, the protein quantity is taken to be te median of the quantities
+                  calculated based on each pair. In that case, the correlations between the 
+                  quantities based on the individual pairs are also plotted as a sanity check.
+                  "
+                ),
+                trigger = "hover",
+                placement = "left",
+                html = "true"
+              )
           ),
           tabsetPanel(id = ns("protein_tabs")),
           width = 12,
