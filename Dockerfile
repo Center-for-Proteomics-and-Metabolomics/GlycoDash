@@ -38,7 +38,7 @@ RUN Rscript -e 'remotes::install_version("shinycssloaders",upgrade="never", vers
 RUN Rscript -e 'remotes::install_version("shinybusy",upgrade="never", version = "0.3.3")'
 RUN Rscript -e 'remotes::install_version("shinyBS",upgrade="never", version = "0.61.1")'
 RUN Rscript -e 'remotes::install_version("shinyalert",upgrade="never", version = "3.1.0")'
-RUN Rscript -e 'remotes::install_version("RLumShiny",upgrade="never", version = "0.2.4")'
+RUN Rscript -e 'remotes::install_version("RLumShiny",upgrade="never", version = "0.2.3")'
 RUN Rscript -e 'remotes::install_version("plotly",upgrade="never", version = "4.10.4")'
 RUN Rscript -e 'remotes::install_version("plater",upgrade="never", version = "1.0.5")'
 RUN Rscript -e 'remotes::install_version("kableExtra",upgrade="never", version = "1.4.0")'
