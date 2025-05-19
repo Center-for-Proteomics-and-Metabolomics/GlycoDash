@@ -32,7 +32,9 @@ mod_tab_quantitation_peptides_ui <- function(id) {
 #' @noRd 
 mod_tab_quantitation_peptides_server <- function(id, 
                                                  peptides_data,
-                                                 results_spectra_curation) {
+                                                 results_spectra_curation,
+                                                 sample_types_to_exclude = c(""),
+                                                 mass_error_ppm = c(-20, 20)) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -42,9 +44,11 @@ mod_tab_quantitation_peptides_server <- function(id,
       updateSelectizeInput(
         inputId = "exclude_sample_types",
         choices = c(sample_types),
-        options = list(maxItems = length(sample_types) - 1)
+        options = list(maxItems = length(sample_types) - 1),
+        selected = sample_types_to_exclude
       )
     })
+    
     
     # Generate quality plot using function from site occupancy
     quality_plot <- reactive({

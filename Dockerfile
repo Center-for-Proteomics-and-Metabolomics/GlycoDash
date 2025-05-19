@@ -44,8 +44,6 @@ RUN Rscript -e 'remotes::install_version("plater",upgrade="never", version = "1.
 RUN Rscript -e 'remotes::install_version("kableExtra",upgrade="never", version = "1.4.0")'
 RUN Rscript -e 'remotes::install_version("golem",upgrade="never", version = "0.5.1")'
 RUN Rscript -e 'remotes::install_version("bsplus",upgrade="never", version = "0.1.5")'
-RUN Rscript -e 'remotes::install_version("patchwork",upgrade="never", version = "1.3.0")' 
-RUN Rscript -e 'remotes::install_version("ggpubr",upgrade="never", version = "0.6.0")' 
 RUN mkdir /build_zone
 ADD . /build_zone
 WORKDIR /build_zone

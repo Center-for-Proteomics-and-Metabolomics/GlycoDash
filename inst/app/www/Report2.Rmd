@@ -302,15 +302,12 @@ if (!is.null(params$quantitation_protein_tab_contents)) {
       GlycoDash::hide_outliers(.)
     cat("\n\n\n Protein quantities: \n\n")
     print(htmltools::tagList(boxplots))
-    # ChatGPT workaround for non-interactive correlation plot
+    # Correlation plots
     if (!is.null(contents$correlation_plots)) {
       cat("\nPeptide correlation plots:\n\n")
-      tmpfile <- tempfile(fileext = ".png")
-      ggplot2::ggsave(tmpfile, plot = contents$correlation_plots, width = 8, height = 6, dpi = 200)
-      encoded <- base64enc::dataURI(file = tmpfile, mime = "image/png")
-      cat(sprintf('<img src="%s" width="600"/>\n', encoded))
-      cat("\n Correlation method: ", contents$correlation_method)
-      cat("\n \n")
+      purrr::walk(contents$correlation_plots, function(plot) {
+        print(htmltools::tagList(plotly::ggplotly(plot, tooltip = "text")))
+      })
     }
   })
 }

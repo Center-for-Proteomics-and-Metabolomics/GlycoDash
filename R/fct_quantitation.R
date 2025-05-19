@@ -137,8 +137,10 @@ plot_protein_quantities <- function(quantities,
   } 
   
   # Check if logarithmic scale should be applied
-  if (log_scale) {
-    plot <- plot + ggplot2::scale_y_log10()
+  if (!is.null(log_scale)) {
+    if (log_scale == TRUE) {
+      plot <- plot + ggplot2::scale_y_log10(guide = "axis_logticks")
+    }
   }
   
   return(plot)
@@ -147,9 +149,7 @@ plot_protein_quantities <- function(quantities,
 
 # Plot protein quantity based on two peptide pairs
 # "pair" is pair of two peptide pairs
-quantity_correlation_plot <- function(df, pair, color_palette, log_scale,
-                                      correlation = "pearson", 
-                                      correlation_symbol = "R") {
+quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
   # Make plot
   plot <- ggplot2::ggplot(df, ggplot2::aes(
     x = !!rlang::sym(pair[1]), y = !!rlang::sym(pair[2])
@@ -164,28 +164,22 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale,
     ggplot2::geom_point(ggplot2::aes(
       color = sample_type, text = paste0(
         "Sample name: ", sample_name, "\n",
-        "Sample ID: ", sample_id, "\n"
+        "Sample ID: ", sample_id, "\n",
+        "Sample type: ", sample_type, "\n",
+        "Quantity based on ", pair[1], ": ", 
+        format(round(!!rlang::sym(pair[1]), digits = 2), nsmall = 2), "\n",
+        "Quantity based on ", pair[2], ": ", 
+        format(round(!!rlang::sym(pair[2]), digits = 2), nsmall = 2), "\n"
       )
-    ), alpha = 0.7, size = 1.5) +
+    ), alpha = 0.7, size = 1.2) +
     ggplot2::labs(x = pair[1], y = pair[2]) +
     ggplot2::theme_classic() +
     ggplot2::theme(
       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
       panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
-      axis.title = ggplot2::element_text(size = 12),
-      legend.title = ggplot2::element_text(size = 12),
-      legend.text = ggplot2::element_text(size = 11),
-      axis.text = ggplot2::element_text(size = 10)
+      legend.position = "none"
     ) + 
-    ggplot2::scale_color_manual(values = color_palette, name = "Sample type") +
-    # Add Pearson correlation
-    ggpubr::stat_cor(
-      method = correlation,
-      cor.coef.name = correlation_symbol,
-      ggplot2::aes(label = ggplot2::after_stat(r.label)),
-      na.rm = TRUE,
-      size = 4
-    )
+    ggplot2::scale_color_manual(values = color_palette, name = "Sample type")
   
   # Check for total and specific
   if ("group" %in% colnames(df)) {
@@ -193,8 +187,12 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale,
   } 
   
   # Check if logarithmic scale should be applied
-  if (log_scale) {
-    plot <- plot + ggplot2::scale_y_log10()
+  if (!is.null(log_scale)) {
+    if (log_scale == TRUE) {
+      plot <- plot + 
+        ggplot2::scale_x_log10(guide = "axis_logticks") +
+        ggplot2::scale_y_log10(guide = "axis_logticks")
+    }
   }
   
   return(plot)
@@ -202,9 +200,7 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale,
 
 
 
-plot_peptide_correlations <- function(protein_data, 
-                                      log_scale, 
-                                      correlation_method) {
+plot_peptide_correlations <- function(protein_data, log_scale) {
   
   # Create color palette
   sample_types <- unique(protein_data$sample_type)
@@ -221,22 +217,10 @@ plot_peptide_correlations <- function(protein_data,
       dplyr::filter(peptide_pair %in% pair) %>% 
       tidyr::pivot_wider(names_from = peptide_pair,
                          values_from = protein_quantity)
-    quantity_correlation_plot(
-      df_pair, pair, color_palette, log_scale,
-      correlation = dplyr::case_when(
-        correlation_method == "Pearson (linear)" ~ "pearson",
-        correlation_method == "Spearman (non-parametric)" ~ "spearman"
-      ),
-      correlation_symbol = dplyr::case_when(
-        correlation_method == "Pearson (linear)" ~ "R",
-        correlation_method == "Spearman (non-parametric)" ~ "rho"
-      )
-    )
+    
+    quantity_correlation_plot(df_pair, pair, color_palette, log_scale)
   })
   
-  # Combine plots into one
-  combined <- patchwork::wrap_plots(plots) +
-    patchwork::plot_layout(guides = "collect", ncol = 2)
-
-  return(combined)
+  # Return list of plots
+  return(plots)
 }
