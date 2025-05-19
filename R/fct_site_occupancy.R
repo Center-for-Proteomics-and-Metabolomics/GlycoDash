@@ -141,8 +141,6 @@ summarize_peptides_quality <- function(peptides_quality,
 # Quality plot for the non-glycosylated peptides
 peptides_quality_plot <- function(peptides_quality_summary) {
   
-  n_colors <- length(unique(peptides_quality_summary$cluster))
-  
   plot <- ggplot2::ggplot(peptides_quality_summary, ggplot2::aes(
     x = charge, y = passing_percentage,
     text = paste0(
@@ -164,7 +162,7 @@ peptides_quality_plot <- function(peptides_quality_summary) {
   }
   
   plot <- plot + 
-    ggplot2::geom_col(color = "black", ggplot2::aes(fill = cluster)) +
+    ggplot2::geom_col(color = "black", fill = "darkblue") +
     ggplot2::theme_classic() + 
     ggplot2::theme(
       panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
@@ -173,7 +171,6 @@ peptides_quality_plot <- function(peptides_quality_summary) {
       legend.position = "none"
     ) +
     ggplot2::labs(x = "", y = "Passing percentage")  + 
-    ggplot2::scale_fill_manual(values = color_palette(n_colors)) + 
     ggplot2::scale_y_continuous(limits = c(0, 100))
   
   return(plot)
