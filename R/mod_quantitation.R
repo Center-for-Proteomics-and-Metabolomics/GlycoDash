@@ -156,6 +156,7 @@ mod_quantitation_ui <- function(id) {
                   a protein, the protein quantity is taken to be te median of the quantities
                   calculated based on each pair. In that case, the correlations between the 
                   quantities based on the individual pairs are also plotted as a sanity check.
+                  In the correlation plots, a dashed line of equality (<i> y = x </i>) is shown.
                   "
                 ),
                 trigger = "hover",
@@ -350,14 +351,9 @@ mod_quantitation_server <- function(id,
       purrr::map(names(r$protein_tabs_contents), function(current_protein) {
         removeTab(inputId = "protein_tabs", target = current_protein)
       })
-      purrr::map(r$peptide_tabs_names, function(current_protein) {
-        removeTab(inputId = "peptide_tabs", target = current_protein)
-      })
       # Reset tab contents in reactiveValues vector
       r$protein_tabs_contents <- NULL
       r$peptide_tabs_contents <- NULL
-      r$peptide_tabs_names <- NULL
-      r$peptide_tabs_data <- NULL
       # Create new tabs with quantitation results for each protein
       for (current_protein in proteins()) {
         appendTab(
@@ -381,6 +377,16 @@ mod_quantitation_server <- function(id,
               dplyr::filter(protein == current_protein)
           )
         })
+    })
+    
+    
+    # Update peptide quality data tabs only when new Excel file is uploaded
+    observeEvent(proteins_excel(), {
+      purrr::map(r$peptide_tabs_names, function(current_protein) {
+        removeTab(inputId = "peptide_tabs", target = current_protein)
+      })
+      r$peptide_tabs_names <- NULL
+      r$peptide_tabs_data <- NULL
       # Generate peptide QC tabs
       if (!is.null(peptides_data())) {
         for (current_protein in proteins()) {
@@ -419,7 +425,8 @@ mod_quantitation_server <- function(id,
             )
           })
       }
-    })
+      # Give negative priority so that quantitation above is performed first
+    }, priority = -1)
     
     
     # Option to exclude peptide ions from calculations
