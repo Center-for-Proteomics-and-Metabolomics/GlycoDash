@@ -510,16 +510,6 @@ mod_quantitation_server <- function(id,
         is_truthy(peptide_ions()) &
         r$correct_formatting == TRUE
       ))
-      # if (
-      #   is_truthy(peptides_data()) & 
-      #   is_truthy(proteins_excel()) & 
-      #   is_truthy(peptide_ions()) & 
-      #   r$correct_formatting == TRUE
-      # ) {
-      #   shinyjs::enable("download")
-      # } else {
-      #   shinyjs::disable("download")
-      # }
     })
     
     output$download <- downloadHandler(
