@@ -155,7 +155,7 @@ peptides_quality_plot <- function(peptides_quality_summary) {
   
   if ("group" %in% colnames(peptides_quality_summary)) {
     plot <- plot +
-      ggplot2::facet_grid(cluster ~ group, scales = "free_x", ncol = 4)
+      ggplot2::facet_grid(cluster ~ group, scales = "free_x")
   } else {
     plot <- plot + 
       ggplot2::facet_wrap(~cluster, scales = "free_x", ncol = 4)

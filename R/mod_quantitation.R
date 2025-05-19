@@ -221,7 +221,7 @@ mod_quantitation_server <- function(id,
     
     # Initiate reactiveValues vector
     r <- reactiveValues(
-      correct_formatting = NULL,
+      correct_formatting = FALSE,
       protein_tabs_contents = NULL,
       peptide_tabs_contents = NULL,
       peptide_tabs_names = NULL,
@@ -439,7 +439,7 @@ mod_quantitation_server <- function(id,
     })
     
     peptide_ions <- reactive({
-      req(peptides_data(), proteins_excel())
+      req(peptides_data(), proteins_excel(), r$correct_formatting == TRUE)
       peptides_data() %>% 
         dplyr::filter(
           cluster %in% c(proteins_excel()$natural, proteins_excel()$labeled)
@@ -505,8 +505,21 @@ mod_quantitation_server <- function(id,
     # Download peptide QC data
     observe({
       shinyjs::toggleState("download", condition = (
-        is_truthy(peptides_data()) & is_truthy(proteins_excel()) & is_truthy(peptide_ions())
+        is_truthy(peptides_data()) &
+        is_truthy(proteins_excel()) &
+        is_truthy(peptide_ions()) &
+        r$correct_formatting == TRUE
       ))
+      # if (
+      #   is_truthy(peptides_data()) & 
+      #   is_truthy(proteins_excel()) & 
+      #   is_truthy(peptide_ions()) & 
+      #   r$correct_formatting == TRUE
+      # ) {
+      #   shinyjs::enable("download")
+      # } else {
+      #   shinyjs::disable("download")
+      # }
     })
     
     output$download <- downloadHandler(
