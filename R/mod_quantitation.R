@@ -303,27 +303,55 @@ mod_quantitation_server <- function(id,
       return(checked)
     })
     
+    # Store notification IDs to be able to remove them
+    notifications <- reactiveValues(ids = c())
+    
     # Warning message
     observeEvent(proteins_checked(), {
+      # Remove existing warning messages
+      for (id in notifications$ids) {
+        removeNotification(id)
+      }
+      notifications$ids <- c()
+      # Show new warning messages
       difference <- dplyr::anti_join(proteins_excel(), proteins_checked())
       if (nrow(difference) > 0) {
-        for (rownum in nrow(difference)) {
+        for (rownum in 1:nrow(difference)) {
           row <- difference[rownum, ]
           message <- paste0(
-            "Protein ", difference$protein, 
+            "Protein ", row$protein, 
             " could not be quantified based on peptides ",
             paste0(row$natural, " / ", row$labeled),
             ", because too many ions required for the calculation were excluded."
           )
-          showNotification(message, type = "warning", duration = 30)
+          showNotification(message, type = "warning", duration = NULL, 
+                           id = as.character(rownum))
+          notifications$ids <- c(notifications$ids, as.character(rownum))
         }
+      }
+      if (nrow(proteins_checked()) == 0) {
+        showNotification(
+          "No proteins could be quantified!",
+          type = "error", duration = NULL,
+          id = "no_proteins"
+        )
+        notifications$ids <- c(notifications$ids, "no_proteins")
       }
     })
     
     # Get calculated quantities based on different peptides
     protein_quantities <- reactive({
       req(combined_intensities())
-      get_protein_quantities(combined_intensities(), proteins_checked())
+      tryCatch(
+        get_protein_quantities(combined_intensities(), proteins_checked()),
+        error = function(e) {
+          purrr::map(names(r$protein_tabs_contents), function(current_protein) {
+            removeTab(inputId = "protein_tabs", target = current_protein)
+          })
+          r$protein_tabs_contents <- NULL
+          NULL
+        }
+      )
     })
     
     # Calculate median quantity for each protein per sample
