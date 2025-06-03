@@ -55,13 +55,19 @@ mod_quantitation_ui <- function(id) {
                   the name of the corresponding stable isotope labeled glycosylation
                   site or peptide.
                   </li>
-                  <li> <i> standard_quantity </i> - 
-                  The quantity of stable isotope labeled standard added to each sample.
-                  Entries in this column should be numbers. GlycoDash agnostic
-                  when it comes to the units of the quantities.
+                  <li> <i> standard_ng </i> - 
+                  The quantity of stable isotope labeled standard added to each sample, 
+                  in nanograms (ng). 
+                  </li>
+                  <li> <i> sample_ul </i> - 
+                  The volume used for each sample from which proteins were captured,
+                  in microliters (μL).
                   </li>
                   </ul>
-                  <br>
+                  <br> 
+                  Quantities will be calculated as concentrations in 
+                  nanograms per milliliter (ng/mL).
+                  <br> <br>
                   For an example file, click the paperclip icon.
                   "
                 ),
@@ -151,7 +157,7 @@ mod_quantitation_ui <- function(id) {
                 title = "Explanation",
                 content = HTML(
                   "
-                  The quantities for each protein will be plotted here per sample type.
+                  The quantities (ng/mL) for each protein will be plotted here per sample type.
                   When multiple labeled/natural (glyco)peptide pairs are used to quantify 
                   a protein, the protein quantity is taken to be te median of the quantities
                   calculated based on each pair. In that case, the correlations between the 
@@ -233,16 +239,17 @@ mod_quantitation_server <- function(id,
       req(normalized_data())
       # Check column names
       if (!all(
-        ncol(proteins_excel()) == 4, 
+        ncol(proteins_excel()) == 5, 
         colnames(proteins_excel())[1] == "protein", 
         colnames(proteins_excel())[2] == "natural", 
         colnames(proteins_excel())[3] == "labeled",
-        colnames(proteins_excel())[4] == "standard_quantity"
+        colnames(proteins_excel())[4] == "standard_ng",
+        colnames(proteins_excel())[5] == "sample_ul"
       )) {
         shinyalert::shinyalert(
           text = "
-          Your Excel file should contain four columns: 
-          \"protein\", \"natural\", \"labeled\" and \"standard_quantity\"
+          Your Excel file should contain five columns: 
+          \"protein\", \"natural\", \"labeled\", \"standard_ng\", and \"sample_ul\".
           Please adjust your file accordingly.
           ",
           confirmButtonCol = "tomato"

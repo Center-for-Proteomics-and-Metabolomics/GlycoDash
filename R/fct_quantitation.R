@@ -59,7 +59,8 @@ get_protein_quantities <- function(combined_intensities,
     protein_name <- proteins_excel[i, ]$protein
     natural <- proteins_excel[i, ]$natural
     labeled <- proteins_excel[i, ]$labeled
-    standard_quantity <- as.numeric(proteins_excel[i, ]$standard_quantity)
+    standard_ng <- as.numeric(proteins_excel[i, ]$standard_ng)
+    sample_ul <- as.numeric(proteins_excel[i, ]$sample_ul)
     # Get data for current protein peptide in wide format
     data <- combined_intensities %>% 
       dplyr::filter(cluster %in% c(natural, labeled)) %>% 
@@ -68,15 +69,16 @@ get_protein_quantities <- function(combined_intensities,
         protein = protein_name,
         peptide_pair = paste(natural, "/", labeled)
       )
-    # Calculate quantity for each sample
-    data$protein_quantity <- data[[natural]] / data[[labeled]] * standard_quantity
+    # Calculate quantity for each sample in ng/mL
+    ml <- sample_ul / 1000
+    data$protein_quantity <- data[[natural]] / data[[labeled]] * standard_ng / ml
+    
     # Get just the quantities
     quantities <- data %>% 
       dplyr::select(
         sample_name, sample_type, sample_id, tidyselect::any_of("group"),
         protein, peptide_pair, protein_quantity
-      ) %>% 
-      dplyr::mutate(standard_quantity = standard_quantity)
+      )
     
     return(quantities)
   })
@@ -115,7 +117,7 @@ plot_protein_quantities <- function(quantities,
     text = paste0(
       "Sample name: ", sample_name, "\n",
       "Sample ID: ", sample_id, "\n",
-      "Protein quantity: ", format(round(quantity, digits = 2), nsmall = 2)
+      "Protein quantity: ", format(round(quantity, digits = 2), nsmall = 2), " ng/mL"
     )
   )) +
     ggplot2::geom_boxplot() +
@@ -167,9 +169,9 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
         "Sample ID: ", sample_id, "\n",
         "Sample type: ", sample_type, "\n",
         "Quantity based on ", pair[1], ": ", 
-        format(round(!!rlang::sym(pair[1]), digits = 2), nsmall = 2), "\n",
+        format(round(!!rlang::sym(pair[1]), digits = 2), nsmall = 2), " ng/mL \n",
         "Quantity based on ", pair[2], ": ", 
-        format(round(!!rlang::sym(pair[2]), digits = 2), nsmall = 2), "\n"
+        format(round(!!rlang::sym(pair[2]), digits = 2), nsmall = 2), " ng/mL \n"
       )
     ), alpha = 0.7, size = 1.2) +
     ggplot2::labs(x = pair[1], y = pair[2]) +
