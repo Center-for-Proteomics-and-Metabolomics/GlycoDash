@@ -59,7 +59,7 @@ _Note: it is recommended that you have at least 16 GB of RAM._
 
 ## How to use GlycoDash
 In the top-right corner of GlycoDash, click on the book icon to download a manual for the version you are using.
-Or [click here](https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/tree/master/man/documents/GlycoDash_manual.pdf) for the manual of the latest release.
+Or [click here](https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/blob/master/inst/app/www/GlycoDash_manual.pdf) for the manual of the latest release.
 
 
 ## Branches
