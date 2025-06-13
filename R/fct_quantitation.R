@@ -131,7 +131,7 @@ plot_protein_quantities <- function(quantities,
       strip.background = ggplot2::element_rect(fill = "#F6F6F8")
     ) +
     ggplot2::scale_color_manual(values = color_palette, name = "Sample type") + 
-    ggplot2::labs(x = "Sample type", y = paste(protein_name, "quantity"))
+    ggplot2::labs(x = "Sample type", y = paste(protein_name, "quantity (ng/mL)"))
   
   # Check for total and specific
   if ("group" %in% colnames(quantities)) {
