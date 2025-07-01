@@ -484,7 +484,7 @@ mod_read_lacytools_server <- function(id){
     })
     
     
-    # Return combined LaCytools summaries or skyline data
+    # Return combined LaCytools summaries or Skyline data
     to_return <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
@@ -512,9 +512,16 @@ mod_read_lacytools_server <- function(id){
       }
     })
     
+    # Remove trailing/leading spaces
+    to_return_trimmed <- reactive({
+      req(to_return())
+      to_return() %>% 
+        dplyr::mutate(dplyr::across(tidyselect::where(is.character), trimws))
+    })
+    
     
     return(list(
-      data = to_return,
+      data = to_return_trimmed,
       data_type = reactive(input$data_type),
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),

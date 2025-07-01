@@ -1,3 +1,36 @@
+# v1.7.2
+## Adjustments
+* Include Joining Chain glycan H6N5S1 in automatic traits calculations.
+
+## Bug fixes
+* Fix a bug in the automatic calculation of IgA glycosylation traits.
+* Make site occupancy calculations work when spectra curation is skipped.
+* Fix site occupancy in HTML report.
+
+
+# v1.7.1
+## Bug fixes
+* Fix a bug where HTML report would not generate.
+
+
+# v1.7.0
+## New features
+* Option to calculate glycosylation site occupancies.
+
+## Bug fixes
+* Various minor bug fixes.
+
+
+# v1.6.6
+## Adjustments
+* Data import: remove leading or trailing spaces from entries in character columns.
+
+# Bug fixes
+* List excluded sample types in the HTML report when curating analytes per 
+biological group.
+* Minor bug fixes in UI.
+
+
 # v1.6.5
 ## Adjustments
 * Sort glycan compositions in the heatmaps of the normalized data.

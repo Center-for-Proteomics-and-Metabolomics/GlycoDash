@@ -1,5 +1,5 @@
 ---
-title: "GlycoDash v1.6.5 data processing report"
+title: "GlycoDash v1.7.2 data processing report"
 output: 
   html_document:
     toc: TRUE
@@ -35,6 +35,11 @@ params:
   formulas: NA
   custom_formulas: NA
   intensity_plots: NA
+  site_occupancy_quality_plot: NA
+  site_occupancy_excluded_sample_types: NA
+  site_occupancy_boxplot: NA
+  site_occupancy_excluded_peptides: NA
+  site_occupancy_mass_error: NA
   repeatability: NA
   data_exploration: NA
   silumab_amount: NA
@@ -173,15 +178,17 @@ if (params$analyte_curation_method == "Curate analytes based on data") {
     text <- paste0(params$ignore_samples, collapse = ", ")
       cat(
       "- Curation method: based on all data\n",
-      paste("- Samples excluded from analyte curation:", text, "\n"),
+      paste("- Sample types excluded from analyte curation:", text, "\n"),
       "- Cut-off percentages:",
       paste(names(params$cut_offs), ": ", params$cut_offs, "%, ", sep = "", collapse = "\n")
       )
   } else if (params$analyte_curation_choice == "Per biological group") {
-    text <- paste0(params$groups_to_ignore, collapse = ", ")
+    text1 <- paste0(params$ignore_samples, collapse = ", ")
+    text2 <- paste0(params$groups_to_ignore, collapse = ", ")
     cat(
       "- Curation method: per biological group\n",
-      paste("- Biological groups excluded from analyte curation:", text, "\n"),
+      paste("- Sample types excluded from analyte curation:", text1, "\n"),
+      paste("- Biological groups excluded from analyte curation:", text2, "\n"),
       "- Cut-off percentages:",
       paste(names(params$cut_offs), ": ", params$cut_offs, "%, ", sep = "", collapse = "\n")
     )
@@ -263,18 +270,17 @@ if (!is.null(names(params$heatmaps))) {
 ```{r IgG1-quantitation-peptides, results='asis'}
 
 if (is.null(params$quantitation_plot)) {
-  cat("IgG1 was not quantified.")
+  cat("Antigen-specific IgG1 was not quantified.")
 } else {
-  cat("IgG1 was quantified with SILuMAb based on the following peptides:",
+  cat("Antigen-specific IgG1 was quantified with SILuMAb based on the following peptides:",
       paste(params$chosen_peptides, collapse = ", "))
 }
 ```
 
-Peptide correlation plots:
-
 ```{r IgG1-peptide-correlations, results='asis'}
 
 if (length(params$peptide_correlation_plots) > 0) {
+  cat("Peptide correlation plot: \n")
   for (plot in params$peptide_correlation_plots) {
     p <- plotly::ggplotly(plot, tooltip = "text")
     print(htmltools::tagList(p))
@@ -282,11 +288,10 @@ if (length(params$peptide_correlation_plots) > 0) {
 }
 ```
 
-IgG1 quantitation plot:
-
 ```{r IgG1-quantitation-plot, results='asis'}
 
 if (!is.null(params$quantitation_plot)) {
+  cat("IgG1 quantitation plot: \n")
   p <- plotly::ggplotly(params$quantitation_plot, tooltip = "text") %>% 
     GlycoDash::hide_outliers(.)
   print(htmltools::tagList(p))
@@ -336,6 +341,41 @@ if (!is.null(params$intensity_plots)) {
 }
 
 ```
+
+## Site occupancy
+```{r site_occupancy, results='asis'}
+
+if (!is.null(params$site_occupancy_quality_plot)) {
+  cat("Non-glycosylated peptides quality plot: \n")
+  print(htmltools::tagList(plotly::ggplotly(params$site_occupancy_quality_plot)))
+  cat("\n Sample types excluded from quality assessment: ", paste0(
+    ifelse(
+      length(params$site_occupancy_excluded_sample_types) > 0,
+      params$site_occupancy_excluded_sample_types,
+      "none"
+    ), collapse = ", "
+  ))
+  cat("\n \n Acceptable mass error range (ppm): ", 
+      min(params$site_occupancy_mass_error), 
+      " - ", max(params$site_occupancy_mass_error))
+  cat("\n \n Peptide ions excluded from site occupancy calculations: ", paste0(
+    ifelse(
+      length(params$site_occupancy_excluded_peptides) > 0,
+      params$site_occupancy_excluded_peptides,
+      "none"
+    ), collapse = ", "
+  ))
+}
+
+if (!is.null(params$site_occupancy_boxplot)) {
+  cat("\n \n Site occupancies boxplots: \n")
+  plotly_object <- plotly::ggplotly(params$site_occupancy_boxplot) %>% 
+    GlycoDash::hide_outliers(.)
+  print(htmltools::tagList(plotly_object))
+}
+
+```
+
 
 ## Repeatability
 

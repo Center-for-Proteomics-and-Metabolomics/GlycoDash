@@ -18,7 +18,7 @@ app_ui <- function(request) {
       
       # Title header, with button that links to GitHub
       header = shinydashboard::dashboardHeader(
-        title = "GlycoDash v1.6.5",
+        title = "GlycoDash v1.7.2",
         tags$li(a(
           onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash')",
           href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"
@@ -45,10 +45,10 @@ app_ui <- function(request) {
                                    icon = icon("area-chart")),
           shinydashboard::menuItem(HTML("&nbspAnalyte curation"), 
                                    tabName = "analyte_curation",
-                                   icon = icon("bar-chart")),
+                                   icon = icon("chart-simple")),
           shinydashboard::menuItem(HTML("&nbspNormalized data"), 
                                    tabName = "normalization",
-                                   icon = icon("table")),
+                                   icon = icon("table-list")),
           div(class = "sidebar-header", style = "font-weight: bold; padding: 10px; margin-left: 10px; text-decoration: underline;", "Optional steps"),
           shinydashboard::menuItem(HTML("&nbspIgG1 quantitation"),
                                    tabName = "quantitation",
@@ -56,6 +56,9 @@ app_ui <- function(request) {
           shinydashboard::menuItem(HTML("&nbsp&nbspGlycosylation traits"), 
                                    tabName = "derived_traits",
                                    icon = icon("flask")),
+          shinydashboard::menuItem(HTML("&nbspSite occupancy"),
+                                   tabName = "site_occupancy",
+                                   icon = icon("vial")),
           shinydashboard::menuItem(HTML("&nbspRepeatability"), 
                                    tabName = "repeatability",
                                    icon = icon("eye")),
@@ -110,6 +113,10 @@ app_ui <- function(request) {
           shinydashboard::tabItem(
             "derived_traits",
             mod_derived_traits_ui("derived_traits_ui_1")
+          ),
+          shinydashboard::tabItem(
+            "site_occupancy",
+            mod_site_occupancy_ui("site_occupancy_ui_1")
           ),
           shinydashboard::tabItem(
             "repeatability",
