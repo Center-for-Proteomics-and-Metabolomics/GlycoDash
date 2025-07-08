@@ -18,7 +18,7 @@ mod_read_lacytools_ui <- function(id){
     selectInput(
       ns("data_type"),
       "Choose which type of data you want to upload:",
-      choices = c("LaCyTools data", "Skyline data"),
+      choices = c("LaCyTools data", "Skyline data (wide format)"),
       selected = "LaCyTools data"
     ),
     fluidRow(
@@ -33,8 +33,8 @@ mod_read_lacytools_ui <- function(id){
           style = "color:#0021B8; font-size: 15px"
         )),
         shinyjs::hidden(div(
-          id = ns("uploaded_skyline"),
-          strong("You uploaded Skyline data. 
+          id = ns("uploaded_skyline_wide"),
+          strong("You uploaded Skyline data in wide format. 
                  To upload a different data type, reload the dashboard."),
           br(),
           br(),
@@ -49,10 +49,39 @@ mod_read_lacytools_ui <- function(id){
           multiple = TRUE
         ),
         fileInput(
-          ns("skyline_input"),
-          "Upload one or more Skyline CSV output files:",
+          ns("skyline_input_wide"),
+          "Upload one or more Skyline CSV output files in wide format:",
           multiple = TRUE
         ),
+        shinyWidgets::awesomeRadio(
+          ns("skyline_analyte_format"),
+          "Select how analytes are specified:",
+          choices = c(
+            "One column with peptide sequences and modifications",
+            "Two columns: one with glycosylation sites and one with glycans"
+          )
+        ),
+        selectizeInput(
+          ns("skyline_analyte_column"),
+          "Select column with analytes:",
+          choices = c()
+        ),
+        selectizeInput(
+          ns("skyline_cluster_column"),
+          "Select column with glycosylation sites:",
+          choices = c()
+        ),
+        selectizeInput(
+          ns("skyline_glycan_column"),
+          "Select column with glycan compositions:",
+          choices = c()
+        ),
+        shinyjs::hidden(div(
+          id = ns("button_div"),
+          actionButton(ns("button"), "Process Skyline data"),
+          br(),
+          br()
+        ))
       ),
       column(
         width = 1,
@@ -100,34 +129,27 @@ mod_read_lacytools_ui <- function(id){
         icon("info-circle", class = "fa-2x") %>% 
           bsplus::bs_embed_popover(
             id = ns("popover"),
-            title = "Skyline data",
+            title = "Skyline data (wide format)",
             content = HTML(
               "
-              You can upload one or more Skyline output CSV file. 
-              The file should contain the following columns:
+              You can upload one or more Skyline output CSV files. 
+              The file should contain one column specifying the charge states of the
+              analytes. The analytes themselves can be specified in one of two ways:
               <ul>
-                  <li>
-                  <i> Protein Name </i> <br>
-                  The entries in this column should consist only of letters
-                  <b> (no numbers or spaces). </b>
-                  They must specify the peptide to which the glycan is attached (see below).
-                  </li>
-                  <li>
-                  <i> Peptide </i> <br>
-                  This column should contain the <b> glycan compositions </b> attached to the peptides
-                  specified in <i>Protein Name</i>, the same way they would be specified in LaCyTools 
-                  (e.g. \"H5N2\", \"H4N4F1S1\").
-                  </li>
-                  <li>
-                  <i> Precursor Charge </i> <br>
-                  A number specifying the charge state of the glycopeptide.
-                  </li>
+                <li>
+                <i>Two separate columns:</i> one with glycosylation sites and one 
+                with glycan compositions.
+                </li>
+                <li>
+                <i>One column</i> where each entry contains both a peptide sequence
+                and a glycan composition (e.g. \"EEQYN[H3N4F1]STYR\").
+                A sequence may also contain methionine oxidation and cysteine
+                carbamidomethyl (CAM) modifications.
+                </li>
               </ul>
               Additionally, it should contain columns with \"<i>Total Area MS1</i>\",
               \"<i>Isotope Dot Product</i>\" and \"<i>Average Mass Error PPM</i>\" 
               for each sample name.
-              <br> <br>
-              <b>Sample names should not start with a number, and should not contain any spaces.</b>
               "
             ),
             trigger = "hover",
@@ -179,18 +201,34 @@ mod_read_lacytools_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    # Visibility of fileInputs
+    # Visibility of UI elements
     observe({
       if (input$data_type == "LaCyTools data") {
+        shinyjs::hide("button_div")
         shinyjs::show("lacytools_input")
         shinyjs::show("info_icon_div1")
-        shinyjs::hide("skyline_input")
+        shinyjs::hide("skyline_input_wide")
         shinyjs::hide("info_icon_div2")
-      } else if (input$data_type == "Skyline data") {
+        shinyjs::hide("skyline_analyte_format")
+        shinyjs::hide("skyline_analyte_column")
+        shinyjs::hide("skyline_cluster_column")
+        shinyjs::hide("skyline_glycan_column")
+      } else if (input$data_type == "Skyline data (wide format)") {
+        shinyjs::show("button_div")
         shinyjs::hide("lacytools_input")
         shinyjs::hide("info_icon_div1")
-        shinyjs::show("skyline_input")
+        shinyjs::show("skyline_input_wide")
         shinyjs::show("info_icon_div2")
+        shinyjs::show("skyline_analyte_format")
+        if (input$skyline_analyte_format == "One column with peptide sequences and modifications") {
+          shinyjs::show("skyline_analyte_column")
+          shinyjs::hide("skyline_cluster_column")
+          shinyjs::hide("skyline_glycan_column")
+        } else {
+          shinyjs::hide("skyline_analyte_column")
+          shinyjs::show("skyline_cluster_column")
+          shinyjs::show("skyline_glycan_column")
+        }
       }
     })
     
@@ -201,7 +239,7 @@ mod_read_lacytools_server <- function(id){
         # LaCyTools --> require text file
         req(input$lacytools_input)
         wrong_file_ext <- subset(input$lacytools_input, !grepl("\\.txt$", name, ignore.case = TRUE))
-      } else if (input$data_type == "Skyline data") {
+      } else if (input$data_type == "Skyline data (wide format)") {
         # Skyline --> require CSV file
         req(input$skyline_input)
         wrong_file_ext <- subset(input$skyline_input, !grepl("\\.csv$", name, ignore.case = TRUE))
@@ -223,7 +261,7 @@ mod_read_lacytools_server <- function(id){
           show = !is_truthy(correct_file_ext()),
           text = "Please upload text files."
         )
-      } else if (input$data_type == "Skyline data") {
+      } else if (input$data_type == "Skyline data (wide format)") {
         req(input$skyline_input)
         shinyFeedback::feedbackDanger(
           inputId = "skyline_input",
@@ -239,7 +277,7 @@ mod_read_lacytools_server <- function(id){
       req(correct_file_ext())
       if (input$data_type == "LaCyTools data") {
         uploaded_files <- input$lacytools_input
-      } else if (input$data_type == "Skyline data") {
+      } else if (input$data_type == "Skyline data (wide format)") {
         uploaded_files <- input$skyline_input
       }
       uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
@@ -354,19 +392,19 @@ mod_read_lacytools_server <- function(id){
     # Read raw Skyline data from CSV files.
     # Isomers are renamed.
     raw_skyline_data <- reactive({
-      req(correct_file_ext(), input$data_type == "Skyline data", input$skyline_input)
+      req(correct_file_ext(), input$data_type == "Skyline data (wide format)", input$skyline_input)
       purrr::map(input$skyline_input$datapath, function(datapath) {
         read_skyline_csv(datapath)
       })
     })
     
-    observe({
-      req(raw_skyline_data())
-      shinybusy::show_modal_spinner(
-        spin = "cube-grid", color = "#0275D8",
-        text = HTML("<br/><strong>Processing Skyline data...")
-      )
-    }, priority = 5)
+    # observe({
+    #   req(raw_skyline_data())
+    #   shinybusy::show_modal_spinner(
+    #     spin = "cube-grid", color = "#0275D8",
+    #     text = HTML("<br/><strong>Processing Skyline data...")
+    #   )
+    # }, priority = 5)
     
     
     skyline_data <- reactive({
@@ -507,7 +545,7 @@ mod_read_lacytools_server <- function(id){
       shinyjs::hide("data_type")
       if (input$data_type == "LaCyTools data") {
         shinyjs::show("uploaded_lacytools")
-      } else if (input$data_type == "Skyline data") {
+      } else if (input$data_type == "Skyline data (wide format)") {
         shinyjs::show("uploaded_skyline")
       }
     })
