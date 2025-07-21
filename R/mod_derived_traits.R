@@ -429,7 +429,9 @@ mod_derived_traits_ui <- function(id){
 #' derived_traits Server Functions
 #'
 #' @noRd 
-mod_derived_traits_server <- function(id, results_normalization, results_quantitation) {
+mod_derived_traits_server <- function(id, 
+                                      results_normalization,
+                                      results_quantitation) {
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     
@@ -652,7 +654,7 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     
     # Read the custom traits Excel file as a data frame.
     traits_excel <- reactive({
-      req(input$custom_traits_file, extension(), extension() == "xlsx")
+      req(input$custom_traits_file, extension(), extension() %in% c("xlsx", "xls"))
       readxl::read_excel(input$custom_traits_file$datapath, col_names = TRUE, col_types = "text")
     })
 
@@ -662,7 +664,6 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     observeEvent(traits_excel(), {
       r$correct_formatting <- TRUE
       # First check for correct columns
-      ncol <- ncol(traits_excel())
       colnames <- colnames(traits_excel())
       if (!all(ncol == 2, colnames[1] == "trait", colnames[2] == "formula")) {
         shinyalert::shinyalert(
@@ -1234,9 +1235,10 @@ mod_derived_traits_server <- function(id, results_normalization, results_quantit
     # Check if there is quantitation data to combine with the traits.
     data_with_traits <- reactive({
       req(with_data())
-      if (is_truthy(results_quantitation$quantitation_data())) {
-        dplyr::full_join(with_data(), results_quantitation$quantitation_data()) %>%
-          dplyr::relocate(IgG1_quantity_ng, .after = replicates)
+      if (is_truthy(results_quantitation$data_with_quantities())) {
+        dplyr::full_join(with_data(), results_quantitation$data_with_quantities()) %>% 
+          dplyr::relocate(tidyselect::contains("_quantity"), 
+                          .after = tidyselect::contains("_sum_intensity"))
       } else {
         with_data()
       }

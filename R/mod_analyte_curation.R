@@ -38,7 +38,8 @@ mod_analyte_curation_ui <- function(id){
                   title = "Explanation",
                   content = HTML(
                     "
-                    Analyte curation will be performed based on the settings that were chosen
+                    Analyte curation will be performed on the glycopeptides in your data,
+                    based on the settings that were chosen
                     for the three quality criteria in the \"Spectra Curation\" tab.
                     <br> <br>
                     You can exclude one or two of the quality criteria from the assessment

@@ -55,11 +55,9 @@ app_server <- function( input, output, session ) {
   
   results_quantitation <- mod_quantitation_server(
     id = "quantitation_ui_1",
-    quantitation_clusters = results_data_import$quantitation_clusters,
-    LaCyTools_summary = results_data_import$LaCyTools_summary,
-    keyword_specific = results_data_import$keyword_specific,
-    data_type = results_data_import$data_type,
-    analyte_curated_data = results_analyte_curation$analyte_curated_data,
+    peptides = results_data_import$peptides,
+    peptides_data = results_data_import$peptides_data,
+    results_spectra_curation = results_spectra_curation,
     results_normalization = results_normalization
   )
   
@@ -87,7 +85,8 @@ app_server <- function( input, output, session ) {
     results_derived_traits = results_derived_traits,
     results_quantitation = results_quantitation,
     results_site_occupancy = results_site_occupancy,
-    results_normalization = results_normalization)
+    results_normalization = results_normalization
+  )
   
   
   mod_export_server(
