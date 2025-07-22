@@ -1,3 +1,8 @@
+# v1.8.1
+## Bug fixes
+* Fix a column name in the example Excel file for protein quantitation.
+
+
 # v1.8.0
 ## New features
 * Option to quantify proteins based on stable isotope labeled (glyco)peptides.
