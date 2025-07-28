@@ -212,12 +212,17 @@ get_block <- function(data, variable) {
                                                 "[\\(\\)\\,\\/\\[\\]]")
   
   # The first three rows of each block contain the column names, the fraction and the exact mass.
-  # These rows should be removed:
-  block <- block[-c(1, 2, 3), ] %>% 
+  # These rows should be removed, but after removing columns where all values including
+  # fraction and exact mass are missing (NA).
+  
+  # Remove NAs
+  block <- block[-1, ] %>%
+    dplyr::select(-tidyselect::vars_select_helpers$where(function(x) all(is.na(x)))) 
+    
+  # Remove fraction and exact mass
+  block <- block[-c(1, 2), ] %>% 
     dplyr::mutate(lacytools_output = better_name_output) %>% 
-    dplyr::mutate(dplyr::across(-c(sample_name, lacytools_output), as.numeric)) %>% 
-    # Remove columns where all values are NAs:
-    dplyr::select(-tidyselect::vars_select_helpers$where(function(x) all(is.na(x))))
+    dplyr::mutate(dplyr::across(-c(sample_name, lacytools_output), as.numeric))
   
   return(block)
 }
