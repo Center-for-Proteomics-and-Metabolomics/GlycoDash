@@ -1,3 +1,8 @@
+# v1.8.2
+## Bug fixes
+* Fix a bug in the data import.
+
+
 # v1.8.1
 ## Bug fixes
 * Fix a column name in the example Excel file for protein quantitation.
