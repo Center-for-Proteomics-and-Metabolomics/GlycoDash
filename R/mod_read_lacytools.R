@@ -76,6 +76,11 @@ mod_read_lacytools_ui <- function(id){
           "Select column with glycan compositions:",
           choices = c()
         ),
+        selectizeInput(
+          ns("skyline_charge_column"),
+          "Select column with charge states:",
+          choices = c()
+        ),
         shinyjs::hidden(div(
           id = ns("button_div"),
           actionButton(ns("button"), "Process Skyline data"),
@@ -213,6 +218,7 @@ mod_read_lacytools_server <- function(id){
         shinyjs::hide("skyline_analyte_column")
         shinyjs::hide("skyline_cluster_column")
         shinyjs::hide("skyline_glycan_column")
+        shinyjs::hide("skyline_charge_column")
       } else if (input$data_type == "Skyline data (wide format)") {
         shinyjs::show("button_div")
         shinyjs::hide("lacytools_input")
@@ -220,6 +226,7 @@ mod_read_lacytools_server <- function(id){
         shinyjs::show("skyline_input_wide")
         shinyjs::show("info_icon_div2")
         shinyjs::show("skyline_analyte_format")
+        shinyjs::show("skyline_charge_column")
         if (input$skyline_analyte_format == "One column with peptide sequences and modifications") {
           shinyjs::show("skyline_analyte_column")
           shinyjs::hide("skyline_cluster_column")
