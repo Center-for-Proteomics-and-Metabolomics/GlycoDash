@@ -248,8 +248,8 @@ mod_read_lacytools_server <- function(id){
         wrong_file_ext <- subset(input$lacytools_input, !grepl("\\.txt$", name, ignore.case = TRUE))
       } else if (input$data_type == "Skyline data (wide format)") {
         # Skyline --> require CSV file
-        req(input$skyline_input)
-        wrong_file_ext <- subset(input$skyline_input, !grepl("\\.csv$", name, ignore.case = TRUE))
+        req(input$skyline_input_wide)
+        wrong_file_ext <- subset(input$skyline_input_wide, !grepl("\\.csv$", name, ignore.case = TRUE))
       }
       if (nrow(wrong_file_ext) > 0) {
         FALSE
@@ -269,9 +269,9 @@ mod_read_lacytools_server <- function(id){
           text = "Please upload text files."
         )
       } else if (input$data_type == "Skyline data (wide format)") {
-        req(input$skyline_input)
+        req(input$skyline_input_wide)
         shinyFeedback::feedbackDanger(
-          inputId = "skyline_input",
+          inputId = "skyline_input_wide",
           show = !is_truthy(correct_file_ext()),
           text = "Please upload CSV files."
         )
@@ -285,7 +285,7 @@ mod_read_lacytools_server <- function(id){
       if (input$data_type == "LaCyTools data") {
         uploaded_files <- input$lacytools_input
       } else if (input$data_type == "Skyline data (wide format)") {
-        uploaded_files <- input$skyline_input
+        uploaded_files <- input$skyline_input_wide
       }
       uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
       uploaded_files
@@ -398,27 +398,27 @@ mod_read_lacytools_server <- function(id){
     
     # Read raw Skyline data from CSV files.
     # Isomers are renamed.
-    raw_skyline_data <- reactive({
-      req(correct_file_ext(), input$data_type == "Skyline data (wide format)", input$skyline_input)
-      purrr::map(input$skyline_input$datapath, function(datapath) {
+    raw_skyline_data_wide <- reactive({
+      req(correct_file_ext(), input$data_type == "Skyline data (wide format)", input$skyline_input_wide)
+      purrr::map(input$skyline_input_wide$datapath, function(datapath) {
         read_skyline_csv(datapath)
       })
     })
     
-    # observe({
-    #   req(raw_skyline_data())
-    #   shinybusy::show_modal_spinner(
-    #     spin = "cube-grid", color = "#0275D8",
-    #     text = HTML("<br/><strong>Processing Skyline data...")
-    #   )
-    # }, priority = 5)
+    observe({
+      req(raw_skyline_data_wide())
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8",
+        text = HTML("<br/><strong>Processing Skyline data...")
+      )
+    }, priority = 5)
     
     
-    skyline_data <- reactive({
-      req(raw_skyline_data())
-      purrr::imap(raw_skyline_data(), function(data, i) {
+    skyline_data_wide <- reactive({
+      req(raw_skyline_data_wide())
+      purrr::imap(raw_skyline_data_wide(), function(data, i) {
         tryCatch(
-          expr = transform_skyline_data(data, i),
+          expr = transform_skyline_data_wide(data, i),
           missing_columns = function(c) {
             showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
             shinybusy::remove_modal_spinner()
@@ -438,12 +438,12 @@ mod_read_lacytools_server <- function(id){
       })
     })
     
-    skyline_data_combined <- reactive({
-      req(skyline_data(), !any(sapply(skyline_data(), is.null)))
-      do.call(dplyr::bind_rows, skyline_data())
+    skyline_data_wide_combined <- reactive({
+      req(skyline_data_wide(), !any(sapply(skyline_data_wide(), is.null)))
+      do.call(dplyr::bind_rows, skyline_data_wide())
     })
   
-    observeEvent(skyline_data_combined(), {
+    observeEvent(skyline_data_wide_combined(), {
       shinybusy::remove_modal_spinner()
     })
     
@@ -456,15 +456,15 @@ mod_read_lacytools_server <- function(id){
       
       # Require data and non-empty keywords
       req(
-        any(is_truthy(lacytools_summaries_combined()), is_truthy(skyline_data_combined())),
+        any(is_truthy(lacytools_summaries_combined()), is_truthy(skyline_data_wide_combined())),
         input$keyword_specific,
         input$keyword_total
       )
       
       if (is_truthy(lacytools_summaries_combined())) {
         data_to_check <- lacytools_summaries_combined()
-      } else if (is_truthy(skyline_data_combined())) {
-        data_to_check <- skyline_data_combined()
+      } else if (is_truthy(skyline_data_wide_combined())) {
+        data_to_check <- skyline_data_wide_combined()
       }
       
       summary <- tryCatch(
@@ -519,12 +519,12 @@ mod_read_lacytools_server <- function(id){
     filenames <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data_combined())
+        is_truthy(skyline_data_wide_combined())
       ))
       if (is_truthy(lacytools_summaries_combined())) {
         input$lacytools_input$name
-      } else if (is_truthy(skyline_data_combined())) {
-        input$skyline_input$name
+      } else if (is_truthy(skyline_data_wide_combined())) {
+        input$skyline_input_wide$name
       }
     })
     
@@ -533,15 +533,15 @@ mod_read_lacytools_server <- function(id){
     to_return <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data_combined())
+        is_truthy(skyline_data_wide_combined())
       ))
       tryCatch(
         data_total_and_specific(),
         error = function(e) {
           if (is_truthy(lacytools_summaries_combined())) {
             lacytools_summaries_combined()
-          } else if (is_truthy(skyline_data_combined())) {
-            skyline_data_combined()
+          } else if (is_truthy(skyline_data_wide_combined())) {
+            skyline_data_wide_combined()
           }
         }
       )
@@ -553,7 +553,7 @@ mod_read_lacytools_server <- function(id){
       if (input$data_type == "LaCyTools data") {
         shinyjs::show("uploaded_lacytools")
       } else if (input$data_type == "Skyline data (wide format)") {
-        shinyjs::show("uploaded_skyline")
+        shinyjs::show("uploaded_skyline_wide")
       }
     })
     

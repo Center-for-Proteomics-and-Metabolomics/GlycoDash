@@ -609,9 +609,9 @@ rename_skyline_isomers <- function(raw_skyline_data, i) {
 
 
 
-#' transform_skyline_data
+#' transform_skyline_data_wide
 #'
-#' @param raw_skyline_data Raw skyline data, read into R with 
+#' @param raw_skyline_data_wide Raw skyline data in wide format, read into R with 
 #' the read_skyline_csv() function above.
 #' 
 #' @param i Number of the Skyline CSV file that is being processed (1, 2, 3, etc)
@@ -626,11 +626,11 @@ rename_skyline_isomers <- function(raw_skyline_data, i) {
 #' - mass_accuracy_ppm
 #' - isotope_dot_product
 #' 
-transform_skyline_data <- function(raw_skyline_data, i) {
+transform_skyline_data_wide <- function(raw_skyline_data_wide, i) {
   # Check structure of skyline data
-  check_skyline_data(raw_skyline_data)
+  check_skyline_data(raw_skyline_data_wide)
   # Check for isomers and rename them if they are present
-  renamed_data <- rename_skyline_isomers(raw_skyline_data, i)
+  renamed_data <- rename_skyline_isomers(raw_skyline_data_wide, i)
   # Select required columns
   raw_data_required <- renamed_data %>% 
     dplyr::select(
