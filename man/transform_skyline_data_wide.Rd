@@ -4,14 +4,17 @@
 \alias{transform_skyline_data_wide}
 \title{transform_skyline_data_wide}
 \usage{
-transform_skyline_data_wide(raw_skyline_data_wide, i)
+transform_skyline_data_wide(
+  raw_skyline_data_wide,
+  analyte_colname = NULL,
+  cluster_colname = NULL,
+  glycan_colname = NULL,
+  charge_colname
+)
 }
 \arguments{
 \item{raw_skyline_data_wide}{Raw skyline data in wide format, read into R with 
 the read_skyline_csv() function above.}
-
-\item{i}{Number of the Skyline CSV file that is being processed (1, 2, 3, etc)
-Required for the rename_skyline_isomers() function to display notifications.}
 }
 \value{
 A clean dataframe in a similar format as a transformed

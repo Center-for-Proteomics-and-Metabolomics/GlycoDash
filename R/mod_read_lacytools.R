@@ -50,8 +50,8 @@ mod_read_lacytools_ui <- function(id){
         ),
         fileInput(
           ns("skyline_input_wide"),
-          "Upload one or more Skyline CSV output files in wide format:",
-          multiple = TRUE
+          "Upload one Skyline CSV output file in wide format:",
+          multiple = FALSE
         ),
         shinyWidgets::awesomeRadio(
           ns("skyline_analyte_format"),
@@ -396,16 +396,38 @@ mod_read_lacytools_server <- function(id){
     ####################  Skyline  ##########################################
     #########################################################################
     
-    # Read raw Skyline data from CSV files.
-    # Isomers are renamed.
+    # Read raw Skyline data from CSV file.
     raw_skyline_data_wide <- reactive({
       req(correct_file_ext(), input$data_type == "Skyline data (wide format)", input$skyline_input_wide)
-      purrr::map(input$skyline_input_wide$datapath, function(datapath) {
-        read_skyline_csv(datapath)
-      })
+      read_skyline_csv(input$skyline_input_wide$datapath)
     })
     
+    # Update column selection options
     observe({
+      req(raw_skyline_data_wide())
+      columns <- raw_skyline_data_wide() %>% 
+        dplyr::select(
+          -tidyselect::contains("Total.Area.MS1"),
+          -tidyselect::contains("Isotope.Dot.Product"),
+          -tidyselect::contains("Mass.Error.PPM"),
+          -tidyselect::contains("Best.Retention.Time"),
+          -tidyselect::contains("Normalized.Area"),
+          -tidyselect::contains("Replicate.Name"),
+          -tidyselect::contains("Background.MS1")
+          ) %>% 
+        colnames()
+      
+      for (id in c("skyline_analyte_column", "skyline_cluster_column",
+                  "skyline_glycan_column", "skyline_charge_column")) {
+        updateSelectizeInput(inputId = id, choices = columns)
+      }
+    })
+    
+    # Set status of button
+    
+    
+    # Show spinner when processing starts
+    observeEvent(input$button, {
       req(raw_skyline_data_wide())
       shinybusy::show_modal_spinner(
         spin = "cube-grid", color = "#0275D8",
@@ -414,36 +436,29 @@ mod_read_lacytools_server <- function(id){
     }, priority = 5)
     
     
+    # Transform Skyline data
+    # Isomers are renamed when cluster and glycan columns are given separately
     skyline_data_wide <- reactive({
       req(raw_skyline_data_wide())
-      purrr::imap(raw_skyline_data_wide(), function(data, i) {
+      if (startsWith(input$skyline_analyte_format, "Two")) {
         tryCatch(
-          expr = transform_skyline_data_wide(data, i),
-          missing_columns = function(c) {
-            showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
-            shinybusy::remove_modal_spinner()
-            NULL
-          },
+          expr = transform_skyline_data_wide(
+            raw_skyline_data_wide(),
+            cluster_colname = input$skyline_cluster_column,
+            glycan_colname = input$skyline_glycan_column,
+            charge_colname = input$skyline_charge_column
+          ),
           missing_variables = function(c) {
-            showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
-            shinybusy::remove_modal_spinner()
-            NULL
-          },
-          numbers_or_spaces = function(c) {
-            showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
+            showNotification(c$message, type = "error", duration = NULL)
             shinybusy::remove_modal_spinner()
             NULL
           }
         )
-      })
-    })
-    
-    skyline_data_wide_combined <- reactive({
-      req(skyline_data_wide(), !any(sapply(skyline_data_wide(), is.null)))
-      do.call(dplyr::bind_rows, skyline_data_wide())
-    })
+      }
+    }) %>% bindEvent(input$button)
   
-    observeEvent(skyline_data_wide_combined(), {
+    # Remove spinner
+    observeEvent(skyline_data_wide(), {
       shinybusy::remove_modal_spinner()
     })
     
@@ -456,15 +471,15 @@ mod_read_lacytools_server <- function(id){
       
       # Require data and non-empty keywords
       req(
-        any(is_truthy(lacytools_summaries_combined()), is_truthy(skyline_data_wide_combined())),
+        any(is_truthy(lacytools_summaries_combined()), is_truthy(skyline_data_wide())),
         input$keyword_specific,
         input$keyword_total
       )
       
       if (is_truthy(lacytools_summaries_combined())) {
         data_to_check <- lacytools_summaries_combined()
-      } else if (is_truthy(skyline_data_wide_combined())) {
-        data_to_check <- skyline_data_wide_combined()
+      } else if (is_truthy(skyline_data_wide())) {
+        data_to_check <- skyline_data_wide()
       }
       
       summary <- tryCatch(
@@ -519,11 +534,11 @@ mod_read_lacytools_server <- function(id){
     filenames <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data_wide_combined())
+        is_truthy(skyline_data_wide())
       ))
       if (is_truthy(lacytools_summaries_combined())) {
         input$lacytools_input$name
-      } else if (is_truthy(skyline_data_wide_combined())) {
+      } else if (is_truthy(skyline_data_wide())) {
         input$skyline_input_wide$name
       }
     })
@@ -533,15 +548,15 @@ mod_read_lacytools_server <- function(id){
     to_return <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data_wide_combined())
+        is_truthy(skyline_data_wide())
       ))
       tryCatch(
         data_total_and_specific(),
         error = function(e) {
           if (is_truthy(lacytools_summaries_combined())) {
             lacytools_summaries_combined()
-          } else if (is_truthy(skyline_data_wide_combined())) {
-            skyline_data_wide_combined()
+          } else if (is_truthy(skyline_data_wide())) {
+            skyline_data_wide()
           }
         }
       )
