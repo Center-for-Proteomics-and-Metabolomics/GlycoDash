@@ -423,7 +423,28 @@ mod_read_lacytools_server <- function(id){
       }
     })
     
-    # Set status of button
+    # Require unique column input names for button
+    observe({
+      # Set requirements
+      req_A <- is_truthy(raw_skyline_data_wide())
+      req_B <- dplyr::case_when(
+        startsWith(input$skyline_analyte_format, "Two") ~ 
+          length(unique(c(
+            input$skyline_cluster_column, input$skyline_glycan_column, 
+            input$skyline_charge_column
+          ))) == 3,
+        startsWith(input$skyline_analyte_format, "One") ~ 
+          length(unique(c(
+            input$skyline_analyte_column, input$skyline_charge_column
+          ))) == 2
+      )
+      # Check requirements
+      if (req_A & req_B) {
+        shinyjs::enable("button")
+      } else {
+        shinyjs::disable("button")
+      }
+    })
     
     
     # Show spinner when processing starts
