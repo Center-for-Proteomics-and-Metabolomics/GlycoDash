@@ -154,7 +154,8 @@ mod_read_lacytools_ui <- function(id){
                 <i>One column</i> where each entry contains both a peptide sequence
                 and a glycan composition (e.g. \"EEQYN[H3N4F1]STYR\").
                 A sequence may also contain methionine oxidation and cysteine
-                carbamidomethyl (CAM) modifications.
+                carbamidomethyl (CAM) modifications, either fully written out
+                or using three-letter abbreviations.
                 </li>
               </ul>
               Additionally, it should contain columns with \"<i>Total Area MS1</i>\",
