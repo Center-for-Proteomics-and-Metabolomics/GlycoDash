@@ -81,6 +81,11 @@ mod_read_lacytools_ui <- function(id){
           "Select column with charge states:",
           choices = c()
         ),
+        shinyWidgets::awesomeCheckbox(
+          ns("skyline_rename_isomers"),
+          label = HTML("<i style='font-size:15px;'> Automatically detect and rename glycan isomers </i>"),
+          value = TRUE
+        ),
         shinyjs::hidden(div(
           id = ns("button_div"),
           actionButton(ns("button"), "Process Skyline data"),
@@ -219,6 +224,7 @@ mod_read_lacytools_server <- function(id){
         shinyjs::hide("skyline_cluster_column")
         shinyjs::hide("skyline_glycan_column")
         shinyjs::hide("skyline_charge_column")
+        shinyjs::hide("skyline_rename_isomers")
       } else if (input$data_type == "Skyline data (wide format)") {
         shinyjs::show("button_div")
         shinyjs::hide("lacytools_input")
@@ -227,6 +233,7 @@ mod_read_lacytools_server <- function(id){
         shinyjs::show("info_icon_div2")
         shinyjs::show("skyline_analyte_format")
         shinyjs::show("skyline_charge_column")
+        shinyjs::show("skyline_rename_isomers")
         if (input$skyline_analyte_format == "One column with peptide sequences and modifications") {
           shinyjs::show("skyline_analyte_column")
           shinyjs::hide("skyline_cluster_column")
@@ -279,14 +286,10 @@ mod_read_lacytools_server <- function(id){
     })
   
     
-    # Show the uploaded files in the table
+    # Show the uploaded LaCyTools files in the table
     output$uploaded_files <- renderTable({
-      req(correct_file_ext())
-      if (input$data_type == "LaCyTools data") {
-        uploaded_files <- input$lacytools_input
-      } else if (input$data_type == "Skyline data (wide format)") {
-        uploaded_files <- input$skyline_input_wide
-      }
+      req(correct_file_ext(), input$data_type == "LaCyTools data")
+      uploaded_files <- input$lacytools_input
       uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
       uploaded_files
     }, striped = TRUE, bordered = TRUE, rownames = TRUE, align = "c")
@@ -468,7 +471,8 @@ mod_read_lacytools_server <- function(id){
             raw_skyline_data_wide(),
             cluster_colname = input$skyline_cluster_column,
             glycan_colname = input$skyline_glycan_column,
-            charge_colname = input$skyline_charge_column
+            charge_colname = input$skyline_charge_column,
+            rename_isomers = input$skyline_rename_isomers
           ),
           missing_variables = function(c) {
             showNotification(c$message, type = "error", duration = NULL)
@@ -482,7 +486,8 @@ mod_read_lacytools_server <- function(id){
           expr = transform_skyline_data_wide(
             raw_skyline_data_wide(),
             analyte_colname = input$skyline_analyte_column,
-            charge_colname = input$skyline_charge_column
+            charge_colname = input$skyline_charge_column,
+            rename_isomers = input$skyline_rename_isomers
           ),
           missing_variables = function(c) {
             showNotification(c$message, type = "error", duration = NULL)
@@ -616,9 +621,19 @@ mod_read_lacytools_server <- function(id){
     })
     
     
+    # Data type to return
+    data_type_to_return <- reactive({
+      if (input$data_type == "LaCyTools data") {
+        "LaCyTools data"
+      } else if (input$data_type == "Skyline data (wide format)") {
+        "Skyline data"
+      }
+    })
+    
+    
     return(list(
       data = to_return_trimmed,
-      data_type = reactive(input$data_type),
+      data_type = data_type_to_return,
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
       contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),

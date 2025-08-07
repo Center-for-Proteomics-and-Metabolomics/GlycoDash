@@ -560,8 +560,6 @@ read_skyline_csv <- function(path_to_file) {
 #'
 #' @return
 #' Skyline CSV data with glycan compositions of isomers renamed using "_a", "_b", etc.
-#' 
-# TODO: adjust function 
 rename_skyline_isomers <- function(data_renamed_cols) {
   
   # Look for isomers in the glycan compositions, per peptide.
@@ -643,7 +641,8 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
                                         analyte_colname = NULL,
                                         cluster_colname = NULL,
                                         glycan_colname = NULL,
-                                        charge_colname) {
+                                        charge_colname,
+                                        rename_isomers = TRUE) {
   
   # Check structure of data
   check_skyline_data(raw_skyline_data_wide)
@@ -673,8 +672,10 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
   raw_data_required[raw_data_required == "#N/A"] <- NA
   raw_data_required <- dplyr::mutate_at(raw_data_required, dplyr::vars(-1, -2, -3), as.numeric)
   
-  # TODO: Check for isomers and rename them if they are present
-  # raw_data_required <- rename_skyline_isomers(raw_data_required)
+  # Check for isomers and rename them if they are present
+  if (rename_isomers == TRUE) {
+    raw_data_required <- rename_skyline_isomers(raw_data_required)
+  } 
     
   # Transform the data
   cols_to_pivot <- colnames(raw_data_required)[-(1:3)]

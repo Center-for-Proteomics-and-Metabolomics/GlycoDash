@@ -9,7 +9,8 @@ transform_skyline_data_wide(
   analyte_colname = NULL,
   cluster_colname = NULL,
   glycan_colname = NULL,
-  charge_colname
+  charge_colname,
+  rename_isomers = TRUE
 )
 }
 \arguments{
