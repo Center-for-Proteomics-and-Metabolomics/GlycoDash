@@ -462,11 +462,26 @@ mod_read_lacytools_server <- function(id){
     skyline_data_wide <- reactive({
       req(raw_skyline_data_wide())
       if (startsWith(input$skyline_analyte_format, "Two")) {
+        # Separate cluster and glycan columns
         tryCatch(
           expr = transform_skyline_data_wide(
             raw_skyline_data_wide(),
             cluster_colname = input$skyline_cluster_column,
             glycan_colname = input$skyline_glycan_column,
+            charge_colname = input$skyline_charge_column
+          ),
+          missing_variables = function(c) {
+            showNotification(c$message, type = "error", duration = NULL)
+            shinybusy::remove_modal_spinner()
+            NULL
+          }
+        )
+      } else {
+        # One analyte column
+        tryCatch(
+          expr = transform_skyline_data_wide(
+            raw_skyline_data_wide(),
+            analyte_colname = input$skyline_analyte_column,
             charge_colname = input$skyline_charge_column
           ),
           missing_variables = function(c) {
