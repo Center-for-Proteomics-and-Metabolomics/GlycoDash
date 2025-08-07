@@ -505,6 +505,19 @@ mod_read_lacytools_server <- function(id){
     })
     
     
+    # Create a table with peptide abbreviations and corresponding sequences
+    peptide_sequences <- reactive({
+      req(skyline_data_wide(), "peptide_sequence" %in% colnames(skyline_data_wide()))
+      skyline_data_wide() %>% 
+        tidyr::separate(
+          analyte, sep = "1", into = c("abbreviation", "glycan"), extra = "merge"
+        ) %>% 
+        dplyr::select(peptide_sequence, methionine_oxidation, abbreviation) %>% 
+        dplyr::distinct() %>% 
+        dplyr::arrange(peptide_sequence)
+    })
+    
+
     # Detect total and specific samples if applicable.
     data_total_and_specific <- reactive({
       
@@ -638,7 +651,8 @@ mod_read_lacytools_server <- function(id){
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
       contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
-      summary_filenames = filenames
+      summary_filenames = filenames,
+      peptide_sequences = peptide_sequences
     ))
     
   })

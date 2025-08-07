@@ -32,6 +32,21 @@ mod_data_import_ui <- function(id){
             status = "primary",
             shinycssloaders::withSpinner(DT::DTOutput(ns("data_table")))
           ),
+          shinyjs::hidden(
+            div(
+              id = ns("peptide_box"),
+              shinydashboard::box(
+                title = "Peptide sequences and abbreviations",
+                width = NULL,
+                solidHeader = TRUE,
+                status = "primary",
+                downloadButton(ns("download_peptide_sequences"),
+                               "Download peptide sequences and abbreviations"),
+                br(), br(),
+                shinycssloaders::withSpinner(DT::DTOutput(ns("peptide_table")))
+              )
+            )
+          ),
           shinydashboard::box(
             title = "Export results",
             width = NULL,
@@ -40,8 +55,7 @@ mod_data_import_ui <- function(id){
             radioButtons(ns("download_format"),
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
-            downloadButton(ns("download"), 
-                           "Download data")
+            downloadButton(ns("download"), "Download data"),
           )
         )
       )
@@ -169,6 +183,39 @@ mod_data_import_server <- function(id){
       show_in_table() %>%
         dplyr::filter(cluster %in% data_incl_clusters$peptides())
     })
+    
+    
+    # Skyline data: show peptide sequences in table when applicable
+    observe({
+      if (is_truthy(LaCyTools_summary$peptide_sequences())) {
+        shinyjs::show("peptide_box")
+      } else {
+        shinyjs::hide("peptide_box")
+      }
+    })
+    
+    output$peptide_table <- DT::renderDT({
+      req(LaCyTools_summary$peptide_sequences())
+      DT::datatable(LaCyTools_summary$peptide_sequences(),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 8,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ),
+                    filter = "top")
+    })
+    
+    # Download table as Excel file
+    output$download_peptide_sequences <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        paste0(current_datetime, "_peptide_sequences.xlsx")
+      },
+      content = function(file) {
+        data_to_download <- LaCyTools_summary$peptide_sequences()
+        writexl::write_xlsx(data_to_download, path = file)
+      }
+    )
 
     
     return(list(

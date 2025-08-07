@@ -566,8 +566,7 @@ rename_skyline_isomers <- function(data_renamed_cols) {
   data <- data_renamed_cols %>% 
     dplyr::group_by(cluster, glycan, charge) %>% 
     dplyr::mutate(n = dplyr::n()) %>% 
-    dplyr::ungroup() %>% 
-    dplyr::relocate(n, .after = charge)
+    dplyr::ungroup()
   
   # n == 1 implies unique glycan composition
   data_unique <- data %>% 
@@ -598,7 +597,8 @@ rename_skyline_isomers <- function(data_renamed_cols) {
     dplyr::select(-glycan_unique)
   
   # Combine the data again
-  data_renamed <- dplyr::bind_rows(data_unique, data_isomers)
+  data_renamed <- dplyr::bind_rows(data_unique, data_isomers) %>% 
+    dplyr::select(-n)
   
   # Show a notification if isomers were detected
   if (length(data_isomers$glycan > 0)) {
@@ -666,11 +666,10 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
         cluster, glycan, charge,
         tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"))
       )
+    # Make columns numeric except for first three
+    raw_data_required[raw_data_required == "#N/A"] <- NA
+    raw_data_required <- dplyr::mutate_at(raw_data_required, dplyr::vars(-1, -2, -3), as.numeric)
   }
-  
-  # Make columns numeric except for first three
-  raw_data_required[raw_data_required == "#N/A"] <- NA
-  raw_data_required <- dplyr::mutate_at(raw_data_required, dplyr::vars(-1, -2, -3), as.numeric)
   
   # Check for isomers and rename them if they are present
   if (rename_isomers == TRUE) {
@@ -678,10 +677,17 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
   } 
     
   # Transform the data
-  cols_to_pivot <- colnames(raw_data_required)[-(1:3)]
+  if (!is.null(analyte_colname)) {
+    cols_to_pivot <- colnames(raw_data_required)[-(1:5)]
+  } else {
+    cols_to_pivot <- colnames(raw_data_required)[-(1:3)]
+  }
+  
   raw_data_long <- raw_data_required %>% 
     tidyr::pivot_longer(tidyselect::all_of(cols_to_pivot))
+  
   variables <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM")
+  
   # Initiate empty list to store DFs
   var_dfs <- vector("list", length = length(variables))
   # Loop over the variables
@@ -720,6 +726,13 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
     dplyr::relocate(charge, .after = analyte) %>% 
     dplyr::relocate(total_area, .after = charge) %>% 
     dplyr::relocate(mass_accuracy_ppm, .after = total_area)
+  
+  if (!is.null(analyte_colname)) {
+    data_clean <- data_clean %>% 
+      dplyr::rename(peptide_sequence = peptide) %>% 
+      dplyr::rename(methionine_oxidation = oxidation) %>% 
+      dplyr::relocate(c(peptide_sequence, methionine_oxidation), .after = charge)
+  }
  
   return(data_clean)
 } 
@@ -791,64 +804,55 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
       ))
     )
   
-  # Create cluster and glycan columns
-  raw_data_reformatted <- raw_data_required %>% 
+  # Reformat and annotate data
+  raw_data_reformatted <- raw_data_required %>%
     dplyr::mutate(
-      # Remove CAM modification
-      glycopeptide_cam_removed = dplyr::case_when(
-        grepl("\\[Carbamidomethyl \\(C\\)\\]", glycopeptide) ~ gsub(
-          "\\[Carbamidomethyl \\(C\\)\\]", "", glycopeptide
-        ),
-        grepl("\\[CAM\\]", glycopeptide) ~ gsub(
-          "\\[CAM\\]", "", glycopeptide
-        ),
-        .default = glycopeptide
+      # Count number of oxidized methionines
+      oxidation = stringr::str_count(
+        glycopeptide, "\\[Oxidation \\(M\\)\\]|\\[Oxi\\]"
       ),
-      # Check for oxidation
-      glycopeptide_oxi_removed = dplyr::case_when(
-        grepl("\\[Oxidation \\(M\\)\\]", glycopeptide_cam_removed) ~ gsub(
-          "\\[Oxidation \\(M\\)\\]", "", glycopeptide_cam_removed
-        ),
-        grepl("\\[Oxi\\]", glycopeptide_cam_removed) ~ gsub(
-          "\\[Oxi\\]", "", glycopeptide_cam_removed
-        ),
-        .default = glycopeptide_cam_removed
+      # Remove CAM modifications
+      glycopeptide_cam_removed = stringr::str_remove_all(
+        glycopeptide, "\\[Carbamidomethyl \\(C\\)\\]|\\[CAM\\]"
       ),
-      oxidation = dplyr::case_when(
-        grepl("\\[Oxidation \\(M\\)\\]", glycopeptide_cam_removed) |
-          grepl("\\[Oxi\\]", glycopeptide_cam_removed) ~ TRUE,
-        .default = FALSE
+      # Remove oxidation to extract unmodified peptide
+      glycopeptide_oxi_removed = stringr::str_remove_all(
+        glycopeptide_cam_removed, "\\[Oxidation \\(M\\)\\]|\\[Oxi\\]"
       ),
-      .after = charge
-    ) %>% 
-    # Create a column with peptide and one with glycan
-    dplyr::mutate(
+      # Extract glycan and peptide sequence
       glycan = stringr::str_extract(glycopeptide_oxi_removed, "(?<=\\[).+?(?=\\])"),
       peptide = stringr::str_replace_all(glycopeptide_oxi_removed, "\\[.+?\\]", ""),
-      .after = oxidation
+  
+      .after = charge
     )
   
-  # Create a column with peptide abbreviations
+  # Generate abbreviated peptide names
   unique_peptides <- shorten_peptide(raw_data_reformatted$peptide)
   
+  # Final processing
   raw_data_reformatted <- raw_data_reformatted %>% 
     dplyr::left_join(unique_peptides) %>% 
     dplyr::relocate(abbreviation, .after = peptide) %>% 
-    # Create cluster and glycan columns
-    # Add suffix "OX" to cluster in case of oxidation
     dplyr::rename(cluster = abbreviation) %>% 
     dplyr::mutate(
       cluster = dplyr::case_when(
-        oxidation == TRUE ~ paste0(cluster, "OX"),
-        .default = cluster
+        oxidation > 0 ~ paste0(cluster, strrep("Ox", oxidation)),
+        TRUE ~ cluster
       )
     ) %>% 
     dplyr::select(
-      cluster, glycan, charge,
+      cluster, glycan, charge, peptide, oxidation,
       tidyselect::contains(c(
         "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"
       ))
-    )
+    ) %>% 
+    dplyr::mutate(oxidation = as.character(oxidation))
+  
+  # Convert numeric columns
+  raw_data_reformatted[raw_data_reformatted == "#N/A"] <- NA
+  raw_data_reformatted <- dplyr::mutate_at(
+    raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5), as.numeric
+  )
   
   return(raw_data_reformatted)
 }
