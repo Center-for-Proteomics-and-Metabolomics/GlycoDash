@@ -87,15 +87,15 @@ mod_read_lacytools_ui <- function(id){
           status = "success",
           right = TRUE
         ),
-        shinyWidgets::awesomeCheckbox(
-          ns("skyline_rename_isomers"),
-          label = HTML("<i style='font-size:15px;'> Automatically detect and rename glycan isomers </i>"),
-          value = TRUE
-        ),
         selectizeInput(
           ns("skyline_note_column"),
           "Select column with notes:",
           choices = c()
+        ),
+        shinyWidgets::awesomeCheckbox(
+          ns("skyline_rename_isomers"),
+          label = HTML("<i style='font-size:15px;'> Automatically detect and rename glycan isomers </i>"),
+          value = TRUE
         ),
         shinyjs::hidden(div(
           id = ns("button_div"),
