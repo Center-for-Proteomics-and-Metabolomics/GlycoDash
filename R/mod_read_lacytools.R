@@ -515,10 +515,11 @@ mod_read_lacytools_server <- function(id){
       # glycan_colname = input$skyline_glycan_column
       # charge_colname = input$skyline_charge_column
       # rename_isomers = input$skyline_rename_isomers
-      # note_colname = dplyr::case_when(
-      #   input$skyline_contains_notes ~ input$skyline_note_column,
-      #   .default = NULL
-      # )
+      # if (input$skyline_contains_notes == TRUE) {
+      #   note_colname <- input$skyline_note_column
+      # } else {
+      #   note_colname <- NULL
+      # }
       # browser()
       ############################################################
       shinybusy::show_modal_spinner(
@@ -532,6 +533,11 @@ mod_read_lacytools_server <- function(id){
     # Isomers are renamed when cluster and glycan columns are given separately
     skyline_data_wide <- reactive({
       req(raw_skyline_data_wide())
+      if (input$skyline_contains_notes == TRUE) {
+        note_column <- input$skyline_note_column
+      } else {
+        note_column <-NULL
+      }
       if (startsWith(input$skyline_analyte_format, "Two")) {
         # Separate cluster and glycan columns
         tryCatch(
@@ -541,10 +547,7 @@ mod_read_lacytools_server <- function(id){
             glycan_colname = input$skyline_glycan_column,
             charge_colname = input$skyline_charge_column,
             rename_isomers = input$skyline_rename_isomers,
-            note_colname = dplyr::case_when(
-              input$skyline_contains_notes ~ input$skyline_note_column,
-              .default = NULL
-            )
+            note_colname = note_column
           ),
           missing_variables = function(c) {
             showNotification(c$message, type = "error", duration = NULL)
@@ -560,10 +563,7 @@ mod_read_lacytools_server <- function(id){
             analyte_colname = input$skyline_analyte_column,
             charge_colname = input$skyline_charge_column,
             rename_isomers = input$skyline_rename_isomers,
-            note_colname = dplyr::case_when(
-              input$skyline_contains_notes ~ input$skyline_note_column,
-              .default = NULL
-            )
+            note_colname =  note_column
           ),
           missing_variables = function(c) {
             showNotification(c$message, type = "error", duration = NULL)
