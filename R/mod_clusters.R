@@ -91,7 +91,7 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
       subset <- LaCyTools_summary() %>% 
         tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge") %>% 
         dplyr::filter(glycan != "")
-      return(unique(subset$cluster))
+      return(sort(unique(subset$cluster)))
     })
     
     peptides <- reactive({
@@ -99,7 +99,7 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
       subset <- LaCyTools_summary() %>% 
         tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge") %>% 
         dplyr::filter(!cluster %in% glycopeptide_clusters())
-      return(unique(subset$cluster))
+      return(sort(unique(subset$cluster)))
     })
     
     

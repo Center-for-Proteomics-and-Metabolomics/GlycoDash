@@ -1,5 +1,6 @@
 ---
 title: "GlycoDash v1.8.2 data processing report"
+date: "`r Sys.Date()`"
 output: 
   html_document:
     toc: TRUE
@@ -12,6 +13,7 @@ params:
   filenames_metadata: NA
   sample_types_method: NA
   filename_sample_types: NA
+  peptide_sequences: NA
   mass_acc: NA
   ipq: NA
   sn: NA
@@ -76,6 +78,22 @@ if (params$sample_types_method != "Automatically determine sample types based on
 }
 
 ```
+
+```{r results='asis'}
+
+if (!is.null(params$peptide_sequences)) {
+  cat("Peptide sequences in your data were abbreviated as follows:")
+  params$peptide_sequences %>% 
+    kableExtra::kbl() %>%
+    kableExtra::kable_styling(bootstrap_options = "striped",
+                              full_width = F,
+                              position = "left") %>%
+    htmltools::HTML() %>%
+    print()
+}
+
+```
+
 
 ## Spectra curation
 

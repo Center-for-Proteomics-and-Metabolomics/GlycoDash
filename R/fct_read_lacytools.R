@@ -14,6 +14,8 @@ outputs <- as.list(unlist(lapply(output_types,
                                  seq_len(max_positive_charge),
                                  "+)")))
 
+
+
 #' Read in non-rectangular delimited files
 #' 
 #' \code{read_non_rectangular()} can read flat files where the number of fields 
@@ -114,6 +116,8 @@ find_widest_row <- function(path, delim) {
   return(max_n_columns)
 }
 
+
+
 #'Convert a LaCyTools summary to a 'tidy' dataframe
 #'
 #'The function \code{convert_lacytools_summary()} can convert a dataframe 
@@ -172,6 +176,8 @@ convert_lacytools_summary <- function(data) {
   return(long_data)
 }
 
+
+
 #' Create a subset containing one block from a LaCyTools summary.
 #'
 #' @inheritParams find_block
@@ -227,6 +233,8 @@ get_block <- function(data, variable) {
   return(block)
 }
 
+
+
 #' Find a block in a LaCyTools summary file
 #'
 #' @inheritParams find_next_na
@@ -255,6 +263,8 @@ find_block <- function(data, variable) {
   }
   return(rows)
 }
+
+
 
 #'Find the next empty line from a given line in a LaCyTools summary file.
 #'
@@ -329,6 +339,8 @@ lengthen_block <- function(block, metadata = NULL) {
   return(long_block)
 }
 
+
+
 #' Get the analytes info from a LaCyTools summary using a list of output formats
 #'
 #' This function uses \code{\link{get_analytes_info}} to get the exact mass of
@@ -396,6 +408,8 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
   return(analytes_info)
 }
 
+
+
 #' Get analytes info from a LaCyTools summary for one output format
 #'
 #' This function gets the exact mass of the most abundant isotopologue and the
@@ -454,6 +468,8 @@ get_analytes_info <- function(data, variable) {
   
   return(analytes_info)
 }
+
+
 
 #'Detect whether a sample is specific or total Ig based on the sample name.
 #'
@@ -543,22 +559,19 @@ read_skyline_csv <- function(path_to_file) {
 #' analytes are assumed to be isomers with the same glycan composision. The glycan
 #' compositions are renamed to distinguish them.
 #' 
-#' @param raw_skyline_data 
-#' Imported skyline CSV data from the read_skyline_csv() function.
-#' 
-#' @param i Number of the Skyline CSV file that is being processed
+#' @param data_renamed_cols
+#' Imported skyline CSV data from the read_skyline_csv() function, with renamed
+#' columns to have "cluster", "glycan" and "charge".
 #'
 #' @return
 #' Skyline CSV data with glycan compositions of isomers renamed using "_a", "_b", etc.
-#' 
-rename_skyline_isomers <- function(raw_skyline_data, i) {
+rename_skyline_isomers <- function(data_renamed_cols) {
   
   # Look for isomers in the glycan compositions, per peptide.
-  data <- raw_skyline_data %>% 
-    dplyr::group_by(Protein.Name, Peptide, Precursor.Charge) %>% 
+  data <- data_renamed_cols %>% 
+    dplyr::group_by(cluster, glycan, charge) %>% 
     dplyr::mutate(n = dplyr::n()) %>% 
-    dplyr::ungroup() %>% 
-    dplyr::relocate(n, .after = Precursor.Charge)
+    dplyr::ungroup()
   
   # n == 1 implies unique glycan composition
   data_unique <- data %>% 
@@ -567,42 +580,43 @@ rename_skyline_isomers <- function(raw_skyline_data, i) {
   # n > 1 implies presence of isomers
   data_isomers <- data %>% 
     dplyr::filter(n > 1) %>% 
-    dplyr::group_by(Protein.Name, Precursor.Charge, Peptide) %>% 
-    dplyr::mutate(Peptide_unique = make.unique(Peptide)) %>% 
+    dplyr::group_by(cluster, glycan, charge) %>% 
+    dplyr::mutate(glycan_unique = make.unique(glycan)) %>% 
     dplyr::ungroup() %>% 
     # Instead of ".1", ".2", etc at the end of duplicates, add "_a","_b", to 
     # the ends of all isomers, including the first one.
     dplyr::mutate(
-      Peptide = dplyr::case_when(
-        endsWith(Peptide_unique, ".1") ~ paste0(Peptide, "_b"),
-        endsWith(Peptide_unique, ".2") ~ paste0(Peptide, "_c"),
-        endsWith(Peptide_unique, ".3") ~ paste0(Peptide, "_d"),
-        endsWith(Peptide_unique, ".4") ~ paste0(Peptide, "_e"),
-        endsWith(Peptide_unique, ".5") ~ paste0(Peptide, "_f"),
-        endsWith(Peptide_unique, ".6") ~ paste0(Peptide, "_g"),
-        endsWith(Peptide_unique, ".7") ~ paste0(Peptide, "_h"),
-        endsWith(Peptide_unique, ".8") ~ paste0(Peptide, "_i"),
-        endsWith(Peptide_unique, ".9") ~ paste0(Peptide, "_j"),
-        .default = paste0(Peptide, "_a")
+      glycan = dplyr::case_when(
+        endsWith(glycan_unique, ".1") ~ paste0(glycan, "_b"),
+        endsWith(glycan_unique, ".2") ~ paste0(glycan, "_c"),
+        endsWith(glycan_unique, ".3") ~ paste0(glycan, "_d"),
+        endsWith(glycan_unique, ".4") ~ paste0(glycan, "_e"),
+        endsWith(glycan_unique, ".5") ~ paste0(glycan, "_f"),
+        endsWith(glycan_unique, ".6") ~ paste0(glycan, "_g"),
+        endsWith(glycan_unique, ".7") ~ paste0(glycan, "_h"),
+        endsWith(glycan_unique, ".8") ~ paste0(glycan, "_i"),
+        endsWith(glycan_unique, ".9") ~ paste0(glycan, "_j"),
+        .default = paste0(glycan, "_a")
       )
     ) %>% 
-    dplyr::select(-Peptide_unique)
+    dplyr::select(-glycan_unique)
   
   # Combine the data again
-  data_renamed <- dplyr::bind_rows(data_unique, data_isomers)
+  data_renamed <- dplyr::bind_rows(data_unique, data_isomers) %>% 
+    dplyr::select(-n)
   
   # Show a notification if isomers were detected
-  if (length(data_isomers$Peptide > 0)) {
+  if (length(data_isomers$glycan > 0)) {
     # Get vector with the compositions for which isomers were detected
     isomeric <- data %>% 
       dplyr::filter(n > 1) %>% 
-      dplyr::select(Protein.Name, Peptide) %>% 
+      dplyr::select(cluster, glycan) %>% 
       dplyr::distinct() %>% 
-      dplyr::mutate(analyte = paste0(Protein.Name, "1", Peptide)) %>% 
+      dplyr::mutate(analyte = paste0(cluster, "1", glycan)) %>% 
       dplyr::pull(analyte)
     # Show notification with message
     message <- paste0(
-      "In CSV file ", i, ", the following ", length(isomeric), 
+      "The following ", length(isomeric), 
       " analytes with isomeric glycan compositions were detected and renamed: ",
       paste0(isomeric , collapse = ", ")
     )
@@ -614,13 +628,10 @@ rename_skyline_isomers <- function(raw_skyline_data, i) {
 
 
 
-#' transform_skyline_data
+#' transform_skyline_data_wide
 #'
-#' @param raw_skyline_data Raw skyline data, read into R with 
+#' @param raw_skyline_data_wide Raw skyline data in wide format, read into R with 
 #' the read_skyline_csv() function above.
-#' 
-#' @param i Number of the Skyline CSV file that is being processed (1, 2, 3, etc)
-#' Required for the rename_skyline_isomers() function to display notifications.
 #'
 #' @return A clean dataframe in a similar format as a transformed
 #' LaCyTools summary. The dataframe contains the following columns:
@@ -631,34 +642,79 @@ rename_skyline_isomers <- function(raw_skyline_data, i) {
 #' - mass_accuracy_ppm
 #' - isotope_dot_product
 #' 
-transform_skyline_data <- function(raw_skyline_data, i) {
-  # Check structure of skyline data
-  check_skyline_data(raw_skyline_data)
-  # Check for isomers and rename them if they are present
-  renamed_data <- rename_skyline_isomers(raw_skyline_data, i)
-  # Select required columns
-  raw_data_required <- renamed_data %>% 
-    dplyr::select(
-      "Protein.Name", "Peptide", "Precursor.Charge",
-      tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM")), 
+transform_skyline_data_wide <- function(raw_skyline_data_wide,
+                                        analyte_colname = NULL,
+                                        cluster_colname = NULL,
+                                        glycan_colname = NULL,
+                                        charge_colname,
+                                        note_colname = NULL, 
+                                        rename_isomers = TRUE) {
+  
+  # Check structure of data
+  check_skyline_data(raw_skyline_data_wide)
+  
+  # Reformat data
+  if (!is.null(analyte_colname)) { 
+    raw_data_required <- reformat_skyline_analyte_column_wide(
+      raw_skyline_data_wide, analyte_colname, charge_colname, note_colname
     )
-  # Select notes
-  # Will have 3 cols if notes exist, otherwise 2 cols
-  notes <- renamed_data %>% 
-    dplyr::select("Protein.Name", "Peptide", "Precursor.Charge", tidyselect::contains("Note")) %>% 
-    dplyr::mutate(analyte = paste0(Protein.Name, "1", Peptide), .after = Peptide) %>% 
-    dplyr::select(-Protein.Name, -Peptide) %>% 
-    dplyr::rename(charge = Precursor.Charge) %>% 
-    dplyr::mutate(charge = paste0(charge, "+")) %>% 
-    dplyr::rename(note = tidyselect::contains("Note"))
-  # Make columns numeric except for first three
-  raw_data_required[raw_data_required == "#N/A"] <- NA
-  raw_data_required <- dplyr::mutate_at(raw_data_required, dplyr::vars(-1, -2, -3), as.numeric)
+  } else {
+    # Rename columns
+    data_renamed_cols <- raw_skyline_data_wide %>% 
+      dplyr::rename(
+        cluster = tidyselect::all_of(cluster_colname),
+        glycan = tidyselect::all_of(glycan_colname),
+        charge = tidyselect::all_of(charge_colname)
+      )
+    # Conditionally create note column
+    if (!is.null(note_colname)) {
+      data_renamed_cols <- data_renamed_cols %>% 
+        dplyr::rename(note = tidyselect::all_of(note_colname))
+    }
+    # Select required columns
+    raw_data_required <- data_renamed_cols %>% 
+      dplyr::select(
+        cluster, glycan, charge, tidyselect::any_of(c("note")),
+        tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"))
+      )
+    # Convert numeric columns
+    raw_data_required[raw_data_required == "#N/A"] <- NA
+    if ("note" %in% colnames(raw_data_required)) {
+      raw_data_required <- dplyr::mutate_at(
+        raw_data_required, dplyr::vars(-1, -2, -3, -4), as.numeric
+      )  
+    } else {
+      raw_data_required <- dplyr::mutate_at(
+        raw_data_required, dplyr::vars(-1, -2, -3), as.numeric
+      )  
+    }
+  }
+  
+  # Check for isomers and rename them if they are present
+  if (rename_isomers == TRUE) {
+    raw_data_required <- rename_skyline_isomers(raw_data_required)
+  } 
+  
   # Transform the data
-  cols_to_pivot <- colnames(raw_data_required)[-(1:3)]
+  if (!is.null(analyte_colname)) {
+    if ("note" %in% colnames(raw_data_required)) {
+      cols_to_pivot <- colnames(raw_data_required)[-(1:6)]
+    } else {
+      cols_to_pivot <- colnames(raw_data_required)[-(1:5)]
+    }
+  } else {
+    if ("note" %in% colnames(raw_data_required)) {
+      cols_to_pivot <- colnames(raw_data_required)[-(1:4)]
+    } else {
+      cols_to_pivot <- colnames(raw_data_required)[-(1:3)]
+    }
+  }
+  
   raw_data_long <- raw_data_required %>% 
     tidyr::pivot_longer(tidyselect::all_of(cols_to_pivot))
+  
   variables <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM")
+  
   # Initiate empty list to store DFs
   var_dfs <- vector("list", length = length(variables))
   # Loop over the variables
@@ -674,11 +730,12 @@ transform_skyline_data <- function(raw_skyline_data, i) {
         into = c("sample_name", "variable")
       ) %>% 
       dplyr::mutate(variable = var) %>% 
-      # Combine Protein.Name and Peptide into analyte
-      dplyr::mutate(analyte = paste0(Protein.Name, "1", Peptide)) %>% 
-      dplyr::select(-Protein.Name, -Peptide)
-    var_dfs[[i]] <- var_data_long
+      # Combine cluster and glycan into one analyte column
+      dplyr::mutate(analyte = paste0(cluster, "1", glycan)) %>% 
+      dplyr::select(-cluster, -glycan)
+      var_dfs[[i]] <- var_data_long
   }
+  
   # Combine required data and turn into wide format
   data_clean <- dplyr::bind_rows(var_dfs) %>% 
     dplyr::group_by(variable) %>% 
@@ -688,7 +745,6 @@ transform_skyline_data <- function(raw_skyline_data, i) {
     dplyr::ungroup() %>% 
     # Get into same format as processed LaCyTools summary
     dplyr::rename(
-      charge = Precursor.Charge,
       total_area = Total.Area.MS1,
       isotope_dot_product = Isotope.Dot.Product,
       mass_accuracy_ppm = Average.Mass.Error.PPM
@@ -697,32 +753,26 @@ transform_skyline_data <- function(raw_skyline_data, i) {
     dplyr::relocate(charge, .after = analyte) %>% 
     dplyr::relocate(total_area, .after = charge) %>% 
     dplyr::relocate(mass_accuracy_ppm, .after = total_area)
-  # Add notes if they exist
-  if (ncol(notes) == 3) {
-    data_clean <- dplyr::left_join(data_clean, notes) %>% 
-      dplyr::relocate(note, .after = charge)
+  
+  if (!is.null(analyte_colname)) {
+    data_clean <- data_clean %>% 
+      dplyr::rename(peptide_sequence = peptide) %>% 
+      dplyr::rename(methionine_oxidation = oxidation) %>% 
+      dplyr::relocate(c(peptide_sequence, methionine_oxidation), .after = charge)
   }
   
+  if ("note" %in% colnames(data_clean)) {
+    data_clean <- data_clean %>% 
+      dplyr::relocate(note, .after = charge)
+  }
+ 
   return(data_clean)
-}
+} 
 
 
 
 # Function to check the structure of Skyline CSV files.
 check_skyline_data <- function(raw_skyline_data) {
-  # Check if required columns are present in the file
-  required_cols <- c("Protein.Name", "Peptide", "Precursor.Charge")
-  cols_check <- required_cols %in% colnames(raw_skyline_data)
-  missing_cols <- required_cols[!cols_check]
-  if (length(missing_cols) > 0) {
-    rlang::abort(
-      class = "missing_columns",
-      message = paste0(
-        "the following columns are missing from your data: ",
-        paste0(gsub("\\.", " ", missing_cols), collapse = ", ")
-      )
-    )
-  }
   # Check if required variables per sample name are present in the file
   required_vars <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM") 
   vars_check <- sapply(required_vars, function(x) any(grepl(x, colnames(raw_skyline_data))))
@@ -731,18 +781,8 @@ check_skyline_data <- function(raw_skyline_data) {
     rlang::abort(
       class = "missing_variables",
       message = paste0(
-        "the following variables are missing from your data: ",
+        "The following variables are missing from your data: ",
         paste0(gsub("\\.", " ", missing_vars), collapse = ", ")
-      )
-    )
-  }
-  # Check if Protein.Name contains spaces or letters
-  contains_numbers_or_spaces <- grepl("[0-9 ]", raw_skyline_data$Protein.Name)
-  if (any(contains_numbers_or_spaces)) {
-    rlang::abort(
-      class = "numbers_or_spaces",
-      message = paste0(
-        "please remove any numbers or spaces from all entries in the column \"Protein Name\"."
       )
     )
   }
@@ -750,5 +790,116 @@ check_skyline_data <- function(raw_skyline_data) {
 
 
 
+# Function to create peptide abbreviations
+# For each unique peptide, it creates a three letter abbreviation.
+# When peptides share the first three letters, peptide abbreviations 
+# are given suffix "a", "b", "c", etc.
+shorten_peptide <- function(peptide_column) {
+  # Vector with unique peptides, sorted by length and then alphabetical
+  unique_peptides <- unique(peptide_column)[
+    order(nchar(unique(peptide_column)), unique(peptide_column))
+  ]
+  # Dataframe with peptide abbreviations
+  df <- data.frame(peptide = unique_peptides) %>% 
+    dplyr::mutate(prefix = stringr::str_sub(peptide, 1, 3)) %>% 
+    dplyr::group_by(prefix) %>% 
+    dplyr::mutate(
+      suffix = if (dplyr::n() == 1) "" else letters[dplyr::row_number()],
+      abbreviation = paste0(prefix, suffix)
+    ) %>% 
+    dplyr::ungroup() %>% 
+    dplyr::select(-prefix, -suffix) %>% 
+    dplyr::arrange(abbreviation)
+  
+  return(df)
+}
+
+
+
+reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide, 
+                                                 analyte_colname, 
+                                                 charge_colname,
+                                                 note_colname) {
+  
+  # Rename columns
+  data_renamed_cols <- raw_skyline_data_wide %>% 
+    dplyr::rename(
+      glycopeptide = tidyselect::all_of(analyte_colname),
+      charge = tidyselect::all_of(charge_colname)
+    )
+  
+  # Conditionally add the note column
+  if (!is.null(note_colname)) {
+    data_renamed_cols <- data_renamed_cols %>% 
+      dplyr::rename(note = tidyselect::all_of(note_colname))
+  }
+  
+  # Select required data
+  raw_data_required <- data_renamed_cols %>% 
+    dplyr::select(
+      glycopeptide, charge, tidyselect::any_of(c("note")),
+      tidyselect::contains(c(
+        "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"
+      ))
+    )
+  
+  # Reformat and annotate data
+  raw_data_reformatted <- raw_data_required %>%
+    dplyr::mutate(
+      # Count number of oxidized methionines
+      oxidation = stringr::str_count(
+        glycopeptide, "\\[Oxidation \\(M\\)\\]|\\[Oxi\\]"
+      ),
+      # Remove CAM modifications
+      glycopeptide_cam_removed = stringr::str_remove_all(
+        glycopeptide, "\\[Carbamidomethyl \\(C\\)\\]|\\[CAM\\]"
+      ),
+      # Remove oxidation to extract unmodified peptide
+      glycopeptide_oxi_removed = stringr::str_remove_all(
+        glycopeptide_cam_removed, "\\[Oxidation \\(M\\)\\]|\\[Oxi\\]"
+      ),
+      # Extract glycan and peptide sequence
+      glycan = stringr::str_extract(glycopeptide_oxi_removed, "(?<=\\[).+?(?=\\])"),
+      peptide = stringr::str_replace_all(glycopeptide_oxi_removed, "\\[.+?\\]", ""),
+  
+      .after = charge
+    )
+  
+  # Generate abbreviated peptide names
+  unique_peptides <- shorten_peptide(raw_data_reformatted$peptide)
+  
+  # Final processing
+  raw_data_reformatted <- raw_data_reformatted %>% 
+    dplyr::left_join(unique_peptides) %>% 
+    dplyr::relocate(abbreviation, .after = peptide) %>% 
+    dplyr::rename(cluster = abbreviation) %>% 
+    dplyr::mutate(
+      cluster = dplyr::case_when(
+        oxidation > 0 ~ paste0(cluster, strrep("Ox", oxidation)),
+        TRUE ~ cluster
+      )
+    ) %>% 
+    dplyr::select(
+      cluster, glycan, charge, peptide, oxidation, tidyselect::any_of(c("note")),
+      tidyselect::contains(c(
+        "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"
+      ))
+    ) %>% 
+    dplyr::mutate(oxidation = as.character(oxidation))
+  
+  # Convert numeric columns
+  raw_data_reformatted[raw_data_reformatted == "#N/A"] <- NA
+  if ("note" %in% colnames(raw_data_reformatted)) {
+    raw_data_reformatted <- dplyr::mutate_at(
+      raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5, -6), as.numeric
+    )  
+  } else {
+    raw_data_reformatted <- dplyr::mutate_at(
+      raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5), as.numeric
+    ) 
+  }
+  
+  return(raw_data_reformatted)
+}
 
 

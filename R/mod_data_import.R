@@ -32,6 +32,21 @@ mod_data_import_ui <- function(id){
             status = "primary",
             shinycssloaders::withSpinner(DT::DTOutput(ns("data_table")))
           ),
+          shinyjs::hidden(
+            div(
+              id = ns("peptide_box"),
+              shinydashboard::box(
+                title = "Peptide sequences and abbreviations",
+                width = NULL,
+                solidHeader = TRUE,
+                status = "primary",
+                downloadButton(ns("download_peptide_sequences"),
+                               "Download peptide sequences and abbreviations"),
+                br(), br(),
+                shinycssloaders::withSpinner(DT::DTOutput(ns("peptide_table")))
+              )
+            )
+          ),
           shinydashboard::box(
             title = "Export results",
             width = NULL,
@@ -40,8 +55,7 @@ mod_data_import_ui <- function(id){
             radioButtons(ns("download_format"),
                          "Choose a file format:",
                          choices = c("Excel file", "R object")),
-            downloadButton(ns("download"), 
-                           "Download data")
+            downloadButton(ns("download"), "Download data"),
           )
         )
       )
@@ -58,21 +72,29 @@ mod_data_import_server <- function(id){
     
     LaCyTools_summary <- mod_read_lacytools_server("read_lacytools_ui_1")
     
-    data_incl_sample_ids <- mod_add_sample_ids_server("add_sample_ids_ui_1",
-                                                      keyword_specific = LaCyTools_summary$keyword_specific,
-                                                      keyword_total = LaCyTools_summary$keyword_total,
-                                                      contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
-                                                      LaCyTools_summary = LaCyTools_summary$data,
-                                                      summary_filenames = LaCyTools_summary$summary_filenames)
+    data_incl_sample_ids <- mod_add_sample_ids_server(
+      "add_sample_ids_ui_1",
+      keyword_specific = LaCyTools_summary$keyword_specific,
+      keyword_total = LaCyTools_summary$keyword_total,
+      contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
+      LaCyTools_summary = LaCyTools_summary$data,
+      summary_filenames = LaCyTools_summary$summary_filenames
+    )
     
-    data_incl_sample_types <- mod_add_sample_types_server("add_sample_types_ui_1",
-                                                          LaCyTools_summary = data_incl_sample_ids$data)
+    data_incl_sample_types <- mod_add_sample_types_server(
+      "add_sample_types_ui_1",
+      LaCyTools_summary = data_incl_sample_ids$data
+    )
     
-    data_incl_clusters <- mod_clusters_server("clusters_ui_1",
-                                              LaCyTools_summary = data_incl_sample_types$data)
+    data_incl_clusters <- mod_clusters_server(
+      "clusters_ui_1",
+      LaCyTools_summary = data_incl_sample_types$data
+    )
     
-    data_incl_metadata <- mod_add_metadata_server("add_metadata_ui_1",
-                                                  LaCyTools_summary = data_incl_clusters$data)
+    data_incl_metadata <- mod_add_metadata_server(
+      "add_metadata_ui_1",
+      LaCyTools_summary = data_incl_clusters$data
+    )
     
     
     
@@ -105,7 +127,7 @@ mod_data_import_server <- function(id){
                       dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
                     options = list(
                       scrollX = TRUE,
-                      pageLength = 6,  # Shows 5 rows
+                      pageLength = 8,  
                       columnDefs = list(list(className = "dt-center", targets = "_all"))
                     ),
                     filter = "top")
@@ -169,11 +191,45 @@ mod_data_import_server <- function(id){
       show_in_table() %>%
         dplyr::filter(cluster %in% data_incl_clusters$peptides())
     })
+    
+    
+    # Skyline data: show peptide sequences in table when applicable
+    observe({
+      if (is_truthy(LaCyTools_summary$peptide_sequences())) {
+        shinyjs::show("peptide_box")
+      } else {
+        shinyjs::hide("peptide_box")
+      }
+    })
+    
+    output$peptide_table <- DT::renderDT({
+      req(LaCyTools_summary$peptide_sequences())
+      DT::datatable(LaCyTools_summary$peptide_sequences(),
+                    options = list(
+                      scrollX = TRUE,
+                      pageLength = 8,
+                      columnDefs = list(list(className = "dt-center", targets = "_all"))
+                    ),
+                    filter = "top")
+    })
+    
+    # Download table as Excel file
+    output$download_peptide_sequences <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        paste0(current_datetime, "_peptide_sequences.xlsx")
+      },
+      content = function(file) {
+        data_to_download <- LaCyTools_summary$peptide_sequences()
+        writexl::write_xlsx(data_to_download, path = file)
+      }
+    )
 
     
     return(list(
       LaCyTools_summary = to_return,
       data_type = LaCyTools_summary$data_type,
+      peptide_sequences = LaCyTools_summary$peptide_sequences,
       biogroup_cols = biogroup_cols,
       contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
       keyword_specific = LaCyTools_summary$keyword_specific,

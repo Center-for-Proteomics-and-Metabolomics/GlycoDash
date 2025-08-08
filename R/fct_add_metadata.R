@@ -113,7 +113,8 @@ check_column_names <- function(merged_metadata) {
   
   not_allowed <- c("sample_name", "analyte", "charge", "mass_accuracy_ppm",
                   "absolute_intensity_background_subtracted", "isotopic_pattern_quality", 
-                  "sn", "fraction", "exact_mass", "group", "sample_type", "cluster")
+                  "sn", "fraction", "exact_mass", "group", "sample_type", "cluster",
+                  "peptide_sequence", "methionine_oxidation", "note")
   
   colnames <- colnames(merged_metadata)
   

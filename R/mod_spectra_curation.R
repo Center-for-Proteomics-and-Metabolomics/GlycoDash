@@ -423,7 +423,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     clusters <- reactive({
       req(data_to_check())
       data <- data_to_check()
-      return(unique(data$cluster))
+      return(sort(unique(data$cluster)))
     })
     
     created_tabs <- reactiveValues(clusters = c(""))
