@@ -83,7 +83,7 @@ mod_read_lacytools_ui <- function(id){
         ),
         shinyWidgets::materialSwitch(
           ns("skyline_contains_notes"),
-          HTML("<i style='font-size:15px;'> Specify column with notes </i>"),
+          HTML("<i style='font-size:15px;'> Specify column with analyte notes </i>"),
           status = "success",
           right = TRUE
         ),
