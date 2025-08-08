@@ -87,15 +87,15 @@ mod_read_lacytools_ui <- function(id){
           status = "success",
           right = TRUE
         ),
-        selectizeInput(
-          ns("skyline_note_column"),
-          "Select column with notes:",
-          choices = c()
-        ),
         shinyWidgets::awesomeCheckbox(
           ns("skyline_rename_isomers"),
           label = HTML("<i style='font-size:15px;'> Automatically detect and rename glycan isomers </i>"),
           value = TRUE
+        ),
+        selectizeInput(
+          ns("skyline_note_column"),
+          "Select column with notes:",
+          choices = c()
         ),
         shinyjs::hidden(div(
           id = ns("button_div"),
@@ -341,15 +341,21 @@ mod_read_lacytools_server <- function(id){
         tryCatch(
           expr = read_non_rectangular(datapath),
           embedded_null = function(c) {
-            showNotification(paste("Summary file", i, ":", c$message), type = "error", duration = NULL)
+            showNotification(paste(
+              "Summary file", i, ":", c$message), type = "error", duration = NULL
+            )
             NULL
           },
           empty_file = function(c) {
-            showNotification(paste("Summary file", i, ":", c$message), type = "error", duration = NULL)
+            showNotification(paste(
+              "Summary file", i, ":", c$message), type = "error", duration = NULL
+            )
             NULL
           },
           wrong_delim = function(c) {
-            showNotification(paste("Summary file", i, ":", c$message), type = "error", duration = NULL)
+            showNotification(paste(
+              "Summary file", i, ":", c$message), type = "error", duration = NULL
+            )
             NULL
           }
         )
@@ -374,7 +380,9 @@ mod_read_lacytools_server <- function(id){
         tryCatch(
           expr = convert_lacytools_summary(data = summary),
           no_outputs_present = function(c) {
-            showNotification(paste("In summary file", i, c$message), type = "error", duration = NULL)
+            showNotification(paste(
+              "In summary file", i, c$message), type = "error", duration = NULL
+            )
             shinybusy::remove_modal_spinner()
             return(NULL)
           }
@@ -421,7 +429,8 @@ mod_read_lacytools_server <- function(id){
     
     # Read raw Skyline data from CSV file.
     raw_skyline_data_wide <- reactive({
-      req(correct_file_ext(), input$data_type == "Skyline data (wide format)", input$skyline_input_wide)
+      req(correct_file_ext(), input$data_type == "Skyline data (wide format)", 
+          input$skyline_input_wide)
       read_skyline_csv(input$skyline_input_wide$datapath)
     })
     
@@ -508,20 +517,6 @@ mod_read_lacytools_server <- function(id){
     # Show spinner when processing starts
     observeEvent(input$button, {
       req(raw_skyline_data_wide())
-      ###################### TESTING #############################
-      # raw_skyline_data_wide <- raw_skyline_data_wide()
-      # analyte_colname = input$skyline_analyte_column
-      # cluster_colname = input$skyline_cluster_column
-      # glycan_colname = input$skyline_glycan_column
-      # charge_colname = input$skyline_charge_column
-      # rename_isomers = input$skyline_rename_isomers
-      # if (input$skyline_contains_notes == TRUE) {
-      #   note_colname <- input$skyline_note_column
-      # } else {
-      #   note_colname <- NULL
-      # }
-      # browser()
-      ############################################################
       shinybusy::show_modal_spinner(
         spin = "cube-grid", color = "#0275D8",
         text = HTML("<br/><strong>Processing Skyline data...")

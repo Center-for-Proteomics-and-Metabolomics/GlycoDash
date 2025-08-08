@@ -72,21 +72,29 @@ mod_data_import_server <- function(id){
     
     LaCyTools_summary <- mod_read_lacytools_server("read_lacytools_ui_1")
     
-    data_incl_sample_ids <- mod_add_sample_ids_server("add_sample_ids_ui_1",
-                                                      keyword_specific = LaCyTools_summary$keyword_specific,
-                                                      keyword_total = LaCyTools_summary$keyword_total,
-                                                      contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
-                                                      LaCyTools_summary = LaCyTools_summary$data,
-                                                      summary_filenames = LaCyTools_summary$summary_filenames)
+    data_incl_sample_ids <- mod_add_sample_ids_server(
+      "add_sample_ids_ui_1",
+      keyword_specific = LaCyTools_summary$keyword_specific,
+      keyword_total = LaCyTools_summary$keyword_total,
+      contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
+      LaCyTools_summary = LaCyTools_summary$data,
+      summary_filenames = LaCyTools_summary$summary_filenames
+    )
     
-    data_incl_sample_types <- mod_add_sample_types_server("add_sample_types_ui_1",
-                                                          LaCyTools_summary = data_incl_sample_ids$data)
+    data_incl_sample_types <- mod_add_sample_types_server(
+      "add_sample_types_ui_1",
+      LaCyTools_summary = data_incl_sample_ids$data
+    )
     
-    data_incl_clusters <- mod_clusters_server("clusters_ui_1",
-                                              LaCyTools_summary = data_incl_sample_types$data)
+    data_incl_clusters <- mod_clusters_server(
+      "clusters_ui_1",
+      LaCyTools_summary = data_incl_sample_types$data
+    )
     
-    data_incl_metadata <- mod_add_metadata_server("add_metadata_ui_1",
-                                                  LaCyTools_summary = data_incl_clusters$data)
+    data_incl_metadata <- mod_add_metadata_server(
+      "add_metadata_ui_1",
+      LaCyTools_summary = data_incl_clusters$data
+    )
     
     
     
@@ -221,6 +229,7 @@ mod_data_import_server <- function(id){
     return(list(
       LaCyTools_summary = to_return,
       data_type = LaCyTools_summary$data_type,
+      peptide_sequences = LaCyTools_summary$peptide_sequences,
       biogroup_cols = biogroup_cols,
       contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
       keyword_specific = LaCyTools_summary$keyword_specific,
