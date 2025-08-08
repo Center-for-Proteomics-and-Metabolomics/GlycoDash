@@ -1,3 +1,18 @@
+# v1.8.2
+## Bug fixes
+* Fix a bug in the data import.
+
+
+# v1.8.1
+## Bug fixes
+* Fix a column name in the example Excel file for protein quantitation.
+
+
+# v1.8.0
+## New features
+* Option to quantify proteins based on stable isotope labeled (glyco)peptides.
+
+
 # v1.7.2
 ## Adjustments
 * Include Joining Chain glycan H6N5S1 in automatic traits calculations.

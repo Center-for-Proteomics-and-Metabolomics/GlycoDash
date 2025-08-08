@@ -9,66 +9,69 @@
 #' @importFrom shiny NS tagList 
 mod_clusters_ui <- function(id) {
   ns <- NS(id)
-  shinydashboard::box(
-    title = "Glycosylation sites",
-    width = NULL,
-    solidHeader = TRUE,
-    status = "primary",
-    div(
-      id = ns("info_detection"),
-      HTML("
+  tagList(
+    tags$style(HTML(paste0(
+      "#", ns("box_header"), " .awesome-checkbox {padding-top: 7px}",
+      "#", ns("box_header"), " .popover {max-width: 400px !important; color: #333}",
+      "#", ns("box"), " .box-title {width: 100%}",
+      "#", ns("box_header"), " .fas {float: right; margin-right: 5px; font-size: 18px}",
+      "#", ns("box_header"), " .direct-chat-contacts {right: 0; background: #222d32!important}",
+      "#", ns("box_header"), " .btn {float: right; border-width: 0px; margin-right: 10px}",
+      "#", ns("box"), " .dropdown {display: inline-block; float: right; width: 330px}",
+      "#", ns("box_header"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
+    ))),
+    shinydashboardPlus::box(
+      id = ns("box"),
+      title = div(
+        id = ns("box_header"),
+        "Glycosylation sites",
+        icon("info-circle", class = "ml") %>% 
+          bsplus::bs_embed_popover(
+            title = "Explanation",
+            content = HTML("
+            Glycopeptides in your data will be assigned to a glycosylation 
+            site based on their names. For example, two analytes named \"IgGI1H3N4F1\" and
+            \"IgGI1H4N4F1\" would be assigned to the glycosylation site \"IgGI\".
+            <br> <br>
+            Non-glycosylated peptides are also automatically detected. When corresponding
+            glycopeptides exist, then this peptide can later be uesd to calculate site occupancies.
+            In the example above, this would be the case when the analyte \"IgGI1\" is present in
+            the data, which can be used to calculate the occupancy of glycosylation site \"IgGI\".
+            When no corresponding glycopeptides are present, the peptide is not considered 
+            to be a glycosylation site. These peptides can later be used for protein quantitation.
+            "),
+            trigger = "hover",
+            placement = "right",
+            html = "true"
+          )
+      ),
+      width = NULL,
+      solidHeader = TRUE,
+      status = "primary",
+      div(
+        id = ns("info_detection"),
+        HTML("
         <strong> Glycosylation sites in your data will be detected automatically after adding the sample types. </strong>
         <br> <br>
       ")
-    ),
-    div(
-      id = ns("info_clusters"),
-      HTML("
+      ),
+      div(
+        id = ns("info_clusters"),
+        HTML("
         <strong> The following glycosylation sites were detected in your data: </strong>
         <br> <br>
       ")
-    ),
-    tableOutput(ns("clusters_table")),
-    div(
-      id = ns("info_peptides"),
-      HTML("
-        <strong> Additionally, the following peptides were detected without any
+      ),
+      tableOutput(ns("clusters_table")),
+      div(
+        id = ns("info_peptides"),
+        HTML("
+        <strong> The following peptides were detected without any
         corresponding glycopeptides: </strong>
         <br> <br>
       ")
-    ),
-    tableOutput(ns("peptides_table")),
-    shinyWidgets::materialSwitch(
-      ns("contains_silumab"),
-      HTML("<i style='font-size:15px;'> Samples contain SILuMAb for quantitation of antigen-specific IgG1 </i>"),
-      status = "success",
-      right = TRUE
-    ),
-    selectInput(
-      ns("silumab_peptides"),
-      "Choose the peptides you want to use for IgG1 quantitation:",
-      choices = c("Glycopeptides and Peptide GPSVFPLAPSSK", "Glycopeptides", "Peptide GPSVFPLAPSSK"),
-      selected = "Glycopeptides and Peptide GPSVFPLAPSSK"
-    ),
-    selectInput(
-      ns("silumab_cluster_glyco"),
-      "Site corresponding to the SILuMAb glycopeptides:",
-      choices = c("")
-    ),
-    selectInput(
-      ns("IgG1_cluster_glyco"),
-      "Site corresponding to the natural IgG1 glycopeptides:",
-      choices = c("")
-    ),
-    selectInput(
-      ns("silumab_cluster_GPS"),
-      "Peptide corresponding to the SILuMAb peptide GPSVFPLAPSSK:",
-      choices = c("")
-    ),
-    selectInput(
-      ns("IgG1_cluster_GPS"),
-      "Peptide corresponding to the natural IgG1 peptide GPSVFPLAPSSK:",
-      choices = c("")
+      ),
+      tableOutput(ns("peptides_table"))
     )
   )
 }
@@ -129,7 +132,6 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
       shinyjs::toggle("info_detection", condition = !is_truthy(glycopeptide_clusters()))
       shinyjs::toggle("info_clusters", condition = is_truthy(glycopeptide_clusters()))
       shinyjs::toggle("clusters_table", condition = is_truthy(glycopeptide_clusters()))
-      shinyjs::toggle("contains_silumab", condition = is_truthy(glycopeptide_clusters()) && length(glycopeptide_clusters()) >= 2)
       
       if (is_truthy(peptides())) {
         shinyjs::show("info_peptides")
@@ -138,72 +140,12 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
         shinyjs::hide("info_peptides")
         shinyjs::hide("peptides_table")
       }
-      
-      shinyjs::toggle("silumab_peptides", condition = input$contains_silumab == TRUE)
-      
-      shinyjs::toggle("silumab_cluster_glyco", condition = input$contains_silumab == TRUE && 
-                        (input$silumab_peptides == "Glycopeptides and Peptide GPSVFPLAPSSK" ||
-                           input$silumab_peptides == "Glycopeptides"))
-      
-      shinyjs::toggle("IgG1_cluster_glyco", condition = input$contains_silumab == TRUE && 
-                        (input$silumab_peptides == "Glycopeptides and Peptide GPSVFPLAPSSK" ||
-                           input$silumab_peptides == "Glycopeptides"))
-      
-      shinyjs::toggle("silumab_cluster_GPS", condition = input$contains_silumab == TRUE && 
-                        (input$silumab_peptides == "Glycopeptides and Peptide GPSVFPLAPSSK" ||
-                           input$silumab_peptides == "Peptide GPSVFPLAPSSK"))
-      
-      shinyjs::toggle("IgG1_cluster_GPS", condition = input$contains_silumab == TRUE && 
-                        (input$silumab_peptides == "Glycopeptides and Peptide GPSVFPLAPSSK" ||
-                           input$silumab_peptides == "Peptide GPSVFPLAPSSK"))
-
-      
-    })
-    
-    
-    # Add clusters as choices to the SILuMAb selectInputs
-    observe({
-      req(glycopeptide_clusters())
-      for (i in c("silumab_cluster_glyco", "IgG1_cluster_glyco")) {
-        updateSelectInput(inputId = i, choices = glycopeptide_clusters())
-      }
-    })
-    
-    observe({
-      req(peptides())
-      for (i in c("silumab_cluster_GPS", "IgG1_cluster_GPS")) {
-        updateSelectInput(inputId = i, choices = peptides())
-      }
-    })
-    
-    # Get the cluster names required for IgG1 quantitation, if applicable.
-    quantitation_clusters <- reactive({
-      req(LaCyTools_summary(), input$contains_silumab == TRUE)
-      
-      if (input$silumab_peptides == "Glycopeptides and Peptide GPSVFPLAPSSK") {
-        list(
-          "silumab_cluster_glyco" = input$silumab_cluster_glyco,
-          "IgG1_cluster_glyco" = input$IgG1_cluster_glyco,
-          "silumab_cluster_GPS" = input$silumab_cluster_GPS,
-          "IgG1_cluster_GPS" = input$IgG1_cluster_GPS
-        )
-      } else if (input$silumab_peptides == "Glycopeptides") {
-        list(
-          "silumab_cluster_glyco" = input$silumab_cluster_glyco,
-          "IgG1_cluster_glyco" = input$IgG1_cluster_glyco
-        )
-      } else if (input$silumab_peptides == "Peptide GPSVFPLAPSSK") {
-        list(
-          "silumab_cluster_GPS" = input$silumab_cluster_GPS,
-          "IgG1_cluster_GPS" = input$IgG1_cluster_GPS
-        )
-      }
     })
     
     
     return(list(
       data = data_with_clusters,
-      quantitation_clusters = quantitation_clusters
+      peptides = peptides
     ))
     
   })
