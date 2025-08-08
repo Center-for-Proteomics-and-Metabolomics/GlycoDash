@@ -642,6 +642,7 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
                                         cluster_colname = NULL,
                                         glycan_colname = NULL,
                                         charge_colname,
+                                        note_colname = NULL,  # TODO: implement
                                         rename_isomers = TRUE) {
   
   # Check structure of data

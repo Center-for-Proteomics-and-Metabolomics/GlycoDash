@@ -10,6 +10,7 @@ transform_skyline_data_wide(
   cluster_colname = NULL,
   glycan_colname = NULL,
   charge_colname,
+  note_colname = NULL,
   rename_isomers = TRUE
 )
 }

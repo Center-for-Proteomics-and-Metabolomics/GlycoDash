@@ -81,6 +81,17 @@ mod_read_lacytools_ui <- function(id){
           "Select column with charge states:",
           choices = c()
         ),
+        shinyWidgets::materialSwitch(
+          ns("skyline_contains_notes"),
+          HTML("<i style='font-size:15px;'> Specify column with notes </i>"),
+          status = "success",
+          right = TRUE
+        ),
+        selectizeInput(
+          ns("skyline_note_column"),
+          "Select column with notes:",
+          choices = c()
+        ),
         shinyWidgets::awesomeCheckbox(
           ns("skyline_rename_isomers"),
           label = HTML("<i style='font-size:15px;'> Automatically detect and rename glycan isomers </i>"),
@@ -225,6 +236,8 @@ mod_read_lacytools_server <- function(id){
         shinyjs::hide("skyline_cluster_column")
         shinyjs::hide("skyline_glycan_column")
         shinyjs::hide("skyline_charge_column")
+        shinyjs::hide("skyline_contains_notes")
+        shinyjs::hide("skyline_note_column")
         shinyjs::hide("skyline_rename_isomers")
       } else if (input$data_type == "Skyline data (wide format)") {
         shinyjs::show("button_div")
@@ -234,6 +247,7 @@ mod_read_lacytools_server <- function(id){
         shinyjs::show("info_icon_div2")
         shinyjs::show("skyline_analyte_format")
         shinyjs::show("skyline_charge_column")
+        shinyjs::show("skyline_contains_notes")
         shinyjs::show("skyline_rename_isomers")
         if (input$skyline_analyte_format == "One column with peptide sequences and modifications") {
           shinyjs::show("skyline_analyte_column")
@@ -243,6 +257,11 @@ mod_read_lacytools_server <- function(id){
           shinyjs::hide("skyline_analyte_column")
           shinyjs::show("skyline_cluster_column")
           shinyjs::show("skyline_glycan_column")
+        }
+        if (input$skyline_contains_notes == TRUE) {
+          shinyjs::show("skyline_note_column")
+        } else {
+          shinyjs::hide("skyline_note_column")
         }
       }
     })
@@ -425,25 +444,45 @@ mod_read_lacytools_server <- function(id){
                   "skyline_glycan_column", "skyline_charge_column")) {
         updateSelectizeInput(inputId = id, choices = columns)
       }
+      
+      if (input$skyline_contains_notes == TRUE) {
+        updateSelectizeInput(
+          inputId = "skyline_note_column", choices = columns
+        )
+      }
     })
     
     # Require unique column input names for button
     observe({
+      # Input column names
+      input_colnames_two <- unique(c(
+        input$skyline_cluster_column, input$skyline_glycan_column, 
+        input$skyline_charge_column
+      ))
+      input_colnames_one <- unique(c(
+        input$skyline_analyte_column, input$skyline_charge_column
+      ))
       # Set requirements
       req_A <- is_truthy(raw_skyline_data_wide())
       req_B <- dplyr::case_when(
         startsWith(input$skyline_analyte_format, "Two") ~ 
-          length(unique(c(
-            input$skyline_cluster_column, input$skyline_glycan_column, 
-            input$skyline_charge_column
-          ))) == 3,
+          length(input_colnames_two) == 3,
         startsWith(input$skyline_analyte_format, "One") ~ 
-          length(unique(c(
-            input$skyline_analyte_column, input$skyline_charge_column
-          ))) == 2
+          length(input_colnames_one) == 2
       )
+      # Below only applies when user selects column with notes
+      if (input$skyline_contains_notes == TRUE) {
+        req_C <- dplyr::case_when(
+          startsWith(input$skyline_analyte_format, "Two") ~ 
+            !input$skyline_note_column %in% input_colnames_two,
+          startsWith(input$skyline_analyte_format, "One") ~ 
+            !input$skyline_note_column %in% input_colnames_one
+        )
+      } else {
+        req_C <- TRUE
+      }
       # Check requirements
-      if (req_A & req_B) {
+      if (req_A & req_B & req_C) {
         shinyjs::enable("button")
       } else {
         shinyjs::disable("button")
