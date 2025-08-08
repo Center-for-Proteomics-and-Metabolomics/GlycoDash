@@ -729,7 +729,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # Create a vector with names of the clusters
     clusters <- reactive({
       req(analyte_curated_data())
-      unique(analyte_curated_data()$cluster)
+      sort(unique(analyte_curated_data()$cluster))
     })
     
 
