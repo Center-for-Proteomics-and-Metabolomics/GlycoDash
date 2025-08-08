@@ -642,7 +642,7 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
                                         cluster_colname = NULL,
                                         glycan_colname = NULL,
                                         charge_colname,
-                                        note_colname = NULL,  # TODO: implement
+                                        note_colname = NULL, 
                                         rename_isomers = TRUE) {
   
   # Check structure of data
@@ -651,7 +651,7 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
   # Reformat data
   if (!is.null(analyte_colname)) { 
     raw_data_required <- reformat_skyline_analyte_column_wide(
-      raw_skyline_data_wide, analyte_colname, charge_colname
+      raw_skyline_data_wide, analyte_colname, charge_colname, note_colname
     )
   } else {
     # Rename columns
@@ -661,27 +661,48 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
         glycan = tidyselect::all_of(glycan_colname),
         charge = tidyselect::all_of(charge_colname)
       )
+    # Conditionally create note column
+    if (!is.null(note_colname)) {
+      data_renamed_cols <- data_renamed_cols %>% 
+        dplyr::rename(note = tidyselect::all_of(note_colname))
+    }
     # Select required columns
     raw_data_required <- data_renamed_cols %>% 
       dplyr::select(
-        cluster, glycan, charge,
+        cluster, glycan, charge,, tidyselect::any_of(c("note")),
         tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"))
       )
-    # Make columns numeric except for first three
+    # Convert numeric columns
     raw_data_required[raw_data_required == "#N/A"] <- NA
-    raw_data_required <- dplyr::mutate_at(raw_data_required, dplyr::vars(-1, -2, -3), as.numeric)
+    if ("note" %in% colnames(raw_data_required)) {
+      raw_data_required <- dplyr::mutate_at(
+        raw_data_required, dplyr::vars(-1, -2, -3, -4), as.numeric
+      )  
+    } else {
+      raw_data_required <- dplyr::mutate_at(
+        raw_data_required, dplyr::vars(-1, -2, -3), as.numeric
+      )  
+    }
   }
   
   # Check for isomers and rename them if they are present
   if (rename_isomers == TRUE) {
     raw_data_required <- rename_skyline_isomers(raw_data_required)
   } 
-    
+  
   # Transform the data
   if (!is.null(analyte_colname)) {
-    cols_to_pivot <- colnames(raw_data_required)[-(1:5)]
+    if ("note" %in% colnames(raw_data_required)) {
+      cols_to_pivot <- colnames(raw_data_required)[-(1:6)]
+    } else {
+      cols_to_pivot <- colnames(raw_data_required)[-(1:5)]
+    }
   } else {
-    cols_to_pivot <- colnames(raw_data_required)[-(1:3)]
+    if ("note" %in% colnames(raw_data_required)) {
+      cols_to_pivot <- colnames(raw_data_required)[-(1:4)]
+    } else {
+      cols_to_pivot <- colnames(raw_data_required)[-(1:3)]
+    }
   }
   
   raw_data_long <- raw_data_required %>% 
@@ -733,6 +754,11 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
       dplyr::rename(peptide_sequence = peptide) %>% 
       dplyr::rename(methionine_oxidation = oxidation) %>% 
       dplyr::relocate(c(peptide_sequence, methionine_oxidation), .after = charge)
+  }
+  
+  if ("note" %in% colnames(data_clean)) {
+    data_clean <- data_clean %>% 
+      dplyr::relocate(note, .after = charge)
   }
  
   return(data_clean)
@@ -787,7 +813,8 @@ shorten_peptide <- function(peptide_column) {
 
 reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide, 
                                                  analyte_colname, 
-                                                 charge_colname) {
+                                                 charge_colname,
+                                                 note_colname) {
   
   # Rename columns
   data_renamed_cols <- raw_skyline_data_wide %>% 
@@ -796,10 +823,16 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
       charge = tidyselect::all_of(charge_colname)
     )
   
+  # Conditionally add the note column
+  if (!is.null(note_colname)) {
+    data_renamed_cols <- data_renamed_cols %>% 
+      dplyr::rename(note = tidyselect::all_of(note_colname))
+  }
+  
   # Select required data
   raw_data_required <- data_renamed_cols %>% 
     dplyr::select(
-      glycopeptide, charge, 
+      glycopeptide, charge, tidyselect::any_of(c("note")),
       tidyselect::contains(c(
         "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"
       ))
@@ -842,7 +875,7 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
       )
     ) %>% 
     dplyr::select(
-      cluster, glycan, charge, peptide, oxidation,
+      cluster, glycan, charge, peptide, oxidation, tidyselect::any_of(c("note")),
       tidyselect::contains(c(
         "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"
       ))
@@ -851,9 +884,15 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
   
   # Convert numeric columns
   raw_data_reformatted[raw_data_reformatted == "#N/A"] <- NA
-  raw_data_reformatted <- dplyr::mutate_at(
-    raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5), as.numeric
-  )
+  if ("note" %in% colnames(raw_data_reformatted)) {
+    raw_data_reformatted <- dplyr::mutate_at(
+      raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5, -6), as.numeric
+    )  
+  } else {
+    raw_data_reformatted <- dplyr::mutate_at(
+      raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5), as.numeric
+    ) 
+  }
   
   return(raw_data_reformatted)
 }

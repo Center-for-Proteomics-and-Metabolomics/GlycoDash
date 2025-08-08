@@ -444,13 +444,28 @@ mod_read_lacytools_server <- function(id){
                   "skyline_glycan_column", "skyline_charge_column")) {
         updateSelectizeInput(inputId = id, choices = columns)
       }
-      
+    })
+    
+    observe({
+      req(raw_skyline_data_wide())
       if (input$skyline_contains_notes == TRUE) {
+        columns <- raw_skyline_data_wide() %>% 
+          dplyr::select(
+            -tidyselect::contains("Total.Area.MS1"),
+            -tidyselect::contains("Isotope.Dot.Product"),
+            -tidyselect::contains("Mass.Error.PPM"),
+            -tidyselect::contains("Best.Retention.Time"),
+            -tidyselect::contains("Normalized.Area"),
+            -tidyselect::contains("Replicate.Name"),
+            -tidyselect::contains("Background.MS1")
+          ) %>% 
+          colnames()
         updateSelectizeInput(
           inputId = "skyline_note_column", choices = columns
         )
       }
     })
+    
     
     # Require unique column input names for button
     observe({
@@ -493,6 +508,19 @@ mod_read_lacytools_server <- function(id){
     # Show spinner when processing starts
     observeEvent(input$button, {
       req(raw_skyline_data_wide())
+      ###################### TESTING #############################
+      # raw_skyline_data_wide <- raw_skyline_data_wide()
+      # analyte_colname = input$skyline_analyte_column
+      # cluster_colname = input$skyline_cluster_column
+      # glycan_colname = input$skyline_glycan_column
+      # charge_colname = input$skyline_charge_column
+      # rename_isomers = input$skyline_rename_isomers
+      # note_colname = dplyr::case_when(
+      #   input$skyline_contains_notes ~ input$skyline_note_column,
+      #   .default = NULL
+      # )
+      # browser()
+      ############################################################
       shinybusy::show_modal_spinner(
         spin = "cube-grid", color = "#0275D8",
         text = HTML("<br/><strong>Processing Skyline data...")
@@ -512,7 +540,11 @@ mod_read_lacytools_server <- function(id){
             cluster_colname = input$skyline_cluster_column,
             glycan_colname = input$skyline_glycan_column,
             charge_colname = input$skyline_charge_column,
-            rename_isomers = input$skyline_rename_isomers
+            rename_isomers = input$skyline_rename_isomers,
+            note_colname = dplyr::case_when(
+              input$skyline_contains_notes ~ input$skyline_note_column,
+              .default = NULL
+            )
           ),
           missing_variables = function(c) {
             showNotification(c$message, type = "error", duration = NULL)
@@ -527,7 +559,11 @@ mod_read_lacytools_server <- function(id){
             raw_skyline_data_wide(),
             analyte_colname = input$skyline_analyte_column,
             charge_colname = input$skyline_charge_column,
-            rename_isomers = input$skyline_rename_isomers
+            rename_isomers = input$skyline_rename_isomers,
+            note_colname = dplyr::case_when(
+              input$skyline_contains_notes ~ input$skyline_note_column,
+              .default = NULL
+            )
           ),
           missing_variables = function(c) {
             showNotification(c$message, type = "error", duration = NULL)
