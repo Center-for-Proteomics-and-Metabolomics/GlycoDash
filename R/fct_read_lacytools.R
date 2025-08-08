@@ -669,7 +669,7 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
     # Select required columns
     raw_data_required <- data_renamed_cols %>% 
       dplyr::select(
-        cluster, glycan, charge,, tidyselect::any_of(c("note")),
+        cluster, glycan, charge, tidyselect::any_of(c("note")),
         tidyselect::contains(c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"))
       )
     # Convert numeric columns
