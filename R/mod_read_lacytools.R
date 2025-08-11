@@ -153,7 +153,7 @@ mod_read_lacytools_ui <- function(id){
             title = "Skyline data (wide format)",
             content = HTML(
               "
-              You can upload one or more Skyline output CSV files. 
+              You can upload one Skyline output CSV file. 
               The file should contain one column specifying the charge states of the
               analytes. The analytes themselves can be specified in one of two ways:
               <ul>
@@ -169,7 +169,7 @@ mod_read_lacytools_ui <- function(id){
                 or using three-letter abbreviations.
                 </li>
               </ul>
-              Additionally, it should contain columns with \"<i>Total Area MS1</i>\",
+              Additionally, the file should contain columns with \"<i>Total Area MS1</i>\",
               \"<i>Isotope Dot Product</i>\" and \"<i>Average Mass Error PPM</i>\" 
               for each sample name.
               "
