@@ -1,3 +1,12 @@
+# v1.9.0
+## New features
+* Allow for more flexibility in the formatting of Skyline data files.
+
+## Adjustments
+* Glycosylation sites are now ordered alphabetically throughout the dashboard
+and in the output data.
+
+
 # v1.8.2
 ## Bug fixes
 * Fix a bug in the data import.
