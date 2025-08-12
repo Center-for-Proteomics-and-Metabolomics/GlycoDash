@@ -352,18 +352,31 @@ color_palette <- function(n_colors) {
 
 
 # Function to create a Changelog button in the dashboard header
-ChangelogButton <- function(outputId, label = ""){
+ChangelogButton <- function(outputId) {
   tags$a(id = outputId, class = "btn shiny-download-link", href = "", 
-         download = NA, icon("history"), label)
+         download = NA, icon("history"))
 }
 
 
 # Function to create a Manual button in the dashboard header
-ManualButton <- function(outputId, label = ""){
+ManualButton <- function(outputId) {
   tags$a(id = outputId, class = "btn shiny-download-link", href = "", 
-         download = NA, icon("book"), label)
+         download = NA, 
+         # Create a container for the icon and label
+         tags$span(icon("book"), 
+                   tags$span(
+                     # Make text bold/italics and add space between icon and text
+                     style = "
+                      margin-left: 5px; 
+                      font-weight: bold;
+                      font-style: italic;
+                      font-size: 11pt;
+                     ", 
+                     # Label next to the book icon
+                     "User guide"
+                   ))
+  )
 }
-
 
 
 

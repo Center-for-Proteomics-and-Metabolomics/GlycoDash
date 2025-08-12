@@ -16,19 +16,33 @@ app_ui <- function(request) {
     # Your application UI logic 
     shinydashboardPlus::dashboardPage(
       
-      # Title header, with button that links to GitHub
+      # Title header
       header = shinydashboard::dashboardHeader(
         title = "GlycoDash v1.9.0",
-        tags$li(a(
-          onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash')",
-          href = NULL, icon("github"), title = "GitHub", style = "cursor: pointer;"
-        ), class = "dropdown"),
-        tags$li(a(
-          onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/issues')",
-          href = NULL, icon("bug"), title = "Known issues", style = "cursor: pointer;"
-        ), class = "dropdown"),
-        tags$li(ManualButton("download_manual"), title = "Download manual", class = "dropdown"),
-        tags$li(ChangelogButton("download_changelog"), title = "Download changelog", class = "dropdown")
+        tags$li(
+          ManualButton("download_manual"), 
+          title = "Download latest version of user guide",
+          class = "dropdown"
+        ),
+        tags$li(
+          ChangelogButton("download_changelog"),
+          title = "Download changelog",
+          class = "dropdown"
+        ),
+        tags$li(
+          a(
+            onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/issues')",
+            href = NULL, icon("bug"), title = "Known bugs and issues", style = "cursor: pointer;"
+          ),
+          class = "dropdown"
+        ),
+        tags$li(
+          a(
+            onclick = "onclick =window.open('https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash')",
+            href = NULL, icon("github"), title = "GitHub page", style = "cursor: pointer;"
+          ),
+          class = "dropdown"
+        )
       ),
       
       sidebar = shinydashboardPlus::dashboardSidebar(
