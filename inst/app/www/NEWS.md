@@ -7,6 +7,9 @@
 and in the output data.
 * Make the download button for the user manual more obvious.
 
+## Bug fixes
+* Minor bug fixes.
+
 
 # v1.8.2
 ## Bug fixes
