@@ -5,6 +5,7 @@
 ## Adjustments
 * Glycosylation sites are now ordered alphabetically throughout the dashboard
 and in the output data.
+* Make the download button for the user manual more obvious.
 
 
 # v1.8.2
