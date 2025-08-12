@@ -221,7 +221,6 @@ check_criteria_skyline <- function(my_data,
 
 
 
-
 #' Apply chosen analyte quality criteria
 #'
 #' \code{apply_chosen_criteria()} determines if the analyte quality criteria in
@@ -321,6 +320,8 @@ report_failed_criteria <- function(my_data,
   
   return(to_return)
 }
+
+
 
 #' Summarize analyte quality criteria checks
 #'
@@ -518,6 +519,8 @@ mean_plus_SD <- function(x, SD_factor, na.rm) {
   mean_x + SD_factor * sd(x, na.rm = na.rm)
 }
 
+
+
 #' Perform spectra curation
 #'
 #' \code{curate_spectra()} performs spectra curation on mass spectrometry data.
@@ -613,6 +616,7 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
 }
 
 
+# Helper function
 determine_reason_for_failure <- function(data) {
   with_reasons <- data %>% 
     dplyr::mutate(reason_for_failure = dplyr::case_when(
@@ -626,6 +630,7 @@ determine_reason_for_failure <- function(data) {
   
   return(with_reasons)
 }
+
 
 
 #' Filter out spectra that failed spectra curation
@@ -754,7 +759,6 @@ remove_unneeded_columns <- function(passing_spectra) {
 
 
 
-
 #' Create the dataframe for next steps when spectra curation is skipped
 #'
 #' @inheritParams curate_spectra
@@ -793,7 +797,6 @@ return_when_spectra_curation_is_skipped <- function(checked_data,
   # Leave 'sum_intensity' for the relative abundance
   # calculation 
 }
-
 
 
 
@@ -952,6 +955,7 @@ create_cut_off_plot <- function(summarized_checks, color_palette) {
 }
 
 
+
 #' Visualize the results of the spectra curation
 #' 
 #' This function can be used to visualize how many spectra per sample type passed
@@ -1083,6 +1087,7 @@ plot_spectra_curation_results <- function(curated_data,
 }
 
 
+
 # Helper function
 calculate_number_and_percentage_per_reason <- function(curated_data) {
   
@@ -1109,7 +1114,7 @@ calculate_number_and_percentage_per_reason <- function(curated_data) {
 }
 
 
-
+# Downloading data
 create_downloadHandler <- function(data_to_download, download_format, paste) {
   downloadHandler(
     filename = function() {

@@ -516,12 +516,14 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         }
         # Check if there are cut-offs missing for clusters
         to_check <- cut_offs_to_use_all_clusters()$cluster
-        identical <- identical(
-          # Need to order elements in the character vectors to compare
-          to_check[stringr::str_order(to_check)],
-          to_compare[stringr::str_order(to_compare)]
+        # Create frequency tables for both vectors
+        freq_to_check <- table(to_check)
+        freq_to_compare <- table(to_compare)
+        # Check if all elements in to_compare are in to_check with the same or higher frequency
+        all_present <- all(
+          freq_to_compare[names(freq_to_compare)] <= freq_to_check[names(freq_to_compare)]
         )
-        if (identical) {
+        if (all_present) {
           return(FALSE)
         } else {
           return(TRUE)
