@@ -481,12 +481,41 @@ calculate_cut_offs <- function(summarized_checks,
   #TODO: rewrite this function so that one of the arguments is
   #spectra_curation_method and it can also be applied when spectra curation
   #should be skipped.
-  
   cut_off_basis <- summarized_checks %>% 
-    dplyr::filter(if (!is.null(group_keyword)) group == group_keyword else TRUE) %>% 
-    dplyr::filter(if (!is.null(control_sample_types)) sample_type %in% control_sample_types else TRUE) %>% 
-    dplyr::filter(if (!is.null(exclude_sample_types)) !(sample_type %in% exclude_sample_types) else TRUE) %>% 
-    dplyr::filter(if (uncalibrated_as_NA) !uncalibrated else TRUE)
+    dplyr::filter(
+      if (!is.null(group_keyword)) {
+        group == group_keyword
+      } else {
+        TRUE
+      }
+    ) %>% 
+    dplyr::filter(
+      if (!is.null(control_sample_types)) {
+        sample_type %in% control_sample_types
+      } else {
+        TRUE
+      }
+    ) %>% 
+    dplyr::filter(
+      if (!is.null(exclude_sample_types)) {
+        !(sample_type %in% exclude_sample_types)
+      } else {
+        TRUE
+      }
+    )
+  
+  # Check if uncalibrated should be treated as NA or zeros.
+  # But: if all spectra for a cluster are uncalibrated, the NAs should
+  # always be treated as zero.
+  if (uncalibrated_as_NA) {
+    cut_off_basis <- cut_off_basis %>%
+      dplyr::group_by(cluster) %>%
+      dplyr::mutate(all_uncalibrated = all(uncalibrated)) %>%
+      dplyr::ungroup() %>%
+      dplyr::filter(!uncalibrated | all_uncalibrated) %>%
+      dplyr::select(-all_uncalibrated)
+  }
+  
   
   grouping_variables <- c("group", "cluster")
   

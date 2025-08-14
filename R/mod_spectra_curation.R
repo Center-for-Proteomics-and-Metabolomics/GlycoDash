@@ -502,7 +502,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     })
   
     
-    # Check if there are clusters for which all negative controls were uncalibrated
+    
+    # Check for missing cluster cut-offs
     missing_cluster_cut_offs <- reactive({
       if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
         # Check if data contains total and specific samples
@@ -523,7 +524,12 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         all_present <- all(
           freq_to_compare[names(freq_to_compare)] <= freq_to_check[names(freq_to_compare)]
         )
-        if (all_present) {
+        if (is.na(all_present)) {
+          # NA for all_present occurs when a manual cut-off is set for a cluster
+          # before a sample type was chosen to use as negative controls.
+          # Then there is only a cut-off for that cluster and the comparison won't work.
+          return(TRUE)
+        } else if (all_present) {
           return(FALSE)
         } else {
           return(TRUE)
