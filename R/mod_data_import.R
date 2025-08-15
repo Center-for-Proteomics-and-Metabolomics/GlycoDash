@@ -214,7 +214,7 @@ mod_data_import_server <- function(id){
     })
     
     # Download table as Excel file
-    output$download_glycosites_table <- downloadHandler(
+    output$download_glycosites <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
         paste0(current_datetime, "_glycosylation_sites.xlsx")
