@@ -594,9 +594,9 @@ mod_read_lacytools_server <- function(id){
       req(skyline_data_wide(), "peptide_sequence" %in% colnames(skyline_data_wide()))
       skyline_data_wide() %>% 
         tidyr::separate(
-          analyte, sep = "1", into = c("glycosite", "glycan"), extra = "merge"
+          analyte, sep = "1", into = c("glycosylation_site", "glycan"), extra = "merge"
         ) %>% 
-        dplyr::select(protein, peptide_sequence, methionine_oxidation, glycosite) %>% 
+        dplyr::select(glycosylation_site, protein, peptide_sequence, methionine_oxidation) %>% 
         dplyr::distinct() %>% 
         dplyr::arrange(protein, peptide_sequence)
     })
