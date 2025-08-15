@@ -6,6 +6,7 @@
 \usage{
 transform_skyline_data_wide(
   raw_skyline_data_wide,
+  protein_colname = NULL,
   analyte_colname = NULL,
   cluster_colname = NULL,
   glycan_colname = NULL,

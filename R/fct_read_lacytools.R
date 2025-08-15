@@ -569,7 +569,7 @@ rename_skyline_isomers <- function(data_renamed_cols) {
   
   # Look for isomers in the glycan compositions, per peptide.
   data <- data_renamed_cols %>% 
-    dplyr::group_by(cluster, glycan, charge) %>% 
+    dplyr::group_by(protein, cluster, glycan, charge) %>% 
     dplyr::mutate(n = dplyr::n()) %>% 
     dplyr::ungroup()
   
@@ -580,7 +580,7 @@ rename_skyline_isomers <- function(data_renamed_cols) {
   # n > 1 implies presence of isomers
   data_isomers <- data %>% 
     dplyr::filter(n > 1) %>% 
-    dplyr::group_by(cluster, glycan, charge) %>% 
+    dplyr::group_by(protein, cluster, glycan, charge) %>% 
     dplyr::mutate(glycan_unique = make.unique(glycan)) %>% 
     dplyr::ungroup() %>% 
     # Instead of ".1", ".2", etc at the end of duplicates, add "_a","_b", to 
@@ -643,6 +643,7 @@ rename_skyline_isomers <- function(data_renamed_cols) {
 #' - isotope_dot_product
 #' 
 transform_skyline_data_wide <- function(raw_skyline_data_wide,
+                                        protein_colname = NULL,
                                         analyte_colname = NULL,
                                         cluster_colname = NULL,
                                         glycan_colname = NULL,
@@ -656,7 +657,7 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
   # Reformat data
   if (!is.null(analyte_colname)) { 
     raw_data_required <- reformat_skyline_analyte_column_wide(
-      raw_skyline_data_wide, analyte_colname, charge_colname, note_colname
+      raw_skyline_data_wide, protein_colname, analyte_colname, charge_colname, note_colname
     )
   } else {
     # Rename columns
@@ -698,9 +699,9 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
   # Transform the data
   if (!is.null(analyte_colname)) {
     if ("note" %in% colnames(raw_data_required)) {
-      cols_to_pivot <- colnames(raw_data_required)[-(1:6)]
+      cols_to_pivot <- colnames(raw_data_required)[-(1:7)]
     } else {
-      cols_to_pivot <- colnames(raw_data_required)[-(1:5)]
+      cols_to_pivot <- colnames(raw_data_required)[-(1:6)]
     }
   } else {
     if ("note" %in% colnames(raw_data_required)) {
@@ -758,7 +759,8 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
     data_clean <- data_clean %>% 
       dplyr::rename(peptide_sequence = peptide) %>% 
       dplyr::rename(methionine_oxidation = oxidation) %>% 
-      dplyr::relocate(c(peptide_sequence, methionine_oxidation), .after = charge)
+      dplyr::relocate(c(peptide_sequence, methionine_oxidation), .after = charge) %>% 
+      dplyr::relocate(protein, .after = sample_name)
   }
   
   if ("note" %in% colnames(data_clean)) {
@@ -790,26 +792,30 @@ check_skyline_data <- function(raw_skyline_data) {
 
 
 
-# Function to create peptide abbreviations
-# For each unique peptide, it creates a three letter abbreviation.
-# When peptides share the first three letters, peptide abbreviations 
-# are given suffix "a", "b", "c", etc.
-shorten_peptide <- function(peptide_column) {
-  # Vector with unique peptides, sorted by length and then alphabetical
-  unique_peptides <- unique(peptide_column)[
-    order(nchar(unique(peptide_column)), unique(peptide_column))
-  ]
-  # Dataframe with peptide abbreviations
-  df <- data.frame(peptide = unique_peptides) %>% 
-    dplyr::mutate(prefix = stringr::str_sub(peptide, 1, 3)) %>% 
-    dplyr::group_by(prefix) %>% 
+# Function to create abbreviations for glycosylation sites (protein + peptide)
+# Different proteins are named PrA, PrB, etc.
+# Per protein each unique peptide is given a three letter abbreviation.
+# When peptide share the first three letters, abbreviations are given suffix
+# "a", "b", "c", etc.
+abbreviate_glycosites <- function(protein_peptide_df) {
+  
+  df <- protein_peptide_df %>% 
+    dplyr::distinct() %>% 
     dplyr::mutate(
-      suffix = if (dplyr::n() == 1) "" else letters[dplyr::row_number()],
-      abbreviation = paste0(prefix, suffix)
+      protein_number = paste0("Pr", LETTERS[dplyr::dense_rank(protein)]),
+      site_prefix = paste0(protein_number, "_", stringr::str_sub(peptide, 1, 3))
+    ) %>% 
+    dplyr::group_by(site_prefix) %>% 
+    dplyr::mutate(
+      suffix = if (dplyr::n() == 1) {
+        ""
+      } else {
+        letters[dplyr::row_number()]
+      },
+      abbreviation = paste0(site_prefix, suffix)
     ) %>% 
     dplyr::ungroup() %>% 
-    dplyr::select(-prefix, -suffix) %>% 
-    dplyr::arrange(abbreviation)
+    dplyr::select(protein, peptide, abbreviation)
   
   return(df)
 }
@@ -817,6 +823,7 @@ shorten_peptide <- function(peptide_column) {
 
 
 reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide, 
+                                                 protein_colname,
                                                  analyte_colname, 
                                                  charge_colname,
                                                  note_colname) {
@@ -824,6 +831,7 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
   # Rename columns
   data_renamed_cols <- raw_skyline_data_wide %>% 
     dplyr::rename(
+      protein = tidyselect::all_of(protein_colname),
       glycopeptide = tidyselect::all_of(analyte_colname),
       charge = tidyselect::all_of(charge_colname)
     )
@@ -837,14 +845,14 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
   # Select required data
   raw_data_required <- data_renamed_cols %>% 
     dplyr::select(
-      glycopeptide, charge, tidyselect::any_of(c("note")),
+      protein, glycopeptide, charge, tidyselect::any_of(c("note")),
       tidyselect::contains(c(
         "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"
       ))
     )
   
   # Reformat and annotate data
-  raw_data_reformatted <- raw_data_required %>%
+  raw_data_modifications <- raw_data_required %>%
     dplyr::mutate(
       # Count number of oxidized methionines
       oxidation = stringr::str_count(
@@ -865,12 +873,17 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
       .after = charge
     )
   
-  # Generate abbreviated peptide names
-  unique_peptides <- shorten_peptide(raw_data_reformatted$peptide)
+  # Generate abbreviations for glycosylation sites
+  glycosites <- abbreviate_glycosites(
+    protein_peptide_df = data.frame(
+      protein = raw_data_modifications$protein,
+      peptide = raw_data_modifications$peptide
+    )
+  )
   
   # Final processing
-  raw_data_reformatted <- raw_data_reformatted %>% 
-    dplyr::left_join(unique_peptides) %>% 
+  raw_data_reformatted <- raw_data_modifications %>% 
+    dplyr::left_join(glycosites) %>% 
     dplyr::relocate(abbreviation, .after = peptide) %>% 
     dplyr::rename(cluster = abbreviation) %>% 
     dplyr::mutate(
@@ -880,7 +893,7 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
       )
     ) %>% 
     dplyr::select(
-      cluster, glycan, charge, peptide, oxidation, tidyselect::any_of(c("note")),
+      protein, peptide, cluster, glycan, charge, oxidation, tidyselect::any_of(c("note")),
       tidyselect::contains(c(
         "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"
       ))
@@ -890,16 +903,16 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
   # Convert numeric columns
   raw_data_reformatted[raw_data_reformatted == "#N/A"] <- NA
   if ("note" %in% colnames(raw_data_reformatted)) {
-    raw_data_reformatted <- dplyr::mutate_at(
-      raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5, -6), as.numeric
+    to_return <- dplyr::mutate_at(
+      raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5, -6, -7), as.numeric
     )  
   } else {
-    raw_data_reformatted <- dplyr::mutate_at(
-      raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5), as.numeric
+    to_return <- dplyr::mutate_at(
+      raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5, -6), as.numeric
     ) 
   }
   
-  return(raw_data_reformatted)
+  return(to_return)
 }
 
 

@@ -13,7 +13,7 @@ params:
   filenames_metadata: NA
   sample_types_method: NA
   filename_sample_types: NA
-  peptide_sequences: NA
+  glycosites_table: NA
   mass_acc: NA
   ipq: NA
   sn: NA
@@ -81,9 +81,9 @@ if (params$sample_types_method != "Automatically determine sample types based on
 
 ```{r results='asis'}
 
-if (!is.null(params$peptide_sequences)) {
-  cat("Peptide sequences in your data were abbreviated as follows:")
-  params$peptide_sequences %>% 
+if (!is.null(params$glycosites_table)) {
+  cat("Glycosylation sites in your data were abbreviated as follows:")
+  params$glycosites_table %>% 
     kableExtra::kbl() %>%
     kableExtra::kable_styling(bootstrap_options = "striped",
                               full_width = F,

@@ -62,6 +62,11 @@ mod_read_lacytools_ui <- function(id){
           )
         ),
         selectizeInput(
+          ns("skyline_protein_column"),
+          "Select column with protein names:",
+          choices = c()
+        ),
+        selectizeInput(
           ns("skyline_analyte_column"),
           "Select column with analytes:",
           choices = c()
@@ -232,6 +237,7 @@ mod_read_lacytools_server <- function(id){
         shinyjs::hide("skyline_input_wide")
         shinyjs::hide("info_icon_div2")
         shinyjs::hide("skyline_analyte_format")
+        shinyjs::hide("skyline_protein_column")
         shinyjs::hide("skyline_analyte_column")
         shinyjs::hide("skyline_cluster_column")
         shinyjs::hide("skyline_glycan_column")
@@ -250,10 +256,12 @@ mod_read_lacytools_server <- function(id){
         shinyjs::show("skyline_contains_notes")
         shinyjs::show("skyline_rename_isomers")
         if (input$skyline_analyte_format == "One column with peptide sequences and modifications") {
+          shinyjs::show("skyline_protein_column")
           shinyjs::show("skyline_analyte_column")
           shinyjs::hide("skyline_cluster_column")
           shinyjs::hide("skyline_glycan_column")
         } else {
+          shinyjs::hide("skyline_protein_column")
           shinyjs::hide("skyline_analyte_column")
           shinyjs::show("skyline_cluster_column")
           shinyjs::show("skyline_glycan_column")
@@ -449,8 +457,11 @@ mod_read_lacytools_server <- function(id){
           ) %>% 
         colnames()
       
-      for (id in c("skyline_analyte_column", "skyline_cluster_column",
-                  "skyline_glycan_column", "skyline_charge_column")) {
+      for (id in c("skyline_protein_column",
+                  "skyline_analyte_column", 
+                  "skyline_cluster_column",
+                  "skyline_glycan_column", 
+                  "skyline_charge_column")) {
         updateSelectizeInput(inputId = id, choices = columns)
       }
     })
@@ -484,7 +495,8 @@ mod_read_lacytools_server <- function(id){
         input$skyline_charge_column
       ))
       input_colnames_one <- unique(c(
-        input$skyline_analyte_column, input$skyline_charge_column
+        input$skyline_analyte_column, input$skyline_charge_column,
+        input$skyline_protein_column
       ))
       # Set requirements
       req_A <- is_truthy(raw_skyline_data_wide())
@@ -492,7 +504,7 @@ mod_read_lacytools_server <- function(id){
         startsWith(input$skyline_analyte_format, "Two") ~ 
           length(input_colnames_two) == 3,
         startsWith(input$skyline_analyte_format, "One") ~ 
-          length(input_colnames_one) == 2
+          length(input_colnames_one) == 3
       )
       # Below only applies when user selects column with notes
       if (input$skyline_contains_notes == TRUE) {
@@ -555,6 +567,7 @@ mod_read_lacytools_server <- function(id){
         tryCatch(
           expr = transform_skyline_data_wide(
             raw_skyline_data_wide(),
+            protein_colname = input$skyline_protein_column,
             analyte_colname = input$skyline_analyte_column,
             charge_colname = input$skyline_charge_column,
             rename_isomers = input$skyline_rename_isomers,
@@ -575,16 +588,17 @@ mod_read_lacytools_server <- function(id){
     })
     
     
-    # Create a table with peptide abbreviations and corresponding sequences
-    peptide_sequences <- reactive({
+    # Create a table with protein names, peptide sequences and corresponding 
+    # glycosylation site abbreviations
+    glycosites_table <- reactive({
       req(skyline_data_wide(), "peptide_sequence" %in% colnames(skyline_data_wide()))
       skyline_data_wide() %>% 
         tidyr::separate(
-          analyte, sep = "1", into = c("abbreviation", "glycan"), extra = "merge"
+          analyte, sep = "1", into = c("glycosite", "glycan"), extra = "merge"
         ) %>% 
-        dplyr::select(peptide_sequence, methionine_oxidation, abbreviation) %>% 
+        dplyr::select(protein, peptide_sequence, methionine_oxidation, glycosite) %>% 
         dplyr::distinct() %>% 
-        dplyr::arrange(peptide_sequence)
+        dplyr::arrange(protein, peptide_sequence)
     })
     
 
@@ -722,7 +736,7 @@ mod_read_lacytools_server <- function(id){
       keyword_total = reactive({input$keyword_total}),
       contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
       summary_filenames = filenames,
-      peptide_sequences = peptide_sequences
+      glycosites_table = glycosites_table
     ))
     
   })

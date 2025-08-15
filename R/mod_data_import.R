@@ -36,14 +36,14 @@ mod_data_import_ui <- function(id){
             div(
               id = ns("peptide_box"),
               shinydashboard::box(
-                title = "Peptide sequences and abbreviations",
+                title = "Glycosylation sites and abbreviations",
                 width = NULL,
                 solidHeader = TRUE,
                 status = "primary",
-                downloadButton(ns("download_peptide_sequences"),
-                               "Download peptide sequences and abbreviations"),
+                downloadButton(ns("download_glycosites"),
+                               "Download table with glycosylation sites"),
                 br(), br(),
-                shinycssloaders::withSpinner(DT::DTOutput(ns("peptide_table")))
+                shinycssloaders::withSpinner(DT::DTOutput(ns("glycosites_table")))
               )
             )
           ),
@@ -195,16 +195,16 @@ mod_data_import_server <- function(id){
     
     # Skyline data: show peptide sequences in table when applicable
     observe({
-      if (is_truthy(LaCyTools_summary$peptide_sequences())) {
+      if (is_truthy(LaCyTools_summary$glycosites_table())) {
         shinyjs::show("peptide_box")
       } else {
         shinyjs::hide("peptide_box")
       }
     })
     
-    output$peptide_table <- DT::renderDT({
-      req(LaCyTools_summary$peptide_sequences())
-      DT::datatable(LaCyTools_summary$peptide_sequences(),
+    output$glycosites_table <- DT::renderDT({
+      req(LaCyTools_summary$glycosites_table())
+      DT::datatable(LaCyTools_summary$glycosites_table(),
                     options = list(
                       scrollX = TRUE,
                       pageLength = 8,
@@ -214,13 +214,13 @@ mod_data_import_server <- function(id){
     })
     
     # Download table as Excel file
-    output$download_peptide_sequences <- downloadHandler(
+    output$download_glycosites_table <- downloadHandler(
       filename = function() {
         current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
-        paste0(current_datetime, "_peptide_sequences.xlsx")
+        paste0(current_datetime, "_glycosylation_sites.xlsx")
       },
       content = function(file) {
-        data_to_download <- LaCyTools_summary$peptide_sequences()
+        data_to_download <- LaCyTools_summary$glycosites_table()
         writexl::write_xlsx(data_to_download, path = file)
       }
     )
@@ -229,7 +229,7 @@ mod_data_import_server <- function(id){
     return(list(
       LaCyTools_summary = to_return,
       data_type = LaCyTools_summary$data_type,
-      peptide_sequences = LaCyTools_summary$peptide_sequences,
+      glycosites_table = LaCyTools_summary$glycosites_table,
       biogroup_cols = biogroup_cols,
       contains_total_and_specific_samples = LaCyTools_summary$contains_total_and_specific_samples,
       keyword_specific = LaCyTools_summary$keyword_specific,
