@@ -85,6 +85,15 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
+    # Show a spinner when sample types are added.
+    # The spinner is removed in the mod_spectra_curation.R after all tabs are generated
+    observeEvent(LaCyTools_summary(), {
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8",
+        text = HTML("<br/><strong>Processing data..")
+      )
+    })
+    
     # Determine the clusters in the data
     glycopeptide_clusters <- reactive({
       req(LaCyTools_summary())
