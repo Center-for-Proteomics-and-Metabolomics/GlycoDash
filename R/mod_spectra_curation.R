@@ -727,6 +727,15 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     })
     
     
+    # Create a list with scatter plots for when spectra curation is skipped
+    observe({
+      req(clusters())
+      r$skipped_spectra_curation_plots <- rlang::set_names(clusters()) %>% 
+        purrr::map(., function(cluster) {
+          r$tab_contents[[cluster]]$plot()
+        })
+    })
+    
     
     # TODO: shorten this code
     observe({
@@ -859,7 +868,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       uncalibrated_as_NA = reactive({ input$uncalibrated_as_na }),
       cut_off = reactive({input$cut_off_basis}),
       tab_contents = reactive({ r$tab_contents }),
-      curated_spectra_plots = reactive({ r$curated_spectra_plots })
+      curated_spectra_plots = reactive({ r$curated_spectra_plots }),
+      skipped_spectra_curation_plots = reactive(r$skipped_spectra_curation_plots)
     ))
     
   })

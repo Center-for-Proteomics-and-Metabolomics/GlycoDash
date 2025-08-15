@@ -22,6 +22,7 @@ params:
   included_qc_spectra: NA
   spectra_curation_tab_contents: NA
   curated_spectra_plots: NA
+  skipped_spectra_curation_plots: NA
   analyte_curation_method: NA
   analyte_curation_choice: NA
   included_qc_analytes: NA
@@ -114,13 +115,20 @@ if (!is.null(params$glycosites_table)) {
     }
     ```
 
-The following analyte quality criteria were taken into account in the calculation of the cut-off for the percentage of passing analytes: `r params$included_qc_spectra`
 
 ### Spectra curation cut-offs
 
 ```{r spectra-curation-cut-offs, results='asis'}
 
-purrr::iwalk(params$spectra_curation_tab_contents, 
+if (length(params$spectra_curation_tab_contents) > 0) {
+  
+  cat(
+    "The following analyte quality criteria were taken into account in the
+    calculation of the cut-off for the percentage of passing analytes:",
+    paste0(params$included_qc_spectra, collapse = ", "), ". \n", "\n"
+  )
+  
+  purrr::iwalk(params$spectra_curation_tab_contents, 
              function(objects_list,
                       name) {
                
@@ -147,6 +155,17 @@ purrr::iwalk(params$spectra_curation_tab_contents,
                
                print(htmltools::tagList(p))
              })
+  
+} else {
+  
+  cat("Spectra curation was skipped. \n \n")
+  
+  purrr::iwalk(params$skipped_spectra_curation_plots, function(plot, name) {
+    cat("####", name, "\n")
+    print(htmltools::tagList(plotly::ggplotly(plot, tooltip = "text")))
+  })
+  
+}
 
 ```
 
@@ -154,7 +173,9 @@ purrr::iwalk(params$spectra_curation_tab_contents,
 
 ```{r spectra-curation-results, results='asis'}
 
-  purrr::iwalk(params$curated_spectra_plots,
+if (length(params$curated_spectra_plots) > 0) {
+  
+    purrr::iwalk(params$curated_spectra_plots,
              function(curated_spectra_plot,
                       name) {
                
@@ -173,6 +194,10 @@ purrr::iwalk(params$spectra_curation_tab_contents,
                
                print(htmltools::tagList(p))
              })
+} else {
+  cat("Spectra curation was skipped. \n \n")
+}
+
 ```
 
 ## Analyte curation
