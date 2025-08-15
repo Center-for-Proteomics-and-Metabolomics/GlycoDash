@@ -159,13 +159,8 @@ mod_read_lacytools_ui <- function(id){
             content = HTML(
               "
               You can upload one Skyline output CSV file. 
-              The file should contain one column specifying the charge states of the
-              analytes. The analytes themselves can be specified in one of two ways:
+              Analytes must be specified in one of two ways:
               <ul>
-                <li>
-                <i>Two separate columns:</i> one with glycosylation sites and one 
-                with glycan compositions.
-                </li>
                 <li>
                 <i>One column</i> where each entry contains both a peptide sequence
                 and a glycan composition (e.g. \"EEQYN[H3N4F1]STYR\").
@@ -173,7 +168,12 @@ mod_read_lacytools_ui <- function(id){
                 carbamidomethyl (CAM) modifications, either fully written out
                 or using three-letter abbreviations.
                 </li>
+                <li>
+                <i>Two separate columns:</i> one with glycosylation sites and one 
+                with glycan compositions.
+                </li>
               </ul>
+              There should also be one column specifying the charge states.
               Additionally, the file should contain columns with \"<i>Total Area MS1</i>\",
               \"<i>Isotope Dot Product</i>\" and \"<i>Average Mass Error PPM</i>\" 
               for each sample name.
