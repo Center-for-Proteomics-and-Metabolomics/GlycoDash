@@ -569,7 +569,8 @@ rename_skyline_isomers <- function(data_renamed_cols) {
   
   # Look for isomers in the glycan compositions, per peptide.
   data <- data_renamed_cols %>% 
-    dplyr::group_by(protein, cluster, glycan, charge) %>% 
+    dplyr::group_by(dplyr::across(tidyselect::any_of(c("protein"))), 
+                    cluster, glycan, charge) %>% 
     dplyr::mutate(n = dplyr::n()) %>% 
     dplyr::ungroup()
   
@@ -580,7 +581,8 @@ rename_skyline_isomers <- function(data_renamed_cols) {
   # n > 1 implies presence of isomers
   data_isomers <- data %>% 
     dplyr::filter(n > 1) %>% 
-    dplyr::group_by(protein, cluster, glycan, charge) %>% 
+    dplyr::group_by(dplyr::across(tidyselect::any_of(c("protein"))), 
+                    cluster, glycan, charge) %>% 
     dplyr::mutate(glycan_unique = make.unique(glycan)) %>% 
     dplyr::ungroup() %>% 
     # Instead of ".1", ".2", etc at the end of duplicates, add "_a","_b", to 

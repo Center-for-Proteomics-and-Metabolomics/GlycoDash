@@ -543,7 +543,7 @@ mod_read_lacytools_server <- function(id){
       if (input$skyline_contains_notes == TRUE) {
         note_column <- input$skyline_note_column
       } else {
-        note_column <-NULL
+        note_column <- NULL
       }
       if (startsWith(input$skyline_analyte_format, "Two")) {
         # Separate cluster and glycan columns
