@@ -3,6 +3,7 @@
 * Allow for more flexibility in the formatting of Skyline data files.
 
 ## Adjustments
+* Improved performance.
 * Glycosylation sites are now ordered alphabetically throughout the dashboard
 and in the output data.
 * Make the download button for the user manual more obvious.

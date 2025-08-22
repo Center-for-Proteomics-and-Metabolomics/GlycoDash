@@ -17,29 +17,19 @@ curate_spectra(checked_data, summarized_checks, cut_offs)
 \code{\link{calculate_cut_offs}}.}
 }
 \value{
-The function returns the three dataframes given as function arguments
-  joined together, with two additional columns:
-  \describe{\item{has_passed_spectra_curation}{This column is \code{TRUE} if
-  the spectrum passed curation and \code{FALSE} if it did not.}
-  \item{reason_for_failure}{This column describes why the spectrum failed
-  curation. The possible reasons are "Calibration failed.", "Percentage of
-  passing analytes and sum intensity below cut-offs.", "Percentage of passing
-  analytes below cut-off." or "Sum intensity below cut-off.". If the spectrum
-  passed curation, reason_for_failure is \code{NA}.}}
+The three dataframes given as function arguments joined together, with two additional columns:
+  \describe{\item{has_passed_spectra_curation}{\code{TRUE} if the spectrum passed curation, \code{FALSE} otherwise.}
+  \item{reason_for_failure}{Describes why the spectrum failed curation, or \code{NA} if it passed.}}
 }
 \description{
-\code{curate_spectra()} performs spectra curation on mass spectrometry data.
-This function should be used after the functions
-\code{\link{check_analyte_quality_criteria}} and
-\code{\link{summarize_spectra_checks}} have been used to calculate the sum
-intensities and percentages of passing analytes for each spectrum and after
-cut-off values have been calculated using \code{\link{calculate_cut_offs}}.
+Optimized version: Reduces join operations, uses left_join instead of full_join,
+and avoids unnecessary relocation and filtering steps. The output remains the same,
+and error handling is preserved. This function performs spectra curation on mass spectrometry data.
 All spectra with sum intensities and percentages of passing analytes above
 the cut-off values pass spectra curation.
 }
 \examples{
 data("example_data")
-
 checked_data <- check_analyte_quality_criteria(my_data = example_data,
                                                min_ppm_deviation = -20,
                                                max_ppm_deviation = 20,
@@ -48,9 +38,7 @@ checked_data <- check_analyte_quality_criteria(my_data = example_data,
                                                criteria_to_consider = c("Mass accuracy",
                                                                         "S/N",
                                                                         "IPQ"))
-
 summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-
 cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
                                control_sample_types = "PBS",
                                exclude_sample_types = NULL,
@@ -59,9 +47,7 @@ cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
                                use_mean_SD = FALSE,
                                SD_factor = NULL,
                                uncalibrated_as_NA = TRUE)
-
 curate_spectra(checked_data = checked_data,
                summarized_checks = summarized_checks,
                cut_offs = cut_offs)
-
 }

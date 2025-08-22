@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_read_lacytools.R
 \name{convert_lacytools_summary}
 \alias{convert_lacytools_summary}
-\title{Convert a LaCyTools summary to a 'tidy' dataframe}
+\title{Convert a LaCyTools summary to a 'tidy' dataframe (Optimized)}
 \usage{
 convert_lacytools_summary(data)
 }
@@ -11,23 +11,12 @@ convert_lacytools_summary(data)
 \code{\link{read_non_rectangular}}.}
 }
 \value{
-This function returns a dataframe with the following columns:
- \describe{ \item{sample_name}{The (unchanged) sample names.}
- \item{analyte}{The analyte. For each sample, there is one row per analyte
- per charge state of that analyte.} \item{charge}{The charge state of the
- analyte.} \item{LaCyTools output formats}{The dataframe will contain one
- column for each LaCyTools output format that was present in the LaCyTools
- summary file.} \item{fraction}{The fraction of the isotopic pattern that was
- included for the analyte.} \item{exact_mass}{The exact mass of the most
- abundant isotopologue of the analyte.}}
+This function returns a dataframe in long format, one row per analyte per charge per sample.
 }
 \description{
-The function \code{convert_lacytools_summary()} can convert a dataframe 
-containing a LaCyTools summary to a 'tidy' dataframe in long format. The long 
-format means that for each sample there is one row per analyte per charge state.
-}
-\examples{
-data("LaCyTools_summary")
-
-convert_lacytools_summary(data = LaCyTools_summary)
+This optimized version preserves all original error handling while
+improving speed and memory usage:
+- Uses lapply/vapply for faster mapping and type safety.
+- Reduces nesting and redundant joins.
+- Keeps aborts/warnings via rlang, as in original.
 }

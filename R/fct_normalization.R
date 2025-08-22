@@ -250,73 +250,81 @@ normalize_data <- function(total_intensities) {
 
 
 
-
-
 #' sample_heatmap
-#' 
-#' Creates a simple heatmap for normalized data. 
-#' Sample names are on the y-axis, glycans are on the x-axis.
-#' Heatmap is created for a specific cluster.
-#' 
+#'
+#' Efficiently creates a heatmap for normalized glycan data by minimizing expensive operations
+#' on unnecessary rows. Sample names are on the y-axis, glycans on the x-axis, for a specific cluster.
+#' The function pre-filters the data before performing separation and sorting, consolidates faceting logic,
+#' and uses vectorized operations for speed.
 #'
 #' @param normalized_data Normalized data in long format.
-#' @param cluster_name Cluster name (character) for which to make the plot
-#' @param exclude_sample_types Character vector with sample types to exclude.
-#' Empty vector is not applicable.
-#' @param group_facet Character: name of column that contains biological groups for facets.
-#' Use an empty character ("") when not applicable. 
+#' @param cluster_name Cluster name (character) for which to make the plot.
+#' @param exclude_sample_types Character vector with sample types to exclude. Empty vector is not applicable.
+#' @param group_facet Character: name of column that contains biological groups for facets. Use "" when not applicable.
 #' @param color_low Color for lowest value.
-#' @param color_mid Color for middle value
-#' @param color_high Color for highest value. 
-#' @param color_na Color to for the background / missing values.
+#' @param color_mid Color for middle value.
+#' @param color_high Color for highest value.
+#' @param color_na Color for the background / missing values.
 #'
-#' @return A ggplot heatmap.
-sample_heatmap <- function(normalized_data,
-                           cluster_name, 
-                           exclude_sample_types,
-                           group_facet,
-                           color_low,
-                           color_mid,
-                           color_high,
-                           color_na) {
-  
-  # Clean data to plot
-  to_plot <- normalized_data %>% 
+#' @return A ggplot2 heatmap object.
+sample_heatmap <- function(
+    normalized_data,
+    cluster_name,
+    exclude_sample_types,
+    group_facet,
+    color_low,
+    color_mid,
+    color_high,
+    color_na
+) {
+  # Pre-filter: only keep rows for the cluster, and not excluded sample types
+  to_plot <- normalized_data %>%
     dplyr::filter(
       cluster == cluster_name,
       !sample_type %in% exclude_sample_types
-    ) %>% 
-    dplyr::select(-cluster) %>% 
-    tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"),
-                    extra = "merge") %>% 
-    sort_glycans(.) 
+    )
   
-  # Check if the plot should be faceted by biological group, and/or Total vs Specific
-  # In that case, remove samples that have no (biological) group assigned.
-  if (group_facet != "") {
-    to_plot <- to_plot %>% 
-      dplyr::filter(!is.na(!!dplyr::sym(group_facet)))
+  # Remove samples without group_facet, if requested
+  if (!identical(group_facet, "") && group_facet %in% colnames(to_plot)) {
+    to_plot <- to_plot %>%
+      dplyr::filter(!is.na(.data[[group_facet]]))
   }
   
-  # Check if the plot should be faceted by Total vs Specific
-  # In that case, remove samples that have no group assigned.
-  if ("group" %in% colnames(normalized_data)) {
-    to_plot <- to_plot %>% 
+  # Remove samples without 'group', if column exists
+  if ("group" %in% colnames(to_plot)) {
+    to_plot <- to_plot %>%
       dplyr::filter(!is.na(group))
   }
   
+  # Only now do expensive tidyr::separate and custom sort
+  to_plot <- to_plot %>%
+    dplyr::select(-cluster) %>%
+    tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"), extra = "merge") %>%
+    sort_glycans()
   
-  # Create simple plot
-  p <- ggplot2::ggplot(to_plot, ggplot2::aes(
-    x = analyte, y = sample_name, fill = relative_abundance,
-    text = paste(
-      "Sample name:", sample_name,
-      "\nSample ID:", sample_id,
-      "\nSample type:", sample_type,
-      "\nAnalyte:", analyte,
-      "\nRelative abundance:", paste0(format(round(relative_abundance, digits = 2), nsmall = 2), "%")
+  # Early exit: if no data to plot, return empty plot with message
+  if (nrow(to_plot) == 0) {
+    return(ggplot2::ggplot() +
+             ggplot2::theme_void() +
+             ggplot2::geom_text(label = "Oops, there is no data to show...", x = 0.5, y = 0.5))
+  }
+  
+  # Create base plot
+  p <- ggplot2::ggplot(
+    to_plot,
+    ggplot2::aes(
+      x = analyte,
+      y = sample_name,
+      fill = relative_abundance,
+      text = paste(
+        "Sample name:", sample_name,
+        "\nSample ID:", sample_id,
+        "\nSample type:", sample_type,
+        "\nAnalyte:", analyte,
+        "\nRelative abundance:", paste0(format(round(relative_abundance, digits = 2), nsmall = 2), "%")
+      )
     )
-  )) +
+  ) +
     ggplot2::geom_tile() +
     ggplot2::labs(x = "", y = "Sample", fill = "Relative abundance (%)") +
     ggplot2::theme_classic() +
@@ -331,19 +339,18 @@ sample_heatmap <- function(normalized_data,
       values = scales::rescale(c(0, 50, 100))
     )
   
-  # Check for faceting
-  if (group_facet != "" & "group" %in% colnames(normalized_data)) {
-    # Facet by biological group and specific/total
-    p <- p +
-      ggplot2::facet_wrap(group ~ get(group_facet), scales = "free_y")
-  } else if (group_facet != "") {
-    # Facet only by biological group
-    p <- p +
-      ggplot2::facet_wrap(~get(group_facet), scales = "free_y")
-  } else if ("group" %in% colnames(normalized_data)) {
-    # Facet only by specific/total
-    p <- p +
-      ggplot2::facet_wrap(~group, scales = "free_y")
+  # Faceting logic, consolidated and simplified
+  facet_formula <- NULL
+  if (!identical(group_facet, "") && "group" %in% colnames(to_plot)) {
+    facet_formula <- stats::as.formula(paste("group ~", group_facet))
+  } else if (!identical(group_facet, "")) {
+    facet_formula <- stats::as.formula(paste("~", group_facet))
+  } else if ("group" %in% colnames(to_plot)) {
+    facet_formula <- stats::as.formula("~ group")
+  }
+  
+  if (!is.null(facet_formula)) {
+    p <- p + ggplot2::facet_wrap(facet_formula, scales = "free_y")
   }
   
   return(p)
@@ -351,106 +358,90 @@ sample_heatmap <- function(normalized_data,
 
 
 
-
 #' cluster_heatmap
-#' 
-#' Creates a heatmap with glycan on x-axis and cluster on y-axis. The median
-#' relative abundance is calculated and shown for each analyte.
+#'
+#' Efficiently creates a heatmap with glycan on x-axis and cluster on y-axis, showing the median
+#' relative abundance for each analyte. Improves performance by pre-filtering data before expensive
+#' separation, sorting, grouping, and summarizing operations. Faceting logic is consolidated and
+#' only performed if necessary. Returns a ggplot2 heatmap or an empty plot if no data is available.
 #'
 #' @param normalized_data Normalized data in long format.
-#' @param exclude_sample_types Character vector with sample types to exclude.
-#' Empty character vector when not applicable.
-#' @param group_facet Character: name of column that contains biological groups for facets.
-#' Use an empty character ("") when not applicable. 
-#' @param color_low Color of lowest value
-#' @param color_mid Color of middle value
-#' @param color_high Color of highest value
+#' @param exclude_sample_types Character vector with sample types to exclude. Empty character vector when not applicable.
+#' @param group_facet Character: name of column that contains biological groups for facets. Use "" when not applicable.
+#' @param color_low Color of lowest value.
+#' @param color_mid Color of middle value.
+#' @param color_high Color of highest value.
 #' @param color_na Color of background/missing values.
 #'
-#' @return A heatmap
-cluster_heatmap <- function(normalized_data,
-                            exclude_sample_types,
-                            group_facet,
-                            color_low,
-                            color_mid,
-                            color_high,
-                            color_na) {
+#' @return A ggplot2 heatmap object.
+cluster_heatmap <- function(
+    normalized_data,
+    exclude_sample_types,
+    group_facet,
+    color_low,
+    color_mid,
+    color_high,
+    color_na
+) {
+  # Pre-filter: remove excluded sample types and NAs in group facets/columns
+  to_plot <- normalized_data %>%
+    dplyr::filter(!sample_type %in% exclude_sample_types)
   
-  # Calculate median relative abundances of each analyte.
-  # Check for faceting by biological group or specific/total.
-  if (group_facet != "" & "group" %in% colnames(normalized_data)) {
-    # Biological groups + Specific/Total
-    to_plot <- normalized_data %>% 
-      dplyr::filter(
-        !is.na(!!dplyr::sym(group_facet)),
-        !is.na(group),
-        !sample_type %in% exclude_sample_types
-      ) %>% 
-      dplyr::select(-cluster) %>% 
-      tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"),
-                      extra = "merge") %>% 
-      sort_glycans(.) %>% 
-      dplyr::group_by(!!dplyr::sym(group_facet), group, cluster, analyte) %>% 
-      dplyr::summarize(
-        median_relative_abundance = median(relative_abundance, na.rm = TRUE)
-      )
-  } else if (group_facet != "") {
-    # Biological groups
-    to_plot <- normalized_data %>% 
-      dplyr::filter(
-        !is.na(!!dplyr::sym(group_facet)),
-        !sample_type %in% exclude_sample_types
-      ) %>% 
-      dplyr::select(-cluster) %>% 
-      tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"),
-                      extra = "merge") %>% 
-      sort_glycans(.) %>% 
-      dplyr::group_by(!!dplyr::sym(group_facet), cluster, analyte) %>% 
-      dplyr::summarize(
-        median_relative_abundance = median(relative_abundance, na.rm = TRUE)
-      )
-  } else if ("group" %in% colnames(normalized_data)) {
-    # Specific/Total
-    to_plot <- normalized_data %>% 
-      dplyr::filter(
-        !is.na(group),
-        !sample_type %in% exclude_sample_types
-      ) %>% 
-      dplyr::select(-cluster) %>% 
-      tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"),
-                      extra = "merge") %>% 
-      sort_glycans(.) %>% 
-      dplyr::group_by(group, cluster, analyte) %>% 
-      dplyr::summarize(
-        median_relative_abundance = median(relative_abundance, na.rm = TRUE)
-      )
+  if (!identical(group_facet, "") && group_facet %in% colnames(to_plot)) {
+    to_plot <- to_plot %>%
+      dplyr::filter(!is.na(.data[[group_facet]]))
+  }
+  if ("group" %in% colnames(to_plot)) {
+    to_plot <- to_plot %>%
+      dplyr::filter(!is.na(group))
+  }
+  
+  # Expensive operations: separate and sort after filtering
+  to_plot <- to_plot %>%
+    dplyr::select(-cluster) %>%
+    tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"), extra = "merge") %>%
+    sort_glycans()
+  
+  # Grouping and summarizing according to facet logic
+  if (!identical(group_facet, "") && "group" %in% colnames(to_plot)) {
+    to_plot <- to_plot %>%
+      dplyr::group_by(.data[[group_facet]], group, cluster, analyte) %>%
+      dplyr::summarize(median_relative_abundance = median(relative_abundance, na.rm = TRUE), .groups = "drop")
+  } else if (!identical(group_facet, "")) {
+    to_plot <- to_plot %>%
+      dplyr::group_by(.data[[group_facet]], cluster, analyte) %>%
+      dplyr::summarize(median_relative_abundance = median(relative_abundance, na.rm = TRUE), .groups = "drop")
+  } else if ("group" %in% colnames(to_plot)) {
+    to_plot <- to_plot %>%
+      dplyr::group_by(group, cluster, analyte) %>%
+      dplyr::summarize(median_relative_abundance = median(relative_abundance, na.rm = TRUE), .groups = "drop")
   } else {
-    # No faceting
-    to_plot <- normalized_data %>%
-      dplyr::filter(!sample_type %in% exclude_sample_types) %>% 
-      tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"),
-                      extra = "merge") %>% 
-      sort_glycans(.) %>%
-      dplyr::group_by(cluster, analyte) %>% 
-      dplyr::summarize(
-        median_relative_abundance = median(relative_abundance, na.rm = TRUE)
-      )
+    to_plot <- to_plot %>%
+      dplyr::group_by(cluster, analyte) %>%
+      dplyr::summarize(median_relative_abundance = median(relative_abundance, na.rm = TRUE), .groups = "drop")
   }
   
-  # Check if the data is empty
+  # Early exit if no data
   if (nrow(to_plot) == 0) {
-    return("Oops, there is no data to show...")
+    return(ggplot2::ggplot() +
+             ggplot2::theme_void() +
+             ggplot2::geom_text(label = "Oops, there is no data to show...", x = 0.5, y = 0.5))
   }
   
-  # Simple plot
-  p <- ggplot2::ggplot(to_plot, ggplot2::aes(
-    x = analyte, y = cluster, fill = median_relative_abundance,
-    text = paste(
-      "Analyte:", analyte,
-      "\nCluster", cluster,
-      "\nMedian relative abundance:", paste0(format(round(median_relative_abundance, digits = 2), nsmall = 2), "%")
+  # Create plot
+  p <- ggplot2::ggplot(
+    to_plot,
+    ggplot2::aes(
+      x = analyte,
+      y = cluster,
+      fill = median_relative_abundance,
+      text = paste(
+        "Analyte:", analyte,
+        "\nCluster", cluster,
+        "\nMedian relative abundance:", paste0(format(round(median_relative_abundance, digits = 2), nsmall = 2), "%")
+      )
     )
-  )) +
+  ) +
     ggplot2::geom_tile() +
     ggplot2::labs(x = "", y = "", fill = "Median relative abundance (%)") +
     ggplot2::theme_classic() +
@@ -464,27 +455,20 @@ cluster_heatmap <- function(normalized_data,
       colors = c(color_low, color_mid, color_high),
       values = scales::rescale(c(0, 50, 100))
     )
-    
-  # Check for biological groups faceting
-  if (group_facet != "") {
-    p <- p + 
-      ggplot2::facet_wrap(~get(group_facet))
+  
+  # Consolidated faceting logic
+  facet_formula <- NULL
+  if (!identical(group_facet, "") && "group" %in% colnames(to_plot)) {
+    facet_formula <- stats::as.formula(paste("group ~", group_facet))
+  } else if (!identical(group_facet, "")) {
+    facet_formula <- stats::as.formula(paste("~", group_facet))
+  } else if ("group" %in% colnames(to_plot)) {
+    facet_formula <- stats::as.formula("~ group")
   }
   
-  # Check for faceting
-  if (group_facet != "" & "group" %in% colnames(normalized_data)) {
-    # Biological groups + Specific/Total
-    p <- p +
-      ggplot2::facet_wrap(group ~ get(group_facet))
-  } else if (group_facet != "") {
-    # Biological groups
-    p <- p +
-      ggplot2::facet_wrap(~get(group_facet))
-  } else if ("group" %in% colnames(normalized_data)) {
-    # Specific/Total
-    p <- p +
-      ggplot2::facet_wrap(~group)
-  } 
+  if (!is.null(facet_formula)) {
+    p <- p + ggplot2::facet_wrap(facet_formula)
+  }
   
   return(p)
 }
