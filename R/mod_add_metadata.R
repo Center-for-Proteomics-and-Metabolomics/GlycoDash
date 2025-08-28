@@ -213,7 +213,9 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
         shinyalert::shinyalert(
           html = TRUE,
           text = paste(
-            "The following column names in your metadata are not allowed:",
+            "The following column names in your metadata are not allowed, because
+            they may conflict with column names that are automatically generated
+            by GlycoDash:",
             shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table"))),
             "<br>Please rename these columns and re-upload your metadata file."
           ),

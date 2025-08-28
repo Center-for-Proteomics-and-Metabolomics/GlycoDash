@@ -2,28 +2,27 @@
 % Please edit documentation in R/fct_read_lacytools.R
 \name{find_widest_row}
 \alias{find_widest_row}
-\title{Find the widest row in a non-rectangular data file}
+\title{Find the widest row in a non-rectangular data file (Optimized)}
 \usage{
 find_widest_row(path, delim)
 }
 \arguments{
-\item{path}{A path to a file with non-rectangular data.}
+\item{path}{File path to non-rectangular data.}
 
-\item{delim}{The field separator used in the file. For example, use "\\t" for 
-files with tab-separated values and "," or ";" for files with comma-separated 
-values (.csv).}
+\item{delim}{The field separator used in the file.}
 }
 \value{
-The number of fields/columns in the widest line of the non-rectangular data file (an integer).
+The number of fields/columns in the widest line (integer).
 }
 \description{
-\code{find_widest_row()} identifies the row/line in a non-rectangular data file
-that contains the highest number of columns/fields. It is used in \code{\link{read_non_rectangular}}
-to determine how many columns need to be read in.
+This optimized version reads the file line-by-line using base R,
+minimizing memory usage and avoiding loading the whole file into RAM.
+It is significantly faster for large files.
 }
-\examples{
-data_file <- system.file("extdata", 
-                         "LaCyTools_summary_example.txt", 
-                         package = "GlycoDash")
-find_widest_row(path = data_file, delim = "\t")
+\details{
+Error and warning handling is preserved from the original:
+- Aborts if file does not exist
+- Aborts on embedded nulls or read errors
+- Aborts if file is empty
+- Warns if delimiter appears incorrect (single column detected)
 }

@@ -1,3 +1,19 @@
+# v1.9.0
+## New features
+* Allow for more flexibility in the formatting of Skyline data files.
+
+## Adjustments
+* Improved performance.
+* Glycosylation sites are now ordered alphabetically throughout the dashboard
+and in the output data.
+* Make the download button for the user manual more obvious.
+* When spectra curation is skipped, the scatter plots with sum intensities
+and percentage of passing analytes will be shown in the HTML report.
+
+## Bug fixes
+* Minor bug fixes.
+
+
 # v1.8.2
 ## Bug fixes
 * Fix a bug in the data import.

@@ -18,27 +18,26 @@ sample_heatmap(
 \arguments{
 \item{normalized_data}{Normalized data in long format.}
 
-\item{cluster_name}{Cluster name (character) for which to make the plot}
+\item{cluster_name}{Cluster name (character) for which to make the plot.}
 
-\item{exclude_sample_types}{Character vector with sample types to exclude.
-Empty vector is not applicable.}
+\item{exclude_sample_types}{Character vector with sample types to exclude. Empty vector is not applicable.}
 
-\item{group_facet}{Character: name of column that contains biological groups for facets.
-Use an empty character ("") when not applicable.}
+\item{group_facet}{Character: name of column that contains biological groups for facets. Use "" when not applicable.}
 
 \item{color_low}{Color for lowest value.}
 
-\item{color_mid}{Color for middle value}
+\item{color_mid}{Color for middle value.}
 
 \item{color_high}{Color for highest value.}
 
-\item{color_na}{Color to for the background / missing values.}
+\item{color_na}{Color for the background / missing values.}
 }
 \value{
-A ggplot heatmap.
+A ggplot2 heatmap object.
 }
 \description{
-Creates a simple heatmap for normalized data. 
-Sample names are on the y-axis, glycans are on the x-axis.
-Heatmap is created for a specific cluster.
+Efficiently creates a heatmap for normalized glycan data by minimizing expensive operations
+on unnecessary rows. Sample names are on the y-axis, glycans on the x-axis, for a specific cluster.
+The function pre-filters the data before performing separation and sorting, consolidates faceting logic,
+and uses vectorized operations for speed.
 }

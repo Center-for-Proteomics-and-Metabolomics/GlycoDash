@@ -85,13 +85,22 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
+    # Show a spinner when sample types are added.
+    # The spinner is removed in the mod_spectra_curation.R after all tabs are generated
+    observeEvent(LaCyTools_summary(), {
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8",
+        text = HTML("<br/><strong>Processing data..")
+      )
+    })
+    
     # Determine the clusters in the data
     glycopeptide_clusters <- reactive({
       req(LaCyTools_summary())
       subset <- LaCyTools_summary() %>% 
         tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge") %>% 
         dplyr::filter(glycan != "")
-      return(unique(subset$cluster))
+      return(sort(unique(subset$cluster)))
     })
     
     peptides <- reactive({
@@ -99,7 +108,7 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
       subset <- LaCyTools_summary() %>% 
         tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge") %>% 
         dplyr::filter(!cluster %in% glycopeptide_clusters())
-      return(unique(subset$cluster))
+      return(sort(unique(subset$cluster)))
     })
     
     

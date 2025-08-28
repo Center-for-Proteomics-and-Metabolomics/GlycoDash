@@ -2,32 +2,20 @@
 % Please edit documentation in R/fct_read_lacytools.R
 \name{read_non_rectangular}
 \alias{read_non_rectangular}
-\title{Read in non-rectangular delimited files}
+\title{Read in non-rectangular delimited files (Optimized)}
 \usage{
 read_non_rectangular(path, delim = "\\t")
 }
 \arguments{
 \item{path}{A path to a file with non-rectangular data.}
 
-\item{delim}{The field separator used in the file. For example, use "\\t" for 
-files with tab-separated values and "," or ";" for files with comma-separated 
-values (.csv).}
+\item{delim}{The field separator used in the file.}
 }
 \value{
-A data frame (\code{\link[base]{data.frame}}) containing the data in 
-the flat file.
+A data.frame containing the data in the flat file.
 }
 \description{
-\code{read_non_rectangular()} can read flat files where the number of fields 
-per line is not constant (non-rectangular data). Blank lines are not skipped 
-and empty fields "" and 0's are interpreted as \code{NA}. This function was 
-created to read LaCyTools summary files (tab-delimited non-rectangular .txt 
-files).
-}
-\examples{
-data_file <- system.file("extdata", 
-                         "LaCyTools_summary_example.txt", 
-                         package = "GlycoDash")
-read_non_rectangular(path = data_file, delim = "\t")
-
+This optimized version uses data.table::fread for much faster file reading,
+especially with large files. It automatically detects the maximum number of
+columns and sets appropriate column names.
 }

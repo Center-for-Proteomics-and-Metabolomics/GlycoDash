@@ -18,7 +18,7 @@ mod_read_lacytools_ui <- function(id){
     selectInput(
       ns("data_type"),
       "Choose which type of data you want to upload:",
-      choices = c("LaCyTools data", "Skyline data"),
+      choices = c("LaCyTools data", "Skyline data (wide format)"),
       selected = "LaCyTools data"
     ),
     fluidRow(
@@ -33,8 +33,8 @@ mod_read_lacytools_ui <- function(id){
           style = "color:#0021B8; font-size: 15px"
         )),
         shinyjs::hidden(div(
-          id = ns("uploaded_skyline"),
-          strong("You uploaded Skyline data. 
+          id = ns("uploaded_skyline_wide"),
+          strong("You uploaded Skyline data in wide format. 
                  To upload a different data type, reload the dashboard."),
           br(),
           br(),
@@ -49,10 +49,65 @@ mod_read_lacytools_ui <- function(id){
           multiple = TRUE
         ),
         fileInput(
-          ns("skyline_input"),
-          "Upload one or more Skyline CSV output files:",
-          multiple = TRUE
+          ns("skyline_input_wide"),
+          "Upload one Skyline CSV output file in wide format:",
+          multiple = FALSE
         ),
+        shinyWidgets::awesomeRadio(
+          ns("skyline_analyte_format"),
+          "Select how analytes are specified:",
+          choices = c(
+            "One column with peptide sequences and modifications",
+            "Two columns: one with glycosylation sites and one with glycans"
+          )
+        ),
+        selectizeInput(
+          ns("skyline_protein_column"),
+          "Select column with protein names:",
+          choices = c()
+        ),
+        selectizeInput(
+          ns("skyline_analyte_column"),
+          "Select column with analytes:",
+          choices = c()
+        ),
+        selectizeInput(
+          ns("skyline_cluster_column"),
+          "Select column with glycosylation sites:",
+          choices = c()
+        ),
+        selectizeInput(
+          ns("skyline_glycan_column"),
+          "Select column with glycan compositions:",
+          choices = c()
+        ),
+        selectizeInput(
+          ns("skyline_charge_column"),
+          "Select column with charge states:",
+          choices = c()
+        ),
+        shinyWidgets::materialSwitch(
+          ns("skyline_contains_notes"),
+          HTML("<i style='font-size:15px;'> Specify column with analyte notes </i>"),
+          status = "success",
+          right = TRUE
+        ),
+        selectizeInput(
+          ns("skyline_note_column"),
+          "Select column with notes:",
+          choices = c()
+        ),
+        shinyWidgets::awesomeCheckbox(
+          ns("skyline_rename_isomers"),
+          label = HTML("<i style='font-size:15px;'> Automatically detect and rename glycan isomers </i>"),
+          value = TRUE
+        ),
+        shinyjs::hidden(div(
+          id = ns("button_div"),
+          actionButton(ns("button"), "Process Skyline data"),
+          br(),
+          br()
+        ))
       ),
       column(
         width = 1,
@@ -100,34 +155,28 @@ mod_read_lacytools_ui <- function(id){
         icon("info-circle", class = "fa-2x") %>% 
           bsplus::bs_embed_popover(
             id = ns("popover"),
-            title = "Skyline data",
+            title = "Skyline data (wide format)",
             content = HTML(
               "
-              You can upload one or more Skyline output CSV file. 
-              The file should contain the following columns:
+              You can upload one Skyline output CSV file. 
+              Analytes must be specified in one of two ways:
               <ul>
-                  <li>
-                  <i> Protein Name </i> <br>
-                  The entries in this column should consist only of letters
-                  <b> (no numbers or spaces). </b>
-                  They must specify the peptide to which the glycan is attached (see below).
-                  </li>
-                  <li>
-                  <i> Peptide </i> <br>
-                  This column should contain the <b> glycan compositions </b> attached to the peptides
-                  specified in <i>Protein Name</i>, the same way they would be specified in LaCyTools 
-                  (e.g. \"H5N2\", \"H4N4F1S1\").
-                  </li>
-                  <li>
-                  <i> Precursor Charge </i> <br>
-                  A number specifying the charge state of the glycopeptide.
-                  </li>
+                <li>
+                <i>One column</i> where each entry contains both a peptide sequence
+                and a glycan composition (e.g. \"EEQYN[H3N4F1]STYR\").
+                A sequence may also contain methionine oxidation and cysteine
+                carbamidomethyl (CAM) modifications, either fully written out
+                or using three-letter abbreviations.
+                </li>
+                <li>
+                <i>Two separate columns:</i> one with glycosylation sites and one 
+                with glycan compositions.
+                </li>
               </ul>
-              Additionally, it should contain columns with \"<i>Total Area MS1</i>\",
+              There should also be one column specifying the charge states.
+              Additionally, the file should contain columns with \"<i>Total Area MS1</i>\",
               \"<i>Isotope Dot Product</i>\" and \"<i>Average Mass Error PPM</i>\" 
               for each sample name.
-              <br> <br>
-              <b>Sample names should not start with a number, and should not contain any spaces.</b>
               "
             ),
             trigger = "hover",
@@ -141,7 +190,7 @@ mod_read_lacytools_ui <- function(id){
     tableOutput(ns("uploaded_files")),
     shinyWidgets::materialSwitch(
       ns("contains_total_and_specific_samples"),
-      HTML("<i style='font-size:15px;'> Specify total and specific immunoglobulin samples </i>"),
+      HTML("<i style='font-size:15px;'> Samples contain specific and total immunoglobulin samples </i>"),
       status = "success",
       right = TRUE
     ),
@@ -179,18 +228,49 @@ mod_read_lacytools_server <- function(id){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
-    # Visibility of fileInputs
+    # Visibility of UI elements
     observe({
       if (input$data_type == "LaCyTools data") {
+        shinyjs::hide("button_div")
         shinyjs::show("lacytools_input")
         shinyjs::show("info_icon_div1")
-        shinyjs::hide("skyline_input")
+        shinyjs::hide("skyline_input_wide")
         shinyjs::hide("info_icon_div2")
-      } else if (input$data_type == "Skyline data") {
+        shinyjs::hide("skyline_analyte_format")
+        shinyjs::hide("skyline_protein_column")
+        shinyjs::hide("skyline_analyte_column")
+        shinyjs::hide("skyline_cluster_column")
+        shinyjs::hide("skyline_glycan_column")
+        shinyjs::hide("skyline_charge_column")
+        shinyjs::hide("skyline_contains_notes")
+        shinyjs::hide("skyline_note_column")
+        shinyjs::hide("skyline_rename_isomers")
+      } else if (input$data_type == "Skyline data (wide format)") {
+        shinyjs::show("button_div")
         shinyjs::hide("lacytools_input")
         shinyjs::hide("info_icon_div1")
-        shinyjs::show("skyline_input")
+        shinyjs::show("skyline_input_wide")
         shinyjs::show("info_icon_div2")
+        shinyjs::show("skyline_analyte_format")
+        shinyjs::show("skyline_charge_column")
+        shinyjs::show("skyline_contains_notes")
+        shinyjs::show("skyline_rename_isomers")
+        if (input$skyline_analyte_format == "One column with peptide sequences and modifications") {
+          shinyjs::show("skyline_protein_column")
+          shinyjs::show("skyline_analyte_column")
+          shinyjs::hide("skyline_cluster_column")
+          shinyjs::hide("skyline_glycan_column")
+        } else {
+          shinyjs::hide("skyline_protein_column")
+          shinyjs::hide("skyline_analyte_column")
+          shinyjs::show("skyline_cluster_column")
+          shinyjs::show("skyline_glycan_column")
+        }
+        if (input$skyline_contains_notes == TRUE) {
+          shinyjs::show("skyline_note_column")
+        } else {
+          shinyjs::hide("skyline_note_column")
+        }
       }
     })
     
@@ -201,10 +281,10 @@ mod_read_lacytools_server <- function(id){
         # LaCyTools --> require text file
         req(input$lacytools_input)
         wrong_file_ext <- subset(input$lacytools_input, !grepl("\\.txt$", name, ignore.case = TRUE))
-      } else if (input$data_type == "Skyline data") {
+      } else if (input$data_type == "Skyline data (wide format)") {
         # Skyline --> require CSV file
-        req(input$skyline_input)
-        wrong_file_ext <- subset(input$skyline_input, !grepl("\\.csv$", name, ignore.case = TRUE))
+        req(input$skyline_input_wide)
+        wrong_file_ext <- subset(input$skyline_input_wide, !grepl("\\.csv$", name, ignore.case = TRUE))
       }
       if (nrow(wrong_file_ext) > 0) {
         FALSE
@@ -223,10 +303,10 @@ mod_read_lacytools_server <- function(id){
           show = !is_truthy(correct_file_ext()),
           text = "Please upload text files."
         )
-      } else if (input$data_type == "Skyline data") {
-        req(input$skyline_input)
+      } else if (input$data_type == "Skyline data (wide format)") {
+        req(input$skyline_input_wide)
         shinyFeedback::feedbackDanger(
-          inputId = "skyline_input",
+          inputId = "skyline_input_wide",
           show = !is_truthy(correct_file_ext()),
           text = "Please upload CSV files."
         )
@@ -234,14 +314,10 @@ mod_read_lacytools_server <- function(id){
     })
   
     
-    # Show the uploaded files in the table
+    # Show the uploaded LaCyTools files in the table
     output$uploaded_files <- renderTable({
-      req(correct_file_ext())
-      if (input$data_type == "LaCyTools data") {
-        uploaded_files <- input$lacytools_input
-      } else if (input$data_type == "Skyline data") {
-        uploaded_files <- input$skyline_input
-      }
+      req(correct_file_ext(), input$data_type == "LaCyTools data")
+      uploaded_files <- input$lacytools_input
       uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
       uploaded_files
     }, striped = TRUE, bordered = TRUE, rownames = TRUE, align = "c")
@@ -273,15 +349,21 @@ mod_read_lacytools_server <- function(id){
         tryCatch(
           expr = read_non_rectangular(datapath),
           embedded_null = function(c) {
-            showNotification(paste("Summary file", i, ":", c$message), type = "error", duration = NULL)
+            showNotification(paste(
+              "Summary file", i, ":", c$message), type = "error", duration = NULL
+            )
             NULL
           },
           empty_file = function(c) {
-            showNotification(paste("Summary file", i, ":", c$message), type = "error", duration = NULL)
+            showNotification(paste(
+              "Summary file", i, ":", c$message), type = "error", duration = NULL
+            )
             NULL
           },
           wrong_delim = function(c) {
-            showNotification(paste("Summary file", i, ":", c$message), type = "error", duration = NULL)
+            showNotification(paste(
+              "Summary file", i, ":", c$message), type = "error", duration = NULL
+            )
             NULL
           }
         )
@@ -306,7 +388,9 @@ mod_read_lacytools_server <- function(id){
         tryCatch(
           expr = convert_lacytools_summary(data = summary),
           no_outputs_present = function(c) {
-            showNotification(paste("In summary file", i, c$message), type = "error", duration = NULL)
+            showNotification(paste(
+              "In summary file", i, c$message), type = "error", duration = NULL
+            )
             shinybusy::remove_modal_spinner()
             return(NULL)
           }
@@ -351,17 +435,100 @@ mod_read_lacytools_server <- function(id){
     ####################  Skyline  ##########################################
     #########################################################################
     
-    # Read raw Skyline data from CSV files.
-    # Isomers are renamed.
-    raw_skyline_data <- reactive({
-      req(correct_file_ext(), input$data_type == "Skyline data", input$skyline_input)
-      purrr::map(input$skyline_input$datapath, function(datapath) {
-        read_skyline_csv(datapath)
-      })
+    # Read raw Skyline data from CSV file.
+    raw_skyline_data_wide <- reactive({
+      req(correct_file_ext(), input$data_type == "Skyline data (wide format)", 
+          input$skyline_input_wide)
+      read_skyline_csv(input$skyline_input_wide$datapath)
+    })
+    
+    # Update column selection options
+    observe({
+      req(raw_skyline_data_wide())
+      columns <- raw_skyline_data_wide() %>% 
+        dplyr::select(
+          -tidyselect::contains("Total.Area.MS1"),
+          -tidyselect::contains("Isotope.Dot.Product"),
+          -tidyselect::contains("Mass.Error.PPM"),
+          -tidyselect::contains("Best.Retention.Time"),
+          -tidyselect::contains("Normalized.Area"),
+          -tidyselect::contains("Replicate.Name"),
+          -tidyselect::contains("Background.MS1")
+          ) %>% 
+        colnames()
+      
+      for (id in c("skyline_protein_column",
+                  "skyline_analyte_column", 
+                  "skyline_cluster_column",
+                  "skyline_glycan_column", 
+                  "skyline_charge_column")) {
+        updateSelectizeInput(inputId = id, choices = columns)
+      }
     })
     
     observe({
-      req(raw_skyline_data())
+      req(raw_skyline_data_wide())
+      if (input$skyline_contains_notes == TRUE) {
+        columns <- raw_skyline_data_wide() %>% 
+          dplyr::select(
+            -tidyselect::contains("Total.Area.MS1"),
+            -tidyselect::contains("Isotope.Dot.Product"),
+            -tidyselect::contains("Mass.Error.PPM"),
+            -tidyselect::contains("Best.Retention.Time"),
+            -tidyselect::contains("Normalized.Area"),
+            -tidyselect::contains("Replicate.Name"),
+            -tidyselect::contains("Background.MS1")
+          ) %>% 
+          colnames()
+        updateSelectizeInput(
+          inputId = "skyline_note_column", choices = columns
+        )
+      }
+    })
+    
+    
+    # Require unique column input names for button
+    observe({
+      # Input column names
+      input_colnames_two <- unique(c(
+        input$skyline_cluster_column, input$skyline_glycan_column, 
+        input$skyline_charge_column
+      ))
+      input_colnames_one <- unique(c(
+        input$skyline_analyte_column, input$skyline_charge_column,
+        input$skyline_protein_column
+      ))
+      # Set requirements
+      req_A <- is_truthy(raw_skyline_data_wide())
+      req_B <- dplyr::case_when(
+        startsWith(input$skyline_analyte_format, "Two") ~ 
+          length(input_colnames_two) == 3,
+        startsWith(input$skyline_analyte_format, "One") ~ 
+          length(input_colnames_one) == 3
+      )
+      # Below only applies when user selects column with notes
+      if (input$skyline_contains_notes == TRUE) {
+        req_C <- dplyr::case_when(
+          startsWith(input$skyline_analyte_format, "Two") ~ 
+            !input$skyline_note_column %in% input_colnames_two,
+          startsWith(input$skyline_analyte_format, "One") ~ 
+            !input$skyline_note_column %in% input_colnames_one
+        )
+      } else {
+        req_C <- TRUE
+      }
+      # Check requirements
+      if (req_A & req_B & req_C) {
+        shinyjs::enable("button")
+      } else {
+        shinyjs::disable("button")
+      }
+    })
+    
+    
+    # Show spinner when processing starts
+    observeEvent(input$button, {
+      req(raw_skyline_data_wide())
       shinybusy::show_modal_spinner(
         spin = "cube-grid", color = "#0275D8",
         text = HTML("<br/><strong>Processing Skyline data...")
@@ -369,40 +536,72 @@ mod_read_lacytools_server <- function(id){
     }, priority = 5)
     
     
-    skyline_data <- reactive({
-      req(raw_skyline_data())
-      purrr::imap(raw_skyline_data(), function(data, i) {
+    # Transform Skyline data
+    # Isomers are renamed when cluster and glycan columns are given separately
+    skyline_data_wide <- reactive({
+      req(raw_skyline_data_wide())
+      if (input$skyline_contains_notes == TRUE) {
+        note_column <- input$skyline_note_column
+      } else {
+        note_column <- NULL
+      }
+      if (startsWith(input$skyline_analyte_format, "Two")) {
+        # Separate cluster and glycan columns
         tryCatch(
-          expr = transform_skyline_data(data, i),
-          missing_columns = function(c) {
-            showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
-            shinybusy::remove_modal_spinner()
-            NULL
-          },
+          expr = transform_skyline_data_wide(
+            raw_skyline_data_wide(),
+            cluster_colname = input$skyline_cluster_column,
+            glycan_colname = input$skyline_glycan_column,
+            charge_colname = input$skyline_charge_column,
+            rename_isomers = input$skyline_rename_isomers,
+            note_colname = note_column
+          ),
           missing_variables = function(c) {
-            showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
-            shinybusy::remove_modal_spinner()
-            NULL
-          },
-          numbers_or_spaces = function(c) {
-            showNotification(paste("In CSV file", i, c$message), type = "error", duration = NULL)
+            showNotification(c$message, type = "error", duration = NULL)
             shinybusy::remove_modal_spinner()
             NULL
           }
         )
-      })
-    })
-    
-    skyline_data_combined <- reactive({
-      req(skyline_data(), !any(sapply(skyline_data(), is.null)))
-      do.call(dplyr::bind_rows, skyline_data())
-    })
+      } else {
+        # One analyte column
+        tryCatch(
+          expr = transform_skyline_data_wide(
+            raw_skyline_data_wide(),
+            protein_colname = input$skyline_protein_column,
+            analyte_colname = input$skyline_analyte_column,
+            charge_colname = input$skyline_charge_column,
+            rename_isomers = input$skyline_rename_isomers,
+            note_colname =  note_column
+          ),
+          missing_variables = function(c) {
+            showNotification(c$message, type = "error", duration = NULL)
+            shinybusy::remove_modal_spinner()
+            NULL
+          }
+        )
+      }
+    }) %>% bindEvent(input$button)
   
-    observeEvent(skyline_data_combined(), {
+    # Remove spinner
+    observeEvent(skyline_data_wide(), {
       shinybusy::remove_modal_spinner()
     })
     
     
+    # Create a table with protein names, peptide sequences and corresponding 
+    # glycosylation site abbreviations
+    glycosites_table <- reactive({
+      req(skyline_data_wide(), "peptide_sequence" %in% colnames(skyline_data_wide()))
+      skyline_data_wide() %>% 
+        tidyr::separate(
+          analyte, sep = "1", into = c("glycosylation_site", "glycan"), extra = "merge"
+        ) %>% 
+        dplyr::select(glycosylation_site, protein, peptide_sequence, methionine_oxidation) %>% 
+        dplyr::distinct() %>% 
+        dplyr::arrange(protein, peptide_sequence)
+    })
+    
+
     # Detect total and specific samples if applicable.
     data_total_and_specific <- reactive({
       
@@ -411,15 +610,15 @@ mod_read_lacytools_server <- function(id){
       
       # Require data and non-empty keywords
       req(
-        any(is_truthy(lacytools_summaries_combined()), is_truthy(skyline_data_combined())),
+        any(is_truthy(lacytools_summaries_combined()), is_truthy(skyline_data_wide())),
         input$keyword_specific,
         input$keyword_total
       )
       
       if (is_truthy(lacytools_summaries_combined())) {
         data_to_check <- lacytools_summaries_combined()
-      } else if (is_truthy(skyline_data_combined())) {
-        data_to_check <- skyline_data_combined()
+      } else if (is_truthy(skyline_data_wide())) {
+        data_to_check <- skyline_data_wide()
       }
       
       summary <- tryCatch(
@@ -474,12 +673,12 @@ mod_read_lacytools_server <- function(id){
     filenames <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data_combined())
+        is_truthy(skyline_data_wide())
       ))
       if (is_truthy(lacytools_summaries_combined())) {
         input$lacytools_input$name
-      } else if (is_truthy(skyline_data_combined())) {
-        input$skyline_input$name
+      } else if (is_truthy(skyline_data_wide())) {
+        input$skyline_input_wide$name
       }
     })
     
@@ -488,15 +687,15 @@ mod_read_lacytools_server <- function(id){
     to_return <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data_combined())
+        is_truthy(skyline_data_wide())
       ))
       tryCatch(
         data_total_and_specific(),
         error = function(e) {
           if (is_truthy(lacytools_summaries_combined())) {
             lacytools_summaries_combined()
-          } else if (is_truthy(skyline_data_combined())) {
-            skyline_data_combined()
+          } else if (is_truthy(skyline_data_wide())) {
+            skyline_data_wide()
           }
         }
       )
@@ -507,8 +706,8 @@ mod_read_lacytools_server <- function(id){
       shinyjs::hide("data_type")
       if (input$data_type == "LaCyTools data") {
         shinyjs::show("uploaded_lacytools")
-      } else if (input$data_type == "Skyline data") {
-        shinyjs::show("uploaded_skyline")
+      } else if (input$data_type == "Skyline data (wide format)") {
+        shinyjs::show("uploaded_skyline_wide")
       }
     })
     
@@ -520,13 +719,24 @@ mod_read_lacytools_server <- function(id){
     })
     
     
+    # Data type to return
+    data_type_to_return <- reactive({
+      if (input$data_type == "LaCyTools data") {
+        "LaCyTools data"
+      } else if (input$data_type == "Skyline data (wide format)") {
+        "Skyline data"
+      }
+    })
+    
+    
     return(list(
       data = to_return_trimmed,
-      data_type = reactive(input$data_type),
+      data_type = data_type_to_return,
       keyword_specific = reactive({input$keyword_specific}),
       keyword_total = reactive({input$keyword_total}),
       contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
-      summary_filenames = filenames
+      summary_filenames = filenames,
+      glycosites_table = glycosites_table
     ))
     
   })

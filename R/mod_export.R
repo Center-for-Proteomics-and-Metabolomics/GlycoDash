@@ -182,6 +182,7 @@ mod_export_server <- function(id,
             NULL
           }
         )
+      
         
         # We do the same thing as above for the analyte curation tabs:
         analyte_curation_tab_contents <- tryCatch(
@@ -281,6 +282,7 @@ mod_export_server <- function(id,
         # other information from the dashboard to pass along to the Report.Rmd
         # markdown file:
         params <- list(
+          # Data impot
           data_type = results_data_import$data_type(),
           summary_filenames = results_data_import$summary_filenames(),
           plate_design = try_call(results_data_import$filenames_plate_design), 
@@ -288,6 +290,8 @@ mod_export_server <- function(id,
           filenames_metadata = try_call(results_data_import$filenames_metadata), 
           sample_types_method = results_data_import$sample_types_method(),
           filename_sample_types = try_call(results_data_import$filename_sample_types),
+          glycosites_table = try_call(results_data_import$glycosites_table),
+          # Spectra curation
           mass_acc = results_spectra_curation$mass_acc(),
           ipq = results_spectra_curation$ipq(),
           sn = results_spectra_curation$sn(),
@@ -296,6 +300,8 @@ mod_export_server <- function(id,
           included_qc_spectra = results_spectra_curation$included_qc(),
           spectra_curation_tab_contents = spectra_curation_tab_contents,
           curated_spectra_plots = curated_spectra_plots,
+          skipped_spectra_curation_plots = results_spectra_curation$skipped_spectra_curation_plots(),
+          # Analyte curation
           analyte_curation_method = results_analyte_curation$method(),
           included_qc_analytes = results_analyte_curation$included_qc(),
           analyte_curation_choice = results_analyte_curation$curation_method(),

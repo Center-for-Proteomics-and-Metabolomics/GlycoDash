@@ -13,23 +13,21 @@ summarize_spectra_checks(checked_data, data_type)
 \item{data_type}{"LaCyTools data" or "Skyline data", determined by file input.}
 }
 \value{
-A dataframe that contains one row per spectrum for each cluster (
-  Thus the number of rows is equal to the number of spectra times the number
-  of clusters). The dataframe contains five columns: \describe{
-  \item{sample_name}{The name of the sample for which this spectrum was
-  recorded.} \item{sample_type}{The type of sample (e.g. negative control,
-  blank etc.).} \item{group}{The group (Total or Specific) that this sample
-  belongs to.} \item{cluster}{The cluster for which the metrics were calculated.}
-  \item{passing_analyte_percentage}{The percentage of analytes that passed the
-  criteria checks in this spectrum.} \item{sum_intensity}{The sum intensity
-  of all passing analytes in this spectrum} }
+A dataframe that contains one row per spectrum for each cluster.
+  The dataframe contains five columns: \describe{
+  \item{sample_name}{The name of the sample for which this spectrum was recorded.}
+  \item{sample_type}{The type of sample (e.g. negative control, blank etc.).}
+  \item{group}{The group (Total or Specific) that this sample belongs to.}
+  \item{cluster}{The cluster for which the metrics were calculated.}
+  \item{passing_analyte_percentage}{The percentage of analytes that passed the criteria checks in this spectrum.}
+  \item{sum_intensity}{The sum intensity of all passing analytes in this spectrum} }
 }
 \description{
-\code{summarize_spectra_checks()} calculates the percentage of passing
-analytes per spectrum and the sum intensity of passing analytes per spectrum.
-\code{summarize_spectra_checks()} should be used after \code{\link{check_analyte_quality_criteria_lacytools}} or 
-\code{\link{check_analyte_quality_criteria_skyline}} has been used to perform analyte quality
-criteria checks for every spectrum and analyte combination in the data.
+Optimized version: Improves grouping and summarization performance by minimizing chained dplyr operations,
+using mutate only where necessary, and retaining output compatibility. Uses left_join if needed and
+efficient conditional logic. This function calculates the percentage of passing analytes per spectrum
+and the sum intensity of passing analytes per spectrum. Should be used after analyte quality criteria
+checks for every spectrum and analyte combination in the data.
 }
 \examples{
 data("example_data")

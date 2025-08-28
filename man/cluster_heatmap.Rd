@@ -17,24 +17,24 @@ cluster_heatmap(
 \arguments{
 \item{normalized_data}{Normalized data in long format.}
 
-\item{exclude_sample_types}{Character vector with sample types to exclude.
-Empty character vector when not applicable.}
+\item{exclude_sample_types}{Character vector with sample types to exclude. Empty character vector when not applicable.}
 
-\item{group_facet}{Character: name of column that contains biological groups for facets.
-Use an empty character ("") when not applicable.}
+\item{group_facet}{Character: name of column that contains biological groups for facets. Use "" when not applicable.}
 
-\item{color_low}{Color of lowest value}
+\item{color_low}{Color of lowest value.}
 
-\item{color_mid}{Color of middle value}
+\item{color_mid}{Color of middle value.}
 
-\item{color_high}{Color of highest value}
+\item{color_high}{Color of highest value.}
 
 \item{color_na}{Color of background/missing values.}
 }
 \value{
-A heatmap
+A ggplot2 heatmap object.
 }
 \description{
-Creates a heatmap with glycan on x-axis and cluster on y-axis. The median
-relative abundance is calculated and shown for each analyte.
+Efficiently creates a heatmap with glycan on x-axis and cluster on y-axis, showing the median
+relative abundance for each analyte. Improves performance by pre-filtering data before expensive
+separation, sorting, grouping, and summarizing operations. Faceting logic is consolidated and
+only performed if necessary. Returns a ggplot2 heatmap or an empty plot if no data is available.
 }

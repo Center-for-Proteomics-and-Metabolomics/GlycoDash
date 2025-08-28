@@ -9,29 +9,28 @@ apply_chosen_criteria(my_data, criteria_to_consider)
 \arguments{
 \item{my_data}{The return value of the function
 \code{\link{check_each_criterium}}.}
+
+\item{criteria_to_consider}{Character vector indicating which criteria columns to use.}
 }
 \value{
 The original dataframe my_data with an additional column
   \code{analyte_meets_criteria} that is \code{TRUE} if the analyte fulfills
-  all criteria in \code{criteria_to_consider} and otherwise is \code{FALSE}.
+  all criteria in \code{criteria_to_consider}, otherwise \code{FALSE}.
 }
 \description{
-\code{apply_chosen_criteria()} determines if the analyte quality criteria in
-criteria to consider were all fulfilled and is used inside the function
-\code{\link{check_analyte_quality_criteria}}.
+Optimized version: Ensures logical columns, uses vectorized row-wise checking, and minimizes 
+dataframe copying. Maintains error handling and output compatibility. Determines if the analyte
+quality criteria in criteria_to_consider were all fulfilled.
 }
 \examples{
 data(example_data)
-
 checked <- check_criteria_lacytools(my_data = example_data,
                      min_ppm_deviation = -20,
                      max_ppm_deviation = 20,
                      max_ipq = 0.2,
                      min_sn = 9)
-
 apply_chosen_criteria(my_data = checked,
                       criteria_to_consider = c("Mass accuracy",
                                                "S/N",
                                                "IPQ"))
-
 }

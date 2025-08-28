@@ -423,7 +423,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     clusters <- reactive({
       req(data_to_check())
       data <- data_to_check()
-      return(unique(data$cluster))
+      return(sort(unique(data$cluster)))
     })
     
     created_tabs <- reactiveValues(clusters = c(""))
@@ -502,7 +502,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     })
   
     
-    # Check if there are clusters for which all negative controls were uncalibrated
+    
+    # Check for missing cluster cut-offs
     missing_cluster_cut_offs <- reactive({
       if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
         # Check if data contains total and specific samples
@@ -516,12 +517,19 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         }
         # Check if there are cut-offs missing for clusters
         to_check <- cut_offs_to_use_all_clusters()$cluster
-        identical <- identical(
-          # Need to order elements in the character vectors to compare
-          to_check[stringr::str_order(to_check)],
-          to_compare[stringr::str_order(to_compare)]
+        # Create frequency tables for both vectors
+        freq_to_check <- table(to_check)
+        freq_to_compare <- table(to_compare)
+        # Check if all elements in to_compare are in to_check with the same or higher frequency
+        all_present <- all(
+          freq_to_compare[names(freq_to_compare)] <= freq_to_check[names(freq_to_compare)]
         )
-        if (identical) {
+        if (is.na(all_present)) {
+          # NA for all_present occurs when a manual cut-off is set for a cluster
+          # before a sample type was chosen to use as negative controls.
+          # Then there is only a cut-off for that cluster and the comparison won't work.
+          return(TRUE)
+        } else if (all_present) {
           return(FALSE)
         } else {
           return(TRUE)
@@ -719,6 +727,19 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     })
     
     
+    # Create a list with scatter plots for when spectra curation is skipped.
+    # Then remove the spinner that starts in the data import tab
+    observe({
+      req(clusters())
+      # List with plots
+      r$skipped_spectra_curation_plots <- rlang::set_names(clusters()) %>% 
+        purrr::map(., function(cluster) {
+          r$tab_contents[[cluster]]$plot()
+        })
+      # Remove spinner
+      shinybusy::remove_modal_spinner()
+    })
+    
     
     # TODO: shorten this code
     observe({
@@ -851,7 +872,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       uncalibrated_as_NA = reactive({ input$uncalibrated_as_na }),
       cut_off = reactive({input$cut_off_basis}),
       tab_contents = reactive({ r$tab_contents }),
-      curated_spectra_plots = reactive({ r$curated_spectra_plots })
+      curated_spectra_plots = reactive({ r$curated_spectra_plots }),
+      skipped_spectra_curation_plots = reactive(r$skipped_spectra_curation_plots)
     ))
     
   })
