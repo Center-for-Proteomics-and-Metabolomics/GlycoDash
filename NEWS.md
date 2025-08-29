@@ -1,3 +1,8 @@
+# v1.9.1
+## Bug fixes
+* Bug fix in LaCyTools data import.
+
+
 # v1.9.0
 ## New features
 * Allow for more flexibility in the formatting of Skyline data files.
