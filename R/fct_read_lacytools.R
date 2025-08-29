@@ -16,40 +16,51 @@ outputs <- as.list(unlist(lapply(output_types,
 
 
 
-#' Read in non-rectangular delimited files (Optimized)
+#' Read in non-rectangular delimited files
 #' 
-#' This optimized version uses data.table::fread for much faster file reading,
-#' especially with large files. It automatically detects the maximum number of
-#' columns and sets appropriate column names.
+#' \code{read_non_rectangular()} can read flat files where the number of fields 
+#' per line is not constant (non-rectangular data). Blank lines are not skipped 
+#' and empty fields "" and 0's are interpreted as \code{NA}. This function was 
+#' created to read LaCyTools summary files (tab-delimited non-rectangular .txt 
+#' files).
 #'
 #' @param path A path to a file with non-rectangular data.
-#' @param delim The field separator used in the file.
-#' @return A data.frame containing the data in the flat file.
+#' @param delim The field separator used in the file. For example, use "\\t" for 
+#' files with tab-separated values and "," or ";" for files with comma-separated 
+#' values (.csv).
+#'
+#' @return A data frame (\code{\link[base]{data.frame}}) containing the data in 
+#' the flat file.
 #' @export
+#' 
+#' @importFrom utils read.table
+#'
+#' @examples 
+#' data_file <- system.file("extdata", 
+#'                          "LaCyTools_summary_example.txt", 
+#'                          package = "GlycoDash")
+#' read_non_rectangular(path = data_file, delim = "\t")
+#' 
 read_non_rectangular <- function(path, delim = "\t") {
-  # Use base R for fastest line-by-line column counting
-  con <- file(path, "r")
-  on.exit(close(con))
-  max_n_columns <- 0
-  while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
-    n_cols <- length(strsplit(line, delim, fixed = TRUE)[[1]])
-    if (n_cols > max_n_columns) max_n_columns <- n_cols
+  
+  max_n_columns <- find_widest_row(path = path,
+                                   delim = delim)
+  
+  column_names <- vector()
+  for (i in 1:max_n_columns) {
+    column_names[i] <- paste("col", i, sep = "_")
   }
-  # Use data.table for fast reading and filling
-  requireNamespace("data.table", quietly = TRUE)
-  column_names <- paste0("col_", seq_len(max_n_columns))
-  data <- data.table::fread(
-    input = path,
-    sep = delim,
-    fill = TRUE,
-    header = FALSE,
-    na.strings = c("", "0"),
-    blank.lines.skip = FALSE,
-    col.names = column_names,
-    data.table = FALSE
-  )
+  
+  data <- read.table(path, 
+                     fill = TRUE, 
+                     header = FALSE, 
+                     col.names = column_names, 
+                     sep = delim, 
+                     blank.lines.skip = FALSE, 
+                     na.strings = c("", "0"))
   return(data)
 }
+
 
 
 
