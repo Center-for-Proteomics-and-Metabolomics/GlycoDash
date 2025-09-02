@@ -1,3 +1,8 @@
+# v1.9.2
+## Bug fixes
+* Bug fix in metadata import.
+
+
 # v1.9.1
 ## Bug fixes
 * Bug fix in LaCyTools data import.
