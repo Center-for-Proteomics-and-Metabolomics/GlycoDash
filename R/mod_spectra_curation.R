@@ -730,7 +730,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     # Create a list with scatter plots for when spectra curation is skipped.
     # Then remove the spinner that starts in the data import tab
     observe({
-      req(clusters())
+      req(clusters(), !is.null(r$tab_contents))
       # List with plots
       r$skipped_spectra_curation_plots <- rlang::set_names(clusters()) %>% 
         purrr::map(., function(cluster) {
