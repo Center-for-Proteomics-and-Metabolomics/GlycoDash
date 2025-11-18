@@ -4,12 +4,11 @@
 \alias{rename_skyline_isomers}
 \title{rename_skyline_isomers}
 \usage{
-rename_skyline_isomers(raw_skyline_data, i)
+rename_skyline_isomers(data_renamed_cols)
 }
 \arguments{
-\item{raw_skyline_data}{Imported skyline CSV data from the read_skyline_csv() function.}
-
-\item{i}{Number of the Skyline CSV file that is being processed}
+\item{data_renamed_cols}{Imported skyline CSV data from the read_skyline_csv() function, with renamed
+columns to have "cluster", "glycan" and "charge".}
 }
 \value{
 Skyline CSV data with glycan compositions of isomers renamed using "_a", "_b", etc.

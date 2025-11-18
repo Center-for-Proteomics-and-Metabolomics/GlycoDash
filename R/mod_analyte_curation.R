@@ -524,7 +524,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       removeNotification(ns("msg_data_changed"))
       # Update the counter
       counter$count <- counter$count + 1
-      # Show spinner
+      # Show spinner, it is removed after data normalization
       shinybusy::show_modal_spinner(
         spin = "cube-grid", color = "#0275D8",
         text = HTML("<br/><strong>Curating analytes...")
@@ -729,7 +729,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     # Create a vector with names of the clusters
     clusters <- reactive({
       req(analyte_curated_data())
-      unique(analyte_curated_data()$cluster)
+      sort(unique(analyte_curated_data()$cluster))
     })
     
 
@@ -809,8 +809,6 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
         }) %>% 
           purrr::reduce(dplyr::full_join)
       }
-      # Remove spinner  
-      shinybusy::remove_modal_spinner()
       
       # Get data with non-glycosylated peptides
       non_glycosylated <- passing_spectra() %>% 

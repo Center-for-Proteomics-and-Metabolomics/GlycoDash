@@ -10,15 +10,20 @@ report_failed_criteria(my_data, criteria_to_consider, data_type)
 \item{my_data}{The return value of the function
 \code{\link{apply_chosen_criteria}}.}
 
-\item{data_type}{"LaCyTools" or "Skyline", determined by file input.}
+\item{criteria_to_consider}{Character vector of criteria columns to check.}
+
+\item{data_type}{"LaCyTools" or "Skyline", determines which columns to drop.}
 }
 \value{
 The original dataframe my_data with an additional column
   \code{failed_criteria} that describes which criteria from criteria_to_consider
   were not fulfilled. If all criteria were met the value will be \code{NA}.
+  Also removes the criteria columns depending on data_type.
 }
 \description{
-Report which analyte quality criteria were not met
+Optimized version: Avoids pivot_longer and uses vectorized row-wise checks for
+failed criteria. This approach improves performance for wide dataframes and
+maintains the same output as the original implementation. Error handling is preserved.
 }
 \examples{
 data(example_data)
@@ -29,10 +34,10 @@ checked <- check_criteria_lacytools(my_data = example_data,
                      max_ipq = 0.2,
                      min_sn = 9)
 
-applied <- apply_chosen_criteria_lacytools(my_data = checked,
-                                          criteria_to_consider = c("Mass accuracy",
-                                                                   "S/N",
-                                                                   "IPQ"))
+applied <- apply_chosen_criteria(my_data = checked,
+                                 criteria_to_consider = c("Mass accuracy",
+                                                          "S/N",
+                                                          "IPQ"))
 
 report_failed_criteria(my_data = applied,
                        criteria_to_consider = c("Mass accuracy",

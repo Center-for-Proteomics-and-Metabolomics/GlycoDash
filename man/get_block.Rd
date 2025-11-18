@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_read_lacytools.R
 \name{get_block}
 \alias{get_block}
-\title{Create a subset containing one block from a LaCyTools summary.}
+\title{Create a subset containing one block from a LaCyTools summary. (Optimized)}
 \usage{
 get_block(data, variable)
 }
@@ -16,11 +16,8 @@ get_block(data, variable)
 A dataframe that is a subset of the input dataframe.
 }
 \description{
-Create a subset containing one block from a LaCyTools summary.
-}
-\examples{
-data(LaCyTools_summary)
-get_block(LaCyTools_summary, 
-          variable = "Absolute Intensity (Background Subtracted, 2+)")
-          
+This optimized version preserves all error/warning handling from the original,
+and improves speed/memory footprint by avoiding unnecessary copies and
+using drop=FALSE for subsetting. It also uses more efficient checks for
+duplicated column names and NA removal.
 }

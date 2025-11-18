@@ -34,7 +34,7 @@ app_server <- function( input, output, session ) {
     }
   )
   
-    
+  # Get results from tabs
   results_data_import <- mod_data_import_server("data_import_ui_1")
   
   results_spectra_curation <- mod_spectra_curation_server(

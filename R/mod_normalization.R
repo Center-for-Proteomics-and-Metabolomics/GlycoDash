@@ -199,6 +199,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       
       return(data)
     })
+    
 
     # Notes from data per analyte (Skyline)
     notes <- reactive({
@@ -233,6 +234,11 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         tidyr::fill(replicates:last_col(), .direction = "downup") %>% 
         dplyr::ungroup() %>% 
         dplyr::distinct()
+    })
+    
+    # Remove the spinner that pops up when analyte curation starts
+    observeEvent(normalized_data(), {
+      shinybusy::remove_modal_spinner()
     })
     
     output$data_table <- DT::renderDT({

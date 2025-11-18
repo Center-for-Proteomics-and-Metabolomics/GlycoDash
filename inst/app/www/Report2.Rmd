@@ -1,5 +1,6 @@
 ---
-title: "GlycoDash v1.8.2 data processing report"
+title: "GlycoDash v1.9.2 data processing report"
+date: "`r Sys.Date()`"
 output: 
   html_document:
     toc: TRUE
@@ -12,6 +13,7 @@ params:
   filenames_metadata: NA
   sample_types_method: NA
   filename_sample_types: NA
+  glycosites_table: NA
   mass_acc: NA
   ipq: NA
   sn: NA
@@ -20,6 +22,7 @@ params:
   included_qc_spectra: NA
   spectra_curation_tab_contents: NA
   curated_spectra_plots: NA
+  skipped_spectra_curation_plots: NA
   analyte_curation_method: NA
   analyte_curation_choice: NA
   included_qc_analytes: NA
@@ -77,6 +80,22 @@ if (params$sample_types_method != "Automatically determine sample types based on
 
 ```
 
+```{r results='asis'}
+
+if (!is.null(params$glycosites_table)) {
+  cat("Glycosylation sites in your data were abbreviated as follows:")
+  params$glycosites_table %>% 
+    kableExtra::kbl() %>%
+    kableExtra::kable_styling(bootstrap_options = "striped",
+                              full_width = F,
+                              position = "left") %>%
+    htmltools::HTML() %>%
+    print()
+}
+
+```
+
+
 ## Spectra curation
 
 -   Analyte quality criteria:
@@ -96,13 +115,20 @@ if (params$sample_types_method != "Automatically determine sample types based on
     }
     ```
 
-The following analyte quality criteria were taken into account in the calculation of the cut-off for the percentage of passing analytes: `r params$included_qc_spectra`
 
 ### Spectra curation cut-offs
 
 ```{r spectra-curation-cut-offs, results='asis'}
 
-purrr::iwalk(params$spectra_curation_tab_contents, 
+if (length(params$spectra_curation_tab_contents) > 0) {
+  
+  cat(
+    "The following analyte quality criteria were taken into account in the
+    calculation of the cut-off for the percentage of passing analytes:",
+    paste0(params$included_qc_spectra, collapse = ", "), ". \n", "\n"
+  )
+  
+  purrr::iwalk(params$spectra_curation_tab_contents, 
              function(objects_list,
                       name) {
                
@@ -129,6 +155,17 @@ purrr::iwalk(params$spectra_curation_tab_contents,
                
                print(htmltools::tagList(p))
              })
+  
+} else {
+  
+  cat("Spectra curation was skipped. \n \n")
+  
+  purrr::iwalk(params$skipped_spectra_curation_plots, function(plot, name) {
+    cat("####", name, "\n")
+    print(htmltools::tagList(plotly::ggplotly(plot, tooltip = "text")))
+  })
+  
+}
 
 ```
 
@@ -136,7 +173,9 @@ purrr::iwalk(params$spectra_curation_tab_contents,
 
 ```{r spectra-curation-results, results='asis'}
 
-  purrr::iwalk(params$curated_spectra_plots,
+if (length(params$curated_spectra_plots) > 0) {
+  
+    purrr::iwalk(params$curated_spectra_plots,
              function(curated_spectra_plot,
                       name) {
                
@@ -155,6 +194,10 @@ purrr::iwalk(params$spectra_curation_tab_contents,
                
                print(htmltools::tagList(p))
              })
+} else {
+  cat("Spectra curation was skipped. \n \n")
+}
+
 ```
 
 ## Analyte curation

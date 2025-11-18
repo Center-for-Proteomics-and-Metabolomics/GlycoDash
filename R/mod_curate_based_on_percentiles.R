@@ -41,7 +41,7 @@ mod_curate_based_on_percentiles_server <- function(id,
     r <- reactiveValues()
     
     observe({
-      req(summarized_checks)
+      req(summarized_checks())
       r$sample_types <- unique(summarized_checks()$sample_type)
     })
     # I'm using a reactiveValue instead of a reactive expression, because a
@@ -51,17 +51,15 @@ mod_curate_based_on_percentiles_server <- function(id,
     
     observe({
       req(r$sample_types)
-      
       updateSelectInput(
         inputId = "exclude_sample_types",
         choices = unique(r$sample_types)
       )
     })
     
+    
     cut_offs <- reactive({
-      req(summarized_checks(),
-          input$percentile)
-      
+      req(summarized_checks(), input$percentile)
       calculate_cut_offs(
         summarized_checks = summarized_checks(),
         percentile = input$percentile,
