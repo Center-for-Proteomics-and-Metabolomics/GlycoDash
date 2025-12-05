@@ -1,13 +1,13 @@
-#' read_lacytools UI Function
+#' read_data UI Function
 #'
-#' @description A shiny Module to upload and read a LaCyTools summary file.
+#' @description A shiny Module to upload and read data.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_read_lacytools_ui <- function(id){
+mod_read_data_ui <- function(id) {
   ns <- NS(id)
   
   shinydashboard::box(
@@ -28,16 +28,14 @@ mod_read_lacytools_ui <- function(id){
           id = ns("uploaded_lacytools"),
           strong("You uploaded LaCyTools data. 
                  To upload a different data type, reload the dashboard."),
-          br(),
-          br(),
+          br(), br(),
           style = "color:#0021B8; font-size: 15px"
         )),
         shinyjs::hidden(div(
           id = ns("uploaded_skyline_wide"),
           strong("You uploaded Skyline data in wide format. 
                  To upload a different data type, reload the dashboard."),
-          br(),
-          br(),
+          br(), br(),
           style = "color:#0021B8; font-size: 15px"
         )),
       ),
@@ -105,8 +103,7 @@ mod_read_lacytools_ui <- function(id){
         shinyjs::hidden(div(
           id = ns("button_div"),
           actionButton(ns("button"), "Process Skyline data"),
-          br(),
-          br()
+          br(), br()
         ))
       ),
       column(
@@ -220,12 +217,11 @@ mod_read_lacytools_ui <- function(id){
 }
   
 
-  
-#' read_lacytools Server Functions
+#' read_data Server Functions
 #'
 #' @noRd 
-mod_read_lacytools_server <- function(id){
-  moduleServer( id, function(input, output, session){
+mod_read_data_server <- function(id) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Visibility of UI elements
@@ -245,7 +241,8 @@ mod_read_lacytools_server <- function(id){
         shinyjs::hide("skyline_contains_notes")
         shinyjs::hide("skyline_note_column")
         shinyjs::hide("skyline_rename_isomers")
-      } else if (input$data_type == "Skyline data (wide format)") {
+      } 
+      else if (input$data_type == "Skyline data (wide format)") {
         shinyjs::show("button_div")
         shinyjs::hide("lacytools_input")
         shinyjs::hide("info_icon_div1")
@@ -260,7 +257,8 @@ mod_read_lacytools_server <- function(id){
           shinyjs::show("skyline_analyte_column")
           shinyjs::hide("skyline_cluster_column")
           shinyjs::hide("skyline_glycan_column")
-        } else {
+        } 
+        else {
           shinyjs::hide("skyline_protein_column")
           shinyjs::hide("skyline_analyte_column")
           shinyjs::show("skyline_cluster_column")
@@ -280,17 +278,22 @@ mod_read_lacytools_server <- function(id){
       if (input$data_type == "LaCyTools data") {
         # LaCyTools --> require text file
         req(input$lacytools_input)
-        wrong_file_ext <- subset(input$lacytools_input, !grepl("\\.txt$", name, ignore.case = TRUE))
-      } else if (input$data_type == "Skyline data (wide format)") {
+        wrong_file_ext <- subset(
+          input$lacytools_input, !grepl("\\.txt$", name, ignore.case = TRUE)
+        )
+      } 
+      else if (input$data_type == "Skyline data (wide format)") {
         # Skyline --> require CSV file
         req(input$skyline_input_wide)
-        wrong_file_ext <- subset(input$skyline_input_wide, !grepl("\\.csv$", name, ignore.case = TRUE))
+        wrong_file_ext <- subset(
+          input$skyline_input_wide, !grepl("\\.csv$", name, ignore.case = TRUE)
+        )
       }
+      
       if (nrow(wrong_file_ext) > 0) {
         FALSE
-      } else {
-        TRUE
       }
+      else TRUE
     })
     
     
@@ -303,7 +306,8 @@ mod_read_lacytools_server <- function(id){
           show = !is_truthy(correct_file_ext()),
           text = "Please upload text files."
         )
-      } else if (input$data_type == "Skyline data (wide format)") {
+      } 
+      else if (input$data_type == "Skyline data (wide format)") {
         req(input$skyline_input_wide)
         shinyFeedback::feedbackDanger(
           inputId = "skyline_input_wide",
@@ -328,14 +332,9 @@ mod_read_lacytools_server <- function(id){
     # textInputs for the keywords are reset to empty strings "". This is needed
     # in case the user first fills in keywords but then changes their mind.
     observe({
-      updateTextInput("keyword_specific",
-                      value = "",
-                      session = session)
-      updateTextInput("keyword_total",
-                      value = "",
-                      session = session)
+      updateTextInput("keyword_specific", value = "", session = session)
+      updateTextInput("keyword_total", value = "", session = session)
     }) %>% bindEvent(input$contains_total_and_specific_samples == FALSE)
-    
     
     
     #########################################################################
