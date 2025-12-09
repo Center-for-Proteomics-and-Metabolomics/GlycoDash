@@ -5,3 +5,8 @@
 manifest.json
 rsconnect/
 Rproj.user
+renv/library/
+renv/local/
+renv/staging/
+renv/cache/
+.renvignore
