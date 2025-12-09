@@ -732,7 +732,7 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
       isotope_dot_product = Isotope.Dot.Product,
       mass_accuracy_ppm = Average.Mass.Error.PPM
     ) %>% 
-    dplyr::mutate(charge = paste0(charge, "+")) %>% 
+    dplyr::mutate(charge = as.character(charge)) %>% 
     dplyr::relocate(charge, .after = analyte) %>% 
     dplyr::relocate(total_area, .after = charge) %>% 
     dplyr::relocate(mass_accuracy_ppm, .after = total_area)
@@ -898,3 +898,60 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
 }
 
 
+#' @title Read SweetSuite Data
+#' 
+#' @description 
+#' This function reads one or more SweetSuite output Excel files.
+#' 
+#' @param datapaths A character vector of file paths to the SweetSuite output Excel files.
+#' 
+#' @return A dataframe combining the 'Data' tabs from all input Excel files.
+#' 
+# Read one or more SweetSuite output Excel files.
+read_sweetsuite_data <- function(datapaths) {
+
+  result <- lapply(seq_along(datapaths), function(i) {
+    datapath <- datapaths[i]
+    # Check if "Data" sheet exists
+    sheets <- readxl::excel_sheets(datapath)
+    if (!"Data" %in% sheets) {
+      rlang::abort(
+        class = "missing_sheet",
+        message = paste0("The 'Data' sheet is missing from file number: ", i)
+      )
+    }
+
+    # Read the data
+    data <- readxl::read_excel(datapath, sheet = "Data")
+
+    # Check for required columns
+    required_cols <- c("file", "analyte", "charge", "mz_exact", "isotopic_fraction",
+                       "total_area_background_subtracted", "mass_error_ppm",
+                       "isotopic_pattern_quality", "signal_to_noise")
+    missing_cols <- setdiff(required_cols, colnames(data))
+    if (length(missing_cols) > 0) {
+      rlang::abort(
+        class = "missing_columns",
+        message = paste0(
+          "The following required columns are missing from the 'Data' sheet in file number ",
+          i, ": ", paste(missing_cols, collapse = ", ")
+        )
+      )
+    }
+
+    # Rename columns for consistency with LaCyTools data
+    data <- data %>%
+      dplyr::rename(
+        sample_name = file,
+        fraction = isotopic_fraction,
+        absolute_intensity_background_subtracted = total_area_background_subtracted,
+        mass_accuracy_ppm = mass_error_ppm,
+        sn = signal_to_noise
+      ) %>%
+      dplyr::mutate(charge = as.character(charge))
+
+    return(data)
+  })
+  
+  return(dplyr::bind_rows(result))
+}
