@@ -1,17 +1,7 @@
-FROM rocker/r-ver:4.5.0
+FROM rocker/verse:4.5.0
 
-# Install system dependencies in one layer and clean up
+# Install any additional system dependencies and clean up
 RUN apt-get update && apt-get install -y \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    libxml2-dev \
-    libfontconfig1-dev \
-    libharfbuzz-dev \
-    libfribidi-dev \
-    libfreetype6-dev \
-    libpng-dev \
-    libtiff5-dev \
-    libjpeg-dev \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /tmp/*
 
@@ -29,7 +19,7 @@ COPY .Rprofile .Rprofile
 COPY renv/activate.R renv/activate.R
 COPY renv/settings.json renv/settings.json
 
-# Install renv and restore packages, then clean up
+# Install renv and restore packages
 RUN R -e 'install.packages("renv")' \
     && R -e 'renv::restore()' \
     && rm -rf /tmp/downloaded_packages/* \
