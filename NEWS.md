@@ -1,5 +1,6 @@
 # v1.10.0
 ## New features
+* Option to upload data from SweetSuite (https://github.com/stainawarijar/SweetSuite).
 * Option to enter notes in the "Export results" section, which will be
 added to the end of the HTML report.
 
