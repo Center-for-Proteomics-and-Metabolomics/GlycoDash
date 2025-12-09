@@ -381,7 +381,7 @@ mod_read_data_server <- function(id) {
         )
       }
       else if (input$data_type == "SweetSuite data") {
-        req(input$sweetsuite_data)
+        req(input$sweetsuite_input)
         shinyFeedback::feedbackDanger(
           inputId = "sweetsuite_input",
           show = !is_truthy(correct_file_ext()),
@@ -824,15 +824,10 @@ mod_read_data_server <- function(id) {
     
     # Data type to return
     data_type_to_return <- reactive({
-      if (input$data_type == "LaCyTools data") {
-        "LaCyTools data"
-      } 
-      else if (input$data_type == "Skyline data (wide format)") {
+      if (input$data_type == "Skyline data (wide format)") {
         "Skyline data"
       }
-      else if (input$data_type == "SweetSuite data") {
-        "SweetSuite data"
-      }
+      else input$data_type
     })
     
     

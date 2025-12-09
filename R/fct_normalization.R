@@ -93,9 +93,10 @@
 calculate_total_intensity <- function(data, data_type) {
   
   # Check for missing columns
-  if (data_type == "LaCyTools data") {
+  if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
     required_columns <- c("absolute_intensity_background_subtracted", "fraction", "sample_name", "analyte")
-  } else if (data_type == "Skyline data") {
+  } 
+  else if (data_type == "Skyline data") {
     required_columns <- c("total_area", "sample_name", "analyte")
   }
   
@@ -109,7 +110,7 @@ calculate_total_intensity <- function(data, data_type) {
   }
   
   # Calculations
-  if (data_type == "LaCyTools data") {
+  if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
     total_intensities <- data %>% 
       dplyr::mutate(intensity_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
       dplyr::group_by(

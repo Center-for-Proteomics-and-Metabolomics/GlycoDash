@@ -266,7 +266,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
     
     # Checkboxes based on data type (LaCyTools or Skyline)
     observeEvent(data_type(), {
-      if (data_type() == "LaCyTools data") {
+      if (data_type() %in% c("LaCyTools data", "SweetSuite data")) {
         shinyWidgets::updateAwesomeCheckboxGroup(
           inputId = "qc_to_include",
           choices = c("Mass accuracy", "Isotopic pattern quality", "S/N"),
@@ -572,7 +572,7 @@ mod_analyte_curation_server <- function(id, results_spectra_curation, biogroup_c
       req(input$method == "Curate analytes based on data")
       req(without_samples_to_ignore())
       
-      if (data_type() == "LaCyTools data") {
+      if (data_type() %in% c("LaCyTools data", "SweetSuite data")) {
         check_analyte_quality_criteria_lacytools(
           without_samples_to_ignore(),
           min_ppm_deviation = results_spectra_curation$mass_acc()[1],

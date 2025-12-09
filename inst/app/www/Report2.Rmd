@@ -103,7 +103,7 @@ if (!is.null(params$glycosites_table)) {
 
     ```{r results='asis'}
 
-    if (params$data_type == "LaCyTools data") {
+    if (params$data_type %in% c("LaCyTools data", "SweetSuite data")) {
       cat("- Acceptable mass accuracy range (ppm): ", min(params$mass_acc), 
           "-", max(params$mass_acc))
       cat("\n- Max. IPQ value: ", params$ipq)

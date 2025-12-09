@@ -286,7 +286,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         shinyjs::hide("sn")
         shinyjs::show("idp")
         shinyjs::show("total_area")
-      } else if (results_data_import$data_type() == "LaCyTools data") {
+      } else if (results_data_import$data_type() %in% c("LaCyTools data", "SweetSuite data")) {
         # Checkboxes to include QC
         shinyWidgets::updateAwesomeCheckboxGroup(
           inputId = "qc_to_include",
@@ -342,7 +342,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       r$tab_contents <- NULL # Reset the tab contents so that 
       # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
       
-      if (results_data_import$data_type() == "LaCyTools data") {
+      if (results_data_import$data_type() %in% c("LaCyTools data", "SweetSuite data")) {
         req(input$sn, input$ipq)
         # Check analyte quality criteria for LaCyTools data
         check_analyte_quality_criteria_lacytools(
