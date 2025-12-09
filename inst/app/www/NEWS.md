@@ -1,3 +1,9 @@
+# v1.10.0
+## New features
+* Option to enter notes in the "Export results" section, which will be
+added to the end of the HTML report.
+
+
 # v1.9.2
 ## Bug fixes
 * Bug fix in metadata import.

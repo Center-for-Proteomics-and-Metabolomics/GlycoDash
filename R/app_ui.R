@@ -18,7 +18,7 @@ app_ui <- function(request) {
       
       # Title header
       header = shinydashboard::dashboardHeader(
-        title = "GlycoDash v1.9.2",
+        title = "GlycoDash v1.10.0",
         tags$li(
           ManualButton("download_manual"), 
           title = "Download latest version of user guide",

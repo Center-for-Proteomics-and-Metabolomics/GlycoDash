@@ -32,6 +32,19 @@ mod_export_ui <- function(id){
             downloadButton(ns("report"),
                            "Generate report")
           )
+        ),
+        column(
+          width = 6,
+          shinydashboard::box(
+            title = "Notes",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            textAreaInput(ns("notes"),
+                          "Enter notes for the report:",
+                          value = "",
+                          rows = 5)
+          )
         )
       ),
       fluidRow(
@@ -331,7 +344,9 @@ mod_export_server <- function(id,
           # Repeatability
           repeatability = repeatability_tab_contents,
           # Data exploration
-          data_exploration = data_exploration_tab_contents
+          data_exploration = data_exploration_tab_contents,
+          # Notes
+          notes = input$notes
         )
         
         # Create a temporary file with a unique name per session to prevent
