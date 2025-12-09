@@ -10,3 +10,16 @@ renv/local/
 renv/staging/
 renv/cache/
 .renvignore
+tests/
+vignettes/
+man/
+*.Rproj
+*.md
+*.Rmd
+NEWS.md
+README.md
+README.Rmd
+dev/
+.vscode/
+.idea/
+*.log
