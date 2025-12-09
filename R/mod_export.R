@@ -16,7 +16,7 @@ mod_export_ui <- function(id){
       ),
       fluidRow(
         column(
-          width = 6,
+          width = 5,
           shinydashboard::box(
             title = "Download the processed data",
             width = NULL,
@@ -34,7 +34,7 @@ mod_export_ui <- function(id){
           )
         ),
         column(
-          width = 6,
+          width = 7,
           shinydashboard::box(
             title = "Notes",
             width = NULL,
