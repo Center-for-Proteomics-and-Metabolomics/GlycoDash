@@ -179,9 +179,14 @@ mod_add_sample_ids_ui <- function(id){
 #' add_sample_ids Server Functions
 #'
 #' @noRd 
-mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, contains_total_and_specific_samples, 
-                                      summary_filenames, LaCyTools_summary) {
-  moduleServer( id, function(input, output, session){
+mod_add_sample_ids_server <- function(
+    id, 
+    keyword_specific, 
+    keyword_total, 
+    contains_total_and_specific_samples, 
+    summary_filenames, 
+    data) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     observe({
@@ -212,12 +217,12 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
     # ID's had already been added to the old summary, the resetter counter is
     # increased with 1 and show_reset_warning is set to TRUE:
     observe({
-      if (is_truthy(LaCyTools_summary()) & is_truthy(data_with_sample_ids())) {
+      if (is_truthy(data()) & is_truthy(data_with_sample_ids())) {
         r$resetter <- isolate(r$resetter) + 1
         r$show_reset_warning <- TRUE
       }
     }) %>% bindEvent(summary_filenames()) # When summary_filenames() updates,
-    # instead of LaCyTools_summary(), because LaCyTools_summary() also changes when total and 
+    # instead of data(), because data() also changes when total and 
     # specific keywords are entered/changed.
     
     
@@ -301,14 +306,14 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
     )
     
     data_with_sample_ids <- reactive({
-      req(LaCyTools_summary())
+      req(data())
       
       shinyFeedback::hideFeedback("sample_id_method")
       
       if (input$sample_id_method == "Upload a plate design") {
         summary_with_plate_well <- tryCatch(
           expr = {
-            detect_plate_and_well(LaCyTools_summary())
+            detect_plate_and_well(data())
           },
           well_precedes_plate = function(c) {
             shinyFeedback::showFeedbackDanger(
@@ -335,7 +340,7 @@ mod_add_sample_ids_server <- function(id, keyword_specific, keyword_total, conta
         }
       } else {
         req(sample_list$sample_list())
-        with_sample_ids <- dplyr::left_join(LaCyTools_summary(),
+        with_sample_ids <- dplyr::left_join(data(),
                                             sample_list$sample_list())
       }
       

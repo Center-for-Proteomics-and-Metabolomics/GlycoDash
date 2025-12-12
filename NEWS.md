@@ -1,3 +1,14 @@
+# v1.10.0
+## New features
+* Option to upload data from SweetSuite (https://github.com/stainawarijar/SweetSuite).
+* Option to enter notes in the "Export results" section, which will be
+added to the end of the HTML report.
+
+## Bug fixes
+* Fixed a bug that caused a crash when uploading a custom traits file.
+* Prevent crash when accidentally excluding all samples in analyte curation.
+
+
 # v1.9.2
 ## Bug fixes
 * Bug fix in metadata import.

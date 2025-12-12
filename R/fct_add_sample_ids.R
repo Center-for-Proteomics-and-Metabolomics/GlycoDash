@@ -280,7 +280,7 @@ read_plate_design <- function(plate_design_file) {
 #'
 #' plate_design <- read_plate_design(path)
 #' process_plate_design(plate_design)
-process_plate_design <- function (plate_design) {
+process_plate_design <- function(plate_design) {
   
   colnames(plate_design)[-1] <- as.character(1:(ncol(plate_design) - 1))
   plate_design <- plate_design %>% 

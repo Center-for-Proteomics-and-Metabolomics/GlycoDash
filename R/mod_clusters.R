@@ -77,17 +77,16 @@ mod_clusters_ui <- function(id) {
 }
 
 
-
 #' clusters Server Functions
 #'
 #' @noRd 
-mod_clusters_server <- function(id, LaCyTools_summary) {
-  moduleServer( id, function(input, output, session) {
+mod_clusters_server <- function(id, data) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Show a spinner when sample types are added.
     # The spinner is removed in the mod_spectra_curation.R after all tabs are generated
-    observeEvent(LaCyTools_summary(), {
+    observeEvent(data(), {
       shinybusy::show_modal_spinner(
         spin = "cube-grid", color = "#0275D8",
         text = HTML("<br/><strong>Processing data..")
@@ -96,18 +95,20 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
     
     # Determine the clusters in the data
     glycopeptide_clusters <- reactive({
-      req(LaCyTools_summary())
-      subset <- LaCyTools_summary() %>% 
+      req(data())
+      subset <- data() %>% 
         tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge") %>% 
         dplyr::filter(glycan != "")
+      
       return(sort(unique(subset$cluster)))
     })
     
     peptides <- reactive({
       req(glycopeptide_clusters())
-      subset <- LaCyTools_summary() %>% 
+      subset <- data() %>% 
         tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge") %>% 
         dplyr::filter(!cluster %in% glycopeptide_clusters())
+      
       return(sort(unique(subset$cluster)))
     })
     
@@ -126,8 +127,8 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
     
     # Create a dataframe with a cluster column when user pushes the button
     data_with_clusters <- reactive({
-      req(LaCyTools_summary())
-      LaCyTools_summary() %>% 
+      req(data())
+      data() %>% 
         tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge",
                         remove = FALSE) %>% 
         dplyr::select(-glycan)
@@ -137,7 +138,6 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
     
     # Determine visibility of UI elements.
     observe({
-      
       shinyjs::toggle("info_detection", condition = !is_truthy(glycopeptide_clusters()))
       shinyjs::toggle("info_clusters", condition = is_truthy(glycopeptide_clusters()))
       shinyjs::toggle("clusters_table", condition = is_truthy(glycopeptide_clusters()))
@@ -145,7 +145,8 @@ mod_clusters_server <- function(id, LaCyTools_summary) {
       if (is_truthy(peptides())) {
         shinyjs::show("info_peptides")
         shinyjs::show("peptides_table")
-      } else {
+      } 
+      else {
         shinyjs::hide("info_peptides")
         shinyjs::hide("peptides_table")
       }

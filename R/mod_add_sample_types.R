@@ -9,7 +9,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_add_sample_types_ui <- function(id){
+mod_add_sample_types_ui <- function(id) {
   ns <- NS(id)
   tagList(
     tags$style(HTML(paste0(
@@ -124,8 +124,8 @@ mod_add_sample_types_ui <- function(id){
 #' add_sample_types Server Functions
 #'
 #' @noRd 
-mod_add_sample_types_server <- function(id, LaCyTools_summary){
-  moduleServer( id, function(input, output, session){
+mod_add_sample_types_server <- function(id, data) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     observe({
@@ -141,52 +141,42 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
       shinyjs::toggleState(
         "button", condition = all(
           input$method == "Automatically determine sample types based on sample ID's",
-          is_truthy(LaCyTools_summary())
+          is_truthy(data())
         )
       )
     })
     
     r <- reactiveValues()
-
-    # observe({
-    #   if (is_truthy(r$with_auto_sample_types)) {
-    #     r$with_auto_sample_types <- NULL
-    #     r$response <- NULL
-    #     r$show_reset_warning <- TRUE
-    #   }
-    # }) %>% bindEvent(LaCyTools_summary())
-    # 
-    # observe({
-    #   if (is_truthy(r$show_reset_warning)) {
-    #     showNotification("Please re-add the sample types to your data.",
-    #                      type = "warning", duration = 10)
-    #     r$show_reset_warning <- FALSE
-    #   }
-    # }) %>% bindEvent(LaCyTools_summary())
     
     observe({
-      req(LaCyTools_summary(),
-          input$method == "Automatically determine sample types based on sample ID's")
-
-      
+      req(
+        data(),
+        input$method == "Automatically determine sample types based on sample ID's"
+      )
       #TODO: convert this to a function:
-      r$with_auto_sample_types <- LaCyTools_summary() %>% 
+      r$with_auto_sample_types <- data() %>% 
         tidyr::extract(col = sample_id,
                        into = c("sample_type"),
                        regex = "([[:alpha:]]+)",
                        remove = FALSE) %>% 
-        dplyr::mutate(sample_type = ifelse(sample_id == "empty cell in plate design",
-                                           "unknown",
-                                           sample_type),
-                      sample_type = ifelse(is.na(sample_type),
-                                           "undetermined",
-                                           sample_type),
-                      sample_type = as.factor(sample_type))
+        dplyr::mutate(
+          sample_type = ifelse(
+            sample_id == "empty cell in plate design",
+            "unknown",
+            sample_type
+          ),
+          sample_type = ifelse(
+            is.na(sample_type),
+            "undetermined",
+            sample_type
+          ),
+          sample_type = as.factor(sample_type)
+        )
     })
     
-    manual_sample_types <- mod_process_sample_type_file_server("process_sample_type_file_ui_1",
-                                                               allowed = c("rds", "xlsx", "xls"))
-    
+    manual_sample_types <- mod_process_sample_type_file_server(
+      "process_sample_type_file_ui_1", allowed = c("rds", "xlsx", "xls")
+    )
     
     
     # In the case of manual sample types: make sure that the sample IDs are unique
@@ -201,6 +191,7 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
         return(non_unique_ids)
       }
     })
+    
     
     observe({
       req(duplicate_sample_ids())
@@ -237,11 +228,10 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     }) 
     
     
-        
     # In the case of manual sample types: check for unmatched ID's
     unmatched_sample_ids <- reactive({
-      req(!is_truthy(duplicate_sample_ids()), LaCyTools_summary(), manual_sample_types$list())
-      unmatched <- setdiff(LaCyTools_summary()$sample_id, manual_sample_types$list()$sample_id)
+      req(!is_truthy(duplicate_sample_ids()), data(), manual_sample_types$list())
+      unmatched <- setdiff(data()$sample_id, manual_sample_types$list()$sample_id)
       if (rlang::is_empty(unmatched)) {
         return(NULL)
       } else return(unmatched)
@@ -284,7 +274,7 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     
     # Combine manual sample types with data
     with_manual_sample_types <- reactive({
-      req(LaCyTools_summary(),
+      req(data(),
           input$method == "Upload a list with sample ID's and corresponding sample types",
           manual_sample_types$list(),
           !is_truthy(unmatched_sample_ids()),
@@ -295,7 +285,7 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
         dplyr::mutate(sample_type = as.factor(sample_type)) %>%
         dplyr::distinct()
 
-      dplyr::left_join(LaCyTools_summary(), sample_types_as_factor) %>%
+      dplyr::left_join(data(), sample_types_as_factor) %>%
         dplyr::relocate(sample_type, .after = sample_id)
     })
     
@@ -344,9 +334,10 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     observe({
       req(!is.null(r$response))
       if(!is_truthy(r$response)) {
-        updateSelectInput("method",
-                          session = session,
-                          selected = "Upload a list with sample ID's and corresponding sample types")
+        updateSelectInput(
+          "method", session = session,
+          selected = "Upload a list with sample ID's and corresponding sample types"
+        )
       }
     })
     
@@ -355,7 +346,8 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
         req(r$response)
         r$with_auto_sample_types
         
-      } else {
+      } 
+      else {
         req(with_manual_sample_types())
         with_manual_sample_types()
       }
@@ -364,15 +356,15 @@ mod_add_sample_types_server <- function(id, LaCyTools_summary){
     output$download_ex_sample_types <- downloadHandler(
       filename = "Example sample types file.xlsx",
       content = function(file) {
-        example_file <- system.file("app",
-                                    "www",
-                                    "Example sample types file.xlsx",
-                                    package = "GlycoDash")
+        example_file <- system.file(
+          "app", "www", "Example sample types file.xlsx",
+          package = "GlycoDash"
+        )
         file.copy(example_file, file)
       }
     )
     
-    
+  
     return(list(
       data = to_return,
       popup = reactive({ r$response }),

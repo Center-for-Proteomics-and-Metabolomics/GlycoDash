@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_derived_traits_ui <- function(id){
+mod_derived_traits_ui <- function(id) {
   ns <- NS(id)
   tagList(
     tags$style(HTML(paste0(
@@ -315,18 +315,20 @@ mod_derived_traits_ui <- function(id){
           id = ns("box"),
           title = div(
             id = ns("box_header"),
-            "Automatically calculated traits plotted against total spectrum intensities",
+            "Traits plotted against total spectrum intensities",
             icon("info-circle", class = "ml") %>%
               bsplus::bs_embed_popover(
                 title = "Explanation",
                 content = HTML(
-                  "
+                "
                 As a sanity check, automatically calculated glycosylation traits
                 are plotted against total spectrum intensities. Correlations
                 between traits and total spectrum intensities for standards
                 (e.g. VisuCon or Pool) indicate that differences in traits between
                 samples are (at least partly) a technical artefact, rather than 
-                a biological effect.
+                a biological effect. <br> <br>
+                Custom traits are only displayed here if their names start 
+                with a cluster present in the data, followed by an underscore.
                 "
                 ),
                 trigger = "hover",
@@ -665,7 +667,11 @@ mod_derived_traits_server <- function(id,
       r$correct_formatting <- TRUE
       # First check for correct columns
       colnames <- colnames(traits_excel())
-      if (!all(ncol == 2, colnames[1] == "trait", colnames[2] == "formula")) {
+      if (!all(
+        length(colnames) == 2,
+        colnames[1] == "trait", 
+        colnames[2] == "formula"
+      )) {
         shinyalert::shinyalert(
           text = "Your Excel file should contain two columns: \"trait\" and \"formula\". Please adjust your file.",
           confirmButtonCol = "tomato"
@@ -1183,23 +1189,17 @@ mod_derived_traits_server <- function(id,
       shinyjs::toggleState("button", length(trait_formulas()) > 0)
     })
     
-
-    
     # Trait formulas to show in dashboard
     r <- reactiveValues(formulas_toshow = NULL)
     
     # Calculate traits when user pushes button
     data_with_derived_traits <- reactive({
       req(trait_formulas())
-      
       clean_traits <- clean_traits(trait_formulas(), normalized_data_wide())
-      
       # Update reactiveValues vector with formulas to show in table
       r$formulas_toshow <- clean_traits$formulas_toshow
-      
       # Return the data
       return(clean_traits$data)
-      
     }) %>% bindEvent(input$button)
     
     
@@ -1223,11 +1223,14 @@ mod_derived_traits_server <- function(id,
     with_data <- reactive({
       if (is_truthy(data_with_all_traits())) {
         data_with_all_traits()
-      } else if (is_truthy(data_with_derived_traits())) {
+      } 
+      else if (is_truthy(data_with_derived_traits())) {
         data_with_derived_traits()
-      } else if (is_truthy(data_with_custom_traits())) {
+      } 
+      else if (is_truthy(data_with_custom_traits())) {
         data_with_custom_traits()
-      } else if (is_truthy(normalized_data_wide())) {
+      } 
+      else if (is_truthy(normalized_data_wide())) {
         normalized_data_wide()
       }
     })

@@ -286,7 +286,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         shinyjs::hide("sn")
         shinyjs::show("idp")
         shinyjs::show("total_area")
-      } else if (results_data_import$data_type() == "LaCyTools data") {
+      } else if (results_data_import$data_type() %in% c("LaCyTools data", "SweetSuite data")) {
         # Checkboxes to include QC
         shinyWidgets::updateAwesomeCheckboxGroup(
           inputId = "qc_to_include",
@@ -305,11 +305,11 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     # If quantitation is done: exlude quantitation clusters except IgG1 glycopeptides.
     # Also exclude non-glycosylated peptides;
     data_to_check <- reactive({
-      req(results_data_import$LaCyTools_summary())
+      req(results_data_import$data())
       if (is_truthy(results_data_import$quantitation_clusters())) {
         clusters <- results_data_import$quantitation_clusters()
         exclude <- clusters[setdiff(names(clusters), "IgG1_cluster_glyco")]
-        to_return <- results_data_import$LaCyTools_summary() %>% 
+        to_return <- results_data_import$data() %>% 
           dplyr::filter(!cluster %in% exclude) %>% 
           dplyr::filter(analyte != paste0(cluster, "1"))
         if (nrow(to_return) > 0) {
@@ -318,7 +318,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
           return(NULL)
         }
       } else {
-        results_data_import$LaCyTools_summary() %>% 
+        results_data_import$data() %>% 
           dplyr::filter(analyte != paste0(cluster, "1"))
       }
     })
@@ -342,7 +342,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       r$tab_contents <- NULL # Reset the tab contents so that 
       # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
       
-      if (results_data_import$data_type() == "LaCyTools data") {
+      if (results_data_import$data_type() %in% c("LaCyTools data", "SweetSuite data")) {
         req(input$sn, input$ipq)
         # Check analyte quality criteria for LaCyTools data
         check_analyte_quality_criteria_lacytools(
@@ -827,7 +827,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     non_glycosylated_data <- reactive({
       req(checked_data())
       
-      peptides <- results_data_import$LaCyTools_summary() %>% 
+      peptides <- results_data_import$data() %>% 
         dplyr::select(sample_name, sample_id, sample_type,
                       cluster, analyte, charge, 
                       tidyselect::any_of(c(

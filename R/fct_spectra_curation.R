@@ -372,7 +372,7 @@ report_failed_criteria <- function(my_data,
 summarize_spectra_checks <- function(checked_data, data_type) {
   grouping_variables <- c("sample_name", "group", "sample_type", "cluster", "sample_id")
   
-  if (data_type == "LaCyTools data") {
+  if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
     # Precompute intensity_divided_by_fraction only for passing analytes
     checked_data <- checked_data %>%
       dplyr::mutate(intensity_divided_by_fraction = absolute_intensity_background_subtracted / fraction)

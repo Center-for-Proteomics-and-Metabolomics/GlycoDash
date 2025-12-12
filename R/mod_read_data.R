@@ -1,13 +1,13 @@
-#' read_lacytools UI Function
+#' read_data UI Function
 #'
-#' @description A shiny Module to upload and read a LaCyTools summary file.
+#' @description A shiny Module to upload and read data.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_read_lacytools_ui <- function(id){
+mod_read_data_ui <- function(id) {
   ns <- NS(id)
   
   shinydashboard::box(
@@ -18,7 +18,9 @@ mod_read_lacytools_ui <- function(id){
     selectInput(
       ns("data_type"),
       "Choose which type of data you want to upload:",
-      choices = c("LaCyTools data", "Skyline data (wide format)"),
+      choices = c(
+        "LaCyTools data", "Skyline data (wide format)", "SweetSuite data"
+      ),
       selected = "LaCyTools data"
     ),
     fluidRow(
@@ -27,17 +29,22 @@ mod_read_lacytools_ui <- function(id){
         shinyjs::hidden(div(
           id = ns("uploaded_lacytools"),
           strong("You uploaded LaCyTools data. 
-                 To upload a different data type, reload the dashboard."),
-          br(),
-          br(),
+                To upload a different data type, reload the dashboard."),
+          br(), br(),
           style = "color:#0021B8; font-size: 15px"
         )),
         shinyjs::hidden(div(
           id = ns("uploaded_skyline_wide"),
           strong("You uploaded Skyline data in wide format. 
-                 To upload a different data type, reload the dashboard."),
-          br(),
-          br(),
+                To upload a different data type, reload the dashboard."),
+          br(), br(),
+          style = "color:#0021B8; font-size: 15px"
+        )),
+      shinyjs::hidden(div(
+          id = ns("uploaded_sweetsuite"),
+          strong("You uploaded SweetSuite data. 
+                To upload a different data type, reload the dashboard."),
+          br(), br(),
           style = "color:#0021B8; font-size: 15px"
         )),
       ),
@@ -52,6 +59,11 @@ mod_read_lacytools_ui <- function(id){
           ns("skyline_input_wide"),
           "Upload one Skyline CSV output file in wide format:",
           multiple = FALSE
+        ),
+        fileInput(
+          ns("sweetsuite_input"),
+          "Upload one or more SweetSuite output xlsx files:",
+          multiple = TRUE
         ),
         shinyWidgets::awesomeRadio(
           ns("skyline_analyte_format"),
@@ -105,8 +117,7 @@ mod_read_lacytools_ui <- function(id){
         shinyjs::hidden(div(
           id = ns("button_div"),
           actionButton(ns("button"), "Process Skyline data"),
-          br(),
-          br()
+          br(), br()
         ))
       ),
       column(
@@ -114,19 +125,24 @@ mod_read_lacytools_ui <- function(id){
         tags$style(
           HTML(paste0(
             "#",
-            ns("info_icon_div1"),
+            ns("info_icon_lacytools"),
             " .fas {margin-top:28px; color: #3c8dbc;}",
             " .popover {width: 400px}",
             " .col-sm-1 {padding-left: 0px}",
             "#",
-            ns("info_icon_div2"),
+            ns("info_icon_skyline"),
+            " .fas {margin-top:28px; color: #3c8dbc;}",
+            " .popover {width: 400px}",
+            " .col-sm-1 {padding-left: 0px}",
+            "#",
+            ns("info_icon_sweetsuite"),
             " .fas {margin-top:28px; color: #3c8dbc;}",
             " .popover {width: 400px}",
             " .col-sm-1 {padding-left: 0px}"
           ))
       ),
         div(
-          id = ns("info_icon_div1"),
+          id = ns("info_icon_lacytools"),
           icon("info-circle", class = "fa-2x") %>% 
             bsplus::bs_embed_popover(
               id = ns("popover"),
@@ -151,7 +167,7 @@ mod_read_lacytools_ui <- function(id){
             )
         ),
       div(
-        id = ns("info_icon_div2"),
+        id = ns("info_icon_skyline"),
         icon("info-circle", class = "fa-2x") %>% 
           bsplus::bs_embed_popover(
             id = ns("popover"),
@@ -174,8 +190,8 @@ mod_read_lacytools_ui <- function(id){
                 </li>
               </ul>
               There should also be one column specifying the charge states.
-              Additionally, the file should contain columns with \"<i>Total Area MS1</i>\",
-              \"<i>Isotope Dot Product</i>\" and \"<i>Average Mass Error PPM</i>\" 
+              Additionally, the file should contain columns with &quot;Total Area MS1&quot;,
+              &quot;Isotope Dot Product&quot; and &quot;Average Mass Error PPM&quot; 
               for each sample name.
               "
             ),
@@ -184,7 +200,24 @@ mod_read_lacytools_ui <- function(id){
             html = "true",
             container = "body"
           )
-        )
+        ),
+        div(
+          id = ns("info_icon_sweetsuite"),
+          icon("info-circle", class = "fa-2x") %>% 
+            bsplus::bs_embed_popover(
+              id = ns("popover"),
+              title = "Sweetsuite data",
+              content = HTML(
+                "Upload one or more SweetSuite output xlsx files.
+                Each file should contain a 'Data' tab, as created
+                by SweetSuite."
+              ),
+              trigger = "hover",
+              placement = "right",
+              html = "true",
+              container = "body"
+            )
+        ),
       )
     ),
     tableOutput(ns("uploaded_files")),
@@ -220,49 +253,72 @@ mod_read_lacytools_ui <- function(id){
 }
   
 
-  
-#' read_lacytools Server Functions
+#' read_data Server Functions
 #'
 #' @noRd 
-mod_read_lacytools_server <- function(id){
-  moduleServer( id, function(input, output, session){
+mod_read_data_server <- function(id) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Visibility of UI elements
     observe({
       if (input$data_type == "LaCyTools data") {
         shinyjs::hide("button_div")
-        shinyjs::show("lacytools_input")
-        shinyjs::show("info_icon_div1")
-        shinyjs::hide("skyline_input_wide")
-        shinyjs::hide("info_icon_div2")
-        shinyjs::hide("skyline_analyte_format")
-        shinyjs::hide("skyline_protein_column")
+        shinyjs::hide("info_icon_skyline")
+        shinyjs::hide("info_icon_sweetsuite")
         shinyjs::hide("skyline_analyte_column")
-        shinyjs::hide("skyline_cluster_column")
-        shinyjs::hide("skyline_glycan_column")
+        shinyjs::hide("skyline_analyte_format")
         shinyjs::hide("skyline_charge_column")
+        shinyjs::hide("skyline_cluster_column")
         shinyjs::hide("skyline_contains_notes")
+        shinyjs::hide("skyline_glycan_column")
+        shinyjs::hide("skyline_input_wide")
         shinyjs::hide("skyline_note_column")
+        shinyjs::hide("skyline_protein_column")
         shinyjs::hide("skyline_rename_isomers")
-      } else if (input$data_type == "Skyline data (wide format)") {
-        shinyjs::show("button_div")
+        shinyjs::hide("sweetsuite_input")
+        shinyjs::show("info_icon_lacytools")
+        shinyjs::show("lacytools_input")
+      } 
+      else if (input$data_type == "SweetSuite data") {
+        shinyjs::hide("button_div")
+        shinyjs::hide("info_icon_lacytools")
+        shinyjs::hide("info_icon_skyline")
         shinyjs::hide("lacytools_input")
-        shinyjs::hide("info_icon_div1")
-        shinyjs::show("skyline_input_wide")
-        shinyjs::show("info_icon_div2")
+        shinyjs::hide("skyline_analyte_column")
+        shinyjs::hide("skyline_analyte_format")
+        shinyjs::hide("skyline_charge_column")
+        shinyjs::hide("skyline_cluster_column")
+        shinyjs::hide("skyline_contains_notes")
+        shinyjs::hide("skyline_glycan_column")
+        shinyjs::hide("skyline_input_wide")
+        shinyjs::hide("skyline_note_column")
+        shinyjs::hide("skyline_protein_column")
+        shinyjs::hide("skyline_rename_isomers")
+        shinyjs::show("info_icon_sweetsuite")
+        shinyjs::show("sweetsuite_input")
+      }
+      else if (input$data_type == "Skyline data (wide format)") {
+        shinyjs::hide("info_icon_lacytools")
+        shinyjs::hide("info_icon_sweetsuite")
+        shinyjs::hide("lacytools_input")
+        shinyjs::hide("sweetsuite_input")
+        shinyjs::show("button_div")
+        shinyjs::show("info_icon_skyline")
         shinyjs::show("skyline_analyte_format")
         shinyjs::show("skyline_charge_column")
         shinyjs::show("skyline_contains_notes")
+        shinyjs::show("skyline_input_wide")
         shinyjs::show("skyline_rename_isomers")
         if (input$skyline_analyte_format == "One column with peptide sequences and modifications") {
-          shinyjs::show("skyline_protein_column")
-          shinyjs::show("skyline_analyte_column")
           shinyjs::hide("skyline_cluster_column")
           shinyjs::hide("skyline_glycan_column")
-        } else {
-          shinyjs::hide("skyline_protein_column")
+          shinyjs::show("skyline_analyte_column")
+          shinyjs::show("skyline_protein_column")
+        } 
+        else {
           shinyjs::hide("skyline_analyte_column")
+          shinyjs::hide("skyline_protein_column")
           shinyjs::show("skyline_cluster_column")
           shinyjs::show("skyline_glycan_column")
         }
@@ -280,17 +336,29 @@ mod_read_lacytools_server <- function(id){
       if (input$data_type == "LaCyTools data") {
         # LaCyTools --> require text file
         req(input$lacytools_input)
-        wrong_file_ext <- subset(input$lacytools_input, !grepl("\\.txt$", name, ignore.case = TRUE))
-      } else if (input$data_type == "Skyline data (wide format)") {
+        wrong_file_ext <- subset(
+          input$lacytools_input, !grepl("\\.txt$", name, ignore.case = TRUE)
+        )
+      } 
+      else if (input$data_type == "Skyline data (wide format)") {
         # Skyline --> require CSV file
         req(input$skyline_input_wide)
-        wrong_file_ext <- subset(input$skyline_input_wide, !grepl("\\.csv$", name, ignore.case = TRUE))
+        wrong_file_ext <- subset(
+          input$skyline_input_wide, !grepl("\\.csv$", name, ignore.case = TRUE)
+        )
       }
+      if (input$data_type == "SweetSuite data") {
+        # SweetSuite --> require xlsx files
+        req(input$sweetsuite_input)
+        wrong_file_ext <- subset(
+          input$sweetsuite_input, !grepl("\\.xlsx$", name, ignore.case = TRUE)
+        )
+      }
+    
       if (nrow(wrong_file_ext) > 0) {
         FALSE
-      } else {
-        TRUE
       }
+      else TRUE
     })
     
     
@@ -303,7 +371,8 @@ mod_read_lacytools_server <- function(id){
           show = !is_truthy(correct_file_ext()),
           text = "Please upload text files."
         )
-      } else if (input$data_type == "Skyline data (wide format)") {
+      } 
+      else if (input$data_type == "Skyline data (wide format)") {
         req(input$skyline_input_wide)
         shinyFeedback::feedbackDanger(
           inputId = "skyline_input_wide",
@@ -311,31 +380,36 @@ mod_read_lacytools_server <- function(id){
           text = "Please upload CSV files."
         )
       }
+      else if (input$data_type == "SweetSuite data") {
+        req(input$sweetsuite_input)
+        shinyFeedback::feedbackDanger(
+          inputId = "sweetsuite_input",
+          show = !is_truthy(correct_file_ext()),
+          text = "Please upload an xlsx file."
+        )
+      }
     })
-  
     
-    # Show the uploaded LaCyTools files in the table
+    # Show the uploaded LaCyTools/SweetSuite files in the table
     output$uploaded_files <- renderTable({
-      req(correct_file_ext(), input$data_type == "LaCyTools data")
-      uploaded_files <- input$lacytools_input
+      req(correct_file_ext(), input$data_type %in% c("LaCyTools data", "SweetSuite data"))
+      if (input$data_type == "SweetSuite data") {
+        uploaded_files <- input$sweetsuite_input
+      } else {
+        uploaded_files <- input$lacytools_input
+      }
       uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
       uploaded_files
     }, striped = TRUE, bordered = TRUE, rownames = TRUE, align = "c")
     
-    
-    
+  
     # If the user changes input$contains_total_and_specific_samples to FALSE  the
     # textInputs for the keywords are reset to empty strings "". This is needed
     # in case the user first fills in keywords but then changes their mind.
     observe({
-      updateTextInput("keyword_specific",
-                      value = "",
-                      session = session)
-      updateTextInput("keyword_total",
-                      value = "",
-                      session = session)
+      updateTextInput("keyword_specific", value = "", session = session)
+      updateTextInput("keyword_total", value = "", session = session)
     }) %>% bindEvent(input$contains_total_and_specific_samples == FALSE)
-    
     
     
     #########################################################################
@@ -429,7 +503,22 @@ mod_read_lacytools_server <- function(id){
         )
       }
     })
+
     
+    ################################################################
+    ####################  SweetSuite  #######################################
+    #########################################################################
+    
+    sweetsuite_data <- reactive({
+      req(correct_file_ext(), input$data_type == "SweetSuite data", input$sweetsuite_input)
+      tryCatch(
+        expr = read_sweetsuite_data(input$sweetsuite_input$datapath),
+        error = function(e) {
+          showNotification(e$message, type = "error", duration = NULL)
+          NULL
+        }
+      )
+    })
     
     #########################################################################
     ####################  Skyline  ##########################################
@@ -673,29 +762,39 @@ mod_read_lacytools_server <- function(id){
     filenames <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data_wide())
+        is_truthy(skyline_data_wide()),
+        is_truthy(sweetsuite_data())
       ))
       if (is_truthy(lacytools_summaries_combined())) {
         input$lacytools_input$name
-      } else if (is_truthy(skyline_data_wide())) {
+      } 
+      else if (is_truthy(skyline_data_wide())) {
         input$skyline_input_wide$name
+      }
+      else if (is_truthy(sweetsuite_data())) {
+        input$sweetsuite_input$name
       }
     })
     
     
-    # Return combined LaCytools summaries or Skyline data
+    # Return the data.
     to_return <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data_wide())
+        is_truthy(skyline_data_wide()),
+        is_truthy(sweetsuite_data())
       ))
       tryCatch(
         data_total_and_specific(),
         error = function(e) {
           if (is_truthy(lacytools_summaries_combined())) {
             lacytools_summaries_combined()
-          } else if (is_truthy(skyline_data_wide())) {
+          } 
+          else if (is_truthy(skyline_data_wide())) {
             skyline_data_wide()
+          }
+          else if (is_truthy(sweetsuite_data())) {
+            sweetsuite_data()
           }
         }
       )
@@ -706,8 +805,12 @@ mod_read_lacytools_server <- function(id){
       shinyjs::hide("data_type")
       if (input$data_type == "LaCyTools data") {
         shinyjs::show("uploaded_lacytools")
-      } else if (input$data_type == "Skyline data (wide format)") {
+      } 
+      else if (input$data_type == "Skyline data (wide format)") {
         shinyjs::show("uploaded_skyline_wide")
+      }
+      else if (input$data_type == "SweetSuite data") {
+        shinyjs::show("uploaded_sweetsuite")
       }
     })
     
@@ -721,11 +824,10 @@ mod_read_lacytools_server <- function(id){
     
     # Data type to return
     data_type_to_return <- reactive({
-      if (input$data_type == "LaCyTools data") {
-        "LaCyTools data"
-      } else if (input$data_type == "Skyline data (wide format)") {
+      if (input$data_type == "Skyline data (wide format)") {
         "Skyline data"
       }
+      else input$data_type
     })
     
     
