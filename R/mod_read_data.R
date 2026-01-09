@@ -699,15 +699,23 @@ mod_read_data_server <- function(id) {
       
       # Require data and non-empty keywords
       req(
-        any(is_truthy(lacytools_summaries_combined()), is_truthy(skyline_data_wide())),
+        any(
+          is_truthy(lacytools_summaries_combined()),
+          is_truthy(skyline_data_wide()),
+          is_truthy(sweetsuite_data())
+        ),
         input$keyword_specific,
         input$keyword_total
       )
       
       if (is_truthy(lacytools_summaries_combined())) {
         data_to_check <- lacytools_summaries_combined()
-      } else if (is_truthy(skyline_data_wide())) {
+      } 
+      else if (is_truthy(skyline_data_wide())) {
         data_to_check <- skyline_data_wide()
+      }
+      else if (is_truthy(sweetsuite_data())) {
+        data_to_check <- sweetsuite_data()
       }
       
       summary <- tryCatch(

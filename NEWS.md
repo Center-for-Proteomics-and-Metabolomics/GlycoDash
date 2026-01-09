@@ -1,3 +1,8 @@
+# v1.10.1
+## Bug fixes
+* Fixed the splitting by total and specific samples for SweetSuite data.
+
+
 # v1.10.0
 ## New features
 * Option to upload data from SweetSuite (https://github.com/stainawarijar/SweetSuite).
