@@ -93,7 +93,7 @@ mod_analyte_curation_ui <- function(id) {
               shinyjs::hidden(div(
                 id = ns("div_biological_groups"),
                 selectInput(
-                  ns("group_column"), 
+                  ns("biogroup_column"), 
                   "Variable in data specifying biological group:",
                   choices = c("")  # Updated in server
                 ),
@@ -209,14 +209,15 @@ mod_analyte_curation_server <- function(id,
       }
     })
     
+    
     # Determine QC parameters based on data type.
-    r <- reactiveValues(qc_parameters = NULL)
+    qc <- reactiveValues(parameters = NULL)
     observeEvent(data_type(), {
       if (data_type() %in% c("LaCyTools data", "SweetSuite data")) {
-        r$qc_parameters <- c("Mass accuracy", "Isotopic pattern quality", "S/N")
+        qc$parameters <- c("Mass accuracy", "Isotopic pattern quality", "S/N")
       }
       else if (data_type() == "Skyline data") {
-        r$qc_parameters <- c("Mass accuracy", "Isotope dot product", "Total area")
+        qc$parameters <- c("Mass accuracy", "Isotope dot product", "Total area")
       }
     })
     
@@ -225,7 +226,7 @@ mod_analyte_curation_server <- function(id,
       # Checkboxes based on data type.
       shinyWidgets::updateAwesomeCheckboxGroup(
         inputId = "qc_to_include", 
-        choices = r$qc_parameters, selected = r$qc_parameters
+        choices = qc$parameters, selected = qc$parameters
       )
     })
     
@@ -239,7 +240,7 @@ mod_analyte_curation_server <- function(id,
         "Isotope dot product" = c(0.9, 0, 1, "Minimum isotope dot product:"),
         "Total area" = c(0, 0, NA, "Minimum total area:")
       )
-      purrr::map(r$qc_parameters, function(param) {
+      purrr::map(qc$parameters, function(param) {
         numericInput(
           ns(param), 
           value = init_map[[param]][1],
@@ -250,6 +251,7 @@ mod_analyte_curation_server <- function(id,
       })
     })
     
+    
     # Add choices for biological groups.
     observe({
       req(biogroup_cols())
@@ -259,16 +261,18 @@ mod_analyte_curation_server <- function(id,
       )
     })
     
+    
     # Output for all spectra that passed the curation
     passing_spectra <- reactive({
       req(results_spectra_curation$passing_spectra())
       results_spectra_curation$passing_spectra()
     })
     
+    
     # Generate inputs for percentages cluster.
     cut_off_ids <- reactive({
       req(passing_spectra(), input$cut_offs_per_cluster)
-      unique(passing_spectra$cluster)
+      unique(passing_spectra()$cluster)
     })
     
     output$cluster_cut_offs_percentages <- renderUI(
@@ -283,231 +287,80 @@ mod_analyte_curation_server <- function(id,
     )
     
     
+    # Options for sample types to ignore.
+    observe({
+      choices <- paste(unique(passing_spectra()$sample_type), "samples")
+      if ("group" %in% colnames(passing_spectra)) {
+        # Add total/specific samples as options.
+        choices <- c(choices, paste(unique(passing_spectra$group), "samples"))
+      }
+      updateSelectizeInput(
+        inputId = "sample_types_to_ignore", choices = c(choices),
+        options = list(maxItems = length(choices) - 1)
+      )
+    })
     
-    # TODO RESTRUCTURE CODE BELOW...
-
-    # Create reactiveValues.
-    # Below, rv_resp$response is created when analyte curation is performed per biological group.
-    # Also store colum name of biological groups, to pass on to normalized data
-    rv_resp <- reactiveValues(response = NULL, biogroups_colname = "")
-
-    # Show pop-up with detected biological groups and ask for confirmation.
+    # Options for biological groups to ignore
     observe({
-      req(input$curation_method == "Per biological group")
-      shinyalert::shinyalert(
-        html = TRUE,
-        text = paste(
-          "The following biological groups were detected:",
-          shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table")))
-        ),
-        size = "m",
-        confirmButtonText = "Accept these as biological groups",
-        showCancelButton = TRUE,
-        cancelButtonText = "Cancel",
-        confirmButtonCol = "#3c8dbc",
-        callbackR = function(response) {
-          rv_resp$response <- response  # TRUE or FALSE, depending on whether user accepts biol. groups.
-          if (response == TRUE) {
-            rv_resp$biogroups_colname <- input$biogroup_column
-          } else {
-            rv_resp$biogroups_colname <- ""
-          }
-        }
-      )
-    }) %>% bindEvent(input$determine_groups_button) # Show pop-up window when button is clicked.
-
-
-    # When user decides to change curation method, set rv_resp$response to NULL
-    observeEvent(input$curation_method, {
-      rv_resp$response <- NULL
-      rv_resp$biogroups_colnames <- ""
-    })
-
-    output$popup_table <- DT::renderDataTable({
-      DT::datatable(
-        data.frame(unique(passing_spectra()[input$biogroup_column])) %>% tidyr::drop_na(),
-        options = list(
-          scrollY = "150px",
-          paging = FALSE,
-          searching = FALSE,
-          columnDefs = list(
-            list(
-              className = 'dt-center',
-              targets = "_all"))),
-        colnames = "",
-        rownames = FALSE
-      )
-    })
-
-
-    # Generate input boxes for cut-offs per cluster
-    cut_off_ids <- reactive({
-      req(passing_spectra(), input$cut_offs_per_cluster == TRUE)
-      unique(passing_spectra()$cluster)
-    })
-
-    output$cluster_cut_offs <- renderUI(
-      purrr::map(cut_off_ids(), function(id) {
-        numericInput(
-          ns(id), label = paste0(id, " cut-off (%)"),
-          min = 0, max = 100, value = 80
-        )
-      })
-    )
-
-
-    # # Show and hide UI based on the chosen method:
-    # observe({
-    # 
-    #   if (input$curation_method == "Per sample") {
-    #     shinyjs::hide("cut_offs_per_cluster")
-    #   }
-    #   else {
-    #     shinyjs::show("cut_offs_per_cluster")
-    #   }
-    # 
-    #   shinyjs::toggle("cut-off", input$cut_offs_per_cluster == FALSE)
-    #   shinyjs::toggle("curation_method",
-    #                   condition = input$method == "Curate analytes based on data")
-    #   shinyjs::toggle("analyte_list_div",
-    #                   condition = input$method == "Supply an analyte list")
-    #   shinyjs::toggle("curation_based_on_data_div",
-    #                   condition = input$method == "Curate analytes based on data")
-    #   shinyjs::toggle("ignore_samples",
-    #                   condition = input$method == "Curate analytes based on data" &
-    #                   input$curation_method != "Per sample")
-    #   shinyjs::toggle("groups_to_ignore",
-    #                  condition = input$method == "Curate analytes based on data" &
-    #                  input$curation_method == "Per biological group")
-    #   # Only enable button under right circumstances:
-    #   shinyjs::toggleState(
-    #     "curate_analytes", condition = all(
-    #       is_truthy(passing_spectra()),
-    #       length(input$qc_to_include) > 0,
-    #       any(
-    #         all(input$method == "Supply an analyte list", is_truthy(analyte_list())),
-    #         all(
-    #           input$method == "Curate analytes based on data",
-    #           any(input$curation_method != "Per biological group", isTRUE(rv_resp$response))
-    #         )
-    #       )
-    #     )
-    #   )
-    #   # Only ask for analyte curation per biological group when "Curate analytes based on data"
-    #   shinyjs::toggle("curate_per_group",
-    #                   condition = input$method == "Curate analytes based on data")
-    #   # Only show drop-down menu to choose biological groups column when the
-    #   # user selects "Yes" when asked if curation should be done per group.
-    #   shinyjs::toggle(
-    #     "biogroup_column",
-    #     condition = input$curation_method == "Per biological group"
-    #   )
-    #   shinyjs::toggle(
-    #     "determine_groups_button",
-    #     condition = input$curation_method == "Per biological group" & input$method == "Curate analytes based on data"
-    #   )
-    #   shinyjs::toggleState(
-    #     "determine_groups_button",
-    #     condition = input$biogroup_column != "" & input$curation_method == "Per biological group"
-    #   )
-    #   # Don't show cut-off option when doing curation per sample.
-    #   shinyjs::toggle(
-    #     "cut_off",
-    #     condition = all(input$curation_method != "Per sample", input$cut_offs_per_cluster == FALSE)
-    #   )
-    #   # Toggle download button
-    #   shinyjs::toggleState(
-    #     "download", condition = is_truthy(with_analytes_to_include())
-    #   )
-    # }, priority = 5)
-
-
-    # The selection menu for input$ignore_samples is updated so that the choices
-    # are sample_types and groups that are present in the data.
-    observe({
-      if ("group" %in% colnames(passing_spectra())) {
-        choices <- c(paste(unique(passing_spectra()$sample_type), "samples"),
-                     paste(unique(passing_spectra()$group), "samples"))
-      }
-      else {
-        choices <- c(paste(unique(passing_spectra()$sample_type), "samples"))
-      }
-
-      updateSelectizeInput(inputId = "ignore_samples",
-                           choices = c(choices),
-                           options = list(maxItems = length(choices) - 1))
-    })
-
-
-    # Update the selection menu for "Biological groups to ignore", based on the chosen column.
-    observe({
-      req(is_truthy(input$biogroup_column), rv_resp$response == TRUE)
+      req(is_truthy(input$biogroup_column))
       choices <- as.character(dplyr::pull(
-        unique(passing_spectra()[input$biogroup_column]) %>%
-        tidyr::drop_na()
-      )) # as.character() for when the column contains factors, as is the case with sample_types
-      updateSelectizeInput(inputId = "groups_to_ignore", choices = c(choices),
-                           options = list(maxItems = length(choices) - 1))
+        unique(passing_spectra()[input$biogroup_column]) %>% 
+          dplyr::drop_na()
+      ))
+      updateSelectizeInput(
+        inputId = "groups_to_ignore", choices = c(choices),
+        options = list(maxItems = length(choices) - 1)
+      )
     })
-
-    observeEvent(input$biogroup_column, {
-      rv_resp$response <- NULL
-      updateSelectizeInput(inputId = "groups_to_ignore", choices = c(""))
-    })
-
-
-    # Read in the analyte list when it is uploaded. Show a Warning if
-    # it's the wrong file extension or not formatted correctly:
+    
+    
+    # Read in the analyte list when it is uploaded. Show a warning if
+    # it's the wrong file extension or not formatted correctly.
     analyte_list <- reactive({
-      req(input$method == "Supply an analyte list")
-      req(input$analyte_list)
+      req(input$curation_method == "Supply an analyte list", input$analyte_list)
       shinyFeedback::hideFeedback("analyte_list")
-
+      
       analytes <- tryCatch(
         expr = {
-          read_analyte_list_file(input$analyte_list$datapath,
-                                 input$analyte_list$name)
-
-      },
-      wrong_extension = function(c) {
-        shinyFeedback::feedbackDanger("analyte_list",
-                                      show = TRUE,
-                                      text = c$message)
-        NULL
-      },
-      missing_columns = function(c) {
-        error_message_first_sentence <- stringr::str_replace(c$message,
-                                                             "(.+\\.).+",
-                                                             "\\1")
-
-        shinyFeedback::feedbackDanger("analyte_list",
-                                      show = TRUE,
-                                      text = error_message_first_sentence)
-        NULL
-      },
-      too_many_columns = function(c) {
-        showNotification(c$message,
-                         type = "error")
-
-        shinyFeedback::feedbackDanger("analyte_list",
-                                      show = TRUE,
-                                      text = c$message)
-        NULL
-      })
-
+          read_analyte_list_file(
+            input$analyte_list$datapath, input$analyte_list$name
+          )
+        },
+        wrong_extension = function(c) {
+          shinyFeedback::feedbackDanger(
+            "analyte_list", show = TRUE, text = c$message
+          )
+          NULL
+        },
+        missing_columns = function(c) {
+          error_message_first_sentence <- stringr::str_replace(
+            c$message, "(.+\\.).+", "\\1"
+          )
+          shinyFeedback::feedbackDanger(
+            "analyte_list", show = TRUE, text = error_message_first_sentence
+          )
+          NULL
+        },
+        too_many_columns = function(c) {
+          showNotification(c$message, type = "error")
+          shinyFeedback::feedbackDanger(
+            "analyte_list", show = TRUE, text = c$message
+          )
+          NULL
+        })
+      
       return(analytes)
     })
-
-
-
+    
+    
     # Create a reactiveValues vector to store results from the tabs.
-    r <- reactiveValues(mod_results = list(),
-                        created_cluster_tabs = vector())
-
+    r <- reactiveValues(
+      mod_results = list(), created_cluster_tabs = vector()
+    )
     # Create a counter to track how many times analyte curation is performed.
     # This is used to generate unique tab ids each curation round.
     counter <- reactiveValues(count = 0)
-
+    
     # When user pushes the button:
     observeEvent(input$curate_analytes, {
       # Remove message (if it exists)
@@ -534,23 +387,25 @@ mod_analyte_curation_server <- function(id,
     },
     # Priority to make sure this code is executed first when button is pushed.
     priority = 10)
-
-
-
-    # without_samples_to_ignore contains the LaCyTools data of the passed spectra,
-    # but without the sample types that the user wants to ignore in analyte curation.
+    
+    
+    # Get data of passing spectra but without samples types to ignore.
     # Non-glycosylated peptides are also excluded.
+    # In case of curation per sample: just the data without non-glycosylated peptides.
     without_samples_to_ignore <- reactive({
-      req(input$method == "Curate analytes based on data")
-      req(passing_spectra())
+      req(passing_spectra(), input$curation_method != "Supply an analyte list")
+      
       without_nonglycosylated <- passing_spectra() %>%
         dplyr::filter(analyte != paste0(cluster, "1"))
+      
       if (input$curation_method == "Per sample") {
         without_nonglycosylated
       }
-      else if (is_truthy(input$ignore_samples)) {
-        throw_out_samples(passing_spectra = without_nonglycosylated,
-                          samples_to_ignore = input$ignore_samples)
+      else if (is_truthy(input$sample_types_to_ignore)) {
+        throw_out_samples(
+          passing_spectra = without_nonglycosylated,
+          samples_to_ignore = input$sample_types_to_ignore
+        )
       }
       else {
         without_nonglycosylated
@@ -561,7 +416,10 @@ mod_analyte_curation_server <- function(id,
     # checked_analytes is the same as without_samples_to_ignore, but with new
     # columns describing whether an analyte fulfills all three quality criteria.
     checked_analytes <- reactive({
-      req(input$method == "Curate analytes based on data")
+      req(input$curation_method %in% c(
+        "Based on percentages of passing spectra", 
+        "Based on average QC parameters"
+      ))
       req(without_samples_to_ignore())
 
       if (data_type() %in% c("LaCyTools data", "SweetSuite data")) {
@@ -583,92 +441,76 @@ mod_analyte_curation_server <- function(id,
           criteria_to_consider = input$qc_to_include
         )
       }
-
     })
+    
 
-
-    # Create a named list with a cut-off percentage for each cluster
-    # If cut-off was accidentally set below 0 or above 100, adjust
-    cut_offs <- reactive({
+    # Create a named list with a cut-off percentage for each cluster.
+    cut_offs_percentages <- reactive({
+      req(passing_spectra())
+      req(input$curation_method == "Based on percentages of passing spectra")
+      
       clusters <- unique(passing_spectra()$cluster)
-      values <- vector("list", length(clusters))
-      names(values) <- clusters
-      if (input$cut_offs_per_cluster == FALSE) {
-        # Same cut-off for each cluster
-        for (cluster in clusters) {
-          cut_off <- dplyr::case_when(
-            input$cut_off < 0 ~ 0,
-            input$cut_off > 100 ~ 100,
-            .default = input$cut_off
-          )
-          values[[cluster]] <- cut_off
-        }
-      } else {
-        # Separate cut-offs
-        for (cluster in clusters) {
-          cut_off <- dplyr::case_when(
+      
+      if (input$cut_offs_per_cluster) {
+        purrr::map(clusters, function(cluster) {
+          dplyr::case_when(
             input[[cluster]] < 0 ~ 0,
             input[[cluster]] > 100 ~ 100,
             .default = input[[cluster]]
           )
-          values[[cluster]] <- cut_off
-        }
+        }) %>% set_names(clusters)
       }
-      return(values)
+      else {
+        purrr::map(clusters, function(cluster) {
+          dplyr::case_when(
+            input$cut_off_percentages < 0 ~ 0,
+            input$cut_off_percentages > 100 ~ 100,
+            .default = input$cut_off_percentages
+          )
+        }) %>% set_names(cluster)
+      }
     })
-
+  
 
     # Curate the analytes when user pushed the button.
     # This creates a dataframe with the passing percentage for each analyte,
     # and whether that analyte passes curation (TRUE or FALSE).
     # When curation is done per biological group, each analyte is present multiple
     # times in the dataframe (once for each biological group).
-    # TODO: turn (part of) this into a function
+    # TODO: Split this into functions.
     curated_analytes <- reactive({
-      if (input$method == "Curate analytes based on data") {
-        if (isTRUE(rv_resp$response)) {
-          # Curate per biological group
-          curated_analytes <- checked_analytes() %>%
-            # Drop samples that don't belong to a biological group (e.g. pools, blanks)
+      if (input$method == "Based on percentages of passing spectra") {
+        req(checked_analytes(), cut_offs_averages())
+        if (input$curate_per_group) {
+          checked_analytes() %>% 
+            # Drop samples not belonging to a biological group (e.g. pools, blanks)
             tidyr::drop_na(., input$biogroup_column) %>%
             # Drop samples in biological groups that should be ignored
-            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>%
-            curate_analytes(., cut_offs(), input$biogroup_column)
+            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>% 
+            # Perform the curation
+            curate_analytes(., cut_offs_averages(), input$biogroup_column)
         }
-        else if (input$curation_method == "On all data") {
-            curated_analytes <- curate_analytes(checked_analytes(), cut_offs())
+        else {
+          curate_analytes(checked_analytes(), cut_offs_averages())
         }
-        else if (input$curation_method == "Per sample") {
-            curated_analytes <- checked_analytes() %>%
-              dplyr::rename(has_passed_analyte_curation = analyte_meets_criteria) %>%
-              dplyr::select(-failed_criteria)
-        }
-
+      }
+      else if (input$method == "Based on average QC parameters") {
+        print("To do!")  # TODO: Implement
       }
       else if (input$method == "Supply an analyte list") {
-        req(analyte_list())
-        req(passing_spectra())
-
-        curated_analytes <- tryCatch(
+        req(analyte_list(), passing_spectra())
+        tryCatch(
           expr = {
-            curate_analytes_with_list(
-              passing_spectra = passing_spectra(),
-              analyte_list = analyte_list()
-            )
+            curate_analytes_with_list(passing_spectra(), analyte_list())
           },
-          missing_analytes = function(c){
-            showNotification(c$message,
-                             type = "warning")
+          missing_analytes = function(c) {
+            showNotification(c$message, type = "warning")
             suppressWarnings(
-              curate_analytes_with_list(
-                data = passing_spectra(),
-                analyte_list = analyte_list()
-              )
+              curate_analytes_with_list(passing_spectra(), analyte_list())
             )
           }
         )
       }
-      return(curated_analytes)
     }) %>% bindEvent(input$curate_analytes)
 
 
@@ -680,7 +522,6 @@ mod_analyte_curation_server <- function(id,
       }
       else FALSE
     })
-
     observeEvent(check_curated_analytes(), {
       if (!check_curated_analytes()) {
         showNotification(
@@ -691,32 +532,33 @@ mod_analyte_curation_server <- function(id,
       }
     })
 
-    # analyte_curated_data is a dataframe with the LaCyTools output of the
-    # passing spectra, but with only the analytes that passed curation.
+    
+    # analyte_curated_data is a dataframe with the output of the
+    # passing spectra, but only for analytes that fulfill the analyte criteria.
     analyte_curated_data <- reactive({
       req(check_curated_analytes() == TRUE)
       if (input$curation_method == "Per sample") {
         # Left join not necessary when curation is done per sample.
         curated_analytes()
       }
-      else {
-        dplyr::left_join(
-          # This combines the info from curated_analytes (whether analytes pass or not)
-          # with the LaCyTools output of the passing spectra.
-          # The order here is important in the case of curation per biological group,
-          # when one or more groups should be ignored. This order ensures that
-          # only groups that should be taken into account are part of the resulting
-          # dataframe (reversing the order would include all biological groups).
-          curated_analytes(), passing_spectra()
-        )
+      else if (input$curation_method == "Based on percentages of passing spectra") {
+        # This combines the info from curated_analytes (whether analytes pass or not)
+        # with the output of the passing spectra.
+        # The order here is important in the case of curation per biological group,
+        # when one or more groups should be ignored. This order ensures that
+        # only groups that should be taken into account are part of the resulting
+        # dataframe (reversing the order would include all biological groups).
+        dplyr::left_join(curated_analytes(), passing_spectra())
       }
-    }) %>% bindEvent(curated_analytes())
-
+      else if (input$curation_method == "Based on average QC parameters") {
+        print("To do!") # TODO: Implement
+      }
+    })
 
 
     # Tell users to re-perform analyte curation when data is updated
     # after curating the analytes earlier.
-    # It is removed in code above.
+    # (It is removed in code above.)
     observeEvent(passing_spectra(), {
       req(analyte_curated_data())
       showNotification(
@@ -730,13 +572,11 @@ mod_analyte_curation_server <- function(id,
     })
 
 
-
     # Create a vector with names of the clusters
     clusters <- reactive({
       req(analyte_curated_data())
       sort(unique(analyte_curated_data()$cluster))
     })
-
 
     # Create tabs for each cluster, when clusters() changes.
     # input$tabs always takes on the value (cluster name) of the selected tab
@@ -750,6 +590,7 @@ mod_analyte_curation_server <- function(id,
           select = TRUE,
           session = session,
           tab = tabPanel(
+            # TODO: Make this work for analyte curation based on average QCs.
             title = clusters()[[i]],
             mod_tab_curated_analytes_ui(ns(
               paste0(clusters()[[i]], "_", counter$count)
@@ -759,68 +600,72 @@ mod_analyte_curation_server <- function(id,
       }
     })
 
-
+    
+    # Collect settings.
+    # TODO: Averages
     info <- reactive({
       req(analyte_curated_data())
       list(
         curated_analytes = curated_analytes(),
-        cut_offs = cut_offs(),
+        cut_offs_percentages  = cut_offs_percentages(),
         analyte_curated_data = analyte_curated_data(),
-        method = input$method
+        curation_method = input$curation_method
       )
     }) %>% bindEvent(analyte_curated_data())
-
-
+    
     observeEvent(info()$analyte_curated_data, {
-      req(clusters())
-      req(input$curation_method != "Per sample")
+      req(clusters(), input$curation_method != "Per sample")
       r$mod_results <- purrr::set_names(clusters()) %>%
         purrr::map(., function(cluster) {
+          # TODO: Make this work for QC averages.
           mod_tab_curated_analytes_server(
             id = paste0(cluster, "_", counter$count),
             info = info(),
             cluster = cluster,
             biogroup_column = ifelse(
-              isTRUE(rv_resp$response),
-              input$biogroup_column,
-              ""
+              test = input$curate_per_group,
+              yes = input$biogroup_column,
+              no = ""
             )
           )
         })
     })
-
-
+  
+    
     with_analytes_to_include <- reactive({
       if (input$curation_method == "Per sample") {
-        # Analyte curation per sample
         # req() below is required to prevent the code from running too soon
         # when switching to "Per sample" from a different method.
-        # analyte_curated_data() needs to update first.
+        # analyte_curated_data() needs to update first
         req("uncalibrated" %in% colnames(analyte_curated_data()))
-        to_return <- analyte_curated_data() %>%
-          dplyr::filter(has_passed_analyte_curation == TRUE) %>%
+        to_return <- analyte_curated_data() %>% 
+          dplyr::filter(has_passed_analyte_curation) %>% 
           dplyr::select(-has_passed_analyte_curation, -uncalibrated)
-      } else {
-        # Analyte curation on all data or per biological group
+      }
+      else if (input$curation_method == "Based on percentages of passing spectra") {
         req(
           passing_spectra(),
           !rlang::is_empty(r$mod_results),
           all(purrr::map_lgl(r$mod_results, ~is_truthy(.x$analytes_to_include())))
         )
-        to_return <- purrr::imap(r$mod_results, function(results, current_cluster) {
-          data_current_cluster <- passing_spectra() %>%
-            dplyr::filter(cluster == current_cluster)
-          dplyr::left_join(results$analytes_to_include(), data_current_cluster)
-        }) %>%
-          purrr::reduce(dplyr::full_join)
+        to_return <- purrr::imap(
+          r$mod_results, function(results, current_cluster) {
+            data_current_cluster <- passing_spectra() %>% 
+              dplyr::filter(cluster == current_cluster)
+            dplyr::left_join(results$analytes_to_include(), data_current_cluster)
+          }
+        ) %>% purrr::reduce(dplyr::full_join)
       }
-
+      else if (input$curation_method == "Based on average QC parameters") {
+        print("To do!") # TODO: Implement
+      }
+      
       # Get data with non-glycosylated peptides
       non_glycosylated <- passing_spectra() %>%
         dplyr::filter(analyte == paste0(cluster, "1")) %>%
         # Rearrange columns to combine with to_return
         dplyr::select(colnames(to_return))
-
+      
       # Return
       if (nrow(non_glycosylated) > 0) {
         return(dplyr::bind_rows(to_return, non_glycosylated))
@@ -828,7 +673,7 @@ mod_analyte_curation_server <- function(id,
         return(to_return)
       }
     })
-
+      
 
     # Make downloading analyte_curated_data possible:
     output$download <- downloadHandler(
@@ -847,17 +692,19 @@ mod_analyte_curation_server <- function(id,
                                                   path = file))
       }
     )
-
+    
+    
+    # TODO: Status of button
 
     return(list(
       analyte_curated_data = with_analytes_to_include,
-      biogroups_colname = reactive(rv_resp$biogroups_colname),
+      biogroups_colname = reactive(input$biogroup_column),  # TODO fix when not used
       included_qc = reactive(input$qc_to_include),
-      method = reactive({ input$method }), # based on data or analyte list,
-      curation_method = reactive(input$curation_method),
-      ignore_samples = reactive({ input$ignore_samples }),
+      method = reactive({input$curation_method}), 
+      curation_method = reactive(input$curation_method), # TODO Remove duplicate
+      ignore_samples = reactive({input$sample_types_to_ignore}),
       groups_to_ignore = reactive(input$groups_to_ignore),
-      cut_offs = cut_offs,
+      cut_offs = cut_offs_percentages,  # TODO Averages
       analyte_list = reactive({ input$analyte_list$name }),
       objects = reactive({ r$mod_results })
     ))
