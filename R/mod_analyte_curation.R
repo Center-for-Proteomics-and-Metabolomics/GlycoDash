@@ -241,7 +241,7 @@ mod_analyte_curation_server <- function(id,
     })
     
     # QC checkboxes based on data type.
-    observeEvent(r$qc_parameters, {
+    observeEvent(qc$parameters, {
       # Checkboxes based on data type.
       shinyWidgets::updateAwesomeCheckboxGroup(
         inputId = "qc_to_include", 
@@ -324,7 +324,7 @@ mod_analyte_curation_server <- function(id,
       req(is_truthy(input$biogroup_column))
       choices <- as.character(dplyr::pull(
         unique(passing_spectra()[input$biogroup_column]) %>% 
-          dplyr::drop_na()
+          tidyr::drop_na()
       ))
       updateSelectizeInput(
         inputId = "groups_to_ignore", choices = c(choices),
@@ -713,7 +713,25 @@ mod_analyte_curation_server <- function(id,
     )
     
     
-    # TODO: Status of button
+    # Set status of buttons
+    observe({
+      shinyjs::toggleState("download", is_truthy(with_analytes_to_include()))
+      shinyjs::toggleState(
+        "curate_analytes", condition = all(
+          is_truthy(passing_spectra()),
+          length(input$qc_to_include) > 0,
+          any(
+            # Depending on analyte curation method
+            all(
+              input$curation_method == "Supply an analyte list",
+              is_truthy(analyte_list())
+            ),
+            input$curation_method != "Supply an analyte list"
+          )
+        )
+      )
+    })
+    
 
     return(list(
       analyte_curated_data = with_analytes_to_include,
