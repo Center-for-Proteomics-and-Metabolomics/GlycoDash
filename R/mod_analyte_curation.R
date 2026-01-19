@@ -150,6 +150,25 @@ mod_analyte_curation_ui <- function(id) {
               )
             )),
             actionButton(ns("curate_analytes"), "Perform analyte curation")
+          ),
+          shinydashboard::box(
+            title = "Export results", width = NULL, solidHeader = TRUE,
+            status = "primary",
+            radioButtons(
+              ns("download_format"), "Choose a file format:",
+              choices = c("Excel file", "R object")
+            ),
+            downloadButton(ns("download"), "Download analyte-curated data")
+          )
+        )
+      ),
+      fluidRow(
+        div(
+          id = ns("tabbed_box"),
+          shinydashboard::box(
+            width = 12, solidHeader = TRUE, status = "primary",
+            title = "Results per glycosylation site",
+            tabsetPanel(id = ns("tabs"))
           )
         )
       )
