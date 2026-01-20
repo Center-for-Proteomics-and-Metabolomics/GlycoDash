@@ -286,7 +286,7 @@ mod_analyte_curation_server <- function(id,
       req(results_spectra_curation$passing_spectra())
       results_spectra_curation$passing_spectra()
     })
-    
+  
     
     # Generate inputs for percentages cluster.
     cut_off_ids <- reactive({
@@ -308,10 +308,12 @@ mod_analyte_curation_server <- function(id,
     
     # Options for sample types to ignore.
     observe({
+      req(passing_spectra())
+      browser()
       choices <- paste(unique(passing_spectra()$sample_type), "samples")
-      if ("group" %in% colnames(passing_spectra)) {
+      if ("group" %in% colnames(passing_spectra())) {
         # Add total/specific samples as options.
-        choices <- c(choices, paste(unique(passing_spectra$group), "samples"))
+        choices <- c(choices, paste(unique(passing_spectra()$group), "samples"))
       }
       updateSelectizeInput(
         inputId = "sample_types_to_ignore", choices = c(choices),
@@ -413,7 +415,6 @@ mod_analyte_curation_server <- function(id,
     # In case of curation per sample: just the data without non-glycosylated peptides.
     without_samples_to_ignore <- reactive({
       req(passing_spectra(), input$curation_method != "Supply an analyte list")
-      
       without_nonglycosylated <- passing_spectra() %>%
         dplyr::filter(analyte != paste0(cluster, "1"))
       
@@ -430,7 +431,7 @@ mod_analyte_curation_server <- function(id,
         without_nonglycosylated
       }
     })
-
+    
 
     # checked_analytes is the same as without_samples_to_ignore, but with new
     # columns describing whether an analyte fulfills all three quality criteria.
@@ -477,7 +478,7 @@ mod_analyte_curation_server <- function(id,
             input[[cluster]] > 100 ~ 100,
             .default = input[[cluster]]
           )
-        }) %>% set_names(clusters)
+        }) %>% purrr::set_names(clusters)
       }
       else {
         purrr::map(clusters, function(cluster) {
@@ -486,10 +487,10 @@ mod_analyte_curation_server <- function(id,
             input$cut_off_percentages > 100 ~ 100,
             .default = input$cut_off_percentages
           )
-        }) %>% set_names(cluster)
+        }) %>% purrr::set_names(clusters)
       }
     })
-  
+    
 
     # Curate the analytes when user pushed the button.
     # This creates a dataframe with the passing percentage for each analyte,
@@ -498,8 +499,8 @@ mod_analyte_curation_server <- function(id,
     # times in the dataframe (once for each biological group).
     # TODO: Split this into functions.
     curated_analytes <- reactive({
-      if (input$method == "Based on percentages of passing spectra") {
-        req(checked_analytes(), cut_offs_averages())
+      if (input$curation_method == "Based on percentages of passing spectra") {
+        req(checked_analytes(), cut_offs_percentages())
         if (input$curate_per_group) {
           checked_analytes() %>% 
             # Drop samples not belonging to a biological group (e.g. pools, blanks)
@@ -507,13 +508,13 @@ mod_analyte_curation_server <- function(id,
             # Drop samples in biological groups that should be ignored
             dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>% 
             # Perform the curation
-            curate_analytes(., cut_offs_averages(), input$biogroup_column)
+            curate_analytes(., cut_offs_percentages(), input$biogroup_column)
         }
         else {
-          curate_analytes(checked_analytes(), cut_offs_averages())
+          curate_analytes(checked_analytes(), cut_offs_percentages())
         }
       }
-      else if (input$method == "Based on average QC parameters") {
+      else if (input$curation_method == "Based on average QC parameters") {
         print("To do!")  # TODO: Implement
       }
       else if (input$method == "Supply an analyte list") {
@@ -573,7 +574,7 @@ mod_analyte_curation_server <- function(id,
         print("To do!") # TODO: Implement
       }
     })
-
+    
 
     # Tell users to re-perform analyte curation when data is updated
     # after curating the analytes earlier.

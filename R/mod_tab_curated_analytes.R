@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_tab_curated_analytes_ui <- function(id){
+mod_tab_curated_analytes_ui <- function(id) {
   ns <- NS(id)
   
   tagList(
@@ -30,12 +30,15 @@ mod_tab_curated_analytes_ui <- function(id){
 #' tab_curated_analytes Server Function
 #'
 #' @noRd 
-mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
-  moduleServer(id, function(input, output, session){
+mod_tab_curated_analytes_server <- function(id, 
+                                            info, 
+                                            cluster, 
+                                            biogroup_column) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     curated_analytes_plot <- reactive({
-      req(info$method  == "Curate analytes based on data")
+      req(info$curation_method  != "Supply an analyte list")
       req(info$curated_analytes)
       req(info$cut_offs)
       
