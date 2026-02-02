@@ -6,7 +6,10 @@
 \usage{
 curate_analytes(
   checked_analytes,
-  cut_off_percentages,
+  cut_offs_percentages = NULL,
+  cut_offs_averages = NULL,
+  average_method = NULL,
+  data_type = NULL,
   bio_groups_colname = NULL
 )
 }
@@ -14,14 +17,14 @@ curate_analytes(
 \item{checked_analytes}{The result of the
 \code{\link{check_analyte_quality_criteria}} function.}
 
-\item{cut_off_percentages}{A named list with the minimum percentages of spectra in which an
-analyte needs to fulfill the quality criteria in order for that analyte to pass curation.
-Separate cut_off for each cluster.}
-
 \item{bio_groups_colname}{The name of the column that contains the biological groups,
 as a character string. This parameter is only required when you want to perform
 analyte curation per biological group. When this parameter is not specified, it is 
 set to NULL (default) and analyte curation will not be performed per group.}
+
+\item{cut_off_percentages}{A named list with the minimum percentages of spectra in which an
+analyte needs to fulfill the quality criteria in order for that analyte to pass curation.
+Separate cut_off for each cluster.}
 }
 \value{
 A dataframe with one row for each combination of analyte and charge

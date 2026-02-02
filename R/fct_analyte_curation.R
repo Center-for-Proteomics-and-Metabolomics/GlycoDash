@@ -189,7 +189,10 @@ throw_out_samples <- function(passing_spectra,
 #'                 cut_off_percentage = 25)
 #' 
 curate_analytes <- function(checked_analytes, 
-                            cut_off_percentages, 
+                            cut_offs_percentages = NULL, 
+                            cut_offs_averages = NULL,
+                            average_method = NULL,
+                            data_type = NULL,
                             bio_groups_colname = NULL) {
   
   required_columns <- c("cluster", 
@@ -205,24 +208,83 @@ curate_analytes <- function(checked_analytes,
                                  "are not present in the data.",
                                  "Attention: curate_analytes() can only be used after spectra curation has been performed with curate_spectra()"))
   }
-
-  curated_analytes <- checked_analytes %>%
-    {
-      if (is.null(bio_groups_colname)) {
-        dplyr::group_by(.data = .,
-                        cluster, charge, analyte)
-      } else {
-        dplyr::group_by(.data = .,
-                        across({{bio_groups_colname}}), cluster, charge, analyte)
-      }
-    } %>%
-    dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(cluster_cut_off = cut_off_percentages[cluster]) %>% 
-    dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cluster_cut_off)
   
+  # Curation based on percentages
+  if (!is.null(cut_offs_percentages)) {
+    curated_analytes <- checked_analytes %>%
+      {
+        if (is.null(bio_groups_colname)) {
+          dplyr::group_by(.data = ., cluster, charge, analyte)
+        } 
+        else {
+          dplyr::group_by(
+            .data = .,
+            across({{bio_groups_colname}}), cluster, charge, analyte
+          )
+        }
+      } %>%
+      dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(cluster_cut_off = cut_offs_percentages[cluster]) %>% 
+      dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cluster_cut_off)
+  }
+  
+  # Curation based on averages
+  else if (!is.null(cut_offs_averages)) {
+    
+    # Function to calculate either mean or median.
+    avg <- function(x) {
+      if (average_method == "Mean") {
+        return(mean(x, na.rm = TRUE))
+      }
+      else if (average_method == "Median") {
+        return(median(x, na.rm = TRUE))
+      }
+    }
+    
+    # Group analytes
+    if (is.null(bio_groups_colname)) {
+      grouped_analytes <- checked_analytes %>% 
+        dplyr::group_by(cluster, charge, analyte)
+    }
+    else {
+      grouped_analytes <- checked_analytes %>% 
+        dplyr::group_by(across({{bio_groups_colname}}), cluster, charge, analyte)
+    }
+    
+    # Averages based on data type
+    if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
+      curated_analytes <- grouped_analytes %>% 
+        dplyr::summarize(
+          avg_mass_accuracy = avg(mass_accuracy_ppm),
+          avg_ipq = avg(isotopic_pattern_quality),
+          avg_sn = avg(sn)
+        ) %>% 
+        dplyr::mutate(
+          pass_mass_accuracy = abs(avg_mass_accuracy) <= cut_offs_averages$max_mass_accuracy,
+          pass_ipq = avg_ipq <= cut_offs_averages$max_ipq,
+          pass_sn = avg_sn >= cut_offs_averages$min_sn,
+          has_passed_analyte_curation = (
+            pass_mass_accuracy & pass_ipq & pass_sn
+          )
+        )
+    }
+    else if (data_type == "SweetSuite data") {
+      curated_analytes <- grouped_analytes %>% 
+        dplyr::summarize(
+          avg_mass_accuracy = avg(mass_accuracy_ppm),
+          avg_idp = avg(isotopic_dot_product),
+          avg_total_area = avg(total_area)
+        ) %>% 
+        dplyr::mutate(
+          pass_mass_accuracy = avg_mass_accuracy <= cut_offs_averages$max_mass_accuracy,
+          pass_idp = avg_idp >= cut_offs_averages$min_idp,
+          pass_total_area = avg_total_area >= cut_offs_averages$min_total_area,
+        )
+    }
+  }
   return(curated_analytes)
-}
+}  
 
 
 #' Read an analyte list Excel or .rds file
@@ -343,7 +405,7 @@ curate_analytes_with_list <- function(passing_spectra,
   
 }
 
-#' Create a visual summary of the analyte curation process
+#' Create a visual summary of the analyte curation process.
 #'
 #' Create a plot showing the results of analyte curation for a single cluster.
 #'
@@ -383,13 +445,14 @@ curate_analytes_with_list <- function(passing_spectra,
 #'                                            "PBS"),
 #'                 cut_off_percentage = 25)
 #'
-#' plot_analyte_curation(curated_analytes = curated_analytes,
+#' plot_analyte_curation_percentages(curated_analytes = curated_analytes,
 #'                       cut_off_percentage = 25,
 #'                       selected_cluster = "IgGI1")
-plot_analyte_curation <- function(curated_analytes, 
-                                  cut_off_percentage, 
-                                  selected_cluster,
-                                  bio_groups_colname = "") {
+plot_analyte_curation_percentages <- function(
+    curated_analytes, 
+    cut_off_percentage, 
+    selected_cluster,
+    bio_groups_colname = "") {
   
   data_to_plot <- curated_analytes %>% 
     dplyr::filter(cluster == selected_cluster) %>% 
@@ -442,6 +505,76 @@ plot_analyte_curation <- function(curated_analytes,
   
   return(plot)
   
+}
+
+
+
+# Visualize analyte curation based on average QC parameters 
+# in a heatmap. One heatmap is made for a cluster.
+# Charge states are shown on the y-axis and analytes on the x-axis.
+# Tiles are colored based on whether an analyte passes curation or not.
+# The plot is faceted by biological group if applicable.
+# The average values of all QC parameters are shown when hovering over tiles.
+plot_analyte_curation_averages <- function(curated_analytes, 
+                                           cut_off_averages,
+                                           selected_cluster,
+                                           bio_groups_colname = "") {
+  
+  to_plot <- curated_analytes %>% 
+    dplyr::filter(cluster == selected_cluster) %>% 
+    dplyr::mutate(
+      passed_curation = dplyr::case_when(
+        has_passed_analyte_curation == TRUE ~ "Yes",
+        has_passed_analyte_curation == FALSE ~ "No"
+      )
+    ) %>% 
+    tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"), extra = "merge") %>% 
+    sort_glycans(.) %>% 
+    # Text for tooltip
+    dplyr::mutate(
+      text = paste0(
+        "Analyte: ", paste(selected_cluster, analyte),
+        "\nCharge: ", charge,
+        "\nPassed curation: ", passed_curation,
+        "\nAverage mass accuracy (ppm): ", format(round(avg_mass_accuracy, digits = 2), nsmall = 2),
+        # Depending on type of data
+        if ("avg_ipq" %in% names(.)) {
+          paste0("\nAverage IPQ: ", format(round(avg_ipq, digits = 2), nsmall = 2))
+        } else {
+          paste0("\nAverage IDP: ", format(round(avg_idp, digits = 2), nsmall = 2))
+        },
+        if ("avg_sn" %in% names(.)) {
+          paste0("\nAverage S/N: ", format(round(avg_sn, digits = 2), nsmall = 2))
+        } else {
+          paste0("\nAverage total area: ", format(round(avg_total_area, digits = 2), nsmall = 2))
+        }
+      )
+    )
+  
+  # Create base plot without facet
+  plot <- ggplot2::ggplot(to_plot, ggplot2::aes(
+    x = analyte, y = charge, fill = passed_curation, text = text
+  )) +
+    ggplot2::geom_tile(color = "black", lwd = 0.7, linetype = 1) +
+    ggplot2::labs(x = "", y = "Charge", fill = "Passed curation?") +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      panel.border = ggplot2::element_rect(color = "black", fill = NA, size = 0.5),
+      panel.background = ggplot2::element_rect(fill = "grey"),
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
+    ) +
+    ggplot2::scale_fill_manual(values = c("Yes" = "#3498DB", "No" = "#E74C3C")) +
+    ggplot2::guides(color = "none")
+  
+  # Facet by biological group if applicable
+  if (bio_groups_colname != "") {
+    plot <- plot %>% 
+      ggplot2::facet_wrap(
+        stats::as.formula(paste("~", bio_groups_colname))
+      )
+  }
+  
+  return(plot)
 }
 
 

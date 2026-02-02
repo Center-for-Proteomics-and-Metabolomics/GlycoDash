@@ -309,7 +309,6 @@ mod_analyte_curation_server <- function(id,
     # Options for sample types to ignore.
     observe({
       req(passing_spectra())
-      browser()
       choices <- paste(unique(passing_spectra()$sample_type), "samples")
       if ("group" %in% colnames(passing_spectra())) {
         # Add total/specific samples as options.
@@ -340,7 +339,6 @@ mod_analyte_curation_server <- function(id,
     analyte_list <- reactive({
       req(input$curation_method == "Supply an analyte list", input$analyte_list)
       shinyFeedback::hideFeedback("analyte_list")
-      
       analytes <- tryCatch(
         expr = {
           read_analyte_list_file(
@@ -438,10 +436,11 @@ mod_analyte_curation_server <- function(id,
     checked_analytes <- reactive({
       req(input$curation_method %in% c(
         "Based on percentages of passing spectra", 
-        "Based on average QC parameters"
+        "Based on average QC parameters",
+        "Per sample"
       ))
       req(without_samples_to_ignore())
-
+      
       if (data_type() %in% c("LaCyTools data", "SweetSuite data")) {
         check_analyte_quality_criteria_lacytools(
           without_samples_to_ignore(),
@@ -451,7 +450,8 @@ mod_analyte_curation_server <- function(id,
           min_sn = results_spectra_curation$sn(),
           criteria_to_consider = input$qc_to_include
         )
-      } else if (data_type() == "Skyline data") {
+      } 
+      else if (data_type() == "Skyline data") {
         check_analyte_quality_criteria_skyline(
           without_samples_to_ignore(),
           min_ppm_deviation = results_spectra_curation$mass_acc()[1],
@@ -491,13 +491,41 @@ mod_analyte_curation_server <- function(id,
       }
     })
     
+    
+    # Create a list with cut-off averages
+    cut_offs_averages <- reactive({
+      req(passing_spectra())
+      req(input$curation_method == "Based on average QC parameters")
+      list(
+        "max_mass_accuracy" = dplyr::case_when(
+          input$`Mass accuracy` < 0 ~ 0,
+          .default = input$`Mass accuracy`
+        ),
+        "max_ipq" = dplyr::case_when(
+          input$`Isotopic pattern quality` < 0 ~ 0,
+          .default = input$`Isotopic pattern quality`
+        ),
+        "min_sn" = dplyr::case_when(
+          input$`S/N` < 0 ~ 0,
+          .default = input$`S/N`
+        ),
+        "min_idp" = dplyr::case_when(
+          input$`Isotope dot product` < 0 ~ 0,
+          .default = input$`Isotope dot product`
+        ),
+        "min_total_area" = dplyr::case_when(
+          input$`Total area` < 0 ~ 0, 
+          .default = input$`Total area`
+        )
+      )
+    })
+    
 
     # Curate the analytes when user pushed the button.
     # This creates a dataframe with the passing percentage for each analyte,
     # and whether that analyte passes curation (TRUE or FALSE).
     # When curation is done per biological group, each analyte is present multiple
     # times in the dataframe (once for each biological group).
-    # TODO: Split this into functions.
     curated_analytes <- reactive({
       if (input$curation_method == "Based on percentages of passing spectra") {
         req(checked_analytes(), cut_offs_percentages())
@@ -511,13 +539,41 @@ mod_analyte_curation_server <- function(id,
             curate_analytes(., cut_offs_percentages(), input$biogroup_column)
         }
         else {
-          curate_analytes(checked_analytes(), cut_offs_percentages())
+          curate_analytes(
+            checked_analytes(), 
+            cut_offs_percentages = cut_offs_percentages()
+          )
         }
       }
       else if (input$curation_method == "Based on average QC parameters") {
-        print("To do!")  # TODO: Implement
+        req(checked_analytes(), cut_offs_averages())
+        if (input$curate_per_group) {
+          checked_analytes() %>% 
+            tidyr::drop_na(., input$biogroup_column) %>% 
+            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>% 
+            curate_analytes(
+              .,
+              cut_offs_averages = cut_offs_averages(),
+              average_method = input$average_method,
+              data_type = data_type()
+            )
+        }
+        else {
+          curate_analytes(
+            checked_analytes(),
+            cut_offs_averages = cut_offs_averages(),
+            average_method = input$average_method,
+            data_type = data_type()
+          )
+        }
       }
-      else if (input$method == "Supply an analyte list") {
+      else if (input$curation_method == "Per sample") {
+        req(checked_analytes())
+        checked_analytes() %>% 
+          dplyr::rename(has_passed_analyte_curation = analyte_meets_criteria) %>% 
+          dplyr::select(-failed_criteria)
+      }
+      else if (input$curation_method == "Supply an analyte list") {
         req(analyte_list(), passing_spectra())
         tryCatch(
           expr = {
@@ -542,6 +598,7 @@ mod_analyte_curation_server <- function(id,
       }
       else FALSE
     })
+    
     observeEvent(check_curated_analytes(), {
       if (!check_curated_analytes()) {
         showNotification(
@@ -551,7 +608,7 @@ mod_analyte_curation_server <- function(id,
         shinybusy::remove_modal_spinner()
       }
     })
-
+    
     
     # analyte_curated_data is a dataframe with the output of the
     # passing spectra, but only for analytes that fulfill the analyte criteria.
@@ -561,7 +618,7 @@ mod_analyte_curation_server <- function(id,
         # Left join not necessary when curation is done per sample.
         curated_analytes()
       }
-      else if (input$curation_method == "Based on percentages of passing spectra") {
+      else {
         # This combines the info from curated_analytes (whether analytes pass or not)
         # with the output of the passing spectra.
         # The order here is important in the case of curation per biological group,
@@ -570,11 +627,7 @@ mod_analyte_curation_server <- function(id,
         # dataframe (reversing the order would include all biological groups).
         dplyr::left_join(curated_analytes(), passing_spectra())
       }
-      else if (input$curation_method == "Based on average QC parameters") {
-        print("To do!") # TODO: Implement
-      }
     })
-    
 
     # Tell users to re-perform analyte curation when data is updated
     # after curating the analytes earlier.
@@ -590,7 +643,7 @@ mod_analyte_curation_server <- function(id,
         closeButton = FALSE
       )
     })
-
+    
 
     # Create a vector with names of the clusters
     clusters <- reactive({
@@ -610,7 +663,6 @@ mod_analyte_curation_server <- function(id,
           select = TRUE,
           session = session,
           tab = tabPanel(
-            # TODO: Make this work for analyte curation based on average QCs.
             title = clusters()[[i]],
             mod_tab_curated_analytes_ui(ns(
               paste0(clusters()[[i]], "_", counter$count)
@@ -622,22 +674,31 @@ mod_analyte_curation_server <- function(id,
 
     
     # Collect settings.
-    # TODO: Averages
     info <- reactive({
       req(analyte_curated_data())
-      list(
-        curated_analytes = curated_analytes(),
-        cut_offs_percentages  = cut_offs_percentages(),
-        analyte_curated_data = analyte_curated_data(),
-        curation_method = input$curation_method
-      )
+      if (input$curation_method == "Based on average QC parameters") {
+        list(
+          curated_analytes = curated_analytes(),
+          cut_offs_averages = cut_offs_averages(),
+          analyte_curated_data = analyte_curated_data(),
+          curation_method = input$curation_method
+        )
+      }
+      else {
+        list(
+          curated_analytes = curated_analytes(),
+          cut_offs_percentages = cut_offs_percentages(),
+          analyte_curated_data = analyte_curated_data(),
+          curation_method = input$curation_method
+        )
+      }
     }) %>% bindEvent(analyte_curated_data())
+
     
     observeEvent(info()$analyte_curated_data, {
       req(clusters(), input$curation_method != "Per sample")
       r$mod_results <- purrr::set_names(clusters()) %>%
         purrr::map(., function(cluster) {
-          # TODO: Make this work for QC averages.
           mod_tab_curated_analytes_server(
             id = paste0(cluster, "_", counter$count),
             info = info(),
@@ -662,10 +723,9 @@ mod_analyte_curation_server <- function(id,
           dplyr::filter(has_passed_analyte_curation) %>% 
           dplyr::select(-has_passed_analyte_curation, -uncalibrated)
       }
-      else if (input$curation_method == "Based on percentages of passing spectra") {
+      else {
         req(
-          passing_spectra(),
-          !rlang::is_empty(r$mod_results),
+          passing_spectra(), !rlang::is_empty(r$mod_results),
           all(purrr::map_lgl(r$mod_results, ~is_truthy(.x$analytes_to_include())))
         )
         to_return <- purrr::imap(
@@ -676,10 +736,6 @@ mod_analyte_curation_server <- function(id,
           }
         ) %>% purrr::reduce(dplyr::full_join)
       }
-      else if (input$curation_method == "Based on average QC parameters") {
-        print("To do!") # TODO: Implement
-      }
-      
       # Get data with non-glycosylated peptides
       non_glycosylated <- passing_spectra() %>%
         dplyr::filter(analyte == paste0(cluster, "1")) %>%
@@ -688,9 +744,10 @@ mod_analyte_curation_server <- function(id,
       
       # Return
       if (nrow(non_glycosylated) > 0) {
-        return(dplyr::bind_rows(to_return, non_glycosylated))
-      } else {
-        return(to_return)
+        dplyr::bind_rows(to_return, non_glycosylated)
+      } 
+      else {
+        to_return
       }
     })
       
@@ -698,18 +755,22 @@ mod_analyte_curation_server <- function(id,
     # Make downloading analyte_curated_data possible:
     output$download <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
-        switch(input$download_format,
-               "R object" = paste0(current_datetime, "_curated_analytes.rds"),
-               "Excel file" = paste0(current_datetime, "_curated_analytes.xlsx"))
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
+        switch(
+          input$download_format,
+          "R object" = paste0(current_datetime, "_curated_analytes.rds"),
+          "Excel file" = paste0(current_datetime, "_curated_analytes.xlsx")
+        )
       },
       content = function(file) {
         data_to_download <- with_analytes_to_include()
-        switch(input$download_format,
-               "R object" = save(data_to_download,
-                                 file = file),
-               "Excel file" = writexl::write_xlsx(data_to_download,
-                                                  path = file))
+        switch(
+          input$download_format,
+          "R object" = save(data_to_download, file = file),
+          "Excel file" = writexl::write_xlsx(data_to_download, path = file)
+        )
       }
     )
     
