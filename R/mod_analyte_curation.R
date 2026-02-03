@@ -146,7 +146,31 @@ mod_analyte_curation_ui <- function(id) {
                   ns("average_method"), "Method for calculating averages:",
                   choices = c("Mean", "Median")
                 ),
-                uiOutput(ns("cut_offs_averages"))
+                sliderInput(
+                  ns("avg_mass_accuracy"),
+                  "Acceptable mass accuracy range (ppm)",
+                  min = -50, max = 50, value = c(-20, 20)
+                ),
+                numericInput(
+                  ns("avg_ipq"),
+                  "Maximum isotopic pattern quality:",
+                  value = 0.2, min = 0, max = 1
+                ),
+                numericInput(
+                  ns("avg_sn"), 
+                  "Minimum S/N:",
+                  value = 9, min = 0, max = NA
+                ),
+                numericInput(
+                  ns("avg_idp"),
+                  "Minimum isotope dot product",
+                  value = 0.9, min = 0, max = 1
+                ),
+                numericInput(
+                  ns("avg_total_area"),
+                  "Minimum total area:",
+                  value = 0, min = 0, max = NA
+                )
               )
             )),
             actionButton(ns("curate_analytes"), "Perform analyte curation")
@@ -240,34 +264,26 @@ mod_analyte_curation_server <- function(id,
       }
     })
     
-    # QC checkboxes based on data type.
+    # Update UI based on data type/
     observeEvent(qc$parameters, {
-      # Checkboxes based on data type.
+      # Checkboxes under gear icon based.
       shinyWidgets::updateAwesomeCheckboxGroup(
         inputId = "qc_to_include", 
         choices = qc$parameters, selected = qc$parameters
       )
-    })
-    
-    # Generate cut-off options for average QC parameters.
-    output$cut_offs_averages <- renderUI({
-      init_map <- list(
-        # (initial, min, max, description)
-        "Mass accuracy" = c(20, 0, 100, "Maximum absolute mass accuracy:"),
-        "Isotopic pattern quality" = c(0.2, 0, 1, "Maximum isotopic pattern quality:"),
-        "S/N" = c(9, 0, NA, "Minimum S/N:"),
-        "Isotope dot product" = c(0.9, 0, 1, "Minimum isotope dot product:"),
-        "Total area" = c(0, 0, NA, "Minimum total area:")
-      )
-      purrr::map(qc$parameters, function(param) {
-        numericInput(
-          ns(param), 
-          value = init_map[[param]][1],
-          min = init_map[[param]][2],
-          max = init_map[[param]][3],
-          label = init_map[[param]][4]
-        )
-      })
+      # Average QC parameters.
+      if (data_type() %in% c("LaCyTools data", "SweetSuite data")) {
+        shinyjs::show("avg_ipq")
+        shinyjs::show("avg_sn")
+        shinyjs::hide("avg_idp")
+        shinyjs::hide("avg_total_area")
+      }
+      else if (data_type() == "Skyline data") {
+        shinyjs::hide("avg_ipq")
+        shinyjs::hide("avg_sn")
+        shinyjs::show("avg_idp")
+        shinyjs::show("avg_total_area")
+      }
     })
     
     
@@ -497,25 +513,22 @@ mod_analyte_curation_server <- function(id,
       req(passing_spectra())
       req(input$curation_method == "Based on average QC parameters")
       list(
-        "max_mass_accuracy" = dplyr::case_when(
-          input$`Mass accuracy` < 0 ~ 0,
-          .default = input$`Mass accuracy`
-        ),
+        "mass_accuracy" = input$avg_mass_accuracy,
         "max_ipq" = dplyr::case_when(
-          input$`Isotopic pattern quality` < 0 ~ 0,
-          .default = input$`Isotopic pattern quality`
+          input$avg_ipq < 0 ~ 0,
+          .default = input$avg_ipq
         ),
         "min_sn" = dplyr::case_when(
-          input$`S/N` < 0 ~ 0,
-          .default = input$`S/N`
+          input$avg_sn < 0 ~ 0,
+          .default = input$avg_sn
         ),
         "min_idp" = dplyr::case_when(
-          input$`Isotope dot product` < 0 ~ 0,
-          .default = input$`Isotope dot product`
+          input$avg_idp < 0 ~ 0,
+          .default = input$avg_idp
         ),
         "min_total_area" = dplyr::case_when(
-          input$`Total area` < 0 ~ 0, 
-          .default = input$`Total area`
+          input$avg_total_area < 0 ~ 0, 
+          .default = input$avg_total_area
         )
       )
     })
@@ -555,7 +568,8 @@ mod_analyte_curation_server <- function(id,
               .,
               cut_offs_averages = cut_offs_averages(),
               average_method = input$average_method,
-              data_type = data_type()
+              data_type = data_type(),
+              bio_groups_colname = input$biogroup_column
             )
         }
         else {
@@ -627,7 +641,7 @@ mod_analyte_curation_server <- function(id,
         # dataframe (reversing the order would include all biological groups).
         dplyr::left_join(curated_analytes(), passing_spectra())
       }
-    })
+    }) %>% bindEvent(curated_analytes())
 
     # Tell users to re-perform analyte curation when data is updated
     # after curating the analytes earlier.
@@ -650,6 +664,7 @@ mod_analyte_curation_server <- function(id,
       req(analyte_curated_data())
       sort(unique(analyte_curated_data()$cluster))
     })
+    
 
     # Create tabs for each cluster, when clusters() changes.
     # input$tabs always takes on the value (cluster name) of the selected tab

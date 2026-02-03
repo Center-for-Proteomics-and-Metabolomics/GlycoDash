@@ -261,7 +261,11 @@ curate_analytes <- function(checked_analytes,
           avg_sn = avg(sn)
         ) %>% 
         dplyr::mutate(
-          pass_mass_accuracy = abs(avg_mass_accuracy) <= cut_offs_averages$max_mass_accuracy,
+          pass_mass_accuracy = dplyr::between(
+            avg_mass_accuracy,
+            cut_offs_averages$mass_accuracy[[1]],
+            cut_offs_averages$mass_accuracy[[2]]
+          ),
           pass_ipq = avg_ipq <= cut_offs_averages$max_ipq,
           pass_sn = avg_sn >= cut_offs_averages$min_sn,
           has_passed_analyte_curation = (
@@ -277,7 +281,11 @@ curate_analytes <- function(checked_analytes,
           avg_total_area = avg(total_area)
         ) %>% 
         dplyr::mutate(
-          pass_mass_accuracy = avg_mass_accuracy <= cut_offs_averages$max_mass_accuracy,
+          pass_mass_accuracy = dplyr::between(
+            avg_mass_accuracy,
+            cut_offs_averages$mass_accuracy[[1]],
+            cut_offs_averages$mass_accuracy[[2]]
+          ),
           pass_idp = avg_idp >= cut_offs_averages$min_idp,
           pass_total_area = avg_total_area >= cut_offs_averages$min_total_area,
         )
@@ -568,9 +576,10 @@ plot_analyte_curation_averages <- function(curated_analytes,
   
   # Facet by biological group if applicable
   if (bio_groups_colname != "") {
-    plot <- plot %>% 
+    plot <- plot +
       ggplot2::facet_wrap(
-        stats::as.formula(paste("~", bio_groups_colname))
+        stats::as.formula(paste("~", bio_groups_colname)),
+        ncol = 1
       )
   }
   
