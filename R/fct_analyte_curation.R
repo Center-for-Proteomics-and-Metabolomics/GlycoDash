@@ -193,7 +193,11 @@ curate_analytes <- function(checked_analytes,
                             cut_offs_averages = NULL,
                             average_method = NULL,
                             data_type = NULL,
-                            bio_groups_colname = NULL) {
+                            bio_groups_colname = NULL,
+                            qc_to_include = NULL) {
+  # Only used when curating based on average QC parameters:
+  # `cut_offs_averages`, `average_method`, `qc_to_include`
+  
   
   required_columns <- c("cluster", 
                         "charge", 
@@ -219,7 +223,7 @@ curate_analytes <- function(checked_analytes,
         else {
           dplyr::group_by(
             .data = .,
-            across({{bio_groups_colname}}), cluster, charge, analyte
+            .data[[bio_groups_colname]], cluster, charge, analyte
           )
         }
       } %>%
@@ -249,10 +253,12 @@ curate_analytes <- function(checked_analytes,
     }
     else {
       grouped_analytes <- checked_analytes %>% 
-        dplyr::group_by(across({{bio_groups_colname}}), cluster, charge, analyte)
+        dplyr::group_by(.data[[bio_groups_colname]], cluster, charge, analyte)
     }
     
     # Averages based on data type
+    # Take into account `qc_to_include` (chosen via gears icon).
+    # If a QC parameter is ignored, always set pass to TRUE.
     if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
       curated_analytes <- grouped_analytes %>% 
         dplyr::summarize(
@@ -261,19 +267,31 @@ curate_analytes <- function(checked_analytes,
           avg_sn = avg(sn)
         ) %>% 
         dplyr::mutate(
-          pass_mass_accuracy = dplyr::between(
-            avg_mass_accuracy,
-            cut_offs_averages$mass_accuracy[[1]],
-            cut_offs_averages$mass_accuracy[[2]]
+          pass_mass_accuracy = dplyr::case_when(
+            "Mass accuracy" %in% qc_to_include ~ dplyr::between(
+              avg_mass_accuracy,
+              cut_offs_averages$mass_accuracy[[1]],
+              cut_offs_averages$mass_accuracy[[2]]
+            ),
+            .default = TRUE
           ),
-          pass_ipq = avg_ipq <= cut_offs_averages$max_ipq,
-          pass_sn = avg_sn >= cut_offs_averages$min_sn,
+          pass_ipq = dplyr::case_when(
+            "Isotopic pattern quality" %in% qc_to_include ~ (
+              avg_ipq <= cut_offs_averages$max_ipq
+            ),
+            .default = TRUE
+          ),
+          pass_sn = dplyr::case_when(
+            "S/N" %in% qc_to_include ~ (avg_sn >= cut_offs_averages$min_sn),
+            .default = TRUE
+          ),
+          # Check all three criteria
           has_passed_analyte_curation = (
             pass_mass_accuracy & pass_ipq & pass_sn
           )
         )
     }
-    else if (data_type == "SweetSuite data") {
+    else if (data_type == "Skyline data") {
       curated_analytes <- grouped_analytes %>% 
         dplyr::summarize(
           avg_mass_accuracy = avg(mass_accuracy_ppm),
@@ -281,16 +299,34 @@ curate_analytes <- function(checked_analytes,
           avg_total_area = avg(total_area)
         ) %>% 
         dplyr::mutate(
-          pass_mass_accuracy = dplyr::between(
-            avg_mass_accuracy,
-            cut_offs_averages$mass_accuracy[[1]],
-            cut_offs_averages$mass_accuracy[[2]]
+          pass_mass_accuracy = dplyr::case_when(
+            "Mass accuracy" %in% qc_to_include ~ dplyr::between(
+              avg_mass_accuracy,
+              cut_offs_averages$mass_accuracy[[1]],
+              cut_offs_averages$mass_accuracy[[2]]
+            ),
+            .default = TRUE
           ),
-          pass_idp = avg_idp >= cut_offs_averages$min_idp,
-          pass_total_area = avg_total_area >= cut_offs_averages$min_total_area,
+          pass_idp = dplyr::case_when(
+            "Isotope dot product" %in% qc_to_include ~ (
+              avg_idp >= cut_offs_averages$mind_idp
+            ),
+            .default = TRUE
+          ),
+          pass_total_area = dplyr::case_when(
+            "Total area" %in% qc_to_include ~ (
+              avg_total_area >= cut_offs_averages$min_total_area
+            ),
+            .default = TRUE
+          ),
+          # Check all three criteria
+          has_passed_analyte_curation = (
+            pass_mass_accuracy & pass_idp & pass_total_area
+          )
         )
     }
   }
+  
   return(curated_analytes)
 }  
 

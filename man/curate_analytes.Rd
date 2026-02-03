@@ -10,7 +10,8 @@ curate_analytes(
   cut_offs_averages = NULL,
   average_method = NULL,
   data_type = NULL,
-  bio_groups_colname = NULL
+  bio_groups_colname = NULL,
+  qc_to_include = NULL
 )
 }
 \arguments{

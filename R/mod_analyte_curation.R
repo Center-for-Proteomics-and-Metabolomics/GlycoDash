@@ -154,7 +154,7 @@ mod_analyte_curation_ui <- function(id) {
                 numericInput(
                   ns("avg_ipq"),
                   "Maximum isotopic pattern quality:",
-                  value = 0.2, min = 0, max = 1
+                  value = 0.2, min = 0, max = NA
                 ),
                 numericInput(
                   ns("avg_sn"), 
@@ -237,7 +237,7 @@ mod_analyte_curation_server <- function(id,
             shinyjs::hide("cluster_cut_offs_percentages")
           }
         }
-        else {
+        else if (input$curation_method == "Based on average QC parameters") {
           shinyjs::hide("div_cutoff_percentages")
           shinyjs::show("div_cutoff_averages")
         }
@@ -264,7 +264,7 @@ mod_analyte_curation_server <- function(id,
       }
     })
     
-    # Update UI based on data type/
+    # Update UI based on data type
     observeEvent(qc$parameters, {
       # Checkboxes under gear icon based.
       shinyWidgets::updateAwesomeCheckboxGroup(
@@ -569,7 +569,8 @@ mod_analyte_curation_server <- function(id,
               cut_offs_averages = cut_offs_averages(),
               average_method = input$average_method,
               data_type = data_type(),
-              bio_groups_colname = input$biogroup_column
+              bio_groups_colname = input$biogroup_column,
+              qc_to_include = input$qc_to_include
             )
         }
         else {
@@ -577,7 +578,8 @@ mod_analyte_curation_server <- function(id,
             checked_analytes(),
             cut_offs_averages = cut_offs_averages(),
             average_method = input$average_method,
-            data_type = data_type()
+            data_type = data_type(),
+            qc_to_include = input$qc_to_include
           )
         }
       }
