@@ -814,15 +814,17 @@ mod_analyte_curation_server <- function(id,
 
     return(list(
       analyte_curated_data = with_analytes_to_include,
-      biogroups_colname = reactive(input$biogroup_column),  # TODO fix when not used
+      curate_per_group = reactive(input$curate_per_group),
+      biogroups_colname = reactive(input$biogroup_column),
       included_qc = reactive(input$qc_to_include),
-      method = reactive({input$curation_method}), 
-      curation_method = reactive(input$curation_method), # TODO Remove duplicate
-      ignore_samples = reactive({input$sample_types_to_ignore}),
+      method = reactive(input$curation_method),
+      ignore_samples = reactive(input$sample_types_to_ignore),
       groups_to_ignore = reactive(input$groups_to_ignore),
-      cut_offs = cut_offs_percentages,  # TODO Averages
-      analyte_list = reactive({ input$analyte_list$name }),
-      objects = reactive({ r$mod_results })
+      cut_offs_percentages = cut_offs_percentages,
+      cut_offs_averages = cut_offs_averages,
+      average_method = reactive(input$average_method),
+      analyte_list = reactive(input$analyte_list$name),
+      objects = reactive(r$mod_results)
     ))
 
   })

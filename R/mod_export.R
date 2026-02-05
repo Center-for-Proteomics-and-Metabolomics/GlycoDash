@@ -83,11 +83,14 @@ mod_export_server <- function(id,
       req(results_normalization$normalized_data_wide())
       if (is_truthy(results_site_occupancy$site_occupancy_data())) {
         x$data <- results_site_occupancy$site_occupancy_data()
-      } else if (is_truthy(results_derived_traits$data_with_traits())) {
+      } 
+      else if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
-      } else if (is_truthy(results_quantitation$data_with_quantities())) {
+      } 
+      else if (is_truthy(results_quantitation$data_with_quantities())) {
         x$data <- results_quantitation$data_with_quantities()
-      } else {
+      } 
+      else {
         x$data <- results_normalization$normalized_data_wide()
       }
     })
@@ -295,7 +298,7 @@ mod_export_server <- function(id,
         # other information from the dashboard to pass along to the Report.Rmd
         # markdown file:
         params <- list(
-          # Data impot
+          # Data import
           data_type = results_data_import$data_type(),
           summary_filenames = results_data_import$summary_filenames(),
           plate_design = try_call(results_data_import$filenames_plate_design), 
@@ -315,13 +318,16 @@ mod_export_server <- function(id,
           curated_spectra_plots = curated_spectra_plots,
           skipped_spectra_curation_plots = results_spectra_curation$skipped_spectra_curation_plots(),
           # Analyte curation
-          analyte_curation_method = results_analyte_curation$method(),
-          included_qc_analytes = results_analyte_curation$included_qc(),
-          analyte_curation_choice = results_analyte_curation$curation_method(),
-          groups_to_ignore = results_analyte_curation$groups_to_ignore(),
-          ignore_samples = results_analyte_curation$ignore_samples(),
-          cut_offs = results_analyte_curation$cut_offs(),
-          analyte_list = results_analyte_curation$analyte_list(),
+          # NOTE: Some of these try_call() may not be necessary...
+          analyte_curation_method = try_call(results_analyte_curation$method),
+          included_qc_analytes = try_call(results_analyte_curation$included_qc),
+          curate_per_group = try_call(results_analyte_curation$curate_per_group),
+          groups_to_ignore = try_call(results_analyte_curation$groups_to_ignore),
+          ignore_samples = try_call(results_analyte_curation$ignore_samples),
+          cut_offs_percentages = try_call(results_analyte_curation$cut_offs_percentages),
+          cut_offs_averages = try_call(results_analyte_curation$cut_offs_averages),
+          average_method = try_call(results_analyte_curation$average_method),
+          analyte_list = try_call(results_analyte_curation$analyte_list),
           analyte_curation_tab_contents = analyte_curation_tab_contents,
           # Normalization
           heatmaps = results_normalization$heatmaps(),
