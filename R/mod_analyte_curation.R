@@ -387,6 +387,10 @@ mod_analyte_curation_server <- function(id,
       return(analytes)
     })
     
+    observe({
+      req(analyte_list())
+      browser()
+    })
     
     # Create a reactiveValues vector to store results from the tabs.
     r <- reactiveValues(

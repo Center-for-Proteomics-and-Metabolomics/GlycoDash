@@ -11,15 +11,15 @@ prepare_analyte_curation_table(
 )
 }
 \arguments{
-\item{analyte_curated_data}{Your data after spectra curation (see
-\code{\link{curate_spectra}}), but filtered so that only analytes are
-included that passed curation with the \code{\link{curate_analytes}}
-function (see example below).}
+\item{analyte_curated_data}{Your data after analyte curation, typically
+the output from the \code{\link{curate_analytes}} function.}
 
 \item{selected_cluster}{The cluster for which the analyte curation results
 should be shown.}
 
-\item{by_group}{Will be set to TRUE if analyte curation is done per biological group, otherwise FALSE.}
+\item{by_group}{Logical indicating whether analyte curation was performed
+per biological group. Set to TRUE if analyte curation is done per biological
+group, otherwise FALSE. Default is FALSE.}
 }
 \value{
 This function returns a dataframe that can be passed as the
