@@ -31,12 +31,6 @@ mod_analyte_curation_ui <- function(id) {
             # Title bar
             title = div(
               id = ns("box_header"), "Method for analyte curation",
-              icon("info-circle", class = "ml") %>% 
-                bsplus::bs_embed_popover(
-                  title = "Explanation",
-                  content = HTML(""), # TODO: Fill in
-                  trigger = "hover", placement = "right", html = "true", container = "body"
-                ),
               shinyWidgets::dropdownButton(
                 shinyWidgets::awesomeCheckboxGroup(
                   ns("qc_to_include"), label = ("Which analyte quality criteria 
@@ -64,8 +58,25 @@ mod_analyte_curation_ui <- function(id) {
             ) %>% 
               bsplus::bs_embed_popover(
                 title = "Explanation",
-                content = HTML(""),  # TODO: Fill in 
-                trigger = "hover", placement = "right", html = "true"
+                content = HTML("
+                  <p> <b> Percentages </b> <br>
+                  When an analyte fulfills the quality criteria in a 
+                  percentage of spectra that is higher than the chosen
+                  cut-off, then that analyte passes curation and is used for 
+                  further analysis in all samples.
+                  
+                  <p> <b> Averages </b> <br>
+                  When the average values of the quality criteria for an 
+                  analyte fulfill the chosen requirements, then that analyte
+                  passes curation and is used for further analysis in all
+                  samples.
+                  
+                  <p> <b> Per sample </b> <br>
+                  For each sample, only analytes that fulfill all
+                  quality criteria in that sample will be used for further analysis.
+                "),
+                trigger = "hover", placement = "bottom", html = "true",
+                custom_class = "wide-popover"
               ),
             # <div> for analytes list
             shinyjs::hidden(div(
@@ -76,7 +87,20 @@ mod_analyte_curation_ui <- function(id) {
               ) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
-                  content = HTML(""),  # TODO fill in
+                  content = HTML("
+                    You can upload a list of analytes that should be used
+                    for further analysis. <i> This method should only
+                    be used when you performed analyte curation on your data
+                    outside of GlycoDash. </i>
+                    <br>
+                    <p> <b> Excel file </b> <br>
+                    One column called \"analyte\", containing names of
+                    the analytes that should pass curation.
+                    
+                    <p> <b> R object </b> <br>
+                    A list or vector containing the names of the analytes
+                    that should be kept.
+                  "),
                   trigger = "hover", placement = "right", html = "true"
                 )
             )),
@@ -104,7 +128,17 @@ mod_analyte_curation_ui <- function(id) {
                 ) %>% 
                   bsplus::bs_embed_popover(
                     title = "Explanation",
-                    content = HTML(""),  # TODO fill in
+                    content = HTML("
+                      <p>
+                      When curating per biological group, you may want to
+                      exclude certain groups from the assessment (e.g., 
+                      when the size of the group is very small).
+                      
+                      <p> <i>
+                      Note: if \"sample type\" was chosen as the column
+                      specifying the groups, you can either exclude a sample
+                      type/group here, in the box below, or both </i>.
+                    "),
                     trigger = "hover", placement = "right", html = "true"
                   )
               )),
@@ -116,7 +150,12 @@ mod_analyte_curation_ui <- function(id) {
               ) %>% 
                 bsplus::bs_embed_popover(
                   title = "Explanation",
-                  content = HTML(""),  # TODO fill in
+                  content = HTML("
+                    You may want to exclude certain sample types from the
+                    assessment (e.g., blanks and standards). When the data
+                    contains total and specific Ig samples, it is recommended
+                    to exclude total samples.
+                  "),
                   trigger = "hover", placement = "right", html = "true"
                 ),
               # Nested <div> for cut-off percentages
@@ -132,11 +171,7 @@ mod_analyte_curation_ui <- function(id) {
                 numericInput(
                   ns("cut_off_percentages"), "Cut-off (%)", 
                   value = 80, min = 0, max = 100
-                ) %>% 
-                  bsplus::bs_embed_popover(
-                    title = "Explanation",
-                    content = HTML(""), # TODO fill in
-                    placement = "right", trigger = "hover", html = "true")
+                )
               ),
               # Nested <div> for cut-off averages
               div(
