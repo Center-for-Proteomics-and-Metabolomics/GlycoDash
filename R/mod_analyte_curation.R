@@ -543,13 +543,17 @@ mod_analyte_curation_server <- function(id,
       if (input$curation_method == "Based on percentages of passing spectra") {
         req(checked_analytes(), cut_offs_percentages())
         if (input$curate_per_group) {
-          checked_analytes() %>% 
+          t <- checked_analytes() %>% 
             # Drop samples not belonging to a biological group (e.g. pools, blanks)
             tidyr::drop_na(., input$biogroup_column) %>%
             # Drop samples in biological groups that should be ignored
             dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>% 
             # Perform the curation
-            curate_analytes(., cut_offs_percentages(), input$biogroup_column)
+            curate_analytes(
+              checked_analytes = .,
+              cut_offs_percentages = cut_offs_percentages(),
+              bio_groups_colname = input$biogroup_column
+            )
         }
         else {
           curate_analytes(
