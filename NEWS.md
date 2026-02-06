@@ -1,3 +1,8 @@
+# v1.11.0
+## New features
+* Option to curate analytes based on the average values of QC parameters.
+
+
 # v1.10.1
 ## Bug fixes
 * Fixed the splitting by total and specific samples for SweetSuite data.
