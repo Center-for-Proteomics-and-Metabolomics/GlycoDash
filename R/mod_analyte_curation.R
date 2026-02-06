@@ -387,10 +387,6 @@ mod_analyte_curation_server <- function(id,
       return(analytes)
     })
     
-    # observe({
-    #   req(analyte_list())
-    #   browser()
-    # })
     
     # Create a reactiveValues vector to store results from the tabs.
     r <- reactiveValues(
@@ -701,22 +697,17 @@ mod_analyte_curation_server <- function(id,
     # Collect settings.
     info <- reactive({
       req(analyte_curated_data())
-      if (input$curation_method == "Based on average QC parameters") {
-        list(
-          curated_analytes = curated_analytes(),
-          cut_offs_averages = cut_offs_averages(),
-          analyte_curated_data = analyte_curated_data(),
-          curation_method = input$curation_method
-        )
-      }
-      else {
-        list(
-          curated_analytes = curated_analytes(),
-          cut_offs_percentages = cut_offs_percentages(),
-          analyte_curated_data = analyte_curated_data(),
-          curation_method = input$curation_method
-        )
-      }
+      list(
+        curated_analytes = curated_analytes(),
+        analyte_curated_data = analyte_curated_data(),
+        curation_method = input$curation_method,
+        cut_offs_percentages = tryCatch({
+          cut_offs_percentages()
+        }, error = function(e) NULL),
+        cut_offs_averages = tryCatch({
+          cut_offs_averages()
+        }, error = function(e) NULL)
+      )
     }) %>% bindEvent(analyte_curated_data())
 
     

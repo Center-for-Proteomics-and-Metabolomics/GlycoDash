@@ -468,7 +468,8 @@ curate_analytes_with_list <- function(passing_spectra,
   }
   
   curated_analytes <- passing_spectra %>% 
-    dplyr::select(cluster, charge, analyte) %>% 
+    dplyr::select(cluster, charge, analyte) %>%
+    dplyr::distinct() %>% 
     dplyr::mutate(has_passed_analyte_curation = analyte %in% analyte_list$analyte) 
   
   return(curated_analytes)
