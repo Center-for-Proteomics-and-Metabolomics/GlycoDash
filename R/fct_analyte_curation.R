@@ -1,6 +1,6 @@
 # This file contains all functions that are used within the module
 # mod_analyte_curation.R and within its sub-module mod_tab_curated_analytes.R.
-
+                           
 #' Filter out samples to ignore during analyte curation
 #'
 #' With this function samples you can filter out samples that you don't want to
@@ -93,11 +93,11 @@ throw_out_samples <- function(passing_spectra,
 
 #' Perform analyte curation
 #'
-#' Curate analytes based on the percentage of spectra in which the analyte
-#' passes the quality criteria. Optionally, analyte curation can be performed
-#' per biological group. Before this function is used, you should filter
-#' out samples that you don't want to base the analyte curation on with the
-#' function \code{\link{throw_out_samples}} and you should use the function
+#' Curate analytes based on either (1) the percentage of spectra in which the analyte
+#' passes the quality criteria, or (2) the average quality control parameters across spectra.
+#' Optionally, analyte curation can be performed per biological group. Before this function 
+#' is used, you should filter out samples that you don't want to base the analyte curation 
+#' on with the function \code{\link{throw_out_samples}} and you should use the function
 #' \code{\link{check_analyte_quality_criteria}} to check the analyte quality
 #' criteria for each analyte in each sample. The reason we check the analyte
 #' quality criteria again even though this already happened during spectra
@@ -108,21 +108,32 @@ throw_out_samples <- function(passing_spectra,
 #' 
 #' @param checked_analytes The result of the
 #'   \code{\link{check_analyte_quality_criteria}} function.
-#' @param cut_off_percentages A named list with the minimum percentages of spectra in which an
+#' @param cut_offs_percentages A named list with the minimum percentages of spectra in which an
 #'   analyte needs to fulfill the quality criteria in order for that analyte to pass curation.
-#'   Separate cut_off for each cluster.
+#'   Separate cut_off for each cluster. Use this parameter for percentage-based curation.
+#'   Set to NULL (default) when using average-based curation.
+#' @param cut_offs_averages A list with cut-off values for average quality control parameters.
+#'   Use this parameter for average-based curation. Set to NULL (default) when using
+#'   percentage-based curation.
+#' @param average_method Character string specifying the method to calculate averages:
+#'   either "Mean" or "Median". Only used when \code{cut_offs_averages} is specified.
+#' @param data_type Character string specifying the type of data: "LaCyTools data",
+#'   "SweetSuite data", or "Skyline data". Only used when \code{cut_offs_averages} is specified.
 #' @param bio_groups_colname The name of the column that contains the biological groups,
 #'   as a character string. This parameter is only required when you want to perform
 #'   analyte curation per biological group. When this parameter is not specified, it is 
 #'   set to NULL (default) and analyte curation will not be performed per group.
+#' @param qc_to_include Character vector specifying which quality control parameters to
+#'   consider during curation. Only used when \code{cut_offs_averages} is specified.
 #'
 #' @return A dataframe with one row for each combination of analyte and charge
-#'   per cluster (and per biological group if applicable), a column named \code{passing_percentage} with the percentage
-#'   of spectra that pass the analyte quality criteria for that analyte and a
-#'   logical column named \code{has_passed_analyte_curation} that is \code{TRUE} for
-#'   analytes with a \code{passing_percentage} equal to or above the
-#'   \code{cut_off_percentage} and \code{FALSE} for analytes with a
-#'   \code{passing_percentage} under the \code{cut_off_percentage}.
+#'   per cluster (and per biological group if applicable). When using percentage-based
+#'   curation: includes a column named \code{passing_percentage} with the percentage
+#'   of spectra that pass the analyte quality criteria for that analyte, and a column
+#'   \code{cluster_cut_off} with the cut-off used. When using average-based curation:
+#'   includes columns with average values for each QC parameter and pass/fail columns
+#'   for each criterion. In both cases, a logical column named \code{has_passed_analyte_curation}
+#'   indicates whether the analyte passed curation (\code{TRUE}) or not (\code{FALSE}).
 #' @export
 #'
 #' @examples
@@ -185,8 +196,18 @@ throw_out_samples <- function(passing_spectra,
 #'                                                                             "S/N",
 #'                                                                             "IPQ"))
 #'                                                                             
+#' # Percentage-based curation:
 #' curate_analytes(checked_analytes = checked_analytes,
-#'                 cut_off_percentage = 25)
+#'                 cut_offs_percentages = list("IgG1" = 25, "IgG2" = 30))
+#' 
+#' # Average-based curation:
+#' curate_analytes(checked_analytes = checked_analytes,
+#'                 cut_offs_averages = list(mass_accuracy = c(-10, 10),
+#'                                          max_ipq = 0.2,
+#'                                          min_sn = 9),
+#'                 average_method = "Mean",
+#'                 data_type = "LaCyTools data",
+#'                 qc_to_include = c("Mass accuracy", "S/N", "Isotopic pattern quality"))
 #' 
 curate_analytes <- function(checked_analytes, 
                             cut_offs_percentages = NULL, 
@@ -393,14 +414,19 @@ read_analyte_list_file <- function(filepath, filename) {
 
 #' Analyte curation based on a list
 #'
-#' @inheritParams curate_analytes
+#' Curate analytes by checking against a predefined list of analytes that should
+#' pass curation. Any analyte present in the list will be marked as passing curation.
+#'
+#' @param passing_spectra A dataframe containing the data after spectra curation,
+#'   typically the output from \code{\link{remove_unneeded_columns}} or
+#'   \code{\link{return_when_spectra_curation_is_skipped}}.
 #' @param analyte_list The list of analytes that should pass the analyte
 #'   curation process. This should be a dataframe or tibble with one column
 #'   named "analyte".
 #'
-#' @return This function returns the same dataframe that was given as the
-#'   \code{data} argument, but filtered so that only those analytes that are in
-#'   \code{analyte_list} remain.
+#' @return A dataframe with columns \code{cluster}, \code{charge}, \code{analyte},
+#'   and \code{has_passed_analyte_curation}, indicating which analytes are present
+#'   in the provided \code{analyte_list}.
 #'
 #' @export
 #'
@@ -457,15 +483,20 @@ curate_analytes_with_list <- function(passing_spectra,
 #'   function: A dataframe with all analytes and charge combinations in the
 #'   data, their percentage of passing spectra and whether or not they passed
 #'   analyte curation.
+#' @param cut_off_percentage The minimum percentage of passing spectra required for
+#'   an analyte to pass curation. This is used to draw a reference line on the plot.
 #' @param selected_cluster The cluster for which the analyte curation results
 #'   should be plotted.
-#' @inheritParams curate_analytes
+#' @param bio_groups_colname The name of the column that contains the biological groups,
+#'   as a character string. If provided (non-empty string), the plot will be faceted by
+#'   biological group. Default is an empty string (no grouping).
 #'
 #' @return A bar plot with all analytes in the selected cluster on the x-axis,
-#'   and the \code{passing_percentage} on the y-axis. The
-#'   \code{cut_off_percentage} is indicated with a red horizontal dashed line.
+#'   and the \\code{passing_percentage} on the y-axis. The
+#'   \\code{cut_off_percentage} is indicated with a red horizontal dashed line.
 #'   Analytes that passed curation are shown in blue, while analytes that didn't
-#'   pass curation are shown in red.
+#'   pass curation are shown in red. If \\code{bio_groups_colname} is specified,
+#'   the plot is faceted by charge and biological group.
 #' @export
 #'
 #' @examples
@@ -553,12 +584,44 @@ plot_analyte_curation_percentages <- function(
 
 
 
-# Visualize analyte curation based on average QC parameters 
-# in a heatmap. One heatmap is made for a cluster.
-# Charge states are shown on the y-axis and analytes on the x-axis.
-# Tiles are colored based on whether an analyte passes curation or not.
-# The plot is faceted by biological group if applicable.
-# The average values of all QC parameters are shown when hovering over tiles.
+#' Create a heatmap visualization of analyte curation based on average QC parameters
+#'
+#' Create a heatmap showing the results of average-based analyte curation for a single
+#' cluster. Analytes are shown on the x-axis and charge states on the y-axis. Tiles
+#' are colored based on whether the analyte passed or failed curation. Hovering over
+#' tiles displays the average values of all QC parameters.
+#'
+#' @param curated_analytes The result of the \code{\link{curate_analytes}}
+#'   function when using average-based curation: A dataframe with all analytes
+#'   and charge combinations, their average QC parameter values, and whether or
+#'   not they passed analyte curation.
+#' @param cut_off_averages A list with cut-off values for average quality control
+#'   parameters. This is displayed in the tooltip when hovering over tiles.
+#' @param selected_cluster The cluster for which the analyte curation results
+#'   should be plotted.
+#' @param bio_groups_colname The name of the column that contains the biological groups,
+#'   as a character string. If provided (non-empty string), the plot will be faceted by
+#'   biological group. Default is an empty string (no grouping).
+#'
+#' @return A heatmap plot with analytes on the x-axis and charge states on the y-axis.
+#'   Tiles are colored blue for analytes that passed curation and red for those that
+#'   failed. Average values for mass accuracy, IPQ/IDP, and S/N or total area are shown
+#'   in tooltips. If \code{bio_groups_colname} is specified, the plot is faceted by
+#'   biological group.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # After performing average-based analyte curation:
+#' plot_analyte_curation_averages(
+#'   curated_analytes = curated_analytes,
+#'   cut_off_averages = list(mass_accuracy = c(-10, 10),
+#'                           max_ipq = 0.2,
+#'                           min_sn = 9),
+#'   selected_cluster = "IgG1",
+#'   bio_groups_colname = ""
+#' )
+#' }
 plot_analyte_curation_averages <- function(curated_analytes, 
                                            cut_off_averages,
                                            selected_cluster,
@@ -740,13 +803,13 @@ Shiny.bindAll(this.api().table().node()); } ')
 
 #' Prepare a dataframe for the analyte curation table
 #'
-#' @param analyte_curated_data Your data after spectra curation (see
-#'   \code{\link{curate_spectra}}), but filtered so that only analytes are
-#'   included that passed curation with the \code{\link{curate_analytes}}
-#'   function (see example below).
+#' @param analyte_curated_data Your data after analyte curation, typically
+#'   the output from the \code{\link{curate_analytes}} function.
 #' @param selected_cluster The cluster for which the analyte curation results
 #'   should be shown.
-#' @param by_group Will be set to TRUE if analyte curation is done per biological group, otherwise FALSE.
+#' @param by_group Logical indicating whether analyte curation was performed
+#'   per biological group. Set to TRUE if analyte curation is done per biological
+#'   group, otherwise FALSE. Default is FALSE.
 #'
 #' @return This function returns a dataframe that can be passed as the
 #'   \code{dataframe_for_table} argument to the
