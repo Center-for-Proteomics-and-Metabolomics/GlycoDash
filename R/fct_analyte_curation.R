@@ -236,21 +236,24 @@ curate_analytes <- function(checked_analytes,
   
   # Curation based on percentages
   if (!is.null(cut_offs_percentages)) {
-    curated_analytes <- checked_analytes %>%
-      {
-        if (is.null(bio_groups_colname)) {
-          dplyr::group_by(.data = ., cluster, charge, analyte)
-        } 
-        else {
-          dplyr::group_by(
-            .data = .,
-            .data[[bio_groups_colname]], cluster, charge, analyte
-          )
-        }
-      } %>%
-      dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>%
-      dplyr::mutate(cluster_cut_off = unlist(cut_offs_percentages[cluster], use.names = FALSE)) 
-      dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cluster_cut_off)
+    # Group by cluster, charge, analyte and biological group if applicable.
+    if (!is.null(bio_groups_colname)) {
+      grouped_analytes <- checked_analytes %>% 
+        dplyr::group_by(.data[[bio_groups_colname]], cluster, charge, analyte)
+    }
+    else {
+      grouped_analytes <- checked_analytes %>% 
+        dplyr::group_by(cluster, charge, analyte)
+    }
+    # Curation
+    curated_analytes <- grouped_analytes %>% 
+      dplyr::summarize(
+        passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100
+      ) %>% 
+      dplyr::mutate(
+        cluster_cut_off = unlist(cut_offs_percentages[cluster], use.names = FALSE),
+        has_passed_analyte_curation = passing_percentage >= cluster_cut_off
+      )
   }
   
   # Curation based on averages
