@@ -92,7 +92,7 @@ mod_analyte_curation_ui <- function(id) {
                     for further analysis. <i> This method should only
                     be used when you performed analyte curation on your data
                     outside of GlycoDash. </i>
-                    <br>
+                    <br> <br>
                     <p> <b> Excel file </b> <br>
                     One column called \"analyte\", containing names of
                     the analytes that should pass curation.
