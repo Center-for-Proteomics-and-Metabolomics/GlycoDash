@@ -285,8 +285,8 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
               .default = "", 
               ( # Only when switch is on, and curation was done per biological group.
                 # Second check is required, because switch is on by default.
-                input$facet_per_group == TRUE &
-                results_analyte_curation$curation_method() == "Per biological group"
+                input$facet_per_group &
+                results_analyte_curation$curate_per_group()
               ) ~ results_analyte_curation$biogroups_colname()
             ),
             color_low = input$color_low,
@@ -324,8 +324,8 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
           group_facet = dplyr::case_when(
             .default = "",
             (
-              input$facet_per_group == TRUE &
-              results_analyte_curation$curation_method() == "Per biological group"
+              input$facet_per_group &
+              results_analyte_curation$curate_per_group()
             ) ~ results_analyte_curation$biogroups_colname()
           ),
           color_low = input$color_low,
@@ -353,8 +353,8 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     # Excluded sample types, to pass on to report
     heatmaps_excluded_sample_types <- reactive({
-      if (results_analyte_curation$curation_method() == "Per biological group") {
-        if (input$facet_per_group == TRUE) {
+      if (results_analyte_curation$curate_per_group()) {
+        if (input$facet_per_group) {
           c("")
         } else if (length(input$exclude_sample_types) == 0) {
           c("None")
@@ -385,19 +385,16 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     observe({
       shinyjs::toggleState("download", is_truthy(normalized_data_wide()))
       
-      if (results_analyte_curation$curation_method() == "Per biological group" &
-          results_analyte_curation$biogroups_colname() != "") {
-        shinyjs::show("facet_per_group")
-      } else {
+      if (!results_analyte_curation$curate_per_group()) {
         shinyjs::hide("facet_per_group")
-      }
-      
-      
-      if (results_analyte_curation$curation_method() == "Per biological group" &
-          input$facet_per_group == TRUE & results_analyte_curation$biogroups_colname() != "") {
-        shinyjs::hide("exclude_sample_types")
+        
       } else {
-        shinyjs::show("exclude_sample_types")
+        shinyjs::show("facet_per_group")
+        if (input$facet_per_group) {
+          shinyjs::show("exclude_sample_types")
+        } else {
+          shinyjs::hide("exclude_sample_types")
+        }
       }
       
       if (input$heatmap_yaxis == "Sample") {

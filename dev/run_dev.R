@@ -9,3 +9,4 @@ rm(list=ls(all.names = TRUE))
 golem::document_and_reload()
 
 run_app()
+

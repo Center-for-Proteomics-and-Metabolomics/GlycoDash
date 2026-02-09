@@ -1,11 +1,12 @@
 ---
-title: "GlycoDash v1.10.1 data processing report"
+title: "GlycoDash v1.11.0 data processing report"
 date: "`r Sys.Date()`"
 output: 
   html_document:
     toc: TRUE
     toc_float: TRUE
 params: 
+  ### Data import ###
   data_type: NA
   summary_filenames: NA
   plate_design: NA
@@ -14,6 +15,7 @@ params:
   sample_types_method: NA
   filename_sample_types: NA
   glycosites_table: NA
+  ### Spectra curation ###
   mass_acc: NA
   ipq: NA
   sn: NA
@@ -23,31 +25,41 @@ params:
   spectra_curation_tab_contents: NA
   curated_spectra_plots: NA
   skipped_spectra_curation_plots: NA
+  ### Analyte curation ###
   analyte_curation_method: NA
-  analyte_curation_choice: NA
   included_qc_analytes: NA
   ignore_samples: NA
+  curate_per_group: NA
   groups_to_ignore: NA
-  cut_offs: NA
+  cut_offs_percentages: NA
+  cut_offs_averages: NA
+  average_method: NA
   analyte_list: NA
   analyte_curation_tab_contents: NA
+  ### Normalization ###
   heatmaps: NA
   heatmaps_excluded_sample_types: NA
+  ### Glycosylation traits ###
   derived_traits: NA
   custom_traits_colnames: NA
   formulas: NA
   custom_formulas: NA
   intensity_plots: NA
+  ### Site occupancy ###
   site_occupancy_quality_plot: NA
   site_occupancy_excluded_sample_types: NA
   site_occupancy_boxplot: NA
   site_occupancy_excluded_peptides: NA
   site_occupancy_mass_error: NA
+  ### Protein quantitation ###
   quantitation_exclude_peptides: NA
   quantitation_protein_tab_contents: NA
   quantitation_peptide_tab_contents: NA
+  ### Repeatability ###
   repeatability: NA
+  ### Data exploration ###
   data_exploration: NA
+  ### Notes ###
   notes: NA
 ---
 
@@ -203,82 +215,117 @@ if (length(params$curated_spectra_plots) > 0) {
 
 ## Analyte curation
 
-The following analyte quality criteria were taken into account in the analyte curation: `r params$included_qc_analytes`
+The following analyte quality criteria were taken into account in the analyte curation: `r paste(params$included_qc_analytes, collapse = ", ")`
 
 ```{r analyte-curation, results='asis'}
+if (!is.null(params$analyte_curation_method)) {
+  cat(paste("Curation method:", params$analyte_curation_method))
 
-if (params$analyte_curation_method == "Supply an analyte list") {
-  cat(
-    "- Curation method: based on analyte list\n",
-    "- Analyte list file: \"",
-    params$analyte_list,
-    "\""
-  )
-}
-
-if (params$analyte_curation_method == "Curate analytes based on data") {
-  if (params$analyte_curation_choice == "On all data") {
-    text <- paste0(params$ignore_samples, collapse = ", ")
-      cat(
-      "- Curation method: based on all data\n",
-      paste("- Sample types excluded from analyte curation:", text, "\n"),
-      "- Cut-off percentages:",
-      paste(names(params$cut_offs), ": ", params$cut_offs, "%, ", sep = "", collapse = "\n")
-      )
-  } else if (params$analyte_curation_choice == "Per biological group") {
-    text1 <- paste0(params$ignore_samples, collapse = ", ")
-    text2 <- paste0(params$groups_to_ignore, collapse = ", ")
-    cat(
-      "- Curation method: per biological group\n",
-      paste("- Sample types excluded from analyte curation:", text1, "\n"),
-      paste("- Biological groups excluded from analyte curation:", text2, "\n"),
-      "- Cut-off percentages:",
-      paste(names(params$cut_offs), ": ", params$cut_offs, "%, ", sep = "", collapse = "\n")
-    )
-  } else if (params$analyte_curation_choice == "Per sample") {
-    cat("Curation method: per sample")
+  if (params$analyte_curation_method == "Supply an analyte list") {
+    # Show analyte list filename
+    cat("\n\n - Analyte list file: \"", params$analyte_list, "\"")
+  } else {
+    # Show excluded sample types
+    if (!is.null(params$ignore_samples)) {
+      cat(paste(
+        "\n\n - Sample types excluded from analyte curation:",
+        paste0(params$ignore_samples, collapse = ", "),
+        "\n"
+      ))
+    }
+    # Check if curation was performed per biological group
+    if (!is.null(params$curate_per_group) && params$curate_per_group) {
+      cat("\n\n - Curation was performed per biological group")
+      if (!is.null(params$groups_to_ignore)) {
+        cat(
+          paste(
+            "\n\n - Biological groups excluded from analyte curation:",
+            paste0(params$groups_to_ignore, collapse = ", "),
+            "\n"
+          )
+        )
+      }
+    }
+    # Check if curation was done using percentages or averages
+    if (params$analyte_curation_method == "Based on percentages of passing spectra") {
+      # Show percentage cut-offs
+      if (!is.null(params$cut_offs_percentages)) {
+        cat(
+          "\n\n - Cut-off percentages:",
+          paste(
+            names(params$cut_offs_percentages), ": ", params$cut_offs_percentages,
+            "%, ", sep = "", collapse = "\n"
+          )
+        )
+      }
+    } else if (params$analyte_curation_method == "Based on average QC parameters") {
+      # Show calculation method
+      cat(paste(
+        "\n\n - Method for calculating averages:",
+        params$average_method
+      ))
+      # Show average cut-offs (depending on data type)
+      # Five spaces before a dash ensure a nested list is created.
+      if (params$data_type %in% c("SweetSuite data", "LaCyTools data")) {
+        cat("\n\n - Cut-offs for average QC values:")
+        cat(paste(
+          "\n     - Acceptable mass accuracy range (ppm):", 
+          paste(params$cut_offs_averages$mass_accuracy, collapse = " to "),
+          "\n     - Maximum isotopic pattern quality:", 
+          params$cut_offs_averages$max_ipq,
+          "\n     - Minimum S/N:", 
+          params$cut_offs_averages$min_sn
+        ))
+      } else if (params$data_type == "Skyline data") {
+        cat("\n\n - Cut-offs for average QC values:")
+        cat(paste(
+          "\n     - Acceptable mass accuracy range (ppm):", 
+          paste(params$cut_offs_averages$mass_accuracy, collapse = " to "),
+          "\n     - Minimum isotope dot product:", 
+          params$cut_offs_averages$min_idp,
+          "\n     - Minimum total area:", 
+          params$cut_offs_averages$min_total_area
+        ))
+      }
+    }
   }
 }
 ```
 
 ```{r analyte-curation-plot-table, results='asis'}
+# Show the analyte curation plots if applicable.
+if (!is.null(params$analyte_curation_method) && 
+    params$analyte_curation_method %in% c(
+      "Based on percentages of passing spectra",
+      "Based on average QC parameters"
+    )) {
+  if (!is.null(params$analyte_curation_tab_contents)) {
+    purrr::iwalk(params$analyte_curation_tab_contents, function(objects_list, cluster) {
+      cat("###", cluster, "\n")
 
-if (params$analyte_curation_method == "Curate analytes based on data") {
-  
-  purrr::iwalk(params$analyte_curation_tab_contents, 
-               function(objects_list,
-                        name) {
-                 cat("###",
-                     name,
-                     "\n")
-                 
-                 p <- objects_list$plot %>% 
-                   plotly::ggplotly(., tooltip = "text")
-                 
-                 p[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
-                 
-                 p[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -90
-                 
-                 print(htmltools::tagList(p))
-                 
-                 objects_list$analytes_to_include %>% 
-                   tidyr::pivot_wider(names_from = "charge",
-                                      names_glue = "{charge} charge state included?",
-                                      values_from = "charge",
-                                      values_fn = function(value) { "Yes" },
-                                      values_fill = "No") %>%
-                   kableExtra::kbl() %>%
-                   kableExtra::kable_styling(bootstrap_options = "striped",
-                                             full_width = F,
-                                             position = "left") %>%
-                   kableExtra::scroll_box(height = "500px", width = "100%") %>% 
-                   htmltools::HTML() %>%
-                   print()
-                 
-               })
-               
-               }
+      p <- objects_list$plot %>%
+        plotly::ggplotly(., tooltip = "text")
 
+      print(htmltools::tagList(p))
+
+      objects_list$analytes_to_include %>%
+        tidyr::pivot_wider(
+          names_from = "charge",
+          names_glue = "{charge} charge state included?",
+          values_from = "charge",
+          values_fn = function(value) { "Yes" },
+          values_fill = "No"
+        ) %>%
+        kableExtra::kbl() %>%
+        kableExtra::kable_styling(
+          bootstrap_options = "striped", full_width = F, position = "left"
+        ) %>%
+        kableExtra::scroll_box(height = "500px", width = "100%") %>%
+        htmltools::HTML() %>%
+        print()
+    })
+  }
+}
 ```
 
 ## Normalized data heatmaps

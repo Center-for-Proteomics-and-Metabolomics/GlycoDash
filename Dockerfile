@@ -30,6 +30,7 @@ COPY . .
 
 # Install the local package and clean up build artifacts
 RUN R -e 'renv::install(".", repos = getOption("repos"))' \
+    && R -e 'renv::snapshot(type = "all", prompt = FALSE)' \
     && rm -rf /tmp/downloaded_packages/* \
     && rm -rf /tmp/Rtmp* \
     && rm -rf /build_zone/vignettes \
@@ -38,6 +39,9 @@ RUN R -e 'renv::install(".", repos = getOption("repos"))' \
     && rm -rf /build_zone/.git \
     && find /build_zone -name "*.md" -type f -delete \
     && find /build_zone -name "*.Rmd" -type f -delete
+
+# Disable renv sync checking in production
+ENV RENV_CONFIG_SYNCHRONIZED_CHECK=FALSE
 
 EXPOSE 80
 CMD ["R", "-e", "options('shiny.port'=80,shiny.host='0.0.0.0');library(GlycoDash);GlycoDash::run_app()"]
