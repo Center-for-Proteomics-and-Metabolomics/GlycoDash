@@ -815,38 +815,6 @@ Shiny.bindAll(this.api().table().node()); } ')
 #' @return This function returns a dataframe that can be passed as the
 #'   \code{dataframe_for_table} argument to the
 #'   \code{\link{create_analyte_curation_table}} function.
-#' @export
-#'
-#' @examples
-#' data("example_data")
-#' example_data <- curate_spectra(data = example_data,
-#'                             min_ppm_deviation = -20,
-#'                             max_ppm_deviation = 20,
-#'                             max_ipq = 0.2,
-#'                             min_sn = 9,
-#'                             clusters_regex = "IgGI1",
-#'                             cut_off_basis = c("Spike PBS", "Total PBS"))
-#'
-#' curated_spectra <- example_data$curated_data %>%
-#'    dplyr::filter(has_passed_spectra_curation == TRUE) %>% 
-#'    dplyr::select(-has_passed_spectra_curation)
-#'
-#' curated_analytes <- curate_analytes(
-#'                 data = curated_spectra,
-#'                 group_to_ignore = "Total",
-#'                 sample_types_to_ignore = c("Visucon",
-#'                                            "PBS"),
-#'                 cut_off_percentage = 25)
-#'
-#' passing_analytes <- curated_analytes %>%
-#'    dplyr::filter(passed_curation == TRUE) %>%
-#'    dplyr::select(-passed_curation)
-#'
-#' analyte_curated_data <- dplyr::left_join(passing_analytes, curated_spectra)
-#' 
-#' dataframe <- prepare_analyte_curation_table(analyte_curated_data = curated_analytes,
-#'                                             selected_cluster = "IgGI1")
-#'                                             
 prepare_analyte_curation_table <- function(analyte_curated_data, 
                                            selected_cluster, 
                                            by_group) {
