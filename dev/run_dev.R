@@ -1,4 +1,5 @@
-# Use "Source" or "Source with echo" to launch dashboard.
+# Use "Ctrl+Shift+Enter" to launch the dashboard.
+# (Or click `Source` -> `Source with Echo`).
 
 
 options(golem.app.prod = FALSE)
