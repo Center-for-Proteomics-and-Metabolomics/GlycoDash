@@ -330,7 +330,7 @@ curate_analytes <- function(checked_analytes,
           ),
           pass_idp = dplyr::case_when(
             "Isotope dot product" %in% qc_to_include ~ (
-              avg_idp >= cut_offs_averages$mind_idp
+              avg_idp >= cut_offs_averages$min_idp
             ),
             .default = TRUE
           ),
