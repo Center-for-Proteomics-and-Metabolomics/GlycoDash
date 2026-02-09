@@ -574,15 +574,11 @@ plot_analyte_curation_percentages <- function(
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, 
                                                        hjust = 1),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                   #text = ggplot2::element_text(size = 16),
                    legend.position = "right",
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
-    ggplot2::xlab("Analyte") +
-    ggplot2::scale_y_continuous(labels = function(x) paste0(x, "%"), 
-                                name = "Proportion of passing spectra (%)")
+    ggplot2::labs(x= "", y = "Passing spectra (%)")
   
   return(plot)
-  
 }
 
 
