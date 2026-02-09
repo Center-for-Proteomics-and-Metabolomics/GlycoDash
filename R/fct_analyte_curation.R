@@ -249,8 +249,7 @@ curate_analytes <- function(checked_analytes,
         }
       } %>%
       dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>%
-      dplyr::ungroup() %>%
-      dplyr::mutate(cluster_cut_off = cut_offs_percentages[cluster]) %>% 
+      dplyr::mutate(cluster_cut_off = unlist(cut_offs_percentages[cluster], use.names = FALSE)) 
       dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cluster_cut_off)
   }
   
