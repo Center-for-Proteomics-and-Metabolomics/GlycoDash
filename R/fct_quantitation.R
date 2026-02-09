@@ -1,6 +1,22 @@
-# Functions used for protein quantitation
-
-
+#' Extract Glycopeptide Intensities
+#'
+#' Extracts glycopeptide intensities from normalized wide-format data for
+#' specified proteins. The function filters the data to include only
+#' glycopeptides listed in the proteins Excel file and returns their
+#' sum intensities grouped by sample.
+#'
+#' @param proteins_excel A dataframe with protein specifications, including
+#'   columns \code{natural} and \code{labeled} containing cluster names
+#'   for natural and labeled glycopeptides.
+#' @param normalized_data_wide A dataframe with normalized data in wide format,
+#'   with sum intensities in columns containing "sum_intensity".
+#'
+#' @return A dataframe with columns: \code{sample_name}, \code{sample_type},
+#'   \code{sample_id}, optionally \code{group}, \code{cluster}, and
+#'   \code{sum_intensity}. Contains only distinct rows with non-NA intensities.
+#'
+#' @keywords internal
+#' @noRd
 get_glycopeptide_intensities <- function(proteins_excel, normalized_data_wide) {
   
   data <- normalized_data_wide %>% 
@@ -23,7 +39,29 @@ get_glycopeptide_intensities <- function(proteins_excel, normalized_data_wide) {
 }
 
 
-
+#' Extract Peptide Intensities from Skyline
+#'
+#' Processes peptide data (typically from Skyline) to extract intensities for
+#' specified proteins. The function calculates intensity per fraction,
+#' aggregates by cluster, and excludes specified peptide ions and proteins
+#' not in the protein specification file.
+#'
+#' @param proteins_excel A dataframe with protein specifications, including
+#'   columns \code{natural} and \code{labeled} containing cluster names
+#'   for natural and labeled peptides.
+#' @param peptides_data A dataframe with peptide data from Skyline,
+#'   including columns: \code{cluster}, \code{charge},
+#'   \code{absolute_intensity_background_subtracted}, \code{fraction},
+#'   \code{sample_name}, \code{sample_type}, and \code{sample_id}.
+#' @param exclude_peptides A character vector of peptide ions to exclude
+#'   from analysis (in format "cluster, charge").
+#'
+#' @return A dataframe with columns: \code{sample_name}, \code{sample_type},
+#'   \code{sample_id}, optionally \code{group}, \code{cluster}, and
+#'   \code{sum_intensity}. Contains only distinct rows with non-NA intensities.
+#'
+#' @keywords internal
+#' @noRd
 get_peptide_intensities <- function(proteins_excel, 
                                     peptides_data,
                                     exclude_peptides) {
@@ -49,7 +87,29 @@ get_peptide_intensities <- function(proteins_excel,
 }
 
 
-
+#' Calculate Protein Quantities
+#'
+#' Calculates protein quantities (in ng/mL) for each sample based on the
+#' quantitation formula using natural and labeled peptide pairs. The function
+#' iterates through each protein in the proteins_excel file, uses the ratio of
+#' natural to labeled intensities, and applies the standard and sample volume
+#' to compute the final quantity.
+#'
+#' @param combined_intensities A dataframe with combined intensities from
+#'   both glycopeptide and non-glycosylated peptides, containing columns:
+#'   \code{sample_name}, \code{sample_type}, \code{sample_id}, optionally
+#'   \code{group}, \code{cluster}, and \code{sum_intensity}.
+#' @param proteins_excel A dataframe with protein specifications, including
+#'   columns: \code{protein} (protein name), \code{natural} (natural cluster),
+#'   \code{labeled} (labeled cluster), \code{standard_ng} (standard amount in ng),
+#'   and \code{sample_ul} (sample volume in microliter).
+#'
+#' @return A dataframe with columns: \code{sample_name}, \code{sample_type},
+#'   \code{sample_id}, optionally \code{group}, \code{protein},
+#'   \code{peptide_pair}, and \code{protein_quantity} (in ng/mL).
+#'
+#' @keywords internal
+#' @noRd
 get_protein_quantities <- function(combined_intensities,
                                    proteins_excel) {
   
@@ -87,7 +147,24 @@ get_protein_quantities <- function(combined_intensities,
 }
 
 
-
+#' Calculate Median Protein Quantities
+#'
+#' Calculates the median protein quantity for each protein per sample.
+#' This function is useful when multiple peptide pairs are used to quantify
+#' the same protein, as it provides a single representative quantity value
+#' per sample.
+#'
+#' @param protein_quantities A dataframe with protein quantities as returned
+#'   by \code{get_protein_quantities()}, containing columns: \code{sample_name},
+#'   \code{sample_type}, \code{sample_id}, optionally \code{group}, \code{protein},
+#'   \code{peptide_pair}, and \code{protein_quantity}.
+#'
+#' @return A dataframe with columns: \code{sample_name}, \code{sample_type},
+#'   \code{sample_id}, optionally \code{group}, \code{protein}, and \code{quantity}
+#'   (the median quantity in ng/mL per sample and protein).
+#'
+#' @keywords internal
+#' @noRd
 get_median_quantities <- function(protein_quantities) {
   
   data <- protein_quantities %>% 
@@ -102,7 +179,24 @@ get_median_quantities <- function(protein_quantities) {
 }
 
 
-
+#' Plot Protein Quantities by Sample Type
+#'
+#' Creates a boxplot visualization of protein quantities grouped by sample type.
+#' Individual data points are displayed as jittered points overlaid on the
+#' boxplot. If the data contains a \code{group} column, separate panels are
+#' created for each group using faceting.
+#'
+#' @param quantities A dataframe with protein quantities, containing columns:
+#'   \code{sample_name}, \code{sample_id}, \code{sample_type}, \code{quantity},
+#'   and optionally \code{group}.
+#' @param log_scale Logical, whether to apply a logarithmic scale to the y-axis.
+#'   If \code{NULL} or \code{FALSE}, a linear scale is used.
+#'
+#' @return A ggplot object displaying the protein quantities as a boxplot with
+#'   jittered points colored by sample type.
+#'
+#' @keywords internal
+#' @noRd
 plot_protein_quantities <- function(quantities,
                                     log_scale) {
   
@@ -149,8 +243,28 @@ plot_protein_quantities <- function(quantities,
 }
 
 
-# Plot protein quantity based on two peptide pairs
-# "pair" is pair of two peptide pairs
+#' Plot Correlation Between Two Peptide Pair Quantities
+#'
+#' Creates a scatter plot showing the correlation between protein quantities
+#' calculated from two different peptide pairs. A line of identity (y = x) is
+#' included as a dashed reference line. If the data contains a \code{group}
+#' column, separate panels are created for each group using faceting.
+#'
+#' @param df A dataframe with protein quantities for two peptide pairs.
+#'   Must contain columns with names matching \code{pair[1]} and \code{pair[2]},
+#'   as well as \code{sample_name}, \code{sample_id}, and \code{sample_type}.
+#'   Optionally may contain a \code{group} column.
+#' @param pair A character vector of length 2, containing the names of the two
+#'   peptide pair columns to compare.
+#' @param color_palette A named vector mapping sample types to colors.
+#' @param log_scale Logical, whether to apply a logarithmic scale to both axes.
+#'   If \code{NULL} or \code{FALSE}, linear scales are used.
+#'
+#' @return A ggplot object displaying the correlation between two peptide pair
+#'   quantities as a scatter plot with a reference line of identity.
+#'
+#' @keywords internal
+#' @noRd
 quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
   # Make plot
   plot <- ggplot2::ggplot(df, ggplot2::aes(
@@ -201,7 +315,27 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
 }
 
 
-
+#' Plot Correlations Between All Peptide Pairs
+#'
+#' Creates a list of scatter plots showing the correlations between all
+#' possible pairs of peptide pairs for a given protein. Each plot uses the
+#' \code{quantity_correlation_plot()} function and includes a reference line
+#' of identity. This function is useful for assessing the consistency of
+#' protein quantitation across different peptide pairs.
+#'
+#' @param protein_data A dataframe with protein quantities for multiple peptide
+#'   pairs, containing columns: \code{sample_name}, \code{sample_id},
+#'   \code{sample_type}, \code{peptide_pair}, \code{protein_quantity}, and
+#'   optionally \code{group}.
+#' @param log_scale Logical, whether to apply a logarithmic scale to both axes.
+#'   If \code{NULL} or \code{FALSE}, linear scales are used.
+#'
+#' @return A list of ggplot objects, each displaying a correlation plot between
+#'   two different peptide pairs. Returns an empty list if only one peptide pair
+#'   is present in the data.
+#'
+#' @keywords internal
+#' @noRd
 plot_peptide_correlations <- function(protein_data, log_scale) {
   
   # Create color palette
