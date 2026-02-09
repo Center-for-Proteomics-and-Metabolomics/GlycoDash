@@ -810,7 +810,7 @@ Shiny.bindAll(this.api().table().node()); } ')
 #'   should be shown.
 #' @param by_group Logical indicating whether analyte curation was performed
 #'   per biological group. Set to TRUE if analyte curation is done per biological
-#'   group, otherwise FALSE. Default is FALSE.
+#'   group, otherwise FALSE.
 #'
 #' @return This function returns a dataframe that can be passed as the
 #'   \code{dataframe_for_table} argument to the
@@ -847,7 +847,9 @@ Shiny.bindAll(this.api().table().node()); } ')
 #' dataframe <- prepare_analyte_curation_table(analyte_curated_data = curated_analytes,
 #'                                             selected_cluster = "IgGI1")
 #'                                             
-prepare_analyte_curation_table <- function(analyte_curated_data, selected_cluster, by_group) {
+prepare_analyte_curation_table <- function(analyte_curated_data, 
+                                           selected_cluster, 
+                                           by_group) {
   
   analyte_curation_dataframe <- analyte_curated_data %>% 
     dplyr::ungroup() %>% 

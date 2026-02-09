@@ -19,7 +19,7 @@ should be shown.}
 
 \item{by_group}{Logical indicating whether analyte curation was performed
 per biological group. Set to TRUE if analyte curation is done per biological
-group, otherwise FALSE. Default is FALSE.}
+group, otherwise FALSE.}
 }
 \value{
 This function returns a dataframe that can be passed as the
