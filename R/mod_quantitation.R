@@ -151,6 +151,27 @@ mod_quantitation_ui <- function(id) {
           id = ns("box"),
           title = div(
             id = ns("box_header"),
+            "Quality check for glycopeptides",
+            info("icon-circle", class = "ml") %>% 
+              bsplus::bs_embed_popover(
+                title = "Explanation",
+                content = HTML("
+                <i> Explanation about labeled vs natural glycopeptide
+                sum intensities. </i>
+                "),
+                trigger = "hover", placement = "left", html = "true",
+                container = "body"
+              )
+          ),
+          tabsetPanel(id = ns("quality_tabs")),
+          w9dth = 12, solidHeader = TRUE, status = "primary"
+        )
+      ),
+      fluidRow(
+        shinydashboardPlus::box(
+          id = ns("box"),
+          title = div(
+            id = ns("box_header"),
             "Quantitation results",
             icon("info-circle", class = "ml") %>% 
               bsplus::bs_embed_popover(
@@ -171,17 +192,13 @@ mod_quantitation_ui <- function(id) {
               )
           ),
           tabsetPanel(id = ns("protein_tabs")),
-          width = 12,
-          solidHeader = TRUE,
-          status = "primary"
+          width = 12, solidHeader = TRUE, status = "primary"
         )
       ),
       fluidRow(
         shinydashboard::box(
           title = "View data with protein quantities",
-          width = 12,
-          solidHeader = TRUE,
-          status = "primary",
+          width = 12, solidHeader = TRUE, status = "primary",
           DT::dataTableOutput(ns("data_table"))
         )
       )
