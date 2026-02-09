@@ -74,9 +74,14 @@ mod_analyte_curation_ui <- function(id) {
                   <p> <b> Per sample </b> <br>
                   For each sample, only analytes that fulfill all
                   quality criteria in that sample will be used for further analysis.
+                  
+                  <p> <b> Analyte list </b> <br>
+                  Upload a list of analytes that should be used for further analysis. 
+                  <i> This method should only be used when you performed analyte 
+                  curation on your data outside of GlycoDash. </i>
                 "),
-                trigger = "hover", placement = "bottom", html = "true",
-                custom_class = "wide-popover"
+                trigger = "hover", placement = "right", html = "true",
+                container = "body"
               ),
             # <div> for analytes list
             shinyjs::hidden(div(
@@ -88,11 +93,6 @@ mod_analyte_curation_ui <- function(id) {
                 bsplus::bs_embed_popover(
                   title = "Explanation",
                   content = HTML("
-                    You can upload a list of analytes that should be used
-                    for further analysis. <i> This method should only
-                    be used when you performed analyte curation on your data
-                    outside of GlycoDash. </i>
-                    <br> <br>
                     <p> <b> Excel file </b> <br>
                     One column called \"analyte\", containing names of
                     the analytes that should pass curation.
@@ -112,7 +112,7 @@ mod_analyte_curation_ui <- function(id) {
                 ns("curate_per_group"), 
                 HTML("<i style='font-size:15px;'> Specify biological groups </i>"),
                 status = "success", right = TRUE
-              ),  # TODO: Add popup box
+              ),
               # Nested <div> for biological groups
               shinyjs::hidden(div(
                 id = ns("div_biological_groups"),
