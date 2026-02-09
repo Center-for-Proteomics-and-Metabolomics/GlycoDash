@@ -669,7 +669,7 @@ plot_analyte_curation_averages <- function(curated_analytes,
     ggplot2::theme(
       panel.border = ggplot2::element_rect(color = "black", fill = NA, size = 0.5),
       panel.background = ggplot2::element_rect(fill = "grey"),
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11)
     ) +
     ggplot2::scale_fill_manual(values = c("Yes" = "#3498DB", "No" = "#E74C3C")) +
     ggplot2::guides(color = "none")
