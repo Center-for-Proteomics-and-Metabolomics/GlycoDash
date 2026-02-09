@@ -534,8 +534,8 @@ plot_analyte_curation_percentages <- function(
     dplyr::filter(cluster == selected_cluster) %>% 
     dplyr::mutate(
       `Passed curation?` = dplyr::case_when(
-        has_passed_analyte_curation == "TRUE" ~ "Yes",
-        has_passed_analyte_curation == "FALSE" ~ "No"
+        has_passed_analyte_curation == TRUE ~ "Yes",
+        has_passed_analyte_curation == FALSE ~ "No"
       )) %>% 
     # Remove cluster prefix from analyte for readability
     dplyr::mutate(analyte = gsub(paste0(selected_cluster, "1"), "", analyte)) %>% 
