@@ -152,7 +152,7 @@ mod_quantitation_ui <- function(id) {
           title = div(
             id = ns("box_header"),
             "Quality check for glycopeptides",
-            info("icon-circle", class = "ml") %>% 
+            icon("info-circle", class = "ml") %>% 
               bsplus::bs_embed_popover(
                 title = "Explanation",
                 content = HTML("
@@ -164,7 +164,7 @@ mod_quantitation_ui <- function(id) {
               )
           ),
           tabsetPanel(id = ns("quality_tabs")),
-          w9dth = 12, solidHeader = TRUE, status = "primary"
+          width = 12, solidHeader = TRUE, status = "primary"
         )
       ),
       fluidRow(
