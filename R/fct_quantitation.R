@@ -367,7 +367,28 @@ plot_peptide_correlations <- function(protein_data, log_scale) {
 
 
 
-# PLOT LABELED VS NATURAL SUM INTENSITIES FOR EACH PAIR
+#' Plot natural vs labeled sum intensities
+#'
+#' @description For each peptide pair in the quantitation input, create a
+#'   scatter plot comparing summed intensities for the natural and labeled
+#'   analytes across samples. Each point represents one sample and is colored
+#'   by sample type. Plots are used in the quantitation tab to visualize signal
+#'   balance between the paired analytes.
+#'
+#' @param intensities A data frame of summed intensities per sample and analyte.
+#'   Expected to include columns \\code{cluster}, \\code{sum_intensity},
+#'   \\code{sample_name}, \\code{sample_id}, and \\code{sample_type}. If present,
+#'   a \\code{group} column is used for faceting.
+#' @param protein_data A data frame with at least \\code{peptide_pair} and
+#'   \\code{sample_type} columns. The \\code{peptide_pair} values must be formatted
+#'   as \\code{"natural / labeled"}.
+#' @param log_scale Logical, whether to apply log10 scaling to both axes.
+#'
+#' @return A list of ggplot objects, one per peptide pair, suitable for
+#'   conversion to plotly and combination in a subplot layout.
+#'
+#' @keywords internal
+#' @noRd
 plot_sum_intensities <- function(intensities, 
                                  protein_data,
                                  log_scale = FALSE) {

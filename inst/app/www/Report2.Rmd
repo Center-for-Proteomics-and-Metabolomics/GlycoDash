@@ -393,6 +393,13 @@ if (!is.null(params$quantitation_protein_tab_contents)) {
       GlycoDash::hide_outliers(.)
     cat("\n\n\n Protein quantities: \n\n")
     print(htmltools::tagList(boxplots))
+    # Intensity plots
+    if (!is.null(contents$intensity_plots)) {
+      cat("\n Labeled vs natural intensity plots:\n\n")
+      purrr::walk(contents$intensity_plots, function(plot) {
+        print(htmltools::tagList(plotly::ggplotly(plot, tooltip = "text")))
+      })
+    }
     # Correlation plots
     if (!is.null(contents$correlation_plots)) {
       cat("\nPeptide correlation plots:\n\n")

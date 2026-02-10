@@ -157,7 +157,8 @@ mod_tab_quantitation_server <- function(id,
     
     return(list(
       quantities_plot = quantities_plot,
-      correlation_plots = peptide_correlation_plots  # TODO: Rename
+      correlation_plots = peptide_correlation_plots,
+      intensity_plots = sum_intensity_plots
     ))
   })
 }
