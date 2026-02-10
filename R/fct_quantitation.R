@@ -127,6 +127,8 @@ get_protein_quantities <- function(combined_intensities,
       tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity) %>% 
       dplyr::mutate(
         protein = protein_name,
+        natural = natural,
+        labeled = labeled,
         peptide_pair = paste(natural, "/", labeled)
       )
     # Calculate quantity for each sample in ng/mL
@@ -268,8 +270,9 @@ plot_protein_quantities <- function(quantities,
 quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
   # Make plot
   plot <- ggplot2::ggplot(df, ggplot2::aes(
-    x = !!rlang::sym(pair[1]), y = !!rlang::sym(pair[2])
-  )) + 
+    x = .data[[pair[[1]]]],
+    y = .data[[pair[[2]]]]
+  )) +
     # Add line of identity (y = x)
     ggplot2::geom_abline(
       slope = 1,
@@ -360,3 +363,78 @@ plot_peptide_correlations <- function(protein_data, log_scale) {
   # Return list of plots
   return(plots)
 }
+
+
+
+
+# PLOT LABELED VS NATURAL SUM INTENSITIES FOR EACH PAIR
+plot_sum_intensities <- function(intensities, 
+                                 protein_data,
+                                 log_scale = FALSE) {
+  
+  plots <- purrr::map(unique(protein_data$peptide_pair), function(pair) {
+    
+    # Extract natural and labeled name for pair.
+    split <- stringr::str_split(pair, " / ", simplify = TRUE)
+    natural <- split[1]
+    labeled <- split[2]
+    
+    # Get intensity data for this pair.
+    df <- intensities %>% 
+      dplyr::filter(cluster %in% c(natural, labeled)) %>% 
+      tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity)
+    
+    # Create color palette.
+    sample_types <- unique(protein_data$sample_type)
+    colors <- color_palette(length(sample_types))
+    color_palette <- setNames(colors, sample_types)
+    
+    # Create plot.
+    plot <- ggplot2::ggplot(df, ggplot2::aes(
+      x = .data[[natural]], 
+      y = .data[[labeled]]
+    )) +
+      ggplot2::geom_point(
+        ggplot2::aes(
+          text = paste0(
+            "Sample name: ", sample_name, "\n",
+            "Sample ID: ", sample_id, "\n",
+            "Sample type: ", sample_type, "\n",
+            natural, " intensity: ", 
+            format(round(!!rlang::sym(natural), digits = 2), nsmall = 2), "\n",
+            labeled, " intensity: ", 
+            format(round(!!rlang::sym(labeled), digits = 2), nsmall = 2)
+          ),
+          color = sample_type
+        ),
+        alpha = 0.7, size = 1.2
+      ) +
+      ggplot2::labs(
+        x = paste(natural, "intensity"),
+        y = paste(labeled, "intensity")
+      ) +
+      ggplot2::theme_classic() +
+      ggplot2::theme(
+        strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+        panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+        legend.position = "none"
+      ) + 
+      ggplot2::scale_color_manual(values = color_palette, name = "Sample type")
+    
+    if ("group" %in% colnames(df)) {
+      plot <- plot + ggplot2::facet_wrap(~group)
+    }
+    
+    if (log_scale) {
+      plot <- plot + 
+        ggplot2::scale_x_log10(guide = "axis_logticks") +
+        ggplot2::scale_y_log10(guide = "axis_logticks")
+    }
+    
+    return(plot)
+  })
+
+  return(plots)
+}
+
+
