@@ -208,7 +208,7 @@ mod_data_import_server <- function(id) {
     })
     
     output$glycosites_table <- DT::renderDT({
-      req(LaCyTools_summary$glycosites_table())
+      req(data_input$glycosites_table())
       DT::datatable(
         data_input$glycosites_table(),
         options = list(
