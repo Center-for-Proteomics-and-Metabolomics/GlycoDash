@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_tab_curated_analytes_ui <- function(id){
+mod_tab_curated_analytes_ui <- function(id) {
   ns <- NS(id)
   
   tagList(
@@ -30,31 +30,38 @@ mod_tab_curated_analytes_ui <- function(id){
 #' tab_curated_analytes Server Function
 #'
 #' @noRd 
-mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
-  moduleServer(id, function(input, output, session){
+mod_tab_curated_analytes_server <- function(id, 
+                                            info, 
+                                            cluster, 
+                                            biogroup_column) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     curated_analytes_plot <- reactive({
-      req(info$method  == "Curate analytes based on data")
+      req(info$curation_method != "Supply an analyte list")
       req(info$curated_analytes)
-      req(info$cut_offs)
-      
-      plot_analyte_curation(curated_analytes = info$curated_analytes,
-                            cut_off_percentage = info$cut_offs[[cluster]],
-                            selected_cluster = cluster,
-                            bio_groups_colname = biogroup_column)
+      if (info$curation_method == "Based on percentages of passing spectra") {
+        req(info$cut_offs_percentages)
+        plot_analyte_curation_percentages(
+          curated_analytes = info$curated_analytes,
+          cut_off_percentage = info$cut_offs_percentages[[cluster]],
+          selected_cluster = cluster,
+          bio_groups_colname = biogroup_column
+        )
+      }
+      else if (info$curation_method == "Based on average QC parameters") {
+        plot_analyte_curation_averages(
+          curated_analytes = info$curated_analytes,
+          cut_off_averages = info$cut_offs_averages,
+          selected_cluster = cluster,
+          bio_groups_colname = biogroup_column
+        )
+      }
     })
     
     output$plot <- plotly::renderPlotly({
       req(curated_analytes_plot())
-      plotly_object <- plotly::ggplotly(curated_analytes_plot(), tooltip = "text")
-      
-      plotly_object[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
-      
-      plotly_object[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -90
-      
-      return(plotly_object)
-      
+      plotly::ggplotly(curated_analytes_plot(), tooltip = "text")
     })
     
     observe({

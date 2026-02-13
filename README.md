@@ -1,6 +1,7 @@
 # GlycoDash <img src="man/figures/glycodash_logo.png" align="right" height="138" /></a>
 
-GlycoDash is an R Shiny dashboard for processing glycomics data obtained from [LaCyTools](<https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00171>) or [Skyline](<https://skyline.ms>).
+GlycoDash is an R Shiny dashboard for processing glycomics data obtained from [LaCyTools](<https://pubs.acs.org/doi/10.1021/acs.jproteome.6b00171>), 
+[SweetSuite](https://github.com/stainawarijar/SweetSuite) and [Skyline](<https://skyline.ms>).
 
 ## Installation
 
@@ -42,20 +43,24 @@ _Note: it is recommended that you have at least 16 GB of RAM._
 10. To close Docker entirely in Windows, right-click the Docker icon in the bottom-right corner of your taskbar, and then click "Quit Docker Desktop". Afterwards, you may want to run the command `wsl --shutdown` in your Command Prompt to free up memory.
 
 
-### Option 2: Run the GlycoDash code in RStudio.
+### Option 2: Run GlycoDash in RStudio
+_This method uses a reproducible R environment managed by renv._
 
-1.  Install R and Rstudio: <https://posit.co/download/rstudio-desktop/>
-2.  Download the source code of the `master` branch as a zip file, then unzip and store the "glycodash-master" folder somewhere.
-3.  Double click “glycodash.Rproj”, this will launch RStudio.
-4.  In Rstudio: click "file", "open". Then in the "glycodash-master"
-    folder, open “run_dev.R” in the "dev" folder.
-5.  In Rstudio, click the “source” button, or use Ctrl+Shift+S, to start
-    the Dashboard. A new Rstudio window should now open with the
-    dashboard running. *(Rstudio might first ask you to install required
-    packages. Accept this. For package version requirements: see the DESCRIPTION
-    file. See the Dockerfile for the package versions that were used in development.*)
-7.  Optional: in the Rstudio dashboard window, click “open in browser”
-    (this should look better). 
+1.  Install [R version 4.5.0](https://cran.r-project.org/bin/windows/base/old/) and [Rstudio](https://posit.co/download/rstudio-desktop/) on your computer.
+    (R 4.5.0 can be installed alongside other R versions).
+2.  Install [RTools 4.5](https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html) using the official _Rtools45_ installer and keep the default settings.
+    This is required to build some packages from source.
+3.  Configure RStudio to use R 4.5.0 (`Tools → Global Options → General → R version → Change…`). Apply the changes and close RStudio.
+4.  Download the source code of the `master` branch as a zip file, then unzip and store the "glycodash-master" folder somewhere.
+5.  Double click “glycodash.Rproj”, this will open the project in RStudio. You will see a message indicating that the `renv` package was installed.
+6.  In the R console, run `renv::restore()`. This will download and install all required R packages exactly as specified for this project.\
+   ⏳ *This may take several minutes.*
+
+8.  In RStudio, open the file `dev/run_dev.R`.
+9.  With `dev/run_dev.R` open, press `Ctrl+Shift+Enter` to run the dashboard.\
+    If prompted to install the **roxygen2** package, confirm the installation.
+10. After these steps, the GlycoDash Shiny application should start automatically in your RStudio session.\
+    Optionally, you can click `Open in browser` (this should look better).
 
 ## How to use GlycoDash
 In the top-right corner of GlycoDash, click on the book icon to download a manual for the version you are using.

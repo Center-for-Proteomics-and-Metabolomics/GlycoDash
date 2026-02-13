@@ -6,4 +6,7 @@
 inst/doc
 data-raw/
 recording.log
-renv/
+renv/library/
+renv/local/
+renv/staging/
+renv/cellar/
