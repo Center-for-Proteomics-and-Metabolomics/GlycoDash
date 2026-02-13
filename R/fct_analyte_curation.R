@@ -495,10 +495,10 @@ curate_analytes_with_list <- function(passing_spectra,
 #'   biological group. Default is an empty string (no grouping).
 #'
 #' @return A bar plot with all analytes in the selected cluster on the x-axis,
-#'   and the \\code{passing_percentage} on the y-axis. The
-#'   \\code{cut_off_percentage} is indicated with a red horizontal dashed line.
+#'   and the \code{passing_percentage} on the y-axis. The
+#'   \code{cut_off_percentage} is indicated with a red horizontal dashed line.
 #'   Analytes that passed curation are shown in blue, while analytes that didn't
-#'   pass curation are shown in red. If \\code{bio_groups_colname} is specified,
+#'   pass curation are shown in red. If \code{bio_groups_colname} is specified,
 #'   the plot is faceted by charge and biological group.
 #' @export
 #'
