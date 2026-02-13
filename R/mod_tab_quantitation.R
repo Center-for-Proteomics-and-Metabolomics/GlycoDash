@@ -22,7 +22,7 @@ mod_tab_quantitation_ui <- function(id) {
         shinyWidgets::materialSwitch(
           ns("log_scale_quantities"),
           HTML("<i style='font-size:16px;'> Plot quantities on logarithmic scale </i>"),
-          status = "success", right = TRUE, value = TRUE
+          status = "success", right = TRUE, value = FALSE
         ),
         shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("boxplots")))
       ),
@@ -58,7 +58,7 @@ mod_tab_quantitation_ui <- function(id) {
             HTML("<i style='font-size:16px;'> Plot quantities on logarithmic scale </i>"),
             status = "success",
             right = TRUE,
-            value = TRUE
+            value = FALSE
           ),
           style = "font-size: 15px; font-style: italic"
         ),
