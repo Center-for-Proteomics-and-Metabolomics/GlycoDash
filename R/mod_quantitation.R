@@ -164,7 +164,9 @@ mod_quantitation_ui <- function(id) {
                   quantities based on the individual pairs are also plotted as a sanity check.
                   In the correlation plots, a dashed line of equality (<i> y = x </i>) is shown.
                   <br> <br>
-                  <i> Explanation here about sum intensity plots... </i>
+                  <i> <b> To do: </b> Explain correlations between labeled
+                  and natural (glyco)peptide spectrum intensities...
+                  </i>
                   " # TODO  !!!
                 ),
                 trigger = "hover", placement = "left",
