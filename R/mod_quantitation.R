@@ -163,25 +163,24 @@ mod_quantitation_ui <- function(id) {
                   calculated based on each pair. In that case, the correlations between the 
                   quantities based on the individual pairs are also plotted as a sanity check.
                   In the correlation plots, a dashed line of equality (<i> y = x </i>) is shown.
-                  "
+                  <br> <br>
+                  <i> <b> To do: </b> Explain correlations between labeled
+                  and natural (glyco)peptide spectrum intensities...
+                  </i>
+                  " # TODO  !!!
                 ),
-                trigger = "hover",
-                placement = "left",
-                html = "true"
+                trigger = "hover", placement = "left",
+                html = "true", container = "body"
               )
           ),
           tabsetPanel(id = ns("protein_tabs")),
-          width = 12,
-          solidHeader = TRUE,
-          status = "primary"
+          width = 12, solidHeader = TRUE, status = "primary"
         )
       ),
       fluidRow(
         shinydashboard::box(
           title = "View data with protein quantities",
-          width = 12,
-          solidHeader = TRUE,
-          status = "primary",
+          width = 12, solidHeader = TRUE, status = "primary",
           DT::dataTableOutput(ns("data_table"))
         )
       )
@@ -255,7 +254,8 @@ mod_quantitation_server <- function(id,
           confirmButtonCol = "tomato"
         )
         r$correct_formatting <- FALSE
-      } else {
+      } 
+      else {
         # Colnames are correct --> check peptides validity
         clusters_specified <- c(proteins_excel()$natural, proteins_excel()$labeled)
         clusters_data <- c(unique(normalized_data()$cluster), peptides())
@@ -294,9 +294,11 @@ mod_quantitation_server <- function(id,
       req(is_truthy(glycopeptide_intensities()) || is_truthy(peptide_intensities()))
       if (is_truthy(glycopeptide_intensities()) && is_truthy(peptide_intensities())) {
         dplyr::bind_rows(glycopeptide_intensities(), peptide_intensities())
-      } else if (is_truthy(glycopeptide_intensities())) {
+      } 
+      else if (is_truthy(glycopeptide_intensities())) {
         glycopeptide_intensities()
-      } else {
+      } 
+      else {
         peptide_intensities()
       }
     })
@@ -305,9 +307,8 @@ mod_quantitation_server <- function(id,
     proteins_checked <- reactive({
       req(combined_intensities(), proteins_excel())
       present <- unique(combined_intensities()$cluster)
-      checked <- proteins_excel() %>% 
+      proteins_excel() %>% 
         dplyr::filter(natural %in% present & labeled %in% present)
-      return(checked)
     })
     
     # Store notification IDs to be able to remove them
@@ -373,7 +374,7 @@ mod_quantitation_server <- function(id,
       unique(proteins_checked()$protein)
     })
     
-    
+  
     # Counter used to create unique tab ids when quantitation
     # is performed multiple times
     counter <- reactiveValues(count = 0)
@@ -404,12 +405,27 @@ mod_quantitation_server <- function(id,
       }
       r$protein_tabs_contents <- rlang::set_names(proteins()) %>% 
         purrr::map(., function(current_protein) {
+          
+          pq <- protein_quantities() %>% 
+            dplyr::filter(protein == current_protein) %>% 
+            tidyr::separate(
+              peptide_pair, sep = " / ", into = c("natural", "labeled"),
+              remove = FALSE
+            )
+          
+          clusters <- c(pq$natural, pq$labeled)
+          
           mod_tab_quantitation_server(
             id = paste0(current_protein, "_", counter$count),
+            
             quantities = median_quantities() %>% 
               dplyr::filter(protein == current_protein),
-            protein_data = protein_quantities() %>% 
-              dplyr::filter(protein == current_protein)
+            
+            protein_data = pq %>% 
+              dplyr::select(-natural, -labeled),
+            
+            intensities = combined_intensities() %>% 
+              dplyr::filter(cluster %in% clusters)
           )
         })
     })

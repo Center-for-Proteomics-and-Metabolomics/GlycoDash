@@ -1,6 +1,12 @@
 # v1.11.0
 ## New features
 * Option to curate analytes based on the average values of QC parameters.
+* Protein quantitation: plot the intensities of labeled (glyco)peptides against
+natural (glyco)peptides for quality control.
+
+## Bug fixes
+* Fixed a bug in Skyline data input, where the table containing detected
+glycosylation sites was not rendered properly.
 
 
 # v1.10.1

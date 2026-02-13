@@ -236,21 +236,24 @@ curate_analytes <- function(checked_analytes,
   
   # Curation based on percentages
   if (!is.null(cut_offs_percentages)) {
-    curated_analytes <- checked_analytes %>%
-      {
-        if (is.null(bio_groups_colname)) {
-          dplyr::group_by(.data = ., cluster, charge, analyte)
-        } 
-        else {
-          dplyr::group_by(
-            .data = .,
-            .data[[bio_groups_colname]], cluster, charge, analyte
-          )
-        }
-      } %>%
-      dplyr::summarise(passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100) %>%
-      dplyr::mutate(cluster_cut_off = unlist(cut_offs_percentages[cluster], use.names = FALSE)) 
-      dplyr::mutate(has_passed_analyte_curation = passing_percentage >= cluster_cut_off)
+    # Group by cluster, charge, analyte and biological group if applicable.
+    if (!is.null(bio_groups_colname)) {
+      grouped_analytes <- checked_analytes %>% 
+        dplyr::group_by(.data[[bio_groups_colname]], cluster, charge, analyte)
+    }
+    else {
+      grouped_analytes <- checked_analytes %>% 
+        dplyr::group_by(cluster, charge, analyte)
+    }
+    # Curation
+    curated_analytes <- grouped_analytes %>% 
+      dplyr::summarize(
+        passing_percentage = sum(analyte_meets_criteria) / dplyr::n() * 100
+      ) %>% 
+      dplyr::mutate(
+        cluster_cut_off = unlist(cut_offs_percentages[cluster], use.names = FALSE),
+        has_passed_analyte_curation = passing_percentage >= cluster_cut_off
+      )
   }
   
   # Curation based on averages
@@ -571,15 +574,11 @@ plot_analyte_curation_percentages <- function(
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, 
                                                        hjust = 1),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                   #text = ggplot2::element_text(size = 16),
                    legend.position = "right",
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
-    ggplot2::xlab("Analyte") +
-    ggplot2::scale_y_continuous(labels = function(x) paste0(x, "%"), 
-                                name = "Proportion of passing spectra (%)")
+    ggplot2::labs(x= "", y = "Passing spectra (%)")
   
   return(plot)
-  
 }
 
 

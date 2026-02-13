@@ -20,34 +20,49 @@ mod_tab_quantitation_ui <- function(id) {
         style = "font-size: 24px",
         br(),
         shinyWidgets::materialSwitch(
-          ns("log_scale_1"),
+          ns("log_scale_quantities"),
           HTML("<i style='font-size:16px;'> Plot quantities on logarithmic scale </i>"),
-          status = "success",
-          right = TRUE,
-          value = FALSE
+          status = "success", right = TRUE, value = TRUE
         ),
         shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("boxplots")))
       ),
-      # Correlation plots
-      # Need the div to be hidden by default for the toggling to work below
+      # Sum inntensity plots
       br(),
       br(),
       shinyjs::hidden(div(
-        id = ns("corplots_div"),
+        id = ns("div_sum_intensities"),
+        strong("Natural vs labeled sum intensities"),
+        style = "font-size: 24px",
+        br(),
+        div(
+          shinyWidgets::materialSwitch(
+            ns("log_scale_sum_intensities"),
+            HTML("<i style='font-size:16px;'> Plot intensities on logarithmic scale </i>"),
+            status = "success", right = TRUE, value = FALSE
+          ),
+          style = "font-size: 15px; font-style: italic"
+        ),
+        shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("sum_intensities")))
+      )),
+      # Peptide correlation plots
+      br(),
+      br(),
+      shinyjs::hidden(div(
+        id = ns("div_peptide_correlations"),
         strong("Correlations between peptides"),
         style = "font-size: 24px",
         br(),
         div(
           shinyWidgets::materialSwitch(
-            ns("log_scale_2"),
+            ns("log_scale_peptides"),
             HTML("<i style='font-size:16px;'> Plot quantities on logarithmic scale </i>"),
             status = "success",
             right = TRUE,
-            value = FALSE
+            value = TRUE
           ),
           style = "font-size: 15px; font-style: italic"
         ),
-        shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("corplots")))
+        shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("peptide_correlations")))
       ))
     )
   )
@@ -60,14 +75,15 @@ mod_tab_quantitation_ui <- function(id) {
 #' @noRd 
 mod_tab_quantitation_server <- function(id, 
                                         quantities,
-                                        protein_data) {
+                                        protein_data,
+                                        intensities) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Show boxplots with quantities
     quantities_plot <- reactive({
       req(quantities)
-      plot_protein_quantities(quantities, input$log_scale_1)
+      plot_protein_quantities(quantities, input$log_scale_quantities)
     })
     
     output$boxplots <- plotly::renderPlotly({
@@ -77,46 +93,72 @@ mod_tab_quantitation_server <- function(id,
     })
     
     
-    # Correlation plots
-    correlation_plots <- reactive({
+    # Correlation plots between peptide pairs
+    peptide_correlation_plots <- reactive({
       req(protein_data)
       if (length(unique(protein_data$peptide_pair)) > 1) {
-        plot_peptide_correlations(protein_data, input$log_scale_2)
-      } else {
+        plot_peptide_correlations(protein_data, input$log_scale_peptides)
+      } 
+      else {
         NULL
       }
     })
     
-    
-    output$corplots <- plotly::renderPlotly({
-      req(correlation_plots())
-      correlation_plots()
+    output$peptide_correlations <- plotly::renderPlotly({
+      req(peptide_correlation_plots())
       # Create list of interactive plots
       plotly_list <- purrr::map(
-        correlation_plots(), function(plot) {
+        peptide_correlation_plots(), function(plot) {
           plotly::ggplotly(plot, tooltip = "text")
         }
       )
-      
       # Combine into subplot
+      plotly::subplot(plotly_list, titleX = TRUE, titleY = TRUE,
+                      nrows = ceiling(length(plotly_list) / 2), 
+                      margin = 0.05)
+    })
+    
+  
+    
+    # Sum intensity plots
+    sum_intensity_plots <- reactive({
+      req(intensities, protein_data)
+      plot_sum_intensities(intensities, protein_data, input$log_scale_sum_intensities)
+    })
+    
+    output$sum_intensities <- plotly::renderPlotly({
+      req(sum_intensity_plots())
+      plotly_list <- purrr::map(
+        sum_intensity_plots(), function(plot) {
+          plotly::ggplotly(plot, tooltip = "text")
+        }
+      )
       plotly::subplot(plotly_list, titleX = TRUE, titleY = TRUE,
                       nrows = ceiling(length(plotly_list) / 2), 
                       margin = 0.05)
     })
   
     
+    # Set visibility of correlation plots.
     observe({
-      if (is_truthy(correlation_plots())) {
-        shinyjs::show("corplots_div")
+      if (is_truthy(peptide_correlation_plots())) {
+        shinyjs::show("div_peptide_correlations")
       } else {
-        shinyjs::hide("corplots_div")
+        shinyjs::hide("div_peptide_correlations")
+      }
+      
+      if (is_truthy(sum_intensity_plots())) {
+        shinyjs::show("div_sum_intensities")
+      } else {
+        shinyjs::hide("div_sum_intensities")
       }
     })
     
     
     return(list(
       quantities_plot = quantities_plot,
-      correlation_plots = correlation_plots
+      correlation_plots = peptide_correlation_plots,
+      intensity_plots = sum_intensity_plots
     ))
   })
 }
