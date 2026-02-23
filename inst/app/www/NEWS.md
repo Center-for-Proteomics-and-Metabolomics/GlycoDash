@@ -1,4 +1,7 @@
 # v1.11.1
+## Adjustments
+* Data import: allow for non-sequential plate numbering.
+
 ## Bug fixes
 * Fix inverted logic in normalized data heatmaps: hide option for excluding
 sample types when showing the heatmaps per biological group.

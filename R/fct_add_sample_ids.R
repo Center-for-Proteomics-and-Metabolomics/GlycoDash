@@ -282,7 +282,21 @@ read_plate_design <- function(plate_design_file) {
 #' process_plate_design(plate_design)
 process_plate_design <- function(plate_design) {
   
-  colnames(plate_design)[-1] <- as.character(1:(ncol(plate_design) - 1))
+  # Extract actual plate numbers from column names (e.g. "Plate 2" -> "2",
+  # "pl4" -> "4"). This allows non-consecutive plate numbers (e.g. only plates
+  # 2 and 4) to be matched correctly against the plate_well values produced by
+  # detect_plate_and_well(). Fall back to sequential numbering only when no
+  # plate number can be parsed (e.g. a single-plate file with no label).
+  plate_col_names <- colnames(plate_design)[-1]
+  plate_numbers <- stringr::str_match(plate_col_names,
+                                      "[Pp][Ll](?:[Aa][Tt][Ee])?\\s*(\\d+)")[, 2]
+  
+  if (!anyNA(plate_numbers)) {
+    colnames(plate_design)[-1] <- plate_numbers
+  } else {
+    colnames(plate_design)[-1] <- as.character(1:(ncol(plate_design) - 1))
+  }
+  
   plate_design <- plate_design %>% 
     tidyr::pivot_longer(cols = -well, names_to = "plate", values_to = "sample_id") %>% 
     dplyr::mutate(plate_well = paste(plate, well, sep = "_")) %>% 
