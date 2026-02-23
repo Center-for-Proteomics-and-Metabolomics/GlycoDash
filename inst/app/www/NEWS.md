@@ -1,3 +1,9 @@
+# v1.11.1
+## Bug fixes
+* Fix inverted logic in normalized data heatmaps: hide option for excluding
+sample types when showing the heatmaps per biological group.
+
+
 # v1.11.0
 ## New features
 * Option to curate analytes based on the average values of QC parameters.
