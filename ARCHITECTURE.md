@@ -1,6 +1,6 @@
 # Architecture
 
-GlycoDash is an R Shiny dashboard built with the [golem](https://thinkr-open.github.io/golem/) framework for processing glycomics data from LaCyTools, SweetSuite, and SkyLine. This document describes the layout and conventions of the `R/` folder.
+GlycoDash is an R Shiny dashboard built with the [golem](https://thinkr-open.github.io/golem/) framework for processing glycomics data from LaCyTools, SweetSuite, and Skyline. This document describes the layout and conventions of the `R/` folder.
 
 ---
 
