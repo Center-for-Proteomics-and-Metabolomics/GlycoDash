@@ -107,6 +107,18 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
           
           NULL
         },
+        duplicate_plate_numbers = function(c) {
+          shinyFeedback::feedbackDanger("file",
+                                        show = TRUE,
+                                        text = "Duplicate plate numbers detected.")
+          showNotification(
+            c$message,
+            type = "error",
+            duration = NULL
+          )
+          
+          NULL
+        },
         incorrect_formatting = function(c) {
           shinyFeedback::feedbackDanger("file",
                                         show = TRUE,
