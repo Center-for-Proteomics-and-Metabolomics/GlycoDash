@@ -1,10 +1,14 @@
 # v1.11.1
 ## Adjustments
 * Data import: allow for non-sequential plate numbering.
+* Protein quantitation: disable sum intensity correlation plots (introduced in v1.11.0) 
+for now.
 
 ## Bug fixes
 * Fix inverted logic in normalized data heatmaps: hide option for excluding
 sample types when showing the heatmaps per biological group.
+* Fix a bug where numeric columns in SweetSuite data were sometimes read
+in as logical.
 
 
 # v1.11.0
