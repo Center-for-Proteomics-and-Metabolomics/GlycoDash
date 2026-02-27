@@ -9,6 +9,8 @@ for now.
 sample types when showing the heatmaps per biological group.
 * Fix a bug where numeric columns in SweetSuite data were sometimes read
 in as logical.
+* Fix a bug where non-glycosylated peptides without corresponding glycosylation
+data were listed in the "Site occupancy" tab.
 
 
 # v1.11.0
