@@ -922,7 +922,17 @@ read_sweetsuite_data <- function(datapaths) {
     }
 
     # Read the data
-    data <- readxl::read_excel(datapath, sheet = "Data")
+    ncols <- ncol(readxl::read_excel(datapath, sheet = "Data", n_max = 0))
+    data <- readxl::read_excel(
+      datapath, sheet = "Data",
+      # Explicitly specify col_types because columns from isotopic_fraction 
+      # onward may have no values in the first 1000 rows (readxl's default guess_max). 
+      # Without this, readxl guesses those columns as logical instead of numeric.
+      col_types = c(
+        "text", "text", # `file` and `analyte`,
+        rep("numeric", ncols - 2)  # Remaining columns
+      )
+    )
 
     # Check for required columns
     required_cols <- c("file", "analyte", "charge", "mz_exact", "isotopic_fraction",
@@ -949,7 +959,7 @@ read_sweetsuite_data <- function(datapaths) {
         sn = signal_to_noise
       ) %>%
       dplyr::mutate(charge = as.character(charge))
-
+    
     return(data)
   })
   
