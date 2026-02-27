@@ -21,7 +21,7 @@ app_ui <- function(request) {
         title = paste0("GlycoDash v", utils::packageVersion("GlycoDash")),
         tags$li(
           ManualButton("download_manual"), 
-          title = "Download latest version of user guide",
+          title = "Download user guide",
           class = "dropdown"
         ),
         tags$li(
