@@ -387,13 +387,14 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       
       if (!results_analyte_curation$curate_per_group()) {
         shinyjs::hide("facet_per_group")
+        shinyjs::show("exclude_sample_types")
         
       } else {
         shinyjs::show("facet_per_group")
         if (input$facet_per_group) {
-          shinyjs::show("exclude_sample_types")
-        } else {
           shinyjs::hide("exclude_sample_types")
+        } else {
+          shinyjs::show("exclude_sample_types")
         }
       }
       

@@ -1,6 +1,6 @@
 Package: GlycoDash
 Title: GlycoDash
-Version: 1.11.0
+Version: 1.11.1
 Authors@R: c(
     person("Steinar", "Gijze", email = "s.gijze@lumc.nl", role = c("aut", "cre")),
     person("Sterre", "Siekman", role = c("aut")),

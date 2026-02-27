@@ -26,24 +26,24 @@ mod_tab_quantitation_ui <- function(id) {
         ),
         shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("boxplots")))
       ),
-      # Sum inntensity plots
-      br(),
-      br(),
-      shinyjs::hidden(div(
-        id = ns("div_sum_intensities"),
-        strong("Natural vs labeled sum intensities"),
-        style = "font-size: 24px",
-        br(),
-        div(
-          shinyWidgets::materialSwitch(
-            ns("log_scale_sum_intensities"),
-            HTML("<i style='font-size:16px;'> Plot intensities on logarithmic scale </i>"),
-            status = "success", right = TRUE, value = FALSE
-          ),
-          style = "font-size: 15px; font-style: italic"
-        ),
-        shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("sum_intensities")))
-      )),
+      # Sum intensity plots (disabled for now)
+      # br(),
+      # br(),
+      # shinyjs::hidden(div(
+      #   id = ns("div_sum_intensities"),
+      #   strong("Natural vs labeled sum intensities"),
+      #   style = "font-size: 24px",
+      #   br(),
+      #   div(
+      #     shinyWidgets::materialSwitch(
+      #       ns("log_scale_sum_intensities"),
+      #       HTML("<i style='font-size:16px;'> Plot intensities on logarithmic scale </i>"),
+      #       status = "success", right = TRUE, value = FALSE
+      #     ),
+      #     style = "font-size: 15px; font-style: italic"
+      #   ),
+      #   shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("sum_intensities")))
+      # )),
       # Peptide correlation plots
       br(),
       br(),
@@ -120,23 +120,23 @@ mod_tab_quantitation_server <- function(id,
     
   
     
-    # Sum intensity plots
-    sum_intensity_plots <- reactive({
-      req(intensities, protein_data)
-      plot_sum_intensities(intensities, protein_data, input$log_scale_sum_intensities)
-    })
-    
-    output$sum_intensities <- plotly::renderPlotly({
-      req(sum_intensity_plots())
-      plotly_list <- purrr::map(
-        sum_intensity_plots(), function(plot) {
-          plotly::ggplotly(plot, tooltip = "text")
-        }
-      )
-      plotly::subplot(plotly_list, titleX = TRUE, titleY = TRUE,
-                      nrows = ceiling(length(plotly_list) / 2), 
-                      margin = 0.05)
-    })
+    # Sum intensity plots (not used for now)
+    # sum_intensity_plots <- reactive({
+    #   req(intensities, protein_data)
+    #   plot_sum_intensities(intensities, protein_data, input$log_scale_sum_intensities)
+    # })
+    # 
+    # output$sum_intensities <- plotly::renderPlotly({
+    #   req(sum_intensity_plots())
+    #   plotly_list <- purrr::map(
+    #     sum_intensity_plots(), function(plot) {
+    #       plotly::ggplotly(plot, tooltip = "text")
+    #     }
+    #   )
+    #   plotly::subplot(plotly_list, titleX = TRUE, titleY = TRUE,
+    #                   nrows = ceiling(length(plotly_list) / 2), 
+    #                   margin = 0.05)
+    # })
   
     
     # Set visibility of correlation plots.
@@ -147,18 +147,18 @@ mod_tab_quantitation_server <- function(id,
         shinyjs::hide("div_peptide_correlations")
       }
       
-      if (is_truthy(sum_intensity_plots())) {
-        shinyjs::show("div_sum_intensities")
-      } else {
-        shinyjs::hide("div_sum_intensities")
-      }
+      # if (is_truthy(sum_intensity_plots())) {
+      #   shinyjs::show("div_sum_intensities")
+      # } else {
+      #   shinyjs::hide("div_sum_intensities")
+      # }
     })
     
     
     return(list(
       quantities_plot = quantities_plot,
-      correlation_plots = peptide_correlation_plots,
-      intensity_plots = sum_intensity_plots
+      correlation_plots = peptide_correlation_plots #,
+      # intensity_plots = sum_intensity_plots
     ))
   })
 }

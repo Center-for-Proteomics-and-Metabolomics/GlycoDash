@@ -576,7 +576,8 @@ plot_analyte_curation_percentages <- function(
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
                    legend.position = "right",
                    panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
-    ggplot2::labs(x= "", y = "Passing spectra (%)")
+    ggplot2::labs(x= "", y = "Passing spectra (%)") +
+    ggplot2::scale_y_continuous(limits = c(0, 100))
   
   return(plot)
 }

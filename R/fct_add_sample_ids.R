@@ -282,7 +282,67 @@ read_plate_design <- function(plate_design_file) {
 #' process_plate_design(plate_design)
 process_plate_design <- function(plate_design) {
   
-  colnames(plate_design)[-1] <- as.character(1:(ncol(plate_design) - 1))
+  # Extract actual plate numbers from column names (e.g. "Plate 2" -> "2",
+  # "pl4" -> "4"). This allows non-consecutive plate numbers (e.g. only plates
+  # 2 and 4) to be matched correctly against the plate_well values produced by
+  # detect_plate_and_well(). When all plate numbers fail to parse (e.g. a
+  # single-plate file with no label), fall back to sequential numbering for all
+  # columns. When only some fail, the parsed numbers are kept and the
+  # unparseable columns receive sequential numbers that don't collide with the
+  # already-parsed ones.
+  plate_col_names <- colnames(plate_design)[-1]
+  plate_numbers <- stringr::str_match(plate_col_names,
+                                      "[Pp][Ll](?:[Aa][Tt][Ee])?\\s*(\\d+)")[, 2]
+  # Strip leading zeros so that plate numbers match the format produced by
+  # detect_plate_and_well(), which also strips leading zeros from plate_well
+  # (e.g. "Plate 04" -> "4", consistent with the gsub("^0+", ...) there).
+  # sub() returns NA unchanged, so NA entries in plate_numbers are safe.
+  plate_numbers <- sub("^0+", "", plate_numbers)
+  
+  if (all(is.na(plate_numbers))) {
+    # No plate numbers could be parsed: fall back to simple sequential numbering.
+    colnames(plate_design)[-1] <- as.character(1:(ncol(plate_design) - 1))
+  } else {
+    # Validate that parsed plate numbers are unique to avoid duplicate column
+    # names, which would cause issues in the pivot_longer() operation below.
+    parsed_numbers <- plate_numbers[!is.na(plate_numbers)]
+    if (anyDuplicated(parsed_numbers) > 0) {
+      rlang::abort(
+        class = "duplicate_plate_numbers",
+        message = paste0(
+          "Duplicate plate numbers were detected in the plate design file (",
+          paste(unique(parsed_numbers[duplicated(parsed_numbers)]), collapse = ", "),
+          "). Please ensure that each plate column has a unique plate number."
+        )
+      )
+    }
+    
+    # Assign collision-free sequential fallback numbers to any columns whose
+    # plate number could not be parsed.
+    new_plate_names <- plate_numbers
+    used_numbers <- as.integer(parsed_numbers)
+    used_numbers <- used_numbers[!is.na(used_numbers)]
+    
+    if (length(used_numbers) == 0L) {
+      next_candidate <- 1L
+    } else {
+      next_candidate <- max(used_numbers, na.rm = TRUE) + 1L
+    }
+    
+    for (i in seq_along(new_plate_names)) {
+      if (is.na(new_plate_names[i])) {
+        while (next_candidate %in% used_numbers) {
+          next_candidate <- next_candidate + 1L
+        }
+        new_plate_names[i] <- as.character(next_candidate)
+        used_numbers <- c(used_numbers, next_candidate)
+        next_candidate <- next_candidate + 1L
+      }
+    }
+    
+    colnames(plate_design)[-1] <- new_plate_names
+  }
+  
   plate_design <- plate_design %>% 
     tidyr::pivot_longer(cols = -well, names_to = "plate", values_to = "sample_id") %>% 
     dplyr::mutate(plate_well = paste(plate, well, sep = "_")) %>% 
