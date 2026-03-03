@@ -239,10 +239,33 @@ mod_tab_curated_analytes_server <- function(id,
       
       return(to_return)
     })
+    
+    
+    # Long-format table of analytes that pass AUTOMATIC curation.
+    # Used in the report to detect manual overrides (inclusions/exclusions).
+    auto_curated_analytes <- reactive({
+      req(curated_analytes_table())
+      
+      charge_columns <- stringr::str_subset(colnames(curated_analytes_table())[-1],
+                                            "Include",
+                                            negate = TRUE)
+      
+      curated_analytes_table() %>%
+        dplyr::select(analyte, tidyselect::all_of(charge_columns)) %>%
+        tidyr::pivot_longer(
+          cols = tidyselect::all_of(charge_columns),
+          names_to  = "charge",
+          values_to = "passed"
+        ) %>%
+        dplyr::filter(passed == "Yes") %>%
+        dplyr::select(-passed)
+    })
+
   
     
     return(list(plot = curated_analytes_plot,
-                analytes_to_include = analytes_to_include))
+                analytes_to_include = analytes_to_include,
+                auto_curated_analytes = auto_curated_analytes))
     
   })
 }

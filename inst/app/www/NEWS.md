@@ -1,3 +1,9 @@
+# v1.11.2
+## Adjustments
+* In the HTML report, explicitly list analytes that were manually included
+or excluded during analyte curation.
+
+
 # v1.11.1
 ## Adjustments
 * Data import: allow for non-sequential plate numbering.
