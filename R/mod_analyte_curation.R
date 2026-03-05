@@ -217,7 +217,10 @@ mod_analyte_curation_ui <- function(id) {
               ns("download_format"), "Choose a file format:",
               choices = c("Excel file", "R object")
             ),
-            downloadButton(ns("download"), "Download analyte-curated data")
+            downloadButton(ns("download"), "Download analyte-curated data"),
+            br(),
+            br(),
+            downloadButton(ns("download_analyte_list"), "Download list of passing analytes")
           )
         )
       ),
@@ -826,9 +829,45 @@ mod_analyte_curation_server <- function(id,
     )
     
     
+    # Reactive: dataframe of all analyte/charge combinations selected in the
+    # checkbox tables across all cluster tabs.
+    passing_analytes_list <- reactive({
+      req(
+        input$curation_method != "Per sample",
+        !rlang::is_empty(r$mod_results),
+        all(purrr::map_lgl(r$mod_results, ~ is_truthy(.x$analytes_to_include())))
+      )
+      purrr::map(r$mod_results, ~ .x$analytes_to_include()) %>%
+        dplyr::bind_rows() %>%
+        dplyr::select(analyte, charge)
+    })
+
+    # Download handler for the list of passing analytes
+    output$download_analyte_list <- downloadHandler(
+      filename = function() {
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
+        switch(
+          input$download_format,
+          "R object" = paste0(current_datetime, "_passing_analytes.rds"),
+          "Excel file" = paste0(current_datetime, "_passing_analytes.xlsx")
+        )
+      },
+      content = function(file) {
+        data_to_download <- passing_analytes_list()
+        switch(
+          input$download_format,
+          "R object" = save(data_to_download, file = file),
+          "Excel file" = writexl::write_xlsx(data_to_download, path = file)
+        )
+      }
+    )
+
     # Set status of buttons
     observe({
       shinyjs::toggleState("download", is_truthy(with_analytes_to_include()))
+      shinyjs::toggleState("download_analyte_list", is_truthy(passing_analytes_list()))
       shinyjs::toggleState(
         "curate_analytes", condition = all(
           is_truthy(passing_spectra()),
