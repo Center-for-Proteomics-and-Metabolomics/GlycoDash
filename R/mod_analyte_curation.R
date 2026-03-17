@@ -822,7 +822,7 @@ mod_analyte_curation_server <- function(id,
         data_to_download <- with_analytes_to_include()
         switch(
           input$download_format,
-          "R object" = save(data_to_download, file = file),
+          "R object" = saveRDS(data_to_download, file = file),
           "Excel file" = writexl::write_xlsx(data_to_download, path = file)
         )
       }
@@ -858,7 +858,7 @@ mod_analyte_curation_server <- function(id,
         data_to_download <- passing_analytes_list()
         switch(
           input$download_format,
-          "R object" = save(data_to_download, file = file),
+          "R object" = saveRDS(data_to_download, file = file),
           "Excel file" = writexl::write_xlsx(data_to_download, path = file)
         )
       }

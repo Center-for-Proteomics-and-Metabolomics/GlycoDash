@@ -1154,8 +1154,9 @@ create_downloadHandler <- function(data_to_download, download_format, paste) {
     },
     content = function(file) {
       if (download_format == "R object") {
-        save(data_to_download, file = file)
-      } else {
+        saveRDS(data_to_download, file = file)
+      } 
+      else {
         writexl::write_xlsx(data_to_download, path = file)
       }
     }

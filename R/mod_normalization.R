@@ -421,11 +421,13 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       },
       content = function(file) {
         if (grepl("R object", input$download_format)) {
-          save(normalized_data_wide(), file = file)
-        } else if (is_truthy(notes())) {
+          saveRDS(normalized_data_wide(), file = file)
+        } 
+        else if (is_truthy(notes())) {
           data_list <- list("Data" = normalized_data_wide(), "Notes" = notes())
           writexl::write_xlsx(data_list, path = file)
-        } else{
+        } 
+        else{
           writexl::write_xlsx(normalized_data_wide(), path = file)
         }
       }

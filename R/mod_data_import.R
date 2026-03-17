@@ -183,7 +183,7 @@ mod_data_import_server <- function(id) {
       content = function(file) {
         data_to_download <- show_in_table()
         switch(input$download_format,
-               "R object" = save(data_to_download, 
+               "R object" = saveRDS(data_to_download, 
                                  file = file),
                "Excel file" = writexl::write_xlsx(data_to_download, 
                                                   path = file))

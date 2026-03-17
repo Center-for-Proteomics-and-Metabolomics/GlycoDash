@@ -774,7 +774,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       content = function(file) {
         data_to_download <- to_return()
         switch(input$download_format,
-               "R object" = save(data_to_download, 
+               "R object" = saveRDS(data_to_download, 
                                  file = file),
                "Excel file" = writexl::write_xlsx(data_to_download, 
                                                   path = file))
@@ -795,7 +795,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
           dplyr::distinct() %>%
           dplyr::filter(!has_passed_spectra_curation)
         switch(input$download_format,
-               "R object" = save(data_to_download, 
+               "R object" = saveRDS(data_to_download, 
                                  file = file),
                "Excel file" = writexl::write_xlsx(data_to_download, 
                                                   path = file))
@@ -816,7 +816,7 @@ mod_spectra_curation_server <- function(id, results_data_import) {
           dplyr::distinct() %>%
           dplyr::filter(has_passed_spectra_curation == FALSE)
         switch(input$download_format,
-               "R object" = save(data_to_download, 
+               "R object" = saveRDS(data_to_download, 
                                  file = file),
                "Excel file" = writexl::write_xlsx(data_to_download, 
                                                   path = file))
