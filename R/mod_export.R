@@ -137,11 +137,13 @@ mod_export_server <- function(id,
       },
       content = function(file) {
         if (grepl("R object", input$download_format)) {
-          save(x$data, file = file)
-        } else if (is_truthy(results_normalization$notes())) {
+          saveRDS(x$data, file = file)
+        } 
+        else if (is_truthy(results_normalization$notes())) {
           data_list <- list("Data" = x$data, "Notes" = results_normalization$notes())
           writexl::write_xlsx(data_list, path = file)
-        } else {
+        } 
+        else {
           writexl::write_xlsx(x$data, path = file)
         }
       }

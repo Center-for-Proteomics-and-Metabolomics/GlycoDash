@@ -1,5 +1,5 @@
 ---
-title: "GlycoDash v1.11.1 data processing report"
+title: "GlycoDash v1.11.2 data processing report"
 date: "`r Sys.Date()`"
 output: 
   html_document:
@@ -323,6 +323,72 @@ if (!is.null(params$analyte_curation_method) &&
         kableExtra::scroll_box(height = "500px", width = "100%") %>%
         htmltools::HTML() %>%
         print()
+      
+      # ── Manual overrides ──────────────────────────────────────────────────────
+      # Compare what automatic curation passed vs. what the user finally selected
+      # to surface any analytes that were manually included or excluded.
+      if (!is.null(objects_list$auto_curated_analytes)) {
+        auto_pass     <- objects_list$auto_curated_analytes
+        user_selected <- objects_list$analytes_to_include
+        
+        manually_excluded <- dplyr::anti_join(
+          auto_pass, user_selected, by = c("analyte", "charge")
+        )
+        manually_included <- dplyr::anti_join(
+          user_selected, auto_pass, by = c("analyte", "charge")
+        )
+        
+        has_overrides <- nrow(manually_excluded) > 0 || nrow(manually_included) > 0
+        
+        cat("\n\n**Manual overrides for", cluster, ":**\n\n")
+        
+        if (!has_overrides) {
+          cat("No analytes were manually included or excluded for this cluster.\n\n")
+        } else {
+          if (nrow(manually_excluded) > 0) {
+            cat(
+              nrow(manually_excluded),
+              "analyte/charge combination(s) **passed automatic curation but were manually excluded:**\n\n"
+            )
+            manually_excluded %>%
+              dplyr::select(analyte, charge) %>%
+              dplyr::rename(
+                Analyte = analyte,
+                `Charge state` = charge
+              ) %>%
+              kableExtra::kbl() %>%
+              kableExtra::kable_styling(
+                bootstrap_options = c("striped", "bordered"),
+                full_width = FALSE, position = "left"
+              ) %>%
+              htmltools::HTML() %>%
+              print()
+            cat("\n\n")
+          }
+          
+          if (nrow(manually_included) > 0) {
+            cat(
+              nrow(manually_included),
+              "analyte/charge combination(s) **did not pass automatic curation but were manually included:**\n\n"
+            )
+            manually_included %>%
+              dplyr::select(analyte, charge) %>%
+              dplyr::rename(
+                Analyte = analyte,
+                `Charge state` = charge
+              ) %>%
+              kableExtra::kbl() %>%
+              kableExtra::kable_styling(
+                bootstrap_options = c("striped", "bordered"),
+                full_width = FALSE, position = "left"
+              ) %>%
+              htmltools::HTML() %>%
+              print()
+            cat("\n\n")
+          }
+        }
+      }
+      # ─────────────────────────────────────────────────────────────────────────
     })
   }
 }
