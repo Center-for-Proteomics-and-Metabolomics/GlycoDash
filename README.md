@@ -27,6 +27,7 @@ Docker will pull the image, which can take some time.
 
 5. The image should now be loaded in Docker. Run GlycoDash locally using:
 `docker run --rm -p 127.0.0.1:8080:80 ghcr.io/center-for-proteomics-and-metabolomics/glycodash:latest`
+	- If you created an image for `beta` branch as described above, use `docker run --rm -p 127.0.0.1:8080:80 glycodash`.
 
 6. Open the dashboard in your internet browser, by navigating to `http://localhost:8080`
    
