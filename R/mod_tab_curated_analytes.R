@@ -201,9 +201,9 @@ mod_tab_curated_analytes_server <- function(id,
     analytes_to_include <- reactive({
       req(curated_analytes_table())
       
-      charge_columns <- stringr::str_subset(colnames(curated_analytes_table())[-1],
-                                            "Include",
-                                            negate = TRUE)
+      charge_columns <- stringr::str_subset(
+        colnames(curated_analytes_table())[-1], "Include", negate = TRUE
+      )
       
       analytes_to_include_per_charge <- rlang::set_names(charge_columns) %>% 
         purrr::map_dfc(.,
@@ -225,12 +225,16 @@ mod_tab_curated_analytes_server <- function(id,
         dplyr::mutate(dplyr::across(analyte, as.character))
       
       
-      # Test if analytes_to_include_per_charge is empty.
-      # This is the case when the cluster tab has not yet been clicked.
-      to_return <- if (nrow(analytes_to_include_per_charge) > 0) {
-        analytes_to_include_per_charge
-      } else {
-        curated_analytes_table() %>% 
+      # Fall back to automatic curation results only if the cluster tab has
+      # not yet been clicked (checkboxes uninitialized, i.e. still NULL).
+      # If the user intentionally deselected all analytes, the input will be
+      # FALSE (not NULL), so analytes_to_include_per_charge is returned as-is.
+      tab_clicked <- !is.null(input[[paste0("checkbox", charge_columns[1], 1)]])
+      if (tab_clicked) {
+        to_return <- analytes_to_include_per_charge
+      }
+      else {
+        to_return <- curated_analytes_table() %>% 
           dplyr::select(., "analyte", charge_columns) %>% 
           tidyr::pivot_longer(., cols = charge_columns, names_to = "charge") %>% 
           dplyr::filter(., value == "Yes") %>% 
