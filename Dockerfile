@@ -44,4 +44,4 @@ RUN R -e 'renv::install(".", repos = getOption("repos"))' \
 ENV RENV_CONFIG_SYNCHRONIZED_CHECK=FALSE
 
 EXPOSE 80
-CMD ["R", "-e", "options('shiny.port'=80,shiny.host='0.0.0.0');library(GlycoDash);GlycoDash::run_app()"]
+CMD ["R", "-e", "options(shiny.port=80, shiny.host='0.0.0.0', shiny.basepath='/glycodash'); library(GlycoDash); GlycoDash::run_app()"]
