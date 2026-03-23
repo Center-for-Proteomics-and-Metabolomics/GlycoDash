@@ -146,6 +146,7 @@ mod_normalization_ui <- function(id){
   )
 }
     
+
 #' normalization Server Functions
 #'
 #' @noRd 
@@ -154,17 +155,13 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     ns <- session$ns
     
     analyte_curated_data <- reactive({
-      # req() considers an empty dataframe Truthy, and because of the way that
-      # results_analyte_curation$analyte_curated_data() is created in
-      # mod_analyte_curation.R there is a moment that it is an empty dataframe.
-      # Solution -> wait until results_analyte_curation$analyte_curated_data()
-      # is not empty:
       req(!rlang::is_empty(results_analyte_curation$analyte_curated_data()))
       # Check if charge states should be treated separately
-      if (input$separate_charges == TRUE) {
+      if (input$separate_charges) {
         results_analyte_curation$analyte_curated_data() %>% 
           tidyr::unite("analyte", analyte:charge, sep = "_", remove = FALSE)
-      } else {
+      } 
+      else {
         results_analyte_curation$analyte_curated_data()
       }
     }) 
@@ -182,19 +179,25 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     # Normalized data is in long format
     normalized_data <- reactive({
       req(total_intensities_glycans())
-      data <- normalize_data(total_intensities = total_intensities_glycans()) %>% 
-        # Sort by glycan composition
-        tidyr::separate(analyte, into = c("cluster", "analyte"),
-                        sep = "1", extra = "merge") %>% 
-        sort_glycans(.) %>% 
-        dplyr::group_by(cluster) %>% 
-        dplyr::arrange(cluster, analyte) %>% 
-        dplyr::ungroup() %>% 
-        dplyr::mutate(analyte = paste0(cluster, "1", analyte))
+      if (nrow(total_intensities_glycans()) == 0) {
+        # Zero analytes passed
+        data <- normalize_data(total_intensities = total_intensities_glycans())
+      }
+      else {
+        data <- normalize_data(total_intensities = total_intensities_glycans()) %>% 
+          # Sort by glycan composition
+          tidyr::separate(analyte, into = c("cluster", "analyte"),
+                          sep = "1", extra = "merge") %>% 
+          sort_glycans(.) %>% 
+          dplyr::group_by(cluster) %>% 
+          dplyr::arrange(cluster, analyte) %>% 
+          dplyr::ungroup() %>% 
+          dplyr::mutate(analyte = paste0(cluster, "1", analyte))
         
-      # Check if metadata exists
-      if (is_truthy(merged_metadata())) {
-        data <- dplyr::left_join(data, merged_metadata(), by = "sample_id")
+        # Check if metadata exists
+        if (is_truthy(merged_metadata())) {
+          data <- dplyr::left_join(data, merged_metadata(), by = "sample_id")
+        }
       }
       
       return(data)
@@ -276,24 +279,28 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         
         # Create tabs and plots
         purrr::imap(cluster_names, function(cluster, i) {
-          
-          plot <- sample_heatmap(
-            normalized_data = normalized_data(),
-            cluster_name = cluster,
-            exclude_sample_types = input$exclude_sample_types,
-            group_facet = dplyr::case_when(
-              .default = "", 
-              ( # Only when switch is on, and curation was done per biological group.
-                # Second check is required, because switch is on by default.
-                input$facet_per_group &
-                results_analyte_curation$curate_per_group()
-              ) ~ results_analyte_curation$biogroups_colname()
-            ),
-            color_low = input$color_low,
-            color_mid = input$color_mid,
-            color_high = input$color_high,
-            color_na = input$color_na
-          )
+          if (nrow(normalized_data()) == 0) {
+            plot <- ggplot2::ggplot()
+          }
+          else {
+            plot <- sample_heatmap(
+              normalized_data = normalized_data(),
+              cluster_name = cluster,
+              exclude_sample_types = input$exclude_sample_types,
+              group_facet = dplyr::case_when(
+                .default = "", 
+                ( # Only when switch is on, and curation was done per biological group.
+                  # Second check is required, because switch is on by default.
+                  input$facet_per_group &
+                    results_analyte_curation$curate_per_group()
+                ) ~ results_analyte_curation$biogroups_colname()
+              ),
+              color_low = input$color_low,
+              color_mid = input$color_mid,
+              color_high = input$color_high,
+              color_na = input$color_na
+            )
+          }
           
           # Store plot in list, give it name of the cluster.
           # Need isolate() to prevent infinite loop
@@ -303,7 +310,9 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
           })
           
           # Show plot in UI
-          output[[cluster]] <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
+          output[[cluster]] <- plotly::renderPlotly(
+            plotly::ggplotly(plot, tooltip = "text")
+          )
           appendTab(
             inputId = "tabs",
             select = TRUE,
@@ -316,29 +325,36 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         
         #### CLUSTER ON Y-AXIS #### 
       } else if (input$heatmap_yaxis == "Glycosylation site") {
-
+      
         # Make the plot
-        plot <- cluster_heatmap(
-          normalized_data = normalized_data(),
-          exclude_sample_types = input$exclude_sample_types,
-          group_facet = dplyr::case_when(
-            .default = "",
-            (
-              input$facet_per_group &
-              results_analyte_curation$curate_per_group()
-            ) ~ results_analyte_curation$biogroups_colname()
-          ),
-          color_low = input$color_low,
-          color_mid = input$color_mid,
-          color_high = input$color_high,
-          color_na = input$color_na
-        )
+        if (nrow(normalized_data()) == 0) {
+          plot <- ggplot2::ggplot()
+        } 
+        else {
+          plot <- cluster_heatmap(
+            normalized_data = normalized_data(),
+            exclude_sample_types = input$exclude_sample_types,
+            group_facet = dplyr::case_when(
+              .default = "",
+              (
+                input$facet_per_group &
+                  results_analyte_curation$curate_per_group()
+              ) ~ results_analyte_curation$biogroups_colname()
+            ),
+            color_low = input$color_low,
+            color_mid = input$color_mid,
+            color_high = input$color_high,
+            color_na = input$color_na
+          )
+        }
         
         # Store plot in list
         isolate(r$heatmaps <- list(plot))
         
         # Show plot in UI and store in list
-        output$clusters_plot <- plotly::renderPlotly(plotly::ggplotly(plot, tooltip = "text"))
+        output$clusters_plot <- plotly::renderPlotly(
+          plotly::ggplotly(plot, tooltip = "text")
+        )
       }
       
     }) %>% 

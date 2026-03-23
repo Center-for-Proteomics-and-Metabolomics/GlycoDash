@@ -18,37 +18,22 @@ _Note: it is recommended that you have at least 16 GB of RAM._
 1. Download and install [Docker desktop](https://www.docker.com/products/docker-desktop/) on your computer.
 2. Start Docker desktop on your computer.
 3. Open a terminal (in Windows, this is called "cmd" or "Command Prompt").
-4. Get the most recent GlycoDash package [here](https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/pkgs/container/glycodash).
+4. To use the latest release version, paste the following command:
+`docker pull ghcr.io/center-for-proteomics-and-metabolomics/glycodash:latest`
+Docker will pull the image, which can take some time.
+    - Alternatively, you can use the `beta` version of GlycoDash to use the
+    newest features. Note that this version may be less stable.
+    Download the code of the [beta branch](https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/tree/beta) as a zip file, and extract the folder somewhere. Open a terminal inside the folder, and run the following: `docker build . -t glycodash`
 
-   Then pull the Docker image by pasting the listed command in your terminal.
+5. The image should now be loaded in Docker. Run GlycoDash locally using:
+`docker run --rm -p 127.0.0.1:8080:80 ghcr.io/center-for-proteomics-and-metabolomics/glycodash:latest`
+	- If instead you created an image for `beta` branch as described above, use `docker run --rm -p 127.0.0.1:8080:80 glycodash`
+
+6. Open the dashboard in your internet browser, by navigating to `http://localhost:8080`
    
-   Docker will now build an image which can take some time.
-6. The image should now be loaded in Docker. Click the Run button. Then click optional settings, and for "host port" fill in 80. Then click "Run".
+7. To stop the Docker container, navigate to the `Containers` tab in Docker Desktop, and click the "Stop" button (square).
 
-<p align="center";">
-    <img src="man/figures/docker_A.png" height="auto" width="85%"/>\
-    <img src="man/figures/docker_B.png" height="auto" width="60%"/>
-</p>
-<br />
-
-7. Under the "Containers" tab in Docker, you should now see something like this:
-   
-<p align="center";">
-    <img src="man/figures/docker_C.png" height="auto" width="85%"/>
-</p>
-<br />
-
-8. To use the dashboard: open your browser, type "localhost" in the search bar and hit enter. You should now be able to use the dashboard:
-
-<p align="center";">
-    <img src="man/figures/localhost.png" height="auto" width="85%"/>
-</p>
-<br />
-
-
-9. When you are done using GlycoDash, simply stop the container in Docker by clicking the stop button. 
-
-10. To close Docker entirely in Windows, right-click the Docker icon in the bottom-right corner of your taskbar, and then click "Quit Docker Desktop". Afterwards, you may want to run the command `wsl --shutdown` in your Command Prompt to free up memory.
+8. To close Docker entirely in Windows, right-click the Docker icon in the bottom-right corner of your taskbar, and then click "Quit Docker Desktop". Afterwards, you may want to run the command `wsl --shutdown` in your terminal to free up memory.
 
 
 ### Option 2: Run GlycoDash in RStudio
@@ -81,5 +66,5 @@ The ```master``` branch will be used for “official” releases.
 
 The ```alfa``` branch is the development branch.
 
-The ```beta``` branch contains the version of the dashboard that is currently
-running on the cpmtools server within the LUMC.
+The ```beta``` branch contains an experimental version of GlycoDash containing
+the newest features. This version may be unstable.

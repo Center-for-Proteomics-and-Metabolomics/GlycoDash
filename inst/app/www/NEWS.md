@@ -1,3 +1,13 @@
+# v1.11.3
+## Adjustments
+* Update instructions in `README.md` for running GlycoDash using Docker.
+
+## Bug fixes
+* Allow the user to de-select all analytes in analyte curation. Previously,
+this caused all initial analytes to pass curation.
+* Prevent GlycoDash from crashing when zero analytes pass curation.
+
+
 # v1.11.2
 ## Adjustments
 * In the HTML report, explicitly list analytes that were manually included
