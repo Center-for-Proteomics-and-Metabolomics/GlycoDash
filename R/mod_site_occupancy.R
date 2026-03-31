@@ -172,10 +172,23 @@ mod_site_occupancy_server <- function(id,
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    # Get quality info on peptides
-    peptides_quality <- reactive({
+    # Get data of peptides for which there is corresponding glycopeptide
+    # data.
+    peptides_data <- reactive({
       req(results_spectra_curation$non_glycosylated_data())
-      data <- results_spectra_curation$non_glycosylated_data() %>% 
+      req(results_normalization$normalized_data())
+
+      glyco_clusters <- results_normalization$normalized_data() %>% 
+        dplyr::distinct(cluster) %>% 
+        dplyr::pull(cluster)
+      
+      results_spectra_curation$non_glycosylated_data() %>% 
+        dplyr::filter(cluster %in% glyco_clusters)
+    })
+    
+    peptides_quality <- reactive({
+      req(peptides_data())
+      data <- peptides_data() %>% 
         dplyr::select(sample_name, sample_id, sample_type, cluster, analyte, charge,
                       tidyselect::any_of(c(
                         "group",
@@ -189,9 +202,8 @@ mod_site_occupancy_server <- function(id,
                       )))
       if (nrow(data) > 0) {
         data
-      } else{
-        NULL
       }
+      else NULL
     })
     
     # Allow for downloading of peptides quality
@@ -297,11 +309,13 @@ mod_site_occupancy_server <- function(id,
         dplyr::left_join(results_derived_traits$data_with_traits(), site_occupancy()) %>% 
           dplyr::relocate(tidyselect::contains("site_occupancy"),
                           .after = tidyselect::contains("sum_intensity"))
-      } else if (is_truthy(results_quantitation$data_with_quantities())) {
+      } 
+      else if (is_truthy(results_quantitation$data_with_quantities())) {
         dplyr::left_join(results_quantitation$data_with_quantities(), site_occupancy()) %>%
           dplyr::relocate(tidyselect::contains("_quantity"),
                           .after = tidyselect::contains("sum_intensity"))
-      } else {
+      } 
+      else {
         site_occupancy()
       }
     })

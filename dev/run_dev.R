@@ -1,13 +1,13 @@
-# Use "Source" or "Source with Echo" in Rstudio to load the dashboard
-# Do not change code below
+# Use "Ctrl+Shift+Enter" to launch the dashboard.
+# (Or click `Source` -> `Source with Echo`).
 
 
-options(golem.app.prod = FALSE) # TRUE = production mode, FALSE = development mode
+options(golem.app.prod = FALSE)
 
-# Detach all loaded packages and clean your environment
 golem::detach_all_attached()
 rm(list=ls(all.names = TRUE))
 
 golem::document_and_reload()
 
 run_app()
+

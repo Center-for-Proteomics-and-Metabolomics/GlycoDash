@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_tab_curated_analytes_ui <- function(id){
+mod_tab_curated_analytes_ui <- function(id) {
   ns <- NS(id)
   
   tagList(
@@ -30,31 +30,38 @@ mod_tab_curated_analytes_ui <- function(id){
 #' tab_curated_analytes Server Function
 #'
 #' @noRd 
-mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
-  moduleServer(id, function(input, output, session){
+mod_tab_curated_analytes_server <- function(id, 
+                                            info, 
+                                            cluster, 
+                                            biogroup_column) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     curated_analytes_plot <- reactive({
-      req(info$method  == "Curate analytes based on data")
+      req(info$curation_method != "Supply an analyte list")
       req(info$curated_analytes)
-      req(info$cut_offs)
-      
-      plot_analyte_curation(curated_analytes = info$curated_analytes,
-                            cut_off_percentage = info$cut_offs[[cluster]],
-                            selected_cluster = cluster,
-                            bio_groups_colname = biogroup_column)
+      if (info$curation_method == "Based on percentages of passing spectra") {
+        req(info$cut_offs_percentages)
+        plot_analyte_curation_percentages(
+          curated_analytes = info$curated_analytes,
+          cut_off_percentage = info$cut_offs_percentages[[cluster]],
+          selected_cluster = cluster,
+          bio_groups_colname = biogroup_column
+        )
+      }
+      else if (info$curation_method == "Based on average QC parameters") {
+        plot_analyte_curation_averages(
+          curated_analytes = info$curated_analytes,
+          cut_off_averages = info$cut_offs_averages,
+          selected_cluster = cluster,
+          bio_groups_colname = biogroup_column
+        )
+      }
     })
     
     output$plot <- plotly::renderPlotly({
       req(curated_analytes_plot())
-      plotly_object <- plotly::ggplotly(curated_analytes_plot(), tooltip = "text")
-      
-      plotly_object[["x"]][["layout"]][["annotations"]][[2]][["xshift"]] <- -50
-      
-      plotly_object[["x"]][["layout"]][["annotations"]][[1]][["yshift"]] <- -90
-      
-      return(plotly_object)
-      
+      plotly::ggplotly(curated_analytes_plot(), tooltip = "text")
     })
     
     observe({
@@ -194,9 +201,9 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
     analytes_to_include <- reactive({
       req(curated_analytes_table())
       
-      charge_columns <- stringr::str_subset(colnames(curated_analytes_table())[-1],
-                                            "Include",
-                                            negate = TRUE)
+      charge_columns <- stringr::str_subset(
+        colnames(curated_analytes_table())[-1], "Include", negate = TRUE
+      )
       
       analytes_to_include_per_charge <- rlang::set_names(charge_columns) %>% 
         purrr::map_dfc(.,
@@ -218,12 +225,16 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
         dplyr::mutate(dplyr::across(analyte, as.character))
       
       
-      # Test if analytes_to_include_per_charge is empty.
-      # This is the case when the cluster tab has not yet been clicked.
-      to_return <- if (nrow(analytes_to_include_per_charge) > 0) {
-        analytes_to_include_per_charge
-      } else {
-        curated_analytes_table() %>% 
+      # Fall back to automatic curation results only if the cluster tab has
+      # not yet been clicked (checkboxes uninitialized, i.e. still NULL).
+      # If the user intentionally deselected all analytes, the input will be
+      # FALSE (not NULL), so analytes_to_include_per_charge is returned as-is.
+      tab_clicked <- !is.null(input[[paste0("checkbox", charge_columns[1], 1)]])
+      if (tab_clicked) {
+        to_return <- analytes_to_include_per_charge
+      }
+      else {
+        to_return <- curated_analytes_table() %>% 
           dplyr::select(., "analyte", charge_columns) %>% 
           tidyr::pivot_longer(., cols = charge_columns, names_to = "charge") %>% 
           dplyr::filter(., value == "Yes") %>% 
@@ -232,10 +243,33 @@ mod_tab_curated_analytes_server <- function(id, info, cluster, biogroup_column){
       
       return(to_return)
     })
+    
+    
+    # Long-format table of analytes that pass AUTOMATIC curation.
+    # Used in the report to detect manual overrides (inclusions/exclusions).
+    auto_curated_analytes <- reactive({
+      req(curated_analytes_table())
+      
+      charge_columns <- stringr::str_subset(colnames(curated_analytes_table())[-1],
+                                            "Include",
+                                            negate = TRUE)
+      
+      curated_analytes_table() %>%
+        dplyr::select(analyte, tidyselect::all_of(charge_columns)) %>%
+        tidyr::pivot_longer(
+          cols = tidyselect::all_of(charge_columns),
+          names_to  = "charge",
+          values_to = "passed"
+        ) %>%
+        dplyr::filter(passed == "Yes") %>%
+        dplyr::select(-passed)
+    })
+
   
     
     return(list(plot = curated_analytes_plot,
-                analytes_to_include = analytes_to_include))
+                analytes_to_include = analytes_to_include,
+                auto_curated_analytes = auto_curated_analytes))
     
   })
 }

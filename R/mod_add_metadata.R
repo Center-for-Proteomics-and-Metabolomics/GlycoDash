@@ -78,8 +78,8 @@ mod_add_metadata_ui <- function(id){
 #' add_metadata Server Functions
 #'
 #' @noRd 
-mod_add_metadata_server <- function(id, LaCyTools_summary){
-  moduleServer( id, function(input, output, session){
+mod_add_metadata_server <- function(id, data) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Read in the metadata files when they are uploaded, or show a warning when
@@ -92,7 +92,9 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
       metadata_list <- tryCatch({
         read_metadata(input$file$datapath, input$file$name)
       }, error = function(e) {
-        shinyFeedback::feedbackDanger("file", show = TRUE, text = "Please upload a .xlsx, .xls or .rds file")
+        shinyFeedback::feedbackDanger(
+          "file", show = TRUE, text = "Please upload a .xlsx, .xls or .rds file"
+        )
         return(NULL)
       })
       
@@ -148,11 +150,9 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
       if (is_truthy(sample_id_inputIds())) {
         all(purrr::map_lgl(sample_id_inputIds(),
                            ~ is_truthy(input[[.x]])))
-      } else {
-        TRUE
-      }
+      } 
+      else TRUE
     })
-    
     
     
     rv <- reactiveValues() 
@@ -304,9 +304,10 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
     unmatched_ids <- reactive({
       req(merged_metadata(),
           unique_sample_ids() == TRUE,
-          LaCyTools_summary())
-      unmatched <- setdiff(LaCyTools_summary()$sample_id,
-                           merged_metadata()$sample_id)
+          data())
+      unmatched <- setdiff(
+        data()$sample_id, merged_metadata()$sample_id
+      )
       
       if (rlang::is_empty(unmatched)) {
         return("none")
@@ -364,7 +365,7 @@ mod_add_metadata_server <- function(id, LaCyTools_summary){
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
       )) {
-        dplyr::left_join(LaCyTools_summary(),
+        dplyr::left_join(data(),
                          merged_metadata(),
                          by = "sample_id") %>% 
           dplyr::relocate(colnames(merged_metadata())[-1], .after = sample_id)

@@ -6,38 +6,57 @@
 \usage{
 curate_analytes(
   checked_analytes,
-  cut_off_percentages,
-  bio_groups_colname = NULL
+  cut_offs_percentages = NULL,
+  cut_offs_averages = NULL,
+  average_method = NULL,
+  data_type = NULL,
+  bio_groups_colname = NULL,
+  qc_to_include = NULL
 )
 }
 \arguments{
 \item{checked_analytes}{The result of the
 \code{\link{check_analyte_quality_criteria}} function.}
 
-\item{cut_off_percentages}{A named list with the minimum percentages of spectra in which an
+\item{cut_offs_percentages}{A named list with the minimum percentages of spectra in which an
 analyte needs to fulfill the quality criteria in order for that analyte to pass curation.
-Separate cut_off for each cluster.}
+Separate cut_off for each cluster. Use this parameter for percentage-based curation.
+Set to NULL (default) when using average-based curation.}
+
+\item{cut_offs_averages}{A list with cut-off values for average quality control parameters.
+Use this parameter for average-based curation. Set to NULL (default) when using
+percentage-based curation.}
+
+\item{average_method}{Character string specifying the method to calculate averages:
+either "Mean" or "Median". Only used when \code{cut_offs_averages} is specified.}
+
+\item{data_type}{Character string specifying the type of data: "LaCyTools data",
+"SweetSuite data", or "Skyline data". Only used when \code{cut_offs_averages} is specified.}
 
 \item{bio_groups_colname}{The name of the column that contains the biological groups,
 as a character string. This parameter is only required when you want to perform
 analyte curation per biological group. When this parameter is not specified, it is 
 set to NULL (default) and analyte curation will not be performed per group.}
+
+\item{qc_to_include}{Character vector specifying which quality control parameters to
+consider during curation. Only used when \code{cut_offs_averages} is specified.}
 }
 \value{
 A dataframe with one row for each combination of analyte and charge
-  per cluster (and per biological group if applicable), a column named \code{passing_percentage} with the percentage
-  of spectra that pass the analyte quality criteria for that analyte and a
-  logical column named \code{has_passed_analyte_curation} that is \code{TRUE} for
-  analytes with a \code{passing_percentage} equal to or above the
-  \code{cut_off_percentage} and \code{FALSE} for analytes with a
-  \code{passing_percentage} under the \code{cut_off_percentage}.
+  per cluster (and per biological group if applicable). When using percentage-based
+  curation: includes a column named \code{passing_percentage} with the percentage
+  of spectra that pass the analyte quality criteria for that analyte, and a column
+  \code{cluster_cut_off} with the cut-off used. When using average-based curation:
+  includes columns with average values for each QC parameter and pass/fail columns
+  for each criterion. In both cases, a logical column named \code{has_passed_analyte_curation}
+  indicates whether the analyte passed curation (\code{TRUE}) or not (\code{FALSE}).
 }
 \description{
-Curate analytes based on the percentage of spectra in which the analyte
-passes the quality criteria. Optionally, analyte curation can be performed
-per biological group. Before this function is used, you should filter
-out samples that you don't want to base the analyte curation on with the
-function \code{\link{throw_out_samples}} and you should use the function
+Curate analytes based on either (1) the percentage of spectra in which the analyte
+passes the quality criteria, or (2) the average quality control parameters across spectra.
+Optionally, analyte curation can be performed per biological group. Before this function 
+is used, you should filter out samples that you don't want to base the analyte curation 
+on with the function \code{\link{throw_out_samples}} and you should use the function
 \code{\link{check_analyte_quality_criteria}} to check the analyte quality
 criteria for each analyte in each sample. The reason we check the analyte
 quality criteria again even though this already happened during spectra
@@ -105,7 +124,17 @@ checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_
                                                                             "S/N",
                                                                             "IPQ"))
                                                                             
+# Percentage-based curation:
 curate_analytes(checked_analytes = checked_analytes,
-                cut_off_percentage = 25)
+                cut_offs_percentages = list("IgG1" = 25, "IgG2" = 30))
+
+# Average-based curation:
+curate_analytes(checked_analytes = checked_analytes,
+                cut_offs_averages = list(mass_accuracy = c(-10, 10),
+                                         max_ipq = 0.2,
+                                         min_sn = 9),
+                average_method = "Mean",
+                data_type = "LaCyTools data",
+                qc_to_include = c("Mass accuracy", "S/N", "Isotopic pattern quality"))
 
 }

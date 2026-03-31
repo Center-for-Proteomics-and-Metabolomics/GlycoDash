@@ -11,15 +11,15 @@ prepare_analyte_curation_table(
 )
 }
 \arguments{
-\item{analyte_curated_data}{Your data after spectra curation (see
-\code{\link{curate_spectra}}), but filtered so that only analytes are
-included that passed curation with the \code{\link{curate_analytes}}
-function (see example below).}
+\item{analyte_curated_data}{Your data after analyte curation, typically
+the output from the \code{\link{curate_analytes}} function.}
 
 \item{selected_cluster}{The cluster for which the analyte curation results
 should be shown.}
 
-\item{by_group}{Will be set to TRUE if analyte curation is done per biological group, otherwise FALSE.}
+\item{by_group}{Logical indicating whether analyte curation was performed
+per biological group. Set to TRUE if analyte curation is done per biological
+group, otherwise FALSE.}
 }
 \value{
 This function returns a dataframe that can be passed as the
@@ -28,35 +28,4 @@ This function returns a dataframe that can be passed as the
 }
 \description{
 Prepare a dataframe for the analyte curation table
-}
-\examples{
-data("example_data")
-example_data <- curate_spectra(data = example_data,
-                            min_ppm_deviation = -20,
-                            max_ppm_deviation = 20,
-                            max_ipq = 0.2,
-                            min_sn = 9,
-                            clusters_regex = "IgGI1",
-                            cut_off_basis = c("Spike PBS", "Total PBS"))
-
-curated_spectra <- example_data$curated_data \%>\%
-   dplyr::filter(has_passed_spectra_curation == TRUE) \%>\% 
-   dplyr::select(-has_passed_spectra_curation)
-
-curated_analytes <- curate_analytes(
-                data = curated_spectra,
-                group_to_ignore = "Total",
-                sample_types_to_ignore = c("Visucon",
-                                           "PBS"),
-                cut_off_percentage = 25)
-
-passing_analytes <- curated_analytes \%>\%
-   dplyr::filter(passed_curation == TRUE) \%>\%
-   dplyr::select(-passed_curation)
-
-analyte_curated_data <- dplyr::left_join(passing_analytes, curated_spectra)
-
-dataframe <- prepare_analyte_curation_table(analyte_curated_data = curated_analytes,
-                                            selected_cluster = "IgGI1")
-                                            
 }

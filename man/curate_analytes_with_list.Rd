@@ -7,17 +7,22 @@
 curate_analytes_with_list(passing_spectra, analyte_list)
 }
 \arguments{
+\item{passing_spectra}{A dataframe containing the data after spectra curation,
+typically the output from \code{\link{remove_unneeded_columns}} or
+\code{\link{return_when_spectra_curation_is_skipped}}.}
+
 \item{analyte_list}{The list of analytes that should pass the analyte
 curation process. This should be a dataframe or tibble with one column
 named "analyte".}
 }
 \value{
-This function returns the same dataframe that was given as the
-  \code{data} argument, but filtered so that only those analytes that are in
-  \code{analyte_list} remain.
+A dataframe with columns \code{cluster}, \code{charge}, \code{analyte},
+  and \code{has_passed_analyte_curation}, indicating which analytes are present
+  in the provided \code{analyte_list}.
 }
 \description{
-Analyte curation based on a list
+Curate analytes by checking against a predefined list of analytes that should
+pass curation. Any analyte present in the list will be marked as passing curation.
 }
 \examples{
 data("example_data")

@@ -16,7 +16,7 @@ mod_export_ui <- function(id){
       ),
       fluidRow(
         column(
-          width = 6,
+          width = 5,
           shinydashboard::box(
             title = "Download the processed data",
             width = NULL,
@@ -31,6 +31,19 @@ mod_export_ui <- function(id){
             br(),
             downloadButton(ns("report"),
                            "Generate report")
+          )
+        ),
+        column(
+          width = 7,
+          shinydashboard::box(
+            title = "Notes",
+            width = NULL,
+            solidHeader = TRUE,
+            status = "primary",
+            textAreaInput(ns("notes"),
+                          "Enter notes for the report:",
+                          value = "",
+                          rows = 5)
           )
         )
       ),
@@ -70,11 +83,14 @@ mod_export_server <- function(id,
       req(results_normalization$normalized_data_wide())
       if (is_truthy(results_site_occupancy$site_occupancy_data())) {
         x$data <- results_site_occupancy$site_occupancy_data()
-      } else if (is_truthy(results_derived_traits$data_with_traits())) {
+      } 
+      else if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
-      } else if (is_truthy(results_quantitation$data_with_quantities())) {
+      } 
+      else if (is_truthy(results_quantitation$data_with_quantities())) {
         x$data <- results_quantitation$data_with_quantities()
-      } else {
+      } 
+      else {
         x$data <- results_normalization$normalized_data_wide()
       }
     })
@@ -121,11 +137,13 @@ mod_export_server <- function(id,
       },
       content = function(file) {
         if (grepl("R object", input$download_format)) {
-          save(x$data, file = file)
-        } else if (is_truthy(results_normalization$notes())) {
+          saveRDS(x$data, file = file)
+        } 
+        else if (is_truthy(results_normalization$notes())) {
           data_list <- list("Data" = x$data, "Notes" = results_normalization$notes())
           writexl::write_xlsx(data_list, path = file)
-        } else {
+        } 
+        else {
           writexl::write_xlsx(x$data, path = file)
         }
       }
@@ -282,7 +300,7 @@ mod_export_server <- function(id,
         # other information from the dashboard to pass along to the Report.Rmd
         # markdown file:
         params <- list(
-          # Data impot
+          # Data import
           data_type = results_data_import$data_type(),
           summary_filenames = results_data_import$summary_filenames(),
           plate_design = try_call(results_data_import$filenames_plate_design), 
@@ -302,13 +320,16 @@ mod_export_server <- function(id,
           curated_spectra_plots = curated_spectra_plots,
           skipped_spectra_curation_plots = results_spectra_curation$skipped_spectra_curation_plots(),
           # Analyte curation
-          analyte_curation_method = results_analyte_curation$method(),
-          included_qc_analytes = results_analyte_curation$included_qc(),
-          analyte_curation_choice = results_analyte_curation$curation_method(),
-          groups_to_ignore = results_analyte_curation$groups_to_ignore(),
-          ignore_samples = results_analyte_curation$ignore_samples(),
-          cut_offs = results_analyte_curation$cut_offs(),
-          analyte_list = results_analyte_curation$analyte_list(),
+          # NOTE: Some of these try_call() may not be necessary...
+          analyte_curation_method = try_call(results_analyte_curation$method),
+          included_qc_analytes = try_call(results_analyte_curation$included_qc),
+          curate_per_group = try_call(results_analyte_curation$curate_per_group),
+          groups_to_ignore = try_call(results_analyte_curation$groups_to_ignore),
+          ignore_samples = try_call(results_analyte_curation$ignore_samples),
+          cut_offs_percentages = try_call(results_analyte_curation$cut_offs_percentages),
+          cut_offs_averages = try_call(results_analyte_curation$cut_offs_averages),
+          average_method = try_call(results_analyte_curation$average_method),
+          analyte_list = try_call(results_analyte_curation$analyte_list),
           analyte_curation_tab_contents = analyte_curation_tab_contents,
           # Normalization
           heatmaps = results_normalization$heatmaps(),
@@ -331,7 +352,9 @@ mod_export_server <- function(id,
           # Repeatability
           repeatability = repeatability_tab_contents,
           # Data exploration
-          data_exploration = data_exploration_tab_contents
+          data_exploration = data_exploration_tab_contents,
+          # Notes
+          notes = input$notes
         )
         
         # Create a temporary file with a unique name per session to prevent

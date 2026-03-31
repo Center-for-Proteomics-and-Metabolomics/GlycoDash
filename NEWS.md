@@ -1,3 +1,61 @@
+# v1.11.3
+## Adjustments
+* Update instructions in `README.md` for running GlycoDash using Docker.
+
+## Bug fixes
+* Allow the user to de-select all analytes in analyte curation. Previously,
+this caused all initial analytes to pass curation.
+* Prevent GlycoDash from crashing when zero analytes pass curation.
+
+
+# v1.11.2
+## Adjustments
+* In the HTML report, explicitly list analytes that were manually included
+or excluded during analyte curation.
+
+
+# v1.11.1
+## Adjustments
+* Data import: allow for non-sequential plate numbering.
+* Protein quantitation: disable sum intensity correlation plots (introduced in v1.11.0) 
+for now.
+
+## Bug fixes
+* Fix inverted logic in normalized data heatmaps: hide option for excluding
+sample types when showing the heatmaps per biological group.
+* Fix a bug where numeric columns in SweetSuite data were sometimes read
+in as logical.
+* Fix a bug where non-glycosylated peptides without corresponding glycosylation
+data were listed in the "Site occupancy" tab.
+
+
+# v1.11.0
+## New features
+* Option to curate analytes based on the average values of QC parameters.
+* Protein quantitation: plot the intensities of labeled (glyco)peptides against
+natural (glyco)peptides for quality control.
+
+## Bug fixes
+* Fixed a bug in Skyline data input, where the table containing detected
+glycosylation sites was not rendered properly.
+
+
+# v1.10.1
+## Bug fixes
+* Fixed the splitting by total and specific samples for SweetSuite data.
+
+
+# v1.10.0
+## New features
+* Option to upload data from SweetSuite (https://github.com/stainawarijar/SweetSuite).
+* Option to enter notes in the "Export results" section, which will be
+added to the end of the HTML report.
+
+## Bug fixes
+* Fixed a bug that caused a crash when uploading a custom traits file.
+* Prevent crash when accidentally excluding all samples in analyte curation.
+
+
 # v1.9.2
 ## Bug fixes
 * Bug fix in metadata import.
