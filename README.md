@@ -11,14 +11,6 @@ https://doi.org/10.1007/s00216-025-05794-3
 
 Since publication, GlycoDash has undergone continued development and refinement. The current version includes additional features and improvements that extend beyond the scope of the published manuscript.
 
-## Publication
-GlycoDash was originally described in:
-
-Pongracz, T., Gijze, S., Hipgrave Ederveen, A. et al. (2025). *GlycoDash: automated, visually assisted curation of glycoproteomics datasets for large sample numbers*. **Analytical and Bioanalytical Chemistry**.  
-https://doi.org/10.1007/s00216-025-05794-3
-
-Since publication, GlycoDash has undergone continued development and refinement. The current version includes additional features and improvements that extend beyond the scope of the published manuscript.
-
 ## Installation
 
 ### Option 1: Run GlycoDash using Docker (recommended)
