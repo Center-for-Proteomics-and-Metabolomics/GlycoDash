@@ -1,4 +1,4 @@
-FROM rocker/verse:4.5.0
+FROM rocker/verse:4.5.3
 
 # Install any additional system dependencies and clean up
 RUN apt-get update && apt-get install -y \
