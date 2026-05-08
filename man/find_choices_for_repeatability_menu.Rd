@@ -7,7 +7,7 @@
 find_choices_for_repeatability_menu(normalized_data)
 }
 \arguments{
-\item{normalized_data}{}
+\item{normalized_data}{Description here...}
 }
 \value{
 A list of character strings where each string contains "sample id: "

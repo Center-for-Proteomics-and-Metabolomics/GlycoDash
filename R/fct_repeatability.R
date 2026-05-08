@@ -6,7 +6,7 @@
 #' sample ID and group (total or specific) for which there are multiple
 #' measurements in the data.
 #'
-#' @param normalized_data
+#' @param normalized_data Description here...
 #'
 #' @return A list of character strings where each string contains "sample id: "
 #'   followed by the sample ID and if applicable "group: " followed by the total

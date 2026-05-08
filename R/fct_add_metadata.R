@@ -102,7 +102,7 @@ rename_sample_id_column <- function(metadata,
 #' uploaded metadata. Some column names are not allowed because they are
 #' already created in the code, causing conflict.
 #'
-#' @param merged_metadata 
+#' @param merged_metadata Description here...
 #'
 #' @return  A vector with forbidden column names. Can be length zero.
 #' @export

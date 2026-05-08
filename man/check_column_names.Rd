@@ -9,7 +9,7 @@ already created in the code, causing conflict.}
 check_column_names(merged_metadata)
 }
 \arguments{
-\item{merged_metadata}{}
+\item{merged_metadata}{Description here...}
 }
 \value{
 A vector with forbidden column names. Can be length zero.
