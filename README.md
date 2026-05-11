@@ -41,7 +41,7 @@ _This method uses a reproducible R environment managed by renv._
 
 1.  Install [R version 4.5.3](https://cran.r-project.org/bin/windows/base/old/) and [Rstudio](https://posit.co/download/rstudio-desktop/) on your computer.
     (R 4.5.3 can be installed alongside other R versions).
-2.  Install [RTools 4.5](https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html) using the official _Rtools45_ installer and keep the default settings.
+2.  Install [Rtools 4.5](https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html) using the official _Rtools45_ installer and keep the default settings.
     This is required to build some packages from source.
 3.  Configure RStudio to use R 4.5.3 (`Tools → Global Options → General → R version → Change…`). Apply the changes and close RStudio.
 4.  Download the source code of the `master` branch as a zip file, then unzip and store the "glycodash-master" folder somewhere.
