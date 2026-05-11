@@ -1,18 +1,88 @@
 \graphicspath{ {./images/A1_Glycan_compositions} }
 
+\newcommand{\glycanrowheight}{1.05cm}
+
+\newcommand{\glycan}[1]{
+	\parbox[c][1.5cm][c]{4cm}{
+		\centering
+		\includegraphics[scale=0.9]{glycans_pdf/#1.pdf}
+	}
+}
+
+\newcommand{\glycanlabel}[1]{
+	\parbox[c][\glycanrowheight][c]{2.0cm}{
+		\centering
+		#1
+	}
+}
+
+
 \section{Assumed glycan compositions}\label{glycan_compositions}
 Below are lists of glycan compositions and their assumed structures.
-These are used when automatically calculating glycosylation traits.
+The compositions are used when automatically calculating glycosylation traits.
 
 \subsection{Human IgG}
+\begin{longtable}{|c|c|@{\hspace{0.8cm}}|c|c|}
+	\cline{1-2}\cline{3-4}
+	\glycanlabel{H5N2}      & \glycan{IgG_H5N2}      & \glycanlabel{H4N4}      & \glycan{IgG_H4N4}      \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H6N2}      & \glycan{IgG_H6N2}      & \glycanlabel{H5N4}      & \glycan{IgG_H5N4}      \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H7N2}      & \glycan{IgG_H7N2}      & \glycanlabel{H4N4S1}    & \glycan{IgG_H4N4S1}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H8N2}      & \glycan{IgG_H8N2}      & \glycanlabel{H5N4S1}    & \glycan{IgG_H5N4S1}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H9N2}      & \glycan{IgG_H9N2}      & \glycanlabel{H5N4S2}    & \glycan{IgG_H5N4S2}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H3N4F1}    & \glycan{IgG_H3N4F1}    & \glycanlabel{H3N5}      & \glycan{IgG_H3N5}      \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H4N4F1}    & \glycan{IgG_H4N4F1}    & \glycanlabel{H4N5}      & \glycan{IgG_H4N5}      \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H5N4F1}    & \glycan{IgG_H5N4F1}    & \glycanlabel{H5N5}      & \glycan{IgG_H5N5}      \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H4N4F1S1}  & \glycan{IgG_H4N4F1S1}  & \glycanlabel{H4N5S1}    & \glycan{IgG_H4N5S1}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H5N4F1S1}  & \glycan{IgG_H5N4F1S1}  & \glycanlabel{H5N5S1}    & \glycan{IgG_H5N5S1}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H5N4F1S2}  & \glycan{IgG_H5N4F1S2}  & \glycanlabel{H3N3F1}    & \glycan{IgG_H3N3F1}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H3N5F1}    & \glycan{IgG_H3N5F1}    & \glycanlabel{H4N3F1}    & \glycan{IgG_H4N3F1}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H4N5F1}    & \glycan{IgG_H4N5F1}    & \glycanlabel{H4N3F1S1}  & \glycan{IgG_H4N3F1S1}  \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H5N5F1}    & \glycan{IgG_H5N5F1}    & \glycanlabel{H5N3F1}    & \glycan{IgG_H5N3F1}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H4N5F1S1}  & \glycan{IgG_H4N5F1S1}  & \glycanlabel{H6N3F1}    & \glycan{IgG_H6N3F1}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H5N5F1S1}  & \glycan{IgG_H5N5F1S1}  & \glycanlabel{H6N3F1S1}  & \glycan{IgG_H6N3F1S1}  \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H3N4}      & \glycan{IgG_H3N4}      & \glycanlabel{H6N4F1}    & \glycan{IgG_H6N4F1}    \\ \cline{1-2}\cline{3-4}
+\end{longtable}
+
 
 \newpage
 \subsection{Human IgA N-glycans}
+\newpage
 \subsubsection{IgA1 O-glycans}
+
+
+\newpage
 \subsubsection{IgA2 N47}
+\begin{longtable}{|c|c|@{\hspace{0.8cm}}|c|c|}
+	\cline{1-2}\cline{3-4}
+	\glycanlabel{H3N4F1}    & \glycan{IgA_N47_H3N4F1}    & \glycanlabel{H5N5F1S2}  & \glycan{IgA_N47_H5N5F1S2}  \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H3N5F1}    & \glycan{IgA_N47_H3N5F1}    & \glycanlabel{H5N6F1}    & \glycan{IgA_N47_H5N6F1}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H4N4F1S1}  & \glycan{IgA_N47_H4N4F1S1}  & \glycanlabel{H5N6F2}    & \glycan{IgA_N47_H5N6F2}    \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H4N5S1}    & \glycan{IgA_N47_H4N5S1}    & \glycanlabel{H5N6F1S1}  & \glycan{IgA_N47_H5N6F1S1}  \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H4N5F1}    & \glycan{IgA_N47_H4N5F1}    & \glycanlabel{H5N6F1S2}  & \glycan{IgA_N47_H5N6F1S2}  \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H4N5F1S1}  & \glycan{IgA_N47_H4N5F1S1}  & \glycanlabel{H5N6F2S1}  & \glycan{IgA_N47_H5N6F2S1}  \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H4N5F2}    & \glycan{IgA_N47_H4N5F2}    & \glycanlabel{H5N6F2S2}  & \glycan{IgA_N47_H5N6F2S2}  \\ \cline{1-2}\cline{3-4}
+	\glycanlabel{H4N5F2S1}  & \glycan{IgA_N47_H4N5F2S1}  & \multicolumn{2}{c}{} \\ \cline{1-2}
+	\glycanlabel{H5N4F1S1}  & \glycan{IgA_N47_H5N4F1S1}  & \multicolumn{2}{c}{} \\ \cline{1-2}
+	\glycanlabel{H5N4F1S2}  & \glycan{IgA_N47_H5N4F1S2}  & \multicolumn{2}{c}{} \\ \cline{1-2}
+	\glycanlabel{H5N5}      & \glycan{IgA_N47_H5N5}      & \multicolumn{2}{c}{} \\ \cline{1-2}
+	\glycanlabel{H5N5S1}    & \glycan{IgA_N47_H5N5S1}    & \multicolumn{2}{c}{} \\ \cline{1-2}
+	\glycanlabel{H5N5S2}    & \glycan{IgA_N47_H5N5S2}    & \multicolumn{2}{c}{} \\ \cline{1-2}
+	\glycanlabel{H5N5F1}    & \glycan{IgA_N47_H5N5F1}    & \multicolumn{2}{c}{} \\ \cline{1-2}
+	\glycanlabel{H5N5F1S1}  & \glycan{IgA_N47_H5N5F1S1}  & \multicolumn{2}{c}{} \\ \cline{1-2}
+\end{longtable}
+
+
+\newpage
 \subsubsection{IgA1/2 N144/131}
+
+
+\newpage
 \subsubsection{IgA2 N205}
+
+
+\newpage
 \subsubsection{IgA1/2 N340/327}
+
 
 \newpage
 \subsection{Human IgM}
