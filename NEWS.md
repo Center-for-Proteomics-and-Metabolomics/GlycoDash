@@ -2,6 +2,9 @@
 ## Adjustments
 * Updated the user guide.
 
+## Bug fixes
+* Fix broken example sample list `xlsx` file.
+
 
 # v1.11.3
 ## Adjustments
