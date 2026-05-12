@@ -1,0 +1,35 @@
+\graphicspath{ {./images/5_Normalized_data} }
+\newpage
+
+\section{Normalized data}
+Following analyte curation, total area normalization is automatically conducted on the data per glycosylation site. 
+A table displaying the normalized data is generated, including the following information:
+
+\begin{itemize}[topsep=0pt, itemsep=0pt]
+	\item Sample names
+	\item Sample types
+	\item Sample IDs
+	\item Plate well positions (if applicable).
+	\item The number of replicates for each sample ID.
+	\item Metadata (if applicable).
+	\item Columns showing the total spectrum intensities for per glycosylation site.
+	\item For each analyte, a column displaying the relative abundance in percentages.
+	Analytes associated to the same glycosylation site will collectively sum to 100\%.
+\end{itemize}
+
+\begin{optionalbox}
+	Above the table, there is an option to normalize charge states separately instead of combining them per analyte.
+\end{optionalbox}
+
+The normalized data is visually represented in one or more heatmaps, with glycan compositions on the $x$-axis and glycosylation sites on the $y$-axis by default.
+Each color in the heatmap corresponds to the median relative abundance for a specific glycopeptide, calculated across all samples.
+There is an option to exclude sample types from this calculation.
+If analyte curation was performed per biological group, there will be an option to separate heatmaps per biological group (enabled by default).
+\begin{center}
+	\includegraphics[scale=0.42]{heatmap.png}
+\end{center}
+
+Alternatively, the individual samples can be plotted on the $y$-axis.
+In this case, a heatmap is generated for each glycosylation site, with the ability to exclude sample types. 
+If curation was performed per biological groups, the heatmaps can be generated per group.
+
