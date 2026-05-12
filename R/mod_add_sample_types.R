@@ -1,7 +1,7 @@
 #' add_sample_types UI Function
 #'
 #' @description A shiny Module to add sample types to your data either 
-#' automatically based on the sample ID's or by uploading a sample types Excel 
+#' automatically based on the sample IDs or by uploading a sample types Excel 
 #' file.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
@@ -67,8 +67,8 @@ mod_add_sample_types_ui <- function(id) {
       status = "primary",
       selectInput(ns("method"),
                   "Choose a method to add sample types to your data:",
-                  choices = c("Automatically determine sample types based on sample ID's",
-                              "Upload a list with sample ID's and corresponding sample types")) %>% 
+                  choices = c("Automatically determine sample types based on sample IDs",
+                              "Upload a list with sample IDs and corresponding sample types")) %>% 
         bsplus::bs_embed_popover(
           title = "Method to add sample types",
           content = HTML(
@@ -78,12 +78,12 @@ mod_add_sample_types_ui <- function(id) {
             For each sample, the first substring of letters within the sample ID is
             assumed to be the sample type. For example, if the sample ID is
             \"<i>36_patient_67b</i>\", then the automatically determined sample type 
-            will be \"patient\". Sample ID's that don't contain any letters will be assigned
+            will be \"patient\". Sample IDs that don't contain any letters will be assigned
             \"undetermined\".
             <br> <br>
             <b> Upload a list </b>
             <br>
-            If your sample ID's are not suitable for automatically determine sample types,
+            If your sample IDs are not suitable for automatically determine sample types,
             use this method instead. Your list should be an Excel file that contains 
             one column called \"sample_id\", and one column called \"sample_type\". 
             Each sample ID should be present once in your file. For an example file,
@@ -104,7 +104,7 @@ mod_add_sample_types_ui <- function(id) {
               "
               The Excel file should contain only one sheet. This sheet should
               contain one column named \"sample_id\" and one column named \"sample_type\".
-              The \"sample_id\" column should contain all your sample ID's, including blanks
+              The \"sample_id\" column should contain all your sample IDs, including blanks
               and standards. The \"sample_type\" column should contain the corresponding sample
               type of each sample.
               <br> <br>
@@ -130,7 +130,7 @@ mod_add_sample_types_server <- function(id, data) {
     
     observe({
       # Show file upload when user chooses sample type list option, and hide the button.
-      if (input$method == "Upload a list with sample ID's and corresponding sample types") {
+      if (input$method == "Upload a list with sample IDs and corresponding sample types") {
         shinyjs::show("upload_div")
         shinyjs::hide("button")
       } else {
@@ -140,7 +140,7 @@ mod_add_sample_types_server <- function(id, data) {
       # Toggle state of the button
       shinyjs::toggleState(
         "button", condition = all(
-          input$method == "Automatically determine sample types based on sample ID's",
+          input$method == "Automatically determine sample types based on sample IDs",
           is_truthy(data())
         )
       )
@@ -151,7 +151,7 @@ mod_add_sample_types_server <- function(id, data) {
     observe({
       req(
         data(),
-        input$method == "Automatically determine sample types based on sample ID's"
+        input$method == "Automatically determine sample types based on sample IDs"
       )
       #TODO: convert this to a function:
       r$with_auto_sample_types <- data() %>% 
@@ -198,7 +198,7 @@ mod_add_sample_types_server <- function(id, data) {
       shinyalert::shinyalert(
         html = TRUE,
         text = paste(
-          "The following sample ID's are present more than once in your file:",
+          "The following sample IDs are present more than once in your file:",
           shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_duplicates"))),
           "<br>Please change your file such that each sample ID is present only once, and try again."
         ),
@@ -228,7 +228,7 @@ mod_add_sample_types_server <- function(id, data) {
     }) 
     
     
-    # In the case of manual sample types: check for unmatched ID's
+    # In the case of manual sample types: check for unmatched IDs
     unmatched_sample_ids <- reactive({
       req(!is_truthy(duplicate_sample_ids()), data(), manual_sample_types$list())
       unmatched <- setdiff(data()$sample_id, manual_sample_types$list()$sample_id)
@@ -242,9 +242,9 @@ mod_add_sample_types_server <- function(id, data) {
       shinyalert::shinyalert(
         html = TRUE,
         text = paste(
-          "The following sample ID's from your data are not present in your sample type list:",
+          "The following sample IDs from your data are not present in your sample type list:",
           shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_unmatched"))),
-          "<br>Please add these sample ID's to your file, and try again."
+          "<br>Please add these sample IDs to your file, and try again."
         ),
         size = "m",
         confirmButtonText = "OK",
@@ -275,7 +275,7 @@ mod_add_sample_types_server <- function(id, data) {
     # Combine manual sample types with data
     with_manual_sample_types <- reactive({
       req(data(),
-          input$method == "Upload a list with sample ID's and corresponding sample types",
+          input$method == "Upload a list with sample IDs and corresponding sample types",
           manual_sample_types$list(),
           !is_truthy(unmatched_sample_ids()),
           !is_truthy(duplicate_sample_ids())
@@ -294,10 +294,10 @@ mod_add_sample_types_server <- function(id, data) {
     # is chosen and button is clicked:
     observe({
       req(r$with_auto_sample_types,
-          input$method == "Automatically determine sample types based on sample ID's")
+          input$method == "Automatically determine sample types based on sample IDs")
       shinyalert::shinyalert(
         html = TRUE,
-        text = paste("Based on the sample ID's the following",
+        text = paste("Based on the sample IDs the following",
                      length(unique(r$with_auto_sample_types$sample_type)),
                      "sample types were defined:",
                      shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_sampletypes")))),
@@ -336,13 +336,13 @@ mod_add_sample_types_server <- function(id, data) {
       if(!is_truthy(r$response)) {
         updateSelectInput(
           "method", session = session,
-          selected = "Upload a list with sample ID's and corresponding sample types"
+          selected = "Upload a list with sample IDs and corresponding sample types"
         )
       }
     })
     
     to_return <- reactive({
-      if (input$method == "Automatically determine sample types based on sample ID's") {
+      if (input$method == "Automatically determine sample types based on sample IDs") {
         req(r$response)
         r$with_auto_sample_types
         

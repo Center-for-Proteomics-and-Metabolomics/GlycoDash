@@ -16,7 +16,7 @@ A list of character strings where each string contains "sample id: "
   to the function \code{\link{selectInput}}.
 }
 \description{
-This function finds the sample ID's or if applicable the combinations of
+This function finds the sample IDs or if applicable the combinations of
 sample ID and group (total or specific) for which there are multiple
 measurements in the data.
 }

@@ -1,6 +1,6 @@
 #' add_sample_ids UI Function
 #'
-#' @description A shiny Module to add sample ID's to the data by uploading 
+#' @description A shiny Module to add sample IDs to the data by uploading 
 #' either a plate design or a sample list. 
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
@@ -25,17 +25,17 @@ mod_add_sample_ids_ui <- function(id){
       id = ns("box"),
       title = div(
         id = ns("box_header"),
-        "Add sample ID's",
+        "Add sample IDs",
         icon("info-circle",
              class = "ml") %>% 
           bsplus::bs_embed_popover(
             title = "Explanation",
             content = HTML(
               "
-              Adding sample ID's to your data allows you to see which measurement
+              Adding sample IDs to your data allows you to see which measurement
               corresponds to which sample.
               <br> <br>
-              Sample ID's are used in later steps to:
+              Sample IDs are used in later steps to:
               <ul>
                   <li> Determine sample types (e.g. blank, standard, negative control, patient). </li>
                   <li> Optionally, link metadata to your data (e.g. age, sex, biological group). </li>
@@ -72,11 +72,11 @@ mod_add_sample_ids_ui <- function(id){
       solidHeader = TRUE,
       status = "primary",
       selectInput(ns("sample_id_method"),
-                  "Choose a method to add sample ID's to your data:",
+                  "Choose a method to add sample IDs to your data:",
                   choices = c("Upload a plate design",
                               "Upload a sample list")) %>% 
         bsplus::bs_embed_popover(
-          title = "Method to add sample ID's",
+          title = "Method to add sample IDs",
           content = HTML(
             "
             <b> Plate design </b>
@@ -121,8 +121,8 @@ mod_add_sample_ids_ui <- function(id){
               Plates in your plate design are numbered automatically.
               <br> <br>
               Each plate layout should contain columns labelled 1-12, and
-              rows labelled A-H. The plate positions should contain the sample ID's.
-              These sample ID's should not contain commas or line breaks.
+              rows labelled A-H. The plate positions should contain the sample IDs.
+              These sample IDs should not contain commas or line breaks.
               <br> <br>
               For an example plate design, click on the paperclip icon.
               "
@@ -144,8 +144,8 @@ mod_add_sample_ids_ui <- function(id){
               Plates in your plate design are numbered automatically.
               <br> <br>
               Each plate layout should contain columns labelled 1-12, and
-              rows labelled A-H. The plate positions should contain the sample ID's.
-              These sample ID's should not contain commas or line breaks.
+              rows labelled A-H. The plate positions should contain the sample IDs.
+              These sample IDs should not contain commas or line breaks.
               <br> <br>
               For an example plate design, click on the paperclip icon.
               "
@@ -214,7 +214,7 @@ mod_add_sample_ids_server <- function(
     
     
     # Whenever a new (correct) LaCyTools summary file is uploaded and sample
-    # ID's had already been added to the old summary, the resetter counter is
+    # IDs had already been added to the old summary, the resetter counter is
     # increased with 1 and show_reset_warning is set to TRUE:
     observe({
       if (is_truthy(data()) & is_truthy(data_with_sample_ids())) {
@@ -234,7 +234,7 @@ mod_add_sample_ids_server <- function(
     })
     
     observe({
-      # When sample ID's have been readded to the data (r$show_reset_warning is TRUE and
+      # When sample IDs have been readded to the data (r$show_reset_warning is TRUE and
       # data_with_sample_ids() exists) r$show_reset_warning should be reset to FALSE, so
       # that the warning is not shown again when the 'load lacytools summary'
       # button is clicked but no new lacytools file has been uploaded:

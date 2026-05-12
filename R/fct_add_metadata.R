@@ -44,10 +44,10 @@ read_metadata <- function(filepaths, filenames) {
   return(metadata_list)
 }
 
-#' Rename the metadata column with sample ID's to "sample_id"
+#' Rename the metadata column with sample IDs to "sample_id"
 #'
 #' This function renames the column in the metadata file that contains sample
-#' ID's to "sample_id".
+#' IDs to "sample_id".
 #'
 #' In case there already is a column named sample_id that is NOT the column
 #' chosen by the user as the sample ID column, a warning is issued and the old
@@ -56,7 +56,7 @@ read_metadata <- function(filepaths, filenames) {
 #'
 #' @param metadata A dataframe or tibble with metadata.
 #' @param sample_id_column A character string, the name of the column in
-#'   \code{metadata} that contains the sample ID's.
+#'   \code{metadata} that contains the sample IDs.
 #'
 #' @return Fill this in...
 #' @export

@@ -12,7 +12,7 @@ process_plate_design(plate_design)
 }
 \value{
 A dataframe with two columns: \describe{\item{sample_id}{The sample
-  ID's as given in the plate design file.} \item{plate_well}{This column 
+  IDs as given in the plate design file.} \item{plate_well}{This column 
   indicated the plate and well that a sample was analyzed in. The format is 
   as follows: the plate number followed by the well ID, separated by an 
   underscore (e.g. plate 1 well A1 is 1_A01).}}

@@ -19,7 +19,7 @@ This function returns a dataframe with the contents of the Excel file.
 }
 \description{
 This function reads and processes a sample list Excel file, so that sample 
-ID's can be linked to your data.
+IDs can be linked to your data.
 }
 \examples{
 path <- system.file("extdata",

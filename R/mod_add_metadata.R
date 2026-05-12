@@ -30,7 +30,7 @@ mod_add_metadata_ui <- function(id){
             title = "Explanation",
             content = HTML(
               "
-              Your metadata Excel file should contain a named column that contains the sample ID's,
+              Your metadata Excel file should contain a named column that contains the sample IDs,
               and one or more named columns with metadata (e.g. \"age\", \"sex\", \"disease\").
               <br> <br>
               Each sample ID should be present only once in your file, even if it is present
@@ -128,7 +128,7 @@ mod_add_metadata_server <- function(id, data) {
                       ns(inputId),
                       label = paste("Which column in", 
                                     metadata_name, 
-                                    "contains the sample ID's?"),
+                                    "contains the sample IDs?"),
                       # The choices for each input correspond to the names of the 
                       # columns in the metadata file:
                       choices = c("", unique(colnames(metadata))),
@@ -267,7 +267,7 @@ mod_add_metadata_server <- function(id, data) {
         shinyalert::shinyalert(
           html = TRUE,
           text = paste(
-            "The following sample ID's are present more than once in your file:",
+            "The following sample IDs are present more than once in your file:",
             shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_duplicates")))
           ),
           size = "m",
@@ -316,7 +316,7 @@ mod_add_metadata_server <- function(id, data) {
       }
     })
     
-    # If there are unmatched sample ID's a pop-up is shown.
+    # If there are unmatched sample IDs a pop-up is shown.
     observe({
       req(!isTRUE(all.equal(unmatched_ids(), "none")))
       shinyalert::shinyalert(
@@ -324,13 +324,13 @@ mod_add_metadata_server <- function(id, data) {
         html = TRUE,
         text = paste(
           length(unmatched_ids()),
-          "sample ID's in the data had no match in the metadata:",
+          "sample IDs in the data had no match in the metadata:",
           shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_unmatched"))),
           "<br>Please check: 1) Does the spelling of sample IDs in your metadata correspond to the spelling in your plate design?",
           "and 2) Have you selected the correct sample ID columns?"
         ),
         size = "m",
-        confirmButtonText = "Add the metadata despite the unmatched ID's",
+        confirmButtonText = "Add the metadata despite the unmatched IDs",
         confirmButtonCol = "#3c8dbc",
         showCancelButton = TRUE,
         cancelButtonText = "Don't add the metadata now",

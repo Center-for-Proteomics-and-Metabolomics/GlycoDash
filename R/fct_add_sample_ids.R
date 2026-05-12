@@ -131,7 +131,7 @@ detect_plate_and_well <- function(data) {
 #'  contain the plate number (e.g. "Plate 1"). The cells to the right of the
 #'  top-left cell need to be labelled 1-12 (for a 96-well plate), while the
 #'  cells below the top-left cell need to be labelled A-H. The cells within the
-#'  plate should contain the sample ID's.
+#'  plate should contain the sample IDs.
 #'
 #'  \preformatted{ 
 #'  Plate number  1             2            3             ... 
@@ -144,7 +144,7 @@ detect_plate_and_well <- function(data) {
 #'  in the same format.
 #'
 #'@return This function returns a dataframe with two columns:
-#'  \describe{\item{sample_id}{The sample ID's as given in the plate design
+#'  \describe{\item{sample_id}{The sample IDs as given in the plate design
 #'  file.} \item{plate_well}{The plate and well that a sample was
 #'  analyzed in. The format is as follows: the plate number followed by the well
 #'  ID, separated by an underscore (e.g. plate 1 well A1 is 1_A01).}}
@@ -186,7 +186,7 @@ read_and_process_plate_design <- function(plate_design_file) {
 #'@return This function returns a dataframe with a column named "well" that
 #'  indicates in which well a sample was analyzed. In addition, there is one
 #'  column for each plate in the plate design file. Each plate column contains
-#'  the sample ID's of the samples on that plate.
+#'  the sample IDs of the samples on that plate.
 #'@export
 #'
 #'@section Plate design format: 
@@ -194,7 +194,7 @@ read_and_process_plate_design <- function(plate_design_file) {
 #'should contain the plate number (e.g. "Plate 1"). The cells to the right of
 #'the top-left cell need to be labelled 1-12, while the cells below the top-left
 #'cell need to be labelled A-H. The cells within the plate should contain the
-#'sample ID's. Exception: If there is only one plate in the plate design, the
+#'sample IDs. Exception: If there is only one plate in the plate design, the
 #'plate number does not have to be indicated in the top left cell of the Excel
 #'file.
 #'
@@ -267,7 +267,7 @@ read_plate_design <- function(plate_design_file) {
 #'   \code{\link{read_plate_design}} function.
 #'
 #' @return A dataframe with two columns: \describe{\item{sample_id}{The sample
-#'   ID's as given in the plate design file.} \item{plate_well}{This column 
+#'   IDs as given in the plate design file.} \item{plate_well}{This column 
 #'   indicated the plate and well that a sample was analyzed in. The format is 
 #'   as follows: the plate number followed by the well ID, separated by an 
 #'   underscore (e.g. plate 1 well A1 is 1_A01).}}
@@ -357,7 +357,7 @@ process_plate_design <- function(plate_design) {
 #' Process a sample list Excel file
 #' 
 #' This function reads and processes a sample list Excel file, so that sample 
-#' ID's can be linked to your data.
+#' IDs can be linked to your data.
 #'
 #' @param sample_list_file The path to an Excel file containing the sample list.
 #' The Excel file should contain only one sheet with two columns named 

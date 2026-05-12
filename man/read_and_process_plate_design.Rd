@@ -12,7 +12,7 @@ should be in the format described below.}
 }
 \value{
 This function returns a dataframe with two columns:
- \describe{\item{sample_id}{The sample ID's as given in the plate design
+ \describe{\item{sample_id}{The sample IDs as given in the plate design
  file.} \item{plate_well}{The plate and well that a sample was
  analyzed in. The format is as follows: the plate number followed by the well
  ID, separated by an underscore (e.g. plate 1 well A1 is 1_A01).}}
@@ -26,7 +26,7 @@ Excel file for a 96-wells plate and processes it.
  contain the plate number (e.g. "Plate 1"). The cells to the right of the
  top-left cell need to be labelled 1-12 (for a 96-well plate), while the
  cells below the top-left cell need to be labelled A-H. The cells within the
- plate should contain the sample ID's.
+ plate should contain the sample IDs.
 
  \preformatted{ 
  Plate number  1             2            3             ... 
