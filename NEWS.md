@@ -1,3 +1,8 @@
+# v1.11.4
+## Adjustments
+* Updated the user guide.
+
+
 # v1.11.3
 ## Adjustments
 * Update instructions in `README.md` for running GlycoDash using Docker.
