@@ -27,6 +27,7 @@ RUN R -e 'install.packages("renv")' \
 
 # Copy the rest of the application
 COPY . .
+COPY NEWS.md inst/app/www/NEWS.md
 
 # Install LaTeX packages and compile the user guide in a single layer to avoid
 # cross-layer TeX file database visibility issues with pdflatex.
