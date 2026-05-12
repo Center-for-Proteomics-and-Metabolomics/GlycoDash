@@ -1,5 +1,5 @@
 ---
-title: "GlycoDash v1.11.3 data processing report"
+title: "`r paste0('GlycoDash v', utils::packageVersion('GlycoDash'), ' data processing report')`"
 date: "`r Sys.Date()`"
 output: 
   html_document:
