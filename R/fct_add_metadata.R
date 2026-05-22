@@ -61,7 +61,10 @@ read_metadata <- function(filepaths, filenames) {
 #' @param sample_id_column A character string, the name of the column in
 #'   \code{metadata} that contains the sample IDs.
 #'
-#' @return Fill this in...
+#' @return The input \code{metadata} dataframe with the column specified by
+#'   \code{sample_id_column} renamed to "sample_id". If a conflicting
+#'   "sample_id" column already existed, it is first renamed to
+#'   "sample_id_original" and a warning is issued.
 #' @export
 #'
 #' @examples
@@ -104,17 +107,25 @@ rename_sample_id_column <- function(metadata, sample_id_column) {
 
 
 
-#' This function checks whether there are forbidden column names in the 
-#' uploaded metadata. Some column names are not allowed because they are
-#' already created in the code, causing conflict.
+#' Check for forbidden column names in metadata
 #'
-#' @param merged_metadata Description here...
+#' Checks whether the metadata contains column names that are reserved for
+#' internal use. Some column names are not allowed because they conflict with
+#' columns created elsewhere in the pipeline.
 #'
-#' @return  A vector with forbidden column names. Can be length zero.
+#' @param merged_metadata A dataframe or tibble containing the merged metadata
+#'   to check.
+#'
+#' @return A character vector of forbidden column names found in
+#'   \code{merged_metadata}. Returns a zero-length character vector if no
+#'   forbidden column names are present.
 #' @export
 #'
-#' @examples 
-#' forbidden_colnames <- check_column_names(merged_metadata())
+#' @examples
+#' metadata <- data.frame(sample_id = c("S1", "S2"),
+#'                        sample_name = c("Sample 1", "Sample 2"),
+#'                        group = c("A", "B"))
+#' check_column_names(metadata)
 check_column_names <- function(merged_metadata) {
   
   not_allowed <- c("sample_name", "analyte", "charge", "mass_accuracy_ppm",

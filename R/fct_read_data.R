@@ -477,24 +477,24 @@ get_analytes_info <- function(data, variable) {
 
 
 
-#'Detect whether a sample is specific or total Ig based on the sample name.
+#' Detect whether a sample is specific or total Ig based on the sample name.
 #'
-#'@param data A dataframe containing a LaCyTools summary with a column 
-#'"sample_name".
-#'@param keyword_specific The word(s)/characters within the sample name used to
-#'  refer to Specific samples.
-#'@param keyword_total The word(s)/characters within the sample name used to
-#'  refer to Total samples.
+#' @param data A dataframe containing a LaCyTools summary with a column
+#'   "sample_name".
+#' @param keyword_specific The word(s)/characters within the sample name used to
+#'   refer to Specific samples.
+#' @param keyword_total The word(s)/characters within the sample name used to
+#'   refer to Total samples.
 #'
-#'@return The dataframe containing a block from a LaCyTools summary file, with
-#'  an additional column named "group" that indicates whether a sample is
-#'  specific or total.
-#'@export
+#' @return The dataframe containing a block from a LaCyTools summary file, with
+#'   an additional column named "group" that indicates whether a sample is
+#'   specific or total.
+#' @export
 #'
-#'@examples
-#'block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"),
-#'                            values = c(13.56, 738.34, 4.56))
-#'detect_group(data = block_example, keyword_specific = "Specific", keyword_total = "Total")
+#' @examples
+#' block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total", "s_8759"),
+#'                             values = c(13.56, 738.34, 4.56))
+#' detect_group(data = block_example, keyword_specific = "Specific", keyword_total = "Total")
 detect_group <- function(data, keyword_specific, keyword_total) {
   data <- data %>% 
     tidyr::extract(
