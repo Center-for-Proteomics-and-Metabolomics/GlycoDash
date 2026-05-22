@@ -19,31 +19,37 @@ mod_read_data_ui <- function(id) {
       ns("data_type"),
       "Choose which type of data you want to upload:",
       choices = c(
-        "LaCyTools data", "Skyline data (wide format)", "SweetSuite data"
+        "SweetSuite data", "Skyline data (wide format)", "LaCyTools data"
       ),
-      selected = "LaCyTools data"
+      selected = "SweetSuite data"
     ),
     fluidRow(
       column(
         width = 12,
         shinyjs::hidden(div(
           id = ns("uploaded_lacytools"),
-          strong("You uploaded LaCyTools data. 
-                To upload a different data type, reload the dashboard."),
+          strong(
+            "You uploaded LaCyTools data. 
+            To upload a different data type, reload the dashboard."
+          ),
           br(), br(),
           style = "color:#0021B8; font-size: 15px"
         )),
         shinyjs::hidden(div(
           id = ns("uploaded_skyline_wide"),
-          strong("You uploaded Skyline data in wide format. 
-                To upload a different data type, reload the dashboard."),
+          strong(
+            "You uploaded Skyline data in wide format. 
+            To upload a different data type, reload the dashboard."
+          ),
           br(), br(),
           style = "color:#0021B8; font-size: 15px"
         )),
       shinyjs::hidden(div(
           id = ns("uploaded_sweetsuite"),
-          strong("You uploaded SweetSuite data. 
-                To upload a different data type, reload the dashboard."),
+          strong(
+            "You uploaded SweetSuite data. 
+            To upload a different data type, reload the dashboard."
+          ),
           br(), br(),
           style = "color:#0021B8; font-size: 15px"
         )),
@@ -229,26 +235,35 @@ mod_read_data_ui <- function(id) {
     ),
     div(id = ns("keywords_specific_total"),
         # Set the width of popovers in this div to 200px:
-        tags$style(HTML(paste0("#",
-                               ns("keywords_specific_total"),
-                               " .popover{width: 200px !important;}"))),
-        textInput(ns("keyword_specific"), 
-                  label = "By what keyword can the specific Ig samples be recognized?") %>% 
+        tags$style(HTML(paste0(
+          "#", ns("keywords_specific_total"),
+          " .popover{width: 200px !important;}"
+        ))),
+        textInput(
+          ns("keyword_specific"), 
+          label = "By what keyword can the specific Ig samples be recognized?"
+        ) %>% 
           bsplus::bs_embed_popover(
             title = "Explanation",
-            content = paste("All specific Ig samples should have sample names",
-                            "that contain this keyword. The keyword is case-sensitive."),
+            content = paste(
+              "All specific Ig samples should have sample names",
+              "that contain this keyword. The keyword is case-sensitive."
+            ),
             trigger = "hover",
             placement = "right"),
-        textInput(ns("keyword_total"), 
-                  label = "By what keyword can the total Ig samples be recognized?") %>% 
+        textInput(
+          ns("keyword_total"), 
+          label = "By what keyword can the total Ig samples be recognized?"
+        ) %>% 
           bsplus::bs_embed_popover(
             title = "Explanation",
-            content = paste("All total Ig samples should have sample names",
-                            "that contain this keyword. The keyword is case-sensitive."),
+            content = paste(
+              "All total Ig samples should have sample names",
+              "that contain this keyword. The keyword is case-sensitive."
+            ),
             trigger = "hover",
             placement = "right")
-    ),
+    )
   )
 }
   
@@ -324,7 +339,8 @@ mod_read_data_server <- function(id) {
         }
         if (input$skyline_contains_notes == TRUE) {
           shinyjs::show("skyline_note_column")
-        } else {
+        } 
+        else {
           shinyjs::hide("skyline_note_column")
         }
       }
@@ -395,7 +411,8 @@ mod_read_data_server <- function(id) {
       req(correct_file_ext(), input$data_type %in% c("LaCyTools data", "SweetSuite data"))
       if (input$data_type == "SweetSuite data") {
         uploaded_files <- input$sweetsuite_input
-      } else {
+      } 
+      else {
         uploaded_files <- input$lacytools_input
       }
       uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
@@ -510,7 +527,11 @@ mod_read_data_server <- function(id) {
     #########################################################################
     
     sweetsuite_data <- reactive({
-      req(correct_file_ext(), input$data_type == "SweetSuite data", input$sweetsuite_input)
+      req(
+        correct_file_ext(), 
+        input$data_type == "SweetSuite data", 
+        input$sweetsuite_input
+      )
       tryCatch(
         expr = read_sweetsuite_data(input$sweetsuite_input$datapath),
         error = function(e) {
@@ -526,8 +547,11 @@ mod_read_data_server <- function(id) {
     
     # Read raw Skyline data from CSV file.
     raw_skyline_data_wide <- reactive({
-      req(correct_file_ext(), input$data_type == "Skyline data (wide format)", 
-          input$skyline_input_wide)
+      req(
+        correct_file_ext(), 
+        input$data_type == "Skyline data (wide format)", 
+        input$skyline_input_wide
+      )
       read_skyline_csv(input$skyline_input_wide$datapath)
     })
     
@@ -546,18 +570,20 @@ mod_read_data_server <- function(id) {
           ) %>% 
         colnames()
       
-      for (id in c("skyline_protein_column",
-                  "skyline_analyte_column", 
-                  "skyline_cluster_column",
-                  "skyline_glycan_column", 
-                  "skyline_charge_column")) {
+      for (id in c(
+        "skyline_protein_column",
+        "skyline_analyte_column", 
+        "skyline_cluster_column",
+        "skyline_glycan_column", 
+        "skyline_charge_column"
+      )) {
         updateSelectizeInput(inputId = id, choices = columns)
       }
     })
     
     observe({
       req(raw_skyline_data_wide())
-      if (input$skyline_contains_notes == TRUE) {
+      if (input$skyline_contains_notes) {
         columns <- raw_skyline_data_wide() %>% 
           dplyr::select(
             -tidyselect::contains("Total.Area.MS1"),
@@ -580,13 +606,16 @@ mod_read_data_server <- function(id) {
     observe({
       # Input column names
       input_colnames_two <- unique(c(
-        input$skyline_cluster_column, input$skyline_glycan_column, 
+        input$skyline_cluster_column, 
+        input$skyline_glycan_column, 
         input$skyline_charge_column
       ))
       input_colnames_one <- unique(c(
-        input$skyline_analyte_column, input$skyline_charge_column,
+        input$skyline_analyte_column, 
+        input$skyline_charge_column,
         input$skyline_protein_column
       ))
+      
       # Set requirements
       req_A <- is_truthy(raw_skyline_data_wide())
       req_B <- dplyr::case_when(
@@ -595,21 +624,25 @@ mod_read_data_server <- function(id) {
         startsWith(input$skyline_analyte_format, "One") ~ 
           length(input_colnames_one) == 3
       )
+      
       # Below only applies when user selects column with notes
-      if (input$skyline_contains_notes == TRUE) {
+      if (input$skyline_contains_notes) {
         req_C <- dplyr::case_when(
           startsWith(input$skyline_analyte_format, "Two") ~ 
             !input$skyline_note_column %in% input_colnames_two,
           startsWith(input$skyline_analyte_format, "One") ~ 
             !input$skyline_note_column %in% input_colnames_one
         )
-      } else {
+      } 
+      else {
         req_C <- TRUE
       }
+      
       # Check requirements
       if (req_A & req_B & req_C) {
         shinyjs::enable("button")
-      } else {
+      } 
+      else {
         shinyjs::disable("button")
       }
     })
@@ -629,9 +662,10 @@ mod_read_data_server <- function(id) {
     # Isomers are renamed when cluster and glycan columns are given separately
     skyline_data_wide <- reactive({
       req(raw_skyline_data_wide())
-      if (input$skyline_contains_notes == TRUE) {
+      if (input$skyline_contains_notes) {
         note_column <- input$skyline_note_column
-      } else {
+      } 
+      else {
         note_column <- NULL
       }
       if (startsWith(input$skyline_analyte_format, "Two")) {
@@ -651,7 +685,8 @@ mod_read_data_server <- function(id) {
             NULL
           }
         )
-      } else {
+      } 
+      else {
         # One analyte column
         tryCatch(
           expr = transform_skyline_data_wide(
@@ -693,7 +728,6 @@ mod_read_data_server <- function(id) {
 
     # Detect total and specific samples if applicable.
     data_total_and_specific <- reactive({
-      
       shinyFeedback::hideFeedback("keyword_specific")
       shinyFeedback::hideFeedback("keyword_total")
       
@@ -718,20 +752,24 @@ mod_read_data_server <- function(id) {
         data_to_check <- sweetsuite_data()
       }
       
-      summary <- tryCatch(
+      tryCatch(
         expr = {
           # Detect based on sample names which samples are Total Ig and which are
           # Specific Ig samples
-          detect_group(data = data_to_check,
-                       keyword_specific = input$keyword_specific,
-                       keyword_total = input$keyword_total)
+          detect_group(
+            data = data_to_check,
+            keyword_specific = input$keyword_specific,
+            keyword_total = input$keyword_total
+          )
         },
         unmatched_keyword_specific = function(c) {
           shinyFeedback::feedbackDanger(
             inputId = "keyword_specific",
             show = TRUE,
-            text = paste("This keyword did not match any sample names in your data.", 
-                         "Please choose a different keyword.")
+            text = paste(
+              "This keyword did not match any sample names in your data.", 
+              "Please choose a different keyword."
+            )
           )
           NULL
         },
@@ -739,28 +777,26 @@ mod_read_data_server <- function(id) {
           shinyFeedback::feedbackDanger(
             inputId = "keyword_total",
             show = TRUE,
-            text = paste("This keyword did not match any sample names in your data.", 
-                         "Please choose a different keyword.")
+            text = paste(
+              "This keyword did not match any sample names in your data.", 
+              "Please choose a different keyword."
+            )
           )
           NULL
         },
         NAs = function(c) {
-          showNotification(c$message,
-                           type = "error",
-                           duration = NULL)
+          showNotification(c$message, type = "error", duration = NULL)
           NULL
         })
-      
-      return(summary)
     })
     
     
     # Toggle UI elements
     observeEvent(input$contains_total_and_specific_samples, {
-      # I use show/hide because toggle causes problems
-      if (input$contains_total_and_specific_samples == TRUE) {
+      if (input$contains_total_and_specific_samples) {
         shinyjs::show("keywords_specific_total")
-      } else {
+      } 
+      else {
         shinyjs::hide("keywords_specific_total")
       }
     })
