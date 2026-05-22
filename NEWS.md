@@ -1,6 +1,7 @@
 # v1.11.4
 ## Adjustments
 * Updated the user guide.
+* Improved performance when importing large datasets.
 
 ## Bug fixes
 * Fix broken example sample list `xlsx` file.
