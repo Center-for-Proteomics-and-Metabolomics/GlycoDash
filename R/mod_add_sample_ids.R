@@ -8,7 +8,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_add_sample_ids_ui <- function(id){
+mod_add_sample_ids_ui <- function(id) {
   ns <- NS(id)
   tagList(
     tags$style(HTML(paste0(
@@ -56,25 +56,32 @@ mod_add_sample_ids_ui <- function(id){
             ns("dropdown_content"),
             " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
           ))),
-          div(id = ns("dropdown_content"),
-              downloadButton(ns("download_ex_plate_design"),
-                             "Download a plate design example file"),
-              downloadButton(ns("download_ex_sample_list"),
-                             "Download a sample list example file")),
-          icon = icon("paperclip",
-                      class = "ml"),
-          tooltip = shinyWidgets::tooltipOptions(placement = "top",
-                                                 title = "Examples"),
+          div(
+            id = ns("dropdown_content"),
+            downloadButton(
+              ns("download_ex_plate_design"),
+              "Download a plate design example file"
+            ),
+            downloadButton(
+              ns("download_ex_sample_list"),
+              "Download a sample list example file"
+            )
+          ),
+          icon = icon("paperclip", class = "ml"),
+          tooltip = shinyWidgets::tooltipOptions(
+            placement = "top", title = "Examples"
+          ),
           width = "330px",
           size = "xs"
         )),
       width = NULL,
       solidHeader = TRUE,
       status = "primary",
-      selectInput(ns("sample_id_method"),
-                  "Choose a method to add sample IDs to your data:",
-                  choices = c("Upload a plate design",
-                              "Upload a sample list")) %>% 
+      selectInput(
+        ns("sample_id_method"),
+        "Choose a method to add sample IDs to your data:",
+        choices = c("Upload a plate design", "Upload a sample list")
+      ) %>% 
         bsplus::bs_embed_popover(
           title = "Method to add sample IDs",
           content = HTML(
@@ -175,7 +182,9 @@ mod_add_sample_ids_ui <- function(id){
     )
   )
 }
-    
+ 
+
+
 #' add_sample_ids Server Functions
 #'
 #' @noRd 
@@ -190,28 +199,35 @@ mod_add_sample_ids_server <- function(
     ns <- session$ns
     
     observe({
-      shinyjs::toggle("sample_list_ui", 
-                      condition = input$sample_id_method == "Upload a sample list")
-      shinyjs::toggle("one_plate_design",
-                      condition = all(
-                        input$sample_id_method == "Upload a plate design",
-                        !isTruthy(input$switch_two_plate_designs)
-                      ))
-      shinyjs::toggle("two_plate_designs",
-                      condition = all(
-                        input$sample_id_method == "Upload a plate design",
-                        isTruthy(input$switch_two_plate_designs)
-                      ))
-      shinyjs::toggle("switch_two_plate_designs",
-                      condition = all(
-                        contains_total_and_specific_samples() == TRUE,
-                        input$sample_id_method == "Upload a plate design"
-                      ))
+      shinyjs::toggle(
+        "sample_list_ui", 
+         condition = input$sample_id_method == "Upload a sample list"
+      )
+      shinyjs::toggle(
+        "one_plate_design",
+        condition = all(
+          input$sample_id_method == "Upload a plate design",
+          !isTruthy(input$switch_two_plate_designs)
+        )
+      )
+      shinyjs::toggle(
+        "two_plate_designs",
+        condition = all(
+          input$sample_id_method == "Upload a plate design",
+          isTruthy(input$switch_two_plate_designs)
+        )
+      )
+      shinyjs::toggle(
+        "switch_two_plate_designs",
+        condition = all(
+          contains_total_and_specific_samples() == TRUE,
+          input$sample_id_method == "Upload a plate design"
+        )
+      )
     })
     
-    r <- reactiveValues(resetter = 0,
-                        show_reset_warning = FALSE)
     
+    r <- reactiveValues(resetter = 0, show_reset_warning = FALSE)
     
     # Whenever a new (correct) LaCyTools summary file is uploaded and sample
     # IDs had already been added to the old summary, the resetter counter is
@@ -227,14 +243,16 @@ mod_add_sample_ids_server <- function(
     
     
     observe({
-      if (r$show_reset_warning == TRUE) {
-        showNotification("Please re-upload your plate design or sample list.",
-                         type = "warning", duration = 10)
+      if (r$show_reset_warning) {
+        showNotification(
+          "Please re-upload your plate design or sample list.",
+          type = "warning", duration = 10
+        )
       }
     })
     
     observe({
-      # When sample IDs have been readded to the data (r$show_reset_warning is TRUE and
+      # When sample IDs have been re-added to the data (r$show_reset_warning is TRUE and
       # data_with_sample_ids() exists) r$show_reset_warning should be reset to FALSE, so
       # that the warning is not shown again when the 'load lacytools summary'
       # button is clicked but no new lacytools file has been uploaded:
@@ -258,8 +276,7 @@ mod_add_sample_ids_server <- function(
     )
     
     plate_design_specific_with_group <- reactive({
-      req(plate_design_specific$plate_design(),
-          keyword_specific())
+      req(plate_design_specific$plate_design(), keyword_specific())
       
       plate_design_specific$plate_design() %>% 
         dplyr::mutate(group = keyword_specific())
@@ -273,28 +290,31 @@ mod_add_sample_ids_server <- function(
     )
     
     plate_design_total_with_group <- reactive({
-      req(plate_design_total$plate_design(),
-          keyword_total())
+      req(plate_design_total$plate_design(), keyword_total())
       
       plate_design_total$plate_design() %>% 
         dplyr::mutate(group = keyword_total())
     })
     
     plate_design_combined <- reactive({
-      req(plate_design_specific_with_group(),
-          plate_design_total_with_group())
+      req(plate_design_specific_with_group(), plate_design_total_with_group())
       
-      dplyr::full_join(plate_design_specific_with_group(),
-                       plate_design_total_with_group()) %>% 
+      dplyr::full_join(
+        plate_design_specific_with_group(), plate_design_total_with_group()
+      ) %>% 
         dplyr::mutate(group = as.factor(group))
     })
     
     plate_design_filenames <- reactive({
       req(input$sample_id_method == "Upload a plate design")
+      
       if(is_truthy(input$switch_two_plate_designs)) {
-        comma_and(c(plate_design_specific$filename(), 
-                    plate_design_total$filename()))
-      } else {
+        comma_and(c(
+          plate_design_specific$filename(), 
+          plate_design_total$filename()
+        ))
+      } 
+      else {
         plate_design$filename()
       }
     })
@@ -328,50 +348,56 @@ mod_add_sample_ids_server <- function(
             NULL
           })
         if (is_truthy(input$switch_two_plate_designs)) {
-          req(plate_design_combined(),
-              !is.null(summary_with_plate_well))
-          with_sample_ids <- dplyr::left_join(summary_with_plate_well,
-                                              plate_design_combined())
-        } else {
-          req(plate_design$plate_design(),
-              !is.null(summary_with_plate_well))
-          with_sample_ids <- dplyr::left_join(summary_with_plate_well,
-                                              plate_design$plate_design())
+          req(plate_design_combined(), !is.null(summary_with_plate_well))
+          with_sample_ids <- dplyr::left_join(
+            summary_with_plate_well, plate_design_combined()
+          )
+        } 
+        else {
+          req(plate_design$plate_design(), !is.null(summary_with_plate_well))
+          with_sample_ids <- dplyr::left_join(
+            summary_with_plate_well, plate_design$plate_design()
+          )
         }
-      } else {
+      } 
+      else {
         req(sample_list$sample_list())
-        with_sample_ids <- dplyr::left_join(data(),
-                                            sample_list$sample_list())
+        with_sample_ids <- dplyr::left_join(data(), sample_list$sample_list())
       }
       
       # TODO: convert code below into a function
       replicates <- with_sample_ids %>% 
-        dplyr::select(tidyselect::any_of(c("sample_name", "sample_id", "group"))) %>% 
+        dplyr::select(tidyselect::any_of(
+          c("sample_name", "sample_id", "group")
+        )) %>% 
         dplyr::distinct() %>% 
         dplyr::group_by(dplyr::across(tidyselect::any_of("group"))) %>% 
         dplyr::add_count(sample_id, name = "number_of_replicates") %>% 
-        dplyr::mutate(number_of_replicates = ifelse(sample_id == "empty cell in plate design",
-                                                    1,
-                                                    number_of_replicates)) %>% 
-        dplyr::mutate(replicates = ifelse(number_of_replicates > 1, 
-                                          TRUE, 
-                                          FALSE)) %>% 
+        dplyr::mutate(number_of_replicates = ifelse(
+          sample_id == "empty cell in plate design",
+          1,
+          number_of_replicates
+        )) %>% 
+        dplyr::mutate(replicates = ifelse(
+          number_of_replicates > 1, 
+          TRUE, 
+          FALSE
+        )) %>% 
         dplyr::ungroup(.)
       
-      with_sample_ids <- dplyr::full_join(replicates, with_sample_ids)
-      
-      return(with_sample_ids)
-      
+      dplyr::full_join(replicates, with_sample_ids)
     })
     
     
     output$download_ex_plate_design <- downloadHandler(
       filename = "Example plate design file.xlsx",
       content = function(file) {
-        example_file <- system.file("app",
-                                    "www",
-                                    "Example plate design file.xlsx",
-                                    package = "GlycoDash")
+        example_file <- system.file(
+          "app",
+          "www",
+          "Example plate design file.xlsx",
+          package = "GlycoDash"
+        )
         file.copy(example_file, file)
       }
     )
@@ -379,13 +405,16 @@ mod_add_sample_ids_server <- function(
     output$download_ex_sample_list <- downloadHandler(
       filename = "Example sample list file.xlsx",
       content = function(file) {
-        example_file <- system.file("app",
-                                    "www",
-                                    "Example sample list file.xlsx",
-                                    package = "GlycoDash")
+        example_file <- system.file(
+          "app",
+          "www",
+          "Example sample list file.xlsx",
+          package = "GlycoDash"
+        )
         file.copy(example_file, file)
       }
     )
+    
     
     
     return(list(
@@ -394,14 +423,6 @@ mod_add_sample_ids_server <- function(
       filename_sample_list = sample_list$filename
     ))
     
-
   })
 }
 
-
-
-## To be copied in the UI
-# mod_add_sample_ids_ui("add_sample_ids_ui_1")
-    
-## To be copied in the server
-# mod_add_sample_ids_server("add_sample_ids_ui_1")

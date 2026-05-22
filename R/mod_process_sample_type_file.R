@@ -7,17 +7,19 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_process_sample_type_file_ui <- function(id, 
-                                            fileInput_label, 
-                                            popover_width, 
-                                            popover_title, 
-                                            popover_content_html){
+mod_process_sample_type_file_ui <- function(
+    id, 
+    fileInput_label, 
+    popover_width, 
+    popover_title, 
+    popover_content_html) {
   ns <- NS(id)
   
   fluidRow(
     column(
       width = 11,
-      fileInput(ns("file"), fileInput_label)),
+      fileInput(ns("file"), fileInput_label)
+    ),
     column(
       width = 1,
       tags$style(
@@ -31,24 +33,29 @@ mod_process_sample_type_file_ui <- function(id,
           " .col-sm-1 {padding-left: 0px}"
         ))
       ),
-      div(id = ns("info_icon_div"),
-          icon("info-circle",
-               class = "fa-2x") %>% 
-            bsplus::bs_embed_popover(
-              title = popover_title,
-              content = popover_content_html,
-              trigger = "hover",
-              placement = "right",
-              html = "true",
-              container = "body")))
+      div(
+        id = ns("info_icon_div"),
+        icon("info-circle", class = "fa-2x") %>% 
+          bsplus::bs_embed_popover(
+            title = popover_title,
+            content = popover_content_html,
+            trigger = "hover",
+            placement = "right",
+            html = "true",
+            container = "body"
+          )
+      )
+    )
   )
 }
     
 #' process_sample_type_file Server Functions
 #'
 #' @noRd 
-mod_process_sample_type_file_server <- function(id, allowed){
-  moduleServer( id, function(input, output, session){
+mod_process_sample_type_file_server <- function(
+    id, 
+    allowed) {
+  moduleServer(id, function(input, output, session){
     ns <- session$ns
     
     sample_type_list <- reactive({
@@ -56,25 +63,25 @@ mod_process_sample_type_file_server <- function(id, allowed){
       
       shinyFeedback::hideFeedback("file")
       
-      sample_types <- tryCatch(
+      tryCatch(
         expr = {
-          read_sample_type_file(input$file$datapath,
-                                input$file$name)
+          read_sample_type_file(input$file$datapath, input$file$name)
         },
         wrong_extension = function(c) {
-          shinyFeedback::feedbackDanger("file",
-                                        show = TRUE,
-                                        text = c$message)
+          shinyFeedback::feedbackDanger(
+            "file", show = TRUE, text = c$message
+          )
           NULL
         },
         missing_columns = function(c) {
-          error_message_first_sentence <- stringr::str_replace(c$message,
-                                                               "(.+\\.).+",
-                                                               "\\1")
+          error_message_first_sentence <- stringr::str_replace(
+            c$message, "(.+\\.).+", "\\1"
+          )
           
-          shinyFeedback::feedbackDanger("file",
-                                        show = TRUE,
-                                        text = error_message_first_sentence)
+          shinyFeedback::feedbackDanger(
+            "file", show = TRUE,
+            text = error_message_first_sentence
+          )
           
           showNotification(
             paste(
@@ -88,21 +95,14 @@ mod_process_sample_type_file_server <- function(id, allowed){
           NULL
           
         })
-      
-      return(sample_types)
     }) %>% bindEvent(input$file)
     
     
     return(list(
       list = sample_type_list,
-      filename = reactive({ input$file$name })
+      filename = reactive(input$file$name)
       ))
     
   })
 }
     
-## To be copied in the UI
-# mod_process_sample_type_file_ui("process_sample_type_file_ui_1")
-    
-## To be copied in the server
-# mod_process_sample_type_file_server("process_sample_type_file_ui_1")

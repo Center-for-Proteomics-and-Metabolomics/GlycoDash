@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_read_data.R
 \name{find_widest_row}
 \alias{find_widest_row}
-\title{Find the widest row in a non-rectangular data file (Optimized)}
+\title{Find the widest row in a non-rectangular data file}
 \usage{
 find_widest_row(path, delim)
 }
@@ -15,14 +15,7 @@ find_widest_row(path, delim)
 The number of fields/columns in the widest line (integer).
 }
 \description{
-This optimized version reads the file line-by-line using base R,
-minimizing memory usage and avoiding loading the whole file into RAM.
-It is significantly faster for large files.
-}
-\details{
-Error and warning handling is preserved from the original:
-- Aborts if file does not exist
-- Aborts on embedded nulls or read errors
-- Aborts if file is empty
-- Warns if delimiter appears incorrect (single column detected)
+Reads a file line-by-line to determine the maximum number of fields in any
+single line. This is used to pre-determine the column count needed by
+\code{\link{read_non_rectangular}}.
 }

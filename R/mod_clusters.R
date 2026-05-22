@@ -80,7 +80,9 @@ mod_clusters_ui <- function(id) {
 #' clusters Server Functions
 #'
 #' @noRd 
-mod_clusters_server <- function(id, data) {
+mod_clusters_server <- function(
+    id, 
+    data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -96,20 +98,20 @@ mod_clusters_server <- function(id, data) {
     # Determine the clusters in the data
     glycopeptide_clusters <- reactive({
       req(data())
-      subset <- data() %>% 
-        tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge") %>% 
+      data() %>% 
+        tidyr::separate(
+          analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge"
+        ) %>% 
         dplyr::filter(glycan != "")
-      
-      return(sort(unique(subset$cluster)))
     })
     
     peptides <- reactive({
       req(glycopeptide_clusters())
-      subset <- data() %>% 
-        tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge") %>% 
+      data() %>% 
+        tidyr::separate(
+          analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge"
+        ) %>% 
         dplyr::filter(!cluster %in% glycopeptide_clusters())
-      
-      return(sort(unique(subset$cluster)))
     })
     
     
@@ -129,8 +131,10 @@ mod_clusters_server <- function(id, data) {
     data_with_clusters <- reactive({
       req(data())
       data() %>% 
-        tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge",
-                        remove = FALSE) %>% 
+        tidyr::separate(
+          analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge",
+          remove = FALSE
+        ) %>% 
         dplyr::select(-glycan)
     })
     
@@ -138,9 +142,15 @@ mod_clusters_server <- function(id, data) {
     
     # Determine visibility of UI elements.
     observe({
-      shinyjs::toggle("info_detection", condition = !is_truthy(glycopeptide_clusters()))
-      shinyjs::toggle("info_clusters", condition = is_truthy(glycopeptide_clusters()))
-      shinyjs::toggle("clusters_table", condition = is_truthy(glycopeptide_clusters()))
+      shinyjs::toggle(
+        "info_detection", condition = !is_truthy(glycopeptide_clusters())
+      )
+      shinyjs::toggle(
+        "info_clusters", condition = is_truthy(glycopeptide_clusters())
+      )
+      shinyjs::toggle(
+        "clusters_table", condition = is_truthy(glycopeptide_clusters())
+      )
       
       if (is_truthy(peptides())) {
         shinyjs::show("info_peptides")
@@ -160,3 +170,4 @@ mod_clusters_server <- function(id, data) {
     
   })
 }
+

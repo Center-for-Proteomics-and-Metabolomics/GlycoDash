@@ -39,8 +39,10 @@
 detect_plate_and_well <- function(data) {
   
   if (!("sample_name" %in% colnames(data))) {
-    rlang::abort(class = "no_sample_name_column",
-                 message = "The data doesn't contain the required column \"sample_name\".")
+    rlang::abort(
+      class = "no_sample_name_column",
+      message = "The data doesn't contain the required column \"sample_name\"."
+    )
   }
   
   data <- data %>% 
@@ -60,8 +62,10 @@ detect_plate_and_well <- function(data) {
       pattern = "[A-H](?:0?\\d\\D|0?\\d$|1[012]).*[Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z])"
     ))
     if (well_precedes_plate) {
-      rlang::abort(class = "well_precedes_plate",
-                   message = "Within the sample name the well position should not precede the plate number.")
+      rlang::abort(
+        class = "well_precedes_plate",
+        message = "Within the sample name the well position should not precede the plate number."
+      )
     }
   }
   
@@ -80,36 +84,42 @@ detect_plate_and_well <- function(data) {
       dplyr::mutate(plate = "plate1")
   }
   
-  some_plate_and_wells_could_not_be_determined <- any(anyNA(data$plate), 
-                                                      anyNA(data$well))
+  some_plate_and_wells_could_not_be_determined <- any(anyNA(data$plate), anyNA(data$well))
   
   # If for some samples the plate or well could not be determined, issue a warning:
   if (some_plate_and_wells_could_not_be_determined) {
     NA_samples <- data$sample_name[is.na(data$plate) | is.na(data$well)]
     if (length(NA_samples) > 15) {
-      rlang::abort(class = "plate_well_NAs",
-                   message = paste("For",
-                                   length(NA_samples),
-                                   "samples the plate and well could not be determined.",
-                                   "Run `?detect_plate_and_well` and check if your sample names are in a suitable format."))
-    } else {
-      rlang::abort(class = "plate_well_NAs",
-                   message = paste("For the sample(s)",
-                                   paste(NA_samples, collapse = " and "),
-                                   "the plate and well could not be determined."))
+      rlang::abort(
+        class = "plate_well_NAs",
+        message = paste(
+          "For", length(NA_samples),
+          "samples the plate and well could not be determined.",
+          "Run `?detect_plate_and_well` and check if your sample names are in a suitable format."
+        )
+      )
+    } 
+    else {
+      rlang::abort(
+        class = "plate_well_NAs",
+        message = paste(
+          "For the sample(s)",
+          paste(NA_samples, collapse = " and "),
+          "the plate and well could not be determined."
+        )
+      )
     }
   }
   
   # Combine the plate and well columns into one plate_well column:
   data <- data %>% 
     dplyr::mutate(
-      plate = stringr::str_match(plate, 
-                                 "[Pp][Ll](?:ate|ATE)?((?:\\d+|[A-Z]))")[ , 2],
-      well = stringr::str_extract(well, 
-                                  "[A-H]\\d{1,2}"),
-      plate_well = paste(plate, 
-                         well, 
-                         sep = "_")
+      plate = stringr::str_match(
+        plate, 
+        "[Pp][Ll](?:ate|ATE)?((?:\\d+|[A-Z]))"
+      )[ , 2],
+      well = stringr::str_extract(well, "[A-H]\\d{1,2}"),
+      plate_well = paste(plate, well, sep = "_")
     ) %>% 
     dplyr::select(-c(plate, well)) %>% 
     dplyr::relocate(plate_well, .after = sample_name) %>%
@@ -119,6 +129,7 @@ detect_plate_and_well <- function(data) {
   
   return(data)
 }
+
 
 #'Read and process a plate design file
 #'
@@ -163,14 +174,14 @@ read_and_process_plate_design <- function(plate_design_file) {
       read_plate_design(plate_design_file)
     },
     incorrect_formatting = function(c) {
-      rlang::abort(message = c$message,
-                   class = "incorrect_formatting")
+      rlang::abort(message = c$message, class = "incorrect_formatting")
     })
   
   plate_design <- process_plate_design(plate_design)
   
   return(plate_design)
 }
+
 
 #'Read in a plate design file
 #'
@@ -217,9 +228,11 @@ read_and_process_plate_design <- function(plate_design_file) {
 read_plate_design <- function(plate_design_file) {
   # The plater package can only read .csv files, so we convert the Excel file to
   # .csv:
-  plate_design <- readxl::read_excel(plate_design_file,
-                                     .name_repair = "minimal",
-                                     col_types = "text")
+  plate_design <- readxl::read_excel(
+    plate_design_file,
+    .name_repair = "minimal",
+    col_types = "text"
+  )
   
   # Replacing the NA's that are due to empty cells on the plates with "Empty cell
   # in plate design"
@@ -230,32 +243,40 @@ read_plate_design <- function(plate_design_file) {
   }
   
   path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
-  write.csv(plate_design,
-            file = path_to_platedesign_csv, 
-            row.names = FALSE,
-            na = "",
-            quote = FALSE)
+  write.csv(
+    plate_design,
+    file = path_to_platedesign_csv, 
+    row.names = FALSE,
+    na = "",
+    quote = FALSE
+  )
   plate_design <- tryCatch(expr = {
-    plater::read_plate(file = path_to_platedesign_csv, 
-                       well_ids_column = "well")
+    plater::read_plate(file = path_to_platedesign_csv, well_ids_column = "well")
   },
   # Throw custom error when plater::read_plate() throws an error:
   error = function(e) { 
-    rlang::abort(class = "incorrect_formatting",
-                 message = paste(
-                   "Please check that your plate design file is formatted correctly.",
-                   "Run `?read_and_process_plate_design` to find the required format."))
+    rlang::abort(
+      class = "incorrect_formatting",
+      message = paste(
+        "Please check that your plate design file is formatted correctly.",
+        "Run `?read_and_process_plate_design` to find the required format."
+      )
+    )
   },
   # Throw custom error when plater::read_plate() throws a warning:
   warning = function(w) { 
-    rlang::abort(class = "incorrect_formatting",
-                 message = paste(
-                   "Please check that your plate design file is formatted correctly.",
-                   "Run `?read_and_process_plate_design` to find the required format."))
+    rlang::abort(
+      class = "incorrect_formatting",
+      message = paste(
+        "Please check that your plate design file is formatted correctly.",
+        "Run `?read_and_process_plate_design` to find the required format."
+      )
+    )
   })
   
   return(plate_design)
 }
+
 
 #' Process the result of read_plate_design()
 #'
@@ -291,8 +312,10 @@ process_plate_design <- function(plate_design) {
   # unparseable columns receive sequential numbers that don't collide with the
   # already-parsed ones.
   plate_col_names <- colnames(plate_design)[-1]
-  plate_numbers <- stringr::str_match(plate_col_names,
-                                      "[Pp][Ll](?:[Aa][Tt][Ee])?\\s*(\\d+)")[, 2]
+  plate_numbers <- stringr::str_match(
+    plate_col_names,
+    "[Pp][Ll](?:[Aa][Tt][Ee])?\\s*(\\d+)"
+  )[, 2]
   # Strip leading zeros so that plate numbers match the format produced by
   # detect_plate_and_well(), which also strips leading zeros from plate_well
   # (e.g. "Plate 04" -> "4", consistent with the gsub("^0+", ...) there).
@@ -302,7 +325,8 @@ process_plate_design <- function(plate_design) {
   if (all(is.na(plate_numbers))) {
     # No plate numbers could be parsed: fall back to simple sequential numbering.
     colnames(plate_design)[-1] <- as.character(1:(ncol(plate_design) - 1))
-  } else {
+  } 
+  else {
     # Validate that parsed plate numbers are unique to avoid duplicate column
     # names, which would cause issues in the pivot_longer() operation below.
     parsed_numbers <- plate_numbers[!is.na(plate_numbers)]
@@ -325,7 +349,8 @@ process_plate_design <- function(plate_design) {
     
     if (length(used_numbers) == 0L) {
       next_candidate <- 1L
-    } else {
+    } 
+    else {
       next_candidate <- max(used_numbers, na.rm = TRUE) + 1L
     }
     
@@ -354,6 +379,7 @@ process_plate_design <- function(plate_design) {
   return(plate_design)
 }
 
+
 #' Process a sample list Excel file
 #' 
 #' This function reads and processes a sample list Excel file, so that sample 
@@ -377,21 +403,27 @@ process_plate_design <- function(plate_design) {
 #' process_sample_list(sample_list_file = path)
 process_sample_list <- function(sample_list_file) {
   
-  sample_list <- readxl::read_excel(sample_list_file,
-                                    col_names = TRUE,
-                                    col_types = "text")
+  sample_list <- readxl::read_excel(
+    sample_list_file,
+    col_names = TRUE,
+    col_types = "text"
+  )
   
   required_columns <- c("sample_name", "sample_id")
   missing_columns <- required_columns[!(required_columns %in% colnames(sample_list))]
   
   if (!rlang::is_empty(missing_columns)) {
-    rlang::abort(class = "wrong_column_names",
-                 message = paste("The column(s)",
-                                 comma_and(missing_columns),
-                                 "could not be found. Please name the columns in your Excel file",
-                                 "\"sample_name\" and \"sample_id\"."
-                 ))
+    rlang::abort(
+      class = "wrong_column_names",
+      message = paste(
+        "The column(s)",
+        comma_and(missing_columns),
+        "could not be found. Please name the columns in your Excel file",
+        "\"sample_name\" and \"sample_id\"."
+      )
+    )
   }
   
   return(sample_list)
 }
+

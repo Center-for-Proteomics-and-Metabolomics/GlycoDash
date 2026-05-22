@@ -30,33 +30,42 @@ read_sample_type_file <- function(filepath, filename) {
   
   if (extension == "rds") {
     sample_types <- load_and_assign(filepath)
-  } else { if (extension %in% c("xlsx", "xls")) {
-    sample_types <- readxl::read_excel(filepath, 
-                                       col_names = TRUE,
-                                       col_types = "text")
-  } else {
-    rlang::abort(class = "wrong_extension",
-                 message = "Please upload a .xlsx, .xls or .rds file.")
   }
+  else if (extension %in% c("xlsx", "xls")) {
+    sample_types <- readxl::read_excel(
+      filepath, col_names = TRUE, col_types = "text"
+    )
+  }
+  else {
+    rlang::abort(
+      class = "wrong_extension",
+      message = "Please upload a .xlsx, .xls or .rds file."
+    )
   }
   
   required_columns <- c("sample_id", "sample_type")
   
-  missing_columns <- required_columns[!(required_columns %in% colnames(sample_types))]
+  missing_columns <- required_columns[
+    !(required_columns %in% colnames(sample_types))
+  ]
   
   if (!rlang::is_empty(missing_columns)) {
-    rlang::abort(class = "missing_columns",
-                 message = paste("The column(s)",
-                                 comma_and(missing_columns),
-                                 "could not be found. Please name the columns in your Excel file",
-                                 "\"sample_name\" and \"sample_id\"."
-                 ))
+    rlang::abort(
+      class = "missing_columns",
+      message = paste(
+        "The column(s)",
+        comma_and(missing_columns),
+        "could not be found. Please name the columns in your Excel file",
+        "\"sample_name\" and \"sample_id\"."
+      )
+    )
   }
   
   sample_types <- sample_types %>% 
-    dplyr::mutate(dplyr::across(.cols = tidyselect::everything(),
-                                .fns = as.character))
+    dplyr::mutate(
+      dplyr::across(.cols = tidyselect::everything(), .fns = as.character)
+    )
   
   return(sample_types)
-  
 }
+

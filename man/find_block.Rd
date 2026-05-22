@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_read_data.R
 \name{find_block}
 \alias{find_block}
-\title{Find a block in a LaCyTools summary file (Optimized)}
+\title{Find a block in a LaCyTools summary file}
 \usage{
 find_block(data, variable)
 }
@@ -16,7 +16,8 @@ find_block(data, variable)
 The row indices of the block.
 }
 \description{
-This optimized version preserves all original error handling and warnings.
-It uses efficient base R logic for index searching, avoids unnecessary copies,
-and leverages the improved find_next_na for speed/memory.
+Locates the row indices of a named output block within a LaCyTools summary
+dataframe. The block starts at the row whose first column matches
+\code{variable} and ends just before the next all-NA row (or at the last row
+if no such row exists).
 }

@@ -31,9 +31,11 @@ read_metadata <- function(filepaths, filenames) {
       extension <- tools::file_ext(name)
       if (extension %in% c("xlsx", "xls")) {
         metadata <- readxl::read_excel(path, na = c("", "NA"), col_types = "text")
-      } else if (extension == "rds") {
+      } 
+      else if (extension == "rds") {
         metadata <- load_and_assign(path)
-      } else {
+      } 
+      else {
         rlang::abort(class = "error")
       }
     }
@@ -43,6 +45,7 @@ read_metadata <- function(filepaths, filenames) {
   
   return(metadata_list)
 }
+
 
 #' Rename the metadata column with sample IDs to "sample_id"
 #'
@@ -76,18 +79,21 @@ read_metadata <- function(filepaths, filenames) {
 #'               rename_sample_id_column(metadata = metadata,
 #'                                       sample_id_column = sample_id_column)
 #'             })
-rename_sample_id_column <- function(metadata,
-                                    sample_id_column) {
+rename_sample_id_column <- function(metadata, sample_id_column) {
+  
   conflict <- "sample_id" %in% colnames(metadata) & sample_id_column != "sample_id"
+  
   if (conflict) {
     metadata <- metadata %>% 
       dplyr::rename(sample_id_original = sample_id)
     
-    rlang::warn(class = "sample_id_conflict",
-                message = paste(
-                  "The column originally named \"sample_id\" was renamed",
-                  "as \"sample_id_original\" to avoid duplicate column names."
-                ))
+    rlang::warn(
+      class = "sample_id_conflict",
+      message = paste(
+        "The column originally named \"sample_id\" was renamed",
+        "as \"sample_id_original\" to avoid duplicate column names."
+      )
+    )
   }
   
   metadata <- metadata %>% 
@@ -130,10 +136,3 @@ check_column_names <- function(merged_metadata) {
   return(forbidden)
 }
 
-
-
-
-
-
-
-  

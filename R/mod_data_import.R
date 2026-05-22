@@ -171,7 +171,7 @@ mod_data_import_server <- function(id) {
     
     # The download button is disabled until data has been loaded:
     observe({
-      shinyjs::toggleState("download", is_truthy(show_in_table()))
+      shinyjs::toggleState("download", condition = is_truthy(show_in_table()))
     })
     
     output$download <- downloadHandler(
@@ -263,3 +263,4 @@ mod_data_import_server <- function(id) {
     
   })
 }
+

@@ -268,6 +268,7 @@ mod_read_data_ui <- function(id) {
 }
   
 
+
 #' read_data Server Functions
 #'
 #' @noRd 
@@ -875,12 +876,15 @@ mod_read_data_server <- function(id) {
     })
     
     
+    
     return(list(
       data = to_return_trimmed,
       data_type = data_type_to_return,
-      keyword_specific = reactive({input$keyword_specific}),
-      keyword_total = reactive({input$keyword_total}),
-      contains_total_and_specific_samples = reactive({input$contains_total_and_specific_samples}),
+      keyword_specific = reactive(input$keyword_specific),
+      keyword_total = reactive(input$keyword_total),
+      contains_total_and_specific_samples = reactive(
+        input$contains_total_and_specific_samples
+      ),
       summary_filenames = filenames,
       glycosites_table = glycosites_table
     ))
@@ -888,4 +892,3 @@ mod_read_data_server <- function(id) {
   })
 }
     
-

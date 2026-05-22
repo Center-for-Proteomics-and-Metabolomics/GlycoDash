@@ -2,16 +2,17 @@
 % Please edit documentation in R/fct_read_data.R
 \name{read_skyline_csv}
 \alias{read_skyline_csv}
-\title{read_skyline_csv}
+\title{Read a Skyline CSV file}
 \usage{
 read_skyline_csv(path_to_file)
 }
 \arguments{
-\item{path_to_file}{Path to Skyline CSV file}
+\item{path_to_file}{Path to Skyline CSV file.}
 }
 \value{
-Dataframe with raw data read from CSV
+A dataframe with the raw data read from the CSV.
 }
 \description{
-read_skyline_csv
+Reads a Skyline-exported CSV file, automatically detecting whether the
+delimiter is a comma or semicolon by inspecting the first line.
 }
