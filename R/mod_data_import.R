@@ -130,9 +130,10 @@ mod_data_import_server <- function(id) {
     # in the data table
     output$data_table <- DT::renderDT({
       req(show_in_table())
-      DT::datatable(
-        show_in_table() %>% # Round numbers to 2 decimals
-          dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+      data_for_table <- show_in_table()
+      numeric_cols <- names(data_for_table)[vapply(data_for_table, is.numeric, logical(1))]
+      table <- DT::datatable(
+        data_for_table,
         options = list(
           scrollX = TRUE,
           pageLength = 8,  
@@ -140,6 +141,10 @@ mod_data_import_server <- function(id) {
         ),
         filter = "top"
       )
+      if (length(numeric_cols) > 0) {
+        table <- DT::formatRound(table, columns = numeric_cols, digits = 2)
+      }
+      table
     })
     
     

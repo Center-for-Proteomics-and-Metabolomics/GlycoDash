@@ -5,10 +5,6 @@
 #' file.
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
-#'
-#' @noRd q
-#'
-#' @importqFrom shiny NS tagList 
 mod_add_sample_types_ui <- function(id) {
   ns <- NS(id)
   tagList(
