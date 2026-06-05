@@ -257,6 +257,23 @@ mod_spectra_curation_ui <- function(id) {
           )
         )
       ),
+      shinyjs::hidden(
+        div(
+          id = ns("calibration_status_box"),
+          fluidRow(
+            column(
+              width = 12,
+              shinydashboard::box(
+                title = "Calibration status per sample type",
+                width = NULL,
+                solidHeader = TRUE,
+                status = "primary",
+                tabsetPanel(id = ns("plots_calibration_status"))
+              )
+            )
+          )
+        )
+      ),
       fluidRow(
         column(
           width = 6,
@@ -443,6 +460,10 @@ mod_spectra_curation_server <- function(
       shinyjs::toggle(
         "uncalibrated_as_na",
         condition = input$curation_method != "Skip spectra curation"
+      )
+      shinyjs::toggle(
+        "calibration_status_box",
+        condition = input$curation_method == "Skip spectra curation"
       )
     })
     
@@ -755,7 +776,7 @@ mod_spectra_curation_server <- function(
     
     # Create a counter to track how many times analyte curation is performed.
     # This is used to generate unique tab ids each curation round.
-    counter <- reactiveValues(count = 0)
+    counter <- reactiveValues(count = 0, skipped_count = 0)
     
     # Create curation results plots
     observeEvent(curated_data(), {
@@ -810,6 +831,49 @@ mod_spectra_curation_server <- function(
         purrr::map(function(cluster) {
           r$tab_contents[[cluster]]$plot()
         })
+    })
+    
+    
+    # Prepare data for calibration status bar charts when curation is skipped.
+    skipped_curation_data <- reactive({
+      req(input$curation_method == "Skip spectra curation", summarized_checks())
+      create_curation_data_when_skipped(summarized_checks())
+    })
+    
+    # Create calibration status bar charts when curation is skipped.
+    observeEvent(skipped_curation_data(), {
+      counter$skipped_count <- counter$skipped_count + 1
+      purrr::map(
+        names(r$skipped_curation_plots), function(current_cluster) {
+          removeTab("plots_calibration_status", target = current_cluster)
+        }
+      )
+      r$skipped_curation_plots <- NULL
+      purrr::map(
+        clusters(), function(current_cluster) {
+          appendTab(
+            "plots_calibration_status",
+            select = TRUE,
+            tabPanel(
+              title = current_cluster,
+              mod_tab_curated_spectra_plot_ui(
+                ns(paste0(current_cluster, "_skipped_", counter$skipped_count)))
+            )
+          )
+        })
+      r$skipped_curation_plots <- rlang::set_names(clusters()) %>%
+        purrr::map(
+          ., function(current_cluster) {
+            mod_tab_curated_spectra_plot_server(
+              id = paste0(current_cluster, "_skipped_", counter$skipped_count),
+              curated_data = reactive({
+                skipped_curation_data() %>%
+                  dplyr::filter(cluster == current_cluster)
+              }),
+              total_and_specific = total_and_specific()
+            )
+          }
+        )
     })
 
     # Remove the spinner that starts in the data import tab when the tabs are ready.
@@ -969,7 +1033,8 @@ mod_spectra_curation_server <- function(
       cut_off = reactive(input$cut_off_basis),
       tab_contents = reactive(r$tab_contents),
       curated_spectra_plots = reactive(r$curated_spectra_plots),
-      skipped_spectra_curation_plots = skipped_spectra_curation_plots
+      skipped_spectra_curation_plots = skipped_spectra_curation_plots,
+      skipped_curation_plots = reactive(r$skipped_curation_plots)
     ))
     
   })

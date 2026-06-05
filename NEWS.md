@@ -1,13 +1,12 @@
 # v1.11.4
 ## Added
-* Glycosylation traits: support automatically calculating sulfation of complex-type
-glycans for IgA N205 and IgA1/2 N340/N327.
+* Glycosylation traits: support automatically calculating sulfation of complex-type glycans for IgA N205 and IgA1/2 N340/N327.
 
 ## Changed
 * Updated the user guide.
 * Improved performance when importing large datasets.
-* O-glycan trait: `disialylated O-antigens` is now calculated as an average number
-per glycopeptide, instead of a percentage.
+* When skipping spectra curation, figures showing the percentage of uncalibrated spectra per sample type are now generated.
+* O-glycan trait: `disialylated O-antigens` is now calculated as an average number per glycopeptide, instead of a percentage.
 
 ## Fixed
 * Fix broken example sample list `xlsx` file.
