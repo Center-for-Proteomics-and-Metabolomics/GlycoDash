@@ -76,7 +76,8 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   # Divide by the sum of all complex-type glycans if necessary
   if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation",
                           "mono_antennary", "tri_antennary", "antennarity", 
-                          "antennary_fucosylation", "alpha_galactosylation")) {
+                          "antennary_fucosylation", "alpha_galactosylation",
+                          "sulfation")) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::filter(complex == 1)
     # Check if all passing glycans were already complex-type, if not adjust formula
@@ -166,7 +167,8 @@ match_traits <- function(traits_ui_input) {
     "Sialyl-T (sT) antigens" = "sT_antigens",
     "Disialylated O-antigens" = "disialylated_O_antigens",
     "\u03B1-1,3-galactosylation of complex-type glycans" = "alpha_galactosylation",
-    "Sialylation (N-glycolylneuraminic acid) per antenna of complex-type glycans" = "sialylation"
+    "Sialylation (N-glycolylneuraminic acid) per antenna of complex-type glycans" = "sialylation",
+    "Sulfation of complex-type glycans" = "sulfation"
   )
   matched_traits <- traits_ui_input
   for (description in names(traits)) {
