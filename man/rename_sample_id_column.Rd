@@ -13,7 +13,10 @@ rename_sample_id_column(metadata, sample_id_column)
 \code{metadata} that contains the sample IDs.}
 }
 \value{
-Fill this in...
+The input \code{metadata} dataframe with the column specified by
+  \code{sample_id_column} renamed to "sample_id". If a conflicting
+  "sample_id" column already existed, it is first renamed to
+  "sample_id_original" and a warning is issued.
 }
 \description{
 This function renames the column in the metadata file that contains sample

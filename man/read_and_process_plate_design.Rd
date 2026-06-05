@@ -12,10 +12,10 @@ should be in the format described below.}
 }
 \value{
 This function returns a dataframe with two columns:
- \describe{\item{sample_id}{The sample IDs as given in the plate design
- file.} \item{plate_well}{The plate and well that a sample was
- analyzed in. The format is as follows: the plate number followed by the well
- ID, separated by an underscore (e.g. plate 1 well A1 is 1_A01).}}
+  \describe{\item{sample_id}{The sample IDs as given in the plate design
+  file.} \item{plate_well}{The plate and well that a sample was analyzed in.
+  The format is as follows: the plate number followed by the well ID,
+  separated by an underscore (e.g. plate 1 well A1 is 1_A01).}}
 }
 \description{
 The function \code{read_and_process_plate_design} reads in a plate design
@@ -23,20 +23,20 @@ Excel file for a 96-wells plate and processes it.
 }
 \section{Plate design format}{
  The top-left cell of the Excel sheet should
- contain the plate number (e.g. "Plate 1"). The cells to the right of the
- top-left cell need to be labelled 1-12 (for a 96-well plate), while the
- cells below the top-left cell need to be labelled A-H. The cells within the
- plate should contain the sample IDs.
+  contain the plate number (e.g. "Plate 1"). The cells to the right of the
+  top-left cell need to be labelled 1-12 (for a 96-well plate), while the
+  cells below the top-left cell need to be labelled A-H. The cells within the
+  plate should contain the sample IDs.
 
- \preformatted{ 
- Plate number  1             2            3             ... 
- A            sample_ID_A1  sample_ID_A2  sample_ID_A3 
- B            sample_ID_B1  sample_ID_B2  sample_ID_B3 
- C            sample_ID_C1  sample_ID_C2  sample_ID_C3  
- ...          ...           ...           ...           ...}
+  \preformatted{
+  Plate number  1             2            3             ...
+  A            sample_ID_A1  sample_ID_A2  sample_ID_A3
+  B            sample_ID_B1  sample_ID_B2  sample_ID_B3
+  C            sample_ID_C1  sample_ID_C2  sample_ID_C3
+  ...          ...           ...           ...           ...}
 
- At the bottom of the plate, leave one row blank and then add the next plate
- in the same format.
+  At the bottom of the plate, leave one row blank and then add the next plate
+  in the same format.
 }
 
 \examples{
