@@ -108,7 +108,8 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   }
   # Divide some O-glycan traits by 100
   else if (target_trait %in% c("sialic_acids", "galactoses", "galnacs",
-                               "Tn_antigens", "T_antigens", "sT_antigens")) {
+                               "Tn_antigens", "T_antigens", "sT_antigens",
+                               "disialylated_O_antigens")) {
     clean_formula_string <- paste0("(", clean_formula_string, ") / 100")
   }
   
