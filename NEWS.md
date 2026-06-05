@@ -1,6 +1,6 @@
 # v1.11.4
 ## Added
-* Glycosylation trait: support automatically calculating sulfation of complex-type
+* Glycosylation traits: support automatically calculating sulfation of complex-type
 glycans for IgA N205 and IgA1/2 N340/N327.
 
 ## Changed
@@ -94,7 +94,7 @@ and in the output data.
 and percentage of passing analytes will be shown in the HTML report.
 
 ## Fixed
-* Minor Fixed.
+* Minor bug fixes.
 
 
 # v1.8.2
@@ -132,17 +132,17 @@ and percentage of passing analytes will be shown in the HTML report.
 * Option to calculate glycosylation site occupancies.
 
 ## Fixed
-* Various minor Fixed.
+* Various minor bug fixes.
 
 
 # v1.6.6
 ## Changed
 * Data import: remove leading or trailing spaces from entries in character columns.
 
-# Fixed
+## Fixed
 * List excluded sample types in the HTML report when curating analytes per 
 biological group.
-* Minor Fixed in UI.
+* Minor bug fixes in UI.
 
 
 # v1.6.5
@@ -193,7 +193,7 @@ quantitation only for the specific samples.
 ## Fixed
 * Prevent GlycoDash from crashing when Total and Specific samples are specified
 after adding the sample types.
-* Minor Fixed in automatic traits calculations.
+* Minor bug fixes in automatic traits calculations.
 
 
 # v1.6.0
@@ -265,7 +265,7 @@ multiplied by 100%.
 * Show chosen percentiles from spectra curation in the report.
 
 ## Fixed
-* Minor Fixed.
+* Minor bug fixes.
 
 
 # v1.4.3
@@ -303,7 +303,7 @@ multiplied by 100%.
 
 # v1.3.6
 ## Fixed
-* Minor Fixed in analyte curation and quantitation.
+* Minor bug fixes in analyte curation and quantitation.
 
 
 # v1.3.6
@@ -341,7 +341,7 @@ multiplied by 100%.
 * Exclude TTP peptide from the IgG1 quantitation.
 
 ## Fixed
-* Minor Fixed in spectra curation UI
+* Minor bug fixes in spectra curation UI
 
 
 # v1.3.1
