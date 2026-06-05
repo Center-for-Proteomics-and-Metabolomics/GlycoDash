@@ -175,7 +175,7 @@ with the glycan added at the end of the trait name.
 * Sort analytes by glycan composition in the analyte curation plots and tables.
 
 ## Fixed
-* Various Fixed.
+* Various bug fixes.
 
 
 # v1.6.1
