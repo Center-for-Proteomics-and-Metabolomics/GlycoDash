@@ -1,0 +1,71 @@
+\input{settings.tex}
+\usepackage{xstring}
+\graphicspath{ {./images/} }
+
+\newread\GlycoDashDescriptionFile
+\newcommand{\GlycoDashVersion}{unknown}
+\newcommand{\ReadGlycoDashVersion}[1]{%
+	\openin\GlycoDashDescriptionFile=#1\relax
+	\ifeof\GlycoDashDescriptionFile
+	\else
+		\loop\unless\ifeof\GlycoDashDescriptionFile
+			\read\GlycoDashDescriptionFile to \GlycoDashDescriptionLine
+			\IfBeginWith{\GlycoDashDescriptionLine}{Version: }{%
+				\StrBehind{\GlycoDashDescriptionLine}{Version: }[\GlycoDashVersion]%
+			}{}%
+		\repeat
+	\fi
+	\closein\GlycoDashDescriptionFile
+}
+\ReadGlycoDashVersion{../../DESCRIPTION}
+\IfStrEq{\GlycoDashVersion}{unknown}{\ReadGlycoDashVersion{DESCRIPTION}}{}
+
+\begin{document}
+	% Title page
+	\begin{titlepage}
+		\centering
+		\vspace*{1cm}
+		
+		% Title
+		\scalebox{2.5}{\Huge\textbf{GlycoDash}}
+		\vspace{0.5cm}
+		
+		% Subtitle
+		{\Huge \textbf{User Guide}}
+		
+		% Logo
+		\vspace{2.5cm}
+		\includegraphics[scale = 0.45]{logo.png}
+		
+		
+		\vfill
+		% Version text
+		{\Huge \textit{Version \GlycoDashVersion}}
+		
+	\end{titlepage}
+	
+	% Table of contents
+	\newpage
+	\tableofcontents
+	
+	% Sections
+	\input{1_Overview.tex}
+	\input{2_Data_import.tex}
+	\input{3_Spectra_curation.tex}
+	\input{4_Analyte_curation.tex}
+	\input{5_Normalized_data.tex}
+	\input{6_Protein_quantitation.tex}
+	\input{7_Glycosylation_traits.tex}
+	\input{8_Site_occupancy.tex}
+	\input{9_Repeatability.tex}
+	\input{10_Data_exploration.tex}
+	\input{11_Data_export.tex}
+	
+	% Appendices
+	\newpage
+	\begin{appendices}
+	\input{A1_Glycan_compositions.tex}
+	\end{appendices}
+	
+	
+\end{document}

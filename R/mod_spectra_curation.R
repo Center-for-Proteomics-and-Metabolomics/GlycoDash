@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_spectra_curation_ui <- function(id){
+mod_spectra_curation_ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidPage(
@@ -65,43 +65,49 @@ mod_spectra_curation_ui <- function(id){
                     ns("qc_to_include"),
                     "Which analyte quality criteria should be taken into account during spectra curation?",
                     # Choices determined in server based on data type
-                    choices = c(""), selected = c(""), status = "primary"),
-                  icon = icon("gears",
-                              class = "ml"),
-                  tooltip = shinyWidgets::tooltipOptions(placement = "top",
-                                                         title = "Advanced settings"),
+                    choices = c(""), selected = c(""), status = "primary"
+                  ),
+                  icon = icon("gears", class = "ml"),
+                  tooltip = shinyWidgets::tooltipOptions(
+                    placement = "top", title = "Advanced settings"
+                  ),
                   width = "250px",
                   size = "xs"
                 )),
               status = "primary",
               solidHeader = TRUE,
               width = NULL,
-              sliderInput(ns("mass_accuracy"), 
-                          "Acceptable mass accuracy range (ppm):",
-                          min = -50,
-                          max = 50,
-                          value = c(-20, 20)
+              sliderInput(
+                ns("mass_accuracy"), 
+                "Acceptable mass accuracy range (ppm):",
+                min = -50, max = 50, value = c(-20, 20)
               ),
               # IPQ and S/N in case of LaCyTools
-              numericInput(ns("ipq"),
-                           "Max. isotopic pattern quality (IPQ) value:",
-                           value = 0.2, step = 0.1, min = 0.0),
-              numericInput(ns("sn"),
-                           "Min. signal-to-noise (S/N) ratio:",
-                           value = 9, min = 0.0),
+              numericInput(
+                ns("ipq"),
+                "Max. isotopic pattern quality (IPQ) value:",
+                value = 0.2, step = 0.1, min = 0.0
+              ),
+              numericInput(
+                ns("sn"),
+                "Min. signal-to-noise (S/N) ratio:",
+                value = 9, min = 0.0
+              ),
               # IDP and Total area in case of Skyline
-              numericInput(ns("idp"),
-                           "Min. isotope dot product (IDP) value:",
-                           val = 0.9, max = 1.0, step = 0.1),
+              numericInput(
+                ns("idp"),
+                "Min. isotope dot product (IDP) value:",
+                val = 0.9, max = 1.0, step = 0.1
+              ),
               numericInput(ns("total_area"), "Min. total area", val = 0)
             )
           )
         ),
         column(
           width = 8,
-          tags$style(HTML(paste0("#",
-                                 ns("popover_cut_off"),
-                                 " .popover{width: 400px !important;}"))),
+          tags$style(HTML(paste0(
+            "#", ns("popover_cut_off"), " .popover{width: 400px !important;}"
+          ))),
           div(
             id = ns("popover_cut_off"),
             tags$style(HTML(paste0(
@@ -115,37 +121,39 @@ mod_spectra_curation_ui <- function(id){
               "#", ns("box_header"), " .dropdown-menu {background: #333; right: -10px; left: auto; top: 28px;}"
             ))),
             shinydashboard::box(
-              title = div("Calculate spectra curation cut-offs",
-                          id = ns("box_header"),
-                          icon("info-circle",
-                               class = "ml",
-                               #tabindex = "0" #only needed for trigger = "focus"
-                          ) %>% 
-                            bsplus::bs_embed_popover(
-                              title = "Spectra curation methods",
-                              content = HTML(
-                                "
-                                <b> Negative control spectra </b>
-                                <br>
-                                Choose a group of negative controls that should not pass
-                                spectra curation. The curation cut-offs will be set at a chosen
-                                percentile of the sum intensities and passing analyte percentages
-                                in the negative control spectra.
-                                <br> <br> 
-                                <b> Percentiles </b>
-                                <br>
-                                The cut-offs will be set at a chosen percentile of the sum intensities
-                                and passing analyte percentages in all spectra, except for those belonging
-                                to sample types that you choose to exclude from the assessment. For example,
-                                when the chosen percentile is 5, then the lowest 5% of all spectra will fail
-                                curation.
-                                "
-                              ),
-                              trigger = "hover",
-                              placement = "left",
-                              html = "true",
-                              container = "body")
-                          ),
+              title = div(
+                "Calculate spectra curation cut-offs",
+                id = ns("box_header"),
+                icon("info-circle",
+                     class = "ml",
+                     #tabindex = "0" #only needed for trigger = "focus"
+                ) %>% 
+                  bsplus::bs_embed_popover(
+                    title = "Spectra curation methods",
+                    content = HTML(
+                      "
+                      <b> Negative control spectra </b>
+                      <br>
+                      Choose a group of negative controls that should not pass
+                      spectra curation. The curation cut-offs will be set at a chosen
+                      percentile of the sum intensities and passing analyte percentages
+                      in the negative control spectra.
+                      <br> <br> 
+                      <b> Percentiles </b>
+                      <br>
+                      The cut-offs will be set at a chosen percentile of the sum intensities
+                      and passing analyte percentages in all spectra, except for those belonging
+                      to sample types that you choose to exclude from the assessment. For example,
+                      when the chosen percentile is 5, then the lowest 5% of all spectra will fail
+                      curation.
+                      "
+                    ),
+                    trigger = "hover",
+                    placement = "left",
+                    html = "true",
+                    container = "body"
+                  )
+              ),
               width = NULL,
               status = "primary",
               solidHeader = TRUE,
@@ -159,12 +167,16 @@ mod_spectra_curation_ui <- function(id){
                     "The way this calculation is performed depends on the chosen",
                     "spectra curation method:"
                   )),
-                  shinyWidgets::awesomeRadio(ns("curation_method"),
-                                             "Curate spectra based on:",
-                                             choices = c("Negative control spectra",
-                                                         "Percentiles",
-                                                         "Skip spectra curation"),
-                                             selected = "Negative control spectra"),
+                  shinyWidgets::awesomeRadio(
+                    ns("curation_method"),
+                    "Curate spectra based on:",
+                    choices = c(
+                      "Negative control spectra",
+                      "Percentiles",
+                      "Skip spectra curation"
+                    ),
+                    selected = "Negative control spectra"
+                  ),
                   # shinyjs::toggle can't be used to directly show/hide a module, 
                   # so I put the modules inside divs:
                   div(
@@ -183,9 +195,9 @@ mod_spectra_curation_ui <- function(id){
                 )
               )
             )
-            )
           )
-        ),
+        )
+      ),
       fluidRow(
         column(
           width = 12,
@@ -196,10 +208,11 @@ mod_spectra_curation_ui <- function(id){
             status = "primary",
             tabsetPanel(id = ns("tabs")),
             br(),
-            actionButton(ns("button"),
-                         "Perform spectra curation",
-                         style = "font-size: 16px; padding: 10px 20px; font-weight: bold; 
-                                 border: 1px solid black;")
+            actionButton(
+              ns("button"),
+              "Perform spectra curation",
+              style = "font-size: 16px; padding: 10px 20px; font-weight: bold; border: 1px solid black;"
+            )
           )
         ) 
       ),
@@ -216,18 +229,47 @@ mod_spectra_curation_ui <- function(id){
             br(),
             tabsetPanel(
               id = ns("result_tables"),
-              tabPanel(title = "Details of passing spectra per analyte",
-                       column(width = 12,
-                              br(),
-                              DT::dataTableOutput(ns("passing_spectra_details")))),
-              tabPanel(title = "Overview of failed spectra",
-                       column(width = 12,
-                              br(),
-                              DT::dataTableOutput(ns("failed_spectra_table")))),
-              tabPanel(title = "Details of failed spectra per analyte",
-                       column(width = 12,
-                              br(),
-                              DT::dataTableOutput(ns("failed_spectra_details"))))
+              tabPanel(
+                title = "Details of passing spectra per analyte",
+                column(
+                  width = 12,
+                  br(),
+                  DT::dataTableOutput(ns("passing_spectra_details"))
+                )
+              ),
+              tabPanel(
+                title = "Overview of failed spectra",
+                column(
+                  width = 12,
+                  br(),
+                  DT::dataTableOutput(ns("failed_spectra_table"))
+                )
+              ),
+              tabPanel(
+                title = "Details of failed spectra per analyte",
+                column(
+                  width = 12,
+                  br(),
+                  DT::dataTableOutput(ns("failed_spectra_details"))
+                )
+              )
+            )
+          )
+        )
+      ),
+      shinyjs::hidden(
+        div(
+          id = ns("calibration_status_box"),
+          fluidRow(
+            column(
+              width = 12,
+              shinydashboard::box(
+                title = "Calibration status per sample type",
+                width = NULL,
+                solidHeader = TRUE,
+                status = "primary",
+                tabsetPanel(id = ns("plots_calibration_status"))
+              )
             )
           )
         )
@@ -240,22 +282,30 @@ mod_spectra_curation_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            radioButtons(ns("download_format"),
-                         "Choose a file format:",
-                         choices = c("Excel file", "R object")),
-            downloadButton(ns("download1"), 
-                           "Details of passing spectra per analyte",
-                           style = "width: 330px;"),
+            radioButtons(
+              ns("download_format"),
+              "Choose a file format:",
+              choices = c("Excel file", "R object")
+            ),
+            downloadButton(
+              ns("download1"), 
+              "Details of passing spectra per analyte",
+              style = "width: 330px;"
+            ),
             br(),
             br(),
-            downloadButton(ns("download2"),
-                           "Overview of failed spectra",
-                           style = "Width: 330px;"),
+            downloadButton(
+              ns("download2"),
+              "Overview of failed spectra",
+              style = "Width: 330px;"
+            ),
             br(),
             br(),
-            downloadButton(ns("download3"),
-                           "Details of failed spectra per analyte",
-                           style = "Width: 330px;")
+            downloadButton(
+              ns("download3"),
+              "Details of failed spectra per analyte",
+              style = "Width: 330px;"
+            )
           )
         )
       )
@@ -268,7 +318,9 @@ mod_spectra_curation_ui <- function(id){
 #' spectra_curation Server Functions
 #'
 #' @noRd 
-mod_spectra_curation_server <- function(id, results_data_import) {
+mod_spectra_curation_server <- function(
+    id, results_data_import  
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -286,7 +338,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         shinyjs::hide("sn")
         shinyjs::show("idp")
         shinyjs::show("total_area")
-      } else if (results_data_import$data_type() %in% c("LaCyTools data", "SweetSuite data")) {
+      } 
+      else if (results_data_import$data_type() %in% c("LaCyTools data", "SweetSuite data")) {
         # Checkboxes to include QC
         shinyWidgets::updateAwesomeCheckboxGroup(
           inputId = "qc_to_include",
@@ -306,18 +359,23 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     # Also exclude non-glycosylated peptides;
     data_to_check <- reactive({
       req(results_data_import$data())
-      if (is_truthy(results_data_import$quantitation_clusters())) {
+      if (
+        !is.null(results_data_import$quantitation_clusters) &&
+        is_truthy(results_data_import$quantitation_clusters())
+      ) {
         clusters <- results_data_import$quantitation_clusters()
         exclude <- clusters[setdiff(names(clusters), "IgG1_cluster_glyco")]
         to_return <- results_data_import$data() %>% 
           dplyr::filter(!cluster %in% exclude) %>% 
           dplyr::filter(analyte != paste0(cluster, "1"))
         if (nrow(to_return) > 0) {
-          return(to_return)
-        } else {
-          return(NULL)
+          to_return
+        } 
+        else {
+          NULL
         }
-      } else {
+      } 
+      else {
         results_data_import$data() %>% 
           dplyr::filter(analyte != paste0(cluster, "1"))
       }
@@ -326,10 +384,13 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     # Check if the data contains total and specific samples
     total_and_specific <- reactive({
       req(data_to_check())
-      if (results_data_import$contains_total_and_specific_samples() & 
-          "group" %in% colnames(data_to_check())) {
+      if (
+        results_data_import$contains_total_and_specific_samples() & 
+        "group" %in% colnames(data_to_check())
+      ) {
         TRUE
-      } else {
+      } 
+      else {
         FALSE
       }
     })
@@ -353,7 +414,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
           min_sn = input$sn,
           criteria_to_consider = input$qc_to_include
         )
-      } else if (results_data_import$data_type() == "Skyline data") {
+      } 
+      else if (results_data_import$data_type() == "Skyline data") {
         req(input$total_area, input$idp)
         # Check analyte quality criteria for Skyline data
         check_analyte_quality_criteria_skyline(
@@ -379,20 +441,30 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     
     observe({
-      shinyjs::toggle("controls_module",
-                      condition = input$curation_method == "Negative control spectra")
-      
-      shinyjs::toggle("percentiles_module",
-                      condition = input$curation_method == "Percentiles")
-      
-      shinyjs::toggle("button",
-                      condition = input$curation_method != "Skip spectra curation")
-      
-      shinyjs::toggle("results_box",
-                      condition = input$curation_method != "Skip spectra curation")
-      
-      shinyjs::toggle("uncalibrated_as_na",
-                      condition = input$curation_method != "Skip spectra curation")
+      shinyjs::toggle(
+        "controls_module",
+        condition = input$curation_method == "Negative control spectra"
+      )
+      shinyjs::toggle(
+        "percentiles_module",
+        condition = input$curation_method == "Percentiles"
+      )
+      shinyjs::toggle(
+        "button",
+        condition = input$curation_method != "Skip spectra curation"
+      )
+      shinyjs::toggle(
+        "results_box",
+        condition = input$curation_method != "Skip spectra curation"
+      )
+      shinyjs::toggle(
+        "uncalibrated_as_na",
+        condition = input$curation_method != "Skip spectra curation"
+      )
+      shinyjs::toggle(
+        "calibration_status_box",
+        condition = input$curation_method == "Skip spectra curation"
+      )
     })
     
     cut_offs_based_on_controls <- mod_curate_based_on_controls_server(
@@ -412,45 +484,47 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     calculated_cut_offs <- reactive({
       if (input$curation_method == "Negative control spectra") {
         req(cut_offs_based_on_controls()) 
-      } else if (input$curation_method == "Percentiles") {
+      } 
+      else if (input$curation_method == "Percentiles") {
         req(cut_offs_based_on_percentiles()) 
-      } else if (input$curation_method == "Skip spectra curation") {
+      } 
+      else if (input$curation_method == "Skip spectra curation") {
         NULL
       }
     })
+    
     
     # Glycopeptide clusters
     clusters <- reactive({
       req(data_to_check())
       data <- data_to_check()
-      return(sort(unique(data$cluster)))
+      sort(unique(data$cluster))
     })
     
     created_tabs <- reactiveValues(clusters = c(""))
     
     observeEvent(clusters(), {
       # Remove tabs in case they have been created before. 
-      purrr::map(created_tabs$clusters,
-                 function(cluster) {
-                   removeTab("tabs",
-                             target = cluster)
-                 })
+      purrr::map(
+        created_tabs$clusters, function(cluster) {
+          removeTab("tabs", target = cluster)
+        }
+      )
       
       # Update created_cluster_tabs with new clusters
       created_tabs$clusters <- clusters()
       
       # Create one tab for each cluster.
-      purrr::map(clusters(),
-                 function(cluster) {
-                   appendTab("tabs",
-                             select = TRUE,
-                             tabPanel(
-                               title = cluster,
-                               mod_tab_cut_offs_ui(ns(cluster))
-                             ))
-                 })
+      purrr::map(
+        clusters(), function(cluster) {
+          appendTab(
+            "tabs",
+            select = TRUE,
+            tabPanel(title = cluster, mod_tab_cut_offs_ui(ns(cluster)))
+          )
+        }
+      )
     })
-    
     
     
     r <- reactiveValues()
@@ -458,7 +532,10 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     observe({
       req(clusters(), summarized_checks())
       # Generate color palette
-      sample_types <- unique(summarized_checks()$sample_type)
+      sample_types <- unique(stats::na.omit(as.character(summarized_checks()$sample_type)))
+      if (length(sample_types) == 0) {
+        sample_types <- "Unknown"
+      }
       colors <- color_palette(length(sample_types))
       color_palette <- setNames(colors, sample_types)
       # Generate tabs with plots
@@ -480,7 +557,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
               calculated_cut_offs = reactive({ 
                 if (is.null(calculated_cut_offs())) { # When spectra curation is skipped.
                   NULL
-                } else {
+                } 
+                else {
                   calculated_cut_offs() %>% 
                     dplyr::filter(cluster == current_cluster)
                 }       
@@ -492,13 +570,14 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     
     cut_offs_to_use_all_clusters <- reactive({
-      purrr::map_dfr(r$tab_contents,
-                     function(tab) {
-                       # Use try_call not do.call, because if
-                       # input$curation_method == "Skip spectra curation", then
-                       # tab_contents$cut_offs_to_use doesn't exist
-                        try_call(tab[["cut_offs_to_use"]])
-                     })
+      purrr::map_dfr(
+        r$tab_contents, function(tab) {
+          # Use try_call not do.call, because if
+          # input$curation_method == "Skip spectra curation", then
+          # tab_contents$cut_offs_to_use doesn't exist
+          try_call(tab[["cut_offs_to_use"]])
+        }
+      )
     })
   
     
@@ -512,9 +591,11 @@ mod_spectra_curation_server <- function(id, results_data_import) {
             dplyr::select(group, cluster) %>% 
             dplyr::distinct() %>% 
             dplyr::pull(cluster)
-        } else {
+        } 
+        else {
           to_compare <- clusters()
         }
+        
         # Check if there are cut-offs missing for clusters
         to_check <- cut_offs_to_use_all_clusters()$cluster
         # Create frequency tables for both vectors
@@ -524,18 +605,22 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         all_present <- all(
           freq_to_compare[names(freq_to_compare)] <= freq_to_check[names(freq_to_compare)]
         )
+        
         if (is.na(all_present)) {
           # NA for all_present occurs when a manual cut-off is set for a cluster
           # before a sample type was chosen to use as negative controls.
           # Then there is only a cut-off for that cluster and the comparison won't work.
-          return(TRUE)
-        } else if (all_present) {
-          return(FALSE)
-        } else {
-          return(TRUE)
+          TRUE
+        } 
+        else if (all_present) {
+          FALSE
+        } 
+        else {
+          TRUE
         }
-      } else {
-        return(FALSE)
+      } 
+      else {
+        FALSE
       }
     })
     
@@ -545,10 +630,12 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
         if (missing_cluster_cut_offs() == TRUE) {
           shinyjs::disable("button")
-        } else {
+        } 
+        else {
           shinyjs::enable("button")
         }
-      } else {
+      } 
+      else {
         shinyjs::disable("button")
       }
     })
@@ -589,9 +676,11 @@ mod_spectra_curation_server <- function(id, results_data_import) {
 
     # Perform spectra curation when button is clicked:
     curated_data <- reactive({
-      curate_spectra(checked_data = checked_data(),
-                     summarized_checks = summarized_checks(),
-                     cut_offs = cut_offs_to_use_all_clusters())
+      curate_spectra(
+        checked_data = checked_data(),
+        summarized_checks = summarized_checks(),
+        cut_offs = cut_offs_to_use_all_clusters()
+      )
     }) %>% bindEvent(input$button)
     
     # Tell users to re-perform spectra curation when data is updated
@@ -622,13 +711,13 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     to_return <- reactive({
       if (input$curation_method == "Skip spectra curation") {
-        req(checked_data(),
-            summarized_checks())
+        req(checked_data(), summarized_checks())
         return_when_spectra_curation_is_skipped(
           checked_data = checked_data(),
           summarized_checks = summarized_checks()
         )
-      } else {
+      } 
+      else {
         req(passing_spectra())
         remove_unneeded_columns(passing_spectra = passing_spectra())
       }
@@ -636,12 +725,14 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     output$passing_spectra_details <- DT::renderDataTable({
       req(to_return())
-      DT::datatable(to_return() %>% dplyr::mutate_if(is.numeric, ~ round(., 2)),
-                    options = list(
-                      scrollX = TRUE,
-                      pageLength = 5,
-                      columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ), filter = "top")
+      DT::datatable(
+        to_return() %>% dplyr::mutate_if(is.numeric, ~ round(., 2)),
+        options = list(
+          scrollX = TRUE,
+          pageLength = 5,
+          columnDefs = list(list(className = "dt-center", targets = "_all"))
+        ), filter = "top"
+      )
     })
     
     
@@ -653,90 +744,141 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         dplyr::distinct() %>% 
         dplyr::filter(!has_passed_spectra_curation)
       
-      DT::datatable(for_table %>% 
-                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
-                    options = list(
-                      scrollX = TRUE,
-                      pageLength = 5,
-                      columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ), filter = "top")
+      DT::datatable(
+        for_table %>% 
+          dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+        options = list(
+          scrollX = TRUE,
+          pageLength = 5,
+          columnDefs = list(list(className = "dt-center", targets = "_all"))
+        ), filter = "top"
+      )
     })
     
     
     output$failed_spectra_details <- DT::renderDataTable({
       req(curated_data())
       
-      DT::datatable(curated_data() %>% 
-                      dplyr::select(-(passing_analyte_percentage:replicates)) %>% 
-                      dplyr::distinct() %>% 
-                      dplyr::filter(has_passed_spectra_curation == FALSE) %>% 
-                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
-                    options = list(
-                      scrollX = TRUE,
-                      pageLength = 5,
-                      columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ), filter = "top")
+      DT::datatable(
+        curated_data() %>% 
+          dplyr::select(-(passing_analyte_percentage:replicates)) %>% 
+          dplyr::distinct() %>% 
+          dplyr::filter(has_passed_spectra_curation == FALSE) %>% 
+          dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+        options = list(
+          scrollX = TRUE,
+          pageLength = 5,
+          columnDefs = list(list(className = "dt-center", targets = "_all"))
+        ), filter = "top"
+      )
     })
 
     
     # Create a counter to track how many times analyte curation is performed.
     # This is used to generate unique tab ids each curation round.
-    counter <- reactiveValues(count = 0)
+    counter <- reactiveValues(count = 0, skipped_count = 0)
     
     # Create curation results plots
     observeEvent(curated_data(), {
       # Up the counter by one
       counter$count <- counter$count + 1
       # Remove tabs in case they have been created before. 
-      purrr::map(names(r$curated_spectra_plots),
-                 function(current_cluster) {
-                   removeTab("plots_curation_results",
-                             target = current_cluster)
-                 })
+      purrr::map(
+        names(r$curated_spectra_plots), function(current_cluster) {
+          removeTab("plots_curation_results", target = current_cluster)
+        }
+      )
       # Reset
       r$curated_spectra_plots <- NULL
       # Create new tabs with clusters as titles
-      purrr::map(clusters(),
-                 function(current_cluster) {
-                   appendTab("plots_curation_results",
-                             select = TRUE,
-                             tabPanel(
-                               title = current_cluster,
-                               mod_tab_curated_spectra_plot_ui(
-                                 # Already using ns(cluster) somewhere else in
-                                 # mod_spectra_curation, so need to use a
-                                 # different namespace here:
-                                 ns(paste0(current_cluster, "_", counter$count)))
-                             )
-                   )
-                 })
+      purrr::map(
+        clusters(), function(current_cluster) {
+          appendTab(
+            "plots_curation_results",
+            select = TRUE,
+            tabPanel(
+              title = current_cluster,
+              mod_tab_curated_spectra_plot_ui(
+                # Already using ns(cluster) somewhere else in
+                # mod_spectra_curation, so need to use a
+                # different namespace here:
+                ns(paste0(current_cluster, "_", counter$count)))
+            )
+          )
+        })
       # Generate the plots for the tabs
       r$curated_spectra_plots <- rlang::set_names(clusters()) %>% 
         purrr::map(
-          .,
-          function(current_cluster) {
+          ., function(current_cluster) {
             mod_tab_curated_spectra_plot_server(
               id = paste0(current_cluster, "_", counter$count), 
               curated_data = reactive({ 
                 curated_data() %>% 
                   dplyr::filter(cluster == current_cluster) 
               }),
-              total_and_specific = total_and_specific())
-          })
-
+              total_and_specific = total_and_specific()
+            )
+          }
+        )
     })
     
     
-    # Create a list with scatter plots for when spectra curation is skipped.
-    # Then remove the spinner that starts in the data import tab
-    observe({
+    # Create scatter plots lazily when spectra curation is skipped. These plots
+    # are only needed for the report, so upload should not precompute them.
+    skipped_spectra_curation_plots <- reactive({
       req(clusters(), !is.null(r$tab_contents))
-      # List with plots
-      r$skipped_spectra_curation_plots <- rlang::set_names(clusters()) %>% 
-        purrr::map(., function(cluster) {
+      rlang::set_names(clusters()) %>%
+        purrr::map(function(cluster) {
           r$tab_contents[[cluster]]$plot()
         })
-      # Remove spinner
+    })
+    
+    
+    # Prepare data for calibration status bar charts when curation is skipped.
+    skipped_curation_data <- reactive({
+      req(input$curation_method == "Skip spectra curation", summarized_checks())
+      create_curation_data_when_skipped(summarized_checks())
+    })
+    
+    # Create calibration status bar charts when curation is skipped.
+    observeEvent(skipped_curation_data(), {
+      counter$skipped_count <- counter$skipped_count + 1
+      purrr::map(
+        names(r$skipped_curation_plots), function(current_cluster) {
+          removeTab("plots_calibration_status", target = current_cluster)
+        }
+      )
+      r$skipped_curation_plots <- NULL
+      purrr::map(
+        clusters(), function(current_cluster) {
+          appendTab(
+            "plots_calibration_status",
+            select = TRUE,
+            tabPanel(
+              title = current_cluster,
+              mod_tab_curated_spectra_plot_ui(
+                ns(paste0(current_cluster, "_skipped_", counter$skipped_count)))
+            )
+          )
+        })
+      r$skipped_curation_plots <- rlang::set_names(clusters()) %>%
+        purrr::map(
+          ., function(current_cluster) {
+            mod_tab_curated_spectra_plot_server(
+              id = paste0(current_cluster, "_skipped_", counter$skipped_count),
+              curated_data = reactive({
+                skipped_curation_data() %>%
+                  dplyr::filter(cluster == current_cluster)
+              }),
+              total_and_specific = total_and_specific()
+            )
+          }
+        )
+    })
+
+    # Remove the spinner that starts in the data import tab when the tabs are ready.
+    observe({
+      req(clusters(), !is.null(r$tab_contents))
       shinybusy::remove_modal_spinner()
     })
     
@@ -753,7 +895,8 @@ mod_spectra_curation_server <- function(id, results_data_import) {
         purrr::map(tab_names, function(tab_name) {
           showTab(inputId = "result_tables", target = tab_name, select = TRUE)
         })
-      } else {
+      } 
+      else {
         purrr::map(tab_names, function(tab_name) {
           hideTab(inputId = "result_tables", target = tab_name)
         })
@@ -766,60 +909,72 @@ mod_spectra_curation_server <- function(id, results_data_import) {
     
     output$download1 <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
-        switch(input$download_format,
-               "R object" = paste0(current_datetime, "_passing_spectra_details.rds"),
-               "Excel file" = paste0(current_datetime, "_passing_spectra_details.xlsx"))
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
+        switch(
+          input$download_format,
+          "R object" = paste0(current_datetime, "_passing_spectra_details.rds"),
+          "Excel file" = paste0(current_datetime, "_passing_spectra_details.xlsx")
+        )
       },
       content = function(file) {
         data_to_download <- to_return()
-        switch(input$download_format,
-               "R object" = saveRDS(data_to_download, 
-                                 file = file),
-               "Excel file" = writexl::write_xlsx(data_to_download, 
-                                                  path = file))
+        switch(
+          input$download_format,
+          "R object" = saveRDS(data_to_download, file = file),
+          "Excel file" = writexl::write_xlsx(data_to_download, path = file)
+        )
       }
     )
     
     
     output$download2 <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
-        switch(input$download_format,
-               "R object" = paste0(current_datetime, "_failed_spectra_overview.rds"),
-               "Excel file" = paste0(current_datetime, "_failed_spectra_overview.xlsx"))
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
+        switch(
+          input$download_format,
+          "R object" = paste0(current_datetime, "_failed_spectra_overview.rds"),
+          "Excel file" = paste0(current_datetime, "_failed_spectra_overview.xlsx")
+        )
       },
       content = function(file) {
         data_to_download <- curated_data() %>%
           dplyr::select(1:cut_off_passing_analyte_percentage) %>%
           dplyr::distinct() %>%
           dplyr::filter(!has_passed_spectra_curation)
-        switch(input$download_format,
-               "R object" = saveRDS(data_to_download, 
-                                 file = file),
-               "Excel file" = writexl::write_xlsx(data_to_download, 
-                                                  path = file))
+        switch(
+          input$download_format,
+          "R object" = saveRDS(data_to_download, file = file),
+          "Excel file" = writexl::write_xlsx(data_to_download, path = file)
+        )
       }
     )
     
     
     output$download3 <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
-        switch(input$download_format,
-               "R object" = paste0(current_datetime, "_failed_spectra_details.rds"),
-               "Excel file" = paste0(current_datetime, "_failed_spectra_details.xlsx"))
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
+        switch(
+          input$download_format,
+          "R object" = paste0(current_datetime, "_failed_spectra_details.rds"),
+          "Excel file" = paste0(current_datetime, "_failed_spectra_details.xlsx")
+        )
       },
       content = function(file) {
         data_to_download <- curated_data() %>%
           dplyr::select(-(passing_analyte_percentage:replicates)) %>%
           dplyr::distinct() %>%
           dplyr::filter(has_passed_spectra_curation == FALSE)
-        switch(input$download_format,
-               "R object" = saveRDS(data_to_download, 
-                                 file = file),
-               "Excel file" = writexl::write_xlsx(data_to_download, 
-                                                  path = file))
+        switch(
+          input$download_format,
+          "R object" = saveRDS(data_to_download, file = file),
+          "Excel file" = writexl::write_xlsx(data_to_download, path = file)
+        )
       }
     )
     
@@ -828,18 +983,24 @@ mod_spectra_curation_server <- function(id, results_data_import) {
       req(checked_data())
       
       peptides <- results_data_import$data() %>% 
-        dplyr::select(sample_name, sample_id, sample_type,
-                      cluster, analyte, charge, 
-                      tidyselect::any_of(c(
-                        "group",
-                        "absolute_intensity_background_subtracted",
-                        "mass_accuracy_ppm",
-                        "isotopic_pattern_quality",
-                        "sn",
-                        "fraction",
-                        "total_area",
-                        "isotope_dot_product"                   
-                      ))) %>% 
+        dplyr::select(
+          sample_name, 
+          sample_id, 
+          sample_type,
+          cluster, 
+          analyte, 
+          charge, 
+          tidyselect::any_of(c(
+            "group",
+            "absolute_intensity_background_subtracted",
+            "mass_accuracy_ppm",
+            "isotopic_pattern_quality",
+            "sn",
+            "fraction",
+            "total_area",
+            "isotope_dot_product"                   
+          ))
+        ) %>% 
         dplyr::filter(analyte == paste0(cluster, "1"))
       
       # Get passing spectra if applicable
@@ -850,31 +1011,32 @@ mod_spectra_curation_server <- function(id, results_data_import) {
           dplyr::mutate(filter = paste0(cluster, "_", sample_name)) %>% 
           dplyr::pull(filter)
         
-        peptides <- peptides %>% 
+        peptides %>% 
           dplyr::mutate(filter = paste0(cluster, "_", sample_name)) %>% 
           dplyr::filter(filter %in% passing) %>% 
           dplyr::select(-filter)
       }
-      
-      return(peptides)
     })
+    
     
     
     return(list(
       passing_spectra = to_return,
       non_glycosylated_data = non_glycosylated_data,
-      mass_acc = reactive({ input$mass_accuracy }),
-      ipq = reactive({ input$ipq }),
-      sn = reactive({ input$sn }),
+      mass_acc = reactive(input$mass_accuracy),
+      ipq = reactive(input$ipq),
+      sn = reactive(input$sn),
       idp = reactive(input$idp),
       total_area = reactive(input$total_area),
-      included_qc = reactive({ input$qc_to_include }),
-      uncalibrated_as_NA = reactive({ input$uncalibrated_as_na }),
-      cut_off = reactive({input$cut_off_basis}),
-      tab_contents = reactive({ r$tab_contents }),
-      curated_spectra_plots = reactive({ r$curated_spectra_plots }),
-      skipped_spectra_curation_plots = reactive(r$skipped_spectra_curation_plots)
+      included_qc = reactive(input$qc_to_include),
+      uncalibrated_as_NA = reactive(input$uncalibrated_as_na),
+      cut_off = reactive(input$cut_off_basis),
+      tab_contents = reactive(r$tab_contents),
+      curated_spectra_plots = reactive(r$curated_spectra_plots),
+      skipped_spectra_curation_plots = skipped_spectra_curation_plots,
+      skipped_curation_plots = reactive(r$skipped_curation_plots)
     ))
     
   })
 }
+

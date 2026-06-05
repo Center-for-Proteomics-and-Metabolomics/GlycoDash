@@ -12,9 +12,9 @@ should be in the format described below.}
 }
 \value{
 This function returns a dataframe with a column named "well" that
- indicates in which well a sample was analyzed. In addition, there is one
- column for each plate in the plate design file. Each plate column contains
- the sample ID's of the samples on that plate.
+  indicates in which well a sample was analyzed. In addition, there is one
+  column for each plate in the plate design file. Each plate column contains
+  the sample IDs of the samples on that plate.
 }
 \description{
 The function \code{read_plate_design} reads in a plate design Excel file of a
@@ -24,18 +24,18 @@ The function \code{read_plate_design} reads in a plate design Excel file of a
 \code{\link{read_and_process_plate_design}} function.
 }
 \section{Plate design format}{
- 
+
 The file should contain only one sheet. The top-left cell of the Excel sheet
 should contain the plate number (e.g. "Plate 1"). The cells to the right of
 the top-left cell need to be labelled 1-12, while the cells below the top-left
 cell need to be labelled A-H. The cells within the plate should contain the
-sample ID's. Exception: If there is only one plate in the plate design, the
+sample IDs. Exception: If there is only one plate in the plate design, the
 plate number does not have to be indicated in the top left cell of the Excel
 file.
 
 \preformatted{
 Plate number  1             2            3             ...
-A            sample_ID_A1  sample_ID_A2  sample_ID_A3  
+A            sample_ID_A1  sample_ID_A2  sample_ID_A3
 B            sample_ID_B1  sample_ID_B2  sample_ID_B3
 C            sample_ID_C1  sample_ID_C2  sample_ID_C3
 ...          ...           ...           ...           ...}

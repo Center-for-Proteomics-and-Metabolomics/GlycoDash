@@ -1,4 +1,4 @@
-FROM rocker/verse:4.5.0
+FROM rocker/verse:4.5.3
 
 # Install any additional system dependencies and clean up
 RUN apt-get update && apt-get install -y \
@@ -27,6 +27,23 @@ RUN R -e 'install.packages("renv")' \
 
 # Copy the rest of the application
 COPY . .
+COPY NEWS.md inst/app/www/NEWS.md
+
+# Install LaTeX packages and compile the user guide in a single layer to avoid
+# cross-layer TeX file database visibility issues with pdflatex.
+# Run pdflatex twice so the table of contents and cross-references resolve correctly.
+RUN tlmgr update --self \
+    && tlmgr install \
+       pgf appendix babel-english caption amsfonts mathtools \
+       enumitem gensymb calligra fundus-calligra hyperref wrapfig booktabs \
+       multirow ctable systeme lipsum titlesec tocloft secdot dirtytalk \
+       esint listings footmisc tcolorbox menukeys graphics tools makecell \
+       xstring simplekv l3packages pdfcol adjustbox relsize collectbox \
+       ifoddpage varwidth \
+    && cd docs/user_guide \
+    && pdflatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex \
+    && pdflatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex \
+    && cp main.pdf /build_zone/inst/app/www/GlycoDash_manual.pdf
 
 # Install the local package and clean up build artifacts
 RUN R -e 'renv::install(".", repos = getOption("repos"))' \

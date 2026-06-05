@@ -825,6 +825,31 @@ return_when_spectra_curation_is_skipped <- function(checked_data,
 
 
 
+#' Prepare curation data for bar charts when spectra curation is skipped
+#'
+#' When spectra curation is skipped, this function creates a dataframe
+#' compatible with \code{\link{plot_spectra_curation_results}}. Only
+#' calibration status determines whether a spectrum is considered passing or
+#' failing.
+#'
+#' @inheritParams curate_spectra
+#'
+#' @return \code{summarized_checks} with two additional columns:
+#'   \describe{\item{has_passed_spectra_curation}{\code{TRUE} for calibrated
+#'   spectra, \code{FALSE} for uncalibrated spectra.}
+#'   \item{reason_for_failure}{\code{NA} for calibrated spectra;
+#'   \code{"Calibration failed."} for uncalibrated spectra.}}
+#' @export
+create_curation_data_when_skipped <- function(summarized_checks) {
+  summarized_checks %>%
+    dplyr::mutate(
+      has_passed_spectra_curation = !uncalibrated,
+      reason_for_failure = ifelse(uncalibrated, "Calibration failed.", NA_character_)
+    )
+}
+
+
+
 #' Get the sample types to put in the menu for negative control samples
 #'
 #' Find out which sample types are present in the total or in the specific

@@ -2,23 +2,27 @@
 % Please edit documentation in R/fct_add_metadata.R
 \name{check_column_names}
 \alias{check_column_names}
-\title{This function checks whether there are forbidden column names in the 
-uploaded metadata. Some column names are not allowed because they are
-already created in the code, causing conflict.}
+\title{Check for forbidden column names in metadata}
 \usage{
 check_column_names(merged_metadata)
 }
 \arguments{
-\item{merged_metadata}{}
+\item{merged_metadata}{A dataframe or tibble containing the merged metadata
+to check.}
 }
 \value{
-A vector with forbidden column names. Can be length zero.
+A character vector of forbidden column names found in
+  \code{merged_metadata}. Returns a zero-length character vector if no
+  forbidden column names are present.
 }
 \description{
-This function checks whether there are forbidden column names in the 
-uploaded metadata. Some column names are not allowed because they are
-already created in the code, causing conflict.
+Checks whether the metadata contains column names that are reserved for
+internal use. Some column names are not allowed because they conflict with
+columns created elsewhere in the pipeline.
 }
 \examples{
-forbidden_colnames <- check_column_names(merged_metadata())
+metadata <- data.frame(sample_id = c("S1", "S2"),
+                       sample_name = c("Sample 1", "Sample 2"),
+                       group = c("A", "B"))
+check_column_names(metadata)
 }

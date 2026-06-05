@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_read_data.R
 \name{convert_lacytools_summary}
 \alias{convert_lacytools_summary}
-\title{Convert a LaCyTools summary to a 'tidy' dataframe (Optimized)}
+\title{Convert a LaCyTools summary to a tidy dataframe}
 \usage{
 convert_lacytools_summary(data)
 }
@@ -11,12 +11,12 @@ convert_lacytools_summary(data)
 \code{\link{read_non_rectangular}}.}
 }
 \value{
-This function returns a dataframe in long format, one row per analyte per charge per sample.
+A dataframe in long format with one row per analyte per charge per
+  sample.
 }
 \description{
-This optimized version preserves all original error handling while
-improving speed and memory usage:
-- Uses lapply/vapply for faster mapping and type safety.
-- Reduces nesting and redundant joins.
-- Keeps aborts/warnings via rlang, as in original.
+Transforms a LaCyTools summary dataframe (as returned by
+\code{\link{read_non_rectangular}}) into a tidy long-format dataframe, with
+one row per analyte per charge state per sample. The analyte exact mass and
+fraction are joined from the summary header rows.
 }

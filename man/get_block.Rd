@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_read_data.R
 \name{get_block}
 \alias{get_block}
-\title{Create a subset containing one block from a LaCyTools summary. (Optimized)}
+\title{Create a subset containing one block from a LaCyTools summary}
 \usage{
 get_block(data, variable)
 }
@@ -16,8 +16,8 @@ get_block(data, variable)
 A dataframe that is a subset of the input dataframe.
 }
 \description{
-This optimized version preserves all error/warning handling from the original,
-and improves speed/memory footprint by avoiding unnecessary copies and
-using drop=FALSE for subsetting. It also uses more efficient checks for
-duplicated column names and NA removal.
+Extracts the rows that belong to a single named output block (e.g. a
+specific charge state of one LaCyTools output type), sets proper column
+names, removes the header and metadata rows, and adds a
+\code{lacytools_output} column identifying the block.
 }

@@ -1,0 +1,166 @@
+%%%%%%%%%%%%%%%%%%%%
+%%%% FORMATTING %%%%
+%%%%%%%%%%%%%%%%%%%%
+\documentclass[11pt,a4paper]{article}  % Set the class of the document to article with 10pt font size and A4 paper size
+\setlength{\textheight}{25.7cm}  % Set the height of the text area to 25.7cm
+\setlength{\textwidth}{16cm}  % Set the width of the text area to 16cm
+\setlength{\unitlength}{1mm}  % Set the default unit length for picture environments to 1mm
+\setlength{\topskip}{2truecm}  % Set the skip above the top baseline of the text area to 2cm
+% Calculate and set the top margin
+\topmargin 260mm \advance \topmargin -\textheight 
+\divide \topmargin by 2 \advance \topmargin -1in 
+% Set the header height and separation to 0pt
+\headheight 0pt
+\headsep 0pt
+% Calculate and set the left margin
+\leftmargin 210mm \advance \leftmargin -\textwidth 
+\divide \leftmargin by 2 \advance \leftmargin -1in 
+% Set the odd and even side margins to the calculated left margin
+\oddsidemargin \leftmargin
+\evensidemargin \leftmargin
+% Set the paragraph indentation to 0pt
+\parindent=0pt
+% Formatting of (sub)section headers
+\usepackage[medium]{titlesec}
+\titlespacing\section{0pt}{12pt plus 4pt minus 2pt}{0pt plus 2pt minus 2pt}
+\titlespacing\subsection{0pt}{12pt plus 4pt minus 2pt}{0pt plus 2pt minus 2pt}
+\titlespacing\subsubsection{0pt}{12pt plus 4pt minus 2pt}{0pt plus 2pt minus 2pt}
+% Paragraph formatting
+\setlength{\parindent}{0ex}  % Removes default indent at new paragraph
+\setlength{\parskip}{.5em}  % Sets the vertical space between two paragraphs.
+% Move down page numbers
+\setlength{\footskip}{2cm} 
+% Include subsubsections in table of contents
+\setcounter{tocdepth}{3}
+
+
+%%%%%%%%%%%%%%%%%%
+%%%% PACKAGES %%%%
+%%%%%%%%%%%%%%%%%%
+\usepackage{tikz}
+\usepackage[toc, page]{appendix}  % For adding appendices.
+\usepackage[english]{babel}  % Provides multilingual support for LaTeX documents.
+\usepackage[format=plain, font=it]{caption}  % Customizes the formatting of captions for figures and tables.
+\usepackage[utf8]{inputenc}  % Specifies the input encoding of the document to UTF-8, allowing for the direct input of special characters.
+\usepackage{amssymb}  % Provides access to various mathematical symbols and fonts.
+% \usepackage{commath}  % Offers additional mathematical commands and environments for typesetting mathematical expressions.
+\usepackage{mathtools}  % Enhances the functionality of mathematical typesetting, providing additional tools and symbols for mathematical equations.
+\usepackage[shortlabels]{enumitem}  % Customizes the appearance and behavior of lists, allowing for different label styles and formatting options.
+\usepackage{gensymb}  % Provides access to generic symbols, including common symbols like degree symbol (°).
+\usepackage{calligra}  % Allows the use of the calligraphic font style in the document.
+\usepackage{amsmath}  % Enhances the functionality of mathematical typesetting in LaTeX.
+\usepackage[hidelinks]{hyperref}  % Enables the creation of hyperlinks within the document, with the hidelinks option used to hide the colored boxes around hyperlinks.
+\usepackage{wrapfig}  % Facilitates the wrapping of text around figures or tables.
+\usepackage{booktabs}  % Enhances the quality of tables by providing guidelines for proper table formatting.
+\usepackage{multicol}  % Enables the creation of multi-column layouts in the document.
+\usepackage{multirow}  % Allows for the merging of rows in tables.
+\usepackage{ctable}  % Provides customizable tables with improved features compared to standard LaTeX tables.
+\usepackage{subcaption}  % Enhances the functionality of subcaptions for subfigures and subtables.
+\usepackage{systeme}  % Aids in the typesetting of systems of equations.
+\usepackage{lipsum}  % Generates dummy text (lorem ipsum) for testing the layout and formatting of the document.
+\usepackage{tocloft}  % Allows for the customization of table of contents formatting.
+\usepackage{secdot}  % Adds a dot after section numbers in the document.
+\usepackage{dirtytalk}  % Typeset quotations with proper quotation marks
+\usepackage{systeme}  % For systems of equations 
+\usepackage{esint}  % Nice looking integrals
+\usepackage{enumitem}  % Offers more flexibility for lists
+\usepackage{wrapfig}  % Wrap text around figures
+
+
+% Style for code using listings
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+	backgroundcolor=\color{backcolour},   
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2
+}
+\lstset{style=mystyle}
+
+
+% Set colors for citation numbers, equation numbers, links and URLs
+% Blue citation numbers
+% Magenta links (e.g. in table of contents)
+% Red equation numbers
+\hypersetup{colorlinks, linkcolor={black}, citecolor={blue}, urlcolor={magenta}} 
+\renewcommand\theequation{{\color{red}\arabic{equation}}} 
+
+% Symbols for footnotes
+\usepackage[symbol]{footmisc}
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+% Table and Figure captions formatting
+\usepackage[font={sl}, format = hang, labelfont=bf]{caption}  
+
+
+%%%%%%%%%%%%%%%%%%
+%%%% COMMANDS %%%%
+%%%%%%%%%%%%%%%%%%
+\renewcommand{\d}[1]{\ensuremath{\operatorname{d}\!{#1}}} % \d command for upright d in differentials. Also has some space before it for at the end of an integral.
+\newcommand{\angstrom}{\text{\normalfont\AA}}  % \angstrom argument for angstrom symbol
+% Below is for recreating the script-r from Griffith's "Introduction to Electrodynamics".
+% Use \scripty{r} as command. Can also be made bold or given a hat.
+\DeclareMathAlphabet{\mathcalligra}{T1}{calligra}{m}{n}
+\DeclareFontShape{T1}{calligra}{m}{n}{<->s*[2.2]callig15}{}
+\newcommand{\scripty}[1]{\ensuremath{\mathcalligra{#1}}}  
+
+
+%%% Color boxex for "Optional" and "Example" parts.
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+\definecolor{darkblue}{RGB}{0, 0, 139}
+\definecolor{darkgreen}{RGB}{0, 80, 0}
+
+\newtcolorbox{optionalbox}[1][]{
+	breakable,
+	enhanced,
+	colback=gray!8,
+	colframe=gray!50,
+	colupper=darkblue,
+	fontupper=\normalfont,
+	fonttitle=\bfseries\color{darkblue},
+	title=Optional,
+	attach boxed title to top left={yshift=-2mm, xshift=4mm},
+	boxed title style={colback=white, colframe=gray!50},
+	#1
+}
+
+\newtcolorbox{examplebox}[1][]{
+	breakable,
+	enhanced,
+	colback=gray!8,
+	colframe=gray!50,
+	colupper=darkgreen,
+	fontupper=\normalfont,
+	fonttitle=\bfseries\color{darkgreen},
+	title=Example,
+	attach boxed title to top left={yshift=-2mm, xshift=4mm},
+	boxed title style={colback=white, colframe=gray!50},
+	#1
+}
+
+
+\usepackage{menukeys}
+
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{makecell}

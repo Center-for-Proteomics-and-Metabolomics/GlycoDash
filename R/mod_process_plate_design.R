@@ -8,17 +8,19 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
-mod_process_plate_design_ui <- function(id, 
-                                       fileInput_label,
-                                       popover_width = "400px", 
-                                       popover_title = "", 
-                                       popover_content_html = ""){
+mod_process_plate_design_ui <- function(
+    id, 
+    fileInput_label,
+    popover_width = "400px", 
+    popover_title = "", 
+    popover_content_html = "") {
   ns <- NS(id)
   
   fluidRow(
     column(
       width = 11,
-      fileInput(ns("file"), fileInput_label)),
+      fileInput(ns("file"), fileInput_label)
+    ),
     column(
       width = 1,
       tags$style(
@@ -32,31 +34,38 @@ mod_process_plate_design_ui <- function(id,
           " .col-sm-1 {padding-left: 0px}"
         ))
       ),
-      div(id = ns("info_icon_div"),
-          icon("info-circle",
-               class = "fa-2x") %>% 
-            bsplus::bs_embed_popover(
-              title = popover_title,
-              content = popover_content_html,
-              trigger = "hover",
-              placement = "right",
-              html = "true",
-              container = "body")))
+      div(
+        id = ns("info_icon_div"),
+        icon("info-circle", class = "fa-2x") %>% 
+          bsplus::bs_embed_popover(
+            title = popover_title,
+            content = popover_content_html,
+            trigger = "hover",
+            placement = "right",
+            html = "true",
+            container = "body"
+          )
+      )
+    )
   )
 }
     
+
 #' process_plate_design Server Functions
 #'
 #' @noRd 
-mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
-  moduleServer( id, function(input, output, session){
+mod_process_plate_design_server <- function(
+    id, 
+    allowed, 
+    with_info_icon, 
+    reset) {
+  moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
     r <- reactiveValues()
     
     observe({
-      shinyjs::toggle("info_icon_div",
-                      condition = with_info_icon)
+      shinyjs::toggle("info_icon_div", condition = with_info_icon)
     })
     
     extension <- reactive({
@@ -64,16 +73,17 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
       tools::file_ext(input$file$name)
     })
     
-    wrong_extension_warning <- paste("Please upload a",
-                                     comma_or(paste0(".", allowed)),
-                                     "file.")
+    wrong_extension_warning <- paste(
+      "Please upload a", comma_or(paste0(".", allowed)), "file."
+    )
     
     observe({
       req(extension())
       shinyFeedback::hideFeedback("file")
-      shinyFeedback::feedbackDanger("file",
-                                    !(extension() %in% allowed),
-                                    text = wrong_extension_warning)
+      shinyFeedback::feedbackDanger(
+        "file", !(extension() %in% allowed),
+        text = wrong_extension_warning
+      )
     })
     
     observe({
@@ -93,9 +103,11 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
           read_and_process_plate_design(input$file$datapath)
         },
         plate_numbers = function(c) {
-          shinyFeedback::feedbackDanger("file",
-                                        show = TRUE,
-                                        text = "The plate numbers could not be detected.")
+          shinyFeedback::feedbackDanger(
+            "file",
+            show = TRUE,
+            text = "The plate numbers could not be detected."
+          )
           showNotification(
             paste(
               "Please check that your plate design file is formatted correctly.",
@@ -108,9 +120,11 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
           NULL
         },
         duplicate_plate_numbers = function(c) {
-          shinyFeedback::feedbackDanger("file",
-                                        show = TRUE,
-                                        text = "Duplicate plate numbers detected.")
+          shinyFeedback::feedbackDanger(
+            "file",
+            show = TRUE,
+            text = "Duplicate plate numbers detected."
+          )
           showNotification(
             c$message,
             type = "error",
@@ -120,9 +134,11 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
           NULL
         },
         incorrect_formatting = function(c) {
-          shinyFeedback::feedbackDanger("file",
-                                        show = TRUE,
-                                        text = "Incorrect file format.")
+          shinyFeedback::feedbackDanger(
+            "file",
+            show = TRUE,
+            text = "Incorrect file format."
+          )
           showNotification(
             paste(
               "Please check that your plate design file is formatted correctly.",
@@ -139,10 +155,12 @@ mod_process_plate_design_server <- function(id, allowed, with_info_icon, reset){
     }) %>% bindEvent(input$file$datapath)
     
     
+    
     return(list(
-      plate_design = reactive({ r$plate_design }),
-      filename = reactive({ input$file$name })
-      ))
+      plate_design = reactive(r$plate_design),
+      filename = reactive(input$file$name)
+    ))
     
   })
 }
+

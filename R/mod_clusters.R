@@ -80,12 +80,13 @@ mod_clusters_ui <- function(id) {
 #' clusters Server Functions
 #'
 #' @noRd 
-mod_clusters_server <- function(id, data) {
+mod_clusters_server <- function(
+    id, 
+    data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Show a spinner when sample types are added.
-    # The spinner is removed in the mod_spectra_curation.R after all tabs are generated
     observeEvent(data(), {
       shinybusy::show_modal_spinner(
         spin = "cube-grid", color = "#0275D8",
@@ -93,54 +94,77 @@ mod_clusters_server <- function(id, data) {
       )
     })
     
+    analyte_parts <- reactive({
+      req(data())
+      analytes <- unique(data()$analyte)
+      # Search for position of first "1" in analyte names
+      separator_pos <- regexpr("1", analytes, fixed = TRUE)
+      has_separator <- separator_pos > 0
+      data.frame(
+        analyte = analytes,
+        cluster = substr(analytes, 1, separator_pos - 1),
+        glycan = substr(analytes, separator_pos + 1, nchar(analytes)),
+        stringsAsFactors = FALSE
+      )
+    })
+
     # Determine the clusters in the data
     glycopeptide_clusters <- reactive({
-      req(data())
-      subset <- data() %>% 
-        tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge") %>% 
-        dplyr::filter(glycan != "")
-      
-      return(sort(unique(subset$cluster)))
+      req(analyte_parts())
+      parts <- analyte_parts()
+      sort(unique(parts$cluster[parts$glycan != ""]))
     })
     
     peptides <- reactive({
-      req(glycopeptide_clusters())
-      subset <- data() %>% 
-        tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge") %>% 
-        dplyr::filter(!cluster %in% glycopeptide_clusters())
-      
-      return(sort(unique(subset$cluster)))
+      req(analyte_parts(), glycopeptide_clusters())
+      parts <- analyte_parts()
+      sort(unique(parts$cluster[
+        parts$glycan == "" &
+          !parts$cluster %in% glycopeptide_clusters()
+      ]))
     })
     
     
     # Show the clusters in a table
     output$clusters_table <- renderTable({
       req(glycopeptide_clusters())
-      data.frame(glycopeptide_clusters())
+      data.frame("Glycosylation site" = glycopeptide_clusters())
     }, striped = TRUE, bordered = TRUE, rownames = TRUE, colnames = FALSE, align = "l")
     
     output$peptides_table <- renderTable({
       req(peptides())
-      data.frame(peptides())
+      data.frame("Peptide" = peptides())
     }, striped = TRUE, bordered = TRUE, rownames = TRUE, colnames = FALSE, align = "l")
     
     
     # Create a dataframe with a cluster column when user pushes the button
     data_with_clusters <- reactive({
-      req(data())
-      data() %>% 
-        tidyr::separate(analyte, sep = "1", into = c("cluster", "glycan"), extra = "merge",
-                        remove = FALSE) %>% 
-        dplyr::select(-glycan)
+      req(data(), analyte_parts())
+      dplyr::left_join(
+        data(),
+        analyte_parts() %>% dplyr::select(analyte, cluster),
+        by = "analyte"
+      ) %>%
+        dplyr::relocate(cluster, .after = analyte)
+    })
+    
+    observeEvent(data_with_clusters(), {
+      shinybusy::remove_modal_spinner()
     })
     
     
     
     # Determine visibility of UI elements.
     observe({
-      shinyjs::toggle("info_detection", condition = !is_truthy(glycopeptide_clusters()))
-      shinyjs::toggle("info_clusters", condition = is_truthy(glycopeptide_clusters()))
-      shinyjs::toggle("clusters_table", condition = is_truthy(glycopeptide_clusters()))
+      shinyjs::toggle(
+        "info_detection", condition = !is_truthy(glycopeptide_clusters())
+      )
+      shinyjs::toggle(
+        "info_clusters", condition = is_truthy(glycopeptide_clusters())
+      )
+      shinyjs::toggle(
+        "clusters_table", condition = is_truthy(glycopeptide_clusters())
+      )
       
       if (is_truthy(peptides())) {
         shinyjs::show("info_peptides")
@@ -160,3 +184,4 @@ mod_clusters_server <- function(id, data) {
     
   })
 }
+
