@@ -980,11 +980,14 @@ mod_spectra_curation_server <- function(
     
     # Get data of non-glycosylated peptides for passing spectra.
     non_glycosylated_data <- reactive({
-      req(any(
-        is_truthy(checked_data()), 
-        input$curation_method == "Skip spectra curation"
-      ))
-    
+      req(
+        results_data_import$data(),
+        any(
+          is_truthy(checked_data()),
+          input$curation_method == "Skip spectra curation"
+        )
+      )
+      
       peptides <- results_data_import$data() %>% 
         dplyr::filter(analyte == paste0(cluster, "1"))
       
