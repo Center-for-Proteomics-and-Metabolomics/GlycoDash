@@ -14,7 +14,7 @@ Imports:
     config,
     dplyr,
     DT,
-    ggplot2,
+    ggplot2 (>= 3.4.0),
     golem,
     htmltools,
     kableExtra,

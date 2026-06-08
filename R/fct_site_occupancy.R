@@ -165,7 +165,7 @@ peptides_quality_plot <- function(peptides_quality_summary) {
     ggplot2::geom_col(color = "black", fill = "darkblue") +
     ggplot2::theme_classic() + 
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
+      panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5),
       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
       legend.position = "none"
@@ -213,7 +213,7 @@ plot_site_occupancy <- function(site_occupancy) {
                          width = 0.2, height = 0, size = 1, alpha = 0.7) +
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
+      panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5),
       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
       legend.position = "right"

@@ -223,7 +223,7 @@ plot_protein_quantities <- function(quantities,
     ) + 
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 0.5),
       strip.background = ggplot2::element_rect(fill = "#F6F6F8")
     ) +
     ggplot2::scale_color_manual(values = color_palette, name = "Sample type") + 
@@ -295,7 +295,7 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
     ggplot2::theme_classic() +
     ggplot2::theme(
       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 0.5),
       legend.position = "none"
     ) + 
     ggplot2::scale_color_manual(values = color_palette, name = "Sample type")
@@ -437,7 +437,7 @@ plot_sum_intensities <- function(intensities,
       ggplot2::theme_classic() +
       ggplot2::theme(
         strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-        panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+        panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 0.5),
         legend.position = "none"
       ) + 
       ggplot2::scale_color_manual(values = color_palette, name = "Sample type")

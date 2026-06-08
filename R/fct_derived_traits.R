@@ -366,7 +366,7 @@ traits_vs_intensity_plot <- function(data_to_plot, cluster) {
     ggplot2::labs(x = paste(cluster, "sum intensity"), y = "Relative abundance") +
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(color = "black", fill = NA, size = 0.5),
+      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 0.5),
       strip.background = ggplot2::element_rect(fill = "#F6F6F8")
     ) +
     ggplot2::scale_color_manual(values = my_palette, name = "Sample type")
