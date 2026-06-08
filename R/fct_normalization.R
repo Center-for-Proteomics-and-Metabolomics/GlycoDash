@@ -332,7 +332,7 @@ sample_heatmap <- function(
     ggplot2::theme(
       panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 0.5),
       panel.background = ggplot2::element_rect(fill = color_na),
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, linewidth = 11),
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
       axis.text.y = ggplot2::element_blank()
     ) +
     ggplot2::scale_fill_gradientn(

@@ -561,7 +561,7 @@ plot_analyte_curation_percentages <- function(
     ggplot2::geom_hline(yintercept = cut_off_percentage, 
                         linetype = "dashed",
                         color = "#E74C3C", 
-                        size = 1) +
+                        linewidth = 1) +
     {
       if (bio_groups_colname != "") {
         # Using {{bio_groups_colname}} does not work here for some reason
