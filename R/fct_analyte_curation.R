@@ -575,7 +575,7 @@ plot_analyte_curation_percentages <- function(
                                                        hjust = 1),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
                    legend.position = "right",
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5)) +
     ggplot2::labs(x= "", y = "Passing spectra (%)") +
     ggplot2::scale_y_continuous(limits = c(0, 100))
   
@@ -666,7 +666,7 @@ plot_analyte_curation_averages <- function(curated_analytes,
     ggplot2::labs(x = "", y = "Charge", fill = "Passed curation?") +
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(color = "black", fill = NA, size = 0.5),
+      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 0.5),
       panel.background = ggplot2::element_rect(fill = "grey"),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11)
     ) +

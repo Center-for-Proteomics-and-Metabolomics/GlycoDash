@@ -389,7 +389,7 @@ visualize_repeatability <- function(repeatability_data,
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
                                                        hjust = 1),
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5)) +
     ggplot2::geom_point(ggplot2::aes(x = analyte,
                                      y = RSD,
                                      group = plate,
@@ -588,7 +588,7 @@ visualize_repeatability_mean_bars <- function(data,
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
                                                        hjust = 1),
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5),
                    legend.position = "none") +
     ggplot2::scale_y_continuous(name = "Relative abundance (%)",
                                 labels = function(x) paste0(x, "%")) +

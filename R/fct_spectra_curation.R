@@ -985,7 +985,7 @@ create_cut_off_plot <- function(summarized_checks, color_palette) {
                          size = 1,
                          alpha = 0.7) +
     ggplot2::theme_classic() +
-    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
+    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
     ggplot2::scale_color_manual(values = color_palette,
                                 name = "Sample type") +
@@ -1122,7 +1122,7 @@ plot_spectra_curation_results <- function(curated_data,
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5))
   
   if (total_and_specific) {
     plot <- plot +

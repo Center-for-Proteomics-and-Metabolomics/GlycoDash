@@ -330,9 +330,9 @@ sample_heatmap <- function(
     ggplot2::labs(x = "", y = "Sample", fill = "Relative abundance (%)") +
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(colour = "black", fill = NA, size = 0.5),
+      panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 0.5),
       panel.background = ggplot2::element_rect(fill = color_na),
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, linewidth = 11),
       axis.text.y = ggplot2::element_blank()
     ) +
     ggplot2::scale_fill_gradientn(
@@ -447,7 +447,7 @@ cluster_heatmap <- function(
     ggplot2::labs(x = "", y = "", fill = "Median relative abundance (%)") +
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(color = "black", fill = NA, size = 0.5),
+      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 0.5),
       panel.background = ggplot2::element_rect(fill = color_na),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
       axis.text.y = ggplot2::element_text(size = 11)
