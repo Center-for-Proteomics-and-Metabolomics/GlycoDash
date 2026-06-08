@@ -782,6 +782,7 @@ mod_analyte_curation_server <- function(id,
           passing_spectra(), !rlang::is_empty(r$mod_results),
           all(purrr::map_lgl(r$mod_results, ~is_truthy(.x$analytes_to_include())))
         )
+        
         to_return <- purrr::imap(
           r$mod_results, function(results, current_cluster) {
             data_current_cluster <- passing_spectra() %>% 
@@ -789,19 +790,6 @@ mod_analyte_curation_server <- function(id,
             dplyr::left_join(results$analytes_to_include(), data_current_cluster)
           }
         ) %>% purrr::reduce(dplyr::full_join)
-      }
-      # Get data with non-glycosylated peptides
-      non_glycosylated <- passing_spectra() %>%
-        dplyr::filter(analyte == paste0(cluster, "1")) %>%
-        # Rearrange columns to combine with to_return
-        dplyr::select(colnames(to_return))
-      
-      # Return
-      if (nrow(non_glycosylated) > 0) {
-        dplyr::bind_rows(to_return, non_glycosylated)
-      } 
-      else {
-        to_return
       }
     })
       
