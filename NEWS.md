@@ -1,6 +1,6 @@
 # v1.11.5
 ## Fixed
-- Fixed a bug where non-glycosylated peptides for calculating site occupancies were not detected.
+* Fixed a bug where non-glycosylated peptides for calculating site occupancies were not detected.
 
 
 # v1.11.4
