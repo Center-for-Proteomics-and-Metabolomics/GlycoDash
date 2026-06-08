@@ -1,3 +1,8 @@
+# v1.11.5
+## Fixed
+* Fixed a bug where non-glycosylated peptides for calculating site occupancies were not detected.
+
+
 # v1.11.4
 ## Added
 * Glycosylation traits: support automatically calculating sulfation of complex-type glycans for IgA N205 and IgA1/2 N340/N327.

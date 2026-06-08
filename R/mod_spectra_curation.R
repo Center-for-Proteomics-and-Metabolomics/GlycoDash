@@ -978,32 +978,19 @@ mod_spectra_curation_server <- function(
       }
     )
     
-    # Get data of non-glycosylated peptides for passing spectra
+    # Get data of non-glycosylated peptides for passing spectra.
     non_glycosylated_data <- reactive({
-      req(checked_data())
+      req(
+        results_data_import$data(),
+        any(
+          is_truthy(checked_data()),
+          input$curation_method == "Skip spectra curation"
+        )
+      )
       
       peptides <- results_data_import$data() %>% 
-        dplyr::select(
-          sample_name, 
-          sample_id, 
-          sample_type,
-          cluster, 
-          analyte, 
-          charge, 
-          tidyselect::any_of(c(
-            "group",
-            "absolute_intensity_background_subtracted",
-            "mass_accuracy_ppm",
-            "isotopic_pattern_quality",
-            "sn",
-            "fraction",
-            "total_area",
-            "isotope_dot_product"                   
-          ))
-        ) %>% 
         dplyr::filter(analyte == paste0(cluster, "1"))
       
-      # Get passing spectra if applicable
       if (is_truthy(passing_spectra())) {
         passing <- passing_spectra() %>% 
           dplyr::select(sample_name, cluster) %>% 
@@ -1016,8 +1003,10 @@ mod_spectra_curation_server <- function(
           dplyr::filter(filter %in% passing) %>% 
           dplyr::select(-filter)
       }
+      else {
+        peptides
+      }
     })
-    
     
     
     return(list(
