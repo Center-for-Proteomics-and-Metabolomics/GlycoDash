@@ -46,14 +46,14 @@ Enhancement suggestions are welcome! Please provide:
 
 ## Development setup
 
-1. **Install R 4.5.0, RStudio, and RTools 4.5**
-   - [R 4.5.0](https://cran.r-project.org/bin/windows/base/old/) — can be installed alongside other R versions
+1. **Install R 4.5.3, RStudio, and RTools 4.5**
+   - [R 4.5.3](https://cran.r-project.org/bin/windows/base/old/) — can be installed alongside other R versions
    - [RStudio](https://posit.co/download/rstudio-desktop/)
    - [RTools 4.5](https://cran.r-project.org/bin/windows/Rtools/rtools45/rtools.html) — required to build some packages from source; use the default installer settings
 
-2. **Configure RStudio to use R 4.5.0**
+2. **Configure RStudio to use R 4.5.3**
 
-   Go to `Tools → Global Options → General → R version → Change…`, select R 4.5.0, apply the changes, and restart RStudio.
+   Go to `Tools → Global Options → General → R version → Change…`, select R 4.5.3, apply the changes, and restart RStudio.
 
 3. **Clone the repository**
    ```bash
