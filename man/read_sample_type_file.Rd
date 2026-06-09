@@ -8,20 +8,21 @@ read_sample_type_file(filepath, filename)
 }
 \arguments{
 \item{filepath}{The path to the Excel or .rds file containing a list of sample types.
- If it is an Excel file it should contain only one sheet. If it's a .rds file
- it should be a dataframe or tibble. In both cases there should be two columns named 
+If it is an Excel file it should contain only one sheet. If it's a .rds file
+it should be a dataframe or tibble. In both cases there should be two columns named
 "sample_id" and "sample_type". The sample_id column should contain all
-sample ID's that are present in your LaCyTools summary. The sample_type column
-should contain the sample type corresponding to that sample ID. Standards 
+sample IDs that are present in your LaCyTools summary. The sample_type column
+should contain the sample type corresponding to that sample ID. Standards
 and blanks should be included.}
 
 \item{filename}{The name of the Excel or .rds file including the file extension.}
 }
 \value{
-A tibble with the sample ID's and sample types.
+A tibble with the sample IDs and sample types.
 }
 \description{
-Read a sample type Excel or .rds file
+Reads a sample type file in Excel (.xlsx, .xls) or .rds format and returns a
+tibble with sample IDs and their corresponding sample types.
 }
 \examples{
 path <- system.file("extdata",

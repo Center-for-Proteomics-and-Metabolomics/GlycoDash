@@ -40,8 +40,10 @@ mod_data_import_ui <- function(id) {
                 width = NULL,
                 solidHeader = TRUE,
                 status = "primary",
-                downloadButton(ns("download_glycosites"),
-                               "Download table with glycosylation sites"),
+                downloadButton(
+                  ns("download_glycosites"),
+                  "Download table with glycosylation sites"
+                ),
                 br(), br(),
                 shinycssloaders::withSpinner(DT::DTOutput(ns("glycosites_table")))
               )
@@ -52,9 +54,11 @@ mod_data_import_ui <- function(id) {
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            radioButtons(ns("download_format"),
-                         "Choose a file format:",
-                         choices = c("Excel file", "R object")),
+            radioButtons(
+              ns("download_format"),
+              "Choose a file format:",
+              choices = c("Excel file", "R object")
+            ),
             downloadButton(ns("download"), "Download data"),
           )
         )
@@ -126,9 +130,10 @@ mod_data_import_server <- function(id) {
     # in the data table
     output$data_table <- DT::renderDT({
       req(show_in_table())
-      DT::datatable(
-        show_in_table() %>% # Round numbers to 2 decimals
-          dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+      data_for_table <- show_in_table()
+      numeric_cols <- names(data_for_table)[vapply(data_for_table, is.numeric, logical(1))]
+      table <- DT::datatable(
+        data_for_table,
         options = list(
           scrollX = TRUE,
           pageLength = 8,  
@@ -136,6 +141,10 @@ mod_data_import_server <- function(id) {
         ),
         filter = "top"
       )
+      if (length(numeric_cols) > 0) {
+        table <- DT::formatRound(table, columns = numeric_cols, digits = 2)
+      }
+      table
     })
     
     
@@ -167,8 +176,7 @@ mod_data_import_server <- function(id) {
     
     # The download button is disabled until data has been loaded:
     observe({
-      shinyjs::toggleState("download",
-                           condition = is_truthy(show_in_table()))
+      shinyjs::toggleState("download", condition = is_truthy(show_in_table()))
     })
     
     output$download <- downloadHandler(
@@ -176,17 +184,19 @@ mod_data_import_server <- function(id) {
         current_datetime <- paste0(
           format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
         )
-        switch(input$download_format,
-               "R object" = paste0(current_datetime, "_data.rds"),
-               "Excel file" = paste0(current_datetime, "_data.xlsx"))
+        switch(
+          input$download_format,
+          "R object" = paste0(current_datetime, "_data.rds"),
+          "Excel file" = paste0(current_datetime, "_data.xlsx")
+        )
       },
       content = function(file) {
         data_to_download <- show_in_table()
-        switch(input$download_format,
-               "R object" = saveRDS(data_to_download, 
-                                 file = file),
-               "Excel file" = writexl::write_xlsx(data_to_download, 
-                                                  path = file))
+        switch(
+          input$download_format,
+          "R object" = saveRDS(data_to_download, file = file),
+          "Excel file" = writexl::write_xlsx(data_to_download, path = file)
+        )
       }
     )
     
@@ -202,7 +212,8 @@ mod_data_import_server <- function(id) {
     observe({
       if (is_truthy(data_input$glycosites_table())) {
         shinyjs::show("peptide_box")
-      } else {
+      } 
+      else {
         shinyjs::hide("peptide_box")
       }
     })
@@ -223,7 +234,9 @@ mod_data_import_server <- function(id) {
     # Download table as Excel file
     output$download_glycosites <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
         paste0(current_datetime, "_glycosylation_sites.xlsx")
       },
       content = function(file) {
@@ -255,3 +268,4 @@ mod_data_import_server <- function(id) {
     
   })
 }
+

@@ -2,11 +2,11 @@
 
 #' Determine the choices for the repeatability sample menu
 #'
-#' This function finds the sample ID's or if applicable the combinations of
+#' This function finds the sample IDs or if applicable the combinations of
 #' sample ID and group (total or specific) for which there are multiple
 #' measurements in the data.
 #'
-#' @param normalized_data
+#' @param normalized_data Description here...
 #'
 #' @return A list of character strings where each string contains "sample id: "
 #'   followed by the sample ID and if applicable "group: " followed by the total
@@ -389,7 +389,7 @@ visualize_repeatability <- function(repeatability_data,
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
                                                        hjust = 1),
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5)) +
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5)) +
     ggplot2::geom_point(ggplot2::aes(x = analyte,
                                      y = RSD,
                                      group = plate,
@@ -588,7 +588,7 @@ visualize_repeatability_mean_bars <- function(data,
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45,
                                                        hjust = 1),
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5),
                    legend.position = "none") +
     ggplot2::scale_y_continuous(name = "Relative abundance (%)",
                                 labels = function(x) paste0(x, "%")) +

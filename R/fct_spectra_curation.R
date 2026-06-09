@@ -825,6 +825,31 @@ return_when_spectra_curation_is_skipped <- function(checked_data,
 
 
 
+#' Prepare curation data for bar charts when spectra curation is skipped
+#'
+#' When spectra curation is skipped, this function creates a dataframe
+#' compatible with \code{\link{plot_spectra_curation_results}}. Only
+#' calibration status determines whether a spectrum is considered passing or
+#' failing.
+#'
+#' @inheritParams curate_spectra
+#'
+#' @return \code{summarized_checks} with two additional columns:
+#'   \describe{\item{has_passed_spectra_curation}{\code{TRUE} for calibrated
+#'   spectra, \code{FALSE} for uncalibrated spectra.}
+#'   \item{reason_for_failure}{\code{NA} for calibrated spectra;
+#'   \code{"Calibration failed."} for uncalibrated spectra.}}
+#' @export
+create_curation_data_when_skipped <- function(summarized_checks) {
+  summarized_checks %>%
+    dplyr::mutate(
+      has_passed_spectra_curation = !uncalibrated,
+      reason_for_failure = ifelse(uncalibrated, "Calibration failed.", NA_character_)
+    )
+}
+
+
+
 #' Get the sample types to put in the menu for negative control samples
 #'
 #' Find out which sample types are present in the total or in the specific
@@ -960,7 +985,7 @@ create_cut_off_plot <- function(summarized_checks, color_palette) {
                          size = 1,
                          alpha = 0.7) +
     ggplot2::theme_classic() +
-    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5),
+    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
     ggplot2::scale_color_manual(values = color_palette,
                                 name = "Sample type") +
@@ -1097,7 +1122,7 @@ plot_spectra_curation_results <- function(curated_data,
     ggplot2::theme_classic() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
                    strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, size=0.5))
+                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5))
   
   if (total_and_specific) {
     plot <- plot +

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_read_data.R
 \name{read_sweetsuite_data}
 \alias{read_sweetsuite_data}
-\title{Read SweetSuite Data}
+\title{Read one or more SweetSuite output Excel files}
 \usage{
 read_sweetsuite_data(datapaths)
 }
@@ -10,8 +10,11 @@ read_sweetsuite_data(datapaths)
 \item{datapaths}{A character vector of file paths to the SweetSuite output Excel files.}
 }
 \value{
-A dataframe combining the 'Data' tabs from all input Excel files.
+A dataframe combining the \code{"Data"} sheets from all input Excel
+  files, with columns renamed to match the LaCyTools data format.
 }
 \description{
-This function reads one or more SweetSuite output Excel files.
+Reads the \code{"Data"} sheet from one or more SweetSuite output Excel
+files, checks for required columns, renames columns for consistency with
+LaCyTools data, and returns all files combined into a single dataframe.
 }

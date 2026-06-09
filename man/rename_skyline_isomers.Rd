@@ -2,20 +2,24 @@
 % Please edit documentation in R/fct_read_data.R
 \name{rename_skyline_isomers}
 \alias{rename_skyline_isomers}
-\title{rename_skyline_isomers}
+\title{Rename isomeric glycan compositions in Skyline data}
 \usage{
 rename_skyline_isomers(data_renamed_cols)
 }
 \arguments{
-\item{data_renamed_cols}{Imported skyline CSV data from the read_skyline_csv() function, with renamed
-columns to have "cluster", "glycan" and "charge".}
+\item{data_renamed_cols}{A dataframe of imported Skyline CSV data (from
+\code{\link{read_skyline_csv}}) with columns renamed to \code{"cluster"},
+\code{"glycan"} and \code{"charge"}.}
 }
 \value{
-Skyline CSV data with glycan compositions of isomers renamed using "_a", "_b", etc.
+A dataframe with the same structure as \code{data_renamed_cols}, with
+  glycan compositions of isomers renamed using \code{"_a"}, \code{"_b"},
+  etc.
 }
 \description{
-This function detects the presence of isomers in a Skyline CSV file.
-When an analyte is present twice in a given charge state, the two duplicate
-analytes are assumed to be isomers with the same glycan composision. The glycan
-compositions are renamed to distinguish them.
+Detects the presence of isomers in a Skyline CSV file. When an analyte is
+present twice in a given charge state, the two duplicate analytes are assumed
+to be isomers with the same glycan composition. The glycan compositions are
+renamed to distinguish them by appending suffixes \code{"_a"}, \code{"_b"},
+etc. A Shiny notification is shown if isomers are detected.
 }

@@ -42,7 +42,7 @@ mod_curate_based_on_percentiles_server <- function(id,
     
     observe({
       req(summarized_checks())
-      r$sample_types <- unique(summarized_checks()$sample_type)
+      r$sample_types <- stats::na.omit(unique(summarized_checks()$sample_type))
     })
     # I'm using a reactiveValue instead of a reactive expression, because a
     # reactiveValue is not invalidated if its value stays the same. Using a

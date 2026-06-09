@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_read_data.R
 \name{transform_skyline_data_wide}
 \alias{transform_skyline_data_wide}
-\title{transform_skyline_data_wide}
+\title{Transform wide-format Skyline data into a tidy dataframe}
 \usage{
 transform_skyline_data_wide(
   raw_skyline_data_wide,
@@ -16,19 +16,50 @@ transform_skyline_data_wide(
 )
 }
 \arguments{
-\item{raw_skyline_data_wide}{Raw skyline data in wide format, read into R with 
-the read_skyline_csv() function above.}
+\item{raw_skyline_data_wide}{A dataframe of raw Skyline data in wide format,
+as returned by \code{\link{read_skyline_csv}}.}
+
+\item{protein_colname}{Name of the column containing protein identifiers.
+Only used when \code{analyte_colname} is also provided. Defaults to
+\code{NULL}.}
+
+\item{analyte_colname}{Name of the column containing full glycopeptide
+analyte identifiers (e.g. including modifications). When \code{NULL},
+separate \code{cluster_colname} and \code{glycan_colname} are used
+instead. Defaults to \code{NULL}.}
+
+\item{cluster_colname}{Name of the column containing glycosylation site
+(cluster) identifiers. Only used when \code{analyte_colname} is
+\code{NULL}. Defaults to \code{NULL}.}
+
+\item{glycan_colname}{Name of the column containing glycan composition
+identifiers. Only used when \code{analyte_colname} is \code{NULL}.
+Defaults to \code{NULL}.}
+
+\item{charge_colname}{Name of the column containing charge states.}
+
+\item{note_colname}{Name of an optional column containing per-analyte notes.
+Defaults to \code{NULL}.}
+
+\item{rename_isomers}{Logical; if \code{TRUE} (default), isomeric glycan
+compositions are automatically detected and renamed using
+\code{\link{rename_skyline_isomers}}.}
 }
 \value{
-A clean dataframe in a similar format as a transformed
-LaCyTools summary. The dataframe contains the following columns:
-- sample_name
-- analyte
-- charge
-- absolute_intensity_background_subtracted
-- mass_accuracy_ppm
-- isotope_dot_product
+A clean dataframe in a similar format as a transformed LaCyTools
+  summary. The dataframe contains (at minimum) the following columns:
+  \describe{
+    \item{sample_name}{Sample identifier.}
+    \item{analyte}{Analyte identifier (cluster + glycan).}
+    \item{charge}{Charge state.}
+    \item{total_area}{Total MS1 area.}
+    \item{mass_accuracy_ppm}{Average mass error in ppm.}
+    \item{isotope_dot_product}{Isotope dot product.}
+  }
 }
 \description{
-transform_skyline_data_wide
+Converts a wide-format Skyline CSV file (as read by
+\code{\link{read_skyline_csv}}) into a long-format dataframe comparable to a
+processed LaCyTools summary. Supports both analyte-column and
+cluster/glycan-column layouts.
 }

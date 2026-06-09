@@ -2,7 +2,7 @@
 % Please edit documentation in R/fct_add_metadata.R
 \name{rename_sample_id_column}
 \alias{rename_sample_id_column}
-\title{Rename the metadata column with sample ID's to "sample_id"}
+\title{Rename the metadata column with sample IDs to "sample_id"}
 \usage{
 rename_sample_id_column(metadata, sample_id_column)
 }
@@ -10,14 +10,17 @@ rename_sample_id_column(metadata, sample_id_column)
 \item{metadata}{A dataframe or tibble with metadata.}
 
 \item{sample_id_column}{A character string, the name of the column in
-\code{metadata} that contains the sample ID's.}
+\code{metadata} that contains the sample IDs.}
 }
 \value{
-Fill this in...
+The input \code{metadata} dataframe with the column specified by
+  \code{sample_id_column} renamed to "sample_id". If a conflicting
+  "sample_id" column already existed, it is first renamed to
+  "sample_id_original" and a warning is issued.
 }
 \description{
 This function renames the column in the metadata file that contains sample
-ID's to "sample_id".
+IDs to "sample_id".
 }
 \details{
 In case there already is a column named sample_id that is NOT the column

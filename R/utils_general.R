@@ -445,7 +445,8 @@ traits_choices <- list(
     "Bisection of complex-type glycans",
     "Galactosylation per antenna of complex-type glycans",
     "Sialylation per antenna of complex-type glycans",
-    "Sialylation per galactose of complex-type glycans"
+    "Sialylation per galactose of complex-type glycans",
+    "Sulfation of complex-type glycans"
   ),
   "human_IgA_N340" = c(
     "Fucosylation of complex-type glycans",
@@ -455,7 +456,8 @@ traits_choices <- list(
     "Sialylation per galactose of complex-type glycans",
     "Percentage of triantennary complex-type glycans",
     "Percentage of oligomannose-type glycans",
-    "Oligomannose-type glycans: average number of mannoses"
+    "Oligomannose-type glycans: average number of mannoses",
+    "Sulfation of complex-type glycans"
   ),
   "human_IgA_O" = c(
     "Sialic acids",

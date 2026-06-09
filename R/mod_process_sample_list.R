@@ -8,17 +8,19 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_process_sample_list_ui <- function(id, 
-                                       fileInput_label, 
-                                       popover_width, 
-                                       popover_title, 
-                                       popover_content_html){
+mod_process_sample_list_ui <- function(
+    id, 
+    fileInput_label, 
+    popover_width, 
+    popover_title, 
+    popover_content_html) {
   ns <- NS(id)
   
   fluidRow(
     column(
       width = 11,
-      fileInput(ns("file"), fileInput_label)),
+      fileInput(ns("file"), fileInput_label)
+    ),
     column(
       width = 1,
       tags$style(
@@ -32,24 +34,31 @@ mod_process_sample_list_ui <- function(id,
           " .col-sm-1 {padding-left: 0px}"
         ))
       ),
-      div(id = ns("info_icon_div"),
-          icon("info-circle",
-               class = "fa-2x") %>% 
-            bsplus::bs_embed_popover(
-              title = popover_title,
-              content = popover_content_html,
-              trigger = "hover",
-              placement = "right",
-              html = "true",
-              container = "body")))
+      div(
+        id = ns("info_icon_div"),
+        icon("info-circle", class = "fa-2x") %>% 
+          bsplus::bs_embed_popover(
+            title = popover_title,
+            content = popover_content_html,
+            trigger = "hover",
+            placement = "right",
+            html = "true",
+            container = "body"
+          )
+      )
+    )
   )
 }
     
+
 #' process_sample_list Server Functions
 #'
 #' @noRd 
-mod_process_sample_list_server <- function(id, allowed, reset){
-  moduleServer( id, function(input, output, session){
+mod_process_sample_list_server <- function(
+    id, 
+    allowed, 
+    reset) {
+  moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
     extension <- reactive({
@@ -57,17 +66,19 @@ mod_process_sample_list_server <- function(id, allowed, reset){
       tools::file_ext(input$file$name)
     })
     
-    wrong_extension_warning <- paste("Please upload a",
-                                     comma_or(paste0(".", allowed)),
-                                     "file.")
+    wrong_extension_warning <- paste(
+      "Please upload a", comma_or(paste0(".", allowed)), "file."
+    )
     
     observe({
       req(extension())
       shinyFeedback::hideFeedback("file")
-      shinyFeedback::feedbackDanger("file",
-                                    !(extension() %in% allowed),
-                                    text = wrong_extension_warning)
+      shinyFeedback::feedbackDanger(
+        "file", !(extension() %in% allowed),
+        text = wrong_extension_warning
+      )
     })
+    
     
     r <- reactiveValues()
     
@@ -87,12 +98,13 @@ mod_process_sample_list_server <- function(id, allowed, reset){
           process_sample_list(input$file$datapath)
         },
         wrong_column_names = function(c) {
-          error_message_first_sentence <- stringr::str_replace(c$message,
-                                                               "(.+\\.).+",
-                                                               "\\1")
-          shinyFeedback::feedbackDanger(inputId = "file",
-                                        show = TRUE,
-                                        text = error_message_first_sentence)
+          error_message_first_sentence <- stringr::str_replace(
+            c$message, "(.+\\.).+", "\\1"
+          )
+          shinyFeedback::feedbackDanger(
+            inputId = "file", show = TRUE,
+            text = error_message_first_sentence
+          )
           
           showNotification(
             paste(
@@ -104,7 +116,6 @@ mod_process_sample_list_server <- function(id, allowed, reset){
           )
           
           NULL
-          
         })
     })
     
@@ -116,8 +127,3 @@ mod_process_sample_list_server <- function(id, allowed, reset){
   })
 }
     
-## To be copied in the UI
-# mod_process_sample_list_ui("process_sample_list_ui_1")
-    
-## To be copied in the server
-# mod_process_sample_list_server("process_sample_list_ui_1")

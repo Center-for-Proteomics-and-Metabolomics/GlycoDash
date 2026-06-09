@@ -119,7 +119,7 @@ mod_curate_based_on_controls_server <- function(id,
     observe({
       req(r$sample_types)
       if (!total_and_specific()) {
-        options <- unique(r$sample_types$sample_type)
+        options <- stats::na.omit(unique(r$sample_types$sample_type))
         
         names(options) <- paste(options, "samples")
         

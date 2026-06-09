@@ -1,18 +1,18 @@
 # This file contains all functions used in the module mod_read_data.R.
 
-# The list 'outputs' with LaCyTools outputs is used in the function
+# The list `OUTPUTS` with LaCyTools outputs is used in the function
 # 'read_lacytools'.
-max_positive_charge <- 20
-output_types <- list(
-  "Absolute Intensity (Background Subtracted, ",
-  "Mass Accuracy [ppm] (",
-  "Isotopic Pattern Quality (",
-  "S/N ("
-)
-outputs <- as.list(unlist(lapply(output_types, 
-                                 paste0,
-                                 seq_len(max_positive_charge),
-                                 "+)")))
+OUTPUTS <- as.list(unlist(lapply(
+  list(
+    "Absolute Intensity (Background Subtracted, ",
+    "Mass Accuracy [ppm] (",
+    "Isotopic Pattern Quality (",
+    "S/N ("
+  ), 
+  paste0,
+  seq_len(20),  # Max. positive charge
+  "+)"
+)))
 
 
 
@@ -43,41 +43,37 @@ outputs <- as.list(unlist(lapply(output_types,
 #' 
 read_non_rectangular <- function(path, delim = "\t") {
   
-  max_n_columns <- find_widest_row(path = path,
-                                   delim = delim)
+  max_n_columns <- find_widest_row(path = path, delim = delim)
   
   column_names <- vector()
   for (i in 1:max_n_columns) {
     column_names[i] <- paste("col", i, sep = "_")
   }
   
-  data <- read.table(path, 
-                     fill = TRUE, 
-                     header = FALSE, 
-                     col.names = column_names, 
-                     sep = delim, 
-                     blank.lines.skip = FALSE, 
-                     na.strings = c("", "0"))
+  data <- read.table(
+    path, 
+    fill = TRUE, 
+    header = FALSE, 
+    col.names = column_names, 
+    sep = delim, 
+    blank.lines.skip = FALSE, 
+    na.strings = c("", "0")
+  )
+  
   return(data)
 }
 
 
 
-
-#' Find the widest row in a non-rectangular data file (Optimized)
+#' Find the widest row in a non-rectangular data file
 #'
-#' This optimized version reads the file line-by-line using base R,
-#' minimizing memory usage and avoiding loading the whole file into RAM.
-#' It is significantly faster for large files.
-#'
-#' Error and warning handling is preserved from the original:
-#' - Aborts if file does not exist
-#' - Aborts on embedded nulls or read errors
-#' - Aborts if file is empty
-#' - Warns if delimiter appears incorrect (single column detected)
+#' Reads a file line-by-line to determine the maximum number of fields in any
+#' single line. This is used to pre-determine the column count needed by
+#' \code{\link{read_non_rectangular}}.
 #'
 #' @param path File path to non-rectangular data.
 #' @param delim The field separator used in the file.
+#'
 #' @return The number of fields/columns in the widest line (integer).
 #' @export
 find_widest_row <- function(path, delim) {
@@ -109,10 +105,14 @@ find_widest_row <- function(path, delim) {
         )
       }
     )
-    if (length(line) == 0) break
+    if (length(line) == 0) {
+      break
+    }
     lines_read <- lines_read + 1L
     n_cols <- length(strsplit(line, delim, fixed = TRUE)[[1]])
-    if (n_cols > max_cols) max_cols <- n_cols
+    if (n_cols > max_cols) {
+      max_cols <- n_cols
+    }
   }
   if (lines_read == 0L) {
     rlang::abort(
@@ -126,27 +126,28 @@ find_widest_row <- function(path, delim) {
       message = "One or more files seem to consist of a single column. Please make sure that you chose the correct delimiter for your files."
     )
   }
+  
   return(max_cols)
 }
 
 
 
-#' Convert a LaCyTools summary to a 'tidy' dataframe (Optimized)
+#' Convert a LaCyTools summary to a tidy dataframe
 #'
-#' This optimized version preserves all original error handling while
-#' improving speed and memory usage:
-#' - Uses lapply/vapply for faster mapping and type safety.
-#' - Reduces nesting and redundant joins.
-#' - Keeps aborts/warnings via rlang, as in original.
+#' Transforms a LaCyTools summary dataframe (as returned by
+#' \code{\link{read_non_rectangular}}) into a tidy long-format dataframe, with
+#' one row per analyte per charge state per sample. The analyte exact mass and
+#' fraction are joined from the summary header rows.
 #'
 #' @param data A dataframe containing a LaCyTools summary returned by
 #'   \code{\link{read_non_rectangular}}.
 #'
-#' @return This function returns a dataframe in long format, one row per analyte per charge per sample.
+#' @return A dataframe in long format with one row per analyte per charge per
+#'   sample.
 #' @export
 convert_lacytools_summary <- function(data) {
   # all_blocks: extract and tidy each output block, suppress warnings on get_block
-  all_blocks <- lapply(outputs, function(output) {
+  all_blocks <- lapply(OUTPUTS, function(output) {
     tryCatch(
       suppressWarnings(get_block(data = data, variable = output)),
       error = function(e) NULL
@@ -154,9 +155,13 @@ convert_lacytools_summary <- function(data) {
   })
   all_blocks <- all_blocks[!vapply(all_blocks, is.null, logical(1))]
   if (rlang::is_empty(all_blocks)) {
-    rlang::abort(class = "no_outputs_present",
-                 message = paste(", none of the LaCyTools output variables are present.",
-                                 "Did you choose the correct file?"))
+    rlang::abort(
+      class = "no_outputs_present",
+      message = paste(
+        ", none of the LaCyTools output variables are present.",
+        "Did you choose the correct file?"
+      )
+    )
   }
   # lengthen_block: transform each block to long format (faster with lapply)
   long_data_list <- lapply(all_blocks, lengthen_block)
@@ -164,23 +169,24 @@ convert_lacytools_summary <- function(data) {
   charges <- as.factor(vapply(long_data_list, function(x) unique(x$charge), character(1)))
   charge_sep_list <- split(long_data_list, charges)
   # Get analytes info (unchanged)
-  analytes_info <- get_analytes_info_from_list(data, outputs)
+  analytes_info <- get_analytes_info_from_list(data, OUTPUTS)
   # Efficiently join blocks and charges
   # Use Reduce over each charge group, then Reduce over all charge groups
   joined_blocks <- lapply(charge_sep_list, function(blocks) Reduce(dplyr::left_join, blocks))
   long_data <- Reduce(dplyr::full_join, joined_blocks)
   long_data <- dplyr::left_join(long_data, analytes_info, by = c("analyte", "charge"))
+  
   return(long_data)
 }
 
 
 
-#' Create a subset containing one block from a LaCyTools summary. (Optimized)
+#' Create a subset containing one block from a LaCyTools summary
 #'
-#' This optimized version preserves all error/warning handling from the original,
-#' and improves speed/memory footprint by avoiding unnecessary copies and
-#' using drop=FALSE for subsetting. It also uses more efficient checks for
-#' duplicated column names and NA removal.
+#' Extracts the rows that belong to a single named output block (e.g. a
+#' specific charge state of one LaCyTools output type), sets proper column
+#' names, removes the header and metadata rows, and adds a
+#' \code{lacytools_output} column identifying the block.
 #'
 #' @inheritParams find_block
 #'
@@ -197,17 +203,21 @@ get_block <- function(data, variable) {
   # .name_repair (and issue a warning message)
   if (any(duplicated(colnames(block)))) {
     duplicated_analytes <- unique(colnames(block)[duplicated(colnames(block))])
-    rlang::warn(class = "duplicated_analytes",
-                message = paste0(
-                  "the following analytes are present more than once: ",
-                  paste(duplicated_analytes, collapse = ", "),
-                  ". The names of the duplicates analytes are given",
-                  " a suffix ('..columnnumber') to differentiate between them."
-                ))
+    rlang::warn(
+      class = "duplicated_analytes",
+      message = paste0(
+        "the following analytes are present more than once: ",
+        paste(duplicated_analytes, collapse = ", "),
+        ". The names of the duplicates analytes are given",
+        " a suffix ('..columnnumber') to differentiate between them."
+      )
+    )
     block <- suppressMessages(tibble::tibble(block, .name_repair = "universal"))
   }
-  better_name_output <- stringr::str_remove_all(stringr::str_replace_all(tolower(variable), " ", "_"),
-                                                "[\\(\\)\\,\\/\\[\\]]")
+  better_name_output <- stringr::str_remove_all(
+    stringr::str_replace_all(tolower(variable), " ", "_"),
+    "[\\(\\)\\,\\/\\[\\]]"
+  )
   # Remove first row (column names)
   block <- block[-1, , drop = FALSE]
   # Remove columns where all values including fraction and exact mass are missing (NA)
@@ -218,16 +228,18 @@ get_block <- function(data, variable) {
   # Convert all columns except sample_name and lacytools_output to numeric
   num_cols <- setdiff(colnames(block), c("sample_name", "lacytools_output"))
   block[num_cols] <- lapply(block[num_cols], function(x) suppressWarnings(as.numeric(x)))
+  
   return(block)
 }
 
 
 
-#' Find a block in a LaCyTools summary file (Optimized)
+#' Find a block in a LaCyTools summary file
 #'
-#' This optimized version preserves all original error handling and warnings.
-#' It uses efficient base R logic for index searching, avoids unnecessary copies,
-#' and leverages the improved find_next_na for speed/memory.
+#' Locates the row indices of a named output block within a LaCyTools summary
+#' dataframe. The block starts at the row whose first column matches
+#' \code{variable} and ends just before the next all-NA row (or at the last row
+#' if no such row exists).
 #'
 #' @inheritParams find_next_na
 #' @param variable The name of a LaCyTools output format.
@@ -239,26 +251,31 @@ find_block <- function(data, variable) {
   if (rlang::is_empty(first_row)) {
     rlang::abort(
       class = "lacytools_output_not_found",
-      message = paste("Error: LaCyTools output format",
-                      variable, "is not present in the first column of the input file."))
-  } else {
+      message = paste(
+        "Error: LaCyTools output format",
+        variable, "is not present in the first column of the input file."
+      ))
+  } 
+  else {
     next_na <- find_next_na(data, first_row)
     if (length(next_na) == 0) { 
       rows <- seq.int(first_row, nrow(data))
-    } else {
+    } 
+    else {
       rows <- seq.int(first_row, next_na - 1)
     }
   }
+  
   return(rows)
 }
 
 
 
-#' Find the next empty line from a given line in a LaCyTools summary file (Optimized)
+#' Find the next empty line from a given line in a LaCyTools summary file
 #'
-#' This optimized version preserves all original error handling.
-#' - Uses efficient base R logic for index searching and comparisons.
-#' - Returns integer(0) if no next NA is found, as in the original.
+#' Searches forward from \code{row} in the first column of \code{data} and
+#' returns the index of the next row that contains only \code{NA}s. Used by
+#' \code{\link{find_block}} to determine where a block ends.
 #'
 #' @param data A dataframe with the LaCyTools summary (the result of
 #'   \code{\link{read_non_rectangular}}).
@@ -274,7 +291,9 @@ find_next_na <- function(data, row) {
   # Select only the rows after the starting row
   later_nas <- na_index[na_index > row]
   # Return the closest NA row after the starting point, or integer(0) if none
-  if (length(later_nas) == 0) return(integer(0))
+  if (length(later_nas) == 0) {
+    return(integer(0))
+  }
   later_nas[which.min(later_nas - row)]
 }
 
@@ -290,7 +309,7 @@ find_next_na <- function(data, row) {
 #' @param block A dataframe containing a block from a LaCyTools summary file
 #'   (the result of \code{\link{get_block}}).
 #' @param metadata A dataframe containing metadata in case the metadata has
-#'   already been added to the data. Defaults too \code{NULL}.
+#'   already been added to the data. Defaults to \code{NULL}.
 #'
 #' @return A dataframe containing the LaCyTools summary block in long format.
 #' @export
@@ -308,9 +327,11 @@ lengthen_block <- function(block, metadata = NULL) {
   
   long_block <- block %>% 
     dplyr::select(-lacytools_output) %>%
-    tidyr::pivot_longer(cols = -tidyselect::any_of(cols_not_to_pivot),
-                        names_to = "analyte",
-                        values_to = tidyselect::all_of(new_output_name)) %>% 
+    tidyr::pivot_longer(
+      cols = -tidyselect::any_of(cols_not_to_pivot),
+      names_to = "analyte",
+      values_to = tidyselect::all_of(new_output_name)
+    ) %>% 
     dplyr::mutate(charge = charge_value) %>% 
     dplyr::relocate(charge, .before = all_of(new_output_name)) %>% 
     # Remove leading or trailing spaces from analyte
@@ -354,18 +375,14 @@ lengthen_block <- function(block, metadata = NULL) {
 #' get_analytes_info_from_list(data = LaCyTools_summary, list_of_variables = outputs)
 get_analytes_info_from_list <- function(data, list_of_variables) {
   # Get the analytes_info for each variable and put them in a list:
-  analytes_info_list <- purrr::map(list_of_variables,
-                                   function(variable) {
-                                     analytes_info <- tryCatch({
-                                       get_analytes_info(data, variable) %>% 
-                                         dplyr::mutate(
-                                           charge = stringr::str_extract(variable, 
-                                                                         # This doesn't work for charges higher/lower than 9!
-                                                                         "\\d+[+\\-]"))
-                                     },
-                                     # Ignore list items that result in an error:
-                                     error = function(e) { })
-                                   }) 
+  analytes_info_list <- purrr::map(list_of_variables, function(variable) {
+    analytes_info <- tryCatch({
+      get_analytes_info(data, variable) %>% 
+        dplyr::mutate(charge = stringr::str_extract(variable, "\\d+[+\\-]"))
+    },
+    # Ignore list items that result in an error:
+    error = function(e) { })
+  }) 
   
   # Throw error if no matches are found:
   if (rlang::is_empty(analytes_info_list)) {
@@ -382,9 +399,9 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
   charge_sep_list <- split(analytes_info_list,
                            charges)
   # Take the first analytes_info dataframe from each list:
-  analytes_info <- purrr::map(charge_sep_list,
-                              function(x) x[[1]]) %>% 
+  analytes_info <- purrr::map(charge_sep_list, function(x) x[[1]]) %>% 
     purrr::reduce(., dplyr::full_join)
+  
   return(analytes_info)
 }
 
@@ -412,8 +429,11 @@ get_analytes_info <- function(data, variable) {
   # of that row:
   row_index_analyte_names <- which(data[ , 1] == variable)
   if (rlang::is_empty(row_index_analyte_names)){
-    stop(paste("The LaCyTools output format", variable,
-               "is not present in the input summary file"))
+    stop(paste(
+      "The LaCyTools output format", 
+      variable,
+      "is not present in the input summary file"
+    ))
   }
   # The two rows below the row with analyte names, contain the exact mass and
   # the fraction for each analyte. Subset those rows:
@@ -424,14 +444,18 @@ get_analytes_info <- function(data, variable) {
   colnames(analytes_info)[1] <- "info_variables"
   
   # .name_repair is used in case of duplicate analytes
-  analytes_info <- suppressMessages(tibble::as_tibble(analytes_info,  name_repair = "universal"))
+  analytes_info <- suppressMessages(tibble::as_tibble(
+    analytes_info,  name_repair = "universal"
+  ))
 
   # Pivot the dataframe and do some formatting:
   analytes_info <- analytes_info %>%
     dplyr::slice(-1) %>% 
-    tidyr::pivot_longer(cols = -info_variables,
-                        names_to = "analyte", 
-                        values_to = "value") %>%
+    tidyr::pivot_longer(
+      cols = -info_variables,
+      names_to = "analyte", 
+      values_to = "value"
+    ) %>%
     tidyr::pivot_wider(names_from = info_variables) %>% 
     # Remove leading or trailing spaces from the analyte column
     dplyr::mutate(analyte = trimws(analyte)) %>% 
@@ -439,11 +463,13 @@ get_analytes_info <- function(data, variable) {
     # different versions of LaCyTools these columns are named differently
     # ("Exact mass of most abundant isotopologue" in one version and
     # "Monoisotopic mass" in the other):
-    dplyr::rename(fraction = tidyselect::contains("fraction"),
-                  exact_mass = tidyselect::contains("mass")) %>% 
-    dplyr::mutate(exact_mass = purrr::map_chr(exact_mass,
-                                              function(x) stringr::str_remove_all(x, 
-                                                                                  "[\\[\\]]"))) %>% 
+    dplyr::rename(
+      fraction = tidyselect::contains("fraction"),
+      exact_mass = tidyselect::contains("mass")
+    ) %>% 
+    dplyr::mutate(exact_mass = purrr::map_chr(
+      exact_mass, function(x) stringr::str_remove_all(x, "[\\[\\]]"))
+    ) %>% 
     dplyr::mutate(dplyr::across(-analyte, ~ suppressWarnings(as.numeric(.x))))
   
   return(analytes_info)
@@ -451,106 +477,140 @@ get_analytes_info <- function(data, variable) {
 
 
 
-#'Detect whether a sample is specific or total Ig based on the sample name.
+#' Detect whether a sample is specific or total Ig based on the sample name.
 #'
-#'@param block A dataframe containing a LaCyTools summary with a column 
-#'"sample_name".
-#'@param keyword_specific The word(s)/characters within the sample name used to
-#'  refer to Specific samples.
-#'@param keyword_total The word(s)/characters within the sample name used to
-#'  refer to Total samples.
+#' @param data A dataframe containing a LaCyTools summary with a column
+#'   "sample_name".
+#' @param keyword_specific The word(s)/characters within the sample name used to
+#'   refer to Specific samples.
+#' @param keyword_total The word(s)/characters within the sample name used to
+#'   refer to Total samples.
 #'
-#'@return The dataframe containing a block from a LaCyTools summary file, with
-#'  an additional column named "group" that indicates whether a sample is
-#'  specific or total.
-#'@export
+#' @return The dataframe containing a block from a LaCyTools summary file, with
+#'   an additional column named "group" that indicates whether a sample is
+#'   specific or total.
+#' @export
 #'
-#'@examples
-#'block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total","s_8759"),
-#'                            values = c(13.56, 738.34, 4.56))
-#'detect_group(block = block_example, keyword_specific = "Specific", keyword_total = "Total")
+#' @examples
+#' block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total", "s_8759"),
+#'                             values = c(13.56, 738.34, 4.56))
+#' detect_group(data = block_example, keyword_specific = "Specific", keyword_total = "Total")
 detect_group <- function(data, keyword_specific, keyword_total) {
   data <- data %>% 
-    tidyr::extract(col = sample_name,
-                   into = "group",
-                   regex = paste0("(", keyword_specific, "|", 
-                                  keyword_total, ")"),
-                   remove = FALSE) %>% 
+    tidyr::extract(
+      col = sample_name,
+      into = "group",
+      regex = paste0("(", keyword_specific, "|", keyword_total, ")"),
+      remove = FALSE
+    ) %>% 
     dplyr::mutate(group = as.factor(group))
   
   if (!(keyword_specific %in% levels(data$group))) {
-    rlang::abort(class = "unmatched_keyword_specific",
-                 message = paste("This keyword for specific samples did not match", 
-                                 "any sample names in your data. Please choose a different keyword."))
+    rlang::abort(
+      class = "unmatched_keyword_specific",
+      message = paste(
+        "This keyword for specific samples did not match", 
+        "any sample names in your data. Please choose a different keyword."
+      )
+    )
   }
   
   if (!(keyword_total %in% levels(data$group))) {
-    rlang::abort(class = "unmatched_keyword_total",
-                 message = paste("This keyword for total samples did not match", 
-                                 "any sample names in your data. Please choose a different keyword."))
+    rlang::abort(
+      class = "unmatched_keyword_total",
+      message = paste(
+        "This keyword for total samples did not match", 
+        "any sample names in your data. Please choose a different keyword."
+      )
+    )
   }
   
   if (any(is.na(data$group))) {
-    rlang::warn(class = "NAs",
-                message = paste("Some sample names could not be classified as total or specific Ig.",
-                                "Please reconsider your keywords."))
+    rlang::warn(
+      class = "NAs",
+      message = paste(
+        "Some sample names could not be classified as total or specific Ig.",
+        "Please reconsider your keywords."
+      )
+    )
   }
+  
   return(data)
 }
 
 
 
-# A function to generate ordinal suffixes
+#' Generate an ordinal suffix for a number
+#'
+#' Returns a character string consisting of the number followed by its English
+#' ordinal suffix ("st", "nd", "rd", or "th").
+#'
+#' @param num A positive integer.
+#'
+#' @return A character string, e.g. \code{"1st"}, \code{"2nd"}, \code{"3rd"},
+#'   \code{"4th"}.
 getOrdinalSuffix <- function(num) {
   if (num %% 10 == 1 && num %% 100 != 11) {
     return(paste0(num, "st"))
-  } else if (num %% 10 == 2 && num %% 100 != 12) {
+  } 
+  else if (num %% 10 == 2 && num %% 100 != 12) {
     return(paste0(num, "nd"))
-  } else if (num %% 10 == 3 && num %% 100 != 13) {
+  } 
+  else if (num %% 10 == 3 && num %% 100 != 13) {
     return(paste0(num, "rd"))
-  } else {
+  } 
+  else {
     return(paste0(num, "th"))
   }
 }
 
 
 
-#' read_skyline_csv
+#' Read a Skyline CSV file
 #'
-#' @param path_to_file Path to Skyline CSV file
+#' Reads a Skyline-exported CSV file, automatically detecting whether the
+#' delimiter is a comma or semicolon by inspecting the first line.
 #'
-#' @return Dataframe with raw data read from CSV
+#' @param path_to_file Path to Skyline CSV file.
+#'
+#' @return A dataframe with the raw data read from the CSV.
 read_skyline_csv <- function(path_to_file) {
   L <- readLines(path_to_file, n = 1)
   if (grepl(";", L)) {
     raw_data <- read.csv(path_to_file, header = TRUE, sep = ";")
-  } else {
+  } 
+  else {
     raw_data <- read.csv(path_to_file, header = TRUE, sep = ",")
   }
+  
   return(raw_data)
 }
 
 
 
-#' rename_skyline_isomers
+#' Rename isomeric glycan compositions in Skyline data
 #' 
-#' This function detects the presence of isomers in a Skyline CSV file.
-#' When an analyte is present twice in a given charge state, the two duplicate
-#' analytes are assumed to be isomers with the same glycan composision. The glycan
-#' compositions are renamed to distinguish them.
+#' Detects the presence of isomers in a Skyline CSV file. When an analyte is
+#' present twice in a given charge state, the two duplicate analytes are assumed
+#' to be isomers with the same glycan composition. The glycan compositions are
+#' renamed to distinguish them by appending suffixes \code{"_a"}, \code{"_b"},
+#' etc. A Shiny notification is shown if isomers are detected.
 #' 
-#' @param data_renamed_cols
-#' Imported skyline CSV data from the read_skyline_csv() function, with renamed
-#' columns to have "cluster", "glycan" and "charge".
+#' @param data_renamed_cols A dataframe of imported Skyline CSV data (from
+#'   \code{\link{read_skyline_csv}}) with columns renamed to \code{"cluster"},
+#'   \code{"glycan"} and \code{"charge"}.
 #'
-#' @return
-#' Skyline CSV data with glycan compositions of isomers renamed using "_a", "_b", etc.
+#' @return A dataframe with the same structure as \code{data_renamed_cols}, with
+#'   glycan compositions of isomers renamed using \code{"_a"}, \code{"_b"},
+#'   etc.
 rename_skyline_isomers <- function(data_renamed_cols) {
   
   # Look for isomers in the glycan compositions, per peptide.
   data <- data_renamed_cols %>% 
-    dplyr::group_by(dplyr::across(tidyselect::any_of(c("protein"))), 
-                    cluster, glycan, charge) %>% 
+    dplyr::group_by(
+      dplyr::across(tidyselect::any_of(c("protein"))), 
+      cluster, glycan, charge
+    ) %>% 
     dplyr::mutate(n = dplyr::n()) %>% 
     dplyr::ungroup()
   
@@ -561,8 +621,10 @@ rename_skyline_isomers <- function(data_renamed_cols) {
   # n > 1 implies presence of isomers
   data_isomers <- data %>% 
     dplyr::filter(n > 1) %>% 
-    dplyr::group_by(dplyr::across(tidyselect::any_of(c("protein"))), 
-                    cluster, glycan, charge) %>% 
+    dplyr::group_by(
+      dplyr::across(tidyselect::any_of(c("protein"))), 
+      cluster, glycan, charge
+    ) %>% 
     dplyr::mutate(glycan_unique = make.unique(glycan)) %>% 
     dplyr::ungroup() %>% 
     # Instead of ".1", ".2", etc at the end of duplicates, add "_a","_b", to 
@@ -610,20 +672,45 @@ rename_skyline_isomers <- function(data_renamed_cols) {
 
 
 
-#' transform_skyline_data_wide
+#' Transform wide-format Skyline data into a tidy dataframe
 #'
-#' @param raw_skyline_data_wide Raw skyline data in wide format, read into R with 
-#' the read_skyline_csv() function above.
+#' Converts a wide-format Skyline CSV file (as read by
+#' \code{\link{read_skyline_csv}}) into a long-format dataframe comparable to a
+#' processed LaCyTools summary. Supports both analyte-column and
+#' cluster/glycan-column layouts.
 #'
-#' @return A clean dataframe in a similar format as a transformed
-#' LaCyTools summary. The dataframe contains the following columns:
-#' - sample_name
-#' - analyte
-#' - charge
-#' - absolute_intensity_background_subtracted
-#' - mass_accuracy_ppm
-#' - isotope_dot_product
-#' 
+#' @param raw_skyline_data_wide A dataframe of raw Skyline data in wide format,
+#'   as returned by \code{\link{read_skyline_csv}}.
+#' @param protein_colname Name of the column containing protein identifiers.
+#'   Only used when \code{analyte_colname} is also provided. Defaults to
+#'   \code{NULL}.
+#' @param analyte_colname Name of the column containing full glycopeptide
+#'   analyte identifiers (e.g. including modifications). When \code{NULL},
+#'   separate \code{cluster_colname} and \code{glycan_colname} are used
+#'   instead. Defaults to \code{NULL}.
+#' @param cluster_colname Name of the column containing glycosylation site
+#'   (cluster) identifiers. Only used when \code{analyte_colname} is
+#'   \code{NULL}. Defaults to \code{NULL}.
+#' @param glycan_colname Name of the column containing glycan composition
+#'   identifiers. Only used when \code{analyte_colname} is \code{NULL}.
+#'   Defaults to \code{NULL}.
+#' @param charge_colname Name of the column containing charge states.
+#' @param note_colname Name of an optional column containing per-analyte notes.
+#'   Defaults to \code{NULL}.
+#' @param rename_isomers Logical; if \code{TRUE} (default), isomeric glycan
+#'   compositions are automatically detected and renamed using
+#'   \code{\link{rename_skyline_isomers}}.
+#'
+#' @return A clean dataframe in a similar format as a transformed LaCyTools
+#'   summary. The dataframe contains (at minimum) the following columns:
+#'   \describe{
+#'     \item{sample_name}{Sample identifier.}
+#'     \item{analyte}{Analyte identifier (cluster + glycan).}
+#'     \item{charge}{Charge state.}
+#'     \item{total_area}{Total MS1 area.}
+#'     \item{mass_accuracy_ppm}{Average mass error in ppm.}
+#'     \item{isotope_dot_product}{Isotope dot product.}
+#'   }
 transform_skyline_data_wide <- function(raw_skyline_data_wide,
                                         protein_colname = NULL,
                                         analyte_colname = NULL,
@@ -641,7 +728,8 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
     raw_data_required <- reformat_skyline_analyte_column_wide(
       raw_skyline_data_wide, protein_colname, analyte_colname, charge_colname, note_colname
     )
-  } else {
+  } 
+  else {
     # Rename columns
     data_renamed_cols <- raw_skyline_data_wide %>% 
       dplyr::rename(
@@ -674,7 +762,7 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
   }
   
   # Check for isomers and rename them if they are present
-  if (rename_isomers == TRUE) {
+  if (rename_isomers) {
     raw_data_required <- rename_skyline_isomers(raw_data_required)
   } 
   
@@ -682,13 +770,16 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
   if (!is.null(analyte_colname)) {
     if ("note" %in% colnames(raw_data_required)) {
       cols_to_pivot <- colnames(raw_data_required)[-(1:7)]
-    } else {
+    } 
+    else {
       cols_to_pivot <- colnames(raw_data_required)[-(1:6)]
     }
-  } else {
+  } 
+  else {
     if ("note" %in% colnames(raw_data_required)) {
       cols_to_pivot <- colnames(raw_data_required)[-(1:4)]
-    } else {
+    } 
+    else {
       cols_to_pivot <- colnames(raw_data_required)[-(1:3)]
     }
   }
@@ -755,7 +846,18 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
 
 
 
-# Function to check the structure of Skyline CSV files.
+#' Check the structure of a Skyline CSV file
+#'
+#' Verifies that a Skyline CSV dataframe contains all required per-sample
+#' variable columns (\code{Total.Area.MS1}, \code{Isotope.Dot.Product}, and
+#' \code{Average.Mass.Error.PPM}). Aborts with an informative error message if
+#' any are missing.
+#'
+#' @param raw_skyline_data A dataframe of raw Skyline data, as returned by
+#'   \code{\link{read_skyline_csv}}.
+#'
+#' @return Invisibly returns \code{NULL}; called for its side effect of aborting
+#'   on invalid input.
 check_skyline_data <- function(raw_skyline_data) {
   # Check if required variables per sample name are present in the file
   required_vars <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM") 
@@ -774,11 +876,20 @@ check_skyline_data <- function(raw_skyline_data) {
 
 
 
-# Function to create abbreviations for glycosylation sites (protein + peptide)
-# Different proteins are named PrA, PrB, etc.
-# Per protein each unique peptide is given a three letter abbreviation.
-# When peptide share the first three letters, abbreviations are given suffix
-# "a", "b", "c", etc.
+#' Abbreviate glycosylation site identifiers
+#'
+#' Generates short abbreviations for unique protein–peptide combinations. Each
+#' protein is assigned a label \code{"PrA"}, \code{"PrB"}, etc. Each unique
+#' peptide within a protein is given a three-letter prefix derived from the
+#' peptide sequence. When peptides share the same three-letter prefix, the
+#' suffixes \code{"a"}, \code{"b"}, \code{"c"}, etc. are appended to
+#' distinguish them.
+#'
+#' @param protein_peptide_df A dataframe with (at least) columns \code{protein}
+#'   and \code{peptide}, where each row represents one protein–peptide pair.
+#'
+#' @return A dataframe with columns \code{protein}, \code{peptide}, and
+#'   \code{abbreviation}.
 abbreviate_glycosites <- function(protein_peptide_df) {
   
   df <- protein_peptide_df %>% 
@@ -803,7 +914,29 @@ abbreviate_glycosites <- function(protein_peptide_df) {
 }
 
 
-
+#' Reformat a wide Skyline dataframe that uses a single analyte column
+#'
+#' When Skyline data is exported with a single column for the full glycopeptide
+#' analyte (rather than separate cluster and glycan columns), this function
+#' parses that column to extract the peptide sequence, glycan composition,
+#' methionine oxidation count, and glycosylation site abbreviation. The
+#' resulting dataframe uses the same \code{cluster}/\code{glycan} column
+#' structure expected by \code{\link{transform_skyline_data_wide}}.
+#'
+#' @param raw_skyline_data_wide A dataframe of raw Skyline data in wide format,
+#'   as returned by \code{\link{read_skyline_csv}}.
+#' @param protein_colname Name of the column containing protein identifiers.
+#' @param analyte_colname Name of the column containing full glycopeptide
+#'   analyte identifiers (including modification annotations).
+#' @param charge_colname Name of the column containing charge states.
+#' @param note_colname Name of an optional column containing per-analyte notes.
+#'   Pass \code{NULL} if not present.
+#'
+#' @return A dataframe with columns \code{protein}, \code{peptide},
+#'   \code{cluster}, \code{glycan}, \code{charge}, \code{oxidation}, and
+#'   optionally \code{note}, followed by the per-sample measurement columns
+#'   (\code{Total.Area.MS1}, \code{Isotope.Dot.Product},
+#'   \code{Average.Mass.Error.PPM}).
 reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide, 
                                                  protein_colname,
                                                  analyte_colname, 
@@ -888,7 +1021,8 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
     to_return <- dplyr::mutate_at(
       raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5, -6, -7), as.numeric
     )  
-  } else {
+  } 
+  else {
     to_return <- dplyr::mutate_at(
       raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5, -6), as.numeric
     ) 
@@ -898,16 +1032,17 @@ reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide,
 }
 
 
-#' @title Read SweetSuite Data
+#' Read one or more SweetSuite output Excel files
 #' 
 #' @description 
-#' This function reads one or more SweetSuite output Excel files.
+#' Reads the \code{"Data"} sheet from one or more SweetSuite output Excel
+#' files, checks for required columns, renames columns for consistency with
+#' LaCyTools data, and returns all files combined into a single dataframe.
 #' 
 #' @param datapaths A character vector of file paths to the SweetSuite output Excel files.
 #' 
-#' @return A dataframe combining the 'Data' tabs from all input Excel files.
-#' 
-# Read one or more SweetSuite output Excel files.
+#' @return A dataframe combining the \code{"Data"} sheets from all input Excel
+#'   files, with columns renamed to match the LaCyTools data format.
 read_sweetsuite_data <- function(datapaths) {
 
   result <- lapply(seq_along(datapaths), function(i) {
@@ -935,9 +1070,11 @@ read_sweetsuite_data <- function(datapaths) {
     )
 
     # Check for required columns
-    required_cols <- c("file", "analyte", "charge", "mz_exact", "isotopic_fraction",
-                       "total_area_background_subtracted", "mass_error_ppm",
-                       "isotopic_pattern_quality", "signal_to_noise")
+    required_cols <- c(
+      "file", "analyte", "charge", "mz_exact", "isotopic_fraction",
+      "total_area_background_subtracted", "mass_error_ppm",
+      "isotopic_pattern_quality", "signal_to_noise"
+    )
     missing_cols <- setdiff(required_cols, colnames(data))
     if (length(missing_cols) > 0) {
       rlang::abort(

@@ -200,6 +200,19 @@ mod_export_server <- function(id,
             NULL
           }
         )
+        
+        skipped_curation_plots <- tryCatch(
+          expr = {
+            purrr::map(
+              results_spectra_curation$skipped_curation_plots(),
+              function(plot) {
+                do.call(plot, args = list())
+              })
+          },
+          error = function(e) {
+            NULL
+          }
+        )
       
         
         # We do the same thing as above for the analyte curation tabs:
@@ -319,6 +332,7 @@ mod_export_server <- function(id,
           spectra_curation_tab_contents = spectra_curation_tab_contents,
           curated_spectra_plots = curated_spectra_plots,
           skipped_spectra_curation_plots = results_spectra_curation$skipped_spectra_curation_plots(),
+          skipped_curation_plots = skipped_curation_plots,
           # Analyte curation
           # NOTE: Some of these try_call() may not be necessary...
           analyte_curation_method = try_call(results_analyte_curation$method),

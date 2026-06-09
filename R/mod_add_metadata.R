@@ -30,7 +30,7 @@ mod_add_metadata_ui <- function(id){
             title = "Explanation",
             content = HTML(
               "
-              Your metadata Excel file should contain a named column that contains the sample ID's,
+              Your metadata Excel file should contain a named column that contains the sample IDs,
               and one or more named columns with metadata (e.g. \"age\", \"sex\", \"disease\").
               <br> <br>
               Each sample ID should be present only once in your file, even if it is present
@@ -41,7 +41,8 @@ mod_add_metadata_ui <- function(id){
             ),
             trigger = "hover", 
             placement = "right",
-            html = "true"),
+            html = "true"
+          ),
         shinyWidgets::dropdownButton(
           tags$style(HTML(paste0(
             "#",
@@ -51,22 +52,28 @@ mod_add_metadata_ui <- function(id){
             ns("dropdown_content"),
             " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
           ))),
-          div(id = ns("dropdown_content"),
-              downloadButton(ns("download_example_metadata"),
-                             "Download a metadata example file")),
-          icon = icon("paperclip",
-                      class = "ml"),
-          tooltip = shinyWidgets::tooltipOptions(placement = "top",
-                                                 title = "Examples"),
+          div(
+            id = ns("dropdown_content"),
+            downloadButton(
+              ns("download_example_metadata"),
+              "Download a metadata example file"
+            )
+          ),
+          icon = icon("paperclip", class = "ml"),
+          tooltip = shinyWidgets::tooltipOptions(
+            placement = "top", title = "Examples"
+          ),
           width = "330px",
           size = "xs"
         )),
       width = NULL,
       solidHeader = TRUE,
       status = "primary",
-      fileInput(ns("file"), 
-                "Upload one or more metadata Excel file(s) or R object(s):",
-                multiple = TRUE),
+      fileInput(
+        ns("file"), 
+        "Upload one or more metadata Excel file(s) or R object(s):",
+        multiple = TRUE
+      ),
       div(
         id = ns("metadata_menu"),
         uiOutput(ns("sample_id"))
@@ -75,10 +82,13 @@ mod_add_metadata_ui <- function(id){
   )
 }
     
+
 #' add_metadata Server Functions
 #'
 #' @noRd 
-mod_add_metadata_server <- function(id, data) {
+mod_add_metadata_server <- function(
+    id, 
+    data) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -89,16 +99,15 @@ mod_add_metadata_server <- function(id, data) {
       
       shinyFeedback::hideFeedback("file")
       
-      metadata_list <- tryCatch({
+      tryCatch({
         read_metadata(input$file$datapath, input$file$name)
       }, error = function(e) {
         shinyFeedback::feedbackDanger(
           "file", show = TRUE, text = "Please upload a .xlsx, .xls or .rds file"
         )
-        return(NULL)
+        NULL
       })
       
-      return(metadata_list)
     })
     
 
@@ -111,8 +120,10 @@ mod_add_metadata_server <- function(id, data) {
     # number of metadata files that were uploaded:
     sample_id_inputIds <- reactive({
       req(metadata_list())
-      purrr::map(seq_len(length(metadata_list())),
-                 ~ paste0("sample_id_column", .x))
+      purrr::map(
+        seq_len(length(metadata_list())),
+        ~ paste0("sample_id_column", .x)
+      )
     })
     
     
@@ -120,36 +131,42 @@ mod_add_metadata_server <- function(id, data) {
     # created is the same as the number of metadata files that were uploaded.
     output$sample_id <- renderUI({
       req(sample_id_inputIds())
-      purrr::pmap(list(sample_id_inputIds(),
-                       metadata_list(),
-                       names(metadata_list())),
-                  function(inputId, metadata, metadata_name) { 
-                    selectizeInput(
-                      ns(inputId),
-                      label = paste("Which column in", 
-                                    metadata_name, 
-                                    "contains the sample ID's?"),
-                      # The choices for each input correspond to the names of the 
-                      # columns in the metadata file:
-                      choices = c("", unique(colnames(metadata))),
-                      selected = NULL,
-                      multiple = FALSE,
-                      options = list(placeholder = "select a column"))
-                  })
+      purrr::pmap(
+        list(sample_id_inputIds(), metadata_list(), names(metadata_list())),
+        function(inputId, metadata, metadata_name) { 
+          selectizeInput(
+            ns(inputId),
+            label = paste(
+              "Which column in", 
+              metadata_name, 
+              "contains the sample IDs?"),
+            # The choices for each input correspond to the names of the 
+            # columns in the metadata file:
+            choices = c("", unique(colnames(metadata))),
+            selected = NULL,
+            multiple = FALSE,
+            options = list(placeholder = "select a column")
+          )
+        }
+      )
     })
     
     # Hide the metadata menu until metadata is uploaded:
     observe({
-      shinyjs::toggle("metadata_menu", 
-                      condition = is_truthy(metadata_list()))
+      shinyjs::toggle(
+        "metadata_menu", 
+        condition = is_truthy(metadata_list())
+      )
     })
     
     # Check if the inputs for the sample ID columns have been filled in by the
     # user.
     sample_id_inputs_completed <- reactive({
       if (is_truthy(sample_id_inputIds())) {
-        all(purrr::map_lgl(sample_id_inputIds(),
-                           ~ is_truthy(input[[.x]])))
+        all(purrr::map_lgl(
+          sample_id_inputIds(),
+          ~ is_truthy(input[[.x]])
+        ))
       } 
       else TRUE
     })
@@ -162,44 +179,45 @@ mod_add_metadata_server <- function(id, data) {
     merged_metadata <- reactive({
       req(
         metadata_list(),
-        all(purrr::map_lgl(sample_id_inputIds(),
-                           ~ isTruthy(input[[.x]])))
+        all(purrr::map_lgl(
+          sample_id_inputIds(),
+          ~ isTruthy(input[[.x]])
+        ))
       )
       # For all metadata files in the metadata_list: Rename the column that the
       # user indicated as the sample ID column to "sample_id" so that the
       # metadata can later be joined with the data using the sample_id column as
       # the key:
       prepped_metadata <- purrr::pmap(
-        list(metadata_list(),
-             sample_id_inputIds()),
-        function(metadata, 
-                 sample_id_inputId) {
+        list(metadata_list(), sample_id_inputIds()),
+        function(metadata, sample_id_inputId) {
           sample_id_column <- input[[sample_id_inputId]]
           
-          renamed <- tryCatch(
+          tryCatch(
             expr = {
               rename_sample_id_column(metadata = metadata,
                                       sample_id_column = sample_id_column)
           },
           sample_id_conflict = function(c) {
-            showNotification(c$message,
-                             type = "warning",
-                             duration = NULL)
+            showNotification(
+              c$message,
+              type = "warning",
+              duration = NULL
+            )
             
-            rename_sample_id_column(metadata = metadata,
-                                    sample_id_column = sample_id_column)
+            rename_sample_id_column(
+              metadata = metadata,
+              sample_id_column = sample_id_column
+            )
           })
-          
-          return(renamed)
         })
 
       # Join all the metadata together (in case the user uploaded more than one
       # metadata file):
-      merged_metadata <- purrr::reduce(prepped_metadata,
-                                       dplyr::full_join,
-                                       by = "sample_id")
+      merged_metadata <- purrr::reduce(
+        prepped_metadata, dplyr::full_join, by = "sample_id"
+      )
 
-      
       # Check for column names that are not allowed.
       # Vector will be length 0 if there are no forbidden column names.
       
@@ -226,12 +244,15 @@ mod_add_metadata_server <- function(id, data) {
           showConfirmButton = TRUE
         )
         
-        shinyFeedback::feedbackDanger("file", show = TRUE, text = "Please adjust your metadata file.")
+        shinyFeedback::feedbackDanger(
+          "file", show = TRUE, text = "Please adjust your metadata file."
+        )
 
-        return(NULL)
-      } else {
+        NULL
+      } 
+      else {
         rv$forbidden_colnames <- NULL
-        return(merged_metadata)
+        merged_metadata
       }
     })
     
@@ -245,12 +266,14 @@ mod_add_metadata_server <- function(id, data) {
           columnDefs = list(
             list(
               className = 'dt-center',
-              targets = "_all"))),
+              targets = "_all"
+            )
+          )
+        ),
         colnames = "Column name",
         rownames = FALSE
       )
     }) 
-    
     
     
     # Check for duplicate sample IDs
@@ -258,16 +281,18 @@ mod_add_metadata_server <- function(id, data) {
       req(merged_metadata())
       sample_ids <- merged_metadata()$sample_id
       all_unique <- length(sample_ids) == length(unique(sample_ids))
+      
       if (all_unique) {
         rv$non_unique_ids <- NULL
-        return(TRUE)
-      } else {
+        TRUE
+      } 
+      else {
         # Show table with duplicate sample IDs
         rv$non_unique_ids <- sample_ids[duplicated(sample_ids)]
         shinyalert::shinyalert(
           html = TRUE,
           text = paste(
-            "The following sample ID's are present more than once in your file:",
+            "The following sample IDs are present more than once in your file:",
             shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_duplicates")))
           ),
           size = "m",
@@ -277,9 +302,11 @@ mod_add_metadata_server <- function(id, data) {
           showConfirmButton = TRUE
         )
         
-        shinyFeedback::feedbackDanger("file", show = TRUE, text = "Please adjust your metadata file.")
+        shinyFeedback::feedbackDanger(
+          "file", show = TRUE, text = "Please adjust your metadata file."
+        )
         
-        return(FALSE)
+        FALSE
       }
     })
     
@@ -293,7 +320,10 @@ mod_add_metadata_server <- function(id, data) {
           columnDefs = list(
             list(
               className = 'dt-center',
-              targets = "_all"))),
+              targets = "_all"
+            )
+          )
+        ),
         colnames = "sample_id",
         rownames = FALSE
       )
@@ -302,21 +332,25 @@ mod_add_metadata_server <- function(id, data) {
     
     # Check for unmatched id's
     unmatched_ids <- reactive({
-      req(merged_metadata(),
-          unique_sample_ids() == TRUE,
-          data())
+      req(
+        merged_metadata(),
+        unique_sample_ids() == TRUE,
+        data()
+      )
       unmatched <- setdiff(
         data()$sample_id, merged_metadata()$sample_id
       )
       
       if (rlang::is_empty(unmatched)) {
-        return("none")
-      } else {
-        return(unmatched)
+        "none"
+      } 
+      else {
+        unmatched
       }
     })
     
-    # If there are unmatched sample ID's a pop-up is shown.
+    
+    # If there are unmatched sample IDs a pop-up is shown.
     observe({
       req(!isTRUE(all.equal(unmatched_ids(), "none")))
       shinyalert::shinyalert(
@@ -324,13 +358,13 @@ mod_add_metadata_server <- function(id, data) {
         html = TRUE,
         text = paste(
           length(unmatched_ids()),
-          "sample ID's in the data had no match in the metadata:",
+          "sample IDs in the data had no match in the metadata:",
           shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_unmatched"))),
           "<br>Please check: 1) Does the spelling of sample IDs in your metadata correspond to the spelling in your plate design?",
           "and 2) Have you selected the correct sample ID columns?"
         ),
         size = "m",
-        confirmButtonText = "Add the metadata despite the unmatched ID's",
+        confirmButtonText = "Add the metadata despite the unmatched IDs",
         confirmButtonCol = "#3c8dbc",
         showCancelButton = TRUE,
         cancelButtonText = "Don't add the metadata now",
@@ -341,35 +375,41 @@ mod_add_metadata_server <- function(id, data) {
     output$popup_table_unmatched <- DT::renderDataTable({
       req(!isTRUE(all.equal(unmatched_ids(), "none")))
       unmatched <- matrix(unmatched_ids())
-      table <- DT::datatable(unmatched,
-                             options = list(
-                               scrollY = "150px",
-                               paging = FALSE,
-                               searching = FALSE,
-                               columnDefs = list(
-                                 list(
-                                   className = 'dt-center',
-                                   targets = "_all"))),
-                             colnames = "Sample ID",
-                             rownames = FALSE)
-
-      return(table)
+      DT::datatable(
+        unmatched,
+        options = list(
+          scrollY = "150px",
+          paging = FALSE,
+          searching = FALSE,
+          columnDefs = list(
+            list(
+              className = 'dt-center',
+              targets = "_all"
+            )
+          )
+        ),
+        colnames = "Sample ID",
+        rownames = FALSE
+      )
     },
     server = FALSE)
     
     
     
     with_metadata <- reactive({
-      req(unmatched_ids(), !is.null(merged_metadata()), unique_sample_ids() == TRUE)
+      req(
+        unmatched_ids(), 
+        !is.null(merged_metadata()), 
+        unique_sample_ids() == TRUE
+      )
       if(any(
         isTRUE(all.equal(unmatched_ids(), "none")),
         is_truthy(input$popup)
       )) {
-        dplyr::left_join(data(),
-                         merged_metadata(),
-                         by = "sample_id") %>% 
+        dplyr::left_join(data(), merged_metadata(), by = "sample_id") %>% 
           dplyr::relocate(colnames(merged_metadata())[-1], .after = sample_id)
-      } else {
+      } 
+      else {
         NULL
       }
     })
@@ -379,10 +419,12 @@ mod_add_metadata_server <- function(id, data) {
     output$download_example_metadata <- downloadHandler(
       filename = "metadata_example.xlsx",
       content = function(file) {
-        example_file <- system.file("app",
-                                    "www",
-                                    "metadata_example.xlsx",
-                                    package = "GlycoDash")
+        example_file <- system.file(
+          "app",
+          "www",
+          "metadata_example.xlsx",
+          package = "GlycoDash"
+        )
         file.copy(example_file, file)
       }
     )
@@ -397,7 +439,8 @@ mod_add_metadata_server <- function(id, data) {
       data = with_metadata,
       filenames_metadata = filenames_metadata, # pass the filenames along for the report
       merged_metadata = merged_metadata_to_return  # for combining with normalized data
-      ))
+    ))
     
   })
 }
+

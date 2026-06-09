@@ -17,6 +17,7 @@ man/
 *.md
 *.Rmd
 NEWS.md
+!NEWS.md
 README.md
 README.Rmd
 dev/

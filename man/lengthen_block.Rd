@@ -11,7 +11,7 @@ lengthen_block(block, metadata = NULL)
 (the result of \code{\link{get_block}}).}
 
 \item{metadata}{A dataframe containing metadata in case the metadata has
-already been added to the data. Defaults too \code{NULL}.}
+already been added to the data. Defaults to \code{NULL}.}
 }
 \value{
 A dataframe containing the LaCyTools summary block in long format.

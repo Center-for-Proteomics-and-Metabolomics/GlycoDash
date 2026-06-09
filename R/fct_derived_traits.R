@@ -76,7 +76,8 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   # Divide by the sum of all complex-type glycans if necessary
   if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation",
                           "mono_antennary", "tri_antennary", "antennarity", 
-                          "antennary_fucosylation", "alpha_galactosylation")) {
+                          "antennary_fucosylation", "alpha_galactosylation",
+                          "sulfation")) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::filter(complex == 1)
     # Check if all passing glycans were already complex-type, if not adjust formula
@@ -107,7 +108,8 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   }
   # Divide some O-glycan traits by 100
   else if (target_trait %in% c("sialic_acids", "galactoses", "galnacs",
-                               "Tn_antigens", "T_antigens", "sT_antigens")) {
+                               "Tn_antigens", "T_antigens", "sT_antigens",
+                               "disialylated_O_antigens")) {
     clean_formula_string <- paste0("(", clean_formula_string, ") / 100")
   }
   
@@ -166,7 +168,8 @@ match_traits <- function(traits_ui_input) {
     "Sialyl-T (sT) antigens" = "sT_antigens",
     "Disialylated O-antigens" = "disialylated_O_antigens",
     "\u03B1-1,3-galactosylation of complex-type glycans" = "alpha_galactosylation",
-    "Sialylation (N-glycolylneuraminic acid) per antenna of complex-type glycans" = "sialylation"
+    "Sialylation (N-glycolylneuraminic acid) per antenna of complex-type glycans" = "sialylation",
+    "Sulfation of complex-type glycans" = "sulfation"
   )
   matched_traits <- traits_ui_input
   for (description in names(traits)) {
@@ -363,7 +366,7 @@ traits_vs_intensity_plot <- function(data_to_plot, cluster) {
     ggplot2::labs(x = paste(cluster, "sum intensity"), y = "Relative abundance") +
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(color = "black", fill = NA, size = 0.5),
+      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 0.5),
       strip.background = ggplot2::element_rect(fill = "#F6F6F8")
     ) +
     ggplot2::scale_color_manual(values = my_palette, name = "Sample type")
