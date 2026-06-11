@@ -56,8 +56,8 @@ _This method uses a reproducible R environment managed by renv._
     Optionally, you can click `Open in browser` (this should look better).
 
 ## How to use GlycoDash
-When running GlycoDash in Docker, click the book icon in the rop-right corner to download a user manual in PDF format.
-Alternatively, download the manual for the latest release [here](https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/releases).
+When running GlycoDash in Docker, click the book icon in the rop-right corner to download a user guide in PDF format.
+Alternatively, download the user guide for the latest release [here](https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash/releases).
 
 
 ## Branches

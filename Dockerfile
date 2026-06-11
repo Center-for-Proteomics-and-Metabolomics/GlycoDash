@@ -43,7 +43,7 @@ RUN tlmgr update --self \
     && cd docs/user_guide \
     && pdflatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex \
     && pdflatex -interaction=nonstopmode -halt-on-error -file-line-error main.tex \
-    && cp main.pdf /build_zone/inst/app/www/GlycoDash_manual.pdf
+    && cp main.pdf /build_zone/inst/app/www/GlycoDash_user_guide.pdf
 
 # Install the local package and clean up build artifacts
 RUN R -e 'renv::install(".", repos = getOption("repos"))' \
