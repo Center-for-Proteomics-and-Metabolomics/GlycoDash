@@ -1,1 +1,50 @@
-*.Rproj text eol=lf
+# Default: treat files as text and normalize to LF in the repository
+* text=auto
+
+# R / R package source files
+*.R        text eol=lf
+*.Rmd      text eol=lf
+*.Rproj    text eol=lf
+*.Rprofile text eol=lf
+*.Renviron text eol=lf
+DESCRIPTION text eol=lf
+NAMESPACE   text eol=lf
+renv.lock   text eol=lf
+
+# Documentation / markdown / LaTeX
+*.md     text eol=lf
+*.tex    text eol=lf
+*.bib    text eol=lf
+*.sty    text eol=lf
+*.cls    text eol=lf
+
+# Config / scripts
+Dockerfile text eol=lf
+*.yml      text eol=lf
+*.yaml     text eol=lf
+*.json     text eol=lf
+*.sh       text eol=lf
+*.txt      text eol=lf
+
+# R documentation files
+*.Rd text eol=lf
+
+# Web / vector text assets
+*.svg text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+
+# Binary files: never normalize line endings
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.ico      binary
+*.pdf      binary
+*.xlsx     binary
+*.xls      binary
+*.rda      binary
+*.RData    binary
+*.gz       binary
+*.zip      binary
