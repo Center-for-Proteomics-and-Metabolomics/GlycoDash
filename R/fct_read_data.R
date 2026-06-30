@@ -588,6 +588,229 @@ read_skyline_csv <- function(path_to_file) {
 
 
 
+#' Check the structure of a Skyline CSV file
+#'
+#' Verifies that a Skyline CSV dataframe contains all required per-sample
+#' variable columns (\code{Total.Area.MS1}, \code{Isotope.Dot.Product}, and
+#' \code{Average.Mass.Error.PPM}). Shows an informative error message and
+#' returns NULLL if data is missing. Returns the data otherwise.
+#'
+#' @param raw_skyline_data A dataframe of raw Skyline data, as returned by
+#'   \code{\link{read_skyline_csv}}.
+#'
+#' @return NULL if required columns are missing, otherwise returns the data.
+check_skyline_data <- function(raw_skyline_data) {
+
+  required_vars <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM") 
+  vars_check <- sapply(required_vars, function(x) any(grepl(x, colnames(raw_skyline_data))))
+  missing_vars <- required_vars[!vars_check]
+  
+  if (length(missing_vars) > 0) {
+    message <- paste0(
+      "The following variables are missing from your data: ",
+      paste0(gsub("\\.", " ", missing_vars), collapse = ", ")
+    )
+    showNotification(message, type = "error", duration = NULL)
+    
+    return(NULL)
+  }
+  
+  return(raw_skyline_data)
+}
+
+
+
+#' Reformat a wide Skyline dataframe that uses a single analyte column
+#'
+#' When Skyline data is exported with a single column for the full glycopeptide
+#' analyte (rather than separate cluster and glycan columns), this function
+#' parses that column to extract the peptide sequence, glycan composition,
+#' methionine oxidation count, and glycosylation site abbreviation. The
+#' resulting dataframe uses the same \code{cluster}/\code{glycan} column
+#' structure expected by \code{\link{transform_skyline_data_wide}}.
+#'
+#' @param raw_skyline_data_wide A dataframe of raw Skyline data in wide format,
+#'   as returned by \code{\link{read_skyline_csv}}.
+#' @param protein_colname Name of the column containing protein identifiers.
+#' @param analyte_colname Name of the column containing full glycopeptide
+#'   analyte identifiers (including modification annotations).
+#' @param charge_colname Name of the column containing charge states.
+#' @param note_colname Name of an optional column containing per-analyte notes.
+#'   Pass \code{NULL} if not present.
+#'
+#' @return A dataframe with columns \code{protein}, \code{peptide},
+#'   \code{cluster}, \code{glycan}, \code{charge}, \code{oxidation}, and
+#'   optionally \code{note}, followed by the per-sample measurement columns
+#'   (\code{Total.Area.MS1}, \code{Isotope.Dot.Product},
+#'   \code{Average.Mass.Error.PPM}).
+reformat_skyline_analyte_column_wide <- function(
+    raw_skyline_data_wide, 
+    protein_colname,
+    analyte_colname, 
+    charge_colname,
+    note_colname,
+    molecular_formula_colname
+  ) {
+  
+  # Rename columns
+  data_renamed_cols <- raw_skyline_data_wide %>% 
+    dplyr::rename(
+      protein = tidyselect::all_of(protein_colname),
+      glycopeptide = tidyselect::all_of(analyte_colname),
+      charge = tidyselect::all_of(charge_colname)
+    )
+  
+  # Conditionally add the note and molecular formula columns
+  if (!is.null(note_colname)) {
+    data_renamed_cols <- data_renamed_cols %>% 
+      dplyr::rename(note = tidyselect::all_of(note_colname))
+  }
+  
+  if (!is.null(molecular_formula_colname)) {
+    data_renamed_cols <- data_renamed_cols %>% 
+      dplyr::rename(molecular_formula = tidyselect::all_of(molecular_formula_colname))
+  }
+  
+  # Select required data.
+  raw_data_required <- data_renamed_cols %>% 
+    dplyr::select(
+      protein, glycopeptide, charge, tidyselect::any_of(c("note", "molecular_formula")),
+      tidyselect::contains(c(
+        # Variables
+        "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM",
+        # Optional for GlyCounter merging
+        "Best.Retention.Time", "Min.Start.Time", "Max.End.Time"
+      ))
+    )
+  
+  # Reformat and annotate data
+  raw_data_modifications <- data_renamed_cols %>%
+    dplyr::mutate(
+      # Count number of oxidized methionines
+      oxidation = stringr::str_count(
+        glycopeptide, "\\[Oxidation \\(M\\)\\]|\\[Oxi\\]"
+      ),
+      # Remove CAM modifications
+      glycopeptide_cam_removed = stringr::str_remove_all(
+        glycopeptide, "\\[Carbamidomethyl \\(C\\)\\]|\\[CAM\\]"
+      ),
+      # Remove oxidation to extract unmodified peptide
+      glycopeptide_oxi_removed = stringr::str_remove_all(
+        glycopeptide_cam_removed, "\\[Oxidation \\(M\\)\\]|\\[Oxi\\]"
+      ),
+      # Extract glycan and peptide sequence
+      glycan = stringr::str_extract(glycopeptide_oxi_removed, "(?<=\\[).+?(?=\\])"),
+      peptide = stringr::str_replace_all(glycopeptide_oxi_removed, "\\[.+?\\]", ""),
+      
+      .after = charge
+    )
+  
+  # Generate abbreviations for glycosylation sites
+  glycosites <- abbreviate_glycosites(
+    protein_peptide_df = data.frame(
+      protein = raw_data_modifications$protein,
+      peptide = raw_data_modifications$peptide
+    )
+  )
+  
+  # Final processing
+  raw_data_reformatted <- raw_data_modifications %>% 
+    dplyr::left_join(glycosites) %>% 
+    dplyr::relocate(abbreviation, .after = peptide) %>% 
+    dplyr::rename(cluster = abbreviation) %>% 
+    dplyr::mutate(
+      cluster = dplyr::case_when(
+        oxidation > 0 ~ paste0(cluster, strrep("Ox", oxidation)),
+        TRUE ~ cluster
+      )
+    ) %>% 
+    # Move some columns to front
+    dplyr::select(
+      protein, peptide, cluster, glycan, charge, oxidation, 
+      tidyselect::any_of(c("note", "molecular_formula")),
+      tidyselect::contains(c(
+        "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM",
+        "Best.Retention.Time", "Min.Start.Time", "Max.End.Time"
+      ))
+    ) %>% 
+    dplyr::mutate(oxidation = as.character(oxidation))
+  
+  # Convert numeric columns
+  raw_data_reformatted[raw_data_reformatted == "#N/A"] <- NA
+  
+  note_in <- "note" %in% colnames(raw_data_reformatted)
+  formula_in <- "molecular_formula" %in% colnames(raw_data_reformatted)
+  
+  non_numeric <- 6 + as.integer(note_in) + as.integer(formula_in)
+  
+  numeric <- raw_data_reformatted %>% 
+    dplyr::mutate(
+      dplyr::across(-(1:non_numeric), as.numeric)
+    )
+  
+  return(numeric)
+}
+
+
+
+# Reformat raw Skyline data when it has separate columsn for glycosylation
+# site and glycans.
+reformat_skyline_data <- function(
+    raw_skyline_data_wide,  
+    cluster_colname,
+    glycan_colname,
+    charge_colname,
+    notes_colname,
+    molecular_formula_colname
+) {
+  # Rename columns
+  data_renamed_cols <- raw_skyline_data_wide %>% 
+    dplyr::rename(
+      cluster = tidyselect::all_of(cluster_colname),
+      glycan = tidyselect::all_of(glycan_colname),
+      charge = tidyselect::all_of(charge_colname)
+    )
+  
+  # Conditionally add the note and molecular formula columns
+  if (!is.null(note_colname)) {
+    data_renamed_cols <- data_renamed_cols %>% 
+      dplyr::rename(note = tidyselect::all_of(note_colname))
+  }
+  
+  if (!is.null(molecular_formula_colname)) {
+    data_renamed_cols <- data_renamed_cols %>% 
+      dplyr::rename(molecular_formula = tidyselect::all_of(molecular_formula_colname))
+  }
+ 
+  # Select required columns.
+  raw_data_required <- data_renamed_cols %>% 
+    dplyr::select(
+      cluster, glycan, charge,
+      tidyselect::any_of(c("note", "molecular_formula")),
+      tidyselect::contains(c(
+        "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM",
+        "Best.Retention.Time", "Min.Start.Time", "Max.End.Time"
+      ))
+    )
+  
+  # Convert numeric columns
+  raw_data_required[raw_data_required == "#N/A"] <- NA
+  
+  note_in <- "note" %in% colnames(raw_data_reformatted)
+  formula_in <- "molecular_formula" %in% colnames(raw_data_reformatted)
+  
+  non_numeric <- 3 + as.integer(note_in) + as.integer(formula_in)
+  
+  numeric <- raw_data_reformatted %>% 
+    dplyr::mutate(
+      dplyr::across(-(1:non_numeric), as.numeric)
+    )
+  
+  return(numeric)
+}
+
+
+
 #' Rename isomeric glycan compositions in Skyline data
 #' 
 #' Detects the presence of isomers in a Skyline CSV file. When an analyte is
@@ -846,34 +1069,6 @@ transform_skyline_data_wide <- function(raw_skyline_data_wide,
 
 
 
-#' Check the structure of a Skyline CSV file
-#'
-#' Verifies that a Skyline CSV dataframe contains all required per-sample
-#' variable columns (\code{Total.Area.MS1}, \code{Isotope.Dot.Product}, and
-#' \code{Average.Mass.Error.PPM}). Aborts with an informative error message if
-#' any are missing.
-#'
-#' @param raw_skyline_data A dataframe of raw Skyline data, as returned by
-#'   \code{\link{read_skyline_csv}}.
-#'
-#' @return Invisibly returns \code{NULL}; called for its side effect of aborting
-#'   on invalid input.
-check_skyline_data <- function(raw_skyline_data) {
-  # Check if required variables per sample name are present in the file
-  required_vars <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM") 
-  vars_check <- sapply(required_vars, function(x) any(grepl(x, colnames(raw_skyline_data))))
-  missing_vars <- required_vars[!vars_check]
-  if (length(missing_vars) > 0) {
-    rlang::abort(
-      class = "missing_variables",
-      message = paste0(
-        "The following variables are missing from your data: ",
-        paste0(gsub("\\.", " ", missing_vars), collapse = ", ")
-      )
-    )
-  }
-}
-
 
 
 #' Abbreviate glycosylation site identifiers
@@ -914,122 +1109,7 @@ abbreviate_glycosites <- function(protein_peptide_df) {
 }
 
 
-#' Reformat a wide Skyline dataframe that uses a single analyte column
-#'
-#' When Skyline data is exported with a single column for the full glycopeptide
-#' analyte (rather than separate cluster and glycan columns), this function
-#' parses that column to extract the peptide sequence, glycan composition,
-#' methionine oxidation count, and glycosylation site abbreviation. The
-#' resulting dataframe uses the same \code{cluster}/\code{glycan} column
-#' structure expected by \code{\link{transform_skyline_data_wide}}.
-#'
-#' @param raw_skyline_data_wide A dataframe of raw Skyline data in wide format,
-#'   as returned by \code{\link{read_skyline_csv}}.
-#' @param protein_colname Name of the column containing protein identifiers.
-#' @param analyte_colname Name of the column containing full glycopeptide
-#'   analyte identifiers (including modification annotations).
-#' @param charge_colname Name of the column containing charge states.
-#' @param note_colname Name of an optional column containing per-analyte notes.
-#'   Pass \code{NULL} if not present.
-#'
-#' @return A dataframe with columns \code{protein}, \code{peptide},
-#'   \code{cluster}, \code{glycan}, \code{charge}, \code{oxidation}, and
-#'   optionally \code{note}, followed by the per-sample measurement columns
-#'   (\code{Total.Area.MS1}, \code{Isotope.Dot.Product},
-#'   \code{Average.Mass.Error.PPM}).
-reformat_skyline_analyte_column_wide <- function(raw_skyline_data_wide, 
-                                                 protein_colname,
-                                                 analyte_colname, 
-                                                 charge_colname,
-                                                 note_colname) {
-  
-  # Rename columns
-  data_renamed_cols <- raw_skyline_data_wide %>% 
-    dplyr::rename(
-      protein = tidyselect::all_of(protein_colname),
-      glycopeptide = tidyselect::all_of(analyte_colname),
-      charge = tidyselect::all_of(charge_colname)
-    )
-  
-  # Conditionally add the note column
-  if (!is.null(note_colname)) {
-    data_renamed_cols <- data_renamed_cols %>% 
-      dplyr::rename(note = tidyselect::all_of(note_colname))
-  }
-  
-  # Select required data
-  raw_data_required <- data_renamed_cols %>% 
-    dplyr::select(
-      protein, glycopeptide, charge, tidyselect::any_of(c("note")),
-      tidyselect::contains(c(
-        "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"
-      ))
-    )
-  
-  # Reformat and annotate data
-  raw_data_modifications <- raw_data_required %>%
-    dplyr::mutate(
-      # Count number of oxidized methionines
-      oxidation = stringr::str_count(
-        glycopeptide, "\\[Oxidation \\(M\\)\\]|\\[Oxi\\]"
-      ),
-      # Remove CAM modifications
-      glycopeptide_cam_removed = stringr::str_remove_all(
-        glycopeptide, "\\[Carbamidomethyl \\(C\\)\\]|\\[CAM\\]"
-      ),
-      # Remove oxidation to extract unmodified peptide
-      glycopeptide_oxi_removed = stringr::str_remove_all(
-        glycopeptide_cam_removed, "\\[Oxidation \\(M\\)\\]|\\[Oxi\\]"
-      ),
-      # Extract glycan and peptide sequence
-      glycan = stringr::str_extract(glycopeptide_oxi_removed, "(?<=\\[).+?(?=\\])"),
-      peptide = stringr::str_replace_all(glycopeptide_oxi_removed, "\\[.+?\\]", ""),
-  
-      .after = charge
-    )
-  
-  # Generate abbreviations for glycosylation sites
-  glycosites <- abbreviate_glycosites(
-    protein_peptide_df = data.frame(
-      protein = raw_data_modifications$protein,
-      peptide = raw_data_modifications$peptide
-    )
-  )
-  
-  # Final processing
-  raw_data_reformatted <- raw_data_modifications %>% 
-    dplyr::left_join(glycosites) %>% 
-    dplyr::relocate(abbreviation, .after = peptide) %>% 
-    dplyr::rename(cluster = abbreviation) %>% 
-    dplyr::mutate(
-      cluster = dplyr::case_when(
-        oxidation > 0 ~ paste0(cluster, strrep("Ox", oxidation)),
-        TRUE ~ cluster
-      )
-    ) %>% 
-    dplyr::select(
-      protein, peptide, cluster, glycan, charge, oxidation, tidyselect::any_of(c("note")),
-      tidyselect::contains(c(
-        "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM"
-      ))
-    ) %>% 
-    dplyr::mutate(oxidation = as.character(oxidation))
-  
-  # Convert numeric columns
-  raw_data_reformatted[raw_data_reformatted == "#N/A"] <- NA
-  if ("note" %in% colnames(raw_data_reformatted)) {
-    to_return <- dplyr::mutate_at(
-      raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5, -6, -7), as.numeric
-    )  
-  } 
-  else {
-    to_return <- dplyr::mutate_at(
-      raw_data_reformatted, dplyr::vars(-1, -2, -3, -4, -5, -6), as.numeric
-    ) 
-  }
-  
-  return(to_return)
-}
+
 
 
 #' Read one or more SweetSuite output Excel files

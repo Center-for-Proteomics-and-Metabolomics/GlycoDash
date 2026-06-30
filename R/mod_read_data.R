@@ -620,110 +620,113 @@ mod_read_data_server <- function(id) {
     })
 
     
-    
-    # # Require unique column input names for button
-    # observe({
-    #   # Input column names
-    #   input_colnames_two <- unique(c(
-    #     input$skyline_cluster_column, 
-    #     input$skyline_glycan_column, 
-    #     input$skyline_charge_column
-    #   ))
-    #   input_colnames_one <- unique(c(
-    #     input$skyline_analyte_column, 
-    #     input$skyline_charge_column,
-    #     input$skyline_protein_column
-    #   ))
-    #   
-    #   # Set requirements
-    #   req_A <- is_truthy(raw_skyline_data_wide())
-    #   req_B <- dplyr::case_when(
-    #     startsWith(input$skyline_analyte_format, "Two") ~ 
-    #       length(input_colnames_two) == 3,
-    #     startsWith(input$skyline_analyte_format, "One") ~ 
-    #       length(input_colnames_one) == 3
-    #   )
-    #   
-    #   # Below only applies when user selects column with notes
-    #   if (input$skyline_contains_notes) {
-    #     req_C <- dplyr::case_when(
-    #       startsWith(input$skyline_analyte_format, "Two") ~ 
-    #         !input$skyline_note_column %in% input_colnames_two,
-    #       startsWith(input$skyline_analyte_format, "One") ~ 
-    #         !input$skyline_note_column %in% input_colnames_one
-    #     )
-    #   } 
-    #   else {
-    #     req_C <- TRUE
-    #   }
-    #   
-    #   # Check requirements
-    #   if (req_A & req_B & req_C) {
-    #     shinyjs::enable("button")
-    #   } 
-    #   else {
-    #     shinyjs::disable("button")
-    #   }
-    # })
+    # TODO Require unique column input names for button
     
     
-    # # Show spinner when processing starts
-    # observeEvent(input$button, {
-    #   req(raw_skyline_data_wide())
-    #   shinybusy::show_modal_spinner(
-    #     spin = "cube-grid", color = "#0275D8",
-    #     text = HTML("<br/><strong>Processing Skyline data...")
-    #   )
-    # }, priority = 5)
-    
-    
-    # Transform Skyline data
-    # Isomers are renamed when cluster and glycan columns are given separately
-    skyline_data_wide <- reactive({
+    raw_skyline_data_checked <- reactive({
       req(raw_skyline_data_wide())
-      if (input$skyline_contains_notes) {
-        note_column <- input$skyline_note_column
-      } 
-      else {
-        note_column <- NULL
+      check_skyline_data(raw_skyline_data_wide())
+    })
+
+    
+    skyline_data_reformatted <- reactive({
+      req(raw_skyline_data_checked())
+      
+      if (isTRUE(input$skyline_include_notes)) {
+        notes_column <- input$skyline_note_column
       }
-      if (startsWith(input$skyline_analyte_format, "Two")) {
-        # Separate cluster and glycan columns
-        tryCatch(
-          expr = transform_skyline_data_wide(
-            raw_skyline_data_wide(),
-            cluster_colname = input$skyline_cluster_column,
-            glycan_colname = input$skyline_glycan_column,
-            charge_colname = input$skyline_charge_column,
-            rename_isomers = input$skyline_rename_isomers,
-            note_colname = note_column
-          ),
-          missing_variables = function(c) {
-            showNotification(c$message, type = "error", duration = NULL)
-            shinybusy::remove_modal_spinner()
-            NULL
-          }
-        )
-      } 
       else {
-        # One analyte column
-        tryCatch(
-          expr = transform_skyline_data_wide(
-            raw_skyline_data_wide(),
-            protein_colname = input$skyline_protein_column,
-            analyte_colname = input$skyline_analyte_column,
-            charge_colname = input$skyline_charge_column,
-            rename_isomers = input$skyline_rename_isomers,
-            note_colname =  note_column
-          ),
-          missing_variables = function(c) {
-            showNotification(c$message, type = "error", duration = NULL)
-            shinybusy::remove_modal_spinner()
-            NULL
-          }
+        notes_column <- NULL
+      }
+      
+      if (isTRUE(input$skyline_merge_glycounter)) {
+        formula_column <- skyline_molecular_formula_column
+      }
+      else {
+        formula_column <- NULL
+      }
+      
+      # In case of one analyte column, separate.
+      if (startsWith(input$skyline_analyte_format, "One")) {
+        reformat_skyline_analyte_column_wide(
+          raw_skyline_data_wide = raw_skyline_data_checked(),
+          protein_colname = input$skyline_protein_column,
+          analyte_colname = input$skyline_analyte_column,
+          charge_colname = input$skyline_charge_column,
+          note_colname = notes_column,
+          molecular_formula_colname = formula_column
+        )
+      }
+      else {
+        reformat_skyline_data(
+          raw_skyline_data_wide = raw_skyline_data_checked(),
+          cluster_colname = input$skyline_cluster_column,
+          glycan_colname = input$skyline_glycan_colname,
+          charge_colname = input$skyline_charge_column,
+          note_colname = notes_column,
+          molecular_formula_colname = formula_column
         )
       }
     }) %>% bindEvent(input$button)
+    
+    observe({
+      req(skyline_data_reformatted())
+      # 2. Rename isomers if applicable.
+      # 3. Merge GlyCounter data if applicable.
+      # 4. Long format
+      browser()
+    }, priority = 10)
+
+    
+    skyline_data_wide <- reactive(NULL)
+    
+    # # Transform Skyline data
+    # # Isomers are renamed when cluster and glycan columns are given separately
+    # skyline_data_wide <- reactive({
+    #   req(raw_skyline_data_wide())
+    #   if (input$skyline_contains_notes) {
+    #     note_column <- input$skyline_note_column
+    #   }
+    #   else {
+    #     note_column <- NULL
+    #   }
+    #   if (startsWith(input$skyline_analyte_format, "Two")) {
+    #     # Separate cluster and glycan columns
+    #     tryCatch(
+    #       expr = transform_skyline_data_wide(
+    #         raw_skyline_data_wide(),
+    #         cluster_colname = input$skyline_cluster_column,
+    #         glycan_colname = input$skyline_glycan_column,
+    #         charge_colname = input$skyline_charge_column,
+    #         rename_isomers = input$skyline_rename_isomers,
+    #         note_colname = note_column
+    #       ),
+    #       missing_variables = function(c) {
+    #         showNotification(c$message, type = "error", duration = NULL)
+    #         shinybusy::remove_modal_spinner()
+    #         NULL
+    #       }
+    #     )
+    #   }
+    #   else {
+    #     # One analyte column
+    #     tryCatch(
+    #       expr = transform_skyline_data_wide(
+    #         raw_skyline_data_wide(),
+    #         protein_colname = input$skyline_protein_column,
+    #         analyte_colname = input$skyline_analyte_column,
+    #         charge_colname = input$skyline_charge_column,
+    #         rename_isomers = input$skyline_rename_isomers,
+    #         note_colname =  note_column
+    #       ),
+    #       missing_variables = function(c) {
+    #         showNotification(c$message, type = "error", duration = NULL)
+    #         shinybusy::remove_modal_spinner()
+    #         NULL
+    #       }
+    #     )
+    #   }
+    # }) %>% bindEvent(input$button)
   
     # # Remove spinner
     # observeEvent(skyline_data_wide(), {

@@ -9,7 +9,8 @@ reformat_skyline_analyte_column_wide(
   protein_colname,
   analyte_colname,
   charge_colname,
-  note_colname
+  note_colname,
+  molecular_formula_colname
 )
 }
 \arguments{
