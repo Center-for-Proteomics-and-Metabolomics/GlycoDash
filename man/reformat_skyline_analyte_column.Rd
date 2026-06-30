@@ -9,7 +9,7 @@ reformat_skyline_analyte_column(
   protein_colname,
   analyte_colname,
   charge_colname,
-  note_colname,
+  notes_colname,
   molecular_formula_colname
 )
 }
@@ -24,7 +24,7 @@ analyte identifiers (including modification annotations).}
 
 \item{charge_colname}{Name of the column containing charge states.}
 
-\item{note_colname}{Name of an optional column containing per-analyte notes.
+\item{notes_colname}{Name of an optional column containing per-analyte notes.
 Pass \code{NULL} if not present.}
 }
 \value{

@@ -67,7 +67,7 @@ check_skyline_data <- function(raw_skyline_data) {
 #' @param analyte_colname Name of the column containing full glycopeptide
 #'   analyte identifiers (including modification annotations).
 #' @param charge_colname Name of the column containing charge states.
-#' @param note_colname Name of an optional column containing per-analyte notes.
+#' @param notes_colname Name of an optional column containing per-analyte notes.
 #'   Pass \code{NULL} if not present.
 #'
 #' @return A dataframe with columns \code{protein}, \code{peptide},
@@ -80,7 +80,7 @@ reformat_skyline_analyte_column <- function(
     protein_colname,
     analyte_colname, 
     charge_colname,
-    note_colname,
+    notes_colname,
     molecular_formula_colname
 ) {
   
@@ -93,9 +93,9 @@ reformat_skyline_analyte_column <- function(
     )
   
   # Conditionally add the note and molecular formula columns
-  if (!is.null(note_colname)) {
+  if (!is.null(notes_colname)) {
     data_renamed_cols <- data_renamed_cols %>% 
-      dplyr::rename(note = tidyselect::all_of(note_colname))
+      dplyr::rename(note = tidyselect::all_of(notes_colname))
   }
   
   if (!is.null(molecular_formula_colname)) {
@@ -190,9 +190,9 @@ reformat_skyline_data <- function(
     )
   
   # Conditionally add the note and molecular formula columns
-  if (!is.null(note_colname)) {
+  if (!is.null(notes_colname)) {
     data_renamed_cols <- data_renamed_cols %>% 
-      dplyr::rename(note = tidyselect::all_of(note_colname))
+      dplyr::rename(note = tidyselect::all_of(notes_colname))
   }
   
   if (!is.null(molecular_formula_colname)) {

@@ -634,7 +634,7 @@ mod_read_data_server <- function(id) {
     # and optionally rename glycan isomers.
     skyline_data_reformatted <- reactive({
       req(raw_skyline_data_checked())
-      
+      browser()
       # Optional columns
       if (isTRUE(input$skyline_include_notes)) {
         notes_column <- input$skyline_note_column
@@ -644,7 +644,7 @@ mod_read_data_server <- function(id) {
       }
       
       if (isTRUE(input$skyline_merge_glycounter)) {
-        formula_column <- skyline_molecular_formula_column
+        formula_column <- input$skyline_molecular_formula_column
       }
       else {
         formula_column <- NULL
@@ -657,7 +657,7 @@ mod_read_data_server <- function(id) {
           protein_colname = input$skyline_protein_column,
           analyte_colname = input$skyline_analyte_column,
           charge_colname = input$skyline_charge_column,
-          note_colname = notes_column,
+          notes_colname = notes_column,
           molecular_formula_colname = formula_column
         )
       }
@@ -665,7 +665,7 @@ mod_read_data_server <- function(id) {
         reformatted <- reformat_skyline_data(
           raw_skyline_data = raw_skyline_data_checked(),
           cluster_colname = input$skyline_cluster_column,
-          glycan_colname = input$skyline_glycan_colname,
+          glycan_colname = input$skyline_glycan_column,
           charge_colname = input$skyline_charge_column,
           notes_colname = notes_column,
           molecular_formula_colname = formula_column
@@ -685,20 +685,72 @@ mod_read_data_server <- function(id) {
     # Reshape data: one column for each variable and a column with sample names.
     skyline_data_reshaped <- reactive({
       req(skyline_data_reformatted())
-      data <- reshape_skyline_data(skyline_data_reformatted())
-      browser()
+      reshape_skyline_data(skyline_data_reformatted())
     })
     
     
     # Optionally merge with GlyCounter data.
+    glycounter_data <- reactive({
+      req(
+        skyline_data_reshaped(),
+        isTRUE(input$skyline_merge_glycounter),
+        input$glycounter_files$datapath
+      )
+      # Extract filenames of OxoSignal files (original and in memory)
+      original_names <- input$glycounter_files$name
+      oxosignal_indices <- grepl("_OxoSignal\\.txt$", original_names)
+      oxosignal_files <- input$glycounter_files$datapath[oxosignal_indices]
+      oxosignal_names <- original_names[oxosignal_indices]
+      # Process the OxoSignal files
+      # TODO: Check against zero OxoSignal files.
+      # TODO: Allow for uploading zip file.
+      load_glycounter_data(
+        setNames(as.list(oxosignal_files), oxosignal_names)
+      )
+    })
+    
+    
     skyline_data_merged <- reactive({
       req(skyline_data_reshaped())
-      if (isTRUE(input$skyline_merge_glycounter)) {
-        # TODO: requirements check and merging
+      if (isFALSE(input$skyline_merge_glycounter)) {
         skyline_data_reshaped()
       }
       else {
-        skyline_data_reshaped()
+        req(glycounter_data())
+        
+        # TODO: check all steps below and modify functions
+        browser()
+        
+        isotopic_patterns <- calculate_skyline_isotopic_patterns(
+          skyline_data_reshaped()
+        )
+        
+        isotope_mz_candidates <- extract_isotopic_mz_candidates(
+          isotopic_patterns = isotopic_patterns,
+          n_peaks = input$n_isotopic_peaks
+        )
+        
+        fragment_cols <- extract_fragment_cols(glycounter_data())
+        
+        skyline_prepped <- prepare_skyline_data(
+          skyline_data(), input$mz_tolerance_ppm
+        )
+        
+        skyline_isotope_candidates <- expand_skyline_isotope_candidates(
+          skyline_prepped = skyline_prepped,
+          isotope_mz_candidates = isotope_mz_candidates()
+        )
+        
+        glycounter_candidates <- extract_glycounter_candidates(
+          skyline_isotope_candidates = skyline_isotope_candidates,
+          glycounter_data = glycounter_data()
+        )
+        
+        glycounter_summary <- summarize_glycounter_data(
+          glycounter_candidates, fragment_cols
+        )
+        
+        merge_data(skyline_data_reshaped(), glycounter_summary)
       }
     })
     
