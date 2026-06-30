@@ -115,6 +115,39 @@ mod_read_data_ui <- function(id) {
           "Select column with notes:",
           choices = c()
         ),
+        shinyWidgets::materialSwitch(
+          ns("skyline_merge_glycounter"),
+          HTML("<i style='font-size:15px;'> Merge with GlyCounter fragmentation data </i>"),
+          status = "success",
+          right = TRUE
+        ),
+        shinyjs::hidden(div(
+          id = ns("div_glycounter"),
+          selectizeInput(
+            ns("skyline_molecular_formula_column"),
+            "Select column with molecular formulas:",
+            choices = c()
+          ),
+          fileInput(
+            ns("glycounter_files"),
+            HTML("Upload GlyCounter <i>OxoSignal</i> text files:"),
+            accept = ".txt",  # TODO: support for zip
+            multiple = TRUE
+          ),
+          numericInput(
+            ns("mz_tolerance_ppm"),
+            HTML(
+              "Tolerance around theoretical <i>m/z</i> values (ppm)
+              in Skyline data:"
+            ),
+            value = 10, min = 1, step = 1
+          ),
+          numericInput(
+            ns("n_isotopic_peaks"),
+            "Number of theoretical isotopic peaks to use for matching:",
+            value = 3, min = 1, step = 1
+          )
+        )),
         shinyWidgets::awesomeCheckbox(
           ns("skyline_rename_isomers"),
           label = HTML("<i style='font-size:15px;'> Automatically detect and rename glycan isomers </i>"),
@@ -278,72 +311,65 @@ mod_read_data_server <- function(id) {
     
     # Visibility of UI elements
     observe({
-      if (input$data_type == "LaCyTools data") {
-        shinyjs::hide("button_div")
-        shinyjs::hide("info_icon_skyline")
-        shinyjs::hide("info_icon_sweetsuite")
-        shinyjs::hide("skyline_analyte_column")
-        shinyjs::hide("skyline_analyte_format")
-        shinyjs::hide("skyline_charge_column")
-        shinyjs::hide("skyline_cluster_column")
-        shinyjs::hide("skyline_contains_notes")
-        shinyjs::hide("skyline_glycan_column")
-        shinyjs::hide("skyline_input_wide")
-        shinyjs::hide("skyline_note_column")
-        shinyjs::hide("skyline_protein_column")
-        shinyjs::hide("skyline_rename_isomers")
-        shinyjs::hide("sweetsuite_input")
-        shinyjs::show("info_icon_lacytools")
-        shinyjs::show("lacytools_input")
-      } 
-      else if (input$data_type == "SweetSuite data") {
-        shinyjs::hide("button_div")
-        shinyjs::hide("info_icon_lacytools")
-        shinyjs::hide("info_icon_skyline")
-        shinyjs::hide("lacytools_input")
-        shinyjs::hide("skyline_analyte_column")
-        shinyjs::hide("skyline_analyte_format")
-        shinyjs::hide("skyline_charge_column")
-        shinyjs::hide("skyline_cluster_column")
-        shinyjs::hide("skyline_contains_notes")
-        shinyjs::hide("skyline_glycan_column")
-        shinyjs::hide("skyline_input_wide")
-        shinyjs::hide("skyline_note_column")
-        shinyjs::hide("skyline_protein_column")
-        shinyjs::hide("skyline_rename_isomers")
-        shinyjs::show("info_icon_sweetsuite")
-        shinyjs::show("sweetsuite_input")
+      is_lacytools <- input$data_type == "LaCyTools data"
+      is_sweetsuite <- input$data_type == "SweetSuite data"
+      is_skyline <- input$data_type == "Skyline data (wide format)"
+      
+      is_analyte_format <- (
+        input$skyline_analyte_format == 
+          "One column with peptide sequences and modifications"
+      )
+      
+      has_notes <- isTRUE(input$skyline_contains_notes)
+      
+      # LaCyTools
+      shinyjs::toggle("info_icon_lacytools", condition = is_lacytools)
+      shinyjs::toggle("lacytools_input", condition = is_lacytools)
+      
+      # SweetSuite
+      shinyjs::toggle("info_icon_sweetsuite", condition = is_sweetsuite)
+      shinyjs::toggle("sweetsuite_input", condition = is_sweetsuite)
+      
+      # Skyline (always shown for Skyline)
+      shinyjs::toggle("button_div", condition = is_skyline)
+      shinyjs::toggle("info_icon_skyline", condition = is_skyline)
+      shinyjs::toggle("skyline_analyte_format", condition = is_skyline)
+      shinyjs::toggle("skyline_charge_column", condition = is_skyline)
+      shinyjs::toggle("skyline_contains_notes", condition = is_skyline)
+      shinyjs::toggle("skyline_input_wide", condition = is_skyline)
+      shinyjs::toggle("skyline_rename_isomers", condition = is_skyline)
+      shinyjs::toggle("skyline_merge_glycounter", condition = is_skyline)
+    
+      # Skyline analyte format
+      shinyjs::toggle(
+        "skyline_analyte_column",
+        condition = is_skyline && is_analyte_format
+      )
+      shinyjs::toggle(
+        "skyline_protein_column",
+        condition = is_skyline && is_analyte_format
+      )
+      shinyjs::toggle(
+        "skyline_cluster_column",
+        condition = is_skyline && !is_analyte_format
+      )
+      shinyjs::toggle(
+        "skyline_glycan_column",
+        condition = is_skyline && !is_analyte_format
+      )
+      
+      # Optional notes column
+      shinyjs::toggle(
+        "skyline_note_column",
+        condition = is_skyline && has_notes
+      )
+      
+      # GlyCounter
+      if (is_skyline && isTRUE(input$skyline_merge_glycounter)) {
+        shinyjs::show("div_glycounter")
       }
-      else if (input$data_type == "Skyline data (wide format)") {
-        shinyjs::hide("info_icon_lacytools")
-        shinyjs::hide("info_icon_sweetsuite")
-        shinyjs::hide("lacytools_input")
-        shinyjs::hide("sweetsuite_input")
-        shinyjs::show("button_div")
-        shinyjs::show("info_icon_skyline")
-        shinyjs::show("skyline_analyte_format")
-        shinyjs::show("skyline_charge_column")
-        shinyjs::show("skyline_contains_notes")
-        shinyjs::show("skyline_input_wide")
-        shinyjs::show("skyline_rename_isomers")
-        if (input$skyline_analyte_format == "One column with peptide sequences and modifications") {
-          shinyjs::hide("skyline_cluster_column")
-          shinyjs::hide("skyline_glycan_column")
-          shinyjs::show("skyline_analyte_column")
-          shinyjs::show("skyline_protein_column")
-        } 
-        else {
-          shinyjs::hide("skyline_analyte_column")
-          shinyjs::hide("skyline_protein_column")
-          shinyjs::show("skyline_cluster_column")
-          shinyjs::show("skyline_glycan_column")
-        }
-        if (input$skyline_contains_notes == TRUE) {
-          shinyjs::show("skyline_note_column")
-        } 
-        else {
-          shinyjs::hide("skyline_note_column")
-        }
+      else {
+        shinyjs::hide("div_glycounter")
       }
     })
     
@@ -351,21 +377,18 @@ mod_read_data_server <- function(id) {
     # Check the file extensions of the uploaded summaries.
     correct_file_ext <- reactive({
       if (input$data_type == "LaCyTools data") {
-        # LaCyTools --> require text file
         req(input$lacytools_input)
         wrong_file_ext <- subset(
           input$lacytools_input, !grepl("\\.txt$", name, ignore.case = TRUE)
         )
       } 
       else if (input$data_type == "Skyline data (wide format)") {
-        # Skyline --> require CSV file
         req(input$skyline_input_wide)
         wrong_file_ext <- subset(
           input$skyline_input_wide, !grepl("\\.csv$", name, ignore.case = TRUE)
         )
       }
-      if (input$data_type == "SweetSuite data") {
-        # SweetSuite --> require xlsx files
+      else if (input$data_type == "SweetSuite data") {
         req(input$sweetsuite_input)
         wrong_file_ext <- subset(
           input$sweetsuite_input, !grepl("\\.xlsx$", name, ignore.case = TRUE)
@@ -549,7 +572,7 @@ mod_read_data_server <- function(id) {
     # Read raw Skyline data from CSV file.
     raw_skyline_data_wide <- reactive({
       req(
-        correct_file_ext(), 
+        isTRUE(correct_file_ext()), 
         input$data_type == "Skyline data (wide format)", 
         input$skyline_input_wide
       )
@@ -576,87 +599,82 @@ mod_read_data_server <- function(id) {
         "skyline_analyte_column", 
         "skyline_cluster_column",
         "skyline_glycan_column", 
-        "skyline_charge_column"
+        "skyline_charge_column",
+        "skyline_molecular_formula_column",
+        "skyline_note_column"
       )) {
-        updateSelectizeInput(inputId = id, choices = columns)
+        if (grepl("charge", id) && "Precursor.Charge" %in% columns) {
+          updateSelectizeInput(
+            inputId = id, choices = columns, selected = "Precursor.Charge"
+          )
+        }
+        else if (grepl("formula", id) && "Molecule.Formula" %in% columns) {
+          updateSelectizeInput(
+            inputId = id, choices = columns, selected = "Molecule.Formula"
+          )
+        }
+        else {
+          updateSelectizeInput(inputId = id, choices = columns)
+        }
       }
     })
-    
-    observe({
-      req(raw_skyline_data_wide())
-      if (input$skyline_contains_notes) {
-        columns <- raw_skyline_data_wide() %>% 
-          dplyr::select(
-            -tidyselect::contains("Total.Area.MS1"),
-            -tidyselect::contains("Isotope.Dot.Product"),
-            -tidyselect::contains("Mass.Error.PPM"),
-            -tidyselect::contains("Best.Retention.Time"),
-            -tidyselect::contains("Normalized.Area"),
-            -tidyselect::contains("Replicate.Name"),
-            -tidyselect::contains("Background.MS1")
-          ) %>% 
-          colnames()
-        updateSelectizeInput(
-          inputId = "skyline_note_column", choices = columns
-        )
-      }
-    })
+
     
     
-    # Require unique column input names for button
-    observe({
-      # Input column names
-      input_colnames_two <- unique(c(
-        input$skyline_cluster_column, 
-        input$skyline_glycan_column, 
-        input$skyline_charge_column
-      ))
-      input_colnames_one <- unique(c(
-        input$skyline_analyte_column, 
-        input$skyline_charge_column,
-        input$skyline_protein_column
-      ))
-      
-      # Set requirements
-      req_A <- is_truthy(raw_skyline_data_wide())
-      req_B <- dplyr::case_when(
-        startsWith(input$skyline_analyte_format, "Two") ~ 
-          length(input_colnames_two) == 3,
-        startsWith(input$skyline_analyte_format, "One") ~ 
-          length(input_colnames_one) == 3
-      )
-      
-      # Below only applies when user selects column with notes
-      if (input$skyline_contains_notes) {
-        req_C <- dplyr::case_when(
-          startsWith(input$skyline_analyte_format, "Two") ~ 
-            !input$skyline_note_column %in% input_colnames_two,
-          startsWith(input$skyline_analyte_format, "One") ~ 
-            !input$skyline_note_column %in% input_colnames_one
-        )
-      } 
-      else {
-        req_C <- TRUE
-      }
-      
-      # Check requirements
-      if (req_A & req_B & req_C) {
-        shinyjs::enable("button")
-      } 
-      else {
-        shinyjs::disable("button")
-      }
-    })
+    # # Require unique column input names for button
+    # observe({
+    #   # Input column names
+    #   input_colnames_two <- unique(c(
+    #     input$skyline_cluster_column, 
+    #     input$skyline_glycan_column, 
+    #     input$skyline_charge_column
+    #   ))
+    #   input_colnames_one <- unique(c(
+    #     input$skyline_analyte_column, 
+    #     input$skyline_charge_column,
+    #     input$skyline_protein_column
+    #   ))
+    #   
+    #   # Set requirements
+    #   req_A <- is_truthy(raw_skyline_data_wide())
+    #   req_B <- dplyr::case_when(
+    #     startsWith(input$skyline_analyte_format, "Two") ~ 
+    #       length(input_colnames_two) == 3,
+    #     startsWith(input$skyline_analyte_format, "One") ~ 
+    #       length(input_colnames_one) == 3
+    #   )
+    #   
+    #   # Below only applies when user selects column with notes
+    #   if (input$skyline_contains_notes) {
+    #     req_C <- dplyr::case_when(
+    #       startsWith(input$skyline_analyte_format, "Two") ~ 
+    #         !input$skyline_note_column %in% input_colnames_two,
+    #       startsWith(input$skyline_analyte_format, "One") ~ 
+    #         !input$skyline_note_column %in% input_colnames_one
+    #     )
+    #   } 
+    #   else {
+    #     req_C <- TRUE
+    #   }
+    #   
+    #   # Check requirements
+    #   if (req_A & req_B & req_C) {
+    #     shinyjs::enable("button")
+    #   } 
+    #   else {
+    #     shinyjs::disable("button")
+    #   }
+    # })
     
     
-    # Show spinner when processing starts
-    observeEvent(input$button, {
-      req(raw_skyline_data_wide())
-      shinybusy::show_modal_spinner(
-        spin = "cube-grid", color = "#0275D8",
-        text = HTML("<br/><strong>Processing Skyline data...")
-      )
-    }, priority = 5)
+    # # Show spinner when processing starts
+    # observeEvent(input$button, {
+    #   req(raw_skyline_data_wide())
+    #   shinybusy::show_modal_spinner(
+    #     spin = "cube-grid", color = "#0275D8",
+    #     text = HTML("<br/><strong>Processing Skyline data...")
+    #   )
+    # }, priority = 5)
     
     
     # Transform Skyline data
@@ -707,11 +725,11 @@ mod_read_data_server <- function(id) {
       }
     }) %>% bindEvent(input$button)
   
-    # Remove spinner
-    observeEvent(skyline_data_wide(), {
-      shinybusy::remove_modal_spinner()
-    })
-    
+    # # Remove spinner
+    # observeEvent(skyline_data_wide(), {
+    #   shinybusy::remove_modal_spinner()
+    # })
+    # 
     
     # Create a table with protein names, peptide sequences and corresponding 
     # glycosylation site abbreviations
