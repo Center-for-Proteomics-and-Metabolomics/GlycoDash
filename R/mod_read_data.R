@@ -634,7 +634,7 @@ mod_read_data_server <- function(id) {
     # and optionally rename glycan isomers.
     skyline_data_reformatted <- reactive({
       req(raw_skyline_data_checked())
-      browser()
+
       # Optional columns
       if (isTRUE(input$skyline_include_notes)) {
         notes_column <- input$skyline_note_column
