@@ -570,7 +570,7 @@ mod_read_data_server <- function(id) {
     #########################################################################
     
     # Read raw Skyline data from CSV file.
-    raw_skyline_data_wide <- reactive({
+    raw_skyline_data <- reactive({
       req(
         isTRUE(correct_file_ext()), 
         input$data_type == "Skyline data (wide format)", 
@@ -581,8 +581,8 @@ mod_read_data_server <- function(id) {
     
     # Update column selection options
     observe({
-      req(raw_skyline_data_wide())
-      columns <- raw_skyline_data_wide() %>% 
+      req(raw_skyline_data())
+      columns <- raw_skyline_data() %>% 
         dplyr::select(
           -tidyselect::contains("Total.Area.MS1"),
           -tidyselect::contains("Isotope.Dot.Product"),
@@ -623,15 +623,19 @@ mod_read_data_server <- function(id) {
     # TODO Require unique column input names for button
     
     
+    # Check structure of raw data
     raw_skyline_data_checked <- reactive({
-      req(raw_skyline_data_wide())
-      check_skyline_data(raw_skyline_data_wide())
+      req(raw_skyline_data())
+      check_skyline_data(raw_skyline_data())
     })
 
     
+    # Reformat data: select required columns, convert to numeric,
+    # and optionally rename glycan isomers.
     skyline_data_reformatted <- reactive({
       req(raw_skyline_data_checked())
       
+      # Optional columns
       if (isTRUE(input$skyline_include_notes)) {
         notes_column <- input$skyline_note_column
       }
@@ -646,10 +650,10 @@ mod_read_data_server <- function(id) {
         formula_column <- NULL
       }
       
-      # In case of one analyte column, separate.
+      # Reformat data
       if (startsWith(input$skyline_analyte_format, "One")) {
-        reformat_skyline_analyte_column_wide(
-          raw_skyline_data_wide = raw_skyline_data_checked(),
+        reformatted <- reformat_skyline_analyte_column(
+          raw_skyline_data = raw_skyline_data_checked(),
           protein_colname = input$skyline_protein_column,
           analyte_colname = input$skyline_analyte_column,
           charge_colname = input$skyline_charge_column,
@@ -658,87 +662,63 @@ mod_read_data_server <- function(id) {
         )
       }
       else {
-        reformat_skyline_data(
-          raw_skyline_data_wide = raw_skyline_data_checked(),
+        reformatted <- reformat_skyline_data(
+          raw_skyline_data = raw_skyline_data_checked(),
           cluster_colname = input$skyline_cluster_column,
           glycan_colname = input$skyline_glycan_colname,
           charge_colname = input$skyline_charge_column,
-          note_colname = notes_column,
+          notes_colname = notes_column,
           molecular_formula_colname = formula_column
         )
       }
+      
+      # Rename isomers.
+      if (isTRUE(input$skyline_rename_isomers)) {
+        rename_skyline_isomers(reformatted)
+      }
+      else {
+        reformatted
+      }
     }) %>% bindEvent(input$button)
     
-    observe({
+    
+    # Reshape data: one column for each variable and a column with sample names.
+    skyline_data_reshaped <- reactive({
       req(skyline_data_reformatted())
-      # 2. Rename isomers if applicable.
-      # 3. Merge GlyCounter data if applicable.
-      # 4. Long format
+      data <- reshape_skyline_data(skyline_data_reformatted())
       browser()
-    }, priority = 10)
-
+    })
     
-    skyline_data_wide <- reactive(NULL)
     
-    # # Transform Skyline data
-    # # Isomers are renamed when cluster and glycan columns are given separately
-    # skyline_data_wide <- reactive({
-    #   req(raw_skyline_data_wide())
-    #   if (input$skyline_contains_notes) {
-    #     note_column <- input$skyline_note_column
-    #   }
-    #   else {
-    #     note_column <- NULL
-    #   }
-    #   if (startsWith(input$skyline_analyte_format, "Two")) {
-    #     # Separate cluster and glycan columns
-    #     tryCatch(
-    #       expr = transform_skyline_data_wide(
-    #         raw_skyline_data_wide(),
-    #         cluster_colname = input$skyline_cluster_column,
-    #         glycan_colname = input$skyline_glycan_column,
-    #         charge_colname = input$skyline_charge_column,
-    #         rename_isomers = input$skyline_rename_isomers,
-    #         note_colname = note_column
-    #       ),
-    #       missing_variables = function(c) {
-    #         showNotification(c$message, type = "error", duration = NULL)
-    #         shinybusy::remove_modal_spinner()
-    #         NULL
-    #       }
-    #     )
-    #   }
-    #   else {
-    #     # One analyte column
-    #     tryCatch(
-    #       expr = transform_skyline_data_wide(
-    #         raw_skyline_data_wide(),
-    #         protein_colname = input$skyline_protein_column,
-    #         analyte_colname = input$skyline_analyte_column,
-    #         charge_colname = input$skyline_charge_column,
-    #         rename_isomers = input$skyline_rename_isomers,
-    #         note_colname =  note_column
-    #       ),
-    #       missing_variables = function(c) {
-    #         showNotification(c$message, type = "error", duration = NULL)
-    #         shinybusy::remove_modal_spinner()
-    #         NULL
-    #       }
-    #     )
-    #   }
-    # }) %>% bindEvent(input$button)
-  
-    # # Remove spinner
-    # observeEvent(skyline_data_wide(), {
-    #   shinybusy::remove_modal_spinner()
-    # })
-    # 
+    # Optionally merge with GlyCounter data.
+    skyline_data_merged <- reactive({
+      req(skyline_data_reshaped())
+      if (isTRUE(input$skyline_merge_glycounter)) {
+        # TODO: requirements check and merging
+        skyline_data_reshaped()
+      }
+      else {
+        skyline_data_reshaped()
+      }
+    })
+    
+    
+    # Get sample_name and analyte columns etc...
+    skyline_data_final <- reactive({
+      req(skyline_data_merged())
+      # TODO
+      NULL
+    })
+    
     
     # Create a table with protein names, peptide sequences and corresponding 
     # glycosylation site abbreviations
     glycosites_table <- reactive({
-      req(skyline_data_wide(), "peptide_sequence" %in% colnames(skyline_data_wide()))
-      skyline_data_wide() %>% 
+      req(
+        skyline_data_final(), 
+        "peptide_sequence" %in% colnames(skyline_data_final())
+      )
+      skyline_data_final() %>% 
         tidyr::separate(
           analyte, sep = "1", into = c("glycosylation_site", "glycan"), extra = "merge"
         ) %>% 
@@ -757,7 +737,7 @@ mod_read_data_server <- function(id) {
       req(
         any(
           is_truthy(lacytools_summaries_combined()),
-          is_truthy(skyline_data_wide()),
+          is_truthy(skyline_data_final()),
           is_truthy(sweetsuite_data())
         ),
         input$keyword_specific,
@@ -767,8 +747,8 @@ mod_read_data_server <- function(id) {
       if (is_truthy(lacytools_summaries_combined())) {
         data_to_check <- lacytools_summaries_combined()
       } 
-      else if (is_truthy(skyline_data_wide())) {
-        data_to_check <- skyline_data_wide()
+      else if (is_truthy(skyline_data_final())) {
+        data_to_check <- skyline_data_final()
       }
       else if (is_truthy(sweetsuite_data())) {
         data_to_check <- sweetsuite_data()
@@ -828,13 +808,13 @@ mod_read_data_server <- function(id) {
     filenames <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data_wide()),
+        is_truthy(skyline_data_final()),
         is_truthy(sweetsuite_data())
       ))
       if (is_truthy(lacytools_summaries_combined())) {
         input$lacytools_input$name
       } 
-      else if (is_truthy(skyline_data_wide())) {
+      else if (is_truthy(skyline_data_final())) {
         input$skyline_input_wide$name
       }
       else if (is_truthy(sweetsuite_data())) {
@@ -847,7 +827,7 @@ mod_read_data_server <- function(id) {
     to_return <- reactive({
       req(any(
         is_truthy(lacytools_summaries_combined()),
-        is_truthy(skyline_data_wide()),
+        is_truthy(skyline_data_final()),
         is_truthy(sweetsuite_data())
       ))
       tryCatch(
@@ -856,8 +836,8 @@ mod_read_data_server <- function(id) {
           if (is_truthy(lacytools_summaries_combined())) {
             lacytools_summaries_combined()
           } 
-          else if (is_truthy(skyline_data_wide())) {
-            skyline_data_wide()
+          else if (is_truthy(skyline_data_final())) {
+            skyline_data_final()
           }
           else if (is_truthy(sweetsuite_data())) {
             sweetsuite_data()
