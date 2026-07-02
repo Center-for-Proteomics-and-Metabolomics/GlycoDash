@@ -26,22 +26,22 @@
 #'
 #' @noRd
 calculate_skyline_isotopic_patterns <- function(
-    skyline_data_reshaped,
+    skyline_data,
     charge_carrier = "H"  # Fix to hydrogen for now
   ) {
 
   # Extract unique composition + charge combinations
-  compositions <- skyline_data |>
-    dplyr::select(molecular_formula, charge) |>
-    dplyr::distinct() |>
-    # Ensure charge is integer.
+  compositions <- skyline_data %>%
+    dplyr::select(molecular_formula, charge) %>%
+    dplyr::distinct() %>%
+    # Ensure charge is integer (should already be the case).
     dplyr::mutate(charge = as.integer(charge))
 
   # Get nominal isotopic pattern(M, M+1, M+2, ...) for each ion
   patterns <- list()
   for (i in seq_len(nrow(compositions))) {
-    formula <- compositions[[molecular_formula_col]][[i]]
-    charge <- compositions[[charge_col]][[i]]
+    formula <- compositions$molecular_formula[[i]]
+    charge <- compositions$charge[[i]]
     charge_name <- as.character(charge)
 
     fine_structure_pattern <- calculate_ion_fine_structure(
@@ -92,19 +92,19 @@ extract_top_isotopic_mz <- function(
 
           peak_df <- purrr::map_dfr(peak_list, tibble::as_tibble)
 
-          peak_df |>
-            dplyr::arrange(dplyr::desc(prob)) |>
-            dplyr::slice_head(n = n_peaks) |>
+          peak_df %>%
+            dplyr::arrange(dplyr::desc(prob)) %>%
+            dplyr::slice_head(n = n_peaks) %>%
             dplyr::mutate(
               rank = dplyr::row_number(),
               # For negative charges, m/z is still reported as positive value
               mz = abs(mass / charge)
-            ) |>
+            ) %>%
             dplyr::select(molecular_formula, charge, rank, mz)
         }
       )
     }
-  ) |>
+  ) %>%
     tidyr::pivot_wider(
       names_from = rank, values_from = mz,
       names_prefix = "mz_prob"
@@ -147,20 +147,22 @@ extract_isotopic_mz_candidates <- function(
   candidates <- purrr::imap_dfr(
     isotopic_patterns, function(charge_list, formula) {
       purrr::imap_dfr(
-        charge_list, function(peak_list, charge) {
+        charge_list, function(peak_list, charge_char) {
 
-          charge_int <- as.integer(charge)
+          charge_int <- as.integer(charge_char)
 
           peak_df <- purrr::map_dfr(peak_list, tibble::as_tibble)
 
-          peak_df |>
-            dplyr::arrange(dplyr::desc(prob)) |>
+          peak_df %>%
+            dplyr::arrange(dplyr::desc(prob)) %>%
             dplyr::mutate(
+              molecular_formula = formula,
+              charge = charge_int,
               isotope_rank = dplyr::row_number(),
               isotope_mz = abs(mass / charge),
               isotope_prob = prob,
               isotope_prob_relative = prob_relative
-            ) |>
+            ) %>%
             dplyr::select(
               molecular_formula,
               charge,
@@ -178,13 +180,13 @@ extract_isotopic_mz_candidates <- function(
   )
 
   if (!is.null(min_relative_prob)) {
-    candidates <- candidates |>
+    candidates <- candidates %>%
       dplyr::filter(isotope_prob_relative >= min_relative_prob)
   }
 
-  slice <- candidates |>
-    dplyr::group_by(molecular_formula, charge) |>
-    dplyr::slice_head(n = n_peaks) |>
+  slice <- candidates %>%
+    dplyr::group_by(molecular_formula, charge) %>%
+    dplyr::slice_head(n = n_peaks) %>%
     dplyr::ungroup()
 
   return(slice)
@@ -204,11 +206,6 @@ extract_isotopic_mz_candidates <- function(
 #'   including a `ppm_tolerance` column.
 #' @param isotope_mz_candidates A data frame as returned by
 #'   [extract_isotopic_mz_candidates()].
-#' @param molecular_formula_col A character string with the name of the
-#'   molecular formula column shared between the two inputs. Default is
-#'   `"Molecule.Formula"`.
-#' @param charge_col A character string with the name of the charge column
-#'   shared between the two inputs. Default is `"Precursor.Charge"`.
 #'
 #' @return A data frame combining `skyline_prepped` and `isotope_mz_candidates`,
 #'   with additional columns `isotope_mz_min` and `isotope_mz_max` representing
@@ -217,16 +214,14 @@ extract_isotopic_mz_candidates <- function(
 #' @noRd
 expand_skyline_isotope_candidates <- function(
     skyline_prepped,
-    isotope_mz_candidates,
-    molecular_formula_col = "Molecule.Formula",
-    charge_col = "Precursor.Charge"
+    isotope_mz_candidates
 ) {
-  skyline_prepped |>
+  skyline_prepped %>%
     dplyr::left_join(
       isotope_mz_candidates,
-      by = c(molecular_formula_col, charge_col),
+      by = c("molecular_formula", "charge"),
       relationship = "many-to-many"
-    ) |>
+    ) %>%
     dplyr::mutate(
       isotope_mz_min = isotope_mz * (1 - ppm_tolerance * 1e-6),
       isotope_mz_max = isotope_mz * (1 + ppm_tolerance * 1e-6)
@@ -261,7 +256,7 @@ load_glycounter_data <- function(files) {
       header = TRUE,
       stringsAsFactors = FALSE,
       check.names = FALSE
-    ) |>
+    ) %>%
       dplyr::select(
         # Required output variables
         ScanNumber,
@@ -271,7 +266,7 @@ load_glycounter_data <- function(files) {
         DissociationType,
         # Fragment columns are named like "204.0867, HexNAc"
         tidyr::matches("^\\d+\\.\\d+,\\s")
-      ) |>
+      ) %>%
       dplyr::mutate(
         # Recover the sample name from the original filename
         sample = sub("_?GlyCounter.*$", "", basename(name)),
@@ -283,8 +278,8 @@ load_glycounter_data <- function(files) {
           dplyr::pick(tidyr::matches("^\\d+\\.\\d+,\\s")),
           na.rm = TRUE
         )
-      ) |>
-      dplyr::relocate(sample, .before = ScanNumber) |>
+      ) %>%
+      dplyr::relocate(sample, .before = ScanNumber) %>%
       dplyr::relocate(fragment_sum, .after = DissociationType)
   })
 }
@@ -312,35 +307,29 @@ extract_fragment_cols <- function(glycounter_data) {
 #' Prepare Skyline data for merging with GlyCounter data
 #'
 #' @description
-#' Adds a stable row identifier (`skyline_row_id`), a `ppm_tolerance` column,
-#' and coerces the precursor charge column to integer. These additions are
-#' required by downstream matching functions.
+#' Adds a stable row identifier (`skyline_row_id`) and a `ppm_tolerance` column.
+#' These additions are required by downstream matching functions.
 #'
 #' @param skyline_data A data frame as returned by [load_skyline_data()].
 #' @param ppm_tolerance A numeric value specifying the mass accuracy window in
 #'   parts per million used for matching GlyCounter precursor m/z values to
 #'   isotope candidates. Default is `10`.
-#' @param charge_col A character string with the name of the precursor charge
-#'   column. Default is `"Precursor.Charge"`.
-#'
+#'   
 #' @return A data frame identical to `skyline_data` with additional columns
-#'   `skyline_row_id` (integer row index) and `ppm_tolerance`, and with the
-#'   charge column coerced to integer.
+#'   `skyline_row_id` (integer row index) and `ppm_tolerance`.
 #'
 #' @noRd
 prepare_skyline_data <- function(
     skyline_data,
-    ppm_tolerance = 10,
-    charge_col = "Precursor.Charge"
+    ppm_tolerance = 10
   ) {
-  skyline_data |>
+  skyline_data %>%
     dplyr::mutate(
       # Add a stable row identifier so GlyCounter summaries can be calculated
       # per Skyline row and safely joined back afterwards.
       skyline_row_id = dplyr::row_number(),
-      # Add ppm tolerance, and charge as integer
-      ppm_tolerance = ppm_tolerance,
-      `Precursor.Charge` = as.integer(.data[["Precursor.Charge"]])  # TODO: adjustable colname
+      # Add ppm tolerance.
+      ppm_tolerance = ppm_tolerance
     )
 }
 
@@ -369,7 +358,7 @@ extract_glycounter_candidates <- function(
     skyline_isotope_candidates,
     glycounter_data
 ) {
-  skyline_isotope_candidates |>
+  skyline_isotope_candidates %>%
     dplyr::select(
       skyline_row_id,
       sample,
@@ -384,27 +373,27 @@ extract_glycounter_candidates <- function(
       isotope_prob_relative,
       isotope_mz_min,
       isotope_mz_max
-    ) |>
+    ) %>%
     dplyr::left_join(
       glycounter_data,
       by = "sample",
       relationship = "many-to-many"
-    ) |>
+    ) %>%
     dplyr::filter(
       dplyr::between(PrecursorMZ, isotope_mz_min, isotope_mz_max),
       dplyr::between(RetentionTime, Min.Start.Time, Max.End.Time)
-    ) |>
+    ) %>%
     dplyr::mutate(
       glycounter_mz_error_ppm = (
         1e6 * abs(PrecursorMZ - isotope_mz) / isotope_mz
       )
-    ) |>
-    dplyr::group_by(skyline_row_id, sample, ScanNumber) |>
+    ) %>%
+    dplyr::group_by(skyline_row_id, sample, ScanNumber) %>%
     dplyr::slice_min(
       order_by = glycounter_mz_error_ppm,
       n = 1,
       with_ties = FALSE
-    ) |>
+    ) %>%
     dplyr::ungroup()
 }
 
@@ -445,8 +434,8 @@ summarize_glycounter_data <- function(
   # Note: GlyCounter precursor m/z values may match M, M+1, M+2, etc. rather
   # than only the monoisotopic precursor m/z. Therefore, isotope-match metadata
   # is retained here for traceability.
-  summary <- glycounter_candidates |>
-    dplyr::group_by(skyline_row_id) |>
+  summary <- glycounter_candidates %>%
+    dplyr::group_by(skyline_row_id) %>%
     dplyr::summarize(
       # Number of GlyCounter scans contributing to this Skyline row.
       glycounter_scan_count = dplyr::n(),
@@ -509,7 +498,7 @@ summarize_glycounter_data <- function(
   # This converts each fragment-ion intensity to a percentage of the total
   # fragment signal for that Skyline row.
   if (relative_abundances) {
-    summary <- summary |>
+    summary <- summary %>%
       dplyr::mutate(
         dplyr::across(
           dplyr::all_of(fragment_cols),
@@ -540,15 +529,15 @@ summarize_glycounter_data <- function(
 #'   GlyCounter summary columns for matched rows (`NA` for unmatched rows).
 #'
 #' @noRd
-merge_data <- function(
+merge_skyline_glycounter <- function(
     skyline_prepped,
     glycounter_summary
   ) {
   # Add the GlyCounter summaries back to the full Skyline table.
   # Because this is a left join starting from Skyline, the number of rows
   # remains identical to the original Skyline analyte-sample table.
-  skyline_prepped |>
-    dplyr::left_join(glycounter_summary, by = "skyline_row_id") |>
+  skyline_prepped %>%
+    dplyr::left_join(glycounter_summary, by = "skyline_row_id") %>%
     # Remove helper columns only needed for matching.
     dplyr::select(-skyline_row_id, -ppm_tolerance)
 }

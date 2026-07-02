@@ -329,7 +329,7 @@ reshape_skyline_data <- function(data_renamed) {
     start_idx:length(colnames(data_renamed))
   ]
   
-  data_long <- data_renamed |>
+  data_long <- data_renamed %>%
     dplyr::mutate(
       # Convert Skyline measurement columns to numeric.
       # Notes:
@@ -338,20 +338,20 @@ reshape_skyline_data <- function(data_renamed) {
       #   (for example "*2.4246E+7"), which must be removed before conversion
       dplyr::across(
         .cols = all_of(variable_cols),
-        .fns = ~ .x |>
+        .fns = ~ .x %>%
           # Force to character
-          as.character() |>
+          as.character() %>%
           # Turn "#N/A" into `NA`
-          dplyr::na_if("#N/A") |>
+          dplyr::na_if("#N/A") %>%
           # Skyline can prefix scientific notation with "*"
-          stringr::str_remove("^\\*") |>
+          stringr::str_remove("^\\*") %>%
           # Back to numeric
           as.numeric()
       )
-    ) |>
+    ) %>%
     tidyr::pivot_longer(
       tidyr::all_of(variable_cols), names_to = "sample_variable"
-    ) |>
+    ) %>%
     tidyr::extract(
       # Split original Skyline column name into sample ID and measurement type
       col   = sample_variable,
@@ -372,7 +372,7 @@ reshape_skyline_data <- function(data_renamed) {
   
   # Reshape back to wide format, but now with one row per analyte-sample
   # combination and one column per measurement variable.
-  data_wide <- data_long |>
+  data_wide <- data_long %>%
     tidyr::pivot_wider(names_from = "variable", values_from = "value")
   
   return(data_wide)

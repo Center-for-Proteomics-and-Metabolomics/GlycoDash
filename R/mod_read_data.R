@@ -523,16 +523,20 @@ mod_read_data_server <- function(id) {
       shinybusy::remove_modal_spinner()
     })
     
+    
     # Check if required data is missing
     observe({
       req(lacytools_summaries_combined())
+      
       required <- c(
         "absolute_intensity_background_subtracted",
         "mass_accuracy_ppm",
         "isotopic_pattern_quality",
         "sn"
       )
+      
       missing <- required[!required %in% colnames(lacytools_summaries_combined())]
+      
       if (length(missing) > 0) {
         showNotification(
           paste(
@@ -718,27 +722,25 @@ mod_read_data_server <- function(id) {
       else {
         req(glycounter_data())
         
-        # TODO: check all steps below and modify functions
-        browser()
-        
         isotopic_patterns <- calculate_skyline_isotopic_patterns(
-          skyline_data_reshaped()
+          skyline_data = skyline_data_reshaped()
         )
         
         isotope_mz_candidates <- extract_isotopic_mz_candidates(
           isotopic_patterns = isotopic_patterns,
-          n_peaks = input$n_isotopic_peaks
+          n_peaks = as.integer(input$n_isotopic_peaks)
         )
         
         fragment_cols <- extract_fragment_cols(glycounter_data())
         
         skyline_prepped <- prepare_skyline_data(
-          skyline_data(), input$mz_tolerance_ppm
+          skyline_data = skyline_data_reshaped(), 
+          ppm_tolerance = input$mz_tolerance_ppm
         )
         
         skyline_isotope_candidates <- expand_skyline_isotope_candidates(
           skyline_prepped = skyline_prepped,
-          isotope_mz_candidates = isotope_mz_candidates()
+          isotope_mz_candidates = isotope_mz_candidates
         )
         
         glycounter_candidates <- extract_glycounter_candidates(
@@ -750,8 +752,14 @@ mod_read_data_server <- function(id) {
           glycounter_candidates, fragment_cols
         )
         
-        merge_data(skyline_data_reshaped(), glycounter_summary)
+        merge_skyline_glycounter(skyline_prepped, glycounter_summary)
       }
+    })
+    
+    
+    observe({
+      req(skyline_data_merged())
+      browser()
     })
     
     
