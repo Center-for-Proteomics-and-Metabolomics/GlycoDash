@@ -101,9 +101,86 @@ By default, analytes with isomeric glycan compositions are automatically detecte
 For example, when \textsf{PepIH5N2} is present twice per sample (in each charge state), they are renamed to \textsf{PepIH5N2\_a} and \textsf{PepIH5N2\_b}. 
 This renaming of isomers can be prevented by unchecking \menu{Automatically detect and rename glycan isomers}.
 
+\begin{optionalbox}
+	\textbf{Merging Skyline data with GlyCounter fragmentation data} \vspace{1em} 
+
+	Skyline data can optionally be merged with GlyCounter fragmentation output by toggling \menu{Merge with GlyCounter fragmentation data}.
+	This option adds GlyCounter MS2 information to the converted Skyline table.
+	The merge starts from the Skyline table, so every Skyline analyte-sample row is kept.
+	GlyCounter columns are added when matching MS2 scans are found; rows without a match receive missing values in the GlyCounter columns. \vspace{.5em} 
+
+	To use this option, the Skyline file must contain a column with molecular formulas for the analytes.
+	Select this column in \menu{Select column with molecular formulas}.
+	The Skyline file must also contain retention time boundaries for each sample, specifically \textsf{Best Retention Time}, \textsf{Min Start Time} and \textsf{Max End Time}, because GlyCounter scans are only matched when they fall inside the Skyline peak boundaries.
+	Upload one or more GlyCounter \textit{OxoSignal} text files.
+	Only files whose names end in \texttt{\_OxoSignal.txt} are used.
+	The sample name is taken from the GlyCounter file name by removing the \texttt{GlyCounter} part and everything after it; this sample name must match the corresponding Skyline sample name. \vspace{.5em}
+
+	For each unique molecular formula and charge state in the Skyline data, GlycoDash calculates a theoretical isotope pattern.
+	The molecular formula is treated as the neutral formula and hydrogen is used as the charge carrier.
+	The fine isotope structure is collapsed to nominal isotope peaks, such as \textsf{M}, \textsf{M+1} and \textsf{M+2}.
+	The most probable isotope peaks are then used as possible precursor \textit{m/z} values for matching GlyCounter scans. \vspace{.5em}
+
+	Two input settings control this matching:
+	\begin{itemize}[topsep=0pt, itemsep=0pt]
+		\item \textsf{Tolerance around theoretical \textit{m/z} values (ppm) in Skyline data} sets the allowed precursor \textit{m/z} window around each theoretical isotope peak.
+		For example, with a tolerance of 10 ppm, a GlyCounter scan is allowed to match an isotope peak when its precursor \textit{m/z} is within $\pm$10 ppm of the theoretical isotope \textit{m/z}.
+		\item \textsf{Number of theoretical isotopic peaks to use for matching} sets how many of the most probable theoretical isotope peaks are used per molecular formula and charge state.
+		A value of 1 only uses the most probable isotope peak.
+		A value of 2 uses the two most probable isotope peaks, and so on.
+		These peaks are selected by probability, so the first ranked peak is not always the monoisotopic \textsf{M} peak.
+	\end{itemize}
+	
+	\vspace{.5em}
+	A GlyCounter scan is matched to a Skyline row only when all of the following are true:
+	\begin{enumerate}[topsep=0pt, itemsep=0pt]
+		\item The sample names match.
+		\item The GlyCounter precursor \textit{m/z} is within the ppm tolerance around one of the selected theoretical isotope peaks for the Skyline molecular formula and charge state.
+		\item The GlyCounter retention time is between the Skyline \textsf{Min Start Time} and \textsf{Max End Time}.
+	\end{enumerate}
+	
+	\vspace{.5em}
+	If one GlyCounter scan matches multiple isotope candidates for the same Skyline row, GlycoDash keeps the candidate with the lowest precursor \textit{m/z} error.
+	All matched GlyCounter scans for a Skyline analyte-sample row are then summarized into one set of output values.
+
+	\vspace{.5em}
+	The merged output contains the normal Skyline columns and the added GlyCounter columns.
+	The Skyline columns include:
+	\begin{itemize}[topsep=0pt, itemsep=0pt]
+		\item \texttt{sample\_name}: sample name from the Skyline file.
+		\item \texttt{analyte}: combined glycosylation site and glycan name used by GlycoDash.
+		\item \texttt{charge}: precursor charge state.
+		\item \texttt{molecular\_formula}: molecular formula selected from the Skyline file; present when the GlyCounter merge option is used.
+		\item \texttt{Total.Area.MS1}: Skyline MS1 total area.
+		\item \texttt{Isotope.Dot.Product}: Skyline isotope dot product.
+		\item \texttt{Average.Mass.Error.PPM}: Skyline average mass error in ppm.
+		\item \texttt{Best.Retention.Time}: Skyline best retention time.
+		\item \texttt{Min.Start.Time} and \texttt{Max.End.Time}: Skyline peak boundaries used for matching GlyCounter scans.
+		\item \texttt{note}: analyte note from Skyline, when a notes column was selected.
+		\item \texttt{protein}, \texttt{peptide\_sequence} and \texttt{methionine\_oxidation}: present when analytes were provided in one glycopeptide column and GlycoDash generated glycosylation site names.
+	\end{itemize}
+	
+	\vspace{.5em}
+	The added GlyCounter columns are:
+	\begin{itemize}[topsep=0pt, itemsep=0pt]
+		\item \texttt{glycounter\_scan\_count}: number of GlyCounter scans matched to the Skyline row.
+		\item \texttt{glycounter\_scan\_numbers}: matched GlyCounter scan numbers, separated by semicolons.
+		\item \texttt{glycounter\_dissociation\_types}: dissociation types found among the matched scans, separated by semicolons.
+		\item \texttt{glycounter\_matched\_isotope\_groups}: theoretical isotope groups that were matched, such as \textsf{M}, \textsf{M+1} or \textsf{M+2}.
+		\item \texttt{glycounter\_matched\_isotope\_ranks}: probability ranks of the matched isotope peaks. Rank 1 is the most probable theoretical isotope peak for that molecular formula and charge state.
+		\item \texttt{glycounter\_likely\_glyco\_count}: number of matched scans that GlyCounter marked as likely glycopeptide spectra.
+		\item \texttt{glycounter\_retention\_time\_mean}, \texttt{glycounter\_retention\_time\_min} and \texttt{glycounter\_retention\_time\_max}: summary of retention times of matched GlyCounter scans.
+		\item \texttt{glycounter\_precursor\_mz\_mean}: mean observed precursor \textit{m/z} of the matched GlyCounter scans.
+		\item \texttt{glycounter\_matched\_isotope\_mz\_mean}: mean theoretical isotope \textit{m/z} values to which the matched scans were assigned.
+		\item \texttt{glycounter\_mz\_error\_ppm\_mean} and \texttt{glycounter\_mz\_error\_ppm\_min}: precursor \textit{m/z} error relative to the matched theoretical isotope peak, in ppm.
+		\item \texttt{fragment\_sum}: summed GlyCounter fragment-ion intensity across all matched scans.
+		\item Fragment-ion columns, for example \texttt{204.0867, HexNAc}: GlyCounter fragment signals summarized across matched scans. These values are reported as percentages of \texttt{fragment\_sum}.
+	\end{itemize}
+\end{optionalbox}
 
 
-\subsubsection{Adding sample IDs}
+
+\subsection{Adding sample IDs}
 Choose a method by which to add sample IDs:
 \begin{itemize}[topsep=0pt, itemsep=0pt]
 	\item 
@@ -137,7 +214,7 @@ After uploading the required \texttt{.xlsx} file, a \textsf{sample\_id} column i
 
 
 \newpage
-\subsubsection{Adding sample types}
+\subsection{Adding sample types}
 First choose a method to add sample types:
 \begin{itemize}[topsep=0pt, itemsep=0pt]
 	\item
@@ -169,7 +246,7 @@ Then, depending on your chosen method of adding sample types:
 \end{itemize}
 
 
-\subsubsection{Detection of glycosylation sites}
+\subsection{Detection of glycosylation sites}
 Glycopeptides in the data will automatically be assigned to glycosylation sites based on their names.
 For example, two analytes \textsf{IgGI1H3N4F1} and \textsf{IgGI1H4N4F1} would both be assigned to the same glycosylation site \textsf{IgGI}.
 Spectra curation and analyte curation will later be performed per glycosylation site.
@@ -191,13 +268,12 @@ Non-glycosylated peptides in your data are automatically detected. Two situation
 \end{itemize}
 	
 
-\subsubsection{Adding metadata (optional)}
+\subsection{Adding metadata (optional)}
 You can upload a \texttt{.xlsx} file containing metadata such as age, sex and disease status.
 This data will be merged with the glycosylation data.
 This integration ensures that the final output data is ready for further data analysis in a program of your choice.
 The metadata can later also be used to perform analyte curation per biological group.
 The \texttt{.xlsx} file must contain one column with sample IDs, and additional columns with the metadata.
-
 
 
 
