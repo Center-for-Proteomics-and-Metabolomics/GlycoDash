@@ -354,8 +354,8 @@ lengthen_block <- function(block, metadata = NULL) {
 #' @param list_of_variables A list/vector with the name of LaCyTools output
 #'   formats.
 #'
-#' @return A dataframe with three columns (analyte, exact mass and fraction) and
-#'   one row per analyte and charge combination.
+#' @return A dataframe with four columns (analyte, exact_mass, fraction, and
+#'   charge) and one row per analyte and charge combination.
 #' @export
 #'
 #' @examples

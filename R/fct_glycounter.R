@@ -13,10 +13,6 @@
 #'
 #' @param skyline_data A data frame containing at least the molecular formula
 #'   and precursor charge columns.
-#' @param molecular_formula_col A character string with the name of the column
-#'   containing molecular formulas. Default is `"Molecule.Formula"`.
-#' @param charge_col A character string with the name of the column containing
-#'   precursor charge states. Default is `"Precursor.Charge"`.
 #' @param charge_carrier A character string with the element symbol used as the
 #'   charge carrier. Default is `"H"`.
 #'
@@ -69,10 +65,6 @@ calculate_skyline_isotopic_patterns <- function(
 #'   [calculate_skyline_isotopic_patterns()].
 #' @param n_peaks An integer giving the number of top peaks to extract per
 #'   formula-charge combination. Default is `3`.
-#' @param molecular_formula_col A character string with the name to use for the
-#'   molecular formula column in the output. Default is `"Molecule.Formula"`.
-#' @param charge_col A character string with the name to use for the charge
-#'   column in the output. Default is `"Precursor.Charge"`.
 #'
 #' @return A data frame with one row per formula-charge combination and columns
 #'   `mz_prob1`, `mz_prob2`, ... for the m/z values of the top isotope peaks
@@ -127,10 +119,6 @@ extract_top_isotopic_mz <- function(
 #' @param min_relative_prob A numeric value between 0 and 1. Peaks with a
 #'   relative probability below this threshold are excluded before applying
 #'   `n_peaks`. Set to `NULL` (default) to skip filtering.
-#' @param molecular_formula_col A character string with the name to use for the
-#'   molecular formula column in the output. Default is `"Molecule.Formula"`.
-#' @param charge_col A character string with the name to use for the charge
-#'   column in the output. Default is `"Precursor.Charge"`.
 #'
 #' @return A data frame with one row per formula-charge-isotope combination,
 #'   containing columns `isotope_rank`, `isotope_group`, `extra_neutrons`,

@@ -25,7 +25,7 @@ read_skyline_csv <- function(path_to_file) {
 #' Verifies that a Skyline CSV dataframe contains all required per-sample
 #' variable columns (\code{Total.Area.MS1}, \code{Isotope.Dot.Product}, and
 #' \code{Average.Mass.Error.PPM}). Shows an informative error message and
-#' returns NULLL if data is missing. Returns the data otherwise.
+#' returns NULL if data is missing. Returns the data otherwise.
 #'
 #' @param raw_skyline_data A dataframe of raw Skyline data, as returned by
 #'   \code{\link{read_skyline_csv}}.
@@ -69,12 +69,15 @@ check_skyline_data <- function(raw_skyline_data) {
 #' @param charge_colname Name of the column containing charge states.
 #' @param notes_colname Name of an optional column containing per-analyte notes.
 #'   Pass \code{NULL} if not present.
+#' @param molecular_formula_colname Name of an optional column containing
+#'   molecular formulas. Pass \code{NULL} if not present.
 #'
-#' @return A dataframe with columns \code{protein}, \code{peptide},
-#'   \code{cluster}, \code{glycan}, \code{charge}, \code{oxidation}, and
-#'   optionally \code{note}, followed by the per-sample measurement columns
-#'   (\code{Total.Area.MS1}, \code{Isotope.Dot.Product},
-#'   \code{Average.Mass.Error.PPM}).
+#' @return A dataframe with columns \code{protein}, \code{peptide_sequence},
+#'   \code{cluster}, \code{glycan}, \code{methionine_oxidation}, \code{charge},
+#'   and optionally \code{note} and \code{molecular_formula}, followed by the
+#'   per-sample measurement columns (\code{Total.Area.MS1},
+#'   \code{Isotope.Dot.Product}, \code{Average.Mass.Error.PPM},
+#'   \code{Best.Retention.Time}, \code{Min.Start.Time}, \code{Max.End.Time}).
 reformat_skyline_analyte_column <- function(
     raw_skyline_data, 
     protein_colname,
