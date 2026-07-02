@@ -757,17 +757,14 @@ mod_read_data_server <- function(id) {
     })
     
     
-    observe({
-      req(skyline_data_merged())
-      browser()
-    })
-    
-    
-    # Get sample_name and analyte columns etc...
+    # Renaming columns
     skyline_data_final <- reactive({
       req(skyline_data_merged())
-      # TODO
-      NULL
+      skyline_data_merged() %>% 
+        dplyr::rename(sample_name = sample) %>% 
+        dplyr::mutate(analyte = paste0(cluster, "1", glycan)) %>% 
+        dplyr::select(-cluster, -glycan) %>% 
+        dplyr::relocate(sample_name, analyte, charge)
     })
     
     
@@ -782,7 +779,12 @@ mod_read_data_server <- function(id) {
         tidyr::separate(
           analyte, sep = "1", into = c("glycosylation_site", "glycan"), extra = "merge"
         ) %>% 
-        dplyr::select(glycosylation_site, protein, peptide_sequence, methionine_oxidation) %>% 
+        dplyr::select(
+          glycosylation_site, 
+          protein, 
+          peptide_sequence, 
+          methionine_oxidation
+        ) %>% 
         dplyr::distinct() %>% 
         dplyr::arrange(protein, peptide_sequence)
     })

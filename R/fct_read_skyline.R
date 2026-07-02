@@ -164,14 +164,16 @@ reformat_skyline_analyte_column <- function(
         "Best.Retention.Time", "Min.Start.Time", "Max.End.Time"
       ))
     ) %>% 
-    dplyr::mutate(oxidation = as.character(oxidation))
+    dplyr::mutate(oxidation = as.character(oxidation)) %>% 
+    dplyr::rename(peptide_sequence = peptide) %>% 
+    dplyr::rename(methionine_oxidation = oxidation)
   
   return(data_reformatted)
 }
 
 
 
-# Reformat raw Skyline data when it has separate columsn for glycosylation
+# Reformat raw Skyline data when it has separate columns for glycosylation
 # site and glycans.
 reformat_skyline_data <- function(
     raw_skyline_data,  
