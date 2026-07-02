@@ -13,8 +13,8 @@ get_analytes_info_from_list(data, list_of_variables)
 formats.}
 }
 \value{
-A dataframe with three columns (analyte, exact mass and fraction) and
-  one row per analyte and charge combination.
+A dataframe with four columns (analyte, exact_mass, fraction, and
+  charge) and one row per analyte and charge combination.
 }
 \description{
 This function uses \code{\link{get_analytes_info}} to get the exact mass of

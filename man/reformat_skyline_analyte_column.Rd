@@ -26,13 +26,17 @@ analyte identifiers (including modification annotations).}
 
 \item{notes_colname}{Name of an optional column containing per-analyte notes.
 Pass \code{NULL} if not present.}
+
+\item{molecular_formula_colname}{Name of an optional column containing
+molecular formulas. Pass \code{NULL} if not present.}
 }
 \value{
-A dataframe with columns \code{protein}, \code{peptide},
-  \code{cluster}, \code{glycan}, \code{charge}, \code{oxidation}, and
-  optionally \code{note}, followed by the per-sample measurement columns
-  (\code{Total.Area.MS1}, \code{Isotope.Dot.Product},
-  \code{Average.Mass.Error.PPM}).
+A dataframe with columns \code{protein}, \code{peptide_sequence},
+  \code{cluster}, \code{glycan}, \code{methionine_oxidation}, \code{charge},
+  and optionally \code{note} and \code{molecular_formula}, followed by the
+  per-sample measurement columns (\code{Total.Area.MS1},
+  \code{Isotope.Dot.Product}, \code{Average.Mass.Error.PPM},
+  \code{Best.Retention.Time}, \code{Min.Start.Time}, \code{Max.End.Time}).
 }
 \description{
 When Skyline data is exported with a single column for the full glycopeptide

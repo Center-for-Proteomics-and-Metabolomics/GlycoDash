@@ -131,7 +131,7 @@ mod_read_data_ui <- function(id) {
           fileInput(
             ns("glycounter_files"),
             HTML("Upload GlyCounter <i>OxoSignal</i> text files:"),
-            accept = ".txt",  # TODO: support for zip
+            accept = ".txt",
             multiple = TRUE
           ),
           numericInput(
@@ -145,7 +145,7 @@ mod_read_data_ui <- function(id) {
           numericInput(
             ns("n_isotopic_peaks"),
             "Number of theoretical isotopic peaks to use for matching:",
-            value = 3, min = 1, step = 1
+            value = 2, min = 1, step = 1
           )
         )),
         shinyWidgets::awesomeCheckbox(
@@ -715,17 +715,32 @@ mod_read_data_server <- function(id) {
       oxosignal_indices <- grepl("_OxoSignal\\.txt$", original_names)
       oxosignal_files <- input$glycounter_files$datapath[oxosignal_indices]
       oxosignal_names <- original_names[oxosignal_indices]
-      # Process the OxoSignal files
-      # TODO: Check against zero OxoSignal files.
-      # TODO: Allow for uploading zip file.
-      load_glycounter_data(
-        setNames(as.list(oxosignal_files), oxosignal_names)
-      )
+
+      # Process the OxoSignal files.
+      # Show warning if none were uploaded.
+      if (length(oxosignal_names) > 0) {
+        load_glycounter_data(
+          setNames(as.list(oxosignal_files), oxosignal_names)
+        )
+      }
+      else{
+        showNotification(
+          ui = paste(
+            "No GlyCounter 'OxoSignal' text files were detected!",
+            "Upload the correct files and try again."
+          ),
+          duration = NULL,
+          type = "error"
+        )
+        shinybusy::remove_modal_spinner()
+        NULL
+      }
     })
     
     
     skyline_data_merged <- reactive({
       req(skyline_data_reshaped())
+      
       if (isFALSE(input$skyline_merge_glycounter)) {
         skyline_data_reshaped()
       }
@@ -764,7 +779,7 @@ mod_read_data_server <- function(id) {
         
         merge_skyline_glycounter(skyline_prepped, glycounter_summary)
       }
-    })
+    }) %>% bindEvent(skyline_data_reshaped())
     
     
     # Renaming columns
