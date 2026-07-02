@@ -634,6 +634,16 @@ mod_read_data_server <- function(id) {
     })
 
     
+    # Show spinner after button.
+    observeEvent(input$button, {
+      shinybusy::show_modal_spinner(
+        spin = "cube-grid", color = "#0275D8",
+        text = HTML("<br/><strong>Processing Skyline data...")
+      )
+    }, priority = 5)
+    
+    
+    
     # Reformat data: select required columns, convert to numeric,
     # and optionally rename glycan isomers.
     skyline_data_reformatted <- reactive({
@@ -768,6 +778,12 @@ mod_read_data_server <- function(id) {
     })
     
     
+    # Remove spinner.
+    observeEvent(skyline_data_final(), {
+      shinybusy::remove_modal_spinner()
+    })
+    
+    
     # Create a table with protein names, peptide sequences and corresponding 
     # glycosylation site abbreviations
     glycosites_table <- reactive({
@@ -777,7 +793,8 @@ mod_read_data_server <- function(id) {
       )
       skyline_data_final() %>% 
         tidyr::separate(
-          analyte, sep = "1", into = c("glycosylation_site", "glycan"), extra = "merge"
+          analyte, sep = "1", into = c("glycosylation_site", "glycan"), 
+          extra = "merge"
         ) %>% 
         dplyr::select(
           glycosylation_site, 
@@ -938,7 +955,7 @@ mod_read_data_server <- function(id) {
       else input$data_type
     })
     
-    
+    # TODO: Fix crash when processing Skyline more than once...
     
     return(list(
       data = to_return_trimmed,
