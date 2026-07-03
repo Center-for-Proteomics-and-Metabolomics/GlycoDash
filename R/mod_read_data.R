@@ -786,7 +786,12 @@ mod_read_data_server <- function(id) {
     skyline_data_final <- reactive({
       req(skyline_data_merged())
       skyline_data_merged() %>% 
-        dplyr::rename(sample_name = sample) %>% 
+        dplyr::rename(
+          sample_name = sample,
+          total_area = `Total.Area.MS1`,
+          isotope_dot_product = `Isotope.Dot.Product`,
+          mass_accuracy_ppm = `Average.Mass.Error.PPM`
+        ) %>% 
         dplyr::mutate(analyte = paste0(cluster, "1", glycan)) %>% 
         dplyr::select(-cluster, -glycan) %>% 
         dplyr::relocate(sample_name, analyte, charge)
@@ -954,11 +959,15 @@ mod_read_data_server <- function(id) {
       }
     })
     
-    # Remove trailing/leading spaces
+    # Remove trailing/leading spaces.
+    # Ensure charge is an integer.
     to_return_trimmed <- reactive({
       req(to_return())
       to_return() %>% 
-        dplyr::mutate(dplyr::across(tidyselect::where(is.character), trimws))
+        dplyr::mutate(
+          dplyr::across(tidyselect::where(is.character), trimws),
+          charge = as.integer(charge)
+        )
     })
     
     

@@ -61,7 +61,7 @@ read_sweetsuite_data <- function(datapaths) {
         mass_accuracy_ppm = mass_error_ppm,
         sn = signal_to_noise
       ) %>%
-      dplyr::mutate(charge = as.character(charge))
+      dplyr::mutate(charge = as.integer(charge))
     
     return(data)
   })

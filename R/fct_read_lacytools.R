@@ -164,7 +164,7 @@ convert_lacytools_summary <- function(data) {
   # lengthen_block: transform each block to long format (faster with lapply)
   long_data_list <- lapply(all_blocks, lengthen_block)
   # Ensure all elements have a charge field, and get factor levels quickly
-  charges <- as.factor(vapply(long_data_list, function(x) unique(x$charge), character(1)))
+  charges <- as.factor(vapply(long_data_list, function(x) unique(x$charge), integer(1)))
   charge_sep_list <- split(long_data_list, charges)
   # Get analytes info (unchanged)
   analytes_info <- get_analytes_info_from_list(data, OUTPUTS)
@@ -318,7 +318,9 @@ find_next_na <- function(data, row) {
 #'                    variable = "Absolute Intensity (Background Subtracted, 2+)")
 #' lengthen_block(block = block)
 lengthen_block <- function(block, metadata = NULL) {
-  charge_value <- stringr::str_extract(block$lacytools_output[1], "\\d+[+\\-]")
+  charge_str <- stringr::str_extract(block$lacytools_output[1], "\\d+[+\\-]")
+  charge_int <- as.integer(stringr::str_extract(charge_str, "\\d+")) *
+    ifelse(grepl("-", charge_str), -1L, 1L)
   # The charge needs to be removed from the analyte name:
   new_output_name <- stringr::str_remove(block$lacytools_output[1], "_\\d+[+\\-]")
   cols_not_to_pivot <- c("sample_name", "group", "plate_well", colnames(metadata))
@@ -330,7 +332,7 @@ lengthen_block <- function(block, metadata = NULL) {
       names_to = "analyte",
       values_to = tidyselect::all_of(new_output_name)
     ) %>% 
-    dplyr::mutate(charge = charge_value) %>% 
+    dplyr::mutate(charge = charge_int) %>% 
     dplyr::relocate(charge, .before = all_of(new_output_name)) %>% 
     # Remove leading or trailing spaces from analyte
     dplyr::mutate(analyte = trimws(analyte))
@@ -376,7 +378,10 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
   analytes_info_list <- purrr::map(list_of_variables, function(variable) {
     analytes_info <- tryCatch({
       get_analytes_info(data, variable) %>% 
-        dplyr::mutate(charge = stringr::str_extract(variable, "\\d+[+\\-]"))
+        dplyr::mutate(charge = {
+          s <- stringr::str_extract(variable, "\\d+[+\\-]")
+          as.integer(stringr::str_extract(s, "\\d+")) * ifelse(grepl("-", s), -1L, 1L)
+        })
     },
     # Ignore list items that result in an error:
     error = function(e) { })
@@ -391,7 +396,7 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
   analytes_info_list <- analytes_info_list[!sapply(analytes_info_list, is.null)]
   
   # Find what charges are present in the LaCyTools summary:
-  charges <- as.factor(purrr::map_chr(analytes_info_list, 
+  charges <- as.factor(purrr::map_int(analytes_info_list, 
                                       function(x) unique(x$charge)))
   # Divide the analytes_info_list into one list per charge:
   charge_sep_list <- split(analytes_info_list,
