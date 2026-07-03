@@ -624,7 +624,67 @@ mod_read_data_server <- function(id) {
     })
 
     
-    # TODO Require unique column input names for button
+    # Validate that active Skyline column selectors have distinct values.
+    # Note and molecular formula columns are only considered when their
+    # respective toggles are enabled.
+    observe({
+      req(input$data_type == "Skyline data (wide format)")
+
+      is_analyte_format <- (
+        input$skyline_analyte_format ==
+          "One column with peptide sequences and modifications"
+      )
+
+      # Collect the selectors that are currently active
+      active_cols <- c(skyline_charge_column = input$skyline_charge_column)
+
+      if (isTRUE(is_analyte_format)) {
+        active_cols <- c(
+          active_cols,
+          skyline_protein_column = input$skyline_protein_column,
+          skyline_analyte_column = input$skyline_analyte_column
+        )
+      } 
+      else {
+        active_cols <- c(
+          active_cols,
+          skyline_cluster_column = input$skyline_cluster_column,
+          skyline_glycan_column  = input$skyline_glycan_column
+        )
+      }
+
+      if (isTRUE(input$skyline_contains_notes)) {
+        active_cols <- c(
+          active_cols,
+          skyline_note_column = input$skyline_note_column
+        )
+      }
+
+      if (isTRUE(input$skyline_merge_glycounter)) {
+        active_cols <- c(
+          active_cols,
+          skyline_molecular_formula_column = input$skyline_molecular_formula_column
+        )
+      }
+
+      # Find selector IDs whose chosen column appears in more than one selector
+      non_empty <- active_cols[!is.na(active_cols) & active_cols != ""]
+      # Flag only the second (and later) selector that picks a duplicate column,
+      # leaving the first occurrence without a warning.
+      dup_ids <- names(non_empty)[duplicated(non_empty)]
+
+      # Show / clear danger feedback for each active selector
+      for (id in names(active_cols)) {
+        shinyFeedback::feedbackDanger(
+          inputId = id,
+          show = id %in% dup_ids,
+          text = "This column is already selected for another field."
+        )
+      }
+
+      # Disable the process button while any duplicate exists
+      shinyjs::toggleState("button", condition = length(dup_ids) == 0)
+    })
     
     
     # Check structure of raw data
@@ -650,7 +710,7 @@ mod_read_data_server <- function(id) {
       req(raw_skyline_data_checked())
 
       # Optional columns
-      if (isTRUE(input$skyline_include_notes)) {
+      if (isTRUE(input$skyline_contains_notes)) {
         notes_column <- input$skyline_note_column
       }
       else {
@@ -979,7 +1039,6 @@ mod_read_data_server <- function(id) {
       else input$data_type
     })
     
-    # TODO: Fix crash when processing Skyline more than once...
     
     return(list(
       data = to_return_trimmed,
