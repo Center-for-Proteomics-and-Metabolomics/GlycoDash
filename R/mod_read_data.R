@@ -837,37 +837,46 @@ mod_read_data_server <- function(id) {
       else {
         req(glycounter_data())
         
-        isotopic_patterns <- calculate_skyline_isotopic_patterns(
-          skyline_data = skyline_data_reshaped()
+        tryCatch(
+          expr = {
+            isotopic_patterns <- calculate_skyline_isotopic_patterns(
+              skyline_data = skyline_data_reshaped()
+            )
+            
+            isotope_mz_candidates <- extract_isotopic_mz_candidates(
+              isotopic_patterns = isotopic_patterns,
+              n_peaks = as.integer(input$n_isotopic_peaks)
+            )
+            
+            fragment_cols <- extract_fragment_cols(glycounter_data())
+            
+            skyline_prepped <- prepare_skyline_data(
+              skyline_data = skyline_data_reshaped(), 
+              ppm_tolerance = input$mz_tolerance_ppm
+            )
+            
+            skyline_isotope_candidates <- expand_skyline_isotope_candidates(
+              skyline_prepped = skyline_prepped,
+              isotope_mz_candidates = isotope_mz_candidates
+            )
+            
+            glycounter_candidates <- extract_glycounter_candidates(
+              skyline_isotope_candidates = skyline_isotope_candidates,
+              glycounter_data = glycounter_data()
+            )
+            
+            glycounter_summary <- summarize_glycounter_data(
+              glycounter_candidates, fragment_cols
+            )
+            
+            merge_skyline_glycounter(skyline_prepped, glycounter_summary)
+          },
+          error = function(e) {
+            showNotification(e$message, type = "error", duration = NULL)
+            shinybusy::remove_modal_spinner()
+            NULL
+          }
         )
-        
-        isotope_mz_candidates <- extract_isotopic_mz_candidates(
-          isotopic_patterns = isotopic_patterns,
-          n_peaks = as.integer(input$n_isotopic_peaks)
-        )
-        
-        fragment_cols <- extract_fragment_cols(glycounter_data())
-        
-        skyline_prepped <- prepare_skyline_data(
-          skyline_data = skyline_data_reshaped(), 
-          ppm_tolerance = input$mz_tolerance_ppm
-        )
-        
-        skyline_isotope_candidates <- expand_skyline_isotope_candidates(
-          skyline_prepped = skyline_prepped,
-          isotope_mz_candidates = isotope_mz_candidates
-        )
-        
-        glycounter_candidates <- extract_glycounter_candidates(
-          skyline_isotope_candidates = skyline_isotope_candidates,
-          glycounter_data = glycounter_data()
-        )
-        
-        glycounter_summary <- summarize_glycounter_data(
-          glycounter_candidates, fragment_cols
-        )
-        
-        merge_skyline_glycounter(skyline_prepped, glycounter_summary)
       }
     }) %>% bindEvent(skyline_data_reshaped())
     
