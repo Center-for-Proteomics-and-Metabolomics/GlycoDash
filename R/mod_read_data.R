@@ -697,8 +697,16 @@ mod_read_data_server <- function(id) {
         )
       }
 
-      # Disable the process button while any duplicate exists or no file is uploaded
-      shinyjs::toggleState("button", condition = length(dup_ids) == 0 && !is.null(input$skyline_input_wide))
+      # Disable the process button while any duplicate exists, no Skyline file is
+      # uploaded, or GlyCounter merge is enabled but no GlyCounter files are uploaded.
+      glycounter_ready <- (
+        !isTRUE(input$skyline_merge_glycounter) || !is.null(input$glycounter_files)
+      )
+      shinyjs::toggleState(
+        "button", condition = (
+          length(dup_ids) == 0 && !is.null(input$skyline_input_wide) && glycounter_ready
+        )
+      )
     })
     
     
