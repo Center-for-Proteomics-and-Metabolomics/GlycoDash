@@ -9,6 +9,8 @@
 #' @param target_trait   # Trait for which a formula should be created, e.g. "galactosylation"
 #'
 #' @return  A character string with a formula
+#'
+#' @noRd
 generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   
   # Get the glycans that should be used for calculating the trait
@@ -143,6 +145,8 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
 #'
 #' @return  Character vector with column names of traits that should be calculated,
 #'          matching those in the traits reference files. 
+#'
+#' @noRd
 match_traits <- function(traits_ui_input) {
   traits <- c(
     # Trait names to replace the descriptions with
@@ -196,7 +200,8 @@ match_traits <- function(traits_ui_input) {
 #' @param chosen_traits Character vector, e.g.  c("fucosylation", "sialylation")
 #' @param chosen_clusters  Character vector, e.g. c("IgGI", "IgGII")
 #' @param reference Reference file for traits, e.g. human_IgG_N_ref.
-#' 
+#'
+#' @noRd
 create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters, reference) {
   # Create an empty vector to store possible analytes with unknown glycan compositions
   unknown_glycans <- c()
@@ -259,6 +264,8 @@ create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters,
 
 
 #' Automatically calculate traits based on list of formulas
+#'
+#' @noRd
 calculate_traits <- function(normalized_data_wide, trait_formulas) {
   # Initiate an empty vector for the trait names
   trait_names <- vector("character", length = length(trait_formulas))
@@ -293,6 +300,7 @@ calculate_traits <- function(normalized_data_wide, trait_formulas) {
 #'
 #'expr_rm extracts whatever comes before the "=" sign (spaces around the "=" sign do not matter)
 #'
+#' @noRd
 create_expr_ls <- function(str_expr) {
   expr_nm <- stringr::str_extract(str_expr, "^\\w+")
   expr_code <- stringr::str_replace_all(str_expr, "(^\\w+\\s?=\\s?)(.*)", "\\2")
@@ -319,7 +327,8 @@ create_expr_ls <- function(str_expr) {
 #' Data frame with normalized data in wide format.
 #'
 #' @return A wide dataframe with the normalized data + calculated custom traits.
-#' 
+#'
+#' @noRd
 calculate_custom_traits <- function(traits_excel, normalized_data_wide) {
   # Create vector with expressions for dplyr::mutate()
   expressions <- traits_excel %>% 

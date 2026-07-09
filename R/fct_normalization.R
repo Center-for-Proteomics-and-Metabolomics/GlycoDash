@@ -268,6 +268,8 @@ normalize_data <- function(total_intensities) {
 #' @param color_na Color for the background / missing values.
 #'
 #' @return A ggplot2 heatmap object.
+#'
+#' @noRd
 sample_heatmap <- function(
     normalized_data,
     cluster_name,
@@ -375,6 +377,8 @@ sample_heatmap <- function(
 #' @param color_na Color of background/missing values.
 #'
 #' @return A ggplot2 heatmap object.
+#'
+#' @noRd
 cluster_heatmap <- function(
     normalized_data,
     exclude_sample_types,

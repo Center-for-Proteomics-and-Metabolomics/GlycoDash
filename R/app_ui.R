@@ -87,6 +87,9 @@ app_ui <- function(request) {
         ),
       
       body = shinydashboard::dashboardBody(
+        # Show a clear reload message if the browser loses the Shiny connection.
+        glycodash_disconnect_warning,
+        
         # Below causes the title to remain visible entirely when collapsing
         # the sidebar. Only tab names are collapsed, icons remain visible.
         # Taken from: https://stackoverflow.com/questions/69591309/shinydashboard-vs-shinydashboardplus-dashboardsidebar-title-differences

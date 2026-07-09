@@ -222,7 +222,8 @@ mod_tab_curated_analytes_server <- function(id,
           values_to = "analyte"
         ) %>% 
         dplyr::filter(!is.na(analyte)) %>% 
-        dplyr::mutate(dplyr::across(analyte, as.character))
+        dplyr::mutate(dplyr::across(analyte, as.character),
+                      charge = as.integer(charge))
       
       
       # Fall back to automatic curation results only if the cluster tab has
@@ -238,7 +239,8 @@ mod_tab_curated_analytes_server <- function(id,
           dplyr::select(., "analyte", charge_columns) %>% 
           tidyr::pivot_longer(., cols = charge_columns, names_to = "charge") %>% 
           dplyr::filter(., value == "Yes") %>% 
-          dplyr::select(., -value)
+          dplyr::select(., -value) %>%
+          dplyr::mutate(charge = as.integer(charge))
       }
       
       return(to_return)
@@ -262,7 +264,8 @@ mod_tab_curated_analytes_server <- function(id,
           values_to = "passed"
         ) %>%
         dplyr::filter(passed == "Yes") %>%
-        dplyr::select(-passed)
+        dplyr::select(-passed) %>%
+        dplyr::mutate(charge = as.integer(charge))
     })
 
   
