@@ -842,6 +842,27 @@ mod_read_data_server <- function(id) {
         
         tryCatch(
           expr = {
+            # Check for presence of required RT columns.
+            required_rt_cols <- c(
+              "Best.Retention.Time", "Min.Start.Time", "Max.End.Time"
+            )
+            missing_rt_cols <- setdiff(
+              required_rt_cols, colnames(skyline_data_reshaped())
+            )
+            if (length(missing_rt_cols) > 0) {
+              showNotification(
+                paste0(
+                  "GlyCounter merge requires Skyline retention time columns: ",
+                  "'Best.Retention.Time', 'Min.Start.Time' and 'Max.End.Time'"
+                ),
+                type = "error", 
+                duration = NULL
+              )
+              shinybusy::remove_modal_spinner()
+              return(NULL)
+            }
+            
+            # Merging
             isotopic_patterns <- calculate_skyline_isotopic_patterns(
               skyline_data = skyline_data_reshaped()
             )
