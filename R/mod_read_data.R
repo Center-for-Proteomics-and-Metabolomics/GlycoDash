@@ -704,7 +704,10 @@ mod_read_data_server <- function(id) {
       )
       shinyjs::toggleState(
         "button", condition = (
-          length(dup_ids) == 0 && !is.null(input$skyline_input_wide) && glycounter_ready
+          length(dup_ids) == 0 && 
+          length(non_empty) == length(active_cols) &&
+          !is.null(input$skyline_input_wide) &&
+          glycounter_ready
         )
       )
     })
