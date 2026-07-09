@@ -70,6 +70,8 @@ detect_group <- function(data, keyword_specific, keyword_total) {
 #'
 #' @return A character string, e.g. \code{"1st"}, \code{"2nd"}, \code{"3rd"},
 #'   \code{"4th"}.
+#'
+#' @noRd
 getOrdinalSuffix <- function(num) {
   if (num %% 10 == 1 && num %% 100 != 11) {
     return(paste0(num, "st"))
@@ -101,6 +103,8 @@ getOrdinalSuffix <- function(num) {
 #'
 #' @return A dataframe with columns \code{protein}, \code{peptide}, and
 #'   \code{abbreviation}.
+#'
+#' @noRd
 abbreviate_glycosites <- function(protein_peptide_df) {
   
   df <- protein_peptide_df %>% 

@@ -6,6 +6,8 @@
 #' @param path_to_file Path to Skyline CSV file.
 #'
 #' @return A dataframe with the raw data read from the CSV.
+#'
+#' @noRd
 read_skyline_csv <- function(path_to_file) {
   L <- readLines(path_to_file, n = 1)
   if (grepl(";", L)) {
@@ -31,6 +33,8 @@ read_skyline_csv <- function(path_to_file) {
 #'   \code{\link{read_skyline_csv}}.
 #'
 #' @return NULL if required columns are missing, otherwise returns the data.
+#'
+#' @noRd
 check_skyline_data <- function(raw_skyline_data) {
   
   required_vars <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM") 
@@ -78,6 +82,8 @@ check_skyline_data <- function(raw_skyline_data) {
 #'   per-sample measurement columns (\code{Total.Area.MS1},
 #'   \code{Isotope.Dot.Product}, \code{Average.Mass.Error.PPM},
 #'   \code{Best.Retention.Time}, \code{Min.Start.Time}, \code{Max.End.Time}).
+#'
+#' @noRd
 reformat_skyline_analyte_column <- function(
     raw_skyline_data, 
     protein_colname,
@@ -236,6 +242,8 @@ reformat_skyline_data <- function(
 #' @return A dataframe with the same structure as \code{data_renamed_cols}, with
 #'   glycan compositions of isomers renamed using \code{"_a"}, \code{"_b"},
 #'   etc.
+#'
+#' @noRd
 rename_skyline_isomers <- function(data_renamed_cols) {
   
   # Look for isomers in the glycan compositions, per peptide.
@@ -322,6 +330,8 @@ rename_skyline_isomers <- function(data_renamed_cols) {
 #'
 #' @return A data frame with one row per analyte-sample combination and
 #'   individual columns for each Skyline measurement variable.
+#'
+#' @noRd
 reshape_skyline_data <- function(data_renamed) {
   # Assume variable columns for samples start after `charge`.
   # Everything after that point belongs to one sample-variable combination such

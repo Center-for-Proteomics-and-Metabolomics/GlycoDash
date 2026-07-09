@@ -814,6 +814,8 @@ Shiny.bindAll(this.api().table().node()); } ')
 #' @return This function returns a dataframe that can be passed as the
 #'   \code{dataframe_for_table} argument to the
 #'   \code{\link{create_analyte_curation_table}} function.
+#'
+#' @noRd
 prepare_analyte_curation_table <- function(analyte_curated_data, 
                                            selected_cluster, 
                                            by_group) {
