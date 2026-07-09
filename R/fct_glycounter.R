@@ -332,8 +332,10 @@ prepare_skyline_data <- function(
       # Add a stable row identifier so GlyCounter summaries can be calculated
       # per Skyline row and safely joined back afterwards.
       skyline_row_id = dplyr::row_number(),
-      # Add ppm tolerance.
-      ppm_tolerance = ppm_tolerance
+      # Add ppm tolerance. Use `.env$ppm_tolerance` to force the function
+      # argument value, in case ppm_tolerance is already an existing column
+      # in the Skyline data (should not be the case).
+      ppm_tolerance = .env$ppm_tolerance
     )
 }
 
