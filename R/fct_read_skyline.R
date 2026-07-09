@@ -124,7 +124,7 @@ reformat_skyline_analyte_column <- function(
     )
   
   # Reformat and annotate data
-  raw_data_modifications <- data_renamed_cols %>%
+  raw_data_modifications <- raw_data_required %>%
     dplyr::mutate(
       # Count number of oxidized methionines
       oxidation = stringr::str_count(
