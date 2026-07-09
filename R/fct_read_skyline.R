@@ -283,7 +283,7 @@ rename_skyline_isomers <- function(data_renamed_cols) {
     dplyr::select(-n)
   
   # Show a notification if isomers were detected
-  if (length(data_isomers$glycan > 0)) {
+  if (nrow(data_isomers) > 0) {
     # Get vector with the compositions for which isomers were detected
     isomeric <- data %>% 
       dplyr::filter(n > 1) %>% 
