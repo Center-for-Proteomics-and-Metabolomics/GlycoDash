@@ -156,7 +156,7 @@ convert_lacytools_summary <- function(data) {
     rlang::abort(
       class = "no_outputs_present",
       message = paste(
-        ", none of the LaCyTools output variables are present.",
+        "None of the LaCyTools output variables are present.",
         "Did you choose the correct file?"
       )
     )
