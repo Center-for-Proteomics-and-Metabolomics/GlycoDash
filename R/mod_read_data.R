@@ -117,7 +117,22 @@ mod_read_data_ui <- function(id) {
         ),
         shinyWidgets::materialSwitch(
           ns("skyline_merge_glycounter"),
-          HTML("<i style='font-size:15px;'> Merge with GlyCounter fragmentation data </i>"),
+          tagList(
+            tags$i(style = "font-size:15px;", "Merge with GlyCounter fragmentation data "),
+            tags$span(class = "label label-warning", style = "font-size:12px; vertical-align:middle;", "Experimental") %>%
+              bsplus::bs_embed_popover(
+                id = ns("experimental_popover"),
+                title = "Experimental feature",
+                content = paste(
+                  "GlyCounter fragmentation matching has not yet been fully validated",
+                  "for all input types. Inspect the results carefully before using",
+                  "them for final analysis."
+                ),
+                trigger = "hover",
+                placement = "right",
+                container = "body"
+              )
+          ),
           status = "success",
           right = TRUE
         ),
@@ -682,8 +697,8 @@ mod_read_data_server <- function(id) {
         )
       }
 
-      # Disable the process button while any duplicate exists
-      shinyjs::toggleState("button", condition = length(dup_ids) == 0)
+      # Disable the process button while any duplicate exists or no file is uploaded
+      shinyjs::toggleState("button", condition = length(dup_ids) == 0 && !is.null(input$skyline_input_wide))
     })
     
     
