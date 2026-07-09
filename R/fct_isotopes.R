@@ -28,7 +28,13 @@ symbol_to_element <- function(symbol) {
     Fe = "iron"
   )
 
-  return(symbol_element_map[[symbol]])
+  element <- symbol_element_map[[symbol]]
+  
+  if (is.null(element)) {
+    stop("Unsupported element symbol in molecular formula: ", symbol)
+  }
+  
+  return(element)
 }
 
 
