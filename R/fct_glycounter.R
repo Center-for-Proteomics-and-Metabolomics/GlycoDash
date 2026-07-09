@@ -102,9 +102,11 @@ extract_top_isotopic_mz <- function(
             dplyr::arrange(dplyr::desc(prob)) %>%
             dplyr::slice_head(n = n_peaks) %>%
             dplyr::mutate(
+              molecular_formula = formula,
+              charge = charge_int,
               rank = dplyr::row_number(),
               # For negative charges, m/z is still reported as positive value
-              mz = abs(mass / charge)
+              mz = abs(mass / charge_int)
             ) %>%
             dplyr::select(molecular_formula, charge, rank, mz)
         }
