@@ -32,6 +32,20 @@ calculate_skyline_isotopic_patterns <- function(
     dplyr::distinct() %>%
     # Ensure charge is integer (should already be the case).
     dplyr::mutate(charge = as.integer(charge))
+  
+  # Check against invalid charges or molecular formulas
+  invalid <- (
+    is.na(compositions$molecular_formula) | 
+    compositions$molecular_formula == "" |
+    is.na(compositions$charge) |
+    compositions$charge == 0L
+  )
+  if (any(invalid)) {
+    stop(paste0(
+      "GlyCounter merge requires non-empty `molecular formula` ", 
+      "and non-zero charge for all Skyline rows."
+    ))
+  }
 
   # Get nominal isotopic pattern(M, M+1, M+2, ...) for each ion
   patterns <- list()
