@@ -92,7 +92,7 @@ mod_clusters_server <- function(
         spin = "cube-grid", color = "#0275D8",
         text = HTML("<br/><strong>Processing data..")
       )
-    })
+    }, priority = 5)
     
     analyte_parts <- reactive({
       req(data())
