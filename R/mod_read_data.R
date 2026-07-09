@@ -802,7 +802,7 @@ mod_read_data_server <- function(id) {
       )
       # Extract filenames of OxoSignal files (original and in memory)
       original_names <- input$glycounter_files$name
-      oxosignal_indices <- grepl("_OxoSignal\\.txt$", original_names)
+      oxosignal_indices <- grepl("_OxoSignal\\.txt$", original_names, ignore.case = TRUE)
       oxosignal_files <- input$glycounter_files$datapath[oxosignal_indices]
       oxosignal_names <- original_names[oxosignal_indices]
 
