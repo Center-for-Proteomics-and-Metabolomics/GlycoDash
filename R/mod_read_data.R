@@ -713,7 +713,11 @@ mod_read_data_server <- function(id) {
     # Check structure of raw data
     raw_skyline_data_checked <- reactive({
       req(raw_skyline_data())
-      check_skyline_data(raw_skyline_data())
+      checked <- check_skyline_data(raw_skyline_data())
+      if (is.null(checked)) {
+        shinybusy::remove_modal_spinner()
+      }
+      checked
     })
 
     
