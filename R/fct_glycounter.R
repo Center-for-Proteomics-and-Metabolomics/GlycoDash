@@ -275,7 +275,7 @@ load_glycounter_data <- function(files) {
         # Recover the sample name from the original filename
         sample = sub("_?GlyCounter.*$", "", basename(name)),
         # Convert "True"/"False" text values to logical values
-        LikelyGlycoSpectrum = tolower(LikelyGlycoSpectrum) == "true",
+        LikelyGlycoSpectrum = tolower(as.character(LikelyGlycoSpectrum)) == "true",
         # Sum all fragment-ion intensities within each scan.
         # The individual fragment columns are retained as well.
         fragment_sum = rowSums(
