@@ -342,7 +342,7 @@ reshape_skyline_data <- function(data_renamed) {
       # - some Skyline exports prefix scientific notation with "*"
       #   (for example "*2.4246E+7"), which must be removed before conversion
       dplyr::across(
-        .cols = all_of(variable_cols),
+        .cols = tidyselect::all_of(variable_cols),
         .fns = ~ .x %>%
           # Force to character
           as.character() %>%
