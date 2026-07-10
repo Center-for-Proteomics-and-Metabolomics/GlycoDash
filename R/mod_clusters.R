@@ -28,18 +28,23 @@ mod_clusters_ui <- function(id) {
         icon("info-circle", class = "ml") %>% 
           bsplus::bs_embed_popover(
             title = "Explanation",
-            content = HTML("
+            content = HTML(
+            "
             Glycopeptides in your data will be assigned to a glycosylation 
-            site based on their names. For example, two analytes named \"IgGI1H3N4F1\" and
-            \"IgGI1H4N4F1\" would be assigned to the glycosylation site \"IgGI\".
+            site based on their names. For example, two analytes named 
+            \"IgGI1H3N4F1\" and \"IgGI1H4N4F1\" would be assigned to the 
+            glycosylation site \"IgGI\".
             <br> <br>
-            Non-glycosylated peptides are also automatically detected. When corresponding
-            glycopeptides exist, then this peptide can later be uesd to calculate site occupancies.
-            In the example above, this would be the case when the analyte \"IgGI1\" is present in
-            the data, which can be used to calculate the occupancy of glycosylation site \"IgGI\".
-            When no corresponding glycopeptides are present, the peptide is not considered 
-            to be a glycosylation site. These peptides can later be used for protein quantitation.
-            "),
+            Non-glycosylated peptides are also automatically detected. 
+            When corresponding glycopeptides exist, then this peptide can later 
+            be used to calculate site occupancies. In the example above, 
+            this would be the case when the analyte \"IgGI1\" is present in
+            the data, which can be used to calculate the occupancy of 
+            glycosylation site \"IgGI\". When no corresponding glycopeptides 
+            are present, the peptide is not considered to be a glycosylation 
+            site. These peptides can later be used for protein quantitation.
+            "
+            ),
             trigger = "hover",
             placement = "right",
             html = "true"
@@ -51,14 +56,19 @@ mod_clusters_ui <- function(id) {
       div(
         id = ns("info_detection"),
         HTML("
-        <strong> Glycosylation sites in your data will be detected automatically after adding the sample types. </strong>
+        <strong> 
+        Glycosylation sites in your data will be detected automatically 
+        after adding the sample types. 
+        </strong>
         <br> <br>
       ")
       ),
       div(
         id = ns("info_clusters"),
         HTML("
-        <strong> The following glycosylation sites were detected in your data: </strong>
+        <strong> 
+        The following glycosylation sites were detected in your data: 
+        </strong>
         <br> <br>
       ")
       ),
@@ -66,8 +76,10 @@ mod_clusters_ui <- function(id) {
       div(
         id = ns("info_peptides"),
         HTML("
-        <strong> The following peptides were detected without any
-        corresponding glycopeptides: </strong>
+        <strong> 
+        The following peptides were detected without any corresponding 
+        glycopeptides: 
+        </strong>
         <br> <br>
       ")
       ),
@@ -77,12 +89,14 @@ mod_clusters_ui <- function(id) {
 }
 
 
+
 #' clusters Server Functions
 #'
 #' @noRd 
 mod_clusters_server <- function(
     id, 
-    data) {
+    data  
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -93,6 +107,7 @@ mod_clusters_server <- function(
         text = HTML("<br/><strong>Processing data..")
       )
     }, priority = 5)
+    
     
     analyte_parts <- reactive({
       req(data())
@@ -126,15 +141,29 @@ mod_clusters_server <- function(
     
     
     # Show the clusters in a table
-    output$clusters_table <- renderTable({
-      req(glycopeptide_clusters())
-      data.frame("Glycosylation site" = glycopeptide_clusters())
-    }, striped = TRUE, bordered = TRUE, rownames = TRUE, colnames = FALSE, align = "l")
+    output$clusters_table <- renderTable(
+      {
+        req(glycopeptide_clusters())
+        data.frame("Glycosylation site" = glycopeptide_clusters())
+      }, 
+      striped = TRUE, 
+      bordered = TRUE, 
+      rownames = TRUE, 
+      colnames = FALSE, 
+      align = "l"
+    )
     
-    output$peptides_table <- renderTable({
-      req(peptides())
-      data.frame("Peptide" = peptides())
-    }, striped = TRUE, bordered = TRUE, rownames = TRUE, colnames = FALSE, align = "l")
+    output$peptides_table <- renderTable(
+      {
+        req(peptides())
+        data.frame("Peptide" = peptides())
+      }, 
+      striped = TRUE, 
+      bordered = TRUE, 
+      rownames = TRUE, 
+      colnames = FALSE, 
+      align = "l"
+    )
     
     
     # Create a dataframe with a cluster column when user pushes the button

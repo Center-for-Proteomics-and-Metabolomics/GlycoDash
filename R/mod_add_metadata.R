@@ -30,11 +30,12 @@ mod_add_metadata_ui <- function(id){
             title = "Explanation",
             content = HTML(
               "
-              Your metadata Excel file should contain a named column that contains the sample IDs,
-              and one or more named columns with metadata (e.g. \"age\", \"sex\", \"disease\").
+              Your metadata Excel file should contain a named column that 
+              contains the sample IDs, and one or more named columns with 
+              metadata (e.g. \"age\", \"sex\", \"disease\").
               <br> <br>
-              Each sample ID should be present only once in your file, even if it is present
-              multiple times in your plate design.
+              Each sample ID should be present only once in your file, 
+              even if it is present multiple times in your plate design.
               <br> <br>
               For an example file, click the paperclip button.
               "
@@ -83,12 +84,14 @@ mod_add_metadata_ui <- function(id){
 }
     
 
+
 #' add_metadata Server Functions
 #'
 #' @noRd 
 mod_add_metadata_server <- function(
     id, 
-    data) {
+    data  
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -136,10 +139,11 @@ mod_add_metadata_server <- function(
         function(inputId, metadata, metadata_name) { 
           selectizeInput(
             ns(inputId),
-            label = paste(
-              "Which column in", 
-              metadata_name, 
-              "contains the sample IDs?"),
+            label = paste0(
+              "Select column in ", 
+              metadata_name,
+              "containing the sample IDs?"
+            ),
             # The choices for each input correspond to the names of the 
             # columns in the metadata file:
             choices = c("", unique(colnames(metadata))),
@@ -179,10 +183,12 @@ mod_add_metadata_server <- function(
     merged_metadata <- reactive({
       req(
         metadata_list(),
-        all(purrr::map_lgl(
-          sample_id_inputIds(),
-          ~ isTruthy(input[[.x]])
-        ))
+        all(
+          purrr::map_lgl(
+            sample_id_inputIds(),
+            ~ isTruthy(input[[.x]])
+          )
+        )
       )
       # For all metadata files in the metadata_list: Rename the column that the
       # user indicated as the sample ID column to "sample_id" so that the
@@ -293,7 +299,9 @@ mod_add_metadata_server <- function(
           html = TRUE,
           text = paste(
             "The following sample IDs are present more than once in your file:",
-            shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_duplicates")))
+            shinycssloaders::withSpinner(
+              DT::dataTableOutput(ns("popup_table_duplicates"))
+            )
           ),
           size = "m",
           confirmButtonText = "OK",
@@ -356,18 +364,22 @@ mod_add_metadata_server <- function(
       shinyalert::shinyalert(
         inputId = "popup",
         html = TRUE,
-        text = paste(
+        text = paste0(
           length(unmatched_ids()),
-          "sample IDs in the data had no match in the metadata:",
-          shinycssloaders::withSpinner(DT::dataTableOutput(ns("popup_table_unmatched"))),
-          "<br>Please check: 1) Does the spelling of sample IDs in your metadata correspond to the spelling in your plate design?",
+          " sample IDs in the data had no match in the metadata: ",
+          shinycssloaders::withSpinner(DT::dataTableOutput(
+            ns("popup_table_unmatched"))
+          ),
+          "<br> Please check: ", 
+          "1) Does the spelling of sample IDs in your metadata correspond to ", 
+          "the spelling in your plate design? ",
           "and 2) Have you selected the correct sample ID columns?"
         ),
         size = "m",
         confirmButtonText = "Add the metadata despite the unmatched IDs",
         confirmButtonCol = "#3c8dbc",
         showCancelButton = TRUE,
-        cancelButtonText = "Don't add the metadata now",
+        cancelButtonText = "Cancel",
         type = ifelse(length(unmatched_ids()) > 20, "warning", "")
       )
     })
