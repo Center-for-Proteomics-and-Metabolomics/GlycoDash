@@ -33,37 +33,38 @@ mod_spectra_curation_ui <- function(id) {
               title = div(
                 "Choose analyte quality criteria",
                 id = ns("box_header2"),
-                icon("info-circle",
-                     class = "ml",
-                     #tabindex = "0" #only needed for trigger = "focus"
-                ) %>% 
+                icon("info-circle", class = "ml") %>% 
                   bsplus::bs_embed_popover(
                     title = "Explanation",
                     content = HTML(
                       "
-                      Here you can select analyte quality criteria that will be used for 
-                      spectra curation. These values will also be used in the \"Analyte Curation\"
-                      tab. For an analyte to pass in a spectrum, it has to fulfill all three
-                      quality criteria.
+                      Here you can select analyte quality criteria that will 
+                      be used for  spectra curation. These values will also be 
+                      used in the \"Analyte Curation\" tab. For an analyte to 
+                      pass in a spectrum, it has to fulfill all three quality 
+                      criteria.
                       <br> <br>
-                      For each spectrum, the intensities of all passing glycopeptide analytes are summed.
-                      The percentage of passing analytes is also calculated per spectrum. 
+                      For each spectrum, the intensities of all passing 
+                      glycopeptide analytes are summed. The percentage of 
+                      passing  analytes is also calculated per spectrum. 
                       These values are shown in the interactive scatter plots. 
-                      Spectra curation is performed based on the sum intensity of passing analytes 
-                      and on the percentage of passing analytes in the spectra.
+                      Spectra curation is performed based on the sum intensity 
+                      of passing analytes and on the percentage of passing 
+                      analytes in the spectra.
                       <br> <br>
-                      It is possible to exclude one or two quality criteria from this assessment,
-                      by clicking the gears icon.
+                      It is possible to exclude one or two quality criteria 
+                      from this assessment, by clicking the gears icon.
                       "
                     ),
                     trigger = "hover",
                     placement = "right",
                     html = "true",
-                    container = "body"),
+                    container = "body"
+                  ),
                 shinyWidgets::dropdownButton(
                   shinyWidgets::awesomeCheckboxGroup(
                     ns("qc_to_include"),
-                    "Which analyte quality criteria should be taken into account during spectra curation?",
+                    "Analyte quality criteria to consider during spectra curation:",
                     # Choices determined in server based on data type
                     choices = c(""), selected = c(""), status = "primary"
                   ),
@@ -135,17 +136,18 @@ mod_spectra_curation_ui <- function(id) {
                       <b> Negative control spectra </b>
                       <br>
                       Choose a group of negative controls that should not pass
-                      spectra curation. The curation cut-offs will be set at a chosen
-                      percentile of the sum intensities and passing analyte percentages
-                      in the negative control spectra.
+                      spectra curation. The curation cut-offs will be set at a 
+                      chosen percentile of the sum intensities and passing
+                      analyte percentages in the negative control spectra.
                       <br> <br> 
                       <b> Percentiles </b>
                       <br>
-                      The cut-offs will be set at a chosen percentile of the sum intensities
-                      and passing analyte percentages in all spectra, except for those belonging
-                      to sample types that you choose to exclude from the assessment. For example,
-                      when the chosen percentile is 5, then the lowest 5% of all spectra will fail
-                      curation.
+                      The cut-offs will be set at a chosen percentile of the sum 
+                      intensities and passing analyte percentages in all spectra, 
+                      except for those belonging to sample types that you choose 
+                      to exclude from the assessment. For example, when the 
+                      chosen percentile is 5, then the lowest 5% of all spectra 
+                      will fail curation.
                       "
                     ),
                     trigger = "hover",
@@ -161,9 +163,9 @@ mod_spectra_curation_ui <- function(id) {
                 column(
                   width = 12,
                   tags$p(paste(
-                    "Each glycopeptide spectrum will be curated based on its sum intensity",
-                    "and its percentage of passing analytes. Cut-off values",
-                    "are calculated for both of these parameters.",
+                    "Each glycopeptide spectrum will be curated based on its sum",
+                    "ntensity and its percentage of passing analytes.",
+                    "Cut-off values are calculated for both of these parameters.",
                     "The way this calculation is performed depends on the chosen",
                     "spectra curation method:"
                   )),
@@ -181,15 +183,21 @@ mod_spectra_curation_ui <- function(id) {
                   # so I put the modules inside divs:
                   div(
                     id = ns("controls_module"), 
-                    mod_curate_based_on_controls_ui(ns("curate_based_on_controls_ui_1"))
+                    mod_curate_based_on_controls_ui(
+                      ns("curate_based_on_controls_ui_1")
+                    )
                   ),
                   div(
                     id = ns("percentiles_module"),
-                    mod_curate_based_on_percentiles_ui(ns("curate_based_on_percentiles_ui_1"))
+                    mod_curate_based_on_percentiles_ui(
+                      ns("curate_based_on_percentiles_ui_1")
+                    )
                   ),
                   shinyWidgets::awesomeCheckbox(
                     ns("uncalibrated_as_na"),
-                    label = "Treat uncalibrated spectra as missing values, not zeros.",
+                    label = (
+                      "Treat uncalibrated spectra as missing values, not zeros."
+                    ),
                     value = TRUE
                   )
                 )
@@ -319,14 +327,18 @@ mod_spectra_curation_ui <- function(id) {
 #'
 #' @noRd 
 mod_spectra_curation_server <- function(
-    id, results_data_import  
+    id, 
+    results_data_import  
   ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    # Update user interface based on data type (LaCyTools or Skyline)
+    # Update user interface based on data type
     observeEvent(results_data_import$data_type(), {
-      if (results_data_import$data_type() == "Skyline data") {
+      
+      data_type <- results_data_import$data_type()
+      
+      if (data_type == "Skyline data") {
         # Checkboxes to include QC
         shinyWidgets::updateAwesomeCheckboxGroup(
           inputId = "qc_to_include",
@@ -339,7 +351,7 @@ mod_spectra_curation_server <- function(
         shinyjs::show("idp")
         shinyjs::show("total_area")
       } 
-      else if (results_data_import$data_type() %in% c("LaCyTools data", "SweetSuite data")) {
+      else if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
         # Checkboxes to include QC
         shinyWidgets::updateAwesomeCheckboxGroup(
           inputId = "qc_to_include",
@@ -355,7 +367,7 @@ mod_spectra_curation_server <- function(
     })
     
     
-    # If quantitation is done: exlude quantitation clusters except IgG1 glycopeptides.
+    # If quantitation is done: exlude quantitation glycopeptides.
     # Also exclude non-glycosylated peptides;
     data_to_check <- reactive({
       req(results_data_import$data())
@@ -400,10 +412,12 @@ mod_spectra_curation_server <- function(
     checked_data <- reactive({
       req(data_to_check(), length(input$qc_to_include) > 0)
       
+      data_type <- results_data_import$data_type()
+      
       r$tab_contents <- NULL # Reset the tab contents so that 
       # cut_offs_to_use_all_clusters() becomes invalid and the button is disabled.
       
-      if (results_data_import$data_type() %in% c("LaCyTools data", "SweetSuite data")) {
+      if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
         req(input$sn, input$ipq)
         # Check analyte quality criteria for LaCyTools data
         check_analyte_quality_criteria_lacytools(
@@ -415,7 +429,7 @@ mod_spectra_curation_server <- function(
           criteria_to_consider = input$qc_to_include
         )
       } 
-      else if (results_data_import$data_type() == "Skyline data") {
+      else if (data_type == "Skyline data") {
         req(input$total_area, input$idp)
         # Check analyte quality criteria for Skyline data
         check_analyte_quality_criteria_skyline(
@@ -472,13 +486,13 @@ mod_spectra_curation_server <- function(
       results_data_import = results_data_import,
       total_and_specific = total_and_specific,
       summarized_checks = summarized_checks,
-      uncalibrated_as_NA = reactive({ input$uncalibrated_as_na })  
+      uncalibrated_as_NA = reactive(input$uncalibrated_as_na)  
     )
     
     cut_offs_based_on_percentiles <- mod_curate_based_on_percentiles_server(
       "curate_based_on_percentiles_ui_1",
       summarized_checks = summarized_checks,
-      uncalibrated_as_NA = reactive({ input$uncalibrated_as_na })
+      uncalibrated_as_NA = reactive(input$uncalibrated_as_na)
     )
     
     calculated_cut_offs <- reactive({
@@ -532,7 +546,9 @@ mod_spectra_curation_server <- function(
     observe({
       req(clusters(), summarized_checks())
       # Generate color palette
-      sample_types <- unique(stats::na.omit(as.character(summarized_checks()$sample_type)))
+      sample_types <- unique(
+        stats::na.omit(as.character(summarized_checks()$sample_type))
+      )
       if (length(sample_types) == 0) {
         sample_types <- "Unknown"
       }
@@ -555,7 +571,8 @@ mod_spectra_curation_server <- function(
               keyword_specific = results_data_import$keyword_specific,
               keyword_total = results_data_import$keyword_total,
               calculated_cut_offs = reactive({ 
-                if (is.null(calculated_cut_offs())) { # When spectra curation is skipped.
+                if (is.null(calculated_cut_offs())) {
+                  # When spectra curation is skipped.
                   NULL
                 } 
                 else {
@@ -601,9 +618,12 @@ mod_spectra_curation_server <- function(
         # Create frequency tables for both vectors
         freq_to_check <- table(to_check)
         freq_to_compare <- table(to_compare)
-        # Check if all elements in to_compare are in to_check with the same or higher frequency
+        # Check if all elements in to_compare are in to_check with the 
+        # same or higher frequency.
         all_present <- all(
-          freq_to_compare[names(freq_to_compare)] <= freq_to_check[names(freq_to_compare)]
+          freq_to_compare[
+            names(freq_to_compare)] <= freq_to_check[names(freq_to_compare)
+          ]
         )
         
         if (is.na(all_present)) {
@@ -643,7 +663,10 @@ mod_spectra_curation_server <- function(
     # If all negative controls for one or more clusters are uncalibrated, show a warning.
     # observeEvent() to prevent the message from showing up when choosing manual cut-offs
     observeEvent(calculated_cut_offs(), {
-      req(cut_offs_based_on_controls(), input$curation_method == "Negative control spectra")
+      req(
+        cut_offs_based_on_controls(), 
+        input$curation_method == "Negative control spectra"
+      )
       # Check if there are clusters for which there is no cut-off value
       if (missing_cluster_cut_offs() == TRUE) {
         # Determine missing clusters
@@ -652,11 +675,17 @@ mod_spectra_curation_server <- function(
           cut_offs_based_on_controls()$cluster,
           c("")
         )
-        clusters_missing <- setdiff(clusters(), clusters_available)  # The ordering in setdiff(x, y) matters
+        
+        # The ordering in setdiff(x, y) matters
+        clusters_missing <- setdiff(clusters(), clusters_available)  
+        
         # Show a warning message
         showNotification(
           tags$div(
-            "For the following clusters, all negative control spectra are either missing or uncalibrated: ",
+            paste(
+              "For the following glycosylation sites, all negative control",
+              "spectra are either missing or uncalibrated: "
+            ),
             paste0(clusters_missing, collapse = ", "),
             br(),
             br(),
@@ -664,7 +693,10 @@ mod_spectra_curation_server <- function(
             tags$ul(
               tags$li("Use different or additional negative controls."),
               tags$li("Choose manual cut-offs for these clusters."),
-              tags$li("Choose to treat uncalibrated spectra as zeros, instead of missing values.")
+              tags$li(paste(
+                "Choose to treat uncalibrated spectra as zeros,",
+                "instead of missing values."
+              ))
             )
           ),
           type = "warning",

@@ -20,43 +20,73 @@ mod_tab_cut_offs_ui <- function(id){
     ))),
     DT::dataTableOutput(ns("table")),
     br(),
-    shinyWidgets::materialSwitch(ns("switch_to_manual"),
-                                 HTML("<i style='font-size:15px;'> Choose cut-off values manually instead </i>"),
-                                 right = TRUE,
-                                 status = "success"),
-    shinyjs::hidden(numericInput(ns("cut_off_sum_intensity"),
-                 "Enter a cut-off value for the sum intensity:",
-                 value = 0, min = 0)),
-    shinyjs::hidden(numericInput(ns("cut_off_passing_analyte_percentage"),
-                 "Enter a cut-off value for the percentage of passing analytes:",
-                 value = 0 , min = 0)),
+    shinyWidgets::materialSwitch(
+      ns("switch_to_manual"),
+      HTML(
+        "
+        <i style='font-size:15px;'> 
+        Set cut-offs manually
+        </i>
+        "
+      ),
+      right = TRUE,
+      status = "success"
+    ),
+    shinyjs::hidden(
+      numericInput(
+        ns("cut_off_sum_intensity"),
+        "Sum intensity cut-off:",
+        value = 0, min = 0
+      )
+    ),
+    shinyjs::hidden(
+      numericInput(
+        ns("cut_off_passing_analyte_percentage"),
+        "Passing analyte percentage cut-off:",
+        value = 0 , min = 0
+      )
+    ),
     # div() has to be placed around the boxes below for toggle to work properly.
-    shinyjs::hidden(div(id = ns("spike_manual_cut_offs"),
-      shinydashboardPlus::box(
-        title = "Specific Ig manual cut-offs",
-        solidHeader = TRUE,
-        #status = "primary",
-        width = 6,
-        numericInput(ns("cut_off_sum_intensity_specific"),
-                     "Enter a cut-off value for the sum intensity in the specific Ig samples:",
-                     value = 0, min = 0),
-        numericInput(ns("cut_off_passing_analyte_percentage_specific"),
-                     "Enter a cut-off value for the percentage of passing analytes in the specific Ig samples:",
-                     value = 0, min = 0)
-      ))),
-    shinyjs::hidden(div(id = ns("total_manual_cut_offs"),
-      shinydashboardPlus::box(
-        title = "Total Ig manual cut-offs",
-        solidHeader = TRUE,
-        #status = "primary",
-        width = 6,
-        numericInput(ns("cut_off_sum_intensity_total"),
-                     "Enter a cut-off value for the sum intensity in the total Ig samples:",
-                     value = 0, min = 0),
-        numericInput(ns("cut_off_passing_analyte_percentage_total"),
-                     "Enter a cut-off value for the percentage of passing analytes in the total Ig samples:",
-                     value = 0, min = 0)
-      )))
+    shinyjs::hidden(
+      div(
+        id = ns("spike_manual_cut_offs"),
+        shinydashboardPlus::box(
+          title = "Specific Ig manual cut-offs",
+          solidHeader = TRUE,
+          width = 6,
+          numericInput(
+            ns("cut_off_sum_intensity_specific"),
+            "Sum intensity cut-off for specific Ig samples:",
+            value = 0, min = 0
+          ),
+          numericInput(
+            ns("cut_off_passing_analyte_percentage_specific"),
+            "Passing analyte percentage cut-off for specific Ig samples:",
+            value = 0, min = 0
+          )
+        )
+      )
+    ),
+    shinyjs::hidden(
+      div(
+        id = ns("total_manual_cut_offs"),
+        shinydashboardPlus::box(
+          title = "Total Ig manual cut-offs",
+          solidHeader = TRUE,
+          width = 6,
+          numericInput(
+            ns("cut_off_sum_intensity_total"),
+            "Sum intensity cut-off for total Ig samples:",
+            value = 0, min = 0
+          ),
+          numericInput(
+            ns("cut_off_passing_analyte_percentage_total"),
+            "Passing analyte percentage cut-off for total Ig samples:",
+            value = 0, min = 0
+          )
+        )
+      )
+    )
   )
 }
     
@@ -65,35 +95,58 @@ mod_tab_cut_offs_ui <- function(id){
 #' tab_cut_offs Server Functions
 #'
 #' @noRd 
-mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
-                                    color_palette,
-                                    contains_total_and_specific_samples, 
-                                    calculated_cut_offs,
-                                    keyword_specific, keyword_total,
-                                    curation_method) {
+mod_tab_cut_offs_server <- function(
+    id, 
+    selected_cluster, 
+    summarized_checks,
+    color_palette,
+    contains_total_and_specific_samples, 
+    calculated_cut_offs,
+    keyword_specific, 
+    keyword_total,
+    curation_method  
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Show the cut-off numericInputs when manual_cut_off is chosen:
     observe({
 
-      shinyjs::toggle("cut_off_sum_intensity",
-                      condition = all(is_truthy(input$switch_to_manual),
-                                      contains_total_and_specific_samples() == FALSE))
-      shinyjs::toggle("cut_off_passing_analyte_percentage",
-                      condition = all(is_truthy(input$switch_to_manual),
-                                      contains_total_and_specific_samples() == FALSE))
+      shinyjs::toggle(
+        "cut_off_sum_intensity",
+        condition = all(
+          is_truthy(input$switch_to_manual),
+          contains_total_and_specific_samples() == FALSE
+        )
+      )
+      shinyjs::toggle(
+        "cut_off_passing_analyte_percentage",
+        condition = all(
+          is_truthy(input$switch_to_manual),
+          contains_total_and_specific_samples() == FALSE
+        )
+      )
 
-      shinyjs::toggle("spike_manual_cut_offs",
-                      condition = all(is_truthy(input$switch_to_manual),
-                                      contains_total_and_specific_samples() == TRUE))
+      shinyjs::toggle(
+        "spike_manual_cut_offs",
+        condition = all(
+          is_truthy(input$switch_to_manual),
+          contains_total_and_specific_samples() == TRUE
+        )
+      )
 
-      shinyjs::toggle("total_manual_cut_offs",
-                      condition = all(is_truthy(input$switch_to_manual),
-                                      contains_total_and_specific_samples() == TRUE))
+      shinyjs::toggle(
+        "total_manual_cut_offs",
+        condition = all(
+          is_truthy(input$switch_to_manual),
+          contains_total_and_specific_samples() == TRUE
+        )
+      )
       
-      shinyjs::toggle("switch_to_manual",
-                      condition = curation_method() != "Skip spectra curation")
+      shinyjs::toggle(
+        "switch_to_manual",
+        condition = curation_method() != "Skip spectra curation"
+      )
     })
     
     
@@ -107,33 +160,46 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
         
         specific <- tibble::tibble(
           cut_off_sum_intensity = input$cut_off_sum_intensity_specific,
-          cut_off_passing_analyte_percentage = input$cut_off_passing_analyte_percentage_specific,
+          cut_off_passing_analyte_percentage = (
+            input$cut_off_passing_analyte_percentage_specific
+          ),
           group = keyword_specific(),
           curation_method = "manual"
         )
         
         total <- tibble::tibble(
           cut_off_sum_intensity = input$cut_off_sum_intensity_total,
-          cut_off_passing_analyte_percentage = input$cut_off_passing_analyte_percentage_total,
+          cut_off_passing_analyte_percentage = (
+            input$cut_off_passing_analyte_percentage_total
+          ),
           group = keyword_total(),
           curation_method = "manual"
         )
         
         cut_offs <- dplyr::full_join(specific, total) %>% 
-          dplyr::mutate(group = as.factor(group), cluster = selected_cluster)
+          dplyr::mutate(
+            group = as.factor(group), 
+            cluster = selected_cluster
+          )
         
-      } else {
-        req(input$cut_off_sum_intensity,
-            input$cut_off_passing_analyte_percentage)
+      } 
+      else {
+        req(
+          input$cut_off_sum_intensity,
+          input$cut_off_passing_analyte_percentage
+        )
         
-        cut_offs <- data.frame(cut_off_sum_intensity = input$cut_off_sum_intensity,
-                               cut_off_passing_analyte_percentage = input$cut_off_passing_analyte_percentage,
-                               curation_method = "manual",
-                               cluster = selected_cluster)
-        
+        cut_offs <- data.frame(
+          cut_off_sum_intensity = input$cut_off_sum_intensity,
+          cut_off_passing_analyte_percentage = (
+            input$cut_off_passing_analyte_percentage
+          ),
+          curation_method = "manual",
+          cluster = selected_cluster
+        )
       }
       
-      return(cut_offs)
+      cut_offs
     })
     
     
@@ -141,7 +207,8 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     cut_offs_to_use <- reactive({
       if (is_truthy(input$switch_to_manual)) {
         req(manual_cut_offs())
-      } else {
+      } 
+      else {
         req(calculated_cut_offs())
       }
     })
@@ -160,15 +227,19 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       
       if (is_truthy(summarized_checks_with_cut_offs())) {
         plot <- plot +
-          ggplot2::geom_vline(data = summarized_checks_with_cut_offs(),
-                              ggplot2::aes(xintercept = cut_off_passing_analyte_percentage),
-                              linetype = "dotted") +
-          ggplot2::geom_hline(data = summarized_checks_with_cut_offs(),
-                              ggplot2::aes(yintercept = cut_off_sum_intensity),
-                              linetype = "dotted")
-        
+          ggplot2::geom_vline(
+            data = summarized_checks_with_cut_offs(),
+            ggplot2::aes(xintercept = cut_off_passing_analyte_percentage),
+            linetype = "dotted"
+          ) +
+          ggplot2::geom_hline(
+            data = summarized_checks_with_cut_offs(),
+            ggplot2::aes(yintercept = cut_off_sum_intensity),
+            linetype = "dotted"
+          )
       }
-      return(plot)
+      
+      plot
     })
 
     # Render the plot
@@ -176,7 +247,11 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       req(my_plot())
       
       plot <- my_plot() +
-        ggplot2::theme(axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 20)))
+        ggplot2::theme(
+          axis.title.y = ggplot2::element_text(
+            margin = ggplot2::margin(r = 20)
+          )
+        )
       
       plotly <- plotly::ggplotly(plot, tooltip = "text")
       
@@ -184,9 +259,7 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       
       plotly[["x"]][["layout"]][["margin"]][["l"]] <- 90
       
-      plotly <- facet_strip_bigger(plotly)
-      
-      return(plotly)
+      facet_strip_bigger(plotly)
     })
     
     
@@ -197,19 +270,23 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       calculated_cut_offs() %>% 
         dplyr::mutate(
           `Based on sample types` = purrr::map_chr(
-            sample_type_list,
-            ~ paste("Yes,",
-                    comma_and(.x$sample_type))),
+            sample_type_list, ~ paste("Yes,", comma_and(.x$sample_type))
+          ),
           curation_method = firstupper(
-            stringr::str_replace_all(curation_method,
-                                     pattern = "_",
-                                     replacement = " "))) %>% 
+            stringr::str_replace_all(
+              curation_method, pattern = "_", replacement = " "
+            )
+          )
+        ) %>% 
         dplyr::ungroup() %>% 
-        dplyr::select(-c(cluster,
-                         sample_type_list)) %>% 
-        dplyr::rename("Cut-off sum intensity" = cut_off_sum_intensity,
-                      "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage,
-                      "Curation method" = curation_method) %>% 
+        dplyr::select(-c(cluster, sample_type_list)) %>% 
+        dplyr::rename(
+          "Cut-off sum intensity" = cut_off_sum_intensity,
+          "Cut-off percentage of passing analytes" = (
+            cut_off_passing_analyte_percentage
+          ),
+          "Curation method" = curation_method
+        ) %>% 
         dplyr::rename_with(firstupper)
     })
     
@@ -219,12 +296,18 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       req(manual_cut_offs())
       
       manual_cut_offs() %>% 
-        dplyr::mutate(`Based on sample types` = "No",
-                      curation_method = "Manual cut-offs") %>% 
+        dplyr::mutate(
+          `Based on sample types` = "No",
+          curation_method = "Manual cut-offs"
+        ) %>% 
         dplyr::ungroup()%>% 
-        dplyr::rename("Cut-off sum intensity" = cut_off_sum_intensity,
-                      "Cut-off percentage of passing analytes" = cut_off_passing_analyte_percentage,
-                      "Curation method" = curation_method) %>% 
+        dplyr::rename(
+          "Cut-off sum intensity" = cut_off_sum_intensity,
+          "Cut-off percentage of passing analytes" = (
+            cut_off_passing_analyte_percentage
+          ),
+          "Curation method" = curation_method
+        ) %>% 
         dplyr::rename_with(firstupper)
     })
     
@@ -233,7 +316,8 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     show_in_cut_off_table <- reactive(
       if (is_truthy(input$switch_to_manual)) {
         for_cut_off_table_manual()
-      } else {
+      } 
+      else {
         req(for_cut_off_table_calculated())
       }
     )
@@ -243,9 +327,14 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
       req(show_in_cut_off_table())
       show_in_cut_off_table() %>% 
         dplyr::mutate(
-          `Cut-off sum intensity` = as.character(round(`Cut-off sum intensity`, digits = 0)),
+          `Cut-off sum intensity` = as.character(
+            round(`Cut-off sum intensity`, digits = 0)
+          ),
           `Cut-off percentage of passing analytes` = paste0(
-            format(round(`Cut-off percentage of passing analytes`, digits = 2), nsmall = 2),
+            format(
+              round(`Cut-off percentage of passing analytes`, digits = 2), 
+              nsmall = 2
+            ),
             "%"
           )
         )
@@ -255,13 +344,18 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     output$table <- DT::renderDT({
       req(cut_off_table_rounded())
   
-      DT::datatable(cut_off_table_rounded(),
-                    rownames = FALSE,
-                    width = "600px",
-                    options = list(searching = FALSE,
-                                   paging = FALSE,
-                                   info = FALSE))
+      DT::datatable(
+        cut_off_table_rounded(),
+        rownames = FALSE,
+        width = "600px",
+        options = list(
+          searching = FALSE,
+          paging = FALSE,
+          info = FALSE
+        )
+      )
     })
+    
     
     return(list(
       plot = my_plot,
@@ -271,9 +365,4 @@ mod_tab_cut_offs_server <- function(id, selected_cluster, summarized_checks,
     
   })
 }
-    
-## To be copied in the UI
-# mod_tab_cut_offs_ui("tab_cut_offs_ui_1")
-    
-## To be copied in the server
-# mod_tab_cut_offs_server("tab_cut_offs_ui_1")
+

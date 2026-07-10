@@ -19,15 +19,6 @@ The original dataframe, but with an extra column for each quality
 \description{
 \code{check_criteria_lacytools()} checks for each analyte quality criterium
 separately if it is fulfilled, and is used in the functions
-\code{\link{check_analyte_quality_criteria_lacytools}} and #' \code{\link{check_analyte_quality_criteria_skyline}}.
-}
-\examples{
-data(example_data)
-
-check_each_criterium(my_data = example_data,
-                     min_ppm_deviation = -20,
-                     max_ppm_deviation = 20,
-                     max_ipq = 0.2,
-                     min_sn = 9)
-
+\code{\link{check_analyte_quality_criteria_lacytools}} and 
+\code{\link{check_analyte_quality_criteria_skyline}}.
 }

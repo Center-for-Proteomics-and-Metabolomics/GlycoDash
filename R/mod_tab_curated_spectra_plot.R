@@ -7,24 +7,30 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_tab_curated_spectra_plot_ui <- function(id){
+mod_tab_curated_spectra_plot_ui <- function(id) {
   ns <- NS(id)
   tagList(
     column(
       width = 12,
       br(),
-      shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("plot")))
+      shinyjqui::jqui_resizable(
+        plotly::plotlyOutput(ns("plot"))
+      )
     )
   )
 }
+
+
     
 #' curated_spectra_plots Server Functions
 #'
 #' @noRd 
-mod_tab_curated_spectra_plot_server <- function(id,
-                                                curated_data,
-                                                total_and_specific){
-  moduleServer( id, function(input, output, session) {
+mod_tab_curated_spectra_plot_server <- function(
+    id,
+    curated_data,
+    total_and_specific  
+  ) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     curated_spectra_plot <- reactive({
@@ -42,15 +48,11 @@ mod_tab_curated_spectra_plot_server <- function(id,
       plotly_object <- facet_strip_bigger(plotly_object)
       plotly_object <- change_axis_title_distance(plotly_object)
       
-      return(plotly_object)
+      plotly_object
     })
+    
     
     return(curated_spectra_plot)
   })
 }
     
-## To be copied in the UI
-# mod_tab_curated_spectra_plot_ui("curated_spectra_plots_1")
-    
-## To be copied in the server
-# mod_tab_curated_spectra_plot_server("curated_spectra_plots_1")

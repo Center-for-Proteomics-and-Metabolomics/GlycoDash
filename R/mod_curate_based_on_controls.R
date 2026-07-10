@@ -10,92 +10,125 @@
 mod_curate_based_on_controls_ui <- function(id){
   ns <- NS(id)
   tagList(
-    selectizeInput(ns("cut_off_basis"),
-                   "Choose which spectra to use as negative controls:",
-                   choices = c(""),
-                   selected = NULL,
-                   multiple = TRUE),
+    selectizeInput(
+      ns("cut_off_basis"),
+      "Spectra to use as negative controls:",
+      choices = c(""),
+      selected = NULL,
+      multiple = TRUE
+    ),
     div(
       id = ns("cut_off_basis_total_and_specific"),
-      selectInput(ns("cut_off_basis_specific"),
-                  "Choose which specific Ig spectra should be used as negative controls:",
-                  choices = c(""),
-                  selected = NULL,
-                  multiple = TRUE),
-      selectInput(ns("cut_off_basis_total"),
-                     "Choose which total Ig spectra should be used as negative controls:",
-                     choices = c(""),
-                     selected = NULL,
-                     multiple = TRUE)
+      selectInput(
+        ns("cut_off_basis_specific"),
+        "Specific Ig spectra to use as negative controls:",
+        choices = c(""),
+        selected = NULL,
+        multiple = TRUE
+      ),
+      selectInput(
+        ns("cut_off_basis_total"),
+        "Total Ig spectra to use as negative controls:",
+        choices = c(""),
+        selected = NULL,
+        multiple = TRUE
+      )
     ),
-    numericInput(ns("percentile"),
-                 "At what percentile of the negative controls should the cut-offs be set?",
-                 value = 95,
-                 min = 0,
-                 max = 100,
-                 step = 1),
-    shinyWidgets::awesomeCheckbox(ns("show_advanced_settings"),
-                                  "Show advanced settings.",
-                                  status = "primary"),
+    numericInput(
+      ns("percentile"),
+      "Percentile cut-off based on negative controls:",
+      value = 95,
+      min = 0,
+      max = 100,
+      step = 1
+    ),
+    shinyWidgets::awesomeCheckbox(
+      ns("show_advanced_settings"),
+      "Show advanced settings.",
+      status = "primary"
+    ),
     div(
       id = ns("advanced_settings"),
       shinyWidgets::materialSwitch(
         ns("use_mean_SD"),
-        HTML("<i style='font-size:15px;'> To calculate the sum intensity cut-off use the mean and standard deviation (SD) instead of percentiles </i>"),
+        HTML(
+          "
+          <i style='font-size:15px;'> 
+          Use mean and standard deviation (SD) instead of percentiles
+          </i>"
+        ),
         right = TRUE,
-        status = "success"),
+        status = "success"
+      ),
       div(
         id = ns("mean_sd_settings"),
-        tags$p(icon("warning"), "Using this method at low sample sizes can", 
-               "lead to inflated cut-offs."),
+        tags$p(
+          icon("warning"), 
+          "Using this method at low sample sizes can", 
+          "lead to inflated cut-offs."
+        ),
         tags$p(paste(
           "The cut-off for the percentage of passing analytes will still be", 
           "calculated using the percentile chosen above."),
           br(),
-          paste("The cut-off for the sum intensity will be calculated using", 
-                "the following formula:")),
-        tags$p("cut-off", 
-               tags$sub("sum intensity"), 
-               "= mean", 
-               tags$sub("sum intensity in negative controls"), 
-               "+ factor * SD", tags$sub("sum intensity in negative controls")),
-        numericInput(ns("factor"),
-                     "Choose the value of the factor with which the SD is multiplied:",
-                     value = 3,
-                     step = 1,
-                     min = 0)
+          paste(
+            "The cut-off for the sum intensity will be calculated using", 
+            "the following formula:"
+          )
+        ),
+        tags$p(
+          "cut-off", 
+          tags$sub("sum intensity"), 
+          "= mean", 
+          tags$sub("sum intensity in negative controls"), 
+          "+ factor * SD", tags$sub("sum intensity in negative controls")
+        ),
+        numericInput(
+          ns("factor"),
+          "Factor by which to multiply the SD:",
+          value = 3,
+          step = 1,
+          min = 0
+        )
       )
     )
   )
 }
     
+
+
 #' curate_based_on_controls Server Functions
 #'
 #' @noRd 
-mod_curate_based_on_controls_server <- function(id, 
-                                                results_data_import,
-                                                total_and_specific,
-                                                summarized_checks,
-                                                uncalibrated_as_NA){
-  moduleServer( id, function(input, output, session){
+mod_curate_based_on_controls_server <- function(
+    id, 
+    results_data_import,
+    total_and_specific,
+    summarized_checks,
+    uncalibrated_as_NA  
+  ) {
+  moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
     observe({
-      shinyjs::toggle("cut_off_basis_total_and_specific",
-                      condition = total_and_specific())
+      shinyjs::toggle(
+        "cut_off_basis_total_and_specific", condition = total_and_specific()
+      )
       
-      shinyjs::toggle("cut_off_basis",
-                      condition = !total_and_specific())
+      shinyjs::toggle(
+        "cut_off_basis", condition = !total_and_specific()
+      )
     })
     
     observe({
-      shinyjs::toggle("advanced_settings",
-                      condition = input$show_advanced_settings)
+      shinyjs::toggle(
+        "advanced_settings",
+        condition = input$show_advanced_settings
+      )
     })
     
     observe({
-      shinyjs::toggle("mean_sd_settings",
-                      condition = input$use_mean_SD)
+      shinyjs::toggle("mean_sd_settings", condition = input$use_mean_SD)
     })
     
     # Creating a reactiveValue with the sample type options for the selectInput
@@ -126,35 +159,47 @@ mod_curate_based_on_controls_server <- function(id,
         updateSelectizeInput(inputId = "cut_off_basis",
                              choices = options)
         
-      } else {
-        
+      } 
+      else {
         options_specific <- get_sample_type_options(
           summarized_checks = r$sample_types,
           total_or_specific_keyword = results_data_import$keyword_specific()
         )
         
-        updateSelectizeInput(inputId = "cut_off_basis_specific",
-                             choices = options_specific)
+        updateSelectizeInput(
+          inputId = "cut_off_basis_specific",
+          choices = options_specific
+        )
         
         options_total <- get_sample_type_options(
           summarized_checks = r$sample_types,
           total_or_specific_keyword = results_data_import$keyword_total()
         )
         
-        updateSelectizeInput(inputId = "cut_off_basis_total",
-                             choices = options_total)
-        
+        updateSelectizeInput(
+          inputId = "cut_off_basis_total",
+          choices = options_total
+        )
       }
     })
     
+    
     cut_offs <- reactive({
-      req(summarized_checks(),
-          input$percentile,
-          any(all(!total_and_specific(),
-                  is_truthy(input$cut_off_basis)),
-              all(total_and_specific(),
-                  is_truthy(input$cut_off_basis_specific),
-                  is_truthy(input$cut_off_basis_total))))
+      req(
+        summarized_checks(),
+        input$percentile,
+        any(
+          all(
+            !total_and_specific(),
+            is_truthy(input$cut_off_basis)
+          ),
+          all(
+            total_and_specific(),
+            is_truthy(input$cut_off_basis_specific),
+            is_truthy(input$cut_off_basis_total)
+          )
+        )
+      )
       
       if (total_and_specific()) {
         
@@ -178,10 +223,10 @@ mod_curate_based_on_controls_server <- function(id,
           uncalibrated_as_NA = uncalibrated_as_NA()
         )
         
-        dplyr::full_join(cut_offs_specific,
-                         cut_offs_total)
+        dplyr::full_join(cut_offs_specific, cut_offs_total)
         
-      } else {
+      } 
+      else {
         calculate_cut_offs(
           summarized_checks(),
           control_sample_types = input$cut_off_basis,
