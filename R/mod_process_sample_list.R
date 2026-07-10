@@ -13,7 +13,8 @@ mod_process_sample_list_ui <- function(
     fileInput_label, 
     popover_width, 
     popover_title, 
-    popover_content_html) {
+    popover_content_html  
+  ) {
   ns <- NS(id)
   
   fluidRow(
@@ -51,13 +52,15 @@ mod_process_sample_list_ui <- function(
 }
     
 
+
 #' process_sample_list Server Functions
 #'
 #' @noRd 
 mod_process_sample_list_server <- function(
     id, 
     allowed, 
-    reset) {
+    reset  
+  ) {
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
