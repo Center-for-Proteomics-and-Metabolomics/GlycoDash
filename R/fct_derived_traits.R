@@ -1,17 +1,20 @@
 #' generate_formula
 #'
+#' @description
 #' Generates a formula for a glycan trait, based on a specified cluster,
 #' trait reference file and a trait name that is present in the reference file as a column,
 #' 
 #' @param cluster Cluster name, e.g. "IgGI"
 #' @param cluster_ref_df Reference file for traits, e.g. human_IgG_N_ref filtered with only glycans
-# that passed the analyte curation.
-#' @param target_trait   # Trait for which a formula should be created, e.g. "galactosylation"
+#' that passed the analyte curation.
+#' @param target_trait Trait for which a formula should be created, e.g. "galactosylation"
 #'
 #' @return  A character string with a formula
-#'
-#' @noRd
-generate_formula <- function(cluster, cluster_ref_df, target_trait) {
+generate_formula <- function(
+    cluster, 
+    cluster_ref_df, 
+    target_trait  
+  ) {
   
   # Get the glycans that should be used for calculating the trait
   df <- cluster_ref_df %>% 
@@ -20,28 +23,44 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   
   # Check the number of glycans used for calculating the trait.
   if (nrow(df) == 0) { 
-    return(paste0(cluster, "_", target_trait, " = Not reported: zero for all samples"))
+    return(paste0(
+      cluster, "_", target_trait, " = Not reported: zero for all samples"
+    ))
   } 
   # If there is only one glycan: do not report if trait is average number of mannoses
   else if (nrow(df) == 1 & target_trait == "oligomannose_average") {
-    return(paste0(cluster, "_", target_trait, " = Not reported: only one relevant glycan ", df$glycan))
+    return(paste0(
+      cluster, "_", target_trait, " = Not reported: only one relevant glycan ", 
+      df$glycan
+    ))
   }
   # Check if "complex" is a column in cluster_ref_df
   else if ("complex" %in% colnames(cluster_ref_df)) {
     # Some traits are always 100 when all glycans are used
     if (nrow(cluster_ref_df %>% dplyr::filter(complex == 1)) == nrow(df)) {
       if (target_trait %in% c(
-        "fucosylation", "core_fucosylation", "antennary_fucosylation",
-        "bisection", "mono_antennary", "tri_antennary"
+        "fucosylation", 
+        "core_fucosylation", 
+        "antennary_fucosylation",
+        "bisection", 
+        "mono_antennary", 
+        "tri_antennary"
       )) {
-        return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
+        return(paste0(
+          cluster, "_", target_trait, " = Not reported: 100 for all samples"
+        ))
       }
     }
     else if (nrow(cluster_ref_df) == nrow(df)) {
       if (target_trait %in% c(
-        "hybrid", "hybrid_fucosylation", "hybrid_bisection", "oligomannose"
+        "hybrid", 
+        "hybrid_fucosylation", 
+        "hybrid_bisection", 
+        "oligomannose"
       )) {
-        return(paste0(cluster, "_", target_trait, " = Not reported: 100 for all samples"))
+        return(paste0(
+          cluster, "_", target_trait, " = Not reported: 100 for all samples"
+        ))
       }
     }
   }
@@ -49,7 +68,12 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   # TODO: check for use of all glycans minus 1 --> not always a problem?
 
   # Create a string with the right hand side of the formula
-  formula_string <- paste0(df[[target_trait]], " * ", paste0(cluster, "1", df$glycan), collapse = " + ")
+  formula_string <- paste0(
+    df[[target_trait]], 
+    " * ", 
+    paste0(cluster, "1", df$glycan), 
+    collapse = " + "
+  )
   
   # Collect terms and coefficients
   terms <- strsplit(formula_string, " \\+ ")[[1]]
@@ -67,7 +91,8 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
         paste(gsub(".* \\* ", "", terms_with_coeff), collapse = " + "),
         ")"
       )
-    } else {
+    } 
+    else {
       terms_with_coeff
     }
   })
@@ -76,19 +101,32 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   clean_formula_string <- paste(unlist(grouped_terms), collapse = " + ")
   
   # Divide by the sum of all complex-type glycans if necessary
-  if (target_trait %in% c("fucosylation", "bisection", "galactosylation", "sialylation",
-                          "mono_antennary", "tri_antennary", "antennarity", 
-                          "antennary_fucosylation", "alpha_galactosylation",
-                          "sulfation")) {
+  if (target_trait %in% c(
+    "fucosylation", 
+    "bisection", 
+    "galactosylation", 
+    "sialylation",
+    "mono_antennary", 
+    "tri_antennary", 
+    "antennarity", 
+    "antennary_fucosylation", 
+    "alpha_galactosylation",
+    "sulfation"
+  )) {
     complex_types_df <- cluster_ref_df %>% 
       dplyr::filter(complex == 1)
+    
     # Check if all passing glycans were already complex-type, if not adjust formula
     if (nrow(complex_types_df) != nrow(cluster_ref_df)) {
       # String with sum of complex type glycans
-      complex_sum <- paste0(cluster, "1", complex_types_df$glycan, collapse = " + ")
+      complex_sum <- paste0(
+        cluster, "1", complex_types_df$glycan, collapse = " + "
+      )
       # Adjust clean_formula_string to divide by complex_types
       # Multiple by 100 if trait is not antennarity
-      clean_formula_string <- paste0("(", clean_formula_string, ") / (", complex_sum, ")")
+      clean_formula_string <- paste0(
+        "(", clean_formula_string, ") / (", complex_sum, ")"
+      )
       if (target_trait != "antennarity") {
         clean_formula_string <- paste0(clean_formula_string, " * 100")
       }
@@ -98,20 +136,32 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
   else if (target_trait == "oligomannose_average") {
     oligomannose_df <- cluster_ref_df %>%
       dplyr::filter(oligomannose_average != 0)
-    oligomannose_sum <- paste0(cluster, "1", oligomannose_df$glycan, collapse = " + ")
-    clean_formula_string <- paste0("(", clean_formula_string, ") / (", oligomannose_sum, ")") 
+    oligomannose_sum <- paste0(
+      cluster, "1", oligomannose_df$glycan, collapse = " + "
+    )
+    clean_formula_string <- paste0(
+      "(", clean_formula_string, ") / (", oligomannose_sum, ")"
+    ) 
   }
   # Divide by sum of hybrids when calculating hybrid fucosylation or bisection
   else if (target_trait %in% c("hybrid_fucosylation", "hybrid_bisection")) {
     hybrid_df <- cluster_ref_df %>% 
       dplyr::filter(hybrid == 1)
     hybrid_sum <- paste0(cluster, "1", hybrid_df$glycan, collapse = " + ")
-    clean_formula_string <- paste0("(", clean_formula_string, ") / (", hybrid_sum, ") * 100")
+    clean_formula_string <- paste0(
+      "(", clean_formula_string, ") / (", hybrid_sum, ") * 100"
+    )
   }
   # Divide some O-glycan traits by 100
-  else if (target_trait %in% c("sialic_acids", "galactoses", "galnacs",
-                               "Tn_antigens", "T_antigens", "sT_antigens",
-                               "disialylated_O_antigens")) {
+  else if (target_trait %in% c(
+    "sialic_acids", 
+    "galactoses", 
+    "galnacs",
+    "Tn_antigens", 
+    "T_antigens", 
+    "sT_antigens",
+    "disialylated_O_antigens"
+  )) {
     clean_formula_string <- paste0("(", clean_formula_string, ") / 100")
   }
   
@@ -127,7 +177,9 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
     # In that case the value should just be zero.
     any(
       clean_formula_string == paste0(" * ", cluster, "1"),
-      stringr::str_starts(clean_formula_string, paste0("\\( \\* ", cluster, "1\\)"))  # need escapement characters
+      stringr::str_starts(
+        clean_formula_string, paste0("\\( \\* ", cluster, "1\\)")
+      )  # need escapement characters
     ),
     paste0(cluster, "_", target_trait, " = ", "0"),
     paste0(cluster, "_", target_trait, " = ", clean_formula_string)
@@ -137,16 +189,12 @@ generate_formula <- function(cluster, cluster_ref_df, target_trait) {
 }
 
 
-
-
 #' Matches traits descriptions from UI to column names in traits reference files.
 #'
 #' @param traits_ui_input  Character vector from UI traits input
 #'
 #' @return  Character vector with column names of traits that should be calculated,
 #'          matching those in the traits reference files. 
-#'
-#' @noRd
 match_traits <- function(traits_ui_input) {
   traits <- c(
     # Trait names to replace the descriptions with
@@ -175,16 +223,20 @@ match_traits <- function(traits_ui_input) {
     "Sialylation (N-glycolylneuraminic acid) per antenna of complex-type glycans" = "sialylation",
     "Sulfation of complex-type glycans" = "sulfation"
   )
+  
   matched_traits <- traits_ui_input
+  
   for (description in names(traits)) {
     matched_traits[matched_traits == description] <- traits[[description]]
   }
+  
   # Remove traits that are calculated based on other traits
   to_remove <- c(
     "Sialylation per galactose of complex-type glycans",
     "Sialic acids per galactose",
     "Galactoses per GalNAc"
   )
+  
   matched_traits_clean <- matched_traits[!matched_traits %in% to_remove]
   
   return(matched_traits_clean)
@@ -194,19 +246,25 @@ match_traits <- function(traits_ui_input) {
 
 #' create_formula_list
 #'
+#' @description
 #' Creates a list of formulas for automatically calculating derived traits
 #'
 #' @param normalized_data  normalized_data in long format
 #' @param chosen_traits Character vector, e.g.  c("fucosylation", "sialylation")
 #' @param chosen_clusters  Character vector, e.g. c("IgGI", "IgGII")
 #' @param reference Reference file for traits, e.g. human_IgG_N_ref.
-#'
-#' @noRd
-create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters, reference) {
+create_formula_list <- function(
+    normalized_data,
+    chosen_traits, 
+    chosen_clusters, 
+    reference  
+  ) {
   # Create an empty vector to store possible analytes with unknown glycan compositions
   unknown_glycans <- c()
+  
   # Initiate an empty list
   formula_list <- vector("character", length(chosen_clusters))
+  
   # Loop over the chosen clusters
   for (i in seq(length(chosen_clusters))) {
     # If the cluster name has "1" included at the end, remove it
@@ -223,7 +281,9 @@ create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters,
       dplyr::filter(cluster == chosen_cluster)
     # Get all analytes/glycans in the cluster
     cluster_analytes <- unique(cluster_normalized_data$analyte)
-    cluster_glycans <- stringr::str_remove(cluster_analytes, paste0(cluster_name, "1"))
+    cluster_glycans <- stringr::str_remove(
+      cluster_analytes, paste0(cluster_name, "1")
+    )
     # Check for unknown glycan compositions in the data
     cluster_unknown_glycans <- c()
     for (j in seq(length(cluster_glycans))) {
@@ -246,6 +306,7 @@ create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters,
     # Add the formulas for this cluster to formula_list
     formula_list[i] <- list(cluster_trait_formulas)
   }
+  
   # Check if there are unknown glycan compositions
   if (length(unknown_glycans) > 0) {
     showNotification(
@@ -263,12 +324,28 @@ create_formula_list <- function(normalized_data, chosen_traits, chosen_clusters,
 }
 
 
-#' Automatically calculate traits based on list of formulas
+#' Calculate derived traits from formulas
 #'
-#' @noRd
-calculate_traits <- function(normalized_data_wide, trait_formulas) {
+#' @description
+#' Evaluates each supplied trait formula against normalized glycan data in wide
+#' format and adds the resulting trait columns immediately after the final
+#' sum-intensity column.
+#'
+#' @param normalized_data_wide Data frame containing normalized glycan data in
+#'   wide format. Its columns must include the analytes referenced by the trait
+#'   formulas.
+#' @param trait_formulas Character vector of trait formulas in the form
+#'   `"trait_name = expression"`.
+#'
+#' @return A data frame containing `normalized_data_wide` with the calculated
+#'   trait columns added.
+calculate_traits <- function(
+    normalized_data_wide, 
+    trait_formulas  
+  ) {
   # Initiate an empty vector for the trait names
   trait_names <- vector("character", length = length(trait_formulas))
+  
   # Loop over the formulas and create a new column with traits
   normalized_data_wide_with_traits <- normalized_data_wide
   for (i in seq(length(trait_formulas))) {
@@ -278,12 +355,16 @@ calculate_traits <- function(normalized_data_wide, trait_formulas) {
     normalized_data_wide_with_traits <- normalized_data_wide_with_traits %>% 
       dplyr::mutate(!!! expr_ls)
   }
+  
   # Relocate the trait columns
   colnames <- colnames(normalized_data_wide_with_traits)
   sum_int_colnames <- colnames[grepl("_sum_intensity", colnames)]
   last_sum_int_colname <- tail(sum_int_colnames, 1)
   normalized_data_wide_with_traits <- normalized_data_wide_with_traits %>% 
-    dplyr::relocate(tidyselect::all_of(trait_names), .after = last_sum_int_colname)
+    dplyr::relocate(
+      tidyselect::all_of(trait_names), .after = last_sum_int_colname
+    )
+  
   # Return normalized data with the trait columns
   return(normalized_data_wide_with_traits)
 }
@@ -313,9 +394,9 @@ create_expr_ls <- function(str_expr) {
 }
 
 
-
 #' calculate_custom_traits
 #' 
+#' @description
 #' Calculate custom glycosylation traits based on an Excel file
 #' provided by the user.
 #'
@@ -327,33 +408,53 @@ create_expr_ls <- function(str_expr) {
 #' Data frame with normalized data in wide format.
 #'
 #' @return A wide dataframe with the normalized data + calculated custom traits.
-#'
-#' @noRd
-calculate_custom_traits <- function(traits_excel, normalized_data_wide) {
+calculate_custom_traits <- function(
+    traits_excel, 
+    normalized_data_wide  
+  ) {
   # Create vector with expressions for dplyr::mutate()
   expressions <- traits_excel %>% 
     dplyr::mutate(expression = paste0(trait, " = ", formula)) %>% 
     dplyr::pull(expression)
+  
   # Loop over the expressions and create new columns
   data_with_custom_traits <- normalized_data_wide
   for (expr in expressions) {
     data_with_custom_traits <- data_with_custom_traits %>% 
       dplyr::mutate(!!!create_expr_ls(expr))
   }
+  
   # Relocate the trait columns
   colnames <- colnames(data_with_custom_traits)
   sum_int_colnames <- colnames[grepl("_sum_intensity", colnames)]
   last_sum_int_colname <- tail(sum_int_colnames, 1)
   data_with_custom_traits <- data_with_custom_traits %>% 
-    dplyr::relocate(tidyselect::all_of(traits_excel$trait), .after = last_sum_int_colname)
+    dplyr::relocate(
+      tidyselect::all_of(traits_excel$trait), .after = last_sum_int_colname
+    )
   
   return(data_with_custom_traits)
 }
 
 
 
-
-traits_vs_intensity_plot <- function(data_to_plot, cluster) {
+#' Plot trait abundance against cluster intensity
+#'
+#' Creates an interactive-ready scatter plot of relative abundance versus the
+#' total intensity of a selected cluster. Observations are coloured by sample
+#' type and faceted by trait and, when available, group.
+#'
+#' @param data_to_plot A data frame containing `relative_abundance`,
+#'   `sample_type`, `trait`, and the selected cluster's sum-intensity column.
+#'   It may also contain a `group` column for faceting.
+#' @param cluster Character string identifying the cluster. Its sum-intensity
+#'   column must be named `"<cluster>_sum_intensity"`.
+#'
+#' @return A ggplot object.
+traits_vs_intensity_plot <- function(
+    data_to_plot, 
+    cluster  
+  ) {
   
   data_to_plot <- data_to_plot %>% 
     dplyr::filter(!is.na(relative_abundance))
@@ -367,22 +468,30 @@ traits_vs_intensity_plot <- function(data_to_plot, cluster) {
     text = paste0(
       "Sample name: ", sample_name, "\n",
       "Sample ID: ", sample_id, "\n",
-      "Relative abundance: ", format(round(relative_abundance, digits = 2), nsmall = 2), "\n",
+      "Relative abundance: ", 
+      format(round(relative_abundance, digits = 2), nsmall = 2), "\n",
       paste(cluster, "sum intensity: "), round(.data[[xvar]], digits = 0)
     )
   )) +
-    ggplot2::geom_point(ggplot2::aes(color = sample_type), size = 1, alpha = 0.7) +
-    ggplot2::labs(x = paste(cluster, "sum intensity"), y = "Relative abundance") +
+    ggplot2::geom_point(
+      ggplot2::aes(color = sample_type), size = 1, alpha = 0.7
+    ) +
+    ggplot2::labs(
+      x = paste(cluster, "sum intensity"), y = "Relative abundance"
+    ) +
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 0.5),
+      panel.border = ggplot2::element_rect(
+        color = "black", fill = NA, linewidth = 0.5
+      ),
       strip.background = ggplot2::element_rect(fill = "#F6F6F8")
     ) +
     ggplot2::scale_color_manual(values = my_palette, name = "Sample type")
   
   if ("group" %in% colnames(data_to_plot)) {
     p <- p + ggplot2::facet_grid(trait ~ group, scales = "free")
-  } else {
+  } 
+  else {
     p <- p + ggplot2::facet_wrap(~trait, scales = "free", ncol = 3)
   }
   
@@ -390,9 +499,25 @@ traits_vs_intensity_plot <- function(data_to_plot, cluster) {
 }
 
 
-
-
-clean_traits <- function(trait_formulas, normalized_data_wide) {
+#' Calculate and filter reportable derived traits
+#'
+#' Calculates traits from formula strings and suppresses traits that cannot be
+#' meaningfully reported, including traits with constant values. Associated
+#' sialylation-per-galactose traits are also suppressed when their required
+#' sialylation or galactosylation trait is not reportable.
+#'
+#' @param trait_formulas Character vector of named trait formulas in the form
+#'   `"trait_name = expression"`. Formulas may also contain a `Not reported`
+#'   status message.
+#' @param normalized_data_wide Data frame containing normalized glycan data in
+#'   wide format.
+#'
+#' @return A list with `formulas_toshow`, the updated formula/status strings,
+#'   and `data`, the input data with reportable calculated trait columns.
+clean_traits <- function(
+    trait_formulas, 
+    normalized_data_wide  
+  ) {
   
   # Create a named list with all the trait formulas
   formulas <- trait_formulas 
@@ -401,13 +526,20 @@ clean_traits <- function(trait_formulas, normalized_data_wide) {
   
   # Sialylation per galactose traits: check if sialylation is reported.
   # If not: don't report sialylation per galactose
-  sial_per_gal_traits <- traits_names[endsWith(traits_names, "_sialylation_per_galactose")]
-  other_traits <- traits_names[!endsWith(traits_names, "_sialylation_per_galactose")]
+  sial_per_gal_traits <- traits_names[
+    endsWith(traits_names, "_sialylation_per_galactose")
+  ]
+  other_traits <- traits_names[
+    !endsWith(traits_names, "_sialylation_per_galactose")
+  ]
   for (trait in sial_per_gal_traits) {
     sial_trait <- gsub("_per_galactose", "", trait)  # <cluster>_sialylation
-    sial_trait <- other_traits[grep(sial_trait, other_traits)]  # Sial trait name can have suffix _<glycan>
+    # Sial trait name can have suffix _<glycan>
+    sial_trait <- other_traits[grep(sial_trait, other_traits)]
     if (grepl(" = Not reported", formulas[[sial_trait]])) {
-      formulas[[trait]] <- paste0(trait, " = Not reported: sialylation not reported")
+      formulas[[trait]] <- paste0(
+        trait, " = Not reported: sialylation not reported"
+      )
     }
   }
   
@@ -423,9 +555,12 @@ clean_traits <- function(trait_formulas, normalized_data_wide) {
       other_traits[grep("_galactosylation", other_traits)],
       colnames(data)
     )
+    
     for (trait in gal_traits) {
       # Get all unique values (need rounding)
-      unique <- unique(round(data[[trait]][!is.na(data[[trait]])], digits = 3))
+      unique <- unique(
+        round(data[[trait]][!is.na(data[[trait]])], digits = 3)
+      )
       if (length(unique) == 1) {
         # Remove trait from data
         data[[trait]] <- NULL
@@ -450,9 +585,12 @@ clean_traits <- function(trait_formulas, normalized_data_wide) {
       other_traits[grep("_sialylation", other_traits)],
       colnames(data)
     )
+    
     for (trait in sial_traits) {
       # Get all unique values (need rounding)
-      unique <- unique(round(data[[trait]][!is.na(data[[trait]])], digits = 3))
+      unique <- unique(
+        round(data[[trait]][!is.na(data[[trait]])], digits = 3)
+      )
       if (length(unique) == 1) {
         # Remove trait from data
         data[[trait]] <- NULL
@@ -487,7 +625,8 @@ clean_traits <- function(trait_formulas, normalized_data_wide) {
       }
     }
     
-  } else {
+  } 
+  else {
     # No formulas to calculate
     data <- normalized_data_wide
   }
@@ -499,4 +638,3 @@ clean_traits <- function(trait_formulas, normalized_data_wide) {
   
 }
 
-  
