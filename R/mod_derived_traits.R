@@ -1160,8 +1160,10 @@ mod_derived_traits_server <- function(
       # Use map to create a list of trait names for each cluster
       cluster_traits <- purrr::map(clusters(), function(cluster) {
         substring <- paste0(cluster, "_")
-        columns[grepl(substring, columns) & !grepl("_sum_intensity", columns)
-                & !grepl("_quantity_ng", columns)]
+        columns[
+          grepl(substring, columns) & !grepl("_sum_intensity", columns) &
+          !grepl("_quantity_ng", columns)
+        ]
       })
       # Turn into a named list
       names(cluster_traits) <- clusters()
