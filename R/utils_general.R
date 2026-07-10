@@ -58,6 +58,8 @@ glycodash_disconnect_warning <- tags$script(HTML("
 #' @param size The height that the facet strip should become.
 #'
 #' @return A plotly object with taller facet strips.
+#' 
+# Exported because this function is used in generating the HTML report.
 #' @export
 #'
 #' @examples
@@ -130,6 +132,8 @@ change_axis_title_distance <- function(plotly_object,
 #' @param ggplot_object A ggplot object.
 #'
 #' @return An integer that indicates the number of facets in the ggplot.
+#' 
+# Exported because this function is used in generating the HTML report.
 #' @export
 #'
 #' @examples
@@ -153,6 +157,8 @@ nfacets <- function(ggplot_object) {
 #' @param plotly_object A plotly object with a box plot.
 #'
 #' @return A plotly object with outliers hidden.
+#' 
+# Exported because this function is used in generating the HTML report.
 #' @export
 #'
 #' @examples
