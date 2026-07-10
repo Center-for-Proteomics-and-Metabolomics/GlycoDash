@@ -24,10 +24,3 @@ and empty fields "" and 0's are interpreted as \code{NA}. This function was
 created to read LaCyTools summary files (tab-delimited non-rectangular .txt 
 files).
 }
-\examples{
-data_file <- system.file("extdata", 
-                         "LaCyTools_summary_example.txt", 
-                         package = "GlycoDash")
-read_non_rectangular(path = data_file, delim = "\t")
-
-}

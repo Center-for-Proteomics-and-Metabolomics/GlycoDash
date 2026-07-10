@@ -19,8 +19,6 @@
 #' @return A nested named list: `patterns[[formula]][[charge]]` holds the
 #'   nominal isotopic pattern (as returned by [collapse_to_nominal_pattern()])
 #'   for the ion with that formula and charge state.
-#'
-#' @noRd
 calculate_skyline_isotopic_patterns <- function(
     skyline_data,
     charge_carrier = "H"  # Fix to hydrogen for now
@@ -83,8 +81,6 @@ calculate_skyline_isotopic_patterns <- function(
 #' @return A data frame with one row per formula-charge combination and columns
 #'   `mz_prob1`, `mz_prob2`, ... for the m/z values of the top isotope peaks
 #'   in descending probability order.
-#'
-#' @noRd
 extract_top_isotopic_mz <- function(
     isotopic_patterns,
     n_peaks = 3
@@ -140,8 +136,6 @@ extract_top_isotopic_mz <- function(
 #'   containing columns `isotope_rank`, `isotope_group`, `extra_neutrons`,
 #'   `isotope_mz`, `isotope_prob`, `isotope_prob_relative`, and
 #'   `n_fine_structure_peaks`.
-#'
-#' @noRd
 extract_isotopic_mz_candidates <- function(
     isotopic_patterns,
     n_peaks = 3,
@@ -214,8 +208,6 @@ extract_isotopic_mz_candidates <- function(
 #' @return A data frame combining `skyline_prepped` and `isotope_mz_candidates`,
 #'   with additional columns `isotope_mz_min` and `isotope_mz_max` representing
 #'   the m/z search window for each candidate.
-#'
-#' @noRd
 expand_skyline_isotope_candidates <- function(
     skyline_prepped,
     isotope_mz_candidates
@@ -250,8 +242,6 @@ expand_skyline_isotope_candidates <- function(
 #'   containing columns `sample`, `ScanNumber`, `RetentionTime`, `PrecursorMZ`,
 #'   `LikelyGlycoSpectrum`, `DissociationType`, `fragment_sum`, and individual
 #'   fragment ion intensity columns (named as `"<mz>, <annotation>"`).
-#'
-#' @noRd
 load_glycounter_data <- function(files) {
   # Read and process all OxoSignal files
   purrr::imap_dfr(files, function(file, name) {
@@ -299,8 +289,6 @@ load_glycounter_data <- function(files) {
 #' @param glycounter_data A data frame as returned by [load_glycounter_data()].
 #'
 #' @return A character vector of fragment ion column names.
-#'
-#' @noRd
 extract_fragment_cols <- function(glycounter_data) {
   names <- colnames(glycounter_data)
   fragment_cols <- names[stringr::str_detect(names, "^\\d+\\.\\d+,\\s")]
@@ -321,8 +309,6 @@ extract_fragment_cols <- function(glycounter_data) {
 #'   
 #' @return A data frame identical to `skyline_data` with additional columns
 #'   `skyline_row_id` (integer row index) and `ppm_tolerance`.
-#'
-#' @noRd
 prepare_skyline_data <- function(
     skyline_data,
     ppm_tolerance = 10
@@ -358,8 +344,6 @@ prepare_skyline_data <- function(
 #'   `(skyline_row_id, sample, ScanNumber)` combination, containing both
 #'   Skyline isotope candidate columns and GlyCounter scan-level columns, plus a
 #'   `glycounter_mz_error_ppm` column.
-#'
-#' @noRd
 extract_glycounter_candidates <- function(
     skyline_isotope_candidates,
     glycounter_data
@@ -426,8 +410,6 @@ extract_glycounter_candidates <- function(
 #' @return A data frame with one row per `skyline_row_id`, containing
 #'   aggregated GlyCounter metrics and fragment ion intensities (or relative
 #'   abundances when `relative_abundances = TRUE`).
-#'
-#' @noRd
 summarize_glycounter_data <- function(
     glycounter_candidates,
     fragment_cols,
@@ -533,8 +515,6 @@ summarize_glycounter_data <- function(
 #'
 #' @return A data frame with all Skyline analyte-sample columns plus the
 #'   GlyCounter summary columns for matched rows (`NA` for unmatched rows).
-#'
-#' @noRd
 merge_skyline_glycounter <- function(
     skyline_prepped,
     glycounter_summary

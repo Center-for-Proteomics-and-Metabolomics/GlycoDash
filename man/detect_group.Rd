@@ -7,8 +7,7 @@
 detect_group(data, keyword_specific, keyword_total)
 }
 \arguments{
-\item{data}{A dataframe containing a LaCyTools summary with a column
-"sample_name".}
+\item{data}{A dataframe of uploaded data containing a column `sample_name`.}
 
 \item{keyword_specific}{The word(s)/characters within the sample name used to
 refer to Specific samples.}
@@ -17,15 +16,10 @@ refer to Specific samples.}
 refer to Total samples.}
 }
 \value{
-The dataframe containing a block from a LaCyTools summary file, with
-  an additional column named "group" that indicates whether a sample is
-  specific or total.
+The original dataframe plus a new column called `group`, which
+indicates whether a sample is specific or total Ig using the specified 
+keywords.
 }
 \description{
 Detect whether a sample is specific or total Ig based on the sample name.
-}
-\examples{
-block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total", "s_8759"),
-                            values = c(13.56, 738.34, 4.56))
-detect_group(data = block_example, keyword_specific = "Specific", keyword_total = "Total")
 }

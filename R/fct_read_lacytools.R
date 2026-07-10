@@ -16,6 +16,7 @@ OUTPUTS <- as.list(unlist(lapply(
 
 #' Read in non-rectangular delimited files
 #' 
+#' @description 
 #' \code{read_non_rectangular()} can read flat files where the number of fields 
 #' per line is not constant (non-rectangular data). Blank lines are not skipped 
 #' and empty fields "" and 0's are interpreted as \code{NA}. This function was 
@@ -29,16 +30,6 @@ OUTPUTS <- as.list(unlist(lapply(
 #'
 #' @return A data frame (\code{\link[base]{data.frame}}) containing the data in 
 #' the flat file.
-#' @export
-#' 
-#' @importFrom utils read.table
-#'
-#' @examples 
-#' data_file <- system.file("extdata", 
-#'                          "LaCyTools_summary_example.txt", 
-#'                          package = "GlycoDash")
-#' read_non_rectangular(path = data_file, delim = "\t")
-#' 
 read_non_rectangular <- function(path, delim = "\t") {
   
   max_n_columns <- find_widest_row(path = path, delim = delim)
@@ -48,7 +39,7 @@ read_non_rectangular <- function(path, delim = "\t") {
     column_names[i] <- paste("col", i, sep = "_")
   }
   
-  data <- read.table(
+  data <- utils::read.table(
     path, 
     fill = TRUE, 
     header = FALSE, 
@@ -65,6 +56,7 @@ read_non_rectangular <- function(path, delim = "\t") {
 
 #' Find the widest row in a non-rectangular data file
 #'
+#' @description 
 #' Reads a file line-by-line to determine the maximum number of fields in any
 #' single line. This is used to pre-determine the column count needed by
 #' \code{\link{read_non_rectangular}}.
@@ -73,8 +65,10 @@ read_non_rectangular <- function(path, delim = "\t") {
 #' @param delim The field separator used in the file.
 #'
 #' @return The number of fields/columns in the widest line (integer).
-#' @export
-find_widest_row <- function(path, delim) {
+find_widest_row <- function(
+    path, 
+    delim  
+  ) {
   # Error handling for file existence
   if (!file.exists(path)) {
     rlang::abort(
@@ -132,6 +126,7 @@ find_widest_row <- function(path, delim) {
 
 #' Convert a LaCyTools summary to a tidy dataframe
 #'
+#' @description 
 #' Transforms a LaCyTools summary dataframe (as returned by
 #' \code{\link{read_non_rectangular}}) into a tidy long-format dataframe, with
 #' one row per analyte per charge state per sample. The analyte exact mass and
@@ -142,7 +137,6 @@ find_widest_row <- function(path, delim) {
 #'
 #' @return A dataframe in long format with one row per analyte per charge per
 #'   sample.
-#' @export
 convert_lacytools_summary <- function(data) {
   # all_blocks: extract and tidy each output block, suppress warnings on get_block
   all_blocks <- lapply(OUTPUTS, function(output) {
@@ -164,15 +158,21 @@ convert_lacytools_summary <- function(data) {
   # lengthen_block: transform each block to long format (faster with lapply)
   long_data_list <- lapply(all_blocks, lengthen_block)
   # Ensure all elements have a charge field, and get factor levels quickly
-  charges <- as.factor(vapply(long_data_list, function(x) unique(x$charge), integer(1)))
+  charges <- as.factor(vapply(
+    long_data_list, function(x) unique(x$charge), integer(1)
+  ))
   charge_sep_list <- split(long_data_list, charges)
   # Get analytes info (unchanged)
   analytes_info <- get_analytes_info_from_list(data, OUTPUTS)
   # Efficiently join blocks and charges
   # Use Reduce over each charge group, then Reduce over all charge groups
-  joined_blocks <- lapply(charge_sep_list, function(blocks) Reduce(dplyr::left_join, blocks))
+  joined_blocks <- lapply(
+    charge_sep_list, function(blocks) Reduce(dplyr::left_join, blocks)
+  )
   long_data <- Reduce(dplyr::full_join, joined_blocks)
-  long_data <- dplyr::left_join(long_data, analytes_info, by = c("analyte", "charge"))
+  long_data <- dplyr::left_join(
+    long_data, analytes_info, by = c("analyte", "charge")
+  )
   
   return(long_data)
 }
@@ -181,6 +181,7 @@ convert_lacytools_summary <- function(data) {
 
 #' Create a subset containing one block from a LaCyTools summary
 #'
+#' @description 
 #' Extracts the rows that belong to a single named output block (e.g. a
 #' specific charge state of one LaCyTools output type), sets proper column
 #' names, removes the header and metadata rows, and adds a
@@ -189,7 +190,6 @@ convert_lacytools_summary <- function(data) {
 #' @inheritParams find_block
 #'
 #' @return A dataframe that is a subset of the input dataframe.
-#' @export
 get_block <- function(data, variable) {
   row_indices <- find_block(data, variable)
   block <- data[row_indices, , drop = FALSE]
@@ -225,7 +225,9 @@ get_block <- function(data, variable) {
   block <- dplyr::mutate(block, lacytools_output = better_name_output)
   # Convert all columns except sample_name and lacytools_output to numeric
   num_cols <- setdiff(colnames(block), c("sample_name", "lacytools_output"))
-  block[num_cols] <- lapply(block[num_cols], function(x) suppressWarnings(as.numeric(x)))
+  block[num_cols] <- lapply(
+    block[num_cols], function(x) suppressWarnings(as.numeric(x))
+  )
   
   return(block)
 }
@@ -234,6 +236,7 @@ get_block <- function(data, variable) {
 
 #' Find a block in a LaCyTools summary file
 #'
+#' @description 
 #' Locates the row indices of a named output block within a LaCyTools summary
 #' dataframe. The block starts at the row whose first column matches
 #' \code{variable} and ends just before the next all-NA row (or at the last row
@@ -243,7 +246,6 @@ get_block <- function(data, variable) {
 #' @param variable The name of a LaCyTools output format.
 #'
 #' @return The row indices of the block.
-#' @export
 find_block <- function(data, variable) {
   first_row <- which(data[, 1] == variable)
   if (rlang::is_empty(first_row)) {
@@ -271,6 +273,7 @@ find_block <- function(data, variable) {
 
 #' Find the next empty line from a given line in a LaCyTools summary file
 #'
+#' @description 
 #' Searches forward from \code{row} in the first column of \code{data} and
 #' returns the index of the next row that contains only \code{NA}s. Used by
 #' \code{\link{find_block}} to determine where a block ends.
@@ -281,8 +284,8 @@ find_block <- function(data, variable) {
 #'   blank line (blank meaning consisting of only \code{NA}'s).
 #'
 #' @return The row index (integer) for the next line with \code{NA}'s. If there
-#'   are no next lines with \code{NA}'s the function will return an empty integer vector.
-#' @export
+#'   are no next lines with \code{NA}'s the function will return an empty 
+#'   integer vector.
 find_next_na <- function(data, row) {
   # Find rows in the first column containing NA's
   na_index <- which(is.na(data[, 1]))
@@ -299,6 +302,7 @@ find_next_na <- function(data, row) {
 
 #' Transform a LaCyTools summary block to a long format.
 #'
+#' @description 
 #' \code{lengthen_block()} transforms a LaCyTools summary block from a wide
 #' format (each analyte has its own column) to a long format. A column named
 #' "analyte" and a column named "charge" have been added and each combination 
@@ -310,14 +314,10 @@ find_next_na <- function(data, row) {
 #'   already been added to the data. Defaults to \code{NULL}.
 #'
 #' @return A dataframe containing the LaCyTools summary block in long format.
-#' @export
-#'
-#' @examples
-#' data("LaCyTools_summary")
-#' block <- get_block(LaCyTools_summary, 
-#'                    variable = "Absolute Intensity (Background Subtracted, 2+)")
-#' lengthen_block(block = block)
-lengthen_block <- function(block, metadata = NULL) {
+lengthen_block <- function(
+    block, 
+    metadata = NULL  
+  ) {
   charge_str <- stringr::str_extract(block$lacytools_output[1], "\\d+[+\\-]")
   charge_int <- as.integer(stringr::str_extract(charge_str, "\\d+")) *
     ifelse(grepl("-", charge_str), -1L, 1L)
@@ -344,6 +344,7 @@ lengthen_block <- function(block, metadata = NULL) {
 
 #' Get the analytes info from a LaCyTools summary using a list of output formats
 #'
+#' @description 
 #' This function uses \code{\link{get_analytes_info}} to get the exact mass of
 #' the most abundant isotopologue and the fraction for each analyte in a
 #' LaCyTools summary, for each charge state of those analytes. The reason that
@@ -358,21 +359,6 @@ lengthen_block <- function(block, metadata = NULL) {
 #'
 #' @return A dataframe with four columns (analyte, exact_mass, fraction, and
 #'   charge) and one row per analyte and charge combination.
-#' @export
-#'
-#' @examples
-#' data("LaCyTools_summary")
-#' 
-#' outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
-#'                 "Absolute Intensity (Background Subtracted, 3+)", 
-#'                 "Mass Accuracy [ppm] (2+)", 
-#'                 "Mass Accuracy [ppm] (3+)",
-#'                 "Isotopic Pattern Quality (2+)",
-#'                 "Isotopic Pattern Quality (3+)",
-#'                 "S/N (2+)",
-#'                 "S/N (3+)")
-#' 
-#' get_analytes_info_from_list(data = LaCyTools_summary, list_of_variables = outputs)
 get_analytes_info_from_list <- function(data, list_of_variables) {
   # Get the analytes_info for each variable and put them in a list:
   analytes_info_list <- purrr::map(list_of_variables, function(variable) {
@@ -412,6 +398,7 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
 
 #' Get analytes info from a LaCyTools summary for one output format
 #'
+#' @description 
 #' This function gets the exact mass of the most abundant isotopologue and the
 #' fraction for each analyte in a LaCyTools summary, for a single output format.
 #' This function is used within \code{\link{get_analytes_info_from_list}}.
@@ -421,11 +408,6 @@ get_analytes_info_from_list <- function(data, list_of_variables) {
 #' @return A dataframe with three columns named "analyte", "exact_mass" and
 #'   "fraction". The number of rows will correspond to the number of analytes in
 #'   the data.
-#' @export
-#'
-#' @examples
-#' data("LaCyTools_summary")
-#' get_analytes_info(data = LaCyTools_summary, variable = "S/N (2+)")
 get_analytes_info <- function(data, variable) {
   # The row that in the first column contains the name of the LaCyTools output
   # format, contains the analyte names in the remaining columns. Find the index

@@ -1,13 +1,12 @@
 #' Read a Skyline CSV file
 #'
+#' @description 
 #' Reads a Skyline-exported CSV file, automatically detecting whether the
 #' delimiter is a comma or semicolon by inspecting the first line.
 #'
 #' @param path_to_file Path to Skyline CSV file.
 #'
 #' @return A dataframe with the raw data read from the CSV.
-#'
-#' @noRd
 read_skyline_csv <- function(path_to_file) {
   L <- readLines(path_to_file, n = 1)
   if (grepl(";", L)) {
@@ -24,6 +23,7 @@ read_skyline_csv <- function(path_to_file) {
 
 #' Check the structure of a Skyline CSV file
 #'
+#' @description 
 #' Verifies that a Skyline CSV dataframe contains all required per-sample
 #' variable columns (\code{Total.Area.MS1}, \code{Isotope.Dot.Product}, and
 #' \code{Average.Mass.Error.PPM}). Shows an informative error message and
@@ -33,8 +33,6 @@ read_skyline_csv <- function(path_to_file) {
 #'   \code{\link{read_skyline_csv}}.
 #'
 #' @return NULL if required columns are missing, otherwise returns the data.
-#'
-#' @noRd
 check_skyline_data <- function(raw_skyline_data) {
   
   required_vars <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM") 
@@ -58,6 +56,7 @@ check_skyline_data <- function(raw_skyline_data) {
 
 #' Reformat a wide Skyline dataframe that uses a single analyte column
 #'
+#' @description 
 #' When Skyline data is exported with a single column for the full glycopeptide
 #' analyte (rather than separate cluster and glycan columns), this function
 #' parses that column to extract the peptide sequence, glycan composition,
@@ -82,16 +81,14 @@ check_skyline_data <- function(raw_skyline_data) {
 #'   per-sample measurement columns (\code{Total.Area.MS1},
 #'   \code{Isotope.Dot.Product}, \code{Average.Mass.Error.PPM},
 #'   \code{Best.Retention.Time}, \code{Min.Start.Time}, \code{Max.End.Time}).
-#'
-#' @noRd
 reformat_skyline_analyte_column <- function(
-    raw_skyline_data, 
-    protein_colname,
-    analyte_colname, 
-    charge_colname,
-    notes_colname,
-    molecular_formula_colname
-) {
+      raw_skyline_data, 
+      protein_colname,
+      analyte_colname, 
+      charge_colname,
+      notes_colname,
+      molecular_formula_colname
+  ) {
   
   # Rename columns
   data_renamed_cols <- raw_skyline_data %>% 
@@ -182,8 +179,31 @@ reformat_skyline_analyte_column <- function(
 
 
 
-# Reformat raw Skyline data when it has separate columns for glycosylation
-# site and glycans.
+#' Reformat a wide Skyline dataframe with separate cluster and glycan columns
+#'
+#' @description 
+#' Renames the selected Skyline columns to the standardized column names used
+#' by downstream import steps and keeps the per-sample measurement columns.
+#' This function is used for Skyline exports where glycosylation site or
+#' cluster information and glycan composition are already present in separate
+#' columns.
+#'
+#' @param raw_skyline_data A dataframe of raw Skyline data in wide format,
+#'   as returned by \code{\link{read_skyline_csv}}.
+#' @param cluster_colname Name of the column containing glycosylation site or
+#'   cluster identifiers.
+#' @param glycan_colname Name of the column containing glycan compositions.
+#' @param charge_colname Name of the column containing charge states.
+#' @param notes_colname Name of an optional column containing per-analyte notes.
+#'   Pass \code{NULL} if not present.
+#' @param molecular_formula_colname Name of an optional column containing
+#'   molecular formulas. Pass \code{NULL} if not present.
+#'
+#' @return A dataframe with columns \code{cluster}, \code{glycan}, \code{charge},
+#'   and optionally \code{note} and \code{molecular_formula}, followed by the
+#'   per-sample measurement columns (\code{Total.Area.MS1},
+#'   \code{Isotope.Dot.Product}, \code{Average.Mass.Error.PPM},
+#'   \code{Best.Retention.Time}, \code{Min.Start.Time}, \code{Max.End.Time}).
 reformat_skyline_data <- function(
     raw_skyline_data,  
     cluster_colname,
@@ -229,6 +249,7 @@ reformat_skyline_data <- function(
 
 #' Rename isomeric glycan compositions in Skyline data
 #' 
+#' @description 
 #' Detects the presence of isomers in a Skyline CSV file. When an analyte is
 #' present twice in a given charge state, the two duplicate analytes are assumed
 #' to be isomers with the same glycan composition. The glycan compositions are
@@ -242,8 +263,6 @@ reformat_skyline_data <- function(
 #' @return A dataframe with the same structure as \code{data_renamed_cols}, with
 #'   glycan compositions of isomers renamed using \code{"_a"}, \code{"_b"},
 #'   etc.
-#'
-#' @noRd
 rename_skyline_isomers <- function(data_renamed_cols) {
   
   # Look for isomers in the glycan compositions, per peptide.
@@ -330,8 +349,6 @@ rename_skyline_isomers <- function(data_renamed_cols) {
 #'
 #' @return A data frame with one row per analyte-sample combination and
 #'   individual columns for each Skyline measurement variable.
-#'
-#' @noRd
 reshape_skyline_data <- function(data_renamed) {
   # Assume variable columns for samples start after `charge`.
   # Everything after that point belongs to one sample-variable combination such

@@ -22,7 +22,3 @@ This function gets the exact mass of the most abundant isotopologue and the
 fraction for each analyte in a LaCyTools summary, for a single output format.
 This function is used within \code{\link{get_analytes_info_from_list}}.
 }
-\examples{
-data("LaCyTools_summary")
-get_analytes_info(data = LaCyTools_summary, variable = "S/N (2+)")
-}

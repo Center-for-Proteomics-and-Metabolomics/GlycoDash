@@ -13,8 +13,6 @@
 #'   `"Na"`).
 #'
 #' @return A character string with the full element name (e.g. `"carbon"`).
-#'
-#' @noRd
 symbol_to_element <- function(symbol) {
 
   symbol_element_map <- list(
@@ -50,8 +48,6 @@ symbol_to_element <- function(symbol) {
 #'
 #' @return A named list where each name is an element symbol and each value is
 #'   an integer atom count.
-#'
-#' @noRd
 parse_molecular_formula <- function(formula) {
   composition <- list()
 
@@ -94,8 +90,6 @@ parse_molecular_formula <- function(formula) {
 #'   value is a non-negative integer atom count.
 #'
 #' @return A character string containing the molecular formula.
-#'
-#' @noRd
 composition_to_formula <- function(composition) {
   formula_parts <- character(0)
 
@@ -138,8 +132,6 @@ composition_to_formula <- function(composition) {
 #'   carrier. Default is `"H"` (proton adduct).
 #'
 #' @return A character string containing the modified molecular formula.
-#'
-#' @noRd
 apply_charge_carrier <- function(
     formula,
     charge,
@@ -196,8 +188,6 @@ apply_charge_carrier <- function(
 #' @param k Integer. Number of isotopes.
 #'
 #' @return A list of integer vectors of length `k`, each summing to `n`.
-#'
-#' @noRd
 isotope_count_combis <- function(n, k) {
   if (k == 1) {
     # Base case: only one isotope.
@@ -242,8 +232,6 @@ isotope_count_combis <- function(n, k) {
 #'   isotope, in the same order as `counts`.
 #'
 #' @return A single numeric value: the multinomial probability.
-#'
-#' @noRd
 multinomial_prob <- function(counts, probs) {
   total <- sum(counts)
 
@@ -282,8 +270,6 @@ multinomial_prob <- function(counts, probs) {
 #'     \item{prob}{The probability of the peak.}
 #'     \item{isotope_counts}{A named integer vector of non-zero isotope counts.}
 #'   }
-#'
-#' @noRd
 element_fine_structure <- function(
     symbol,
     atom_count,
@@ -341,8 +327,6 @@ element_fine_structure <- function(
 #'   this value are excluded.
 #'
 #' @return A list of combined isotope peaks in the same format as the inputs.
-#'
-#' @noRd
 convolve_patterns <- function(
     pattern_a,
     pattern_b,
@@ -413,8 +397,6 @@ convolve_patterns <- function(
 #'
 #' @return A list of fine-structure peaks sorted by mass. Each peak is a named
 #'   list with `mass`, `prob`, `isotope_counts`, and `relative_prob`.
-#'
-#' @noRd
 calculate_fine_structure <- function(
     formula,
     charge,
@@ -502,8 +484,6 @@ calculate_fine_structure <- function(
 #'     \item{prob_relative}{Probability relative to the most probable group.}
 #'     \item{n_fine_structure_peaks}{Number of fine-structure peaks in the group.}
 #'   }
-#'
-#' @noRd
 collapse_to_nominal_pattern <- function(fine_structure_pattern) {
 
   grouped_pattern <- list()
@@ -610,8 +590,6 @@ collapse_to_nominal_pattern <- function(fine_structure_pattern) {
 #'
 #' @return A list of fine-structure peaks as returned by
 #'   [calculate_fine_structure()].
-#'
-#' @noRd
 calculate_ion_fine_structure <- function(
     formula,
     charge,

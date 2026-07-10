@@ -15,7 +15,8 @@ blank line (blank meaning consisting of only \code{NA}'s).}
 }
 \value{
 The row index (integer) for the next line with \code{NA}'s. If there
-  are no next lines with \code{NA}'s the function will return an empty integer vector.
+  are no next lines with \code{NA}'s the function will return an empty 
+  integer vector.
 }
 \description{
 Searches forward from \code{row} in the first column of \code{data} and

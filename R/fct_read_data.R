@@ -1,22 +1,19 @@
 #' Detect whether a sample is specific or total Ig based on the sample name.
 #'
-#' @param data A dataframe containing a LaCyTools summary with a column
-#'   "sample_name".
+#' @param data A dataframe of uploaded data containing a column `sample_name`.
 #' @param keyword_specific The word(s)/characters within the sample name used to
 #'   refer to Specific samples.
 #' @param keyword_total The word(s)/characters within the sample name used to
 #'   refer to Total samples.
 #'
-#' @return The dataframe containing a block from a LaCyTools summary file, with
-#'   an additional column named "group" that indicates whether a sample is
-#'   specific or total.
-#' @export
-#'
-#' @examples
-#' block_example <- data.frame(sample_name = c("s_0216_Specific", "s_568_Total", "s_8759"),
-#'                             values = c(13.56, 738.34, 4.56))
-#' detect_group(data = block_example, keyword_specific = "Specific", keyword_total = "Total")
-detect_group <- function(data, keyword_specific, keyword_total) {
+#' @return The original dataframe plus a new column called `group`, which
+#' indicates whether a sample is specific or total Ig using the specified 
+#' keywords.
+detect_group <- function(
+    data, 
+    keyword_specific, 
+    keyword_total  
+  ) {
   data <- data %>% 
     tidyr::extract(
       col = sample_name,
@@ -63,15 +60,13 @@ detect_group <- function(data, keyword_specific, keyword_total) {
 
 #' Generate an ordinal suffix for a number
 #'
+#' @description 
 #' Returns a character string consisting of the number followed by its English
 #' ordinal suffix ("st", "nd", "rd", or "th").
 #'
 #' @param num A positive integer.
 #'
-#' @return A character string, e.g. \code{"1st"}, \code{"2nd"}, \code{"3rd"},
-#'   \code{"4th"}.
-#'
-#' @noRd
+#' @return A character string, e.g. \code{"1st"}, \code{"2nd"}, \code{"3rd"}.
 getOrdinalSuffix <- function(num) {
   if (num %% 10 == 1 && num %% 100 != 11) {
     return(paste0(num, "st"))
@@ -91,6 +86,7 @@ getOrdinalSuffix <- function(num) {
 
 #' Abbreviate glycosylation site identifiers
 #'
+#' @description 
 #' Generates short abbreviations for unique protein–peptide combinations. Each
 #' protein is assigned a label \code{"PrA"}, \code{"PrB"}, etc. Each unique
 #' peptide within a protein is given a three-letter prefix derived from the
@@ -103,8 +99,6 @@ getOrdinalSuffix <- function(num) {
 #'
 #' @return A dataframe with columns \code{protein}, \code{peptide}, and
 #'   \code{abbreviation}.
-#'
-#' @noRd
 abbreviate_glycosites <- function(protein_peptide_df) {
   
   df <- protein_peptide_df %>% 

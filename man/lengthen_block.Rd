@@ -22,9 +22,3 @@ format (each analyte has its own column) to a long format. A column named
 "analyte" and a column named "charge" have been added and each combination 
 of sample, analyte and charge state has its own row.
 }
-\examples{
-data("LaCyTools_summary")
-block <- get_block(LaCyTools_summary, 
-                   variable = "Absolute Intensity (Background Subtracted, 2+)")
-lengthen_block(block = block)
-}

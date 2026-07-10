@@ -9,8 +9,6 @@
 #' 
 #' @return A dataframe combining the \code{"Data"} sheets from all input Excel
 #'   files, with columns renamed to match the LaCyTools data format.
-#'
-#' @noRd
 read_sweetsuite_data <- function(datapaths) {
   
   result <- lapply(seq_along(datapaths), function(i) {

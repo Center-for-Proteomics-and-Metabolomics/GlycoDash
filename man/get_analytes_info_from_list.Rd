@@ -25,17 +25,3 @@ analyte can be different in different charge states. This can happen when
 there are contaminants that need to be excluded near one charge state of an
 analyte, but not near another charge state of that same analyte.
 }
-\examples{
-data("LaCyTools_summary")
-
-outputs <- list("Absolute Intensity (Background Subtracted, 2+)",
-                "Absolute Intensity (Background Subtracted, 3+)", 
-                "Mass Accuracy [ppm] (2+)", 
-                "Mass Accuracy [ppm] (3+)",
-                "Isotopic Pattern Quality (2+)",
-                "Isotopic Pattern Quality (3+)",
-                "S/N (2+)",
-                "S/N (3+)")
-
-get_analytes_info_from_list(data = LaCyTools_summary, list_of_variables = outputs)
-}
