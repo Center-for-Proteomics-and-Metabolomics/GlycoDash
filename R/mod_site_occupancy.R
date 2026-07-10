@@ -164,19 +164,23 @@ mod_site_occupancy_ui <- function(id) {
 #' site_occupancy Server Functions
 #'
 #' @noRd 
-mod_site_occupancy_server <- function(id,
-                                      results_spectra_curation,
-                                      results_normalization,
-                                      results_quantitation,
-                                      results_derived_traits) {
+mod_site_occupancy_server <- function(
+    id,
+    results_spectra_curation,
+    results_normalization,
+    results_quantitation,
+    results_derived_traits  
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     # Get data of peptides for which there is corresponding glycopeptide
     # data.
     peptides_data <- reactive({
-      req(results_spectra_curation$non_glycosylated_data())
-      req(results_normalization$normalized_data())
+      req(
+        results_spectra_curation$non_glycosylated_data(), 
+        results_normalization$normalized_data()
+      )
 
       glyco_clusters <- results_normalization$normalized_data() %>% 
         dplyr::distinct(cluster) %>% 
@@ -189,17 +193,24 @@ mod_site_occupancy_server <- function(id,
     peptides_quality <- reactive({
       req(peptides_data())
       data <- peptides_data() %>% 
-        dplyr::select(sample_name, sample_id, sample_type, cluster, analyte, charge,
-                      tidyselect::any_of(c(
-                        "group",
-                        "absolute_intensity_background_subtracted",
-                        "mass_accuracy_ppm",
-                        "isotopic_pattern_quality",
-                        "sn",
-                        "fraction",
-                        "total_area",
-                        "isotope_dot_product"
-                      )))
+        dplyr::select(
+          sample_name, 
+          sample_id, 
+          sample_type, 
+          cluster, 
+          analyte, 
+          charge,
+          tidyselect::any_of(c(
+            "group",
+            "absolute_intensity_background_subtracted",
+            "mass_accuracy_ppm",
+            "isotopic_pattern_quality",
+            "sn",
+            "fraction",
+            "total_area",
+            "isotope_dot_product"
+          ))
+        )
       if (nrow(data) > 0) {
         data
       }
@@ -213,7 +224,9 @@ mod_site_occupancy_server <- function(id,
     
     output$download <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
         paste0(current_datetime, "_site_occupancy_peptides_quality.xlsx")
       },
       content = function(file) {
@@ -262,8 +275,8 @@ mod_site_occupancy_server <- function(id,
         total_area = results_spectra_curation$total_area(),
         mass_accuracy = input$mass_accuracy
       )
-      plot <- peptides_quality_plot(summary)
-      return(plot)
+      
+      peptides_quality_plot(summary)
     })
     
     output$plot <- plotly::renderPlotly({
@@ -277,6 +290,7 @@ mod_site_occupancy_server <- function(id,
       choices <- peptides_table() %>% 
         dplyr::mutate(ion = paste0(Peptide, ", ", Charge)) %>% 
         dplyr::pull(ion)
+      
       updateSelectizeInput(
         inputId = "exclude_peptides",
         choices = choices
@@ -306,14 +320,22 @@ mod_site_occupancy_server <- function(id,
     data_combined <- reactive({
       req(site_occupancy())
       if (is_truthy(results_derived_traits$data_with_traits())) {
-        dplyr::left_join(results_derived_traits$data_with_traits(), site_occupancy()) %>% 
-          dplyr::relocate(tidyselect::contains("site_occupancy"),
-                          .after = tidyselect::contains("sum_intensity"))
+        dplyr::left_join(
+          results_derived_traits$data_with_traits(), site_occupancy()
+        ) %>% 
+          dplyr::relocate(
+            tidyselect::contains("site_occupancy"),
+            .after = tidyselect::contains("sum_intensity")
+          )
       } 
       else if (is_truthy(results_quantitation$data_with_quantities())) {
-        dplyr::left_join(results_quantitation$data_with_quantities(), site_occupancy()) %>%
-          dplyr::relocate(tidyselect::contains("_quantity"),
-                          .after = tidyselect::contains("sum_intensity"))
+        dplyr::left_join(
+          results_quantitation$data_with_quantities(), site_occupancy()
+        ) %>%
+          dplyr::relocate(
+            tidyselect::contains("_quantity"),
+            .after = tidyselect::contains("sum_intensity")
+          )
       } 
       else {
         site_occupancy()
@@ -337,13 +359,15 @@ mod_site_occupancy_server <- function(id,
     # Show data in table
     output$data_table <- DT::renderDT({
       req(data_combined())
-      DT::datatable(data = data_combined() %>% 
-                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
-                    options = list(
-                      scrollX = TRUE,
-                      pageLength = 6,
-                      columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ), filter = "top")
+      DT::datatable(
+        data = data_combined() %>% 
+          dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+        options = list(
+          scrollX = TRUE,
+          pageLength = 6,
+          columnDefs = list(list(className = "dt-center", targets = "_all"))
+        ), filter = "top"
+      )
     })
     
     # Toggle UI
@@ -355,7 +379,8 @@ mod_site_occupancy_server <- function(id,
         shinyjs::show("plot")
         shinyjs::show("mass_accuracy")
         shinyjs::show("exclude_sample_types")
-      } else {
+      } 
+      else {
         shinyjs::show("no_peptides")
         shinyjs::hide("info_clusters")
         shinyjs::hide("exclude_peptides")
@@ -377,7 +402,4 @@ mod_site_occupancy_server <- function(id,
     
   })
 }
-
-
-
 
