@@ -30,11 +30,13 @@ mod_tab_quantitation_peptides_ui <- function(id) {
 #' tab_quantitation_peptides Server Functions
 #'
 #' @noRd 
-mod_tab_quantitation_peptides_server <- function(id, 
-                                                 peptides_data,
-                                                 results_spectra_curation,
-                                                 sample_types_to_exclude = c(""),
-                                                 mass_error_ppm = c(-20, 20)) {
+mod_tab_quantitation_peptides_server <- function(
+    id, 
+    peptides_data,
+    results_spectra_curation,
+    sample_types_to_exclude = c(""),
+    mass_error_ppm = c(-20, 20)
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -53,6 +55,7 @@ mod_tab_quantitation_peptides_server <- function(id,
     # Generate quality plot using function from site occupancy
     quality_plot <- reactive({
       req(peptides_data, input$mass_accuracy)
+      
       summary <- summarize_peptides_quality(
         peptides_quality = peptides_data %>% 
           dplyr::filter(!sample_type %in% input$exclude_sample_types),
@@ -62,8 +65,8 @@ mod_tab_quantitation_peptides_server <- function(id,
         total_area = results_spectra_curation$total_area(),
         mass_accuracy = input$mass_accuracy
       )
-      plot <- peptides_quality_plot(summary)
-      return(plot)
+      
+      peptides_quality_plot(summary)
     })
     
     output$plot <- plotly::renderPlotly({
