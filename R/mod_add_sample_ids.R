@@ -26,19 +26,24 @@ mod_add_sample_ids_ui <- function(id) {
       title = div(
         id = ns("box_header"),
         "Add sample IDs",
-        icon("info-circle",
-             class = "ml") %>% 
+        icon("info-circle", class = "ml") %>% 
           bsplus::bs_embed_popover(
             title = "Explanation",
             content = HTML(
               "
-              Adding sample IDs to your data allows you to see which measurement
-              corresponds to which sample.
+              Adding sample IDs to your data allows you to see which 
+              measurement corresponds to which sample.
               <br> <br>
               Sample IDs are used in later steps to:
               <ul>
-                  <li> Determine sample types (e.g. blank, standard, negative control, patient). </li>
-                  <li> Optionally, link metadata to your data (e.g. age, sex, biological group). </li>
+                  <li> 
+                  Determine sample types 
+                  (e.g. blank, standard, negative control, patient).
+                  </li>
+                  <li>
+                  Optionally, link metadata to your data 
+                  (e.g. age, sex, biological group). 
+                  </li>
               </ul>
               "
             ),
@@ -46,7 +51,8 @@ mod_add_sample_ids_ui <- function(id) {
             # styling for .popover won't be applied
             trigger = "hover", # if trigger = "focus" use tabindex: 0 on icon
             placement = "right",
-            html = "true"),
+            html = "true"
+          ),
         shinyWidgets::dropdownButton(
           tags$style(HTML(paste0(
             "#",
@@ -73,13 +79,14 @@ mod_add_sample_ids_ui <- function(id) {
           ),
           width = "330px",
           size = "xs"
-        )),
+        )
+      ),
       width = NULL,
       solidHeader = TRUE,
       status = "primary",
       selectInput(
         ns("sample_id_method"),
-        "Choose a method to add sample IDs to your data:",
+        "Method for adding sample IDs:",
         choices = c("Upload a plate design", "Upload a sample list")
       ) %>% 
         bsplus::bs_embed_popover(
@@ -88,8 +95,9 @@ mod_add_sample_ids_ui <- function(id) {
             "
             <b> Plate design </b>
             <br>
-            You can only use this method when your sample names contain information
-            on the plate and well position of the sample, in the correct format.
+            You can only use this method when your sample names contain 
+            information on the plate and well position of the sample, 
+            in the correct format.
             <br> <br>
             Examples of valid formatting for sample names are:
             <ul>
@@ -99,8 +107,9 @@ mod_add_sample_ids_ui <- function(id) {
             <br>
             <b> Sample list </b>
             <br>
-            Use this method when your samples were not measured on 96-well plates,
-            or when your sample names are not formatted correctly as described above.
+            Use this method when your samples were not measured on 96-well 
+            plates, or when your sample names are not formatted correctly 
+            as described above.
             "
           ),
           html = "true",
@@ -109,75 +118,88 @@ mod_add_sample_ids_ui <- function(id) {
         ),
       shinyWidgets::materialSwitch(
         ns("switch_two_plate_designs"),
-        HTML("<i style='font-size:15px;'> Add separate plate design files for specific and for total Ig samples </i>"),
+        HTML(
+          "
+          <i style='font-size:15px;'> 
+          Add separate plate design files for specific and for total Ig samples 
+          </i>
+          "
+        ),
         status = "success",
         right = TRUE
       ),
-      div(id = ns("one_plate_design"),
-          mod_process_plate_design_ui(
-            id = ns("plate_design"),
-            fileInput_label = "Upload a plate design Excel file:",
-            popover_width = "400px",
-            popover_title = "Plate design format",
-            popover_content_html = HTML(
-              "
-              When the plate design contains multiple 96-well plates,
-              place them underneath each other in the Excel file with one
-              blank row between two plates.
-              <br> <br>
-              Plates in your plate design are numbered automatically.
-              <br> <br>
-              Each plate layout should contain columns labelled 1-12, and
-              rows labelled A-H. The plate positions should contain the sample IDs.
-              These sample IDs should not contain commas or line breaks.
-              <br> <br>
-              For an example plate design, click on the paperclip icon.
-              "
-            )
+      div(
+        id = ns("one_plate_design"),
+        mod_process_plate_design_ui(
+          id = ns("plate_design"),
+          fileInput_label = "Upload a plate design xlsx file:",
+          popover_width = "400px",
+          popover_title = "Plate design format",
+          popover_content_html = HTML(
+            "
+            When the plate design contains multiple 96-well plates,
+            place them underneath each other in the Excel file with one
+            blank row between two plates.
+            <br> <br>
+            Plates in your plate design are numbered automatically.
+            <br> <br>
+            Each plate layout should contain columns labelled 1-12, and
+            rows labelled A-H. The plate positions should contain sample IDs.
+            These sample IDs should not contain commas or line breaks.
+            <br> <br>
+            For an example plate design, click on the paperclip icon.
+            "
           )
+        )
       ),
-      div(id = ns("two_plate_designs"),
-          mod_process_plate_design_ui(
-            id = ns("plate_design_specific"),
-            fileInput_label = "Upload a plate design Excel file for the specific Ig samples:",
-            popover_width = "400px",
-            popover_title = "Plate design format",
-            popover_content_html = HTML(
-              "
-              When the plate design contains multiple 96-well plates,
-              place them underneath each other in the Excel file with one
-              blank row between two plates.
-              <br> <br>
-              Plates in your plate design are numbered automatically.
-              <br> <br>
-              Each plate layout should contain columns labelled 1-12, and
-              rows labelled A-H. The plate positions should contain the sample IDs.
-              These sample IDs should not contain commas or line breaks.
-              <br> <br>
-              For an example plate design, click on the paperclip icon.
-              "
-            )
+      div(
+        id = ns("two_plate_designs"),
+        mod_process_plate_design_ui(
+          id = ns("plate_design_specific"),
+          fileInput_label = (
+            "Upload a plate design Excel file for the specific Ig samples:"
           ),
-          mod_process_plate_design_ui(
-            id = ns("plate_design_total"),
-            fileInput_label = "Upload a plate design Excel file for the total Ig samples:"
+          popover_width = "400px",
+          popover_title = "Plate design format",
+          popover_content_html = HTML(
+            "
+            When the plate design contains multiple 96-well plates,
+            place them underneath each other in the Excel file with one
+            blank row between two plates.
+            <br> <br>
+            Plates in your plate design are numbered automatically.
+            <br> <br>
+            Each plate layout should contain columns labelled 1-12, and
+            rows labelled A-H. The plate positions should contain sample IDs.
+            These sample IDs should not contain commas or line breaks.
+            <br> <br>
+            For an example plate design, click on the paperclip icon.
+            "
           )
+        ),
+        mod_process_plate_design_ui(
+          id = ns("plate_design_total"),
+          fileInput_label = (
+            "Upload a plate design xlsx file for the total Ig samples:"
+          )
+        )
       ),
-      div(id = ns("sample_list_ui"),
-          mod_process_sample_list_ui(
-            id = ns("sample_list"),
-            fileInput_label = "Upload an Excel file with your sample list:",
-            popover_width = "400px",
-            popover_title = "Sample list format:",
-            popover_content_html = HTML(paste0(
-              tags$p(paste(
-                "The Excel file should contain only one sheet.",
-                "This sheet should contain one column named \"sample_name\"",
-                "and one column named \"sample_id\"."
-              )),
-              tags$p("For an example, click on the paperclip icon.")
-            ))
-          )
+      div(
+        id = ns("sample_list_ui"),
+        mod_process_sample_list_ui(
+          id = ns("sample_list"),
+          fileInput_label = "Upload an xlsx file with your sample list:",
+          popover_width = "400px",
+          popover_title = "Sample list format:",
+          popover_content_html = HTML(paste0(
+            tags$p(paste(
+              "The Excel file should contain only one sheet.",
+              "This sheet should contain one column named \"sample_name\"",
+              "and one column named \"sample_id\"."
+            )),
+            tags$p("For an example, click on the paperclip icon.")
+          ))
+        )
       )
     )
   )
@@ -252,10 +274,11 @@ mod_add_sample_ids_server <- function(
     })
     
     observe({
-      # When sample IDs have been re-added to the data (r$show_reset_warning is TRUE and
-      # data_with_sample_ids() exists) r$show_reset_warning should be reset to FALSE, so
-      # that the warning is not shown again when the 'load lacytools summary'
-      # button is clicked but no new lacytools file has been uploaded:
+      # When sample IDs have been re-added to the data 
+      # (r$show_reset_warning is TRUE and data_with_sample_ids() exists), 
+      # r$show_reset_warning should be reset to FALSE, so that the warning is 
+      # not shown again when the 'load lacytools summary' button is clicked but 
+      # no new lacytools file has been uploaded:
       if (is_truthy(data_with_sample_ids()) & is_truthy(r$show_reset_warning)) {
         r$show_reset_warning <- FALSE
       }
@@ -365,7 +388,6 @@ mod_add_sample_ids_server <- function(
         with_sample_ids <- dplyr::left_join(data(), sample_list$sample_list())
       }
       
-      # TODO: convert code below into a function
       replicates <- with_sample_ids %>% 
         dplyr::select(tidyselect::any_of(
           c("sample_name", "sample_id", "group")
