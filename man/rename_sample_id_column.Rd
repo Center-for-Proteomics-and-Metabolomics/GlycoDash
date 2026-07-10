@@ -21,26 +21,9 @@ The input \code{metadata} dataframe with the column specified by
 \description{
 This function renames the column in the metadata file that contains sample
 IDs to "sample_id".
-}
-\details{
+
 In case there already is a column named sample_id that is NOT the column
 chosen by the user as the sample ID column, a warning is issued and the old
 sample_id column is renamed to "sample_id_original" to avoid duplicate column
 names.
-}
-\examples{
-path <- system.file("extdata",
-                    "Metadata_example.xlsx",
-                    package = "GlycoDash")
-
-metadata_list <- read_metadata(filepaths = list(path),
-                               filenames = list("Metadata_example.xlsx"))
-sample_id_columns_list <- list("Sample ID")
-
-purrr::pmap(list(metadata_list,
-                 sample_id_columns_list),
-            function(metadata, sample_id_column) {
-              rename_sample_id_column(metadata = metadata,
-                                      sample_id_column = sample_id_column)
-            })
 }

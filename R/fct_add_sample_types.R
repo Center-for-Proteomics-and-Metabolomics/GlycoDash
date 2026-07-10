@@ -2,8 +2,9 @@
 # mod_add_sample_types.R and within its sub-module
 # mod_process_sample_type_file.R.
 
+
 #' Read a sample type Excel or .rds file
-#'
+#' @description
 #' Reads a sample type file in Excel (.xlsx, .xls) or .rds format and returns a
 #' tibble with sample IDs and their corresponding sample types.
 #'
@@ -17,16 +18,6 @@
 #' @param filename The name of the Excel or .rds file including the file extension.
 #'
 #' @return A tibble with the sample IDs and sample types.
-#' @export
-#'
-#' @examples
-#' path <- system.file("extdata",
-#'                     "Sample_types_example.xlsx",
-#'                     package = "GlycoDash")
-#' 
-#' read_sample_type_file(filepath = path, 
-#'                       filename = "Sample_types_example.xlsx")
-#' 
 read_sample_type_file <- function(filepath, filename) {
   
   extension <- tools::file_ext(filename)

@@ -25,8 +25,8 @@ Excel file for a 96-wells plate and processes it.
  The top-left cell of the Excel sheet should
   contain the plate number (e.g. "Plate 1"). The cells to the right of the
   top-left cell need to be labelled 1-12 (for a 96-well plate), while the
-  cells below the top-left cell need to be labelled A-H. The cells within the
-  plate should contain the sample IDs.
+  cells below the top-left cell need to be labelled A-H. The cells within 
+  the plate should contain the sample IDs.
 
   \preformatted{
   Plate number  1             2            3             ...
@@ -35,14 +35,7 @@ Excel file for a 96-wells plate and processes it.
   C            sample_ID_C1  sample_ID_C2  sample_ID_C3
   ...          ...           ...           ...           ...}
 
-  At the bottom of the plate, leave one row blank and then add the next plate
-  in the same format.
+  At the bottom of the plate, leave one row blank and then add the next 
+  plate in the same format.
 }
 
-\examples{
-path <- system.file("extdata",
-                    "Plate_design_example.xlsx",
-                    package = "GlycoDash")
-
-read_and_process_plate_design(plate_design_file = path)
-}

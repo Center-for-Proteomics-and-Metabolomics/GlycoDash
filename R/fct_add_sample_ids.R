@@ -2,16 +2,18 @@
 # mod_add_sample_ids.R and within its sub-modules mod_process_plate_design.R and
 # mod_process_sample_list.R.
 
+
 #' Detect the plate and well of a sample from the sample name.
-#'
+#' 
+#' @description 
 #' This function detects the plate and well position of a sample, based on it's
 #' sample name. The sample name should be in a column named "sample_name" and
 #' should contain either "plate" or "pl" (not case-sensitive) followed by the
 #' plate number or a capital letter. Then the well position should be indicated
 #' by a single capital letter between A and H followed directly by a number
 #' between 1 and 12 (numbers smaller than 10 may be preceded by a zero, e.g. A01
-#' and A1 will both be recognized). The plate number has to precede the well position,
-#' but they can be separated by other characters.
+#' and A1 will both be recognized). The plate number has to precede the well 
+#' position, but they can be separated by other characters.
 #' 
 #' If there are no plate numbers in the sample names, this function will assume
 #' that there was only one plate.
@@ -20,22 +22,6 @@
 #'
 #' @return The input dataframe with an added column named "plate_well" that
 #'   indicates on which plate and in which well a sample was analysed.
-#' @export
-#'
-#' @examples
-#' example <- data.frame(sample_name = c("s_0216_Specific_Plate4_A10",
-#'                                       "s_568_Total_pl5_H4",
-#'                                       "plate23_B6.s_8759",
-#'                                       "sample3857_Pl8_D05.568"))
-#' 
-#' detect_plate_and_well(example)
-#' 
-#' example_no_plate_numbers <- data.frame(sample_name = c("s_0216_Specific_A10",
-#'                                                        "s_568_Total_H4",
-#'                                                        "specific_B6.s_8759",
-#'                                                        "sample3857_D05.568"))
-#' 
-#' detect_plate_and_well(example_no_plate_numbers)
 detect_plate_and_well <- function(data) {
   
   if (!("sample_name" %in% colnames(data))) {
@@ -50,21 +36,31 @@ detect_plate_and_well <- function(data) {
       col = sample_name, 
       into = c("plate", "well"),
       # "\D" in regex is anything but a digit
-      # 0?\\d\\D matches 01 up to and including 09 or 1 up to and including 9 followed by a non-digit character
+      # 0?\\d\\D matches 01 up to and including 09 or 1 up to and including 9 
+      # followed by a non-digit character.
       # 0?\\d$ matches 01 up until 09 or 1 up until 9 at the end of a string
       # 1[012] matches 10, 11 and 12
-      regex = "([Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z])).*([A-H](?:0?\\d\\D|0?\\d$|1[012]))",
+      regex = paste0(
+        "([Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z])).", 
+        "*([A-H](?:0?\\d\\D|0?\\d$|1[012]))"
+      ),
       remove = FALSE)
   
   if (any(anyNA(data$well))) {
     well_precedes_plate <- any(stringr::str_detect(
       string = data$sample_name,
-      pattern = "[A-H](?:0?\\d\\D|0?\\d$|1[012]).*[Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z])"
+      pattern = paste0(
+        "[A-H](?:0?\\d\\D|0?\\d$|1[012]).", 
+        "*[Pp][Ll](?:[Aa][Tt][Ee])?(?:\\d+|[A-Z])"
+      )
     ))
     if (well_precedes_plate) {
       rlang::abort(
         class = "well_precedes_plate",
-        message = "Within the sample name the well position should not precede the plate number."
+        message = paste0(
+          "Within the sample name the well position should",
+          "not precede the plate number."
+        )
       )
     }
   }
@@ -84,7 +80,9 @@ detect_plate_and_well <- function(data) {
       dplyr::mutate(plate = "plate1")
   }
   
-  some_plate_and_wells_could_not_be_determined <- any(anyNA(data$plate), anyNA(data$well))
+  some_plate_and_wells_could_not_be_determined <- any(
+    anyNA(data$plate), anyNA(data$well)
+  )
   
   # If for some samples the plate or well could not be determined, issue a warning:
   if (some_plate_and_wells_could_not_be_determined) {
@@ -95,7 +93,7 @@ detect_plate_and_well <- function(data) {
         message = paste(
           "For", length(NA_samples),
           "samples the plate and well could not be determined.",
-          "Run `?detect_plate_and_well` and check if your sample names are in a suitable format."
+          "Please check that the sample names are formatted correctly."
         )
       )
     } 
@@ -133,6 +131,7 @@ detect_plate_and_well <- function(data) {
 
 #' Read and process a plate design file
 #'
+#' @description
 #' The function \code{read_and_process_plate_design} reads in a plate design
 #' Excel file for a 96-wells plate and processes it.
 #'
@@ -141,8 +140,8 @@ detect_plate_and_well <- function(data) {
 #' @section Plate design format: The top-left cell of the Excel sheet should
 #'   contain the plate number (e.g. "Plate 1"). The cells to the right of the
 #'   top-left cell need to be labelled 1-12 (for a 96-well plate), while the
-#'   cells below the top-left cell need to be labelled A-H. The cells within the
-#'   plate should contain the sample IDs.
+#'   cells below the top-left cell need to be labelled A-H. The cells within 
+#'   the plate should contain the sample IDs.
 #'
 #'   \preformatted{
 #'   Plate number  1             2            3             ...
@@ -151,23 +150,14 @@ detect_plate_and_well <- function(data) {
 #'   C            sample_ID_C1  sample_ID_C2  sample_ID_C3
 #'   ...          ...           ...           ...           ...}
 #'
-#'   At the bottom of the plate, leave one row blank and then add the next plate
-#'   in the same format.
+#'   At the bottom of the plate, leave one row blank and then add the next 
+#'   plate in the same format.
 #'
 #' @return This function returns a dataframe with two columns:
 #'   \describe{\item{sample_id}{The sample IDs as given in the plate design
 #'   file.} \item{plate_well}{The plate and well that a sample was analyzed in.
 #'   The format is as follows: the plate number followed by the well ID,
 #'   separated by an underscore (e.g. plate 1 well A1 is 1_A01).}}
-#'
-#' @export
-#'
-#' @examples
-#' path <- system.file("extdata",
-#'                     "Plate_design_example.xlsx",
-#'                     package = "GlycoDash")
-#' 
-#' read_and_process_plate_design(plate_design_file = path)
 read_and_process_plate_design <- function(plate_design_file) {
   plate_design <- tryCatch(
     expr = {
@@ -185,8 +175,9 @@ read_and_process_plate_design <- function(plate_design_file) {
 
 #' Read in a plate design file
 #'
-#' The function \code{read_plate_design} reads in a plate design Excel file of a
-#' 96-wells plate and returns a dataframe. It uses the
+#' @description
+#' The function \code{read_plate_design} reads in a plate design Excel file of 
+#' a 96-wells plate and returns a dataframe. It uses the
 #' \code{\link[plater]{read_plate}} function from the plater package.
 #' \code{read_plate_design} is used in the
 #' \code{\link{read_and_process_plate_design}} function.
@@ -217,14 +208,6 @@ read_and_process_plate_design <- function(plate_design_file) {
 #'
 #' At the bottom of the plate, leave one row blank and then add the next plate in
 #' the same format.
-#'
-#' @export
-#'
-#' @examples
-#' path <- system.file("extdata",
-#'                     "Plate_design_example.xlsx",
-#'                     package = "GlycoDash")
-#' read_plate_design(plate_design_file = path)
 read_plate_design <- function(plate_design_file) {
   # The plater package can only read .csv files, so we convert the Excel file to
   # .csv:
@@ -237,12 +220,16 @@ read_plate_design <- function(plate_design_file) {
   # Replacing the NA's that are due to empty cells on the plates with "Empty cell
   # in plate design"
   for (row in 1:nrow(plate_design)) {
-    if (!all(is.na(plate_design[row, ]))) { # but don't replace the NA's from the empty lines separating the plates
-      plate_design[row, which(is.na(plate_design[row, ]))] <- "Empty cell in plate design"
+    if (!all(is.na(plate_design[row, ]))) { 
+      # but don't replace the NA's from the empty lines separating the plates
+      plate_design[row, which(is.na(plate_design[row, ]))] <- (
+        "Empty cell in plate design"
+      )
     }
   }
   
   path_to_platedesign_csv <- file.path(tempdir(), "glycodash_platedesign.csv")
+  
   write.csv(
     plate_design,
     file = path_to_platedesign_csv, 
@@ -250,6 +237,7 @@ read_plate_design <- function(plate_design_file) {
     na = "",
     quote = FALSE
   )
+  
   plate_design <- tryCatch(expr = {
     plater::read_plate(file = path_to_platedesign_csv, well_ids_column = "well")
   },
@@ -257,9 +245,8 @@ read_plate_design <- function(plate_design_file) {
   error = function(e) { 
     rlang::abort(
       class = "incorrect_formatting",
-      message = paste(
-        "Please check that your plate design file is formatted correctly.",
-        "Run `?read_and_process_plate_design` to find the required format."
+      message = (
+        "Please check that your plate design file is formatted correctly."
       )
     )
   },
@@ -267,9 +254,8 @@ read_plate_design <- function(plate_design_file) {
   warning = function(w) { 
     rlang::abort(
       class = "incorrect_formatting",
-      message = paste(
-        "Please check that your plate design file is formatted correctly.",
-        "Run `?read_and_process_plate_design` to find the required format."
+      message = (
+        "Please check that your plate design file is formatted correctly."
       )
     )
   })
@@ -280,6 +266,7 @@ read_plate_design <- function(plate_design_file) {
 
 #' Process the result of read_plate_design()
 #'
+#' @description
 #' This function takes the result from the \code{\link{read_plate_design}}
 #' function and converts it to a different format.
 #'
@@ -291,15 +278,6 @@ read_plate_design <- function(plate_design_file) {
 #'   indicates the plate and well that a sample was analyzed in. The format is
 #'   as follows: the plate number followed by the well ID, separated by an
 #'   underscore (e.g. plate 1 well A1 is 1_A01).}}
-#' @export
-#'
-#' @examples
-#' path <- system.file("extdata",
-#'                     "Plate_design_example.xlsx",
-#'                     package = "GlycoDash")
-#'
-#' plate_design <- read_plate_design(path)
-#' process_plate_design(plate_design)
 process_plate_design <- function(plate_design) {
   
   # Extract actual plate numbers from column names (e.g. "Plate 2" -> "2",
@@ -334,7 +312,10 @@ process_plate_design <- function(plate_design) {
         class = "duplicate_plate_numbers",
         message = paste0(
           "Duplicate plate numbers were detected in the plate design file (",
-          paste(unique(parsed_numbers[duplicated(parsed_numbers)]), collapse = ", "),
+          paste(
+            unique(parsed_numbers[duplicated(parsed_numbers)]), 
+            collapse = ", "
+          ),
           "). Please ensure that each plate column has a unique plate number."
         )
       )
@@ -368,7 +349,9 @@ process_plate_design <- function(plate_design) {
   }
   
   plate_design <- plate_design %>% 
-    tidyr::pivot_longer(cols = -well, names_to = "plate", values_to = "sample_id") %>% 
+    tidyr::pivot_longer(
+      cols = -well, names_to = "plate", values_to = "sample_id"
+    ) %>% 
     dplyr::mutate(plate_well = paste(plate, well, sep = "_")) %>% 
     dplyr::select(-c(plate, well)) %>% 
     tidyr::replace_na(list(
@@ -381,6 +364,7 @@ process_plate_design <- function(plate_design) {
 
 #' Process a sample list Excel file
 #' 
+#' @description
 #' This function reads and processes a sample list Excel file, so that sample 
 #' IDs can be linked to your data.
 #'
@@ -392,14 +376,6 @@ process_plate_design <- function(plate_design) {
 #' and blanks should be included.
 #'
 #' @return This function returns a dataframe with the contents of the Excel file.
-#' @export
-#'
-#' @examples
-#' path <- system.file("extdata",
-#'                     "Sample_list_example.xlsx",
-#'                     package = "GlycoDash")
-#' 
-#' process_sample_list(sample_list_file = path)
 process_sample_list <- function(sample_list_file) {
   
   sample_list <- readxl::read_excel(
