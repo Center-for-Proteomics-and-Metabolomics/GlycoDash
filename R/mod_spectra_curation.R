@@ -167,7 +167,7 @@ mod_spectra_curation_ui <- function(id) {
                     "ntensity and its percentage of passing analytes.",
                     "Cut-off values are calculated for both of these parameters.",
                     "The way this calculation is performed depends on the chosen",
-                    "spectra curation method:"
+                    "spectra curation method."
                   )),
                   shinyWidgets::awesomeRadio(
                     ns("curation_method"),
