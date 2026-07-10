@@ -17,9 +17,11 @@ mod_read_data_ui <- function(id) {
     status = "primary",
     selectInput(
       ns("data_type"),
-      "Choose which type of data you want to upload:",
+      "Data type:",
       choices = c(
-        "SweetSuite data", "Skyline data (wide format)", "LaCyTools data"
+        "SweetSuite data", 
+        "Skyline data (wide format)", 
+        "LaCyTools data"
       ),
       selected = "SweetSuite data"
     ),
@@ -106,7 +108,13 @@ mod_read_data_ui <- function(id) {
         ),
         shinyWidgets::materialSwitch(
           ns("skyline_contains_notes"),
-          HTML("<i style='font-size:15px;'> Specify column with analyte notes </i>"),
+          HTML(
+            "
+            <i style='font-size:15px;'> 
+            Specify column with analyte notes 
+            </i>
+            "
+          ),
           status = "success",
           right = TRUE
         ),
@@ -118,15 +126,22 @@ mod_read_data_ui <- function(id) {
         shinyWidgets::materialSwitch(
           ns("skyline_merge_glycounter"),
           tagList(
-            tags$i(style = "font-size:15px;", "Merge with GlyCounter fragmentation data "),
-            tags$span(class = "label label-warning", style = "font-size:12px; vertical-align:middle;", "Experimental") %>%
+            tags$i(
+              style = "font-size:15px;", 
+              "Merge with GlyCounter fragmentation data "
+            ),
+            tags$span(
+              class = "label label-warning", 
+              style = "font-size:12px; vertical-align:middle;", 
+              "Experimental"
+            ) %>%
               bsplus::bs_embed_popover(
                 id = ns("experimental_popover"),
                 title = "Experimental feature",
                 content = paste(
-                  "GlyCounter fragmentation matching has not yet been fully validated",
-                  "for all input types. Inspect the results carefully before using",
-                  "them for final analysis."
+                  "GlyCounter fragmentation matching has not yet been fully ",
+                  "validated for all input types. Inspect the results ", 
+                  "carefully before using them for final analysis."
                 ),
                 trigger = "hover",
                 placement = "right",
@@ -165,7 +180,13 @@ mod_read_data_ui <- function(id) {
         )),
         shinyWidgets::awesomeCheckbox(
           ns("skyline_rename_isomers"),
-          label = HTML("<i style='font-size:15px;'> Automatically detect and rename glycan isomers </i>"),
+          label = HTML(
+            "
+            <i style='font-size:15px;'> 
+            Automatically detect and rename glycan isomers 
+            </i>
+            "
+          ),
           value = TRUE
         ),
         shinyjs::hidden(div(
@@ -203,9 +224,9 @@ mod_read_data_ui <- function(id) {
               title = "LaCyTools data",
               content = HTML(
                 "
-                You can upload one or more LaCyTools summary text files. The following
-                outputs should at least be present in your files for each analyte
-                (per charge state):
+                You can upload one or more LaCyTools summary text files. 
+                The following outputs should be present in your files for 
+                each analyte/charge state combination:
                 <ul>
                     <li> Absolute Intensity (Background Subtracted) </li>
                     <li> Mass Accuracy [ppm] </li>
@@ -232,21 +253,21 @@ mod_read_data_ui <- function(id) {
               Analytes must be specified in one of two ways:
               <ul>
                 <li>
-                <i>One column</i> where each entry contains both a peptide sequence
-                and a glycan composition (e.g. \"EEQYN[H3N4F1]STYR\").
+                <i>One column</i> where each entry contains both a peptide 
+                sequence and a glycan composition (e.g. \"EEQYN[H3N4F1]STYR\").
                 A sequence may also contain methionine oxidation and cysteine
                 carbamidomethyl (CAM) modifications, either fully written out
                 or using three-letter abbreviations.
                 </li>
                 <li>
-                <i>Two separate columns:</i> one with glycosylation sites and one 
-                with glycan compositions.
+                <i>Two separate columns:</i> one with glycosylation sites and 
+                one with glycan compositions.
                 </li>
               </ul>
               There should also be one column specifying the charge states.
-              Additionally, the file should contain columns with &quot;Total Area MS1&quot;,
-              &quot;Isotope Dot Product&quot; and &quot;Average Mass Error PPM&quot; 
-              for each sample name.
+              Additionally, the file should contain columns with 
+              &quot;Total Area MS1&quot;, &quot;Isotope Dot Product&quot; 
+              and &quot;Average Mass Error PPM&quot; for each sample name.
               "
             ),
             trigger = "hover",
@@ -277,7 +298,13 @@ mod_read_data_ui <- function(id) {
     tableOutput(ns("uploaded_files")),
     shinyWidgets::materialSwitch(
       ns("contains_total_and_specific_samples"),
-      HTML("<i style='font-size:15px;'> Samples contain specific and total immunoglobulin samples </i>"),
+      HTML(
+        "
+        <i style='font-size:15px;'> 
+        Data contains specific and total immunoglobulin samples 
+        </i>
+        "
+      ),
       status = "success",
       right = TRUE
     ),
@@ -289,7 +316,7 @@ mod_read_data_ui <- function(id) {
         ))),
         textInput(
           ns("keyword_specific"), 
-          label = "By what keyword can the specific Ig samples be recognized?"
+          label = "Keyword specifying specific Ig samples:"
         ) %>% 
           bsplus::bs_embed_popover(
             title = "Explanation",
@@ -298,10 +325,11 @@ mod_read_data_ui <- function(id) {
               "that contain this keyword. The keyword is case-sensitive."
             ),
             trigger = "hover",
-            placement = "right"),
+            placement = "right"
+          ),
         textInput(
           ns("keyword_total"), 
-          label = "By what keyword can the total Ig samples be recognized?"
+          label = "Keyword specifying total Ig samples:"
         ) %>% 
           bsplus::bs_embed_popover(
             title = "Explanation",
@@ -447,7 +475,10 @@ mod_read_data_server <- function(id) {
     
     # Show the uploaded LaCyTools/SweetSuite files in the table
     output$uploaded_files <- renderTable({
-      req(correct_file_ext(), input$data_type %in% c("LaCyTools data", "SweetSuite data"))
+      req(
+        correct_file_ext(), 
+        input$data_type %in% c("LaCyTools data", "SweetSuite data")
+      )
       if (input$data_type == "SweetSuite data") {
         uploaded_files <- input$sweetsuite_input
       } 
@@ -474,25 +505,35 @@ mod_read_data_server <- function(id) {
     
     # Create a vector that contains the raw LaCyTools summary files
     raw_lacytools_summaries <- reactive({
-      req(correct_file_ext(), input$data_type == "LaCyTools data", input$lacytools_input)
+      req(
+        correct_file_ext(), 
+        input$data_type == "LaCyTools data", 
+        input$lacytools_input
+      )
       purrr::imap(input$lacytools_input$datapath, function(datapath, i) {
         tryCatch(
           expr = read_non_rectangular(datapath),
           embedded_null = function(c) {
             showNotification(paste(
-              "Summary file", i, ":", c$message), type = "error", duration = NULL
+              "Summary file", i, ":", c$message), 
+              type = "error", 
+              duration = NULL
             )
             NULL
           },
           empty_file = function(c) {
             showNotification(paste(
-              "Summary file", i, ":", c$message), type = "error", duration = NULL
+              "Summary file", i, ":", c$message), 
+              type = "error", 
+              duration = NULL
             )
             NULL
           },
           wrong_delim = function(c) {
             showNotification(paste(
-              "Summary file", i, ":", c$message), type = "error", duration = NULL
+              "Summary file", i, ":", c$message), 
+              type = "error", 
+              duration = NULL
             )
             NULL
           }
@@ -519,7 +560,9 @@ mod_read_data_server <- function(id) {
           expr = convert_lacytools_summary(data = summary),
           no_outputs_present = function(c) {
             showNotification(paste(
-              "In summary file", i, c$message), type = "error", duration = NULL
+              "In summary file", i, c$message),
+              type = "error", 
+              duration = NULL
             )
             shinybusy::remove_modal_spinner()
             return(NULL)
@@ -550,7 +593,9 @@ mod_read_data_server <- function(id) {
         "sn"
       )
       
-      missing <- required[!required %in% colnames(lacytools_summaries_combined())]
+      missing <- required[
+        !required %in% colnames(lacytools_summaries_combined())
+      ]
       
       if (length(missing) > 0) {
         showNotification(
