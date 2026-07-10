@@ -33,8 +33,8 @@ mod_analyte_curation_ui <- function(id) {
               id = ns("box_header"), "Method for analyte curation",
               shinyWidgets::dropdownButton(
                 shinyWidgets::awesomeCheckboxGroup(
-                  ns("qc_to_include"), label = ("Which analyte quality criteria 
-                  should be taken into account during analyte curation?"),
+                  ns("qc_to_include"), 
+                  "Quality criteria to consider during analyte curation:",
                   # Choices are determined in server based on type of data
                   choices = c(""), selected = c(""), status = "primary"
                 ),
@@ -243,10 +243,12 @@ mod_analyte_curation_ui <- function(id) {
 #' analyte_curation Server Functions
 #'
 #' @noRd
-mod_analyte_curation_server <- function(id,
-                                        results_spectra_curation,
-                                        biogroup_cols,
-                                        data_type) {
+mod_analyte_curation_server <- function(
+    id,
+    results_spectra_curation,
+    biogroup_cols,
+    data_type  
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
 
@@ -585,7 +587,10 @@ mod_analyte_curation_server <- function(id,
             # Drop samples not belonging to a biological group (e.g. pools, blanks)
             tidyr::drop_na(., input$biogroup_column) %>%
             # Drop samples in biological groups that should be ignored
-            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>% 
+            dplyr::filter(
+              ., 
+              !.data[[input$biogroup_column]] %in% input$groups_to_ignore
+            ) %>% 
             # Perform the curation
             curate_analytes(
               checked_analytes = .,
@@ -605,7 +610,10 @@ mod_analyte_curation_server <- function(id,
         if (input$curate_per_group) {
           checked_analytes() %>% 
             tidyr::drop_na(., input$biogroup_column) %>% 
-            dplyr::filter(., !.data[[input$biogroup_column]] %in% input$groups_to_ignore) %>% 
+            dplyr::filter(
+              ., 
+              !.data[[input$biogroup_column]] %in% input$groups_to_ignore
+            ) %>% 
             curate_analytes(
               .,
               cut_offs_averages = cut_offs_averages(),
@@ -787,7 +795,10 @@ mod_analyte_curation_server <- function(id,
           r$mod_results, function(results, current_cluster) {
             data_current_cluster <- passing_spectra() %>% 
               dplyr::filter(cluster == current_cluster)
-            dplyr::left_join(results$analytes_to_include(), data_current_cluster)
+            
+            dplyr::left_join(
+              results$analytes_to_include(), data_current_cluster
+            )
           }
         ) %>% purrr::reduce(dplyr::full_join)
       }
@@ -854,8 +865,12 @@ mod_analyte_curation_server <- function(id,
 
     # Set status of buttons
     observe({
-      shinyjs::toggleState("download", is_truthy(with_analytes_to_include()))
-      shinyjs::toggleState("download_analyte_list", is_truthy(passing_analytes_list()))
+      shinyjs::toggleState(
+        "download", is_truthy(with_analytes_to_include())
+      )
+      shinyjs::toggleState(
+        "download_analyte_list", is_truthy(passing_analytes_list())
+      )
       shinyjs::toggleState(
         "curate_analytes", condition = all(
           is_truthy(passing_spectra()),

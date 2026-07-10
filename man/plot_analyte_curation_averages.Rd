@@ -40,16 +40,3 @@ cluster. Analytes are shown on the x-axis and charge states on the y-axis. Tiles
 are colored based on whether the analyte passed or failed curation. Hovering over
 tiles displays the average values of all QC parameters.
 }
-\examples{
-\dontrun{
-# After performing average-based analyte curation:
-plot_analyte_curation_averages(
-  curated_analytes = curated_analytes,
-  cut_off_averages = list(mass_accuracy = c(-10, 10),
-                          max_ipq = 0.2,
-                          min_sn = 9),
-  selected_cluster = "IgG1",
-  bio_groups_colname = ""
-)
-}
-}
