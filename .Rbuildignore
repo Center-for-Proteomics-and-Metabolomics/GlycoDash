@@ -13,3 +13,5 @@ $run_dev.*
 ^\.positai$
 ^\.claude$
 ^codecov\.yml$
+^doc$
+^Meta$
