@@ -412,12 +412,12 @@ mod_add_sample_ids_server <- function(
     
     
     output$download_ex_plate_design <- downloadHandler(
-      filename = "Example plate design file.xlsx",
+      filename = "plate_layout_example.xlsx",
       content = function(file) {
         example_file <- system.file(
           "app",
           "www",
-          "Example plate design file.xlsx",
+          "plate_layout_example.xlsx",
           package = "GlycoDash"
         )
         file.copy(example_file, file)
@@ -425,12 +425,12 @@ mod_add_sample_ids_server <- function(
     )
     
     output$download_ex_sample_list <- downloadHandler(
-      filename = "Example sample list file.xlsx",
+      filename = "sample_list_example.xlsx",
       content = function(file) {
         example_file <- system.file(
           "app",
           "www",
-          "Example sample list file.xlsx",
+          "sample_list_example.xlsx",
           package = "GlycoDash"
         )
         file.copy(example_file, file)

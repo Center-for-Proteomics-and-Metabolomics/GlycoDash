@@ -1212,12 +1212,12 @@ mod_derived_traits_server <- function(
 
     ########## Download example Excel of custom traits ##########
     output$download_ex_custom_formulas <- downloadHandler(
-      filename = "Custom_traits_formulas_example.xlsx",
+      filename = "custom_traits_formulas_example.xlsx",
       content = function(file) {
         example_file <- system.file(
           "app",
           "www",
-          "Custom_traits_formulas_example.xlsx",
+          "custom_traits_formulas_example.xlsx",
           package = "GlycoDash"
         )
         file.copy(example_file, file)

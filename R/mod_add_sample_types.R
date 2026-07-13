@@ -403,10 +403,10 @@ mod_add_sample_types_server <- function(
     })
     
     output$download_ex_sample_types <- downloadHandler(
-      filename = "Example sample types file.xlsx",
+      filename = "sample_types_example.xlsx",
       content = function(file) {
         example_file <- system.file(
-          "app", "www", "Example sample types file.xlsx",
+          "app", "www", "sample_types_example.xlsx",
           package = "GlycoDash"
         )
         file.copy(example_file, file)
@@ -414,12 +414,14 @@ mod_add_sample_types_server <- function(
     )
     
   
-    return(list(
-      data = to_return,
-      popup = reactive(r$response),
-      method = reactive(input$method),
-      filename_sample_types = manual_sample_types$filename
-      ))
+    return(
+      list(
+        data = to_return,
+        popup = reactive(r$response),
+        method = reactive(input$method),
+        filename_sample_types = manual_sample_types$filename
+      )
+    )
     
   })
 }
