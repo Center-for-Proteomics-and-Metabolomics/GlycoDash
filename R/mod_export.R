@@ -7,13 +7,11 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_export_ui <- function(id){
+mod_export_ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidPage(
-      fluidRow(
-        h1("Export results")
-      ),
+      fluidRow(h1("Export results")),
       fluidRow(
         column(
           width = 5,
@@ -22,15 +20,15 @@ mod_export_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            radioButtons(ns("download_format"),
-                        "Choose a file format:",
-                        choices = c("Excel file", "R object")),
-            downloadButton(ns("download"), 
-                           "Download processed data"),
+            radioButtons(
+              ns("download_format"),
+              "Choose a file format:",
+              choices = c("Excel file", "R object")
+            ),
+            downloadButton(ns("download"),  "Download processed data"),
             br(),
             br(),
-            downloadButton(ns("report"),
-                           "Generate report")
+            downloadButton(ns("report"), "Generate report")
           )
         ),
         column(
@@ -40,10 +38,12 @@ mod_export_ui <- function(id){
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
-            textAreaInput(ns("notes"),
-                          "Enter notes for the report:",
-                          value = "",
-                          rows = 5)
+            textAreaInput(
+              ns("notes"),
+              "Enter notes for the report:",
+              value = "",
+              rows = 5
+            )
           )
         )
       ),
@@ -60,20 +60,23 @@ mod_export_ui <- function(id){
  
   )
 }
-    
+ 
+   
 #' export Server Functions
 #'
 #' @noRd 
-mod_export_server <- function(id, 
-                              results_quantitation,
-                              results_site_occupancy,
-                              results_derived_traits,
-                              results_data_import,
-                              results_spectra_curation,
-                              results_analyte_curation,
-                              results_normalization,
-                              results_repeatability,
-                              results_data_exploration) {
+mod_export_server <- function(
+    id, 
+    results_quantitation,
+    results_site_occupancy,
+    results_derived_traits,
+    results_data_import,
+    results_spectra_curation,
+    results_analyte_curation,
+    results_normalization,
+    results_repeatability,
+    results_data_exploration  
+  ) {
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
@@ -96,8 +99,8 @@ mod_export_server <- function(id,
     })
 
     
-    # Disable the "Download processed data" button until normalized data is available
-    # Also the Generate report button
+    # Disable the "Download processed data" button until data is available.
+    # Also the Generate report button.
     observe({
       shinyjs::toggleState("download", is_truthy(x$data))
       shinyjs::toggleState("report", is_truthy(x$data))
@@ -106,13 +109,15 @@ mod_export_server <- function(id,
     # Display the final data table
     output$data_table <- DT::renderDT({
       req(x$data)
-      DT::datatable(data = x$data %>% 
-                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
-                    options = list(
-                      scrollX = TRUE,
-                      pageLength = 6,
-                      columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ), filter = "top")
+      DT::datatable(
+        data = x$data %>% 
+          dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+        options = list(
+          scrollX = TRUE,
+          pageLength = 6,
+          columnDefs = list(list(className = "dt-center", targets = "_all"))
+        ), filter = "top"
+      )
     })
     
     observe({
@@ -128,10 +133,13 @@ mod_export_server <- function(id,
     # Download processed data
     output$download <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
         if (grepl("R object", input$download_format)) {
           paste0(current_datetime, "_normalized_data.rds")
-        } else {
+        } 
+        else {
           paste0(current_datetime, "_normalized_data.xlsx")
         }
       },
@@ -140,7 +148,9 @@ mod_export_server <- function(id,
           saveRDS(x$data, file = file)
         } 
         else if (is_truthy(results_normalization$notes())) {
-          data_list <- list("Data" = x$data, "Notes" = results_normalization$notes())
+          data_list <- list(
+            "Data" = x$data, "Notes" = results_normalization$notes()
+          )
           writexl::write_xlsx(data_list, path = file)
         } 
         else {
@@ -152,7 +162,9 @@ mod_export_server <- function(id,
     
     output$report <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))  # Thx ChatGPT
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
         paste0(current_datetime, "_data_processing_report.html")
       },
       content = function(file) {
@@ -169,16 +181,18 @@ mod_export_server <- function(id,
         spectra_curation_tab_contents <- tryCatch(
           expr = {
             # We map the list that contains one list for each tab:
-            purrr::map(results_spectra_curation$tab_contents(),
-                       function(list_of_objects) {
-                         # Then we map each list containing objects:
-                         purrr::map(
-                           list_of_objects,
-                           # Every reactive expression containing an object in
-                           # the list is called to retrieve the objects:
-                           ~ do.call(.x,
-                                     args = list()))
-                       })
+            purrr::map(
+              results_spectra_curation$tab_contents(),
+              function(list_of_objects) {
+                # Then we map each list containing objects:
+                purrr::map(
+                  list_of_objects,
+                  # Every reactive expression containing an object in
+                  # the list is called to retrieve the objects:
+                  ~ do.call(.x, args = list())
+                )
+              }
+            )
           },
           error = function(e) {
             NULL
@@ -191,10 +205,10 @@ mod_export_server <- function(id,
           expr = {
             purrr::map(
               results_spectra_curation$curated_spectra_plots(),
-                       function(curated_spectra_plot) {
-                         do.call(curated_spectra_plot,
-                                 args = list())
-                       })
+              function(curated_spectra_plot) {
+                do.call(curated_spectra_plot, args = list())
+              }
+            )
           },
           error = function(e) {
             NULL
@@ -218,13 +232,15 @@ mod_export_server <- function(id,
         # We do the same thing as above for the analyte curation tabs:
         analyte_curation_tab_contents <- tryCatch(
           expr = {
-            purrr::map(results_analyte_curation$objects(),
-                       function(list_of_objects) {
-                         purrr::map(
-                           list_of_objects,
-                           ~ do.call(.x,
-                                     args = list()))
-                       })
+            purrr::map(
+              results_analyte_curation$objects(),
+              function(list_of_objects) {
+                purrr::map(
+                  list_of_objects,
+                  ~ do.call(.x, args = list())
+                )
+              }
+            )
           },
           error = function(e) {
             NULL
@@ -235,13 +251,15 @@ mod_export_server <- function(id,
         # Quantitation tab contents
         quantitation_protein_tab_contents <- tryCatch(
           expr = {
-            purrr::map(results_quantitation$protein_tabs_contents(),
-                       function(list_of_objects) {
-                         purrr::map(
-                           list_of_objects,
-                           ~ do.call(.x,
-                                     args = list()))
-                       })
+            purrr::map(
+              results_quantitation$protein_tabs_contents(),
+              function(list_of_objects) {
+                purrr::map(
+                  list_of_objects,
+                  ~ do.call(.x, args = list())
+                )
+              }
+            )
           },
           error = function(e) {
             NULL
@@ -250,13 +268,15 @@ mod_export_server <- function(id,
         
         quantitation_peptide_tab_contents <- tryCatch(
           expr = {
-            purrr::map(results_quantitation$peptide_tabs_contents(),
-                       function(list_of_objects) {
-                         purrr::map(
-                           list_of_objects,
-                           ~ do.call(.x,
-                                     args = list()))
-                       })
+            purrr::map(
+              results_quantitation$peptide_tabs_contents(),
+              function(list_of_objects) {
+                purrr::map(
+                  list_of_objects,
+                  ~ do.call(.x, args = list())
+                )
+              }
+            )
           },
           error = function(e) {
             NULL
@@ -267,9 +287,13 @@ mod_export_server <- function(id,
         # Repeatability
         # Mapping (or looping) a reactiveValues list is not possible. You need
         # to convert it to a regular list first. 
-        repeatability_list <- shiny::reactiveValuesToList(results_repeatability$tab_results)
+        repeatability_list <- shiny::reactiveValuesToList(
+          results_repeatability$tab_results
+        )
         # Remove potential NULL values from the list (happens when tabs are deleted)
-        repeatability_list_clean <- repeatability_list[!sapply(repeatability_list, is.null)]
+        repeatability_list_clean <- repeatability_list[
+          !sapply(repeatability_list, is.null)
+        ]
         # Loop over the tabs in the list
         repeatability_tab_contents <- purrr::map(
           repeatability_list_clean,
@@ -277,11 +301,12 @@ mod_export_server <- function(id,
             # Remove NULL tabs from the list (happens when tabs are deleted)
             
             plot <- try_call(list_of_objects$plot)
-            plots <- purrr::map(list_of_objects$plots(),
-                                ~ try_call(.x))
+            
+            plots <- purrr::map(list_of_objects$plots(), ~ try_call(.x))
+            
             table <- try_call(list_of_objects$table)
-            title <- do.call(list_of_objects$title_for_report,
-                             args = list())
+            
+            title <- do.call(list_of_objects$title_for_report, args = list())
             return(list(
               plot = plot,
               plots = plots,
@@ -296,17 +321,19 @@ mod_export_server <- function(id,
           # to convert it to a regular list first:
           shiny::reactiveValuesToList(results_data_exploration$tab_results),
           function(list_of_objects) {
-            lapply(list_of_objects,
-                   function(x) {
-                     tryCatch(
-                       expr = {
-                         do.call(x,
-                                 args = list())
-                       },
-                       error = function(e) {
-                         NULL
-                       })
-                   })
+            lapply(
+              list_of_objects,
+              function(x) {
+                tryCatch(
+                  expr = {
+                    do.call(x, args = list())
+                  },
+                  error = function(e) {
+                    NULL
+                  }
+                )
+              }
+            )
           })
         
         # We prepare a list of parameters with all of the plots, tables and
@@ -371,27 +398,27 @@ mod_export_server <- function(id,
           notes = input$notes
         )
         
-        # Create a temporary file with a unique name per session to prevent
-        # overwriting the file when there are simultaneous users:
-        temp_report <- file.path(tempdir(), paste0(session$token, 
-                                                   "Report.Rmd"))
-        report_file <- system.file("app",
-                                   "www", 
-                                   "Report2.Rmd",
-                                   package = "GlycoDash")
+        # Create a session-specific writable copy of the report template.
+        # This prevents concurrent report renders from sharing intermediate files
+        # and avoids writing into the installed package directory.
+        temp_report <- file.path(
+          tempdir(), paste0(session$token, "_report.Rmd")
+        )
         
-        # Copy the original Report.Rmd file to the temporary file location:
-        file.copy(report_file, 
-                  temp_report, 
-                  overwrite = TRUE)
+        report_file <- system.file(
+          "app", "www", "report.Rmd", package = "GlycoDash"
+        )
         
-        # Render the parameterized report:
+        # Copy the original report.Rmd file to the temporary file location
+        file.copy(report_file, temp_report, overwrite = TRUE)
+        
+        # Render the parameterized report
         rmarkdown::render(
           input = temp_report,
           output_format = "html_document",
           output_file = file,
           envir = new.env(parent = globalenv()),
-          params = params # We're passing along the params that are listed above
+          params = params
         )
         
         shinybusy::remove_modal_spinner()
@@ -401,8 +428,3 @@ mod_export_server <- function(id,
   })
 }
     
-## To be copied in the UI
-# mod_export_ui("export_ui_1")
-    
-## To be copied in the server
-# mod_export_server("export_ui_1")
