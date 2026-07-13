@@ -67,15 +67,13 @@ my_boxplot <- function(
         # In case of continuous color variable
         if (is.numeric(data[[color]]) && !is.integer(data[[color]])) {
           ggplot2::scale_color_continuous(type = "viridis")
-        } 
-        else {
+        } else {
           ggplot2::scale_color_manual(
             values = my_palette, name = nicer_label(color)
           )
         }
       }
-  } 
-  else {
+  } else {
     plot <- plot +
       ggplot2::geom_jitter(
         ggplot2::aes(x = .data[[xvar]], y = .data[[yvar]]),
@@ -149,8 +147,7 @@ my_scatter_plot <- function(
       {
         if (is.numeric(data[[color]]) && !is.integer(data[[color]])) {
           ggplot2::scale_color_continuous(type = "viridis")
-        } 
-        else {
+        } else {
           ggplot2::scale_color_manual(
             values = my_palette,
             name = nicer_label(color)
@@ -158,8 +155,7 @@ my_scatter_plot <- function(
         }
       }
     
-  } 
-  else {
+  } else {
     plot <- plot +
       ggplot2::geom_point(
         ggplot2::aes(
@@ -227,16 +223,14 @@ my_histogram <- function(
       {
         if (is.numeric(data[[color]]) && !is.integer(data[[color]])) {
           ggplot2::scale_fill_continuous(type = "viridis")
-        } 
-        else {
+        } else {
           ggplot2::scale_fill_manual(
             values = my_palette, name = nicer_label(color)
           )
         }
       }
     
-  } 
-  else {
+  } else {
     plot <- plot +
       ggplot2::geom_histogram(
         ggplot2::aes(x = .data[[xvar]]), fill = "#1f77b4"

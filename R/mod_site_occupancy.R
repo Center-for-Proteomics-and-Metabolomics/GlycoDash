@@ -213,8 +213,7 @@ mod_site_occupancy_server <- function(
         )
       if (nrow(data) > 0) {
         data
-      }
-      else NULL
+      } else NULL
     })
     
     # Allow for downloading of peptides quality
@@ -327,8 +326,7 @@ mod_site_occupancy_server <- function(
             tidyselect::contains("site_occupancy"),
             .after = tidyselect::contains("sum_intensity")
           )
-      } 
-      else if (is_truthy(results_quantitation$data_with_quantities())) {
+      } else if (is_truthy(results_quantitation$data_with_quantities())) {
         dplyr::left_join(
           results_quantitation$data_with_quantities(), site_occupancy()
         ) %>%
@@ -336,8 +334,7 @@ mod_site_occupancy_server <- function(
             tidyselect::contains("_quantity"),
             .after = tidyselect::contains("sum_intensity")
           )
-      } 
-      else {
+      } else {
         site_occupancy()
       }
     })
@@ -379,8 +376,7 @@ mod_site_occupancy_server <- function(
         shinyjs::show("plot")
         shinyjs::show("mass_accuracy")
         shinyjs::show("exclude_sample_types")
-      } 
-      else {
+      } else {
         shinyjs::show("no_peptides")
         shinyjs::hide("info_clusters")
         shinyjs::hide("exclude_peptides")

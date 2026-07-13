@@ -144,8 +144,7 @@ mod_add_sample_types_server <- function(
       if (startsWith(input$method, "Upload")) {
         shinyjs::show("upload_div")
         shinyjs::hide("button")
-      } 
-      else {
+      } else {
         shinyjs::hide("upload_div")
         shinyjs::show("button")
       }
@@ -200,8 +199,7 @@ mod_add_sample_types_server <- function(
       all_unique <- length(sample_ids) == length(unique(sample_ids))
       if (all_unique) {
         return(NULL)
-      } 
-      else {
+      } else {
         non_unique_ids <- sample_ids[duplicated(sample_ids)]
         return(non_unique_ids)
       }
@@ -262,8 +260,7 @@ mod_add_sample_types_server <- function(
       )
       if (rlang::is_empty(unmatched)) {
         NULL
-      } 
-      else {
+      } else {
         unmatched
       }
     })
@@ -395,8 +392,7 @@ mod_add_sample_types_server <- function(
       if (startsWith(input$method, "Automatically")) {
         req(r$response)
         r$with_auto_sample_types
-      } 
-      else {
+      } else {
         req(with_manual_sample_types())
         with_manual_sample_types()
       }

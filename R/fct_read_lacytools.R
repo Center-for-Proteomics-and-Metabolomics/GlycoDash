@@ -255,13 +255,11 @@ find_block <- function(data, variable) {
         "Error: LaCyTools output format",
         variable, "is not present in the first column of the input file."
       ))
-  } 
-  else {
+  } else {
     next_na <- find_next_na(data, first_row)
     if (length(next_na) == 0) { 
       rows <- seq.int(first_row, nrow(data))
-    } 
-    else {
+    } else {
       rows <- seq.int(first_row, next_na - 1)
     }
   }

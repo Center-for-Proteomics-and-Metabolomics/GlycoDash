@@ -26,16 +26,14 @@ generate_formula <- function(
     return(paste0(
       cluster, "_", target_trait, " = Not reported: zero for all samples"
     ))
-  } 
-  # If there is only one glycan: do not report if trait is average number of mannoses
-  else if (nrow(df) == 1 & target_trait == "oligomannose_average") {
+  } else if (nrow(df) == 1 & target_trait == "oligomannose_average") {
+    # If there is only one glycan: do not report if trait is average number of mannoses
     return(paste0(
       cluster, "_", target_trait, " = Not reported: only one relevant glycan ", 
       df$glycan
     ))
-  }
-  # Check if "complex" is a column in cluster_ref_df
-  else if ("complex" %in% colnames(cluster_ref_df)) {
+    # Check if "complex" is a column in cluster_ref_df
+  } else if ("complex" %in% colnames(cluster_ref_df)) {
     # Some traits are always 100 when all glycans are used
     if (nrow(cluster_ref_df %>% dplyr::filter(complex == 1)) == nrow(df)) {
       if (target_trait %in% c(
@@ -50,8 +48,7 @@ generate_formula <- function(
           cluster, "_", target_trait, " = Not reported: 100 for all samples"
         ))
       }
-    }
-    else if (nrow(cluster_ref_df) == nrow(df)) {
+    } else if (nrow(cluster_ref_df) == nrow(df)) {
       if (target_trait %in% c(
         "hybrid", 
         "hybrid_fucosylation", 
@@ -91,8 +88,7 @@ generate_formula <- function(
         paste(gsub(".* \\* ", "", terms_with_coeff), collapse = " + "),
         ")"
       )
-    } 
-    else {
+    } else {
       terms_with_coeff
     }
   })
@@ -131,9 +127,8 @@ generate_formula <- function(
         clean_formula_string <- paste0(clean_formula_string, " * 100")
       }
     }
-  }
-  # Divide by the sum of all oligomannose type glycans
-  else if (target_trait == "oligomannose_average") {
+    # Divide by the sum of all oligomannose type glycans
+  } else if (target_trait == "oligomannose_average") {
     oligomannose_df <- cluster_ref_df %>%
       dplyr::filter(oligomannose_average != 0)
     oligomannose_sum <- paste0(
@@ -142,26 +137,24 @@ generate_formula <- function(
     clean_formula_string <- paste0(
       "(", clean_formula_string, ") / (", oligomannose_sum, ")"
     ) 
-  }
-  # Divide by sum of hybrids when calculating hybrid fucosylation or bisection
-  else if (target_trait %in% c("hybrid_fucosylation", "hybrid_bisection")) {
+    # Divide by sum of hybrids when calculating hybrid fucosylation or bisection
+  } else if (target_trait %in% c("hybrid_fucosylation", "hybrid_bisection")) {
     hybrid_df <- cluster_ref_df %>% 
       dplyr::filter(hybrid == 1)
     hybrid_sum <- paste0(cluster, "1", hybrid_df$glycan, collapse = " + ")
     clean_formula_string <- paste0(
       "(", clean_formula_string, ") / (", hybrid_sum, ") * 100"
     )
-  }
-  # Divide some O-glycan traits by 100
-  else if (target_trait %in% c(
-    "sialic_acids", 
-    "galactoses", 
-    "galnacs",
-    "Tn_antigens", 
-    "T_antigens", 
-    "sT_antigens",
-    "disialylated_O_antigens"
-  )) {
+    # Divide some O-glycan traits by 100
+  } else if (target_trait %in% c(
+      "sialic_acids", 
+      "galactoses", 
+      "galnacs",
+      "Tn_antigens", 
+      "T_antigens", 
+      "sT_antigens",
+      "disialylated_O_antigens"
+    )) {
     clean_formula_string <- paste0("(", clean_formula_string, ") / 100")
   }
   
@@ -490,8 +483,7 @@ traits_vs_intensity_plot <- function(
   
   if ("group" %in% colnames(data_to_plot)) {
     p <- p + ggplot2::facet_grid(trait ~ group, scales = "free")
-  } 
-  else {
+  } else {
     p <- p + ggplot2::facet_wrap(~trait, scales = "free", ncol = 3)
   }
   
@@ -625,8 +617,7 @@ clean_traits <- function(
       }
     }
     
-  } 
-  else {
+  } else {
     # No formulas to calculate
     data <- normalized_data_wide
   }

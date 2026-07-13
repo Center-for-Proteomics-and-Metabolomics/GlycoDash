@@ -261,8 +261,7 @@ mod_quantitation_server <- function(
           confirmButtonCol = "tomato"
         )
         r$correct_formatting <- FALSE
-      } 
-      else {
+      } else {
         # Colnames are correct --> check peptides validity
         clusters_specified <- c(proteins_excel()$natural, proteins_excel()$labeled)
         
@@ -280,8 +279,7 @@ mod_quantitation_server <- function(
             confirmButtonCol = "tomato"
           )
           r$correct_formatting <- FALSE
-        } 
-        else {
+        } else {
           r$correct_formatting <- TRUE
         }
       }
@@ -321,11 +319,9 @@ mod_quantitation_server <- function(
         is_truthy(peptide_intensities())
       ) {
         dplyr::bind_rows(glycopeptide_intensities(), peptide_intensities())
-      } 
-      else if (is_truthy(glycopeptide_intensities())) {
+      } else if (is_truthy(glycopeptide_intensities())) {
         glycopeptide_intensities()
-      } 
-      else {
+      } else {
         peptide_intensities()
       }
     })
@@ -520,8 +516,7 @@ mod_quantitation_server <- function(
     observe({
       if (is_truthy(peptides_data())) {
         shinyjs::show("exclude_peptides")
-      } 
-      else {
+      } else {
         shinyjs::hide("exclude_peptides")
       }
     })

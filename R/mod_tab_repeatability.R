@@ -108,8 +108,7 @@ mod_tab_repeatability_server <- function(
           string = input$sample_menu,
           pattern = "(?<=group: ).+(?= sample_id: .+)") %>% 
           na.omit(.)
-      } 
-      else {
+      } else {
         NULL
       }
     }) %>% bindEvent(input$assess_repeatability)
@@ -151,8 +150,7 @@ mod_tab_repeatability_server <- function(
       if (is_truthy(input$by_plate)) {
         req(repeatability())
         visualize_repeatability(repeatability())
-      } 
-      else {
+      } else {
         req(my_data(), selected_sample_id())
         
         tryCatch(

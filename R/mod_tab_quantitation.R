@@ -100,8 +100,7 @@ mod_tab_quantitation_server <- function(
       req(protein_data)
       if (length(unique(protein_data$peptide_pair)) > 1) {
         plot_peptide_correlations(protein_data, input$log_scale_peptides)
-      } 
-      else {
+      } else {
         NULL
       }
     })
@@ -147,8 +146,7 @@ mod_tab_quantitation_server <- function(
     observe({
       if (is_truthy(peptide_correlation_plots())) {
         shinyjs::show("div_peptide_correlations")
-      } 
-      else {
+      } else {
         shinyjs::hide("div_peptide_correlations")
       }
       

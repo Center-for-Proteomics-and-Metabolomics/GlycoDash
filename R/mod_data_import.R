@@ -114,17 +114,13 @@ mod_data_import_server <- function(id) {
 
       if (is_truthy(data_incl_metadata$data())) {
         show_in_table <- data_incl_metadata$data()
-      } 
-      else if (is_truthy(data_incl_clusters$data())) {
+      } else if (is_truthy(data_incl_clusters$data())) {
         show_in_table <- data_incl_clusters$data()
-      } 
-      else if (is_truthy(data_incl_sample_types$data())) {
+      } else if (is_truthy(data_incl_sample_types$data())) {
           show_in_table <- data_incl_sample_types$data()
-      } 
-      else if (is_truthy(data_incl_sample_ids$data())) {
+      } else if (is_truthy(data_incl_sample_ids$data())) {
         show_in_table <- data_incl_sample_ids$data()
-      } 
-      else if (is_truthy(data_input$data())) {
+      } else if (is_truthy(data_input$data())) {
           show_in_table <- data_input$data()
       }
       
@@ -164,11 +160,9 @@ mod_data_import_server <- function(id) {
     to_return <- reactive({
       if (is_truthy(data_incl_metadata$data())) {
         data_incl_metadata$data()
-      }
-      else if (is_truthy(data_incl_clusters$data())) {
+      } else if (is_truthy(data_incl_clusters$data())) {
         data_incl_clusters$data()
-      }
-      else NULL
+      } else NULL
     })
     
     
@@ -181,11 +175,9 @@ mod_data_import_server <- function(id) {
           "sample_id", "sample_type", 
           colnames(data_incl_metadata$merged_metadata())
         )
-      } 
-      else if (is_truthy(data_incl_clusters$data())) {
+      } else if (is_truthy(data_incl_clusters$data())) {
           c("sample_id", "sample_type")
-      } 
-      else NULL
+      } else NULL
     })
     
     
@@ -227,8 +219,7 @@ mod_data_import_server <- function(id) {
     observe({
       if (is_truthy(data_input$glycosites_table())) {
         shinyjs::show("peptide_box")
-      } 
-      else {
+      } else {
         shinyjs::hide("peptide_box")
       }
     })

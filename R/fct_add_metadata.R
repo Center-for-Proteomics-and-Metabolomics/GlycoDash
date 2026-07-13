@@ -26,11 +26,9 @@ read_metadata <- function(filepaths, filenames) {
         metadata <- readxl::read_excel(
           path, na = c("", "NA"), col_types = "text"
         )
-      } 
-      else if (extension == "rds") {
+      } else if (extension == "rds") {
         metadata <- load_and_assign(path)
-      } 
-      else {
+      } else {
         rlang::abort(class = "error")
       }
     }

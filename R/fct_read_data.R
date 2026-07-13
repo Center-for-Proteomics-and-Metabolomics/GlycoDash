@@ -70,14 +70,11 @@ detect_group <- function(
 getOrdinalSuffix <- function(num) {
   if (num %% 10 == 1 && num %% 100 != 11) {
     return(paste0(num, "st"))
-  } 
-  else if (num %% 10 == 2 && num %% 100 != 12) {
+  } else if (num %% 10 == 2 && num %% 100 != 12) {
     return(paste0(num, "nd"))
-  } 
-  else if (num %% 10 == 3 && num %% 100 != 13) {
+  } else if (num %% 10 == 3 && num %% 100 != 13) {
     return(paste0(num, "rd"))
-  } 
-  else {
+  } else {
     return(paste0(num, "th"))
   }
 }

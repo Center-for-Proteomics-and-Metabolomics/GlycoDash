@@ -350,8 +350,7 @@ mod_spectra_curation_server <- function(
         shinyjs::hide("sn")
         shinyjs::show("idp")
         shinyjs::show("total_area")
-      } 
-      else if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
+      } else if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
         # Checkboxes to include QC
         shinyWidgets::updateAwesomeCheckboxGroup(
           inputId = "qc_to_include",
@@ -382,12 +381,10 @@ mod_spectra_curation_server <- function(
           dplyr::filter(analyte != paste0(cluster, "1"))
         if (nrow(to_return) > 0) {
           to_return
-        } 
-        else {
+        } else {
           NULL
         }
-      } 
-      else {
+      } else {
         results_data_import$data() %>% 
           dplyr::filter(analyte != paste0(cluster, "1"))
       }
@@ -401,8 +398,7 @@ mod_spectra_curation_server <- function(
         "group" %in% colnames(data_to_check())
       ) {
         TRUE
-      } 
-      else {
+      } else {
         FALSE
       }
     })
@@ -428,8 +424,7 @@ mod_spectra_curation_server <- function(
           min_sn = input$sn,
           criteria_to_consider = input$qc_to_include
         )
-      } 
-      else if (data_type == "Skyline data") {
+      } else if (data_type == "Skyline data") {
         req(input$total_area, input$idp)
         # Check analyte quality criteria for Skyline data
         check_analyte_quality_criteria_skyline(
@@ -498,11 +493,9 @@ mod_spectra_curation_server <- function(
     calculated_cut_offs <- reactive({
       if (input$curation_method == "Negative control spectra") {
         req(cut_offs_based_on_controls()) 
-      } 
-      else if (input$curation_method == "Percentiles") {
+      } else if (input$curation_method == "Percentiles") {
         req(cut_offs_based_on_percentiles()) 
-      } 
-      else if (input$curation_method == "Skip spectra curation") {
+      } else if (input$curation_method == "Skip spectra curation") {
         NULL
       }
     })
@@ -574,8 +567,7 @@ mod_spectra_curation_server <- function(
                 if (is.null(calculated_cut_offs())) {
                   # When spectra curation is skipped.
                   NULL
-                } 
-                else {
+                } else {
                   calculated_cut_offs() %>% 
                     dplyr::filter(cluster == current_cluster)
                 }       
@@ -608,8 +600,7 @@ mod_spectra_curation_server <- function(
             dplyr::select(group, cluster) %>% 
             dplyr::distinct() %>% 
             dplyr::pull(cluster)
-        } 
-        else {
+        } else {
           to_compare <- clusters()
         }
         
@@ -631,15 +622,12 @@ mod_spectra_curation_server <- function(
           # before a sample type was chosen to use as negative controls.
           # Then there is only a cut-off for that cluster and the comparison won't work.
           TRUE
-        } 
-        else if (all_present) {
+        } else if (all_present) {
           FALSE
-        } 
-        else {
+        } else {
           TRUE
         }
-      } 
-      else {
+      } else {
         FALSE
       }
     })
@@ -650,12 +638,10 @@ mod_spectra_curation_server <- function(
       if (!rlang::is_empty(cut_offs_to_use_all_clusters())) {
         if (missing_cluster_cut_offs() == TRUE) {
           shinyjs::disable("button")
-        } 
-        else {
+        } else {
           shinyjs::enable("button")
         }
-      } 
-      else {
+      } else {
         shinyjs::disable("button")
       }
     })
@@ -748,8 +734,7 @@ mod_spectra_curation_server <- function(
           checked_data = checked_data(),
           summarized_checks = summarized_checks()
         )
-      } 
-      else {
+      } else {
         req(passing_spectra())
         remove_unneeded_columns(passing_spectra = passing_spectra())
       }
@@ -927,8 +912,7 @@ mod_spectra_curation_server <- function(
         purrr::map(tab_names, function(tab_name) {
           showTab(inputId = "result_tables", target = tab_name, select = TRUE)
         })
-      } 
-      else {
+      } else {
         purrr::map(tab_names, function(tab_name) {
           hideTab(inputId = "result_tables", target = tab_name)
         })
@@ -1034,8 +1018,7 @@ mod_spectra_curation_server <- function(
           dplyr::mutate(filter = paste0(cluster, "_", sample_name)) %>% 
           dplyr::filter(filter %in% passing) %>% 
           dplyr::select(-filter)
-      }
-      else {
+      } else {
         peptides
       }
     })

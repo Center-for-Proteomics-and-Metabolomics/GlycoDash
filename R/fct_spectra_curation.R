@@ -264,12 +264,10 @@ report_failed_criteria <- function(
   if (data_type == "LaCyTools") {  # Also includes SweetSuite data
     to_return <- my_data %>% 
       dplyr::select(-c(`Mass accuracy`, `Isotopic pattern quality`, `S/N`))
-  } 
-  else if (data_type == "Skyline") {
+  } else if (data_type == "Skyline") {
     to_return <- my_data %>% 
       dplyr::select(-c(`Mass accuracy`, `Isotope dot product`, `Total area`))
-  } 
-  else {
+  } else {
     to_return <- my_data
   }
   
@@ -332,8 +330,7 @@ summarize_spectra_checks <- function(
         uncalibrated = any(uncalibrated),
         .groups = "drop"
       )
-  } 
-  else if (data_type == "Skyline data") {
+  } else if (data_type == "Skyline data") {
     summarized_checks <- checked_data %>%
       dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>%
       dplyr::summarise(
@@ -345,8 +342,7 @@ summarize_spectra_checks <- function(
         uncalibrated = any(uncalibrated),
         .groups = "drop"
       )
-  } 
-  else {
+  } else {
     stop("Unknown 'data_type' provided to 'summarize_spectra_checks'.")
   }
   
@@ -419,24 +415,21 @@ calculate_cut_offs <- function(
     dplyr::filter(
       if (!is.null(group_keyword)) {
         group == group_keyword
-      } 
-      else {
+      } else {
         TRUE
       }
     ) %>% 
     dplyr::filter(
       if (!is.null(control_sample_types)) {
         sample_type %in% control_sample_types
-      } 
-      else {
+      } else {
         TRUE
       }
     ) %>% 
     dplyr::filter(
       if (!is.null(exclude_sample_types)) {
         !(sample_type %in% exclude_sample_types)
-      } 
-      else {
+      } else {
         TRUE
       }
     )
@@ -558,8 +551,7 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
   if (nrow(without_uncalibrated) > 0) {
     if (all(!without_uncalibrated$has_passed_spectra_curation)) {
       rlang::warn("None of the spectra passed curation.")
-    } 
-    else if (all(without_uncalibrated$has_passed_spectra_curation)) {
+    } else if (all(without_uncalibrated$has_passed_spectra_curation)) {
       rlang::warn("All spectra passed curation.")
     }
   }
@@ -827,8 +819,7 @@ create_cut_off_plot <- function(
   if ("group" %in% colnames(for_plot)) {
     p <- p +
       ggplot2::facet_wrap(cluster ~ group)
-  } 
-  else {
+  } else {
     p <- p +
       ggplot2::facet_wrap(~ cluster)
   }
@@ -938,8 +929,7 @@ plot_spectra_curation_results <- function(
   if (total_and_specific) {
     plot <- plot +
       ggplot2::facet_wrap(cluster ~ group)
-  } 
-  else if (!total_and_specific) {
+  } else if (!total_and_specific) {
     plot <- plot +
       ggplot2::facet_wrap(~ cluster)
   } 
@@ -996,8 +986,7 @@ create_downloadHandler <- function(
       if (download_format == "R object") {
         print(download_format)
         return(paste0(current_datetime, paste, ".rds"))
-      } 
-      else {
+      } else {
         print(download_format)
         return(paste0(current_datetime, paste, ".xlsx"))
       }
@@ -1005,8 +994,7 @@ create_downloadHandler <- function(
     content = function(file) {
       if (download_format == "R object") {
         saveRDS(data_to_download, file = file)
-      } 
-      else {
+      } else {
         writexl::write_xlsx(data_to_download, path = file)
       }
     }

@@ -182,8 +182,7 @@ mod_tab_cut_offs_server <- function(
             cluster = selected_cluster
           )
         
-      } 
-      else {
+      } else {
         req(
           input$cut_off_sum_intensity,
           input$cut_off_passing_analyte_percentage
@@ -207,8 +206,7 @@ mod_tab_cut_offs_server <- function(
     cut_offs_to_use <- reactive({
       if (is_truthy(input$switch_to_manual)) {
         req(manual_cut_offs())
-      } 
-      else {
+      } else {
         req(calculated_cut_offs())
       }
     })
@@ -316,8 +314,7 @@ mod_tab_cut_offs_server <- function(
     show_in_cut_off_table <- reactive(
       if (is_truthy(input$switch_to_manual)) {
         for_cut_off_table_manual()
-      } 
-      else {
+      } else {
         req(for_cut_off_table_calculated())
       }
     )

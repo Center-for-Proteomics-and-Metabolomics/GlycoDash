@@ -40,8 +40,7 @@ throw_out_samples <- function(
     groups_to_ignore <- samples_to_ignore[
       samples_to_ignore %in% levels(passing_spectra$group)
     ]
-  } 
-  else {
+  } else {
     groups_to_ignore <- vector()
   }
   
@@ -144,8 +143,7 @@ curate_analytes <- function(
     if (!is.null(bio_groups_colname)) {
       grouped_analytes <- checked_analytes %>% 
         dplyr::group_by(.data[[bio_groups_colname]], cluster, charge, analyte)
-    }
-    else {
+    } else {
       grouped_analytes <- checked_analytes %>% 
         dplyr::group_by(cluster, charge, analyte)
     }
@@ -158,17 +156,15 @@ curate_analytes <- function(
         cluster_cut_off = unlist(cut_offs_percentages[cluster], use.names = FALSE),
         has_passed_analyte_curation = passing_percentage >= cluster_cut_off
       )
-  }
-  
-  # Curation based on averages
-  else if (!is.null(cut_offs_averages)) {
+  } else if (!is.null(cut_offs_averages)) {
+    
+    # Curation based on averages
     
     # Function to calculate either mean or median.
     avg <- function(x) {
       if (average_method == "Mean") {
         return(mean(x, na.rm = TRUE))
-      }
-      else if (average_method == "Median") {
+      } else if (average_method == "Median") {
         return(median(x, na.rm = TRUE))
       }
     }
@@ -177,8 +173,7 @@ curate_analytes <- function(
     if (is.null(bio_groups_colname)) {
       grouped_analytes <- checked_analytes %>% 
         dplyr::group_by(cluster, charge, analyte)
-    }
-    else {
+    } else {
       grouped_analytes <- checked_analytes %>% 
         dplyr::group_by(.data[[bio_groups_colname]], cluster, charge, analyte)
     }
@@ -217,8 +212,7 @@ curate_analytes <- function(
             pass_mass_accuracy & pass_ipq & pass_sn
           )
         )
-    }
-    else if (data_type == "Skyline data") {
+    } else if (data_type == "Skyline data") {
       curated_analytes <- grouped_analytes %>% 
         dplyr::summarize(
           avg_mass_accuracy = avg(mass_accuracy_ppm),
@@ -276,13 +270,11 @@ read_analyte_list_file <- function(filepath, filename) {
   
   if (extension == "rds") {
     analyte_list <- load_and_assign(filepath)
-  }
-  else if (extension %in% c("xlsx", "xls")) {
+  } else if (extension %in% c("xlsx", "xls")) {
     analyte_list <- readxl::read_excel(
       filepath, col_names = TRUE, col_types = "text"
     )
-  }
-  else {
+  } else {
     rlang::abort(
       class = "wrong_extension",
       message = "Please upload a .xlsx, .xls or .rds file."
@@ -433,8 +425,7 @@ plot_analyte_curation_percentages <- function(
       if (bio_groups_colname != "") {
         # Using {{bio_groups_colname}} does not work here for some reason
         ggplot2::facet_grid(charge ~ .data[[bio_groups_colname]])
-      } 
-      else {
+      } else {
         ggplot2::facet_wrap(~ charge, ncol = 1)
       }
     } +
@@ -513,8 +504,7 @@ plot_analyte_curation_averages <- function(
             "\nAverage IPQ: ", 
             format(round(avg_ipq, digits = 2), nsmall = 2)
           )
-        } 
-        else {
+        } else {
           paste0(
             "\nAverage IDP: ", 
             format(round(avg_idp, digits = 2), nsmall = 2)
@@ -525,8 +515,7 @@ plot_analyte_curation_averages <- function(
             "\nAverage S/N: ", 
             format(round(avg_sn, digits = 2), nsmall = 2)
           )
-        } 
-        else {
+        } else {
           paste0(
             "\nAverage total area: ", 
             format(round(avg_total_area, digits = 2), nsmall = 2)
@@ -688,8 +677,7 @@ prepare_analyte_curation_table <- function(
         ) %>%
         dplyr::select(., -n) %>%
         dplyr::distinct(.)
-      } 
-      else {
+      } else {
           identity(.)
       }
     } %>%

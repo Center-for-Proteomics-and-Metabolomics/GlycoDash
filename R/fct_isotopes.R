@@ -60,15 +60,13 @@ parse_molecular_formula <- function(formula) {
 
     if (count_text == "") {
       count <- 1
-    }
-    else {
+    } else {
       count <- as.integer(count_text)
     }
 
     if (is.null(composition[[symbol]])) {
       composition[[symbol]] <- count
-    }
-    else {
+    } else {
       composition[[symbol]] <- composition[[symbol]] + count
     }
   }
@@ -106,8 +104,7 @@ composition_to_formula <- function(composition) {
 
     if (count == 1) {
       formula_parts <- c(formula_parts, symbol)
-    }
-    else {
+    } else {
       formula_parts <- c(formula_parts, paste0(symbol, count))
     }
   }
@@ -147,16 +144,13 @@ apply_charge_carrier <- function(
   if (charge > 0) {
     if (is.null(composition[[carrier]])) {
       composition[[carrier]] <- carrier_count
-    }
-    else {
+    } else {
       composition[[carrier]] <- composition[[carrier]] + carrier_count
     }
-  }
-  else {
+  } else {
     if (is.null(composition[[carrier]])) {
       current_count <- 0L
-    }
-    else {
+    } else {
       current_count <- composition[[carrier]]
     }
 
@@ -356,8 +350,7 @@ convolve_patterns <- function(
 
         if (is.null(isotope_counts[[isotope_label]])) {
           isotope_counts[[isotope_label]] <- count
-        }
-        else {
+        } else {
           isotope_counts[[isotope_label]] <- (
             isotope_counts[[isotope_label]] + count
           )
