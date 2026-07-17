@@ -1,9 +1,65 @@
+# Disconnect/reload warning shown when the browser loses connection
+# to the Shiny session.
+glycodash_disconnect_warning <- tags$script(HTML("
+  $(document).on('shiny:disconnected', function(event) {
+    if (document.getElementById('glycodash-disconnect-message')) {
+      return;
+    }
+
+    let box = document.createElement('div');
+    box.id = 'glycodash-disconnect-message';
+
+    box.innerHTML = `
+      <div style='font-weight: 600; margin-bottom: 6px;'>
+        GlycoDash connection lost
+      </div>
+      <div style='margin-bottom: 10px;'>
+        The dashboard session stopped or disconnected due to an unexpected
+        error. Please reload the page.
+      </div>
+      <button
+        onclick='window.location.reload();'
+        style='
+          background: white;
+          color: #b00020;
+          border: none;
+          padding: 6px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: 600;
+        '
+      >
+        Reload GlycoDash
+      </button>
+    `;
+
+    box.style.position = 'fixed';
+    box.style.top = '20px';
+    box.style.left = '50%';
+    box.style.transform = 'translateX(-50%)';
+    box.style.zIndex = '99999';
+    box.style.background = '#b00020';
+    box.style.color = 'white';
+    box.style.padding = '14px 18px';
+    box.style.borderRadius = '6px';
+    box.style.fontFamily = 'sans-serif';
+    box.style.boxShadow = '0 2px 8px rgba(0,0,0,0.35)';
+    box.style.maxWidth = '520px';
+    box.style.textAlign = 'center';
+
+    document.body.appendChild(box);
+  });
+"))
+
+
 #' Increase the height of the facet strips of a plotly object.
 #'
 #' @param ggplotly A plotly object. 
 #' @param size The height that the facet strip should become.
 #'
 #' @return A plotly object with taller facet strips.
+#' 
+# Exported because this function is used in generating the HTML report.
 #' @export
 #'
 #' @examples
@@ -76,6 +132,8 @@ change_axis_title_distance <- function(plotly_object,
 #' @param ggplot_object A ggplot object.
 #'
 #' @return An integer that indicates the number of facets in the ggplot.
+#' 
+# Exported because this function is used in generating the HTML report.
 #' @export
 #'
 #' @examples
@@ -99,6 +157,8 @@ nfacets <- function(ggplot_object) {
 #' @param plotly_object A plotly object with a box plot.
 #'
 #' @return A plotly object with outliers hidden.
+#' 
+# Exported because this function is used in generating the HTML report.
 #' @export
 #'
 #' @examples

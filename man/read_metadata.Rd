@@ -22,11 +22,3 @@ This function can be used to read in a list of metadata files (.xlsx, .xls or
 read in as \code{NA}. All column names will be converted to snake case
 (lowercase, words separated by underscores).
 }
-\examples{
-path <- system.file("extdata",
-                    "Metadata_example.xlsx",
-                    package = "GlycoDash")
-
-read_metadata(filepaths = list(path),
-              filenames = list("Metadata_example.xlsx"))
-}

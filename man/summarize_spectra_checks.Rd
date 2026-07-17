@@ -23,23 +23,8 @@ A dataframe that contains one row per spectrum for each cluster.
   \item{sum_intensity}{The sum intensity of all passing analytes in this spectrum} }
 }
 \description{
-Optimized version: Improves grouping and summarization performance by minimizing chained dplyr operations,
-using mutate only where necessary, and retaining output compatibility. Uses left_join if needed and
-efficient conditional logic. This function calculates the percentage of passing analytes per spectrum
-and the sum intensity of passing analytes per spectrum. Should be used after analyte quality criteria
-checks for every spectrum and analyte combination in the data.
-}
-\examples{
-data("example_data")
-
-checked_data <- check_analyte_quality_criteria(my_data = example_data,
-                                  min_ppm_deviation = -20,
-                                  max_ppm_deviation = 20,
-                                  max_ipq = 0.2,
-                                  min_sn = 9,
-                                  criteria_to_consider = c("Mass accuracy",
-                                                          "S/N",
-                                                          "IPQ"))
-
-summarize_spectra_checks(checked_data = checked_data, data_type = results_data_import$data_type())
+This function calculates the percentage of passing 
+analytes per spectrum and the sum intensity of passing analytes per spectrum. 
+Should be used after analyte quality criteria checks for every spectrum and 
+analyte combination in the data.
 }

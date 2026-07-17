@@ -21,10 +21,3 @@ This function returns a dataframe with the contents of the Excel file.
 This function reads and processes a sample list Excel file, so that sample 
 IDs can be linked to your data.
 }
-\examples{
-path <- system.file("extdata",
-                    "Sample_list_example.xlsx",
-                    package = "GlycoDash")
-
-process_sample_list(sample_list_file = path)
-}

@@ -7,8 +7,8 @@
 #' @noRd
 app_server <- function( input, output, session ) {
   
-  # Increasing the maximum size of files that can be uploaded to 200 MB:
-  options(shiny.maxRequestSize=200*1024^2)
+  # Increasing the maximum size of files that can be uploaded to 500 MiB:
+  options(shiny.maxRequestSize = 500 * 1024^2)
   
   # Download changelog
   output$download_changelog <- downloadHandler(
@@ -27,9 +27,11 @@ app_server <- function( input, output, session ) {
   
   # Download manual
   output$download_manual <- downloadHandler(
-    filename = "GlycoDash_manual.pdf",
+    filename = "GlycoDash_user_guide.pdf",
     content = function(file) {
-      path <- system.file("app", "www", "GlycoDash_manual.pdf", package = "GlycoDash")
+      path <- system.file(
+        "app", "www", "GlycoDash_user_guide.pdf", package = "GlycoDash"
+      )
       file.copy(path, file)
     }
   )

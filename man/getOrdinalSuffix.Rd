@@ -10,8 +10,7 @@ getOrdinalSuffix(num)
 \item{num}{A positive integer.}
 }
 \value{
-A character string, e.g. \code{"1st"}, \code{"2nd"}, \code{"3rd"},
-  \code{"4th"}.
+A character string, e.g. \code{"1st"}, \code{"2nd"}, \code{"3rd"}.
 }
 \description{
 Returns a character string consisting of the number followed by its English

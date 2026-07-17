@@ -2,7 +2,8 @@
 % Please edit documentation in R/fct_spectra_curation.R
 \name{check_analyte_quality_criteria_lacytools}
 \alias{check_analyte_quality_criteria_lacytools}
-\title{Perform an analyte quality criteria check for every spectrum in LaCyTools data.}
+\title{Perform an analyte quality criteria check for every spectrum in LaCyTools data.
+It is also used for SweetSuite data.}
 \usage{
 check_analyte_quality_criteria_lacytools(
   my_data,
@@ -45,18 +46,6 @@ The original dataframe given as the my_data argument, but with 3
   failed_criteria is \code{NA}}}
 }
 \description{
-\code{check_analyte_quality_criteria_lacytools()} performs an analyte quality criteria check for
-every spectrum in the data.
-}
-\examples{
-data(example_data)
-
-check_analyte_quality_criteria(my_data = example_data,
-                               min_ppm_deviation = -20,
-                               max_ppm_deviation = 20,
-                               max_ipq = 0.2,
-                               min_sn = 9,
-                               criteria_to_consider = c("Mass accuracy",
-                                                        "Isotopic pattern quality",
-                                                        "S/N"))
+\code{check_analyte_quality_criteria_lacytools()} performs an analyte quality 
+criteria check for every spectrum in the data.
 }

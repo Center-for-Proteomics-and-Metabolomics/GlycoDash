@@ -16,32 +16,3 @@ The filtered dataframe given as \code{curated_data}.
 This function filters out spectra that failed spectra curation and spectra
 that are uncalibrated.
 }
-\examples{
-data("example_data")
-
-checked_data <- check_analyte_quality_criteria(my_data = example_data,
-                                               min_ppm_deviation = -20,
-                                               max_ppm_deviation = 20,
-                                               max_ipq = 0.2,
-                                               min_sn = 9,
-                                               criteria_to_consider = c("Mass accuracy",
-                                                                        "S/N",
-                                                                        "IPQ"))
-
-summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-
-cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
-                               control_sample_types = "PBS",
-                               exclude_sample_types = NULL,
-                               group_keyword = "Total",
-                               percentile = 97,
-                               use_mean_SD = FALSE,
-                               SD_factor = NULL,
-                               uncalibrated_as_NA = TRUE)
-
-curated_spectra <- curate_spectra(checked_data = checked_data,
-                                  summarized_checks = summarized_checks,
-                                  cut_offs = cut_offs)
-                                  
-kick_out_spectra(curated_spectra)
-}

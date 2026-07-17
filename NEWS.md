@@ -1,3 +1,11 @@
+# v1.12.0
+## Added
+* Data import: option to merge Skyline data with GlyCounter fragmentation data.
+
+## Changed
+* Show an error message when the dashboard crashes, telling user to reload the page.
+
+
 # v1.11.5
 ## Fixed
 * Fixed a bug where non-glycosylated peptides for calculating site occupancies were not detected.

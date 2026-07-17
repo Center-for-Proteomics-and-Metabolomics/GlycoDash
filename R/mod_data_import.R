@@ -45,7 +45,9 @@ mod_data_import_ui <- function(id) {
                   "Download table with glycosylation sites"
                 ),
                 br(), br(),
-                shinycssloaders::withSpinner(DT::DTOutput(ns("glycosites_table")))
+                shinycssloaders::withSpinner(
+                  DT::DTOutput(ns("glycosites_table"))
+                )
               )
             )
           ),
@@ -66,6 +68,8 @@ mod_data_import_ui <- function(id) {
     )
   )
 }
+
+
     
 #' data_import Server Functions
 #'
@@ -80,7 +84,9 @@ mod_data_import_server <- function(id) {
       "add_sample_ids_ui_1",
       keyword_specific = data_input$keyword_specific,
       keyword_total = data_input$keyword_total,
-      contains_total_and_specific_samples = data_input$contains_total_and_specific_samples,
+      contains_total_and_specific_samples = (
+        data_input$contains_total_and_specific_samples
+      ),
       data = data_input$data,
       summary_filenames = data_input$summary_filenames
     )
@@ -108,17 +114,13 @@ mod_data_import_server <- function(id) {
 
       if (is_truthy(data_incl_metadata$data())) {
         show_in_table <- data_incl_metadata$data()
-      } 
-      else if (is_truthy(data_incl_clusters$data())) {
+      } else if (is_truthy(data_incl_clusters$data())) {
         show_in_table <- data_incl_clusters$data()
-      } 
-      else if (is_truthy(data_incl_sample_types$data())) {
+      } else if (is_truthy(data_incl_sample_types$data())) {
           show_in_table <- data_incl_sample_types$data()
-      } 
-      else if (is_truthy(data_incl_sample_ids$data())) {
+      } else if (is_truthy(data_incl_sample_ids$data())) {
         show_in_table <- data_incl_sample_ids$data()
-      } 
-      else if (is_truthy(data_input$data())) {
+      } else if (is_truthy(data_input$data())) {
           show_in_table <- data_input$data()
       }
       
@@ -131,7 +133,11 @@ mod_data_import_server <- function(id) {
     output$data_table <- DT::renderDT({
       req(show_in_table())
       data_for_table <- show_in_table()
-      numeric_cols <- names(data_for_table)[vapply(data_for_table, is.numeric, logical(1))]
+      
+      numeric_cols <- names(data_for_table)[
+        vapply(data_for_table, is.numeric, logical(1))
+      ]
+      
       table <- DT::datatable(
         data_for_table,
         options = list(
@@ -141,9 +147,11 @@ mod_data_import_server <- function(id) {
         ),
         filter = "top"
       )
+      
       if (length(numeric_cols) > 0) {
         table <- DT::formatRound(table, columns = numeric_cols, digits = 2)
       }
+      
       table
     })
     
@@ -152,11 +160,9 @@ mod_data_import_server <- function(id) {
     to_return <- reactive({
       if (is_truthy(data_incl_metadata$data())) {
         data_incl_metadata$data()
-      }
-      else if (is_truthy(data_incl_clusters$data())) {
+      } else if (is_truthy(data_incl_clusters$data())) {
         data_incl_clusters$data()
-      }
-      else NULL
+      } else NULL
     })
     
     
@@ -165,12 +171,13 @@ mod_data_import_server <- function(id) {
     biogroup_cols <- reactive({
       req(data_incl_clusters$data())
       if (is_truthy(data_incl_metadata$data())) {
-        c("sample_id", "sample_type", colnames(data_incl_metadata$merged_metadata()))
-      } 
-      else if (is_truthy(data_incl_clusters$data())) {
+        c(
+          "sample_id", "sample_type", 
+          colnames(data_incl_metadata$merged_metadata())
+        )
+      } else if (is_truthy(data_incl_clusters$data())) {
           c("sample_id", "sample_type")
-      } 
-      else NULL
+      } else NULL
     })
     
     
@@ -212,8 +219,7 @@ mod_data_import_server <- function(id) {
     observe({
       if (is_truthy(data_input$glycosites_table())) {
         shinyjs::show("peptide_box")
-      } 
-      else {
+      } else {
         shinyjs::hide("peptide_box")
       }
     })
@@ -251,7 +257,9 @@ mod_data_import_server <- function(id) {
       data_type = data_input$data_type,
       glycosites_table = data_input$glycosites_table,
       biogroup_cols = biogroup_cols,
-      contains_total_and_specific_samples = data_input$contains_total_and_specific_samples,
+      contains_total_and_specific_samples = (
+        data_input$contains_total_and_specific_samples
+      ),
       keyword_specific = data_input$keyword_specific,
       keyword_total = data_input$keyword_total,
       summary_filenames = data_input$summary_filenames,

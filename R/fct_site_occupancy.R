@@ -1,16 +1,37 @@
-
-# Calculate total intensities of non-glycosylated peptides
-calculate_peptides_intensities <- function(peptides_quality,
-                                           exclude_peptides) {
+#' Calculate non-glycosylated peptide intensities
+#'
+#' @description
+#' Aggregates ion intensities by peptide cluster and sample, excluding selected
+#' peptide-charge combinations. For data with a `fraction` column, background-
+#' subtracted intensity is first adjusted by fraction; otherwise `total_area` is
+#' summed. The result is returned in wide format, with one column per peptide.
+#'
+#' @param peptides_quality A data frame of non-glycosylated peptide measurements.
+#'   It must contain `sample_name`, `sample_id`, `sample_type`, `cluster`, and
+#'   `charge`, as well as `absolute_intensity_background_subtracted` and
+#'   `fraction`, or `total_area`. An optional `group` column is retained.
+#' @param exclude_peptides A character vector of peptide-charge combinations to
+#'   exclude, formatted as `"<cluster>, <charge>"`.
+#'
+#' @return A wide data frame with one row per sample and one intensity column per
+#'   included peptide cluster, or `NULL` if no peptide measurements remain.
+calculate_peptides_intensities <- function(
+    peptides_quality,
+    exclude_peptides  
+  ) {
   
   data <- peptides_quality %>% 
-    dplyr::select(sample_name, sample_id, sample_type,
-                  cluster, charge, tidyselect::any_of(c(
-                    "group",
-                    "absolute_intensity_background_subtracted",
-                    "fraction",
-                    "total_area"
-                  ))) %>% 
+    dplyr::select(
+      sample_name, 
+      sample_id, 
+      sample_type,
+      cluster, charge, tidyselect::any_of(c(
+        "group",
+        "absolute_intensity_background_subtracted",
+        "fraction",
+        "total_area"
+      ))
+    ) %>% 
     # Ignore ions when applicable
     dplyr::mutate(ion = paste0(cluster, ", ", charge), .after = charge) %>% 
     dplyr::filter(!ion %in% exclude_peptides)
@@ -19,7 +40,7 @@ calculate_peptides_intensities <- function(peptides_quality,
     return(NULL)
   }
   
-  else if ("fraction" %in% colnames(data)) {
+  if ("fraction" %in% colnames(data)) {
     data <- data %>% 
       dplyr::mutate(
         intensity_by_fraction = absolute_intensity_background_subtracted / fraction
@@ -28,33 +49,54 @@ calculate_peptides_intensities <- function(peptides_quality,
       dplyr::group_by(sample_name, cluster) %>% 
       dplyr::mutate(total_intensity = sum(intensity_by_fraction)) %>% 
       dplyr::ungroup() %>% 
-      dplyr::select(sample_name, sample_id, sample_type, cluster,
-                    tidyselect::any_of(c("group")), total_intensity) %>%
+      dplyr::select(
+        sample_name, sample_id, sample_type, cluster,
+        tidyselect::any_of(c("group")), total_intensity
+      ) %>%
       dplyr::distinct() %>% 
       tidyr::pivot_wider(names_from = "cluster", values_from = "total_intensity")
-    
-    return(data)
-  } 
-  
-  else {
+  } else {
     data <- data %>% 
       dplyr::group_by(sample_name, cluster) %>% 
       dplyr::mutate(total_intensity = sum(total_area)) %>% 
       dplyr::ungroup() %>% 
-      dplyr::select(sample_name, sample_id, sample_type, cluster,
-                    tidyselect::any_of(c("group")), total_intensity) %>% 
+      dplyr::select(
+        sample_name, sample_id, sample_type, cluster,
+        tidyselect::any_of(c("group")), total_intensity
+      ) %>% 
       tidyr::pivot_wider(names_from = "cluster", values_from = "total_intensity")
-    
-    return(data)
   }
+  
+  return(data)
 }
 
 
 
-# Calculate site occupancies
-calculate_site_occupancy <- function(peptides_intensities,
-                                     normalized_data_wide,
-                                     peptides_table) {
+#' Calculate glycosylation site occupancies
+#'
+#' @description
+#' Combines normalized glycopeptide intensities with their corresponding
+#' non-glycosylated peptide intensities. For every peptide listed in
+#' `peptides_table` that is present in `peptides_intensities`, site occupancy is
+#' calculated as glycopeptide intensity divided by the sum of glycopeptide and
+#' non-glycosylated peptide intensity, expressed as a percentage.
+#'
+#' @param peptides_intensities A wide data frame returned by
+#'   [calculate_peptides_intensities()], containing one column per peptide.
+#' @param normalized_data_wide A wide data frame of normalized glycopeptide data.
+#'   It must include `"<peptide>_sum_intensity"` columns for the peptides to be
+#'   evaluated.
+#' @param peptides_table A data frame with a `Peptide` column listing peptide
+#'   cluster names.
+#'
+#' @return A data frame containing `normalized_data_wide` and one
+#'   `"<peptide>_site_occupancy"` column per calculated site. The intermediate
+#'   non-glycosylated peptide columns are removed.
+calculate_site_occupancy <- function(
+    peptides_intensities,
+    normalized_data_wide,
+    peptides_table  
+  ) {
   
   peptides <- peptides_table$Peptide
   peptides <- peptides[peptides %in% colnames(peptides_intensities)]
@@ -80,13 +122,39 @@ calculate_site_occupancy <- function(peptides_intensities,
 
 
 
-# Summarize QC criteria per ion, and for total/specific
-summarize_peptides_quality <- function(peptides_quality,
-                                       ipq,
-                                       sn,
-                                       idp,
-                                       total_area,
-                                       mass_accuracy) {
+#' Summarize peptide quality-control results
+#'
+#' @description
+#' Calculates the percentage of measurements passing quality-control criteria
+#' for each peptide cluster and charge state, optionally separately by group.
+#' When `ipq` is supplied, LaCyTools/SweetSuite isotopic-pattern quality and
+#' signal-to-noise criteria are used; otherwise Skyline isotope-dot-product and
+#' total-area criteria are used. In both cases, mass accuracy is assessed within
+#' the supplied range.
+#'
+#' @param peptides_quality A data frame of peptide measurements containing
+#'   `cluster`, `charge`, `mass_accuracy_ppm`, and the quality metric columns
+#'   required by the selected data type. An optional `group` column is used for
+#'   separate summaries.
+#' @param ipq Numeric maximum isotopic pattern quality threshold. Supply a value
+#'   for LaCyTools/SweetSuite data; use `NULL` for Skyline data.
+#' @param sn Numeric minimum signal-to-noise threshold for LaCyTools/SweetSuite
+#'   data.
+#' @param idp Numeric minimum isotope dot product threshold for Skyline data.
+#' @param total_area Numeric minimum total area threshold for Skyline data.
+#' @param mass_accuracy Numeric vector of length two giving the inclusive lower
+#'   and upper mass-accuracy limits in ppm.
+#'
+#' @return A grouped tibble with `cluster`, `charge`, optional `group`, and
+#'   `passing_percentage`.
+summarize_peptides_quality <- function(
+    peptides_quality,
+    ipq,
+    sn,
+    idp,
+    total_area,
+    mass_accuracy  
+  ) {
 
   if ("group" %in% colnames(peptides_quality)) {
     summary <- peptides_quality %>% 
@@ -97,7 +165,7 @@ summarize_peptides_quality <- function(peptides_quality,
   }
   
   if (!is.null(ipq)) {
-    # LaCyTools data
+    # LaCyTools/SweetSuite data
     summary <- summary %>% 
       dplyr::mutate(
         pass_ipq = isotopic_pattern_quality <= ipq,
@@ -136,9 +204,18 @@ summarize_peptides_quality <- function(peptides_quality,
 }
 
 
-
-
-# Quality plot for the non-glycosylated peptides
+#' Plot peptide quality-control summaries
+#'
+#' @description
+#' Creates a bar chart of the percentage of measurements passing quality-control
+#' criteria for every peptide cluster and charge state. Results are faceted by
+#' cluster and, when present, group.
+#'
+#' @param peptides_quality_summary A data frame returned by
+#'   [summarize_peptides_quality()] containing `cluster`, `charge`, and
+#'   `passing_percentage`, with an optional `group` column.
+#'
+#' @return A ggplot object.
 peptides_quality_plot <- function(peptides_quality_summary) {
   
   plot <- ggplot2::ggplot(peptides_quality_summary, ggplot2::aes(
@@ -165,7 +242,9 @@ peptides_quality_plot <- function(peptides_quality_summary) {
     ggplot2::geom_col(color = "black", fill = "darkblue") +
     ggplot2::theme_classic() + 
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5),
+      panel.border = ggplot2::element_rect(
+        colour = "black", fill=NA, linewidth=0.5
+      ),
       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
       legend.position = "none"
@@ -178,18 +257,33 @@ peptides_quality_plot <- function(peptides_quality_summary) {
 
 
 
-
-# Plot site occupancies boxplot
+#' Plot glycosylation site occupancies
+#'
+#' @description
+#' Creates boxplots with jittered sample-level observations for each calculated
+#' glycosylation site. Points are coloured by sample type and, when available,
+#' the plot is faceted by group.
+#'
+#' @param site_occupancy A data frame returned by [calculate_site_occupancy()].
+#'   It must contain `sample_name`, `sample_id`, `sample_type`, and one or more
+#'   columns whose names end in `"_site_occupancy"`. An optional `group` column
+#'   is used for faceting.
+#'
+#' @return A ggplot object.
 plot_site_occupancy <- function(site_occupancy) {
   
   n_colors <- length(unique(site_occupancy$sample_type))
   
   site_occupancy_long <- site_occupancy %>% 
-    dplyr::select(sample_name, sample_type, sample_id,
-                  tidyselect::contains("site_occupancy"),
-                  tidyselect::any_of(c("group"))) %>% 
-    tidyr::pivot_longer(tidyselect::contains("site_occupancy"),
-                        names_to = "site", values_to = "occupancy") %>% 
+    dplyr::select(
+      sample_name, sample_type, sample_id,
+      tidyselect::contains("site_occupancy"),
+      tidyselect::any_of(c("group"))
+    ) %>% 
+    tidyr::pivot_longer(
+      tidyselect::contains("site_occupancy"),
+      names_to = "site", values_to = "occupancy"
+    ) %>% 
     dplyr::mutate(site = gsub("_site_occupancy", "", site)) %>% 
     dplyr::filter(!is.na(occupancy))
   
@@ -209,18 +303,24 @@ plot_site_occupancy <- function(site_occupancy) {
   
   plot <- plot + 
     ggplot2::geom_boxplot(outlier.shape = NA) + 
-    ggplot2::geom_jitter(ggplot2::aes(color = sample_type),
-                         width = 0.2, height = 0, size = 1, alpha = 0.7) +
+    ggplot2::geom_jitter(
+      ggplot2::aes(color = sample_type),
+      width = 0.2, height = 0, size = 1, alpha = 0.7
+    ) +
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5),
+      panel.border = ggplot2::element_rect(
+        colour = "black", fill=NA, linewidth=0.5
+      ),
       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
       legend.position = "right"
     ) + 
     ggplot2::scale_color_manual(values = color_palette(n_colors)) +
-    ggplot2::labs(x = "Glycosylation site", y = "Site occupancy (%)",
-                  color = "Sample type")
+    ggplot2::labs(
+      x = "Glycosylation site", y = "Site occupancy (%)",
+      color = "Sample type"
+    )
   
   return(plot)
 }

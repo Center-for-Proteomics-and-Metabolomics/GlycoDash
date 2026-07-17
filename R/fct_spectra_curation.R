@@ -4,9 +4,11 @@
 
 
 #' Perform an analyte quality criteria check for every spectrum in LaCyTools data.
+#' It is also used for SweetSuite data.
 #'
-#' \code{check_analyte_quality_criteria_lacytools()} performs an analyte quality criteria check for
-#' every spectrum in the data.
+#' @description
+#' \code{check_analyte_quality_criteria_lacytools()} performs an analyte quality 
+#' criteria check for every spectrum in the data.
 #'
 #' @param my_data A dataframe in long format (one row for each analyte + sample
 #'   + charge combination).
@@ -31,25 +33,14 @@
 #'   \item{failed_criteria}{A character string describing which criteria in 
 #'   criteria_to_consider were not fulfilled. If all criteria were fulfilled 
 #'   failed_criteria is \code{NA}}}
-#' @export
-#'
-#' @examples
-#' data(example_data)
-#' 
-#' check_analyte_quality_criteria(my_data = example_data,
-#'                                min_ppm_deviation = -20,
-#'                                max_ppm_deviation = 20,
-#'                                max_ipq = 0.2,
-#'                                min_sn = 9,
-#'                                criteria_to_consider = c("Mass accuracy",
-#'                                                         "Isotopic pattern quality",
-#'                                                         "S/N"))
-check_analyte_quality_criteria_lacytools <- function(my_data, 
-                                                    min_ppm_deviation, 
-                                                    max_ppm_deviation, 
-                                                    max_ipq, 
-                                                    min_sn,
-                                                    criteria_to_consider) {
+check_analyte_quality_criteria_lacytools <- function(
+    my_data, 
+    min_ppm_deviation, 
+    max_ppm_deviation, 
+    max_ipq, 
+    min_sn,
+    criteria_to_consider  
+  ) {
   
   data_checked <- my_data %>% 
     dplyr::group_by(sample_name,  cluster) %>% 
@@ -60,16 +51,15 @@ check_analyte_quality_criteria_lacytools <- function(my_data,
       all(is.na(sn))
     )) %>% 
     dplyr::ungroup() %>% 
-    check_criteria_lacytools(., 
-                            min_ppm_deviation,
-                            max_ppm_deviation,
-                            max_ipq,
-                            min_sn) %>% 
-    apply_chosen_criteria(.,
-                          criteria_to_consider) %>%
-    report_failed_criteria(.,
-                           criteria_to_consider,
-                           "LaCyTools")
+    check_criteria_lacytools(
+      ., 
+      min_ppm_deviation,
+      max_ppm_deviation,
+      max_ipq,
+      min_sn
+    ) %>% 
+    apply_chosen_criteria(., criteria_to_consider) %>%
+    report_failed_criteria(., criteria_to_consider, "LaCyTools")
   
   return(data_checked)
 }
@@ -78,6 +68,7 @@ check_analyte_quality_criteria_lacytools <- function(my_data,
 
 #' Perform an analyte quality criteria check for every spectrum in Skyline data.
 #'
+#' @description
 #' \code{check_analyte_quality_criteria_skyline()} performs an analyte quality criteria check for
 #' every spectrum in the data.
 #'
@@ -103,25 +94,14 @@ check_analyte_quality_criteria_lacytools <- function(my_data,
 #'   \item{failed_criteria}{A character string describing which criteria in 
 #'   criteria_to_consider were not fulfilled. If all criteria were fulfilled 
 #'   failed_criteria is \code{NA}}}
-#' @export
-#'
-#' @examples
-#' data(example_data)
-#' 
-#' check_analyte_quality_criteria(my_data = example_data,
-#'                                min_ppm_deviation = -20,
-#'                                max_ppm_deviation = 20,
-#'                                min_idp = 0.9,
-#'                                min_total_area = 0,
-#'                                criteria_to_consider = c("Mass accuracy",
-#'                                                         "Isotope dot product",
-#'                                                         "Total area"))
-check_analyte_quality_criteria_skyline <- function(my_data, 
-                                                  min_ppm_deviation, 
-                                                  max_ppm_deviation, 
-                                                  min_idp, 
-                                                  min_total_area,
-                                                  criteria_to_consider) {
+check_analyte_quality_criteria_skyline <- function(
+    my_data, 
+    min_ppm_deviation, 
+    max_ppm_deviation, 
+    min_idp, 
+    min_total_area,
+    criteria_to_consider  
+  ) {
   
   data_checked <- my_data %>% 
     dplyr::group_by(sample_name,  cluster) %>%
@@ -131,16 +111,14 @@ check_analyte_quality_criteria_skyline <- function(my_data,
       all(is.na(isotope_dot_product))
     )) %>%
     dplyr::ungroup() %>%
-    check_criteria_skyline(.,
-                          min_ppm_deviation,
-                          max_ppm_deviation,
-                          min_idp,
-                          min_total_area) %>%
-    apply_chosen_criteria(.,
-                          criteria_to_consider) %>%
-    report_failed_criteria(.,
-                           criteria_to_consider,
-                           "Skyline")
+    check_criteria_skyline(
+      .,
+      min_ppm_deviation,
+      max_ppm_deviation,
+      min_idp,
+      min_total_area)%>%
+    apply_chosen_criteria(., criteria_to_consider) %>%
+    report_failed_criteria(., criteria_to_consider, "Skyline")
 
   return(data_checked)
 }
@@ -148,37 +126,35 @@ check_analyte_quality_criteria_skyline <- function(my_data,
 
 
 #' Check all analyte quality criteria for LaCyTools data.
+#' It is also used for SweetSuite data.
 #'
+#' @description
 #' \code{check_criteria_lacytools()} checks for each analyte quality criterium
 #' separately if it is fulfilled, and is used in the functions
-#' \code{\link{check_analyte_quality_criteria_lacytools}} and #' \code{\link{check_analyte_quality_criteria_skyline}}.
+#' \code{\link{check_analyte_quality_criteria_lacytools}} and 
+#' \code{\link{check_analyte_quality_criteria_skyline}}.
 #'
 #' @return The original dataframe, but with an extra column for each quality
 #'   criterium that is \code{TRUE} or \code{FALSE}.
-#' @export
-#'
-#' @examples
-#' data(example_data)
-#' 
-#' check_each_criterium(my_data = example_data,
-#'                      min_ppm_deviation = -20,
-#'                      max_ppm_deviation = 20,
-#'                      max_ipq = 0.2,
-#'                      min_sn = 9)
-#' 
-check_criteria_lacytools <- function(my_data, 
-                                    min_ppm_deviation,
-                                    max_ppm_deviation,
-                                    max_ipq,
-                                    min_sn) {
+check_criteria_lacytools <- function(
+    my_data, 
+    min_ppm_deviation,
+    max_ppm_deviation,
+    max_ipq,
+    min_sn  
+  ) {
+  
   my_data %>% 
-    dplyr::mutate(`Mass accuracy` = dplyr::between(mass_accuracy_ppm, 
-                                                   min_ppm_deviation, 
-                                                   max_ppm_deviation),
-                  `Isotopic pattern quality` = isotopic_pattern_quality <= max_ipq,
-                  `S/N` = sn >= min_sn,
-                  dplyr::across(c(`Mass accuracy`, `Isotopic pattern quality`, `S/N`),
-                                ~ tidyr::replace_na(.x, FALSE))
+    dplyr::mutate(
+      `Mass accuracy` = dplyr::between(
+        mass_accuracy_ppm, min_ppm_deviation, max_ppm_deviation
+      ),
+      `Isotopic pattern quality` = isotopic_pattern_quality <= max_ipq,
+      `S/N` = sn >= min_sn,
+      dplyr::across(
+        c(`Mass accuracy`, `Isotopic pattern quality`, `S/N`),
+        ~ tidyr::replace_na(.x, FALSE)
+      )
     )
 }
 
@@ -186,36 +162,32 @@ check_criteria_lacytools <- function(my_data,
 
 #' Check all analyte quality criteria for LaCyTools data.
 #'
+#' @description
 #' \code{check_criteria_lacytools()} checks for each analyte quality criterium
 #' separately if it is fulfilled, and is used in the functions
-#' \code{\link{check_analyte_quality_criteria_lacytools}} and #' \code{\link{check_analyte_quality_criteria_skyline}}.
+#' \code{\link{check_analyte_quality_criteria_lacytools}} and 
+#' \code{\link{check_analyte_quality_criteria_skyline}}.
 #'
 #' @return The original dataframe, but with an extra column for each quality
 #'   criterium that is \code{TRUE} or \code{FALSE}.
-#' @export
-#'
-#' @examples
-#' data(example_data)
-#' 
-#' check_each_criterium(my_data = example_data,
-#'                      min_ppm_deviation = -20,
-#'                      max_ppm_deviation = 20,
-#'                      max_ipq = 0.2,
-#'                      min_sn = 9)
-#' 
-check_criteria_skyline <- function(my_data, 
-                                  min_ppm_deviation,
-                                  max_ppm_deviation,
-                                  min_idp,
-                                  min_total_area) {
+check_criteria_skyline <- function(
+    my_data, 
+    min_ppm_deviation,
+    max_ppm_deviation,
+    min_idp,
+    min_total_area  
+  ) {
   my_data %>% 
-    dplyr::mutate(`Mass accuracy` = dplyr::between(mass_accuracy_ppm, 
-                                                   min_ppm_deviation, 
-                                                   max_ppm_deviation),
-                  `Isotope dot product` = isotope_dot_product >= min_idp,
-                  `Total area` = total_area > min_total_area,
-                  dplyr::across(c(`Mass accuracy`, `Isotope dot product`, `Total area`),
-                                ~ tidyr::replace_na(.x, FALSE))
+    dplyr::mutate(
+      `Mass accuracy` = dplyr::between(
+        mass_accuracy_ppm, min_ppm_deviation, max_ppm_deviation
+      ),
+      `Isotope dot product` = isotope_dot_product >= min_idp,
+      `Total area` = total_area > min_total_area,
+      dplyr::across(
+        c(`Mass accuracy`, `Isotope dot product`, `Total area`),
+        ~ tidyr::replace_na(.x, FALSE)
+      )
     )
 }
 
@@ -223,9 +195,9 @@ check_criteria_skyline <- function(my_data,
 
 #' Apply chosen analyte quality criteria
 #'
-#' Optimized version: Ensures logical columns, uses vectorized row-wise checking, and minimizes 
-#' dataframe copying. Maintains error handling and output compatibility. Determines if the analyte
-#' quality criteria in criteria_to_consider were all fulfilled.
+#' @description
+#' Determines if the analyte quality criteria in \code{criteria_to_consider} 
+#' were all fulfilled.
 #'
 #' @param my_data The return value of the function
 #'   \code{\link{check_each_criterium}}.
@@ -234,44 +206,33 @@ check_criteria_skyline <- function(my_data,
 #' @return The original dataframe my_data with an additional column
 #'   \code{analyte_meets_criteria} that is \code{TRUE} if the analyte fulfills
 #'   all criteria in \code{criteria_to_consider}, otherwise \code{FALSE}.
-#'
-#' @export
-#'
-#' @examples
-#' data(example_data)
-#' checked <- check_criteria_lacytools(my_data = example_data,
-#'                      min_ppm_deviation = -20,
-#'                      max_ppm_deviation = 20,
-#'                      max_ipq = 0.2,
-#'                      min_sn = 9)
-#' apply_chosen_criteria(my_data = checked,
-#'                       criteria_to_consider = c("Mass accuracy",
-#'                                                "S/N",
-#'                                                "IPQ"))
-apply_chosen_criteria <- function(my_data,
-                                  criteria_to_consider) {
+apply_chosen_criteria <- function(
+    my_data, 
+    criteria_to_consider
+  ) {
   # If no criteria, all analytes pass
   if (length(criteria_to_consider) == 0) {
     my_data$analyte_meets_criteria <- TRUE
     return(my_data)
   }
+  
   # Ensure logical columns
   qc_cols <- my_data[, criteria_to_consider, drop = FALSE]
   if (!all(sapply(qc_cols, is.logical))) {
     qc_cols[] <- lapply(qc_cols, as.logical)
   }
+  
   # Vectorized row-wise criteria check
-  my_data$analyte_meets_criteria <- rowSums(qc_cols) == length(criteria_to_consider)
+  my_data$analyte_meets_criteria <- (
+    rowSums(qc_cols) == length(criteria_to_consider)
+  )
+  
   return(my_data)
 }
 
 
 
 #' Report which analyte quality criteria were not met
-#'
-#' Optimized version: Avoids pivot_longer and uses vectorized row-wise checks for
-#' failed criteria. This approach improves performance for wide dataframes and
-#' maintains the same output as the original implementation. Error handling is preserved.
 #'
 #' @param my_data The return value of the function
 #'   \code{\link{apply_chosen_criteria}}.
@@ -283,30 +244,11 @@ apply_chosen_criteria <- function(my_data,
 #'   \code{failed_criteria} that describes which criteria from criteria_to_consider
 #'   were not fulfilled. If all criteria were met the value will be \code{NA}.
 #'   Also removes the criteria columns depending on data_type.
-#' @export
-#'
-#' @examples
-#' data(example_data)
-#'
-#' checked <- check_criteria_lacytools(my_data = example_data,
-#'                      min_ppm_deviation = -20,
-#'                      max_ppm_deviation = 20,
-#'                      max_ipq = 0.2,
-#'                      min_sn = 9)
-#'
-#' applied <- apply_chosen_criteria(my_data = checked,
-#'                                  criteria_to_consider = c("Mass accuracy",
-#'                                                           "S/N",
-#'                                                           "IPQ"))
-#'
-#' report_failed_criteria(my_data = applied,
-#'                        criteria_to_consider = c("Mass accuracy",
-#'                                                "S/N",
-#'                                                "IPQ"),
-#'                        data_type = "LaCyTools")
-report_failed_criteria <- function(my_data,
-                                   criteria_to_consider,
-                                   data_type) {
+report_failed_criteria <- function(
+    my_data,
+    criteria_to_consider,
+    data_type  
+  ) {
   # For each row, collect criteria that are FALSE
   # Returns NA if all passed, else comma-separated string of failed criteria
   my_data$failed_criteria <- apply(
@@ -319,7 +261,7 @@ report_failed_criteria <- function(my_data,
   )
   
   # Remove criteria columns depending on data_type
-  if (data_type == "LaCyTools") {
+  if (data_type == "LaCyTools") {  # Also includes SweetSuite data
     to_return <- my_data %>% 
       dplyr::select(-c(`Mass accuracy`, `Isotopic pattern quality`, `S/N`))
   } else if (data_type == "Skyline") {
@@ -336,11 +278,11 @@ report_failed_criteria <- function(my_data,
 
 #' Summarize analyte quality criteria checks
 #'
-#' Optimized version: Improves grouping and summarization performance by minimizing chained dplyr operations,
-#' using mutate only where necessary, and retaining output compatibility. Uses left_join if needed and
-#' efficient conditional logic. This function calculates the percentage of passing analytes per spectrum
-#' and the sum intensity of passing analytes per spectrum. Should be used after analyte quality criteria
-#' checks for every spectrum and analyte combination in the data.
+#' @description
+#' This function calculates the percentage of passing 
+#' analytes per spectrum and the sum intensity of passing analytes per spectrum. 
+#' Should be used after analyte quality criteria checks for every spectrum and 
+#' analyte combination in the data.
 #'
 #' @param checked_data The dataframe that is returned by
 #'   \code{\link{check_analyte_quality_criteria_lacytools}} or \code{\link{check_analyte_quality_criteria_skyline}}.
@@ -354,34 +296,37 @@ report_failed_criteria <- function(my_data,
 #'   \item{cluster}{The cluster for which the metrics were calculated.}
 #'   \item{passing_analyte_percentage}{The percentage of analytes that passed the criteria checks in this spectrum.}
 #'   \item{sum_intensity}{The sum intensity of all passing analytes in this spectrum} }
-#' @export
-#'
-#' @examples
-#' data("example_data")
-#'
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
-#'                                   min_ppm_deviation = -20,
-#'                                   max_ppm_deviation = 20,
-#'                                   max_ipq = 0.2,
-#'                                   min_sn = 9,
-#'                                   criteria_to_consider = c("Mass accuracy",
-#'                                                           "S/N",
-#'                                                           "IPQ"))
-#'
-#' summarize_spectra_checks(checked_data = checked_data, data_type = results_data_import$data_type())
-summarize_spectra_checks <- function(checked_data, data_type) {
-  grouping_variables <- c("sample_name", "group", "sample_type", "cluster", "sample_id")
+summarize_spectra_checks <- function(
+    checked_data, 
+    data_type
+  ) {
+  grouping_variables <- c(
+    "sample_name", 
+    "group", 
+    "sample_type", 
+    "cluster", 
+    "sample_id"
+  )
   
   if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
     # Precompute intensity_divided_by_fraction only for passing analytes
     checked_data <- checked_data %>%
-      dplyr::mutate(intensity_divided_by_fraction = absolute_intensity_background_subtracted / fraction)
+      dplyr::mutate(
+        intensity_divided_by_fraction = (
+          absolute_intensity_background_subtracted / fraction
+        )
+      )
     
     summarized_checks <- checked_data %>%
-      dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>%
+      dplyr::group_by(
+        dplyr::across(tidyselect::any_of(grouping_variables))
+      ) %>%
       dplyr::summarise(
         passing_analyte_percentage = mean(analyte_meets_criteria) * 100,
-        sum_intensity = sum(intensity_divided_by_fraction[analyte_meets_criteria == TRUE], na.rm = TRUE),
+        sum_intensity = sum(
+          intensity_divided_by_fraction[analyte_meets_criteria == TRUE], 
+          na.rm = TRUE
+        ),
         uncalibrated = any(uncalibrated),
         .groups = "drop"
       )
@@ -390,12 +335,15 @@ summarize_spectra_checks <- function(checked_data, data_type) {
       dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>%
       dplyr::summarise(
         passing_analyte_percentage = mean(analyte_meets_criteria) * 100,
-        sum_intensity = sum(total_area[analyte_meets_criteria == TRUE], na.rm = TRUE),
+        sum_intensity = sum(
+          total_area[analyte_meets_criteria == TRUE], 
+          na.rm = TRUE
+        ),
         uncalibrated = any(uncalibrated),
         .groups = "drop"
       )
   } else {
-    stop("Unknown data_type provided to summarize_spectra_checks.")
+    stop("Unknown 'data_type' provided to 'summarize_spectra_checks'.")
   }
   
   return(summarized_checks)
@@ -405,6 +353,7 @@ summarize_spectra_checks <- function(checked_data, data_type) {
 
 #' Calculate cut-off values
 #'
+#' @description
 #' \code{calculate_cut_offs()} calculates the cut-off values for the sum
 #' intensity and percentage of passing analytes during spectra curation.
 #'
@@ -449,44 +398,16 @@ summarize_spectra_checks <- function(checked_data, data_type) {
 #'   "based_on_negative_controls". It indicates which method for spectra
 #'   curation was used.} \item{sample_type_list}{This column contains a list
 #'   with the sample types that were used as a basis for the analyte curation.}}
-#' @export
-#'
-#' @examples
-#' data("example_data")
-#'
-#' checked_data <- check_analyte_quality_criteria_lacytools(my_data = example_data,
-#'                                                min_ppm_deviation = -20,
-#'                                                max_ppm_deviation = 20,
-#'                                                max_ipq = 0.2,
-#'                                                min_sn = 9,
-#'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "S/N",
-#'                                                                         "IPQ"))
-#'
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data, data_type == "LaCyTools")
-#'
-#' # In this example we calculate cut-offs for total Ig samples, using PBS
-#' # samples as negative controls. Both cut-offs are set at the 97th percentile
-#' # of the PBS samples' distributions of the sum intensity and percentage of
-#' # passing analytes. Uncalibrated spectra are not included in the cut-off
-#' # calculations:
-#' calculate_cut_offs(summarized_checks = summarized_checks,
-#'                    control_sample_types = "PBS",
-#'                    exclude_sample_types = NULL,
-#'                    group_keyword = "Total",
-#'                    percentile = 97,
-#'                    use_mean_SD = FALSE,
-#'                    SD_factor = NULL,
-#'                    uncalibrated_as_NA = TRUE)
-#'                                                                                      
-calculate_cut_offs <- function(summarized_checks,
-                               control_sample_types = NULL,
-                               exclude_sample_types = NULL,
-                               group_keyword = NULL,
-                               percentile,
-                               use_mean_SD = FALSE,
-                               SD_factor = NULL,
-                               uncalibrated_as_NA = FALSE) {
+calculate_cut_offs <- function(
+    summarized_checks,
+    control_sample_types = NULL,
+    exclude_sample_types = NULL,
+    group_keyword = NULL,
+    percentile,
+    use_mean_SD = FALSE,
+    SD_factor = NULL,
+    uncalibrated_as_NA = FALSE  
+  ) {
   #TODO: rewrite this function so that one of the arguments is
   #spectra_curation_method and it can also be applied when spectra curation
   #should be skipped.
@@ -525,11 +446,12 @@ calculate_cut_offs <- function(summarized_checks,
       dplyr::select(-all_uncalibrated)
   }
   
-  
   grouping_variables <- c("group", "cluster")
   
   cut_offs <- cut_off_basis %>%  
-    dplyr::group_by(dplyr::across(tidyselect::any_of(grouping_variables))) %>% 
+    dplyr::group_by(
+      dplyr::across(tidyselect::any_of(grouping_variables))
+    ) %>% 
     dplyr::reframe(
       cut_off_sum_intensity = if (use_mean_SD) { 
         mean_plus_SD(sum_intensity, SD_factor, uncalibrated_as_NA) } else { 
@@ -544,14 +466,19 @@ calculate_cut_offs <- function(summarized_checks,
         remove_NA = uncalibrated_as_NA
       ),
       sample_type = unique(sample_type),
-      curation_method = ifelse(is.null(control_sample_types), 
-                               "based_on_percentiles",
-                               "based_on_negative_controls")) %>% 
+      curation_method = ifelse(
+        is.null(control_sample_types), 
+        "based_on_percentiles",
+        "based_on_negative_controls"
+      )
+    ) %>% 
     tidyr::nest(., "sample_type_list" = sample_type)
     
   return(cut_offs)
 }
 
+
+# Helper function
 mean_plus_SD <- function(x, SD_factor, na.rm) {
   mean_x <- mean(x, na.rm = na.rm)
   mean_x + SD_factor * sd(x, na.rm = na.rm)
@@ -561,9 +488,8 @@ mean_plus_SD <- function(x, SD_factor, na.rm) {
 
 #' Perform spectra curation
 #'
-#' Optimized version: Reduces join operations, uses left_join instead of full_join,
-#' and avoids unnecessary relocation and filtering steps. The output remains the same,
-#' and error handling is preserved. This function performs spectra curation on mass spectrometry data.
+#' @description
+#' This function performs spectra curation on mass spectrometry data.
 #' All spectra with sum intensities and percentages of passing analytes above
 #' the cut-off values pass spectra curation.
 #'
@@ -574,36 +500,19 @@ mean_plus_SD <- function(x, SD_factor, na.rm) {
 #' @param cut_offs The return value of the function
 #'   \code{\link{calculate_cut_offs}}.
 #'
-#' @return The three dataframes given as function arguments joined together, with two additional columns:
-#'   \describe{\item{has_passed_spectra_curation}{\code{TRUE} if the spectrum passed curation, \code{FALSE} otherwise.}
-#'   \item{reason_for_failure}{Describes why the spectrum failed curation, or \code{NA} if it passed.}}
-#' @export
-#'
-#' @examples
-#' data("example_data")
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
-#'                                                min_ppm_deviation = -20,
-#'                                                max_ppm_deviation = 20,
-#'                                                max_ipq = 0.2,
-#'                                                min_sn = 9,
-#'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "S/N",
-#'                                                                         "IPQ"))
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-#' cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
-#'                                control_sample_types = "PBS",
-#'                                exclude_sample_types = NULL,
-#'                                group_keyword = "Total",
-#'                                percentile = 97,
-#'                                use_mean_SD = FALSE,
-#'                                SD_factor = NULL,
-#'                                uncalibrated_as_NA = TRUE)
-#' curate_spectra(checked_data = checked_data,
-#'                summarized_checks = summarized_checks,
-#'                cut_offs = cut_offs)
+#' @return The three dataframes given as function arguments joined together,
+#'    with two additional columns: \describe{\item{has_passed_spectra_curation}{\code{TRUE} 
+#'    if the spectrum passed curation, \code{FALSE} otherwise.}
+#'    \item{reason_for_failure}{Describes why the spectrum failed curation, 
+#'    or \code{NA} if it passed.}}
 curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
+  
   # Join summarized_checks with cut_offs using left_join for better performance
-  summarized_checks_with_cut_offs <- dplyr::left_join(summarized_checks, cut_offs, by = intersect(names(summarized_checks), names(cut_offs)))
+  summarized_checks_with_cut_offs <- dplyr::left_join(
+    summarized_checks, 
+    cut_offs, 
+    by = intersect(names(summarized_checks), names(cut_offs))
+  )
   
   # Add curation results
   curated_spectra <- summarized_checks_with_cut_offs %>%
@@ -617,12 +526,23 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
     ) %>%
     determine_reason_for_failure()
   
-  # Use left_join instead of full_join (checked_data might have more analyte rows, but summarized_checks is the spectra summary)
+  # Use left_join instead of full_join 
+  # (checked_data might have more analyte rows, but summarized_checks 
+  # is the spectra summary)
   curated_data <- dplyr::left_join(curated_spectra, checked_data) %>%
     # Relocate columns for output consistency
-    dplyr::relocate(c(has_passed_spectra_curation, reason_for_failure), .after = sample_name) %>%
-    dplyr::relocate(c(analyte_meets_criteria, failed_criteria), .after = charge) %>%
-    dplyr::relocate(tidyselect::any_of(c("sample_id", "plate_well")), .after = sample_name)
+    dplyr::relocate(
+      c(has_passed_spectra_curation, reason_for_failure), 
+      .after = sample_name
+    ) %>%
+    dplyr::relocate(
+      c(analyte_meets_criteria, failed_criteria), 
+      .after = charge
+    ) %>%
+    dplyr::relocate(
+      tidyselect::any_of(c("sample_id", "plate_well")), 
+      .after = sample_name
+    )
   
   # Only check for warnings if there are calibrated spectra
   without_uncalibrated <- curated_data %>%
@@ -641,13 +561,18 @@ curate_spectra <- function(checked_data, summarized_checks, cut_offs) {
 
 
 
-# Helper function
+# Helper function to determine reason for failing spectra curation.
 determine_reason_for_failure <- function(data) {
   with_reasons <- data %>% 
     dplyr::mutate(reason_for_failure = dplyr::case_when(
       uncalibrated ~ "Calibration failed.",
-      passing_analyte_percentage < cut_off_passing_analyte_percentage & sum_intensity < cut_off_sum_intensity ~ "Percentage of passing analytes and sum intensity below cut-offs.",
-      passing_analyte_percentage < cut_off_passing_analyte_percentage ~ "Percentage of passing analytes below cut-off.",
+      (
+        passing_analyte_percentage < cut_off_passing_analyte_percentage & 
+        sum_intensity < cut_off_sum_intensity
+      ) ~ "Percentage of passing analytes and sum intensity below cut-offs.",
+      (
+        passing_analyte_percentage < cut_off_passing_analyte_percentage
+      ) ~ "Percentage of passing analytes below cut-off.",
       sum_intensity < cut_off_sum_intensity ~ "Sum intensity below cut-off.",
       TRUE ~ as.character(NA) # as.character(), because case_When requires that 
       # all possible values are of the same data type
@@ -660,55 +585,24 @@ determine_reason_for_failure <- function(data) {
 
 #' Filter out spectra that failed spectra curation
 #'
+#' @description
 #' This function filters out spectra that failed spectra curation and spectra
 #' that are uncalibrated.
 #'
 #' @param curated_data The return value of \code{\link{curate_spectra}}.
 #'
 #' @return The filtered dataframe given as \code{curated_data}.
-#' @export
-#'
-#' @examples
-#' data("example_data")
-#'
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
-#'                                                min_ppm_deviation = -20,
-#'                                                max_ppm_deviation = 20,
-#'                                                max_ipq = 0.2,
-#'                                                min_sn = 9,
-#'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "S/N",
-#'                                                                         "IPQ"))
-#'
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-#'
-#' cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
-#'                                control_sample_types = "PBS",
-#'                                exclude_sample_types = NULL,
-#'                                group_keyword = "Total",
-#'                                percentile = 97,
-#'                                use_mean_SD = FALSE,
-#'                                SD_factor = NULL,
-#'                                uncalibrated_as_NA = TRUE)
-#'
-#' curated_spectra <- curate_spectra(checked_data = checked_data,
-#'                                   summarized_checks = summarized_checks,
-#'                                   cut_offs = cut_offs)
-#'                                   
-#' kick_out_spectra(curated_spectra)
 kick_out_spectra <- function(curated_spectra) {
   
-  passing_spectra <- curated_spectra %>% 
-    dplyr::filter(has_passed_spectra_curation,
-                  !uncalibrated)
-  
-  return(passing_spectra)
+  curated_spectra %>% 
+    dplyr::filter(has_passed_spectra_curation, !uncalibrated)
 }
 
 
 
 #' Remove columns no longer needed after spectra curation
 #'
+#' @description
 #' The \code{sum_intensity} column is the only column from spectra curation that
 #' is kept, because it is needed during normalization.
 #'
@@ -717,42 +611,9 @@ kick_out_spectra <- function(curated_spectra) {
 #' @return The same dataframe given as \code{passing_spectra}, but without the
 #'   columns created during the spectra curation process (except for the
 #'   sum_intensity column).
-#' @export
-#'
-#' @examples
-#' data("example_data")
-#'
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
-#'                                                min_ppm_deviation = -20,
-#'                                                max_ppm_deviation = 20,
-#'                                                max_ipq = 0.2,
-#'                                                min_sn = 9,
-#'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "S/N",
-#'                                                                         "IPQ"))
-#'
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-#'
-#' cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
-#'                                control_sample_types = "PBS",
-#'                                exclude_sample_types = NULL,
-#'                                group_keyword = "Total",
-#'                                percentile = 97,
-#'                                use_mean_SD = FALSE,
-#'                                SD_factor = NULL,
-#'                                uncalibrated_as_NA = TRUE)
-#'
-#' curated_spectra <- curate_spectra(checked_data = checked_data,
-#'                                   summarized_checks = summarized_checks,
-#'                                   cut_offs = cut_offs)
-#'                                   
-#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra) 
-#' 
-#' remove_unneeded_columns(passing_spectra = passing_spectra)
-#' 
 remove_unneeded_columns <- function(passing_spectra) {
   
-  without_extra_columns <- passing_spectra %>% 
+  passing_spectra %>% 
     # During the spectra curation process a number of extra columns are created.
     # All of these except for sum_intensity can be removed. sum_intensity will
     # be used in mod_normalization to calculate relative abundances.:
@@ -779,7 +640,6 @@ remove_unneeded_columns <- function(passing_spectra) {
     # any_off() to prevent an error:
     dplyr::select(-tidyselect::any_of(c("sample_type_list")))
   
-  return(without_extra_columns)
 }
 
 
@@ -791,42 +651,26 @@ remove_unneeded_columns <- function(passing_spectra) {
 #' @return The \code{checked_data} and \code{summarized_checks} dataframes
 #'   joined together, with unneeded columns removed and with uncalibrated
 #'   spectra filtered out.
-#' @export
-#'
-#' @examples
-#' data("example_data")
-#'
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
-#'                                                min_ppm_deviation = -20,
-#'                                                max_ppm_deviation = 20,
-#'                                                max_ipq = 0.2,
-#'                                                min_sn = 9,
-#'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "S/N",
-#'                                                                         "IPQ"))
-#'
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-#' 
-#' return_when_spectra_curation_is_skipped(checked_data = checked_data,
-#'                                         summarized_checks = summarized_checks)
-#'                                         
-return_when_spectra_curation_is_skipped <- function(checked_data,
-                                                    summarized_checks) {
-  dplyr::full_join(checked_data,
-                   summarized_checks) %>% 
+return_when_spectra_curation_is_skipped <- function(
+    checked_data,
+    summarized_checks  
+  ) {
+  dplyr::full_join(checked_data, summarized_checks) %>% 
     dplyr::filter(!uncalibrated) %>% 
-    dplyr::select(-c(failed_criteria,
-                     passing_analyte_percentage,
-                     analyte_meets_criteria,
-                     uncalibrated))
-  # Leave 'sum_intensity' for the relative abundance
-  # calculation 
+    dplyr::select(-c(
+      failed_criteria,
+      passing_analyte_percentage,
+      analyte_meets_criteria,
+      uncalibrated
+    ))
+  # Leave 'sum_intensity' for the relative abundance calculation 
 }
 
 
 
 #' Prepare curation data for bar charts when spectra curation is skipped
 #'
+#' @description
 #' When spectra curation is skipped, this function creates a dataframe
 #' compatible with \code{\link{plot_spectra_curation_results}}. Only
 #' calibration status determines whether a spectrum is considered passing or
@@ -839,12 +683,13 @@ return_when_spectra_curation_is_skipped <- function(checked_data,
 #'   spectra, \code{FALSE} for uncalibrated spectra.}
 #'   \item{reason_for_failure}{\code{NA} for calibrated spectra;
 #'   \code{"Calibration failed."} for uncalibrated spectra.}}
-#' @export
 create_curation_data_when_skipped <- function(summarized_checks) {
   summarized_checks %>%
     dplyr::mutate(
       has_passed_spectra_curation = !uncalibrated,
-      reason_for_failure = ifelse(uncalibrated, "Calibration failed.", NA_character_)
+      reason_for_failure = ifelse(
+        uncalibrated, "Calibration failed.", NA_character_
+      )
     )
 }
 
@@ -852,6 +697,7 @@ create_curation_data_when_skipped <- function(summarized_checks) {
 
 #' Get the sample types to put in the menu for negative control samples
 #'
+#' @description
 #' Find out which sample types are present in the total or in the specific
 #' samples. These sample types can then be shown in the selection menu for the
 #' negative control samples.
@@ -865,25 +711,6 @@ create_curation_data_when_skipped <- function(summarized_checks) {
 #'   names are the sample types with the \code{total_or_specific_keyword} as
 #'   prefix and "samples" as suffix. The names are what will be shown in the
 #'   selectInput.
-#' @export
-#'
-#' @examples
-#' data("example_data")
-#'
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
-#'                                                min_ppm_deviation = -20,
-#'                                                max_ppm_deviation = 20,
-#'                                                max_ipq = 0.2,
-#'                                                min_sn = 9,
-#'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "S/N",
-#'                                                                         "IPQ"))
-#'
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-#' 
-#' # To get the sample type options for the specific samples:
-#' get_sample_type_options(summarized_checks = summarized_checks,
-#'                         total_or_specific_keyword = "Spike")
 get_sample_type_options <- function(summarized_checks,
                                     total_or_specific_keyword) {
   
@@ -903,95 +730,91 @@ get_sample_type_options <- function(summarized_checks,
 
 
 
-#'Visualize the spectra curation process
+#' Visualize the spectra curation process
 #'
-#'This function can be used to visualize spectra curation. It will create a
-#'scatter plot with the sum intensity plotted against the percentage of passing
-#'analytes. Each point represents one sum spectrum (one cluster from one
-#'sample). Colors represent sample types. Uncalibrated spectra are shown as squares, while
-#'calibrated spectra are shown as dots. If the data contains total and specific
-#'samples, the plot is faceted by group (total or specific).
+#' @description
+#' This function can be used to visualize spectra curation. It will create a
+#' scatter plot with the sum intensity plotted against the percentage of passing
+#' analytes. Each point represents one sum spectrum (one cluster from one
+#' sample). Colors represent sample types. Uncalibrated spectra are shown as squares, while
+#' calibrated spectra are shown as dots. If the data contains total and specific
+#' samples, the plot is faceted by group (total or specific).
 #'
-#'The ggplot has a text aesthetic that can be used to show as hover
-#'info if the ggplot object is converted to a ggplotly object (see example).
+#' The ggplot has a text aesthetic that can be used to show as hover
+#' info if the ggplot object is converted to a ggplotly object (see example).
 #'
-#'@inheritParams calculate_cut_offs
+#' @inheritParams calculate_cut_offs
 #'
-#'@return A ggplot object.
-#'
-#'@export
-#'
-#'@importFrom grDevices colorRampPalette
-#'
-#' @examples
-#' data("example_data")
-#'
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
-#'                                                min_ppm_deviation = -20,
-#'                                                max_ppm_deviation = 20,
-#'                                                max_ipq = 0.2,
-#'                                                min_sn = 9,
-#'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "S/N",
-#'                                                                         "IPQ"))
-#'
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-#'
-#' plot <- create_cut_off_plot(summarized_checks = summarized_checks)
-#'
-#' # The plot can be made interactive with plotly. Use the "text" aesthetic to
-#' # show hover info:
-#' plotly::ggplotly(plot,
-#'                  tooltip = "text")
-#' 
-create_cut_off_plot <- function(summarized_checks, color_palette) {
+#' @return A ggplot object.
+create_cut_off_plot <- function(
+    summarized_checks, 
+    color_palette
+  ) {
   
   for_plot <- summarized_checks %>% 
     # in case there are NAs when uncalibrated_as_NA is TRUE:
     # TODO: check if this is still needed
-    tidyr::replace_na(replace = list(sum_intensity = 0,
-                                     passing_analyte_percentage = 0))
+    tidyr::replace_na(
+      replace = list(sum_intensity = 0, passing_analyte_percentage = 0)
+    )
   
   p <- for_plot %>% 
     ggplot2::ggplot(
-      ggplot2::aes( text = paste0("Sample name: ",
-                                 sample_name,
-                                 "\n",
-                                 "Sample ID: ",
-                                 sample_id,
-                                 "\n",
-                                 "Passing analyte percentage: ",
-                                 paste0(
-                                   format(round(passing_analyte_percentage, digits = 2), nsmall = 2),
-                                   "%"
-                                 ),
-                                 "\n",
-                                 "Sum intensity: ",
-                                 round(sum_intensity, digits = 0),
-                                 "\nUncalibrated: ",
-                                 uncalibrated))
+      ggplot2::aes(
+        text = paste0(
+          "Sample name: ",
+          sample_name,
+          "\n",
+          "Sample ID: ",
+          sample_id,
+          "\n",
+          "Passing analyte percentage: ",
+          paste0(
+            format(round(passing_analyte_percentage, digits = 2), nsmall = 2),
+            "%"
+          ),
+          "\n",
+          "Sum intensity: ",
+          round(sum_intensity, digits = 0),
+          "\nUncalibrated: ",
+          uncalibrated
+        )
+      )
     ) +
-    ggplot2::geom_point(data = for_plot[!for_plot$uncalibrated, ],
-                         ggplot2::aes(color = sample_type,
-                                      x = passing_analyte_percentage,
-                                      y = sum_intensity),
-                         size = 1,
-                         alpha = 0.7) +
-    ggplot2::geom_point(data = for_plot[for_plot$uncalibrated, ],
-                         ggplot2::aes(color = sample_type,
-                                      x = passing_analyte_percentage,
-                                      y = sum_intensity),
-                         shape = 15,
-                         size = 1,
-                         alpha = 0.7) +
+    ggplot2::geom_point(
+      data = for_plot[!for_plot$uncalibrated, ],
+      ggplot2::aes(
+        color = sample_type,
+        x = passing_analyte_percentage,
+        y = sum_intensity
+      ),
+      size = 1,
+      alpha = 0.7
+    ) +
+    ggplot2::geom_point(
+      data = for_plot[for_plot$uncalibrated, ],
+      ggplot2::aes(
+        color = sample_type,
+        x = passing_analyte_percentage,
+        y = sum_intensity
+      ),
+      shape = 15,
+      size = 1,
+      alpha = 0.7
+    ) +
     ggplot2::theme_classic() +
-    ggplot2::theme(panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5),
-                   strip.background = ggplot2::element_rect(fill = "#F6F6F8")) +
-    ggplot2::scale_color_manual(values = color_palette,
-                                name = "Sample type") +
+    ggplot2::theme(
+      panel.border = ggplot2::element_rect(
+        colour = "black", fill=NA, linewidth=0.5
+      ),
+      strip.background = ggplot2::element_rect(fill = "#F6F6F8")
+    ) +
+    ggplot2::scale_color_manual(values = color_palette, name = "Sample type") +
     ggplot2::labs(y = "Sum intensity of passing analytes") +
-    ggplot2::scale_x_continuous(labels = function(x) paste0(x, "%"), 
-                                name = "Percentage of passing analytes")
+    ggplot2::scale_x_continuous(
+      labels = function(x) paste0(x, "%"), 
+      name = "Percentage of passing analytes"
+    )
   
   if ("group" %in% colnames(for_plot)) {
     p <- p +
@@ -1008,6 +831,7 @@ create_cut_off_plot <- function(summarized_checks, color_palette) {
 
 #' Visualize the results of the spectra curation
 #' 
+#' @description
 #' This function can be used to visualize how many spectra per sample type passed
 #' spectra curation and how many failed and why. It will create a bar plot with 
 #' sample types on the x-axis and the percentage of spectra on the y-axis. Colors 
@@ -1025,45 +849,10 @@ create_cut_off_plot <- function(summarized_checks, color_palette) {
 #'   indicates whether there are total and specific Ig samples in the data.
 #'
 #' @return A ggplot object.
-#' @export
-#'
-#' @examples
-#' data("example_data")
-#'
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
-#'                                                min_ppm_deviation = -20,
-#'                                                max_ppm_deviation = 20,
-#'                                                max_ipq = 0.2,
-#'                                                min_sn = 9,
-#'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "S/N",
-#'                                                                         "IPQ"))
-#'
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-#'
-#' cut_offs <- calculate_cut_offs(summarized_checks = summarized_checks,
-#'                                control_sample_types = NULL,
-#'                                exclude_sample_types = "PBS",
-#'                                group_keyword = NULL,
-#'                                percentile = 2,
-#'                                use_mean_SD = FALSE,
-#'                                SD_factor = NULL,
-#'                                uncalibrated_as_NA = TRUE)
-#'
-#' curated_data <- curate_spectra(checked_data = checked_data,
-#'                                summarized_checks = summarized_checks,
-#'                                cut_offs = cut_offs)
-#'                                
-#' plot <- plot_spectra_curation_results(curated_data = curated_data,
-#'                                       total_and_specific = TRUE)
-#'                                       
-#' # The plot can be made interactive with plotly. Use the "text" aesthetic to
-#' # show hover info:
-#' plotly::ggplotly(plot,
-#'                  tooltip = "text")
-#' 
-plot_spectra_curation_results <- function(curated_data,
-                                          total_and_specific) {
+plot_spectra_curation_results <- function(
+    curated_data,
+    total_and_specific  
+  ) {
   
   # Consistent fill colors.
   my_palette <- c(
@@ -1075,21 +864,27 @@ plot_spectra_curation_results <- function(curated_data,
   )
   
   my_data <- curated_data %>% 
-    dplyr::distinct(dplyr::across(tidyselect::any_of(c("group", 
-                                                       "sample_type", 
-                                                       "cluster", 
-                                                       "sample_name", 
-                                                       "has_passed_spectra_curation",
-                                                       "reason_for_failure")))) %>% 
+    dplyr::distinct(
+      dplyr::across(
+        tidyselect::any_of(c(
+          "group", 
+          "sample_type", 
+          "cluster", 
+          "sample_name", 
+          "has_passed_spectra_curation",
+          "reason_for_failure"
+        ))
+      )
+    ) %>% 
     dplyr::mutate(
       `Passed curation?` = dplyr::case_when(
         is.na(reason_for_failure) ~ "Yes",
         reason_for_failure == "Percentage of passing analytes and sum intensity below cut-offs." ~ 
-                           "No, percentage of passing\nanalytes and sum\nintensity below cut-offs.",
+          "No, percentage of passing\nanalytes and sum\nintensity below cut-offs.",
         reason_for_failure == "Percentage of passing analytes below cut-off." ~ 
-                           "No, percentage of passing\nanalytes below\ncut-off.",
+          "No, percentage of passing\nanalytes below\ncut-off.",
         reason_for_failure == "Sum intensity below cut-off." ~ 
-                           "No, sum intensity below\ncut-off.",
+          "No, sum intensity below\ncut-off.",
         .default = "No, calibration failed."
       )
     ) %>% 
@@ -1112,17 +907,24 @@ plot_spectra_curation_results <- function(curated_data,
         )
       )
     ) +
-    ggplot2::geom_bar(ggplot2::aes(x = sample_type,
-                                   fill = `Passed curation?`), 
-                      position = "fill") +
+    ggplot2::geom_bar(
+      ggplot2::aes(x = sample_type, fill = `Passed curation?`), 
+      position = "fill"
+    ) +
     ggplot2::xlab("Sample type") +
-    ggplot2::scale_y_continuous(labels = function(x) paste0(x * 100, "%"), 
-                                name = "Percentage of spectra") +
+    ggplot2::scale_y_continuous(
+      labels = function(x) paste0(x * 100, "%"), 
+      name = "Percentage of spectra"
+    ) +
     ggplot2::scale_fill_manual(values = my_palette) +
     ggplot2::theme_classic() +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
-                   strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-                   panel.border = ggplot2::element_rect(colour = "black", fill=NA, linewidth=0.5))
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+      strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
+      panel.border = ggplot2::element_rect(
+        colour = "black", fill = NA, linewidth = 0.5
+      )
+    )
   
   if (total_and_specific) {
     plot <- plot +
@@ -1142,10 +944,16 @@ plot_spectra_curation_results <- function(curated_data,
 calculate_number_and_percentage_per_reason <- function(curated_data) {
   
   curated_data %>% 
-    dplyr::group_by(dplyr::across(tidyselect::any_of(c("group",
-                                                       "cluster",
-                                                       "sample_type",
-                                                       "reason_for_failure")))) %>% 
+    dplyr::group_by(
+      dplyr::across(
+        tidyselect::any_of(c(
+          "group",
+          "cluster",
+          "sample_type",
+          "reason_for_failure"
+        ))
+      )
+    ) %>% 
     dplyr::mutate(
       number_true = sum(has_passed_spectra_curation),
       number_false = sum(!has_passed_spectra_curation)) %>% 
@@ -1165,10 +973,16 @@ calculate_number_and_percentage_per_reason <- function(curated_data) {
 
 
 # Downloading data
-create_downloadHandler <- function(data_to_download, download_format, paste) {
+create_downloadHandler <- function(
+    data_to_download, 
+    download_format, 
+    paste  
+  ) {
   downloadHandler(
     filename = function() {
-      current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+      current_datetime <- paste0(
+        format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+      )
       if (download_format == "R object") {
         print(download_format)
         return(paste0(current_datetime, paste, ".rds"))
@@ -1180,8 +994,7 @@ create_downloadHandler <- function(data_to_download, download_format, paste) {
     content = function(file) {
       if (download_format == "R object") {
         saveRDS(data_to_download, file = file)
-      } 
-      else {
+      } else {
         writexl::write_xlsx(data_to_download, path = file)
       }
     }

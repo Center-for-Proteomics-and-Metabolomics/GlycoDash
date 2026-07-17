@@ -1,5 +1,6 @@
 #' Extract Glycopeptide Intensities
 #'
+#' @description
 #' Extracts glycopeptide intensities from normalized wide-format data for
 #' specified proteins. The function filters the data to include only
 #' glycopeptides listed in the proteins Excel file and returns their
@@ -14,10 +15,10 @@
 #' @return A dataframe with columns: \code{sample_name}, \code{sample_type},
 #'   \code{sample_id}, optionally \code{group}, \code{cluster}, and
 #'   \code{sum_intensity}. Contains only distinct rows with non-NA intensities.
-#'
-#' @keywords internal
-#' @noRd
-get_glycopeptide_intensities <- function(proteins_excel, normalized_data_wide) {
+get_glycopeptide_intensities <- function(
+    proteins_excel, 
+    normalized_data_wide  
+  ) {
   
   data <- normalized_data_wide %>% 
     tidyr::pivot_longer(
@@ -41,6 +42,7 @@ get_glycopeptide_intensities <- function(proteins_excel, normalized_data_wide) {
 
 #' Extract Peptide Intensities from Skyline
 #'
+#' @description
 #' Processes peptide data (typically from Skyline) to extract intensities for
 #' specified proteins. The function calculates intensity per fraction,
 #' aggregates by cluster, and excludes specified peptide ions and proteins
@@ -59,12 +61,11 @@ get_glycopeptide_intensities <- function(proteins_excel, normalized_data_wide) {
 #' @return A dataframe with columns: \code{sample_name}, \code{sample_type},
 #'   \code{sample_id}, optionally \code{group}, \code{cluster}, and
 #'   \code{sum_intensity}. Contains only distinct rows with non-NA intensities.
-#'
-#' @keywords internal
-#' @noRd
-get_peptide_intensities <- function(proteins_excel, 
-                                    peptides_data,
-                                    exclude_peptides) {
+get_peptide_intensities <- function(
+    proteins_excel, 
+    peptides_data,
+    exclude_peptides  
+  ) {
   
   data <- peptides_data %>%
     dplyr::mutate(ion = paste0(cluster, ", ", charge)) %>% 
@@ -89,6 +90,7 @@ get_peptide_intensities <- function(proteins_excel,
 
 #' Calculate Protein Quantities
 #'
+#' @description
 #' Calculates protein quantities (in ng/mL) for each sample based on the
 #' quantitation formula using natural and labeled peptide pairs. The function
 #' iterates through each protein in the proteins_excel file, uses the ratio of
@@ -107,11 +109,10 @@ get_peptide_intensities <- function(proteins_excel,
 #' @return A dataframe with columns: \code{sample_name}, \code{sample_type},
 #'   \code{sample_id}, optionally \code{group}, \code{protein},
 #'   \code{peptide_pair}, and \code{protein_quantity} (in ng/mL).
-#'
-#' @keywords internal
-#' @noRd
-get_protein_quantities <- function(combined_intensities,
-                                   proteins_excel) {
+get_protein_quantities <- function(
+    combined_intensities,
+    proteins_excel  
+  ) {
   
   # Go over each row in proteins_excel and calculate corresponding quantities
   protein_quantities <- purrr::map_dfr(1:nrow(proteins_excel), function(i) {
@@ -151,6 +152,7 @@ get_protein_quantities <- function(combined_intensities,
 
 #' Calculate Median Protein Quantities
 #'
+#' @description
 #' Calculates the median protein quantity for each protein per sample.
 #' This function is useful when multiple peptide pairs are used to quantify
 #' the same protein, as it provides a single representative quantity value
@@ -164,17 +166,20 @@ get_protein_quantities <- function(combined_intensities,
 #' @return A dataframe with columns: \code{sample_name}, \code{sample_type},
 #'   \code{sample_id}, optionally \code{group}, \code{protein}, and \code{quantity}
 #'   (the median quantity in ng/mL per sample and protein).
-#'
-#' @keywords internal
-#' @noRd
 get_median_quantities <- function(protein_quantities) {
   
   data <- protein_quantities %>% 
     dplyr::filter(!is.na(protein_quantity)) %>% 
     dplyr::group_by(sample_name, sample_type, sample_id, protein) %>% 
     dplyr::mutate(quantity = median(protein_quantity)) %>% 
-    dplyr::select(sample_name, sample_type, sample_id, tidyselect::any_of("group"),
-                  protein, quantity) %>% 
+    dplyr::select(
+      sample_name, 
+      sample_type, 
+      sample_id, 
+      tidyselect::any_of("group"),
+      protein, 
+      quantity
+    ) %>% 
     dplyr::distinct()
   
   return(data)
@@ -183,6 +188,7 @@ get_median_quantities <- function(protein_quantities) {
 
 #' Plot Protein Quantities by Sample Type
 #'
+#' @description
 #' Creates a boxplot visualization of protein quantities grouped by sample type.
 #' Individual data points are displayed as jittered points overlaid on the
 #' boxplot. If the data contains a \code{group} column, separate panels are
@@ -196,11 +202,10 @@ get_median_quantities <- function(protein_quantities) {
 #'
 #' @return A ggplot object displaying the protein quantities as a boxplot with
 #'   jittered points colored by sample type.
-#'
-#' @keywords internal
-#' @noRd
-plot_protein_quantities <- function(quantities,
-                                    log_scale) {
+plot_protein_quantities <- function(
+    quantities,
+    log_scale  
+  ) {
   
   protein_name <- unique(quantities$protein)
   
@@ -213,7 +218,8 @@ plot_protein_quantities <- function(quantities,
     text = paste0(
       "Sample name: ", sample_name, "\n",
       "Sample ID: ", sample_id, "\n",
-      "Protein quantity: ", format(round(quantity, digits = 2), nsmall = 2), " ng/mL"
+      "Protein quantity: ", 
+      format(round(quantity, digits = 2), nsmall = 2), " ng/mL"
     )
   )) +
     ggplot2::geom_boxplot() +
@@ -223,7 +229,9 @@ plot_protein_quantities <- function(quantities,
     ) + 
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 0.5),
+      panel.border = ggplot2::element_rect(
+        colour = "black", fill = NA, linewidth = 0.5
+      ),
       strip.background = ggplot2::element_rect(fill = "#F6F6F8")
     ) +
     ggplot2::scale_color_manual(values = color_palette, name = "Sample type") + 
@@ -247,6 +255,7 @@ plot_protein_quantities <- function(quantities,
 
 #' Plot Correlation Between Two Peptide Pair Quantities
 #'
+#' @description
 #' Creates a scatter plot showing the correlation between protein quantities
 #' calculated from two different peptide pairs. A line of identity (y = x) is
 #' included as a dashed reference line. If the data contains a \code{group}
@@ -264,10 +273,12 @@ plot_protein_quantities <- function(quantities,
 #'
 #' @return A ggplot object displaying the correlation between two peptide pair
 #'   quantities as a scatter plot with a reference line of identity.
-#'
-#' @keywords internal
-#' @noRd
-quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
+quantity_correlation_plot <- function(
+    df,
+    pair, 
+    color_palette, 
+    log_scale
+  ) {
   # Make plot
   plot <- ggplot2::ggplot(df, ggplot2::aes(
     x = .data[[pair[[1]]]],
@@ -295,7 +306,9 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
     ggplot2::theme_classic() +
     ggplot2::theme(
       strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-      panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 0.5),
+      panel.border = ggplot2::element_rect(
+        colour = "black", fill = NA, linewidth = 0.5
+      ),
       legend.position = "none"
     ) + 
     ggplot2::scale_color_manual(values = color_palette, name = "Sample type")
@@ -320,6 +333,7 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
 
 #' Plot Correlations Between All Peptide Pairs
 #'
+#' @description
 #' Creates a list of scatter plots showing the correlations between all
 #' possible pairs of peptide pairs for a given protein. Each plot uses the
 #' \code{quantity_correlation_plot()} function and includes a reference line
@@ -339,7 +353,10 @@ quantity_correlation_plot <- function(df, pair, color_palette, log_scale) {
 #'
 #' @keywords internal
 #' @noRd
-plot_peptide_correlations <- function(protein_data, log_scale) {
+plot_peptide_correlations <- function(
+    protein_data, 
+    log_scale  
+  ) {
   
   # Create color palette
   sample_types <- unique(protein_data$sample_type)
@@ -354,8 +371,9 @@ plot_peptide_correlations <- function(protein_data, log_scale) {
     # Reshape data to get two quantity columns
     df_pair <- protein_data %>% 
       dplyr::filter(peptide_pair %in% pair) %>% 
-      tidyr::pivot_wider(names_from = peptide_pair,
-                         values_from = protein_quantity)
+      tidyr::pivot_wider(
+        names_from = peptide_pair, values_from = protein_quantity
+      )
     
     quantity_correlation_plot(df_pair, pair, color_palette, log_scale)
   })
@@ -365,15 +383,14 @@ plot_peptide_correlations <- function(protein_data, log_scale) {
 }
 
 
-
-
 #' Plot natural vs labeled sum intensities
 #'
-#' @description For each peptide pair in the quantitation input, create a
-#'   scatter plot comparing summed intensities for the natural and labeled
-#'   analytes across samples. Each point represents one sample and is colored
-#'   by sample type. Plots are used in the quantitation tab to visualize signal
-#'   balance between the paired analytes.
+#' @description 
+#' For each peptide pair in the quantitation input, create a
+#' scatter plot comparing summed intensities for the natural and labeled
+#' analytes across samples. Each point represents one sample and is colored
+#' by sample type. Plots are used in the quantitation tab to visualize signal
+#' balance between the paired analytes.
 #'
 #' @param intensities A data frame of summed intensities per sample and analyte.
 #'   Expected to include columns \code{cluster}, \code{sum_intensity},
@@ -386,12 +403,11 @@ plot_peptide_correlations <- function(protein_data, log_scale) {
 #'
 #' @return A list of ggplot objects, one per peptide pair, suitable for
 #'   conversion to plotly and combination in a subplot layout.
-#'
-#' @keywords internal
-#' @noRd
-plot_sum_intensities <- function(intensities, 
-                                 protein_data,
-                                 log_scale = FALSE) {
+plot_sum_intensities <- function(
+    intensities, 
+    protein_data,
+    log_scale = FALSE  
+  ) {
   
   plots <- purrr::map(unique(protein_data$peptide_pair), function(pair) {
     
@@ -437,7 +453,9 @@ plot_sum_intensities <- function(intensities,
       ggplot2::theme_classic() +
       ggplot2::theme(
         strip.background = ggplot2::element_rect(fill = "#F6F6F8"),
-        panel.border = ggplot2::element_rect(colour = "black", fill = NA, linewidth = 0.5),
+        panel.border = ggplot2::element_rect(
+          colour = "black", fill = NA, linewidth = 0.5
+        ),
         legend.position = "none"
       ) + 
       ggplot2::scale_color_manual(values = color_palette, name = "Sample type")

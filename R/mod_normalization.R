@@ -32,7 +32,13 @@ mod_normalization_ui <- function(id){
           status = "primary",
           shinyWidgets::materialSwitch(
             ns("separate_charges"),
-            HTML("<i style='font-size:15px;'> Normalize charge states separately </i>"),
+            HTML(
+              "
+              <i style='font-size:15px;'> 
+              Normalize charge states separately 
+              </i>
+              "
+            ),
             status = "success",
             right = TRUE,
             value = FALSE
@@ -51,14 +57,16 @@ mod_normalization_ui <- function(id){
                 title = "Explanation",
                 content = HTML(
                   "
-                  When plotting \"Cluster\" on the y-axis, the median relative abundance
-                  for each analyte is shown in one heatmap. When plotting \"Sample\" 
-                  on the y-axis, a heatmap is shown for each cluster, with the relative
-                  abundances of all glycans per sample.
+                  When plotting \"Cluster\" on the y-axis, the median relative 
+                  abundance for each analyte is shown in one heatmap. When 
+                  plotting \"Sample\" on the y-axis, a heatmap is shown for 
+                  each cluster, with the relative abundances of all glycans per 
+                  sample.
                   <br> <br>
                   If analyte curation was performed per biological group, separate
                   heatmaps can be shown per group. In that case, sample types without 
-                  a biological group assigned (e.g. blanks and pools) are automatically excluded.
+                  a biological group assigned (e.g. blanks and pools) are 
+                  automatically excluded.
                   "
                 ),
                 trigger = "hover",
@@ -99,7 +107,9 @@ mod_normalization_ui <- function(id){
                 closeOnClick = TRUE
               ),
               icon = icon("paintbrush", class = "ml"),
-              tooltip = shinyWidgets::tooltipOptions(placement = "top", title = "Colors"),
+              tooltip = shinyWidgets::tooltipOptions(
+                placement = "top", title = "Colors"
+              ),
               width = "250px",
               size = "xs"
             )
@@ -114,7 +124,12 @@ mod_normalization_ui <- function(id){
           ),
           shinyWidgets::materialSwitch(
             ns("facet_per_group"),
-            HTML("<i style='font-size:15px;'> Show heatmaps per biological group </i>"),
+            HTML(
+              "
+              <i style='font-size:15px;'> 
+              Show heatmaps per biological group 
+              </i>"
+            ),
             status = "success",
             right = TRUE,
             value = TRUE  # TRUE by default
@@ -136,9 +151,11 @@ mod_normalization_ui <- function(id){
           width = 6,
           solidHeader = TRUE,
           status = "primary",
-          radioButtons(ns("download_format"),
-                       "Choose a file format:",
-                       choices = c("Excel file", "R object")),
+          radioButtons(
+            ns("download_format"),
+            "Choose a file format:",
+            choices = c("Excel file", "R object")
+          ),
           downloadButton(ns("download"), "Download normalized data")
         )
       )
@@ -147,10 +164,16 @@ mod_normalization_ui <- function(id){
 }
     
 
+
 #' normalization Server Functions
 #'
 #' @noRd 
-mod_normalization_server <- function(id, results_analyte_curation, merged_metadata, data_type) {
+mod_normalization_server <- function(
+    id, 
+    results_analyte_curation, 
+    merged_metadata, 
+    data_type
+  ) {
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
@@ -160,8 +183,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       if (input$separate_charges) {
         results_analyte_curation$analyte_curated_data() %>% 
           tidyr::unite("analyte", analyte:charge, sep = "_", remove = FALSE)
-      } 
-      else {
+      } else {
         results_analyte_curation$analyte_curated_data()
       }
     }) 
@@ -182,12 +204,13 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       if (nrow(total_intensities_glycans()) == 0) {
         # Zero analytes passed
         data <- normalize_data(total_intensities = total_intensities_glycans())
-      }
-      else {
+      } else {
         data <- normalize_data(total_intensities = total_intensities_glycans()) %>% 
           # Sort by glycan composition
-          tidyr::separate(analyte, into = c("cluster", "analyte"),
-                          sep = "1", extra = "merge") %>% 
+          tidyr::separate(
+            analyte, into = c("cluster", "analyte"),
+            sep = "1", extra = "merge"
+          ) %>% 
           sort_glycans(.) %>% 
           dplyr::group_by(cluster) %>% 
           dplyr::arrange(cluster, analyte) %>% 
@@ -230,8 +253,10 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     normalized_data_wide <- reactive({
       req(normalized_data())
       normalized_data() %>% 
-        tidyr::pivot_wider(names_from = cluster, values_from = sum_intensity, 
-                           names_glue = "{cluster}_sum_intensity") %>% 
+        tidyr::pivot_wider(
+          names_from = cluster, values_from = sum_intensity, 
+          names_glue = "{cluster}_sum_intensity"
+        ) %>% 
         tidyr::pivot_wider(names_from = analyte, values_from = relative_abundance) %>% 
         dplyr::group_by(sample_name) %>% 
         tidyr::fill(replicates:last_col(), .direction = "downup") %>% 
@@ -246,13 +271,16 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     
     output$data_table <- DT::renderDT({
       req(normalized_data_wide())
-      DT::datatable(data = normalized_data_wide() %>% 
-                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
-                    options = list(
-                      scrollX = TRUE,
-                      pageLength = 6,
-                      columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ), filter = "top")
+      DT::datatable(
+        data = normalized_data_wide() %>% 
+          dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+        options = list(
+          scrollX = TRUE,
+          pageLength = 6,
+          columnDefs = list(list(className = "dt-center", targets = "_all"))
+        ), 
+        filter = "top"
+      )
     })
     
     
@@ -281,8 +309,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         purrr::imap(cluster_names, function(cluster, i) {
           if (nrow(normalized_data()) == 0) {
             plot <- ggplot2::ggplot()
-          }
-          else {
+          } else {
             plot <- sample_heatmap(
               normalized_data = normalized_data(),
               cluster_name = cluster,
@@ -329,8 +356,7 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         # Make the plot
         if (nrow(normalized_data()) == 0) {
           plot <- ggplot2::ggplot()
-        } 
-        else {
+        } else {
           plot <- cluster_heatmap(
             normalized_data = normalized_data(),
             exclude_sample_types = input$exclude_sample_types,
@@ -361,8 +387,14 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       # Bind to events to prevent updating heatmaps when only analyte curation
       # settings are changed. 
       bindEvent(c(
-        normalized_data(), input$facet_per_group, input$heatmap_yaxis, input$exclude_sample_types,
-        input$color_low, input$color_mid, input$color_high, input$color_na
+        normalized_data(), 
+        input$facet_per_group, 
+        input$heatmap_yaxis, 
+        input$exclude_sample_types,
+        input$color_low, 
+        input$color_mid, 
+        input$color_high, 
+        input$color_na
       ))
 
     
@@ -377,12 +409,10 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
         } else {
           input$exclude_sample_types
         }
+      } else if (length(input$exclude_sample_types) == 0) {
+        c("None")
       } else {
-        if (length(input$exclude_sample_types) == 0) {
-          c("None")
-        } else {
-          input$exclude_sample_types
-        }
+        input$exclude_sample_types
       }
     })
 
@@ -393,7 +423,11 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       updateSelectizeInput(
         inputId = "exclude_sample_types",
         choices = as.character(unique(normalized_data()$sample_type)),
-        options = list(maxItems = length(as.character(unique(normalized_data()$sample_type))) - 1)
+        options = list(
+          maxItems = (
+            length(as.character(unique(normalized_data()$sample_type))) - 1
+          )
+        )
       )
     })
     
@@ -428,7 +462,9 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
     # Download normalized data
     output$download <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
         if (grepl("R object", input$download_format)) {
           paste0(current_datetime, "_normalized_data.rds")
         } else {
@@ -438,17 +474,14 @@ mod_normalization_server <- function(id, results_analyte_curation, merged_metada
       content = function(file) {
         if (grepl("R object", input$download_format)) {
           saveRDS(normalized_data_wide(), file = file)
-        } 
-        else if (is_truthy(notes())) {
+        } else if (is_truthy(notes())) {
           data_list <- list("Data" = normalized_data_wide(), "Notes" = notes())
           writexl::write_xlsx(data_list, path = file)
-        } 
-        else{
+        } else {
           writexl::write_xlsx(normalized_data_wide(), path = file)
         }
       }
     )
-    
     
     
     return(list(

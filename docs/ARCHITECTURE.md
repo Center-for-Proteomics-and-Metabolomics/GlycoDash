@@ -48,7 +48,7 @@ The modules follow the data processing pipeline of the application:
 
 ```
 mod_data_import.R
-├── mod_read_data.R               / fct_read_data.R
+├── mod_read_data.R               / fct_read_data.R, fct_read_lacytools.R, fct_read_skyline.R, fct_read_sweetsuite.R, fct_glycounter.R, fct_isotopes.R, constants.R
 ├── mod_add_sample_ids.R          / fct_add_sample_ids.R
 ├── mod_process_plate_design.R
 ├── mod_process_sample_list.R
