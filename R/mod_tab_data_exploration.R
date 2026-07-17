@@ -120,8 +120,7 @@ mod_tab_data_exploration_server <- function(
       if(isTruthy(input$filter)) {
         my_data() %>% 
           dplyr::filter(!(sample_type %in% input$filter))
-      } 
-      else {
+      } else {
         my_data()
       }
     })
@@ -132,15 +131,13 @@ mod_tab_data_exploration_server <- function(
       
       if (is_truthy(input$color)) {
         color <- input$color
-      } 
-      else {
+      } else {
         color <- NULL
       }
       
       if (is_truthy(input$facets)) {
         facets <- input$facets
-      } 
-      else {
+      } else {
         facets <- NULL
       }
       
@@ -153,8 +150,7 @@ mod_tab_data_exploration_server <- function(
           color = color,
           facets = facets
         )
-      } 
-      else if (input$plot_type == "Scatter plot") {
+      } else if (input$plot_type == "Scatter plot") {
         req(input$xvar, input$yvar)
         my_scatter_plot(
           filtered_data(),
@@ -163,8 +159,7 @@ mod_tab_data_exploration_server <- function(
           color = color,
           facets = facets
         )
-      }
-      else if (input$plot_type == "Histogram") {
+      } else if (input$plot_type == "Histogram") {
         req(input$xvar)
         my_histogram(
           filtered_data(),

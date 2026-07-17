@@ -11,8 +11,7 @@ read_skyline_csv <- function(path_to_file) {
   L <- readLines(path_to_file, n = 1)
   if (grepl(";", L)) {
     raw_data <- read.csv(path_to_file, header = TRUE, sep = ";")
-  } 
-  else {
+  } else {
     raw_data <- read.csv(path_to_file, header = TRUE, sep = ",")
   }
   

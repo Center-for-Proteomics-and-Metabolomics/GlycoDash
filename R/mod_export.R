@@ -86,14 +86,11 @@ mod_export_server <- function(
       req(results_normalization$normalized_data_wide())
       if (is_truthy(results_site_occupancy$site_occupancy_data())) {
         x$data <- results_site_occupancy$site_occupancy_data()
-      } 
-      else if (is_truthy(results_derived_traits$data_with_traits())) {
+      } else if (is_truthy(results_derived_traits$data_with_traits())) {
         x$data <- results_derived_traits$data_with_traits()
-      } 
-      else if (is_truthy(results_quantitation$data_with_quantities())) {
+      } else if (is_truthy(results_quantitation$data_with_quantities())) {
         x$data <- results_quantitation$data_with_quantities()
-      } 
-      else {
+      } else {
         x$data <- results_normalization$normalized_data_wide()
       }
     })
@@ -138,22 +135,19 @@ mod_export_server <- function(
         )
         if (grepl("R object", input$download_format)) {
           paste0(current_datetime, "_normalized_data.rds")
-        } 
-        else {
+        } else {
           paste0(current_datetime, "_normalized_data.xlsx")
         }
       },
       content = function(file) {
         if (grepl("R object", input$download_format)) {
           saveRDS(x$data, file = file)
-        } 
-        else if (is_truthy(results_normalization$notes())) {
+        } else if (is_truthy(results_normalization$notes())) {
           data_list <- list(
             "Data" = x$data, "Notes" = results_normalization$notes()
           )
           writexl::write_xlsx(data_list, path = file)
-        } 
-        else {
+        } else {
           writexl::write_xlsx(x$data, path = file)
         }
       }

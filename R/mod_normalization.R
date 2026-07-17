@@ -183,8 +183,7 @@ mod_normalization_server <- function(
       if (input$separate_charges) {
         results_analyte_curation$analyte_curated_data() %>% 
           tidyr::unite("analyte", analyte:charge, sep = "_", remove = FALSE)
-      } 
-      else {
+      } else {
         results_analyte_curation$analyte_curated_data()
       }
     }) 
@@ -205,8 +204,7 @@ mod_normalization_server <- function(
       if (nrow(total_intensities_glycans()) == 0) {
         # Zero analytes passed
         data <- normalize_data(total_intensities = total_intensities_glycans())
-      }
-      else {
+      } else {
         data <- normalize_data(total_intensities = total_intensities_glycans()) %>% 
           # Sort by glycan composition
           tidyr::separate(
@@ -311,8 +309,7 @@ mod_normalization_server <- function(
         purrr::imap(cluster_names, function(cluster, i) {
           if (nrow(normalized_data()) == 0) {
             plot <- ggplot2::ggplot()
-          }
-          else {
+          } else {
             plot <- sample_heatmap(
               normalized_data = normalized_data(),
               cluster_name = cluster,
@@ -354,14 +351,12 @@ mod_normalization_server <- function(
         })
         
         #### CLUSTER ON Y-AXIS #### 
-      } 
-      else if (input$heatmap_yaxis == "Glycosylation site") {
+      } else if (input$heatmap_yaxis == "Glycosylation site") {
       
         # Make the plot
         if (nrow(normalized_data()) == 0) {
           plot <- ggplot2::ggplot()
-        } 
-        else {
+        } else {
           plot <- cluster_heatmap(
             normalized_data = normalized_data(),
             exclude_sample_types = input$exclude_sample_types,
@@ -409,18 +404,14 @@ mod_normalization_server <- function(
       if (results_analyte_curation$curate_per_group()) {
         if (input$facet_per_group) {
           c("")
-        } 
-        else if (length(input$exclude_sample_types) == 0) {
+        } else if (length(input$exclude_sample_types) == 0) {
           c("None")
-        } 
-        else {
+        } else {
           input$exclude_sample_types
         }
-      } 
-      else if (length(input$exclude_sample_types) == 0) {
+      } else if (length(input$exclude_sample_types) == 0) {
         c("None")
-      }
-      else {
+      } else {
         input$exclude_sample_types
       }
     })
@@ -448,13 +439,11 @@ mod_normalization_server <- function(
         shinyjs::hide("facet_per_group")
         shinyjs::show("exclude_sample_types")
         
-      } 
-      else {
+      } else {
         shinyjs::show("facet_per_group")
         if (input$facet_per_group) {
           shinyjs::hide("exclude_sample_types")
-        } 
-        else {
+        } else {
           shinyjs::show("exclude_sample_types")
         }
       }
@@ -462,8 +451,7 @@ mod_normalization_server <- function(
       if (input$heatmap_yaxis == "Sample") {
         shinyjs::show("tabs")
         shinyjs::hide("clusters_plot")
-      } 
-      else if (input$heatmap_yaxis == "Glycosylation site") {
+      } else if (input$heatmap_yaxis == "Glycosylation site") {
         shinyjs::hide("tabs")
         shinyjs::show("clusters_plot")
       }
@@ -479,20 +467,17 @@ mod_normalization_server <- function(
         )
         if (grepl("R object", input$download_format)) {
           paste0(current_datetime, "_normalized_data.rds")
-        } 
-        else {
+        } else {
           paste0(current_datetime, "_normalized_data.xlsx")
         }
       },
       content = function(file) {
         if (grepl("R object", input$download_format)) {
           saveRDS(normalized_data_wide(), file = file)
-        } 
-        else if (is_truthy(notes())) {
+        } else if (is_truthy(notes())) {
           data_list <- list("Data" = normalized_data_wide(), "Notes" = notes())
           writexl::write_xlsx(data_list, path = file)
-        } 
-        else{
+        } else {
           writexl::write_xlsx(normalized_data_wide(), path = file)
         }
       }

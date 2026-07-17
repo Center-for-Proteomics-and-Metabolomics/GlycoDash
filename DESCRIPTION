@@ -47,7 +47,7 @@ Imports:
 Suggests:
     knitr,
     spelling,
-    testthat
+    testthat (>= 3.0.0)
 Encoding: UTF-8
 LazyData: true
 Config/testthat/edition: 3

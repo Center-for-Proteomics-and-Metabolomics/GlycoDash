@@ -55,9 +55,7 @@ calculate_peptides_intensities <- function(
       ) %>%
       dplyr::distinct() %>% 
       tidyr::pivot_wider(names_from = "cluster", values_from = "total_intensity")
-  } 
-  
-  else {
+  } else {
     data <- data %>% 
       dplyr::group_by(sample_name, cluster) %>% 
       dplyr::mutate(total_intensity = sum(total_area)) %>% 
@@ -161,8 +159,7 @@ summarize_peptides_quality <- function(
   if ("group" %in% colnames(peptides_quality)) {
     summary <- peptides_quality %>% 
       dplyr::group_by(group, cluster, charge)
-  } 
-  else {
+  } else {
     summary <- peptides_quality %>% 
       dplyr::group_by(cluster, charge)
   }
@@ -185,8 +182,7 @@ summarize_peptides_quality <- function(
       dplyr::summarize(
         passing_percentage = sum(pass) / dplyr::n() * 100
       )
-  } 
-  else {
+  } else {
     # Skyline data
     summary <- summary %>% 
       dplyr::mutate(
@@ -237,8 +233,7 @@ peptides_quality_plot <- function(peptides_quality_summary) {
   if ("group" %in% colnames(peptides_quality_summary)) {
     plot <- plot +
       ggplot2::facet_grid(cluster ~ group, scales = "free_x")
-  } 
-  else {
+  } else {
     plot <- plot + 
       ggplot2::facet_wrap(~cluster, scales = "free_x", ncol = 4)
   }

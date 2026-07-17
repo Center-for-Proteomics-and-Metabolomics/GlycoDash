@@ -69,14 +69,11 @@ mod_data_exploration_server <- function(
       
       if (is_truthy(results_site_occupancy$site_occupancy_data())) {
         results_site_occupancy$site_occupancy_data()
-      } 
-      else if (is_truthy(results_derived_traits$data_with_traits())) {
+      } else if (is_truthy(results_derived_traits$data_with_traits())) {
         results_derived_traits$data_with_traits()
-      } 
-      else if (is_truthy(results_quantitation$data_with_quantities())) {
+      } else if (is_truthy(results_quantitation$data_with_quantities())) {
         results_quantitation$data_with_quantities()
-      } 
-      else {
+      } else {
         results_normalization$normalized_data_wide()
       }
     })

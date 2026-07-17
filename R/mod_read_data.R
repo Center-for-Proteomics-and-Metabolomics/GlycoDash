@@ -410,8 +410,7 @@ mod_read_data_server <- function(id) {
       # GlyCounter
       if (is_skyline && isTRUE(input$skyline_merge_glycounter)) {
         shinyjs::show("div_glycounter")
-      }
-      else {
+      } else {
         shinyjs::hide("div_glycounter")
       }
     })
@@ -424,14 +423,12 @@ mod_read_data_server <- function(id) {
         wrong_file_ext <- subset(
           input$lacytools_input, !grepl("\\.txt$", name, ignore.case = TRUE)
         )
-      } 
-      else if (input$data_type == "Skyline data (wide format)") {
+      } else if (input$data_type == "Skyline data (wide format)") {
         req(input$skyline_input_wide)
         wrong_file_ext <- subset(
           input$skyline_input_wide, !grepl("\\.csv$", name, ignore.case = TRUE)
         )
-      }
-      else if (input$data_type == "SweetSuite data") {
+      } else if (input$data_type == "SweetSuite data") {
         req(input$sweetsuite_input)
         wrong_file_ext <- subset(
           input$sweetsuite_input, !grepl("\\.xlsx$", name, ignore.case = TRUE)
@@ -440,8 +437,7 @@ mod_read_data_server <- function(id) {
     
       if (nrow(wrong_file_ext) > 0) {
         FALSE
-      }
-      else TRUE
+      } else TRUE
     })
     
     
@@ -454,16 +450,14 @@ mod_read_data_server <- function(id) {
           show = !is_truthy(correct_file_ext()),
           text = "Please upload text files."
         )
-      } 
-      else if (input$data_type == "Skyline data (wide format)") {
+      } else if (input$data_type == "Skyline data (wide format)") {
         req(input$skyline_input_wide)
         shinyFeedback::feedbackDanger(
           inputId = "skyline_input_wide",
           show = !is_truthy(correct_file_ext()),
           text = "Please upload CSV files."
         )
-      }
-      else if (input$data_type == "SweetSuite data") {
+      } else if (input$data_type == "SweetSuite data") {
         req(input$sweetsuite_input)
         shinyFeedback::feedbackDanger(
           inputId = "sweetsuite_input",
@@ -481,8 +475,7 @@ mod_read_data_server <- function(id) {
       )
       if (input$data_type == "SweetSuite data") {
         uploaded_files <- input$sweetsuite_input
-      } 
-      else {
+      } else {
         uploaded_files <- input$lacytools_input
       }
       uploaded_files$datapath <- NULL  # Get rid of the "datapath" column
@@ -671,13 +664,11 @@ mod_read_data_server <- function(id) {
           updateSelectizeInput(
             inputId = id, choices = columns, selected = "Precursor.Charge"
           )
-        }
-        else if (grepl("formula", id) && "Molecule.Formula" %in% columns) {
+        } else if (grepl("formula", id) && "Molecule.Formula" %in% columns) {
           updateSelectizeInput(
             inputId = id, choices = columns, selected = "Molecule.Formula"
           )
-        }
-        else {
+        } else {
           updateSelectizeInput(inputId = id, choices = columns)
         }
       }
@@ -704,8 +695,7 @@ mod_read_data_server <- function(id) {
           skyline_protein_column = input$skyline_protein_column,
           skyline_analyte_column = input$skyline_analyte_column
         )
-      } 
-      else {
+      } else {
         active_cols <- c(
           active_cols,
           skyline_cluster_column = input$skyline_cluster_column,
@@ -790,15 +780,13 @@ mod_read_data_server <- function(id) {
       # Optional columns
       if (isTRUE(input$skyline_contains_notes)) {
         notes_column <- input$skyline_note_column
-      }
-      else {
+      } else {
         notes_column <- NULL
       }
       
       if (isTRUE(input$skyline_merge_glycounter)) {
         formula_column <- input$skyline_molecular_formula_column
-      }
-      else {
+      } else {
         formula_column <- NULL
       }
       
@@ -812,8 +800,7 @@ mod_read_data_server <- function(id) {
           notes_colname = notes_column,
           molecular_formula_colname = formula_column
         )
-      }
-      else {
+      } else {
         reformatted <- reformat_skyline_data(
           raw_skyline_data = raw_skyline_data_checked(),
           cluster_colname = input$skyline_cluster_column,
@@ -827,8 +814,7 @@ mod_read_data_server <- function(id) {
       # Rename isomers.
       if (isTRUE(input$skyline_rename_isomers)) {
         rename_skyline_isomers(reformatted)
-      }
-      else {
+      } else {
         reformatted
       }
     }) %>% bindEvent(input$button)
@@ -860,8 +846,7 @@ mod_read_data_server <- function(id) {
         load_glycounter_data(
           setNames(as.list(oxosignal_files), oxosignal_names)
         )
-      }
-      else{
+      } else {
         showNotification(
           ui = paste(
             "No GlyCounter 'OxoSignal' text files were detected!",
@@ -881,8 +866,7 @@ mod_read_data_server <- function(id) {
       
       if (isFALSE(input$skyline_merge_glycounter)) {
         skyline_data_reshaped()
-      }
-      else {
+      } else {
         req(glycounter_data())
         
         tryCatch(
@@ -1013,11 +997,9 @@ mod_read_data_server <- function(id) {
       
       if (is_truthy(lacytools_summaries_combined())) {
         data_to_check <- lacytools_summaries_combined()
-      } 
-      else if (is_truthy(skyline_data_final())) {
+      } else if (is_truthy(skyline_data_final())) {
         data_to_check <- skyline_data_final()
-      }
-      else if (is_truthy(sweetsuite_data())) {
+      } else if (is_truthy(sweetsuite_data())) {
         data_to_check <- sweetsuite_data()
       }
       
@@ -1064,8 +1046,7 @@ mod_read_data_server <- function(id) {
     observeEvent(input$contains_total_and_specific_samples, {
       if (input$contains_total_and_specific_samples) {
         shinyjs::show("keywords_specific_total")
-      } 
-      else {
+      } else {
         shinyjs::hide("keywords_specific_total")
       }
     })
@@ -1080,11 +1061,9 @@ mod_read_data_server <- function(id) {
       ))
       if (is_truthy(lacytools_summaries_combined())) {
         input$lacytools_input$name
-      } 
-      else if (is_truthy(skyline_data_final())) {
+      } else if (is_truthy(skyline_data_final())) {
         input$skyline_input_wide$name
-      }
-      else if (is_truthy(sweetsuite_data())) {
+      } else if (is_truthy(sweetsuite_data())) {
         input$sweetsuite_input$name
       }
     })
@@ -1102,11 +1081,9 @@ mod_read_data_server <- function(id) {
         error = function(e) {
           if (is_truthy(lacytools_summaries_combined())) {
             lacytools_summaries_combined()
-          } 
-          else if (is_truthy(skyline_data_final())) {
+          } else if (is_truthy(skyline_data_final())) {
             skyline_data_final()
-          }
-          else if (is_truthy(sweetsuite_data())) {
+          } else if (is_truthy(sweetsuite_data())) {
             sweetsuite_data()
           }
         }
@@ -1118,11 +1095,9 @@ mod_read_data_server <- function(id) {
       shinyjs::hide("data_type")
       if (input$data_type == "LaCyTools data") {
         shinyjs::show("uploaded_lacytools")
-      } 
-      else if (input$data_type == "Skyline data (wide format)") {
+      } else if (input$data_type == "Skyline data (wide format)") {
         shinyjs::show("uploaded_skyline_wide")
-      }
-      else if (input$data_type == "SweetSuite data") {
+      } else if (input$data_type == "SweetSuite data") {
         shinyjs::show("uploaded_sweetsuite")
       }
     })
@@ -1143,8 +1118,7 @@ mod_read_data_server <- function(id) {
     data_type_to_return <- reactive({
       if (input$data_type == "Skyline data (wide format)") {
         "Skyline data"
-      }
-      else input$data_type
+      } else input$data_type
     })
     
     

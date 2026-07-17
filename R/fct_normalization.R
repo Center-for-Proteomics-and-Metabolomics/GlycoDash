@@ -33,8 +33,7 @@ calculate_total_intensity <- function(
       "sample_name", 
       "analyte"
     )
-  } 
-  else if (data_type == "Skyline data") {
+  } else if (data_type == "Skyline data") {
     required_columns <- c(
       "total_area", 
       "sample_name", 
@@ -82,8 +81,7 @@ calculate_total_intensity <- function(
         total_absolute_intensity = sum(intensity_by_fraction, na.rm = TRUE)
       ) %>% 
       dplyr::ungroup()
-  } 
-  else if (data_type == "Skyline data") {
+  } else if (data_type == "Skyline data") {
     # No fraction in case of skyline data
     total_intensities <- data %>% 
       dplyr::group_by(
@@ -248,11 +246,9 @@ sample_heatmap <- function(
   facet_formula <- NULL
   if (!identical(group_facet, "") && "group" %in% colnames(to_plot)) {
     facet_formula <- stats::as.formula(paste("group ~", group_facet))
-  } 
-  else if (!identical(group_facet, "")) {
+  } else if (!identical(group_facet, "")) {
     facet_formula <- stats::as.formula(paste("~", group_facet))
-  } 
-  else if ("group" %in% colnames(to_plot)) {
+  } else if ("group" %in% colnames(to_plot)) {
     facet_formula <- stats::as.formula("~ group")
   }
   
@@ -316,16 +312,13 @@ cluster_heatmap <- function(
   if (!identical(group_facet, "") && "group" %in% colnames(to_plot)) {
     to_plot <- to_plot %>%
       dplyr::group_by(.data[[group_facet]], group, cluster, analyte)
-  } 
-  else if (!identical(group_facet, "")) {
+  } else if (!identical(group_facet, "")) {
     to_plot <- to_plot %>%
       dplyr::group_by(.data[[group_facet]], cluster, analyte)
-  } 
-  else if ("group" %in% colnames(to_plot)) {
+  } else if ("group" %in% colnames(to_plot)) {
     to_plot <- to_plot %>%
       dplyr::group_by(group, cluster, analyte)
-  } 
-  else {
+  } else {
     to_plot <- to_plot %>%
       dplyr::group_by(cluster, analyte)
   }
@@ -385,11 +378,9 @@ cluster_heatmap <- function(
   facet_formula <- NULL
   if (!identical(group_facet, "") && "group" %in% colnames(to_plot)) {
     facet_formula <- stats::as.formula(paste("group ~", group_facet))
-  } 
-  else if (!identical(group_facet, "")) {
+  } else if (!identical(group_facet, "")) {
     facet_formula <- stats::as.formula(paste("~", group_facet))
-  } 
-  else if ("group" %in% colnames(to_plot)) {
+  } else if ("group" %in% colnames(to_plot)) {
     facet_formula <- stats::as.formula("~ group")
   }
   

@@ -59,8 +59,7 @@ mod_tab_curated_analytes_server <- function(
           selected_cluster = cluster,
           bio_groups_colname = biogroup_column
         )
-      }
-      else if (info$curation_method == "Based on average QC parameters") {
+      } else if (info$curation_method == "Based on average QC parameters") {
         plot_analyte_curation_averages(
           curated_analytes = info$curated_analytes,
           cut_off_averages = info$cut_offs_averages,
@@ -190,8 +189,7 @@ mod_tab_curated_analytes_server <- function(
           ids_to_check,
           ~ updateCheckboxInput(session = session, inputId = .x, value = TRUE)
         )
-      } 
-      else {
+      } else {
         charge_columns <- stringr::str_subset(
           colnames(curated_analytes_table())[-1],
           "Include",
@@ -266,8 +264,7 @@ mod_tab_curated_analytes_server <- function(
       tab_clicked <- !is.null(input[[paste0("checkbox", charge_columns[1], 1)]])
       if (tab_clicked) {
         analytes_to_include_per_charge
-      }
-      else {
+      } else {
         curated_analytes_table() %>% 
           dplyr::select(., "analyte", charge_columns) %>% 
           tidyr::pivot_longer(., cols = charge_columns, names_to = "charge") %>% 

@@ -171,8 +171,7 @@ mod_add_metadata_server <- function(
           sample_id_inputIds(),
           ~ is_truthy(input[[.x]])
         ))
-      } 
-      else TRUE
+      } else TRUE
     })
     
     
@@ -255,8 +254,7 @@ mod_add_metadata_server <- function(
         )
 
         NULL
-      } 
-      else {
+      } else {
         rv$forbidden_colnames <- NULL
         merged_metadata
       }
@@ -291,8 +289,7 @@ mod_add_metadata_server <- function(
       if (all_unique) {
         rv$non_unique_ids <- NULL
         TRUE
-      } 
-      else {
+      } else {
         # Show table with duplicate sample IDs
         rv$non_unique_ids <- sample_ids[duplicated(sample_ids)]
         shinyalert::shinyalert(
@@ -351,8 +348,7 @@ mod_add_metadata_server <- function(
       
       if (rlang::is_empty(unmatched)) {
         "none"
-      } 
-      else {
+      } else {
         unmatched
       }
     })
@@ -420,8 +416,7 @@ mod_add_metadata_server <- function(
       )) {
         dplyr::left_join(data(), merged_metadata(), by = "sample_id") %>% 
           dplyr::relocate(colnames(merged_metadata())[-1], .after = sample_id)
-      } 
-      else {
+      } else {
         NULL
       }
     })

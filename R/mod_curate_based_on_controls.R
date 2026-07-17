@@ -159,8 +159,7 @@ mod_curate_based_on_controls_server <- function(
         updateSelectizeInput(inputId = "cut_off_basis",
                              choices = options)
         
-      } 
-      else {
+      } else {
         options_specific <- get_sample_type_options(
           summarized_checks = r$sample_types,
           total_or_specific_keyword = results_data_import$keyword_specific()
@@ -225,8 +224,7 @@ mod_curate_based_on_controls_server <- function(
         
         dplyr::full_join(cut_offs_specific, cut_offs_total)
         
-      } 
-      else {
+      } else {
         calculate_cut_offs(
           summarized_checks(),
           control_sample_types = input$cut_off_basis,

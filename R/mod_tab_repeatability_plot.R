@@ -45,8 +45,7 @@ mod_tab_repeatability_plot_server <- function(
             showNotification(c$message, type = "error", duration = NULL)
             NULL
           })
-      } 
-      else {
+      } else {
         req(my_data(), selected_sample_id())
         
         tryCatch(

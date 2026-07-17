@@ -261,8 +261,7 @@ mod_analyte_curation_server <- function(
         shinyjs::show("div_curation_pct_avg")
         if (input$curate_per_group) {
           shinyjs::show("div_biological_groups")
-        } 
-        else {
+        } else {
           shinyjs::hide("div_biological_groups")
         }
         if (input$curation_method == "Based on percentages of passing spectra") {
@@ -271,22 +270,18 @@ mod_analyte_curation_server <- function(
           if (input$cut_offs_per_cluster) {
             shinyjs::hide("cut_off_percentages")
             shinyjs::show("cluster_cut_offs_percentages")
-          }
-          else {
+          } else {
             shinyjs::show("cut_off_percentages")
             shinyjs::hide("cluster_cut_offs_percentages")
           }
-        }
-        else if (input$curation_method == "Based on average QC parameters") {
+        } else if (input$curation_method == "Based on average QC parameters") {
           shinyjs::hide("div_cutoff_percentages")
           shinyjs::show("div_cutoff_averages")
         }
-      }
-      else if (input$curation_method == "Per sample") {
+      } else if (input$curation_method == "Per sample") {
         shinyjs::hide("div_curation_list")
         shinyjs::hide("div_curation_pct_avg")
-      }
-      else if (input$curation_method == "Supply an analyte list") {
+      } else if (input$curation_method == "Supply an analyte list") {
         shinyjs::show("div_curation_list")
         shinyjs::hide("div_curation_pct_avg")
       }
@@ -298,8 +293,7 @@ mod_analyte_curation_server <- function(
     observeEvent(data_type(), {
       if (data_type() %in% c("LaCyTools data", "SweetSuite data")) {
         qc$parameters <- c("Mass accuracy", "Isotopic pattern quality", "S/N")
-      }
-      else if (data_type() == "Skyline data") {
+      } else if (data_type() == "Skyline data") {
         qc$parameters <- c("Mass accuracy", "Isotope dot product", "Total area")
       }
     })
@@ -317,8 +311,7 @@ mod_analyte_curation_server <- function(
         shinyjs::show("avg_sn")
         shinyjs::hide("avg_idp")
         shinyjs::hide("avg_total_area")
-      }
-      else if (data_type() == "Skyline data") {
+      } else if (data_type() == "Skyline data") {
         shinyjs::hide("avg_ipq")
         shinyjs::hide("avg_sn")
         shinyjs::show("avg_idp")
@@ -474,14 +467,12 @@ mod_analyte_curation_server <- function(
       
       if (input$curation_method == "Per sample") {
         without_nonglycosylated
-      }
-      else if (is_truthy(input$sample_types_to_ignore)) {
+      } else if (is_truthy(input$sample_types_to_ignore)) {
         throw_out_samples(
           passing_spectra = without_nonglycosylated,
           samples_to_ignore = input$sample_types_to_ignore
         )
-      }
-      else {
+      } else {
         without_nonglycosylated
       }
     })
@@ -506,8 +497,7 @@ mod_analyte_curation_server <- function(
           min_sn = results_spectra_curation$sn(),
           criteria_to_consider = input$qc_to_include
         )
-      } 
-      else if (data_type() == "Skyline data") {
+      } else if (data_type() == "Skyline data") {
         check_analyte_quality_criteria_skyline(
           without_samples_to_ignore(),
           min_ppm_deviation = results_spectra_curation$mass_acc()[1],
@@ -535,8 +525,7 @@ mod_analyte_curation_server <- function(
             .default = input[[cluster]]
           )
         }) %>% purrr::set_names(clusters)
-      }
-      else {
+      } else {
         purrr::map(clusters, function(cluster) {
           dplyr::case_when(
             input$cut_off_percentages < 0 ~ 0,
@@ -597,15 +586,13 @@ mod_analyte_curation_server <- function(
               cut_offs_percentages = cut_offs_percentages(),
               bio_groups_colname = input$biogroup_column
             )
-        }
-        else {
+        } else {
           curate_analytes(
             checked_analytes(), 
             cut_offs_percentages = cut_offs_percentages()
           )
         }
-      }
-      else if (input$curation_method == "Based on average QC parameters") {
+      } else if (input$curation_method == "Based on average QC parameters") {
         req(checked_analytes(), cut_offs_averages())
         if (input$curate_per_group) {
           checked_analytes() %>% 
@@ -622,8 +609,7 @@ mod_analyte_curation_server <- function(
               bio_groups_colname = input$biogroup_column,
               qc_to_include = input$qc_to_include
             )
-        }
-        else {
+        } else {
           curate_analytes(
             checked_analytes(),
             cut_offs_averages = cut_offs_averages(),
@@ -632,14 +618,12 @@ mod_analyte_curation_server <- function(
             qc_to_include = input$qc_to_include
           )
         }
-      }
-      else if (input$curation_method == "Per sample") {
+      } else if (input$curation_method == "Per sample") {
         req(checked_analytes())
         checked_analytes() %>% 
           dplyr::rename(has_passed_analyte_curation = analyte_meets_criteria) %>% 
           dplyr::select(-failed_criteria)
-      }
-      else if (input$curation_method == "Supply an analyte list") {
+      } else if (input$curation_method == "Supply an analyte list") {
         req(analyte_list(), passing_spectra())
         tryCatch(
           expr = {
@@ -661,8 +645,7 @@ mod_analyte_curation_server <- function(
       req(curated_analytes())
       if (nrow(curated_analytes()) > 0) {
         TRUE
-      }
-      else FALSE
+      } else FALSE
     })
     
     observeEvent(check_curated_analytes(), {
@@ -683,8 +666,7 @@ mod_analyte_curation_server <- function(
       if (input$curation_method == "Per sample") {
         # Left join not necessary when curation is done per sample.
         curated_analytes()
-      }
-      else {
+      } else {
         # This combines the info from curated_analytes (whether analytes pass or not)
         # with the output of the passing spectra.
         # The order here is important in the case of curation per biological group,
@@ -784,8 +766,7 @@ mod_analyte_curation_server <- function(
         to_return <- analyte_curated_data() %>% 
           dplyr::filter(has_passed_analyte_curation) %>% 
           dplyr::select(-has_passed_analyte_curation, -uncalibrated)
-      }
-      else {
+      } else {
         req(
           passing_spectra(), !rlang::is_empty(r$mod_results),
           all(purrr::map_lgl(r$mod_results, ~is_truthy(.x$analytes_to_include())))

@@ -198,8 +198,7 @@ mod_clusters_server <- function(
       if (is_truthy(peptides())) {
         shinyjs::show("info_peptides")
         shinyjs::show("peptides_table")
-      } 
-      else {
+      } else {
         shinyjs::hide("info_peptides")
         shinyjs::hide("peptides_table")
       }

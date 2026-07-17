@@ -336,8 +336,7 @@ mod_add_sample_ids_server <- function(
           plate_design_specific$filename(), 
           plate_design_total$filename()
         ))
-      } 
-      else {
+      } else {
         plate_design$filename()
       }
     })
@@ -375,15 +374,13 @@ mod_add_sample_ids_server <- function(
           with_sample_ids <- dplyr::left_join(
             summary_with_plate_well, plate_design_combined()
           )
-        } 
-        else {
+        } else {
           req(plate_design$plate_design(), !is.null(summary_with_plate_well))
           with_sample_ids <- dplyr::left_join(
             summary_with_plate_well, plate_design$plate_design()
           )
         }
-      } 
-      else {
+      } else {
         req(sample_list$sample_list())
         with_sample_ids <- dplyr::left_join(data(), sample_list$sample_list())
       }

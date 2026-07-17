@@ -32,8 +32,7 @@ find_choices_for_repeatability_menu <- function(normalized_data) {
         paste("group:", group, "sample_id:", sample_id)
       }
     )
-  } 
-  else {
+  } else {
     choices <- paste("sample_id:", menu_df$sample_id)
   }
   

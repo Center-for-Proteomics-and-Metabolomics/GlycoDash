@@ -461,8 +461,7 @@ mod_derived_traits_server <- function(
         function(antibody_type) {
           if (antibody_type %in% input$antibody_types) {
             showTab(inputId = "tabs", target = antibody_type, select = TRUE)
-          } 
-          else {
+          } else {
             hideTab(inputId = "tabs", target = antibody_type)
           }
         }
@@ -638,8 +637,7 @@ mod_derived_traits_server <- function(
           confirmButtonCol = "tomato"
         )
         r$correct_formatting <- FALSE
-      } 
-      else {
+      } else {
         # Then check for spaces in trait names
         if (any(grepl(" ", traits_excel()$trait))) {
           shinyalert::shinyalert(
@@ -744,14 +742,12 @@ mod_derived_traits_server <- function(
             selected_traits, "Sialic acids", "Galactoses", "GalNAcs"
           ))
         )
-      }
-      else if (sial_per_gal && !all(sial, gal)) {
+      } else if (sial_per_gal && !all(sial, gal)) {
         shinyWidgets::updateAwesomeCheckboxGroup(
           inputId = "human_IgA_O_traits",
           selected = unique(c(selected_traits, "Sialic acids", "Galactoses"))
         )
-      }
-      else if (gal_per_galnac && !all(gal, galnacs)) {
+      } else if (gal_per_galnac && !all(gal, galnacs)) {
         shinyWidgets::updateAwesomeCheckboxGroup(
           inputId = "human_IgA_O_traits",
           selected = unique(c(selected_traits, "Galactoses", "GalNAcs"))
@@ -1084,14 +1080,11 @@ mod_derived_traits_server <- function(
     with_data <- reactive({
       if (is_truthy(data_with_all_traits())) {
         data_with_all_traits()
-      } 
-      else if (is_truthy(data_with_derived_traits())) {
+      } else if (is_truthy(data_with_derived_traits())) {
         data_with_derived_traits()
-      } 
-      else if (is_truthy(data_with_custom_traits())) {
+      } else if (is_truthy(data_with_custom_traits())) {
         data_with_custom_traits()
-      } 
-      else if (is_truthy(normalized_data_wide())) {
+      } else if (is_truthy(normalized_data_wide())) {
         normalized_data_wide()
       }
     })
@@ -1108,8 +1101,7 @@ mod_derived_traits_server <- function(
             tidyselect::contains("_quantity"), 
             .after = tidyselect::contains("_sum_intensity")
           )
-      } 
-      else {
+      } else {
         with_data()
       }
     })

@@ -96,8 +96,7 @@ detect_plate_and_well <- function(data) {
           "Please check that the sample names are formatted correctly."
         )
       )
-    } 
-    else {
+    } else {
       rlang::abort(
         class = "plate_well_NAs",
         message = paste(
@@ -302,8 +301,7 @@ process_plate_design <- function(plate_design) {
   if (all(is.na(plate_numbers))) {
     # No plate numbers could be parsed: fall back to simple sequential numbering.
     colnames(plate_design)[-1] <- as.character(1:(ncol(plate_design) - 1))
-  } 
-  else {
+  } else {
     # Validate that parsed plate numbers are unique to avoid duplicate column
     # names, which would cause issues in the pivot_longer() operation below.
     parsed_numbers <- plate_numbers[!is.na(plate_numbers)]
@@ -329,8 +327,7 @@ process_plate_design <- function(plate_design) {
     
     if (length(used_numbers) == 0L) {
       next_candidate <- 1L
-    } 
-    else {
+    } else {
       next_candidate <- max(used_numbers, na.rm = TRUE) + 1L
     }
     
