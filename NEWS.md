@@ -1,3 +1,10 @@
+# v1.12.1
+## Changed
+- Remove `mz_exact` as a required column in SweetSuite data. The values are 
+not required for processing, and the column is renamed in newer SweetSuite
+versions.
+
+
 # v1.12.0
 ## Added
 * Data import: option to merge Skyline data with GlyCounter fragmentation data.

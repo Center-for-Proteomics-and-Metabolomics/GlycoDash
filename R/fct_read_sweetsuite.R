@@ -37,7 +37,7 @@ read_sweetsuite_data <- function(datapaths) {
     
     # Check for required columns
     required_cols <- c(
-      "file", "analyte", "charge", "mz_exact", "isotopic_fraction",
+      "file", "analyte", "charge", "isotopic_fraction",
       "total_area_background_subtracted", "mass_error_ppm",
       "isotopic_pattern_quality", "signal_to_noise"
     )
