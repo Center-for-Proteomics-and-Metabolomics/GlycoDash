@@ -1,0 +1,55 @@
+cff-version: 1.2.0
+title: GlycoDash
+type: software
+repository: https://github.com/Center-for-Proteomics-and-Metabolomics/GlycoDash
+identifiers:
+- type: other
+  value: GlycoDash
+  description: bio.tools
+license: MIT
+keywords:
+- term: Biochemistry
+  uri: http://edamontology.org/topic_3292
+- term: Proteomics
+  uri: http://edamontology.org/topic_0121
+abstract: GlycoDash is an R Shiny dashboard for processing glycomics data obtained
+  from LaCyTools, SweetSuite and Skyline.
+message: If you use this software, please cite it and the Primary publications below.
+references:
+- doi: 10.1007/s00216-025-05794-3
+  title: 'GlycoDash: automated, visually assisted curation of glycoproteomics datasets
+    for large sample numbers.'
+  authors:
+  - first_name: Tamas
+    last_name: Pongracz
+  - first_name: Steinar
+    last_name: Gijze
+  - first_name: Agnes L
+    last_name: Hipgrave Ederveen
+  - first_name: Rico J E
+    last_name: Derks
+  - first_name: David
+    last_name: Falck
+  year: 2025
+  page_start: 2003
+  page_end: 2014
+  pub_type: article
+preferred-citation:
+  doi: 10.1007/s00216-025-05794-3
+  title: 'GlycoDash: automated, visually assisted curation of glycoproteomics datasets
+    for large sample numbers.'
+  authors:
+  - first_name: Tamas
+    last_name: Pongracz
+  - first_name: Steinar
+    last_name: Gijze
+  - first_name: Agnes L
+    last_name: Hipgrave Ederveen
+  - first_name: Rico J E
+    last_name: Derks
+  - first_name: David
+    last_name: Falck
+  year: 2025
+  page_start: 2003
+  page_end: 2014
+  pub_type: article
