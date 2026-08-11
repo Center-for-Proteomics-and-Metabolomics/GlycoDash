@@ -383,9 +383,16 @@ mod_derived_traits_ui <- function(id) {
                 ns("dropdown_content"),
                 " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
               ))),
-              div(id = ns("dropdown_content"),
-                  downloadButton(ns("download_ex_custom_formulas"),
-                                 "Download an example Excel file")),
+              div(
+                id = ns("dropdown_content"),
+                tags$a(
+                  href = "www/custom_traits_formulas_example.xlsx",
+                  download = "custom_traits_formulas_example.xlsx",
+                  class = "btn btn-default",
+                  icon("download"),
+                  "Download example file"
+                )
+              ),
               icon = icon("paperclip", class = "ml"),
               tooltip = shinyWidgets::tooltipOptions(placement = "top",
                                                      title = "Example"),

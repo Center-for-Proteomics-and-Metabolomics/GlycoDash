@@ -64,13 +64,19 @@ mod_add_sample_ids_ui <- function(id) {
           ))),
           div(
             id = ns("dropdown_content"),
-            downloadButton(
-              ns("download_ex_plate_design"),
-              "Download a plate design example file"
+            tags$a(
+              href = "www/plate_layout_example.xlsx",
+              download = "plate_layout_example.xlsx",
+              class = "btn btn-default",
+              icon("download"),
+              "Download example plate design file"
             ),
-            downloadButton(
-              ns("download_ex_sample_list"),
-              "Download a sample list example file"
+            tags$a(
+              href = "www/sample_list_example.xlsx",
+              download = "sample_list_example.xlsx",
+              class = "btn btn-default",
+              icon("download"),
+              "Download example sample list file"
             )
           ),
           icon = icon("paperclip", class = "ml"),
@@ -406,34 +412,6 @@ mod_add_sample_ids_server <- function(
       
       dplyr::full_join(replicates, with_sample_ids)
     })
-    
-    
-    output$download_ex_plate_design <- downloadHandler(
-      filename = "plate_layout_example.xlsx",
-      content = function(file) {
-        example_file <- system.file(
-          "app",
-          "www",
-          "plate_layout_example.xlsx",
-          package = "GlycoDash"
-        )
-        file.copy(example_file, file)
-      }
-    )
-    
-    output$download_ex_sample_list <- downloadHandler(
-      filename = "sample_list_example.xlsx",
-      content = function(file) {
-        example_file <- system.file(
-          "app",
-          "www",
-          "sample_list_example.xlsx",
-          package = "GlycoDash"
-        )
-        file.copy(example_file, file)
-      }
-    )
-    
     
     
     return(list(

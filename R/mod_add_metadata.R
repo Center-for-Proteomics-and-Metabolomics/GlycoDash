@@ -55,9 +55,12 @@ mod_add_metadata_ui <- function(id){
           ))),
           div(
             id = ns("dropdown_content"),
-            downloadButton(
-              ns("download_example_metadata"),
-              "Download a metadata example file"
+            tags$a(
+              href = "www/metadata_example.xlsx",
+              download = "metadata_example.xlsx",
+              class = "btn btn-default",
+              icon("download"),
+              "Download example metadata file"
             )
           ),
           icon = icon("paperclip", class = "ml"),
