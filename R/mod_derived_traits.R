@@ -394,8 +394,10 @@ mod_derived_traits_ui <- function(id) {
                 )
               ),
               icon = icon("paperclip", class = "ml"),
-              tooltip = shinyWidgets::tooltipOptions(placement = "top",
-                                                     title = "Example"),
+              tooltip = shinyWidgets::tooltipOptions(
+                placement = "top",
+                title = "Example"
+              ),
               width = "330px",
               size = "xs"
             )
@@ -403,9 +405,10 @@ mod_derived_traits_ui <- function(id) {
           width = 5,
           solidHeader = TRUE,
           status = "primary",
-          fileInput(ns("custom_traits_file"),
-                    "Upload Excel file with custom glycosylation traits formulas:"
-                    )
+          fileInput(
+            ns("custom_traits_file"),
+            "Upload Excel file with custom glycosylation traits formulas:"
+          )
         ),
         
         shinydashboard::box(
@@ -430,7 +433,6 @@ mod_derived_traits_ui <- function(id) {
   )
 }
     
-
 
 
 #' derived_traits Server Functions
