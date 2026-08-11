@@ -1,3 +1,11 @@
+# v1.12.2
+## Fixed
+- Fixed a bug where example `xlsx` files could not be downloaded when running GlycoDash in a Docker container.
+
+## Changed
+- Minor improvements in the user interface.
+
+
 # v1.12.1
 ## Changed
 - Remove `mz_exact` as a required column in SweetSuite data. The values are 
