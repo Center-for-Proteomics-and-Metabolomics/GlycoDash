@@ -21,27 +21,5 @@ The original dataframe my_data with an additional column
   Also removes the criteria columns depending on data_type.
 }
 \description{
-Optimized version: Avoids pivot_longer and uses vectorized row-wise checks for
-failed criteria. This approach improves performance for wide dataframes and
-maintains the same output as the original implementation. Error handling is preserved.
-}
-\examples{
-data(example_data)
-
-checked <- check_criteria_lacytools(my_data = example_data,
-                     min_ppm_deviation = -20,
-                     max_ppm_deviation = 20,
-                     max_ipq = 0.2,
-                     min_sn = 9)
-
-applied <- apply_chosen_criteria(my_data = checked,
-                                 criteria_to_consider = c("Mass accuracy",
-                                                          "S/N",
-                                                          "IPQ"))
-
-report_failed_criteria(my_data = applied,
-                       criteria_to_consider = c("Mass accuracy",
-                                               "S/N",
-                                               "IPQ"),
-                       data_type = "LaCyTools")
+Report which analyte quality criteria were not met
 }

@@ -17,7 +17,14 @@ mod_tab_curated_analytes_ui <- function(id) {
       br(),
       shinyWidgets::materialSwitch(
         ns("check_all"),
-        HTML("<i style='font-size:15px;'> If one charge state has passed curation, also select all other charge states for further analysis </i>"),
+        HTML(
+          "
+          <i style='font-size:15px;'> 
+          If one charge state has passed curation, also select all other 
+          charge states for further analysis 
+          </i>
+          "
+        ),
         right = TRUE,
         status = "success"
       ),
@@ -27,13 +34,17 @@ mod_tab_curated_analytes_ui <- function(id) {
   )
 }
     
+
+
 #' tab_curated_analytes Server Function
 #'
 #' @noRd 
-mod_tab_curated_analytes_server <- function(id, 
-                                            info, 
-                                            cluster, 
-                                            biogroup_column) {
+mod_tab_curated_analytes_server <- function(
+    id, 
+    info, 
+    cluster, 
+    biogroup_column  
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -48,8 +59,7 @@ mod_tab_curated_analytes_server <- function(id,
           selected_cluster = cluster,
           bio_groups_colname = biogroup_column
         )
-      }
-      else if (info$curation_method == "Based on average QC parameters") {
+      } else if (info$curation_method == "Based on average QC parameters") {
         plot_analyte_curation_averages(
           curated_analytes = info$curated_analytes,
           cut_off_averages = info$cut_offs_averages,
@@ -65,8 +75,10 @@ mod_tab_curated_analytes_server <- function(id,
     })
     
     observe({
-      shinyjs::toggle(id = "plot",
-                      condition = is_truthy(curated_analytes_plot()))
+      shinyjs::toggle(
+        id = "plot",
+        condition = is_truthy(curated_analytes_plot())
+      )
     })
     
     # The code to create a datatable with checkboxes is based on:
@@ -74,10 +86,12 @@ mod_tab_curated_analytes_server <- function(id,
     # These functions are defined within this module instead of in
     # fct_analyte_curation.R, because inside the function ns() is used and the
     # ns() function is only available within the module:
-    create_multiple_shinyInputs <- function(shinyInput_function, 
-                                            number_of_inputs, 
-                                            inputId, 
-                                            values) {
+    create_multiple_shinyInputs <- function(
+        shinyInput_function, 
+        number_of_inputs, 
+        inputId, 
+        values
+      ) {
       vector_with_inputs <- character(number_of_inputs)
       for (i in seq_len(number_of_inputs)) {
         vector_with_inputs[i] <- as.character(
@@ -88,11 +102,11 @@ mod_tab_curated_analytes_server <- function(id,
           )
         )
       }
+      
       return(vector_with_inputs)
     }
     
-    retrieve_shinyInput_values <- function(inputId, 
-                                           number_of_inputs) {
+    retrieve_shinyInput_values <- function(inputId, number_of_inputs) {
       unlist(lapply(
         seq_len(number_of_inputs), 
         function(i) {
@@ -124,77 +138,93 @@ mod_tab_curated_analytes_server <- function(id,
       
       table_with_checkboxes <- table %>% 
         dplyr::mutate(
-          dplyr::across(tidyselect::all_of(charge_columns),
-                        ~ create_multiple_shinyInputs(
-                          shinyInput_function = checkboxInput,
-                          number_of_inputs = nrow(table),
-                          inputId = paste0("checkbox", dplyr::cur_column()),
-                          values = dplyr::if_else(.x == "Yes", 
-                                                  TRUE, 
-                                                  FALSE)
-                        ),
-                        .names = "Include {col} in further analysis")
+          dplyr::across(
+            tidyselect::all_of(charge_columns),
+            ~ create_multiple_shinyInputs(
+              shinyInput_function = checkboxInput,
+              number_of_inputs = nrow(table),
+              inputId = paste0("checkbox", dplyr::cur_column()),
+              values = dplyr::if_else(.x == "Yes", TRUE, FALSE)
+            ),
+            .names = "Include {col} in further analysis"
+          )
         ) %>% 
-        dplyr::select(analyte,
-                      tidyselect::contains(charge_columns))
+        dplyr::select(analyte, tidyselect::contains(charge_columns))
       
       return(table_with_checkboxes)
     })
+    
     
     observe({
       req(curated_analytes_table())
 
       if (is_truthy(input$check_all)) {
         
-        charge_columns <- stringr::str_subset(colnames(curated_analytes_table())[-1],
-                                              "Include",
-                                              negate = TRUE)
+        charge_columns <- stringr::str_subset(
+          colnames(curated_analytes_table())[-1],
+          "Include",
+          negate = TRUE
+        )
+        
         checkbox_ids <- paste0("checkbox", charge_columns)
         
         to_check <- curated_analytes_table() %>% 
-          dplyr::filter(dplyr::if_any(tidyselect::all_of(charge_columns),
-                                      ~ .x == "Yes")) %>% 
+          dplyr::filter(
+            dplyr::if_any(tidyselect::all_of(charge_columns), ~ .x == "Yes")
+          ) %>% 
           dplyr::pull(analyte)
         
-        to_check_indices <- which(curated_analytes_table()$analyte %in% to_check)
+        to_check_indices <- which(
+          curated_analytes_table()$analyte %in% to_check
+        )
         
-        ids_to_check <- sapply(paste0("checkbox", charge_columns), 
-                               paste0,
-                               to_check_indices) %>% 
+        ids_to_check <- sapply(
+          paste0("checkbox", charge_columns), 
+          paste0,
+          to_check_indices
+        ) %>% 
           c()
         
-        purrr::map(ids_to_check,
-                   ~ updateCheckboxInput(session = session,
-                                         inputId = .x,
-                                         value = TRUE))
+        purrr::map(
+          ids_to_check,
+          ~ updateCheckboxInput(session = session, inputId = .x, value = TRUE)
+        )
       } else {
-        charge_columns <- stringr::str_subset(colnames(curated_analytes_table())[-1],
-                                              "Include",
-                                              negate = TRUE)
+        charge_columns <- stringr::str_subset(
+          colnames(curated_analytes_table())[-1],
+          "Include",
+          negate = TRUE
+        )
         
-        purrr::map(charge_columns,
-                   function(charge_column) {
-                     purrr::map(1:nrow(curated_analytes_table()),
-                                function(row_index) {
-                                  updateCheckboxInput(session = session,
-                                                      inputId = paste0("checkbox", 
-                                                                       charge_column, 
-                                                                       row_index),
-                                                      value = dplyr::if_else(
-                                                        curated_analytes_table()[[row_index, charge_column]] == "Yes",
-                                                        TRUE,
-                                                        FALSE)
-                                  )
-                                })
-                   })
+        purrr::map(
+          charge_columns,
+          function(charge_column) {
+            purrr::map(
+              1:nrow(curated_analytes_table()),
+              function(row_index) {
+                updateCheckboxInput(
+                  session = session,
+                  inputId = paste0("checkbox", charge_column, row_index),
+                  value = dplyr::if_else(
+                    curated_analytes_table()[[row_index, charge_column]] == "Yes",
+                    TRUE,
+                    FALSE
+                  )
+                )
+              }
+            )
+          }
+        )
       }
       
     }) %>% bindEvent(input$check_all)
       
+    
     output$table <- DT::renderDT(server = FALSE, expr = {
       req(curated_analytes_table())
-      
-      create_analyte_curation_table(dataframe_for_table = curated_analytes_table())
+      create_analyte_curation_table(
+        dataframe_for_table = curated_analytes_table()
+      )
     })
     
     
@@ -206,23 +236,25 @@ mod_tab_curated_analytes_server <- function(id,
       )
       
       analytes_to_include_per_charge <- rlang::set_names(charge_columns) %>% 
-        purrr::map_dfc(.,
-                       function(charge_column) {
-                         checkbox_values <- retrieve_shinyInput_values(
-                           inputId = paste0("checkbox", charge_column),
-                           number_of_inputs = nrow(curated_analytes_table())
-                         )
-                         ifelse(checkbox_values,
-                                curated_analytes_table()$analyte,
-                                NA)
-                       }) %>% 
+        purrr::map_dfc(
+          ., function(charge_column) {
+            checkbox_values <- retrieve_shinyInput_values(
+              inputId = paste0("checkbox", charge_column),
+              number_of_inputs = nrow(curated_analytes_table())
+            )
+            ifelse(checkbox_values, curated_analytes_table()$analyte, NA)
+          }
+        ) %>% 
         tidyr::pivot_longer(
           tidyselect::everything(),
           names_to = "charge",
           values_to = "analyte"
         ) %>% 
         dplyr::filter(!is.na(analyte)) %>% 
-        dplyr::mutate(dplyr::across(analyte, as.character))
+        dplyr::mutate(
+          dplyr::across(analyte, as.character),
+          charge = as.integer(charge)
+        )
       
       
       # Fall back to automatic curation results only if the cluster tab has
@@ -231,17 +263,15 @@ mod_tab_curated_analytes_server <- function(id,
       # FALSE (not NULL), so analytes_to_include_per_charge is returned as-is.
       tab_clicked <- !is.null(input[[paste0("checkbox", charge_columns[1], 1)]])
       if (tab_clicked) {
-        to_return <- analytes_to_include_per_charge
-      }
-      else {
-        to_return <- curated_analytes_table() %>% 
+        analytes_to_include_per_charge
+      } else {
+        curated_analytes_table() %>% 
           dplyr::select(., "analyte", charge_columns) %>% 
           tidyr::pivot_longer(., cols = charge_columns, names_to = "charge") %>% 
           dplyr::filter(., value == "Yes") %>% 
-          dplyr::select(., -value)
+          dplyr::select(., -value) %>%
+          dplyr::mutate(charge = as.integer(charge))
       }
-      
-      return(to_return)
     })
     
     
@@ -250,9 +280,11 @@ mod_tab_curated_analytes_server <- function(id,
     auto_curated_analytes <- reactive({
       req(curated_analytes_table())
       
-      charge_columns <- stringr::str_subset(colnames(curated_analytes_table())[-1],
-                                            "Include",
-                                            negate = TRUE)
+      charge_columns <- stringr::str_subset(
+        colnames(curated_analytes_table())[-1],
+        "Include",
+        negate = TRUE
+      )
       
       curated_analytes_table() %>%
         dplyr::select(analyte, tidyselect::all_of(charge_columns)) %>%
@@ -262,14 +294,17 @@ mod_tab_curated_analytes_server <- function(id,
           values_to = "passed"
         ) %>%
         dplyr::filter(passed == "Yes") %>%
-        dplyr::select(-passed)
+        dplyr::select(-passed) %>%
+        dplyr::mutate(charge = as.integer(charge))
     })
 
   
     
-    return(list(plot = curated_analytes_plot,
-                analytes_to_include = analytes_to_include,
-                auto_curated_analytes = auto_curated_analytes))
+    return(list(
+      plot = curated_analytes_plot,
+      analytes_to_include = analytes_to_include,
+      auto_curated_analytes = auto_curated_analytes
+    ))
     
   })
 }

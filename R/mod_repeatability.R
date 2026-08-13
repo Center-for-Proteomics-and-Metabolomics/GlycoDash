@@ -7,7 +7,7 @@
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
-mod_repeatability_ui <- function(id){
+mod_repeatability_ui <- function(id) {
   ns <- NS(id)
   tagList(
     fluidPage(
@@ -26,17 +26,14 @@ mod_repeatability_ui <- function(id){
             title = span(
               id = ns("box_title"),
               "Assess repeatability",
-              actionButton(ns("add_tab"),
-                           "Add a tab",
-                           icon = icon("plus"))
+              actionButton(ns("add_tab"), "Add a tab", icon = icon("plus"))
             ),
             width = NULL,
             solidHeader = TRUE,
             status = "primary",
             tabsetPanel(
               id = ns("tabs"),
-              tabPanel(title = "Standard 1",
-                       uiOutput(ns("first_tab")))
+              tabPanel(title = "Standard 1", uiOutput(ns("first_tab")))
             )
           )
         )
@@ -50,8 +47,12 @@ mod_repeatability_ui <- function(id){
 #' repeatability Server Functions
 #'
 #' @noRd 
-mod_repeatability_server <- function(id, results_normalization, results_data_import){
-  moduleServer( id, function(input, output, session){
+mod_repeatability_server <- function(
+    id, 
+    results_normalization, 
+    results_data_import  
+  ) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     tab_results <- reactiveValues()
@@ -70,9 +71,11 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
       mod_tab_repeatability_ui(ns("tab1"))
     })
     
-    tab_results$tab1 <- mod_tab_repeatability_server("tab1",
-                                                     my_data = normalized_data,
-                                                     contains_total_and_specific_samples = contains_total_and_specific_samples)
+    tab_results$tab1 <- mod_tab_repeatability_server(
+      "tab1",
+      my_data = normalized_data,
+      contains_total_and_specific_samples = contains_total_and_specific_samples
+    )
     
     tab_counter <- reactiveValues(n = 1)
     
@@ -84,31 +87,34 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
       tab_id <- paste0("tab", (tab_counter$n))
       
       # Add a tab:
-      appendTab(inputId = "tabs",
-                tabPanel(
-                  value = paste("Standard",
-                                tab_counter$n), # By giving this value as an 
-                  # argument to removeTab() the tab can be closed.
-                  title = tags$span(
-                    paste("Standard",
-                          tab_counter$n),
-                    # Adding a clickable x-mark icon to close the tab:
-                    tags$span(icon("times"),
-                              style = "margin-left: 5px;",
-                              # When the x-mark icon is clicked a Shiny input
-                              # named input$remove_tab is created with the value
-                              # being the value argument of the tab on which the
-                              # icon was clicked:
-                              onclick = paste0("Shiny.setInputValue(\"", 
-                                               ns("remove_tab"), 
-                                               "\", \"", 
-                                               paste("Standard",
-                                                     tab_counter$n), 
-                                               "\", {priority: \"event\"})"))
-                  ),
-                  # The content of the tab is created in the tab_repeatability module:
-                  mod_tab_repeatability_ui(ns(tab_id))
-                )
+      appendTab(
+        inputId = "tabs",
+        tabPanel(
+          # By giving this value as an argument to removeTab() the tab can be closed.
+          value = paste("Standard", tab_counter$n), 
+          title = tags$span(
+            paste("Standard", tab_counter$n),
+            # Adding a clickable x-mark icon to close the tab:
+            tags$span(
+              icon("times"),
+              style = "margin-left: 5px;",
+              # When the x-mark icon is clicked a Shiny input
+              # named input$remove_tab is created with the value
+              # being the value argument of the tab on which the
+              # icon was clicked:
+              onclick = paste0(
+                "Shiny.setInputValue(\"", 
+                ns("remove_tab"), 
+                "\", \"", 
+                paste("Standard",
+                      tab_counter$n), 
+                "\", {priority: \"event\"})"
+              )
+            )
+          ),
+          # The content of the tab is created in the tab_repeatability module:
+          mod_tab_repeatability_ui(ns(tab_id))
+        )
       )
       
       # The contents of the tab are saved in the reactiveValues list tab_results,
@@ -120,6 +126,7 @@ mod_repeatability_server <- function(id, results_normalization, results_data_imp
       )
       
     }) %>% bindEvent(input$add_tab)
+    
     
     # When an x-mark icon is clicked (so when input$remove_tab changes) that tab
     # is closed:

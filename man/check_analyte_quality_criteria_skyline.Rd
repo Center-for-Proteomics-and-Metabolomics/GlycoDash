@@ -47,15 +47,3 @@ The original dataframe given as the my_data argument, but with 3
 \code{check_analyte_quality_criteria_skyline()} performs an analyte quality criteria check for
 every spectrum in the data.
 }
-\examples{
-data(example_data)
-
-check_analyte_quality_criteria(my_data = example_data,
-                               min_ppm_deviation = -20,
-                               max_ppm_deviation = 20,
-                               min_idp = 0.9,
-                               min_total_area = 0,
-                               criteria_to_consider = c("Mass accuracy",
-                                                        "Isotope dot product",
-                                                        "Total area"))
-}

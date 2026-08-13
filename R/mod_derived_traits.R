@@ -21,9 +21,7 @@ mod_derived_traits_ui <- function(id) {
       "#", ns("box_header"), " .dropdown-menu {background: #333; right: -30px; left: auto; top: 28px;}"
     ))),
     fluidPage(
-      fluidRow(
-        h1("Glycosylation traits"),
-              ),
+      fluidRow(h1("Glycosylation traits")),
       fluidRow(
         shinydashboardPlus::box(
           id = ns("box"),
@@ -34,7 +32,7 @@ mod_derived_traits_ui <- function(id) {
               bsplus::bs_embed_popover(
                 title = "Explanation",
                 content = HTML(
-                  "
+                "
                 Glycosylation traits are calculated based on a reference list
                 containing known glycan compositions. A warning is shown when
                 your data contains analytes with unknown glycan compositions.
@@ -385,12 +383,21 @@ mod_derived_traits_ui <- function(id) {
                 ns("dropdown_content"),
                 " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
               ))),
-              div(id = ns("dropdown_content"),
-                  downloadButton(ns("download_ex_custom_formulas"),
-                                 "Download an example Excel file")),
+              div(
+                id = ns("dropdown_content"),
+                tags$a(
+                  href = "www/custom_traits_formulas_example.xlsx",
+                  download = "custom_traits_formulas_example.xlsx",
+                  class = "btn btn-default",
+                  icon("download"),
+                  "Download example file"
+                )
+              ),
               icon = icon("paperclip", class = "ml"),
-              tooltip = shinyWidgets::tooltipOptions(placement = "top",
-                                                     title = "Example"),
+              tooltip = shinyWidgets::tooltipOptions(
+                placement = "top",
+                title = "Example"
+              ),
               width = "330px",
               size = "xs"
             )
@@ -398,9 +405,10 @@ mod_derived_traits_ui <- function(id) {
           width = 5,
           solidHeader = TRUE,
           status = "primary",
-          fileInput(ns("custom_traits_file"),
-                    "Upload Excel file with custom glycosylation traits formulas:"
-                    )
+          fileInput(
+            ns("custom_traits_file"),
+            "Upload Excel file with custom glycosylation traits formulas:"
+          )
         ),
         
         shinydashboard::box(
@@ -427,14 +435,15 @@ mod_derived_traits_ui <- function(id) {
     
 
 
-
 #' derived_traits Server Functions
 #'
 #' @noRd 
-mod_derived_traits_server <- function(id, 
-                                      results_normalization,
-                                      results_quantitation) {
-  moduleServer(id, function(input, output, session){
+mod_derived_traits_server <- function(
+    id, 
+    results_normalization,
+    results_quantitation  
+  ) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     normalized_data <- reactive({
@@ -450,8 +459,14 @@ mod_derived_traits_server <- function(id,
     # Toggle visibility of tabs, depending on input$antibody_types
     observeEvent(input$antibody_types, {
       purrr::map(
-        c("Human IgG: N-glycans", "Human IgA: N-glycans", "Human IgA: O-glycans", 
-          "Human IgM: N-glycans", "Human Joining Chain: N-glycans", "Mouse IgG: N-glycans"), 
+        c(
+          "Human IgG: N-glycans", 
+          "Human IgA: N-glycans", 
+          "Human IgA: O-glycans", 
+          "Human IgM: N-glycans", 
+          "Human Joining Chain: N-glycans", 
+          "Mouse IgG: N-glycans"
+        ), 
         function(antibody_type) {
           if (antibody_type %in% input$antibody_types) {
             showTab(inputId = "tabs", target = antibody_type, select = TRUE)
@@ -471,168 +486,111 @@ mod_derived_traits_server <- function(id,
     
     observe({
       req(clusters())
-      for (id in c("human_IgG_N_clusters", "mouse_IgG_N_clusters", 
-                   "human_IgA_N47_clusters", "human_IgA_N144_clusters", 
-                   "human_IgA_N205_clusters", "human_IgA_N340_clusters", 
-                   "human_IgA_O_clusters", "human_JC_N_clusters",
-                   "human_IgM_N46_clusters", "human_IgM_N209_clusters", 
-                   "human_IgM_N272_clusters", "human_IgM_N279_clusters", 
-                   "human_IgM_N440_clusters")) {
+      for (id in c(
+        "human_IgG_N_clusters", 
+        "mouse_IgG_N_clusters", 
+        "human_IgA_N47_clusters", 
+        "human_IgA_N144_clusters", 
+        "human_IgA_N205_clusters", 
+        "human_IgA_N340_clusters", 
+        "human_IgA_O_clusters", 
+        "human_JC_N_clusters",
+        "human_IgM_N46_clusters", 
+        "human_IgM_N209_clusters", 
+        "human_IgM_N272_clusters", 
+        "human_IgM_N279_clusters", 
+        "human_IgM_N440_clusters"
+      )) {
         updateSelectizeInput(id, choices = clusters(), session = session)
       }
     })
     
-    ########## Check if all traits should be selected #####################
+    
+    ########## Check if all traits should be selected ##############
+    
     observeEvent(input$human_IgG_N_all, {
-      if (input$human_IgG_N_all) {
-        # Select all traits
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgG_N_traits",
-          selected = traits_choices$human_IgG_N
-        )
-      } else if (!input$human_IgG_N_all) {
-        # Deselect all traits
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgG_N_traits",
-          selected = c("")
-        )
-      }
+      shinyWidgets::updateAwesomeCheckboxGroup(
+        inputId = "human_IgG_N_traits",
+        selected = if (isTRUE(input$human_IgG_N_all)) {
+          traits_choices$human_IgG_N
+        } else {
+          character(0)
+        }
+      )
     })
     
     observeEvent(input$human_IgA_N_all, {
-      if (input$human_IgA_N_all) {
-        # Select all traits
+      glycosylation_sites <- c(
+        "human_IgA_N47",
+        "human_IgA_N144",
+        "human_IgA_N205",
+        "human_IgA_N340"
+      )
+      
+      for (site in glycosylation_sites) {
         shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_N47_traits",
-          selected = traits_choices$human_IgA_N47
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_N144_traits",
-          selected = traits_choices$human_IgA_N144
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_N205_traits",
-          selected = traits_choices$human_IgA_N205
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_N340_traits",
-          selected = traits_choices$human_IgA_N340
-        )
-      } else if (!input$human_IgA_N_all) {
-        # Deselect all traits
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_N47_traits",
-          selected = c("")
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_N144_traits",
-          selected = c("")
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_N205_traits",
-          selected = c("")
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_N340_traits",
-          selected = c("")
+          inputId = paste0(site, "_traits"),
+          selected = if (isTRUE(input$human_IgA_N_all)) {
+            traits_choices[[site]]
+          } else {
+            character(0)
+          }
         )
       }
     })
     
     observeEvent(input$human_IgA_O_all, {
-      if (input$human_IgA_O_all) {
-        # Select all traits
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_O_traits",
-          selected = traits_choices$human_IgA_O
-        )
-      } else if (!input$human_IgA_O_all) {
-        # Deselect all traits
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgA_O_traits",
-          selected = c("")
-        )
-      }
+      shinyWidgets::updateAwesomeCheckboxGroup(
+        inputId = "human_IgA_O_traits",
+        selected = if (isTRUE(input$human_IgA_O_all)) {
+          traits_choices$human_IgA_O
+        } else {
+          character(0)
+        }
+      )
     })
     
     observeEvent(input$human_IgM_N_all, {
-      if (input$human_IgM_N_all) {
-        # Select all traits
+      glycosylation_sites <- c(
+        "human_IgM_N46",
+        "human_IgM_N209",
+        "human_IgM_N272",
+        "human_IgM_N279",
+        "human_IgM_N440"
+      )
+      
+      for (site in glycosylation_sites) {
         shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgM_N46_traits",
-          selected = traits_choices$human_IgM_N46
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgM_N209_traits",
-          selected = traits_choices$human_IgM_N209
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgM_N272_traits",
-          selected = traits_choices$human_IgM_N272
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgM_N279_traits",
-          selected = traits_choices$human_IgM_N279
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgM_N440_traits",
-          selected = traits_choices$human_IgM_N440
-        )
-      } else if (!input$human_IgM_N_all) {
-        # Deselect all traits
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgM_N46_traits",
-          selected = c("")
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgM_N209_traits",
-          selected = c("")
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgM_N272_traits",
-          selected = c("")
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgM_N279_traits",
-          selected = c("")
-        )
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_IgM_N440_traits",
-          selected = c("")
+          inputId = paste0(site, "_traits"),
+          selected = if (isTRUE(input$human_IgM_N_all)) {
+            traits_choices[[site]]
+          } else {
+            character(0)
+          }
         )
       }
     })
     
     observeEvent(input$human_JC_N_all, {
-      if (input$human_JC_N_all) {
-        # Select all traits
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_JC_N_traits",
-          selected = traits_choices$human_JC_N
-        )
-      } else if (!input$human_JC_N_all) {
-        # Deselect all traits
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "human_JC_N_traits",
-          selected = c("")
-        )
-      }
+      shinyWidgets::updateAwesomeCheckboxGroup(
+        inputId = "human_JC_N_traits",
+        selected = if (isTRUE(input$human_JC_N_all)) {
+          traits_choices$human_JC_N
+        } else {
+          character(0)
+        }
+      )
     })
     
     observeEvent(input$mouse_IgG_N_all, {
-      if (input$mouse_IgG_N_all) {
-        # Select all traits
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "mouse_IgG_N_traits",
-          selected = traits_choices$mouse_IgG_N
-        )
-      } else if (!input$mouse_IgG_N_all) {
-        # Deselect all traits
-        shinyWidgets::updateAwesomeCheckboxGroup(
-          inputId = "mouse_IgG_N_traits",
-          selected = c("")
-        )
-      }
+      shinyWidgets::updateAwesomeCheckboxGroup(
+        inputId = "mouse_IgG_N_traits",
+        selected = if (isTRUE(input$mouse_IgG_N_all)) {
+          traits_choices$mouse_IgG_N
+        } else {
+          character(0)
+        }
+      )
     })
     
     
@@ -646,7 +604,7 @@ mod_derived_traits_server <- function(id,
     
     # Check if the extension is OK
     observeEvent(extension(), {
-      shinyFeedback::hideFeedback("custom_traits_file")  # Hide previous feedback, if any
+      shinyFeedback::hideFeedback("custom_traits_file") # Hide previous feedback, if any
       shinyFeedback::feedbackDanger(
         "custom_traits_file",
         !extension() %in% c("xlsx", "xls"),
@@ -656,8 +614,16 @@ mod_derived_traits_server <- function(id,
     
     # Read the custom traits Excel file as a data frame.
     traits_excel <- reactive({
-      req(input$custom_traits_file, extension(), extension() %in% c("xlsx", "xls"))
-      readxl::read_excel(input$custom_traits_file$datapath, col_names = TRUE, col_types = "text")
+      req(
+        input$custom_traits_file, 
+        extension(), 
+        extension() %in% c("xlsx", "xls")
+      )
+      readxl::read_excel(
+        input$custom_traits_file$datapath, 
+        col_names = TRUE, 
+        col_types = "text"
+      )
     })
 
     
@@ -673,7 +639,10 @@ mod_derived_traits_server <- function(id,
         colnames[2] == "formula"
       )) {
         shinyalert::shinyalert(
-          text = "Your Excel file should contain two columns: \"trait\" and \"formula\". Please adjust your file.",
+          text = paste0(
+            "Your Excel file should contain two columns: ", 
+            "\"trait\" and \"formula\". Please adjust your file."
+          ),
           confirmButtonCol = "tomato"
         )
         r$correct_formatting <- FALSE
@@ -681,7 +650,10 @@ mod_derived_traits_server <- function(id,
         # Then check for spaces in trait names
         if (any(grepl(" ", traits_excel()$trait))) {
           shinyalert::shinyalert(
-            text = "Trait names should not contain any spaces. Please adjust your Excel file.",
+            text = paste0(
+              "Trait names should not contain any spaces. ", 
+              "Please adjust your Excel file."
+            ),
             confirmButtonCol = "tomato"
           )
           r$correct_formatting <- FALSE
@@ -689,6 +661,7 @@ mod_derived_traits_server <- function(id,
       }
     }, priority = 10)
 
+    
     # Calculate the custom traits
     data_with_custom_traits <- reactive({
       req(traits_excel(), normalized_data(), r$correct_formatting == TRUE)
@@ -696,7 +669,10 @@ mod_derived_traits_server <- function(id,
         calculate_custom_traits(traits_excel(), normalized_data_wide())
       }, error = function(e) {
         shinyalert::shinyalert(
-          text = "One or more of your formulas contain non-existing analytes. Please check your file and try again.",
+          text = paste0(
+            "One or more of your formulas contain non-existing analytes. ",
+            "Please check your file and try again."
+          ),
           confirmButtonCol = "tomato"
         )
         NULL
@@ -735,15 +711,18 @@ mod_derived_traits_server <- function(id,
         "human_IgM_N272_traits",
         "human_JC_N_traits"
       )
+      
+      sial_per_gal <- "Sialylation per galactose of complex-type glycans"
+      sial <- "Sialylation per antenna of complex-type glycans"
+      gal <- "Galactosylation per antenna of complex-type glycans"
+      
       for (i in seq(length(ids))) {
         id <- ids[[i]]
         selected_traits <- input[[id]]
-        if ("Sialylation per galactose of complex-type glycans" %in% selected_traits) {
-          if (!all("Sialylation per antenna of complex-type glycans" %in% selected_traits,
-                   "Galactosylation per antenna of complex-type glycans" %in% selected_traits)) {
+        if (sial_per_gal %in% selected_traits) {
+          if (!all(sial %in% selected_traits, gal %in% selected_traits)) {
             shinyWidgets::updateAwesomeCheckboxGroup(
-              inputId = id,
-              selected = unique(c(
+              inputId = id, selected = unique(c(
                 selected_traits,
                 "Sialylation per antenna of complex-type glycans",
                 "Galactosylation per antenna of complex-type glycans"
@@ -757,430 +736,317 @@ mod_derived_traits_server <- function(id,
     
     # Also check O-glycans: sialic acids per galactose, and galactoses per GalNAc
     observeEvent(input$human_IgA_O_traits, {
+      
       selected_traits <- input$human_IgA_O_traits
-      if (all("Sialic acids per galactose" %in% selected_traits,
-              "Galactoses per GalNAc" %in% selected_traits)) {
-        if (!all("Sialic acids" %in% selected_traits,
-                 "Galactoses" %in% selected_traits,
-                 "GalNAcs" %in% selected_traits)) {
-          shinyWidgets::updateAwesomeCheckboxGroup(
-            inputId = "human_IgA_O_traits",
-            selected = unique(c(selected_traits, "Sialic acids", "Galactoses", "GalNAcs"))
-          )
-        }
-      }
-      else if ("Sialic acids per galactose" %in% selected_traits) {
-        if (!all("Sialic acids" %in% selected_traits, "Galactoses" %in% selected_traits)) {
-          shinyWidgets::updateAwesomeCheckboxGroup(
-            inputId = "human_IgA_O_traits",
-            selected = unique(c(selected_traits, "Sialic acids", "Galactoses"))
-          )
-        }
-      }
-      else if ("Galactoses per GalNAc" %in% selected_traits) {
-        if (!all("Galactoses" %in% selected_traits, "GalNAcs" %in% selected_traits)) {
-          shinyWidgets::updateAwesomeCheckboxGroup(
-            inputId = "human_IgA_O_traits",
-            selected = unique(c(selected_traits, "Galactoses", "GalNAcs"))
-          )
-        }
+      
+      sial_per_gal <- "Sialic acids per galactose" %in% selected_traits
+      gal_per_galnac <- "Galactoses per GalNAc" %in% selected_traits
+      sial <- "Sialic acids" %in% selected_traits
+      gal <- "Galactoses" %in% selected_traits
+      galnacs <- "GalNAcs" %in% selected_traits
+      
+      if (all(sial_per_gal, gal_per_galnac) && !all(sial, gal, galnacs)) {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_O_traits", selected = unique(c(
+            selected_traits, "Sialic acids", "Galactoses", "GalNAcs"
+          ))
+        )
+      } else if (sial_per_gal && !all(sial, gal)) {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_O_traits",
+          selected = unique(c(selected_traits, "Sialic acids", "Galactoses"))
+        )
+      } else if (gal_per_galnac && !all(gal, galnacs)) {
+        shinyWidgets::updateAwesomeCheckboxGroup(
+          inputId = "human_IgA_O_traits",
+          selected = unique(c(selected_traits, "Galactoses", "GalNAcs"))
+        )
       }
     })
     
     
   
-    ################# DETERMINE FORMULAS FOR DEFAULT TRAITS #########################
+    ############# DETERMINE FORMULAS FOR DEFAULT TRAITS ######################
     
-    #TODO: Reduce the code below
-    
-    # Trait formulas for human IgG
-    human_IgG_N_traits <- reactive({
-      req(input$human_IgG_N_traits)
-      match_traits(input$human_IgG_N_traits)
-    })
-
-    human_IgG_N_formulas <- reactive({
-      req(length(input$human_IgG_N_clusters) > 0, is_truthy(human_IgG_N_traits()))
-      load(system.file("app", "www", "human_IgG_N_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgG_N_traits(), input$human_IgG_N_clusters, human_IgG_N_ref
-        ), c  # c = concatenate
+    # Helper function for creating reactives with trait formulas
+    create_trait_reactives <- function(id) {
+      
+      traits_input_id <- paste0(id, "_traits")
+      clusters_input_id <- paste0(id, "_clusters")
+      reference_name <- paste0(id, "_ref")
+      
+      reference_environment <- new.env()
+      
+      load(
+        system.file(
+          "app",
+          "www",
+          paste0(reference_name, ".rda"),
+          package = "GlycoDash"
+        ),
+        envir = reference_environment
       )
-    })
-
-    # Trait formulas for human IgA N-glycans
-    human_IgA_N47_traits <- reactive({
-      req(input$human_IgA_N47_traits)
-      match_traits(input$human_IgA_N47_traits)
-    })
-
-    human_IgA_N47_formulas <- reactive({
-      req(length(input$human_IgA_N47_clusters) > 0, is_truthy(human_IgA_N47_traits()))
-      load(system.file("app", "www", "human_IgA_N47_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgA_N47_traits(), input$human_IgA_N47_clusters, human_IgA_N47_ref
-        ), c  # c = concatenate
+      
+      reference_data <- reference_environment[[reference_name]]
+      
+      selected_traits <- reactive({
+        req(input[[traits_input_id]])
+        match_traits(input[[traits_input_id]])
+      })
+      
+      formulas <- reactive({
+        req(
+          length(input[[clusters_input_id]]) > 0,
+          is_truthy(selected_traits())
+        )
+        
+        purrr::reduce(
+          create_formula_list(
+            normalized_data(),
+            selected_traits(),
+            input[[clusters_input_id]],
+            reference_data
+          ),
+          c
+        )
+      })
+      
+      list(
+        traits = selected_traits,
+        formulas = formulas
       )
-    })
-
-    human_IgA_N144_traits <- reactive({
-      req(input$human_IgA_N144_traits)
-      match_traits(input$human_IgA_N144_traits)
-    })
-
-    human_IgA_N144_formulas <- reactive({
-      req(length(input$human_IgA_N144_clusters) > 0, is_truthy(human_IgA_N144_traits()))
-      load(system.file("app", "www", "human_IgA_N144_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgA_N144_traits(), input$human_IgA_N144_clusters, human_IgA_N144_ref
-        ), c  # c = concatenate
+    }
+    
+    # Human IgG N-glycans
+    human_IgG_N <- create_trait_reactives("human_IgG_N")
+    human_IgG_N_traits <- human_IgG_N$traits
+    human_IgG_N_formulas <- human_IgG_N$formulas
+    
+    # Human IgA N-glycans
+    human_IgA_N47 <- create_trait_reactives("human_IgA_N47")
+    human_IgA_N47_traits <- human_IgA_N47$traits
+    human_IgA_N47_formulas <- human_IgA_N47$formulas
+    
+    human_IgA_N144 <- create_trait_reactives("human_IgA_N144")
+    human_IgA_N144_traits <- human_IgA_N144$traits
+    human_IgA_N144_formulas <- human_IgA_N144$formulas
+    
+    human_IgA_N205 <- create_trait_reactives("human_IgA_N205")
+    human_IgA_N205_traits <- human_IgA_N205$traits
+    human_IgA_N205_formulas <- human_IgA_N205$formulas
+    
+    human_IgA_N340 <- create_trait_reactives("human_IgA_N340")
+    human_IgA_N340_traits <- human_IgA_N340$traits
+    human_IgA_N340_formulas <- human_IgA_N340$formulas
+    
+    # Human IgA O-glycans
+    human_IgA_O <- create_trait_reactives("human_IgA_O")
+    human_IgA_O_traits <- human_IgA_O$traits
+    human_IgA_O_formulas <- human_IgA_O$formulas
+    
+    # Human IgM N-glycans
+    human_IgM_N46 <- create_trait_reactives("human_IgM_N46")
+    human_IgM_N46_traits <- human_IgM_N46$traits
+    human_IgM_N46_formulas <- human_IgM_N46$formulas
+    
+    human_IgM_N209 <- create_trait_reactives("human_IgM_N209")
+    human_IgM_N209_traits <- human_IgM_N209$traits
+    human_IgM_N209_formulas <- human_IgM_N209$formulas
+    
+    human_IgM_N272 <- create_trait_reactives("human_IgM_N272")
+    human_IgM_N272_traits <- human_IgM_N272$traits
+    human_IgM_N272_formulas <- human_IgM_N272$formulas
+    
+    human_IgM_N279 <- create_trait_reactives("human_IgM_N279")
+    human_IgM_N279_traits <- human_IgM_N279$traits
+    human_IgM_N279_formulas <- human_IgM_N279$formulas
+    
+    human_IgM_N440 <- create_trait_reactives("human_IgM_N440")
+    human_IgM_N440_traits <- human_IgM_N440$traits
+    human_IgM_N440_formulas <- human_IgM_N440$formulas
+    
+    # Human joining chain
+    human_JC_N <- create_trait_reactives("human_JC_N")
+    human_JC_N_traits <- human_JC_N$traits
+    human_JC_N_formulas <- human_JC_N$formulas
+    
+    # Mouse IgG N-glycans
+    mouse_IgG_N <- create_trait_reactives("mouse_IgG_N")
+    mouse_IgG_N_traits <- mouse_IgG_N$traits
+    mouse_IgG_N_formulas <- mouse_IgG_N$formulas
+    
+    
+    
+    ############# COMBINE TRAIT FORMULAS ######################
+    
+    # Helper function
+    add_n_glycan_formulas <- function(
+      formulas,
+      selected_traits,
+      clusters,
+      calculate_sialylation_per_galactose = TRUE
+    ) {
+      if (!is_truthy(formulas)) {
+        return(character(0))
+      }
+      
+      if (
+        calculate_sialylation_per_galactose &&
+        "Sialylation per galactose of complex-type glycans" %in% selected_traits
+      ) {
+        trait_names <- unlist(
+          purrr::map(formulas, ~ names(create_expr_ls(.x)))
+        )
+        
+        sialylation_per_galactose_formulas <- purrr::map(
+          clusters,
+          function(cluster) {
+            galactosylation <- trait_names[
+              grep(paste0(cluster, "_galactosylation"), trait_names)
+            ]
+            
+            sialylation <- trait_names[
+              grep(paste0(cluster, "_sialylation"), trait_names)
+            ]
+            
+            paste0(
+              cluster,
+              "_sialylation_per_galactose = ",
+              sialylation,
+              " / ",
+              galactosylation,
+              " * 100"
+            )
+          }
+        )
+        
+        formulas <- c(formulas, sialylation_per_galactose_formulas)
+      }
+      
+      formulas
+    }
+    
+    # Helper list
+    n_glycan_groups <- list(
+      list(
+        id = "human_IgG_N",
+        formulas = human_IgG_N_formulas
+      ),
+      list(
+        id = "human_IgA_N47",
+        formulas = human_IgA_N47_formulas
+      ),
+      list(
+        id = "human_IgA_N144",
+        formulas = human_IgA_N144_formulas
+      ),
+      list(
+        id = "human_IgA_N205",
+        formulas = human_IgA_N205_formulas
+      ),
+      list(
+        id = "human_IgA_N340",
+        formulas = human_IgA_N340_formulas
+      ),
+      list(
+        id = "human_JC_N",
+        formulas = human_JC_N_formulas
+      ),
+      list(
+        id = "human_IgM_N46",
+        formulas = human_IgM_N46_formulas
+      ),
+      list(
+        id = "human_IgM_N209",
+        formulas = human_IgM_N209_formulas
+      ),
+      list(
+        id = "human_IgM_N272",
+        formulas = human_IgM_N272_formulas
+      ),
+      list(
+        id = "human_IgM_N279",
+        formulas = human_IgM_N279_formulas,
+        calculate_sialylation_per_galactose = FALSE
+      ),
+      list(
+        id = "human_IgM_N440",
+        formulas = human_IgM_N440_formulas,
+        calculate_sialylation_per_galactose = FALSE
+      ),
+      list(
+        id = "mouse_IgG_N",
+        formulas = mouse_IgG_N_formulas,
+        calculate_sialylation_per_galactose = FALSE
       )
-    })
-
-    human_IgA_N205_traits <- reactive({
-      req(input$human_IgA_N205_traits)
-      match_traits(input$human_IgA_N205_traits)
-    })
-
-    human_IgA_N205_formulas <- reactive({
-      req(length(input$human_IgA_N205_clusters) > 0, is_truthy(human_IgA_N205_traits()))
-      load(system.file("app", "www", "human_IgA_N205_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgA_N205_traits(), input$human_IgA_N205_clusters, human_IgA_N205_ref
-        ), c  # c = concatenate
-      )
-    })
-
-    human_IgA_N340_traits <- reactive({
-      req(input$human_IgA_N340_traits)
-      match_traits(input$human_IgA_N340_traits)
-    })
-
-    human_IgA_N340_formulas <- reactive({
-      req(length(input$human_IgA_N340_clusters) > 0, is_truthy(human_IgA_N340_traits()))
-      load(system.file("app", "www", "human_IgA_N340_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgA_N340_traits(), input$human_IgA_N340_clusters, human_IgA_N340_ref
-        ), c  # c = concatenate
-      )
-    })
-
-
-    # Trait formulas for human IgA O-glycans
-    human_IgA_O_traits <- reactive({
-      req(input$human_IgA_O_traits)
-      match_traits(input$human_IgA_O_traits)
-    })
-
-    human_IgA_O_formulas <- reactive({
-      req(length(input$human_IgA_O_clusters) > 0, is_truthy(human_IgA_O_traits()))
-      load(system.file("app", "www", "human_IgA_O_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgA_O_traits(), input$human_IgA_O_clusters, human_IgA_O_ref
-        ), c  # c = concatenate
-      )
-    })
+    )
     
-    
-    # Trait formulas for human IgM N-glycans
-    human_IgM_N46_traits <- reactive({
-      req(input$human_IgM_N46_traits)
-      match_traits(input$human_IgM_N46_traits)
-    })
-    
-    human_IgM_N46_formulas <- reactive({
-      req(length(input$human_IgM_N46_clusters) > 0, is_truthy(human_IgM_N46_traits()))
-      load(system.file("app", "www", "human_IgM_N46_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgM_N46_traits(), input$human_IgM_N46_clusters, human_IgM_N46_ref
-        ), c  # c = concatenate
-      )
-    })
-    
-    human_IgM_N209_traits <- reactive({
-      req(input$human_IgM_N209_traits)
-      match_traits(input$human_IgM_N209_traits)
-    })
-    
-    human_IgM_N209_formulas <- reactive({
-      req(length(input$human_IgM_N209_clusters) > 0, is_truthy(human_IgM_N209_traits()))
-      load(system.file("app", "www", "human_IgM_N209_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgM_N209_traits(), input$human_IgM_N209_clusters, human_IgM_N209_ref
-        ), c  # c = concatenate
-      )
-    })
-    
-    human_IgM_N272_traits <- reactive({
-      req(input$human_IgM_N272_traits)
-      match_traits(input$human_IgM_N272_traits)
-    })
-    
-    human_IgM_N272_formulas <- reactive({
-      req(length(input$human_IgM_N272_clusters) > 0, is_truthy(human_IgM_N272_traits()))
-      load(system.file("app", "www", "human_IgM_N272_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgM_N272_traits(), input$human_IgM_N272_clusters, human_IgM_N272_ref
-        ), c  # c = concatenate
-      )
-    })
-    
-    human_IgM_N279_traits <- reactive({
-      req(input$human_IgM_N279_traits)
-      match_traits(input$human_IgM_N279_traits)
-    })
-    
-    human_IgM_N279_formulas <- reactive({
-      req(length(input$human_IgM_N279_clusters) > 0, is_truthy(human_IgM_N279_traits()))
-      load(system.file("app", "www", "human_IgM_N279_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgM_N279_traits(), input$human_IgM_N279_clusters, human_IgM_N279_ref
-        ), c  # c = concatenate
-      )
-    })
-    
-    human_IgM_N440_traits <- reactive({
-      req(input$human_IgM_N440_traits)
-      match_traits(input$human_IgM_N440_traits)
-    })
-    
-    human_IgM_N440_formulas <- reactive({
-      req(length(input$human_IgM_N440_clusters) > 0, is_truthy(human_IgM_N440_traits()))
-      load(system.file("app", "www", "human_IgM_N440_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_IgM_N440_traits(), input$human_IgM_N440_clusters, human_IgM_N440_ref
-        ), c  # c = concatenate
-      )
-    })
-    
-
-    # Trait formulas for human JC
-    human_JC_N_traits <- reactive({
-      req(input$human_JC_N_traits)
-      match_traits(input$human_JC_N_traits)
-    })
-
-    human_JC_N_formulas <- reactive({
-      req(length(input$human_JC_N_clusters) > 0, is_truthy(human_JC_N_traits()))
-      load(system.file("app", "www", "human_JC_N_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), human_JC_N_traits(), input$human_JC_N_clusters, human_JC_N_ref
-        ), c  # c = concatenate
-      )
-    })
-    
-    # Trait formulas for mouse IgG
-    mouse_IgG_N_traits <- reactive({
-      req(input$mouse_IgG_N_traits)
-      match_traits(input$mouse_IgG_N_traits)
-    })
-
-    mouse_IgG_N_formulas <- reactive({
-      req(length(input$mouse_IgG_N_clusters) > 0, is_truthy(mouse_IgG_N_traits()))
-      load(system.file("app", "www", "mouse_IgG_N_ref.rda", package = "GlycoDash"))
-      purrr::reduce(
-        create_formula_list(
-          normalized_data(), mouse_IgG_N_traits(), input$mouse_IgG_N_clusters, mouse_IgG_N_ref
-        ), c  # c = concatenate
-      )
-    })
-    
-    
-    ##########################################################################
-    
-    # Combine the trait formulas
+    # Combined trait formulas
     trait_formulas <- reactive({
       
-      # Initiate empty vector to append formulas to
-      formulas <- c() 
+      formulas <- character(0)
       
-      # Check each possible "formulas" reactive.
-      # N-glycans: check if sialylation per galactose should be calculated.
-      # O-glycans: check if sialic acids per galactose or galactose per GalNAc should be calculated.
-      if (is_truthy(human_IgG_N_formulas())) {
-        formulas <- c(formulas, human_IgG_N_formulas())
-        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgG_N_traits) {
-          # Extract all trait names
-          trait_names <- unlist(purrr::map(human_IgG_N_formulas(), ~ names(create_expr_ls(.x))))
-          # Create new formulas, use the correct sialylation and galactosylation trait names
-          formulas <- c(formulas, purrr::map(input$human_IgG_N_clusters, function(cluster) {
-            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
-            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
-            formula <- paste0(
-              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
-            )
-            return(formula)
-          }))
+      # N-glycan formulas
+      for (group in n_glycan_groups) {
+        calculate_sialylation_per_galactose <- if (
+          is.null(group$calculate_sialylation_per_galactose)
+        ) {
+          TRUE
+        } else {
+          group$calculate_sialylation_per_galactose
         }
+        
+        group_formulas <- add_n_glycan_formulas(
+          formulas = group$formulas(),
+          selected_traits = input[[paste0(group$id, "_traits")]],
+          clusters = input[[paste0(group$id, "_clusters")]],
+          calculate_sialylation_per_galactose =
+            calculate_sialylation_per_galactose
+        )
+        
+        formulas <- c(formulas, group_formulas)
       }
-      if (is_truthy(human_IgA_N47_formulas())) {
-        formulas <- c(formulas, human_IgA_N47_formulas())
-        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N47_traits) {
-          # Extract all trait names
-          trait_names <- unlist(purrr::map(human_IgA_N47_formulas(), ~ names(create_expr_ls(.x))))
-          # Create new formulas, use the correct sialylation and galactosylation trait names
-          formulas <- c(formulas, purrr::map(input$human_IgA_N47_clusters, function(cluster) {
-            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
-            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
-            formula <- paste0(
-              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
-            )
-            return(formula)
-          }))
-        }
-      }
-      if (is_truthy(human_IgA_N144_formulas())) {
-        formulas <- c(formulas, human_IgA_N144_formulas())
-        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N144_traits) {
-          # Extract all trait names
-          trait_names <- unlist(purrr::map(human_IgA_N144_formulas(), ~ names(create_expr_ls(.x))))
-          # Create new formulas, use the correct sialylation and galactosylation trait names
-          formulas <- c(formulas, purrr::map(input$human_IgA_N144_clusters, function(cluster) {
-            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
-            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
-            formula <- paste0(
-              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
-            )
-            return(formula)
-          }))
-        }
-      }
-      if (is_truthy(human_IgA_N205_formulas())) {
-        formulas <- c(formulas, human_IgA_N205_formulas())
-        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N205_traits) {
-          # Extract all trait names
-          trait_names <- unlist(purrr::map(human_IgA_N205_formulas(), ~ names(create_expr_ls(.x))))
-          # Create new formulas, use the correct sialylation and galactosylation trait names
-          formulas <- c(formulas, purrr::map(input$human_IgA_N205_clusters, function(cluster) {
-            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
-            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
-            formula <- paste0(
-              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
-            )
-            return(formula)
-          }))
-        }
-      }
-      if (is_truthy(human_IgA_N340_formulas())) {
-        formulas <- c(formulas, human_IgA_N340_formulas())
-        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgA_N340_traits) {
-          # Extract all trait names
-          trait_names <- unlist(purrr::map(human_IgA_N340_formulas(), ~ names(create_expr_ls(.x))))
-          # Create new formulas, use the correct sialylation and galactosylation trait names
-          formulas <- c(formulas, purrr::map(input$human_IgA_N340_clusters, function(cluster) {
-            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
-            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
-            formula <- paste0(
-              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
-            )
-            return(formula)
-          }))
-        }
-      }
+      
+      # Human IgA O-glycan formulas
       if (is_truthy(human_IgA_O_formulas())) {
         formulas <- c(formulas, human_IgA_O_formulas())
+        
         if ("Sialic acids per galactose" %in% input$human_IgA_O_traits) {
           formulas <- c(
-            formulas, purrr::map(input$human_IgA_O_clusters, ~ paste0(
-              .x, "_sialic_acids_per_galactose = ", .x, "_sialic_acids / ", .x, "_galactoses"
-            ))
+            formulas,
+            purrr::map(
+              input$human_IgA_O_clusters,
+              ~ paste0(
+                .x,
+                "_sialic_acids_per_galactose = ",
+                .x,
+                "_sialic_acids / ",
+                .x,
+                "_galactoses"
+              )
+            )
           )
         }
+        
         if ("Galactoses per GalNAc" %in% input$human_IgA_O_traits) {
           formulas <- c(
-            formulas, purrr::map(input$human_IgA_O_clusters, ~ paste0(
-              .x, "_galactoses_per_galnac = ", .x, "_galactoses / ", .x, "_galnacs"
-            ))
+            formulas,
+            purrr::map(
+              input$human_IgA_O_clusters,
+              ~ paste0(
+                .x,
+                "_galactoses_per_galnac = ",
+                .x,
+                "_galactoses / ",
+                .x,
+                "_galnacs"
+              )
+            )
           )
         }
       }
-      if (is_truthy(human_JC_N_formulas())) {
-        formulas <- c(formulas, human_JC_N_formulas())
-        if ("Sialylation per galactose of complex-type glycans" %in% input$human_JC_N_traits) {
-          # Extract all trait names
-          trait_names <- unlist(purrr::map(human_JC_N_formulas(), ~ names(create_expr_ls(.x))))
-          # Create new formulas, use the correct sialylation and galactosylation trait names
-          formulas <- c(formulas, purrr::map(input$human_JC_N_clusters, function(cluster) {
-            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
-            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
-            formula <- paste0(
-              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
-            )
-            return(formula)
-          }))
-        }
-      }
-      if (is_truthy(human_IgM_N46_formulas())) {
-        formulas <- c(formulas, human_IgM_N46_formulas())
-        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgM_N46_traits) {
-          # Extract all trait names
-          trait_names <- unlist(purrr::map(human_IgM_N46_formulas(), ~ names(create_expr_ls(.x))))
-          # Create new formulas, use the correct sialylation and galactosylation trait names
-          formulas <- c(formulas, purrr::map(input$human_IgM_N46_clusters, function(cluster) {
-            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
-            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
-            formula <- paste0(
-              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
-            )
-            return(formula)
-          }))
-        }
-      }
-      if (is_truthy(human_IgM_N209_formulas())) {
-        formulas <- c(formulas, human_IgM_N209_formulas())
-        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgM_N209_traits) {
-          # Extract all trait names
-          trait_names <- unlist(purrr::map(human_IgM_N209_formulas(), ~ names(create_expr_ls(.x))))
-          # Create new formulas, use the correct sialylation and galactosylation trait names
-          formulas <- c(formulas, purrr::map(input$human_IgM_N209_clusters, function(cluster) {
-            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
-            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
-            formula <- paste0(
-              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
-            )
-            return(formula)
-          }))
-        }
-      }
-      if (is_truthy(human_IgM_N272_formulas())) {
-        formulas <- c(formulas, human_IgM_N272_formulas())
-        if ("Sialylation per galactose of complex-type glycans" %in% input$human_IgM_N272_traits) {
-          # Extract all trait names
-          trait_names <- unlist(purrr::map(human_IgM_N272_formulas(), ~ names(create_expr_ls(.x))))
-          # Create new formulas, use the correct sialylation and galactosylation trait names
-          formulas <- c(formulas, purrr::map(input$human_IgM_N272_clusters, function(cluster) {
-            galactosylation <- trait_names[grep(paste0(cluster, "_galactosylation"), trait_names)]
-            sialylation <- trait_names[grep(paste0(cluster, "_sialylation"), trait_names)]
-            formula <- paste0(
-              cluster, "_sialylation_per_galactose = ", sialylation, " / ", galactosylation, " * 100"
-            )
-            return(formula)
-          }))
-        }
-      }
-      if (is_truthy(human_IgM_N279_formulas())) {
-        formulas <- c(formulas, human_IgM_N279_formulas())
-      }
-      if (is_truthy(human_IgM_N440_formulas())) {
-        formulas <- c(formulas, human_IgM_N440_formulas())
-      }
-      if (is_truthy(mouse_IgG_N_formulas())) {
-        formulas <- c(formulas, mouse_IgG_N_formulas())
-      }
       
-      return(formulas)
+      formulas
     })
     
     
@@ -1223,14 +1089,11 @@ mod_derived_traits_server <- function(id,
     with_data <- reactive({
       if (is_truthy(data_with_all_traits())) {
         data_with_all_traits()
-      } 
-      else if (is_truthy(data_with_derived_traits())) {
+      } else if (is_truthy(data_with_derived_traits())) {
         data_with_derived_traits()
-      } 
-      else if (is_truthy(data_with_custom_traits())) {
+      } else if (is_truthy(data_with_custom_traits())) {
         data_with_custom_traits()
-      } 
-      else if (is_truthy(normalized_data_wide())) {
+      } else if (is_truthy(normalized_data_wide())) {
         normalized_data_wide()
       }
     })
@@ -1239,9 +1102,14 @@ mod_derived_traits_server <- function(id,
     data_with_traits <- reactive({
       req(with_data())
       if (is_truthy(results_quantitation$data_with_quantities())) {
-        dplyr::full_join(with_data(), results_quantitation$data_with_quantities()) %>% 
-          dplyr::relocate(tidyselect::contains("_quantity"), 
-                          .after = tidyselect::contains("_sum_intensity"))
+        dplyr::full_join(
+          with_data(), 
+          results_quantitation$data_with_quantities()
+        ) %>% 
+          dplyr::relocate(
+            tidyselect::contains("_quantity"), 
+            .after = tidyselect::contains("_sum_intensity")
+          )
       } else {
         with_data()
       }
@@ -1250,7 +1118,10 @@ mod_derived_traits_server <- function(id,
     
     # Show a notification if data changes after calculating traits
     observeEvent(normalized_data(), {
-      req(is_truthy(data_with_derived_traits()) | is_truthy(data_with_custom_traits()))
+      req(
+        is_truthy(data_with_derived_traits()) | 
+        is_truthy(data_with_custom_traits())
+      )
       showNotification(
         id = ns("msg_data_changed"),
         "Your normalized data has changed.
@@ -1269,13 +1140,15 @@ mod_derived_traits_server <- function(id,
       # thrown by the browser, when quickly selecting and deselecting traits.
       # But it does make rendering somewhat slower.
       server = FALSE
-      DT::datatable(data = data_with_traits() %>% 
-                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
-                    options = list(
-                      scrollX = TRUE,
-                      pageLength = 6,
-                      columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ), filter = "top")
+      DT::datatable(
+        data = data_with_traits() %>% 
+          dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+        options = list(
+          scrollX = TRUE,
+          pageLength = 6,
+          columnDefs = list(list(className = "dt-center", targets = "_all"))
+        ), filter = "top"
+      )
     })
     
     
@@ -1288,18 +1161,22 @@ mod_derived_traits_server <- function(id,
       # Use map to create a list of trait names for each cluster
       cluster_traits <- purrr::map(clusters(), function(cluster) {
         substring <- paste0(cluster, "_")
-        columns[grepl(substring, columns) & !grepl("_sum_intensity", columns)
-                & !grepl("_quantity_ng", columns)]
+        columns[
+          grepl(substring, columns) & !grepl("_sum_intensity", columns) &
+          !grepl("_quantity_ng", columns)
+        ]
       })
       # Turn into a named list
       names(cluster_traits) <- clusters()
-      return(cluster_traits)
+      
+      cluster_traits
     })
     
     
     # Create a tab for each name in cluster_traits that is not empty
     # created_tabs <- reactiveValues(tabs = )
     intensity_plots <- reactiveValues(plots = NULL)
+    
     observeEvent(cluster_traits(), {
       # Remove previously generated tabs and plots
       for (cluster in clusters()) {
@@ -1307,7 +1184,9 @@ mod_derived_traits_server <- function(id,
       } 
       intensity_plots$plots <- NULL
       # Generate tabs with plots
-      non_empty_clusters <- names(purrr::keep(cluster_traits(), ~ length(.x) > 0))
+      non_empty_clusters <- names(
+        purrr::keep(cluster_traits(), ~ length(.x) > 0)
+      )
       if (length(non_empty_clusters) > 0) {
         for (cluster in non_empty_clusters) {
           # Create tab
@@ -1331,51 +1210,52 @@ mod_derived_traits_server <- function(id,
     })
     
     
-
-    
-    ########## Download example Excel of custom traits ##########
-    output$download_ex_custom_formulas <- downloadHandler(
-      filename = "Custom_traits_formulas_example.xlsx",
-      content = function(file) {
-        example_file <- system.file("app",
-                                    "www",
-                                    "Custom_traits_formulas_example.xlsx",
-                                    package = "GlycoDash")
-        file.copy(example_file, file)
-      }
-    )
-
-    
-    
     ############### Formulas of glycosylation traits ###############
     
     # Display for double check
     output$custom_formulas <- DT::renderDT({
       req(traits_excel(), data_with_custom_traits())
-      DT::datatable(traits_excel(),
-                    rownames = FALSE, 
-                    options = list(paging = FALSE,
-                                  ordering = FALSE,
-                                  searching = FALSE))
+      DT::datatable(
+        traits_excel(),
+        rownames = FALSE, 
+        options = list(
+          paging = FALSE,
+          ordering = FALSE,
+          searching = FALSE
+        )
+      )
     })
     
     
     # Display the formulas of the default traits
     formulas_table <- reactive({
       req(r$formulas_toshow)
+      
       formula_dfs <- vector("list", length = length(r$formulas_toshow))
+      
       for (i in seq(length(r$formulas_toshow))) {
         trait_formula <- r$formulas_toshow[i]
         trait_name <- names(create_expr_ls(trait_formula))
-        calculation <- stringr::str_remove(trait_formula, paste0(trait_name, " = "))
-        formula_dfs[[i]] <- data.frame(trait = trait_name, formula = calculation)
+        calculation <- stringr::str_remove(
+          trait_formula, paste0(trait_name, " = "))
+        formula_dfs[[i]] <- data.frame(
+          trait = trait_name, formula = calculation
+        )
       }
       purrr::reduce(formula_dfs, dplyr::full_join)
-    }) %>% bindEvent(data_with_derived_traits()) # Update table after calculation of traits
+      # Update table after calculation of traits
+    }) %>% bindEvent(data_with_derived_traits())
+    
     
     output$formulas <- DT::renderDT({
       req(formulas_table())
-      levels <- c("", unique(formulas_table()$formula[grepl("Not reported", formulas_table()$formula)]))
+      levels <- c(
+        "", unique(
+          formulas_table()$formula[
+            grepl("Not reported", formulas_table()$formula)
+          ]
+        )
+      )
       DT::datatable(formulas_table(), rownames = FALSE, filter = "top") %>% 
         # Highlight traits that are not reported
         DT::formatStyle(
@@ -1396,7 +1276,9 @@ mod_derived_traits_server <- function(id,
     
     output$download_formulas <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
         paste0(current_datetime, "_glycosylation_traits_formulas.xlsx")
       },
       content = function(file) {
@@ -1408,16 +1290,17 @@ mod_derived_traits_server <- function(id,
       }
     )
     
+    
     return(
       list(
         data_with_traits = data_with_traits,
         normalized_data = normalized_data,
-        derived_traits = reactive({ input$traits_menu }),
+        derived_traits = reactive(input$traits_menu),
         formulas = formulas_table,
         custom_traits_excel = traits_excel,
         intensity_plots = reactive(intensity_plots$plots)
       )
     )
- 
+    
   })
 }

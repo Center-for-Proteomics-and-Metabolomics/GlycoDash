@@ -1,5 +1,6 @@
 #' Calculate the total intensity of an analyte in a spectrum
 #'
+#' @description
 #' The function \code{calculate_total_intensity} calculates the total intensity
 #' of an analyte in a spectrum, by combining the intensities from each charge
 #' state. For each charge state, the intensity is divided by the fraction. Then
@@ -19,103 +20,50 @@
 #'   analytes within a spectrum together), "number_of_replicates", "replicates"
 #'   and "total_absolute_intensity" (the total intensity of all charge states of
 #'   an analyte together).
-#' @export
-#'
-#' @examples
-#' # First spectra curation has to be performed:
-#' data("example_data")
-#'
-#' checked_data <- check_analyte_quality_criteria_lacytools(my_data = example_data,
-#'                                                min_ppm_deviation = -20,
-#'                                                max_ppm_deviation = 20,
-#'                                                max_ipq = 0.2,
-#'                                                min_sn = 9,
-#'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "Isotopic pattern quality",
-#'                                                                         "S/N"))
-#'
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-#'
-#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
-#'                                      control_sample_types = "PBS",
-#'                                      exclude_sample_types = NULL,
-#'                                      group_keyword = "Total",
-#'                                      percentile = 97,
-#'                                      use_mean_SD = FALSE,
-#'                                      SD_factor = NULL,
-#'                                      uncalibrated_as_NA = TRUE)
-#'
-#' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
-#'                                         control_sample_types = "PBS",
-#'                                         exclude_sample_types = NULL,
-#'                                         group_keyword = "Spike",
-#'                                         percentile = 97,
-#'                                         use_mean_SD = FALSE,
-#'                                         SD_factor = NULL,
-#'                                         uncalibrated_as_NA = TRUE)
-#'
-#' cut_offs <- dplyr::full_join(cut_offs_total,
-#'                              cut_offs_specific)
-#'
-#' curated_spectra <- curate_spectra(checked_data = checked_data,
-#'                                   summarized_checks = summarized_checks,
-#'                                   cut_offs = cut_offs)
-#'
-#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
-#'
-#' for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
-#'
-#' # Then analyte curation is performed:
-#' without_samples_to_ignore <- throw_out_samples(
-#'    passing_spectra = for_analyte_curation,
-#'    samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
-#' )
-#'
-#' checked_analytes <- check_analyte_quality_criteria_lacytools(my_data = without_samples_to_ignore,
-#'                                                    min_ppm_deviation = -20,
-#'                                                    max_ppm_deviation = 20,
-#'                                                    max_ipq = 0.2,
-#'                                                    min_sn = 9,
-#'                                                    criteria_to_consider = c("Mass accuracy",
-#'                                                                             "S/N",
-#'                                                                             "Isotopic pattern quality"))
-#'
-#' curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
-#'                                     cut_off_percentage = 25)
-#'
-#' analyte_curated_data <- dplyr::full_join(curated_analytes,
-#'                                          for_analyte_curation) %>%
-#'    dplyr::filter(has_passed_analyte_curation) %>%
-#'    dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
-#'
-#' calculate_total_intensity(analyte_curated_data, "LaCyTools_data")
-#' 
-calculate_total_intensity <- function(data, data_type) {
+calculate_total_intensity <- function(
+    data, 
+    data_type  
+  ) {
   
   # Check for missing columns
   if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
-    required_columns <- c("absolute_intensity_background_subtracted", "fraction", "sample_name", "analyte")
-  } 
-  else if (data_type == "Skyline data") {
-    required_columns <- c("total_area", "sample_name", "analyte")
+    required_columns <- c(
+      "absolute_intensity_background_subtracted", 
+      "fraction", 
+      "sample_name", 
+      "analyte"
+    )
+  } else if (data_type == "Skyline data") {
+    required_columns <- c(
+      "total_area", 
+      "sample_name", 
+      "analyte"
+    )
   }
   
   missing_columns <- required_columns[!(required_columns %in% colnames(data))]
   
   if(!rlang::is_empty(missing_columns)) {
-    rlang::abort(class = "missing_columns",
-                 message = paste("The required column(s)",
-                                 missing_columns,
-                                 "are not present in the data."))
+    rlang::abort(
+      class = "missing_columns",
+      message = paste(
+        "The required column(s)",
+        missing_columns,
+        "are not present in the data."
+      )
+    )
   }
   
   # Calculations
   if (data_type %in% c("LaCyTools data", "SweetSuite data")) {
     total_intensities <- data %>% 
-      dplyr::mutate(intensity_by_fraction = absolute_intensity_background_subtracted / fraction) %>% 
+      dplyr::mutate(
+        intensity_by_fraction = absolute_intensity_background_subtracted / fraction
+      ) %>% 
       dplyr::group_by(
         dplyr::across(tidyselect::any_of(
-          c("sample_name", "analyte",
+          c(
+            "sample_name", "analyte",
             # The remaining grouping variables are only there to ensure they
             # remain in the dataframe after summarize()
             "cluster",
@@ -125,21 +73,36 @@ calculate_total_intensity <- function(data, data_type) {
             "plate_well",
             "sum_intensity",
             "number_of_replicates",
-            "replicates")
+            "replicates"
+          )
         ))
       ) %>% 
-      dplyr::summarize(total_absolute_intensity = sum(intensity_by_fraction, na.rm = TRUE)) %>% 
+      dplyr::summarize(
+        total_absolute_intensity = sum(intensity_by_fraction, na.rm = TRUE)
+      ) %>% 
       dplyr::ungroup()
   } else if (data_type == "Skyline data") {
     # No fraction in case of skyline data
     total_intensities <- data %>% 
       dplyr::group_by(
         dplyr::across(tidyselect::any_of(
-          c("sample_name", "analyte", "cluster", "group", "sample_type", 
-            "sample_id", "plate_well", "sum_intensity", "number_of_replicates", "replicates")
+          c(
+            "sample_name", 
+            "analyte", 
+            "cluster", 
+            "group", 
+            "sample_type", 
+            "sample_id", 
+            "plate_well", 
+            "sum_intensity", 
+            "number_of_replicates", 
+            "replicates"
+          )
         ))
       ) %>% 
-      dplyr::summarize(total_absolute_intensity = sum(total_area, na.rm = TRUE)) %>% 
+      dplyr::summarize(
+        total_absolute_intensity = sum(total_area, na.rm = TRUE)
+      ) %>% 
       dplyr::ungroup()
   }
   
@@ -150,6 +113,7 @@ calculate_total_intensity <- function(data, data_type) {
 
 #' Perform total area normalization
 #'
+#' @description
 #' This function performs total area normalization per cluster for each
 #' spectrum. The total absolute intensity for each analyte per cluster per
 #' spectrum (\code{total_absolute_intensity}) is divided by the sum absolute
@@ -163,87 +127,17 @@ calculate_total_intensity <- function(data, data_type) {
 #' @return The tibble given as the \code{total_intensities} argument, but with
 #'   the columns \code{total_absolute_intensity} and \code{sum_intensity}
 #'   replaced by the column \code{relative_abundance}.
-#' @export
-#'
-#' @examples
-#' # First spectra curation has to be performed:
-#' data("example_data")
-#'
-#' checked_data <- check_analyte_quality_criteria(my_data = example_data,
-#'                                                min_ppm_deviation = -20,
-#'                                                max_ppm_deviation = 20,
-#'                                                max_ipq = 0.2,
-#'                                                min_sn = 9,
-#'                                                criteria_to_consider = c("Mass accuracy",
-#'                                                                         "S/N",
-#'                                                                         "IPQ"))
-#'
-#' summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-#'
-#' cut_offs_total <- calculate_cut_offs(summarized_checks = summarized_checks,
-#'                                      control_sample_types = "PBS",
-#'                                      exclude_sample_types = NULL,
-#'                                      group_keyword = "Total",
-#'                                      percentile = 97,
-#'                                      use_mean_SD = FALSE,
-#'                                      SD_factor = NULL,
-#'                                      uncalibrated_as_NA = TRUE)
-#'
-#' cut_offs_specific <- calculate_cut_offs(summarized_checks = summarized_checks,
-#'                                         control_sample_types = "PBS",
-#'                                         exclude_sample_types = NULL,
-#'                                         group_keyword = "Spike",
-#'                                         percentile = 97,
-#'                                         use_mean_SD = FALSE,
-#'                                         SD_factor = NULL,
-#'                                         uncalibrated_as_NA = TRUE)
-#'
-#' cut_offs <- dplyr::full_join(cut_offs_total,
-#'                              cut_offs_specific)
-#'
-#' curated_spectra <- curate_spectra(checked_data = checked_data,
-#'                                   summarized_checks = summarized_checks,
-#'                                   cut_offs = cut_offs)
-#'
-#' passing_spectra <- kick_out_spectra(curated_spectra = curated_spectra)
-#'
-#' for_analyte_curation <- remove_unneeded_columns(passing_spectra = passing_spectra)
-#'
-#' # Then analyte curation is performed:
-#' without_samples_to_ignore <- throw_out_samples(
-#'    passing_spectra = for_analyte_curation,
-#'    samples_to_ignore = c("PBS", "Visucon", "IVIGg", "Total")
-#' )
-#'
-#' checked_analytes <- check_analyte_quality_criteria(my_data = without_samples_to_ignore,
-#'                                                    min_ppm_deviation = -20,
-#'                                                    max_ppm_deviation = 20,
-#'                                                    max_ipq = 0.2,
-#'                                                    min_sn = 9,
-#'                                                    criteria_to_consider = c("Mass accuracy",
-#'                                                                             "S/N",
-#'                                                                             "IPQ"))
-#'
-#' curated_analytes <- curate_analytes(checked_analytes = checked_analytes,
-#'                                     cut_off_percentage = 25)
-#'
-#' analyte_curated_data <- dplyr::full_join(curated_analytes,
-#'                                          for_analyte_curation) %>%
-#'    dplyr::filter(has_passed_analyte_curation) %>%
-#'    dplyr::select(-c(has_passed_analyte_curation, passing_percentage))
-#'
-#' # Then we calculate the total intensities for each analyte:
-#' total_intensities <- calculate_total_intensity(analyte_curated_data)
-#'
-#' # And then we can perform total area normalization:
-#' normalize_data(total_intensities)
 normalize_data <- function(total_intensities) {
 
   normalized_data <- total_intensities %>%
     dplyr::group_by(cluster, sample_name) %>%
-    dplyr::reframe(sum_intensity = sum(total_absolute_intensity),
-                     across(everything())) %>%
-    dplyr::mutate(relative_abundance = total_absolute_intensity / sum_intensity * 100) %>% 
+    dplyr::reframe(
+      sum_intensity = sum(total_absolute_intensity),
+      across(everything())
+    ) %>%
+    dplyr::mutate(
+      relative_abundance = total_absolute_intensity / sum_intensity * 100
+    ) %>% 
     dplyr::select(-total_absolute_intensity)
 
   return(normalized_data)
@@ -253,6 +147,7 @@ normalize_data <- function(total_intensities) {
 
 #' sample_heatmap
 #'
+#' @description
 #' Efficiently creates a heatmap for normalized glycan data by minimizing expensive operations
 #' on unnecessary rows. Sample names are on the y-axis, glycans on the x-axis, for a specific cluster.
 #' The function pre-filters the data before performing separation and sorting, consolidates faceting logic,
@@ -300,14 +195,20 @@ sample_heatmap <- function(
   # Only now do expensive tidyr::separate and custom sort
   to_plot <- to_plot %>%
     dplyr::select(-cluster) %>%
-    tidyr::separate(analyte, sep = "1", into = c("cluster", "analyte"), extra = "merge") %>%
+    tidyr::separate(
+      analyte, sep = "1", into = c("cluster", "analyte"), extra = "merge"
+    ) %>%
     sort_glycans()
   
   # Early exit: if no data to plot, return empty plot with message
   if (nrow(to_plot) == 0) {
-    return(ggplot2::ggplot() +
-             ggplot2::theme_void() +
-             ggplot2::geom_text(label = "Oops, there is no data to show...", x = 0.5, y = 0.5))
+    return(
+      ggplot2::ggplot() +
+        ggplot2::theme_void() +
+        ggplot2::geom_text(
+          label = "Oops, there is no data to show...", x = 0.5, y = 0.5
+        )
+    )
   }
   
   # Create base plot
@@ -322,7 +223,8 @@ sample_heatmap <- function(
         "\nSample ID:", sample_id,
         "\nSample type:", sample_type,
         "\nAnalyte:", analyte,
-        "\nRelative abundance:", paste0(format(round(relative_abundance, digits = 2), nsmall = 2), "%")
+        "\nRelative abundance:", 
+        paste0(format(round(relative_abundance, digits = 2), nsmall = 2), "%")
       )
     )
   ) +
@@ -361,6 +263,7 @@ sample_heatmap <- function(
 
 #' cluster_heatmap
 #'
+#' @description
 #' Efficiently creates a heatmap with glycan on x-axis and cluster on y-axis, showing the median
 #' relative abundance for each analyte. Improves performance by pre-filtering data before expensive
 #' separation, sorting, grouping, and summarizing operations. Faceting logic is consolidated and
@@ -375,6 +278,8 @@ sample_heatmap <- function(
 #' @param color_na Color of background/missing values.
 #'
 #' @return A ggplot2 heatmap object.
+#'
+#' @noRd
 cluster_heatmap <- function(
     normalized_data,
     exclude_sample_types,
@@ -406,27 +311,33 @@ cluster_heatmap <- function(
   # Grouping and summarizing according to facet logic
   if (!identical(group_facet, "") && "group" %in% colnames(to_plot)) {
     to_plot <- to_plot %>%
-      dplyr::group_by(.data[[group_facet]], group, cluster, analyte) %>%
-      dplyr::summarize(median_relative_abundance = median(relative_abundance, na.rm = TRUE), .groups = "drop")
+      dplyr::group_by(.data[[group_facet]], group, cluster, analyte)
   } else if (!identical(group_facet, "")) {
     to_plot <- to_plot %>%
-      dplyr::group_by(.data[[group_facet]], cluster, analyte) %>%
-      dplyr::summarize(median_relative_abundance = median(relative_abundance, na.rm = TRUE), .groups = "drop")
+      dplyr::group_by(.data[[group_facet]], cluster, analyte)
   } else if ("group" %in% colnames(to_plot)) {
     to_plot <- to_plot %>%
-      dplyr::group_by(group, cluster, analyte) %>%
-      dplyr::summarize(median_relative_abundance = median(relative_abundance, na.rm = TRUE), .groups = "drop")
+      dplyr::group_by(group, cluster, analyte)
   } else {
     to_plot <- to_plot %>%
-      dplyr::group_by(cluster, analyte) %>%
-      dplyr::summarize(median_relative_abundance = median(relative_abundance, na.rm = TRUE), .groups = "drop")
+      dplyr::group_by(cluster, analyte)
   }
+  
+  to_plot <- to_plot %>% 
+    dplyr::summarize(
+      median_relative_abundance = median(relative_abundance, na.rm = TRUE), 
+      .groups = "drop"
+    )
   
   # Early exit if no data
   if (nrow(to_plot) == 0) {
-    return(ggplot2::ggplot() +
-             ggplot2::theme_void() +
-             ggplot2::geom_text(label = "Oops, there is no data to show...", x = 0.5, y = 0.5))
+    return(
+      ggplot2::ggplot() +
+        ggplot2::theme_void() +
+        ggplot2::geom_text(
+          label = "Oops, there is no data to show...", x = 0.5, y = 0.5
+        )
+    )
   }
   
   # Create plot
@@ -439,7 +350,11 @@ cluster_heatmap <- function(
       text = paste(
         "Analyte:", analyte,
         "\nCluster", cluster,
-        "\nMedian relative abundance:", paste0(format(round(median_relative_abundance, digits = 2), nsmall = 2), "%")
+        "\nMedian relative abundance:", 
+        paste0(
+          format(round(median_relative_abundance, digits = 2), nsmall = 2), 
+          "%"
+        )
       )
     )
   ) +
@@ -447,7 +362,9 @@ cluster_heatmap <- function(
     ggplot2::labs(x = "", y = "", fill = "Median relative abundance (%)") +
     ggplot2::theme_classic() +
     ggplot2::theme(
-      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 0.5),
+      panel.border = ggplot2::element_rect(
+        color = "black", fill = NA, linewidth = 0.5
+      ),
       panel.background = ggplot2::element_rect(fill = color_na),
       axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
       axis.text.y = ggplot2::element_text(size = 11)

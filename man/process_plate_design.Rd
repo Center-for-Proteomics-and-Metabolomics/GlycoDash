@@ -21,11 +21,3 @@ A dataframe with two columns: \describe{\item{sample_id}{The sample
 This function takes the result from the \code{\link{read_plate_design}}
 function and converts it to a different format.
 }
-\examples{
-path <- system.file("extdata",
-                    "Plate_design_example.xlsx",
-                    package = "GlycoDash")
-
-plate_design <- read_plate_design(path)
-process_plate_design(plate_design)
-}

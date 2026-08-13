@@ -13,7 +13,8 @@ mod_process_plate_design_ui <- function(
     fileInput_label,
     popover_width = "400px", 
     popover_title = "", 
-    popover_content_html = "") {
+    popover_content_html = ""  
+  ) {
   ns <- NS(id)
   
   fluidRow(
@@ -51,6 +52,7 @@ mod_process_plate_design_ui <- function(
 }
     
 
+
 #' process_plate_design Server Functions
 #'
 #' @noRd 
@@ -58,7 +60,8 @@ mod_process_plate_design_server <- function(
     id, 
     allowed, 
     with_info_icon, 
-    reset) {
+    reset  
+  ) {
   moduleServer( id, function(input, output, session) {
     ns <- session$ns
     
@@ -86,6 +89,7 @@ mod_process_plate_design_server <- function(
       )
     })
     
+    
     observe({
       if (is_truthy(r$plate_design)) {
         shinyjs::reset("file")
@@ -93,9 +97,9 @@ mod_process_plate_design_server <- function(
       }
     }) %>% bindEvent(reset$resetter)
     
+    
     observe({
       req(extension() %in% allowed)
-      
       shinyFeedback::hideFeedback("file")
       
       r$plate_design <- tryCatch(

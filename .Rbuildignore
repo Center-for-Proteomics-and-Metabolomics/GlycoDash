@@ -12,3 +12,6 @@ $run_dev.*
 ^\.dockerignore$
 ^\.positai$
 ^\.claude$
+^codecov\.yml$
+^doc$
+^Meta$

@@ -12,7 +12,8 @@ mod_process_sample_type_file_ui <- function(
     fileInput_label, 
     popover_width, 
     popover_title, 
-    popover_content_html) {
+    popover_content_html  
+  ) {
   ns <- NS(id)
   
   fluidRow(
@@ -48,14 +49,17 @@ mod_process_sample_type_file_ui <- function(
     )
   )
 }
-    
+ 
+
+   
 #' process_sample_type_file Server Functions
 #'
 #' @noRd 
 mod_process_sample_type_file_server <- function(
     id, 
-    allowed) {
-  moduleServer(id, function(input, output, session){
+    allowed  
+  ) {
+  moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
     sample_type_list <- reactive({
@@ -98,10 +102,12 @@ mod_process_sample_type_file_server <- function(
     }) %>% bindEvent(input$file)
     
     
-    return(list(
-      list = sample_type_list,
-      filename = reactive(input$file$name)
-      ))
+    return(
+      list(
+        list = sample_type_list,
+        filename = reactive(input$file$name)
+      )
+    )
     
   })
 }

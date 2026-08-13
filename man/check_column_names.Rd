@@ -20,9 +20,3 @@ Checks whether the metadata contains column names that are reserved for
 internal use. Some column names are not allowed because they conflict with
 columns created elsewhere in the pipeline.
 }
-\examples{
-metadata <- data.frame(sample_id = c("S1", "S2"),
-                       sample_name = c("Sample 1", "Sample 2"),
-                       group = c("A", "B"))
-check_column_names(metadata)
-}

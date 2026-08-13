@@ -17,8 +17,8 @@ This function returns a dataframe with a column named "well" that
   the sample IDs of the samples on that plate.
 }
 \description{
-The function \code{read_plate_design} reads in a plate design Excel file of a
-96-wells plate and returns a dataframe. It uses the
+The function \code{read_plate_design} reads in a plate design Excel file of 
+a 96-wells plate and returns a dataframe. It uses the
 \code{\link[plater]{read_plate}} function from the plater package.
 \code{read_plate_design} is used in the
 \code{\link{read_and_process_plate_design}} function.
@@ -44,9 +44,3 @@ At the bottom of the plate, leave one row blank and then add the next plate in
 the same format.
 }
 
-\examples{
-path <- system.file("extdata",
-                    "Plate_design_example.xlsx",
-                    package = "GlycoDash")
-read_plate_design(plate_design_file = path)
-}

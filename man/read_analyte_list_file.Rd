@@ -23,12 +23,3 @@ A tibble with one column named "analyte" with the analytes that
 \description{
 Read an analyte list Excel or .rds file
 }
-\examples{
-path <- system.file("extdata",
-                    "Analyte_list.xlsx",
-                    package = "GlycoDash")
-
-read_analyte_list_file(filepath = path,
-                      filename = "Analyte_list.xlsx")
-
-}

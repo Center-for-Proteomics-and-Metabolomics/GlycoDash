@@ -24,12 +24,3 @@ A tibble with the sample IDs and sample types.
 Reads a sample type file in Excel (.xlsx, .xls) or .rds format and returns a
 tibble with sample IDs and their corresponding sample types.
 }
-\examples{
-path <- system.file("extdata",
-                    "Sample_types_example.xlsx",
-                    package = "GlycoDash")
-
-read_sample_type_file(filepath = path, 
-                      filename = "Sample_types_example.xlsx")
-
-}

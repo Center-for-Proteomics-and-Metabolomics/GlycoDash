@@ -21,21 +21,3 @@ The \code{checked_data} and \code{summarized_checks} dataframes
 \description{
 Create the dataframe for next steps when spectra curation is skipped
 }
-\examples{
-data("example_data")
-
-checked_data <- check_analyte_quality_criteria(my_data = example_data,
-                                               min_ppm_deviation = -20,
-                                               max_ppm_deviation = 20,
-                                               max_ipq = 0.2,
-                                               min_sn = 9,
-                                               criteria_to_consider = c("Mass accuracy",
-                                                                        "S/N",
-                                                                        "IPQ"))
-
-summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-
-return_when_spectra_curation_is_skipped(checked_data = checked_data,
-                                        summarized_checks = summarized_checks)
-                                        
-}

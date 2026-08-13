@@ -22,7 +22,7 @@ mod_tab_quantitation_ui <- function(id) {
         shinyWidgets::materialSwitch(
           ns("log_scale_quantities"),
           HTML("<i style='font-size:16px;'> Plot quantities on logarithmic scale </i>"),
-          status = "success", right = TRUE, value = FALSE
+          status = "success", right = TRUE, value = TRUE
         ),
         shinyjqui::jqui_resizable(plotly::plotlyOutput(ns("boxplots")))
       ),
@@ -58,7 +58,7 @@ mod_tab_quantitation_ui <- function(id) {
             HTML("<i style='font-size:16px;'> Plot quantities on logarithmic scale </i>"),
             status = "success",
             right = TRUE,
-            value = FALSE
+            value = TRUE
           ),
           style = "font-size: 15px; font-style: italic"
         ),
@@ -73,10 +73,12 @@ mod_tab_quantitation_ui <- function(id) {
 #' tab_quantitation Server Functions
 #'
 #' @noRd 
-mod_tab_quantitation_server <- function(id, 
-                                        quantities,
-                                        protein_data,
-                                        intensities) {
+mod_tab_quantitation_server <- function(
+    id, 
+    quantities,
+    protein_data,
+    intensities  
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -98,8 +100,7 @@ mod_tab_quantitation_server <- function(id,
       req(protein_data)
       if (length(unique(protein_data$peptide_pair)) > 1) {
         plot_peptide_correlations(protein_data, input$log_scale_peptides)
-      } 
-      else {
+      } else {
         NULL
       }
     })
@@ -113,9 +114,11 @@ mod_tab_quantitation_server <- function(id,
         }
       )
       # Combine into subplot
-      plotly::subplot(plotly_list, titleX = TRUE, titleY = TRUE,
-                      nrows = ceiling(length(plotly_list) / 2), 
-                      margin = 0.05)
+      plotly::subplot(
+        plotly_list, titleX = TRUE, titleY = TRUE,
+        nrows = ceiling(length(plotly_list) / 2), 
+        margin = 0.05
+      )
     })
     
   

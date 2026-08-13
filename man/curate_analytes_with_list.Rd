@@ -24,27 +24,3 @@ A dataframe with columns \code{cluster}, \code{charge}, \code{analyte},
 Curate analytes by checking against a predefined list of analytes that should
 pass curation. Any analyte present in the list will be marked as passing curation.
 }
-\examples{
-data("example_data")
-example_data <- curate_spectra(data = example_data,
-                            min_ppm_deviation = -20,
-                            max_ppm_deviation = 20,
-                            max_ipq = 0.2,
-                            min_sn = 9,
-                            clusters_regex = "IgGI1",
-                            cut_off_basis = c("Spike PBS", "Total PBS"))
-
-curated_spectra <- example_data$curated_data \%>\%
-   dplyr::filter(has_passed_spectra_curation == TRUE) \%>\%
-   dplyr::select(-has_passed_spectra_curation)
-
-analyte_list_file <- system.file("extdata",
-                                 "Analyte_list.xlsx",
-                                 package = "GlycoDash")
-
-analyte_list <- readxl::read_excel(analyte_list_file)
-
-curate_analytes_with_list(data = curated_spectra,
-                          analyte_list = analyte_list)
-                          
-}

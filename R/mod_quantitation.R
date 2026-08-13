@@ -85,12 +85,21 @@ mod_quantitation_ui <- function(id) {
                 ns("dropdown_content"),
                 " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
               ))),
-              div(id = ns("dropdown_content"),
-                  downloadButton(ns("download_example"),
-                                 "Download an example Excel file")),
+              div(
+                id = ns("dropdown_content"),
+                tags$a(
+                  href = "www/protein_quantitation_example.xlsx",
+                  download = "protein_quantitation_example.xlsx",
+                  class = "btn btn-default",
+                  icon("download"),
+                  "Download example file"
+                )
+              ),
               icon = icon("paperclip", class = "ml"),
-              tooltip = shinyWidgets::tooltipOptions(placement = "top",
-                                                     title = "Example"),
+              tooltip = shinyWidgets::tooltipOptions(
+                placement = "top",
+                title = "Example"
+              ),
               width = "330px",
               size = "xs"
             )
@@ -98,8 +107,9 @@ mod_quantitation_ui <- function(id) {
           width = 5,
           solidHeader = TRUE,
           status = "primary",
-          fileInput(ns("proteins_file"),
-                    "Upload Excel file with protein specifications:"
+          fileInput(
+            ns("proteins_file"),
+            "Upload xlsx file with protein specifications:"
           ),
           # Option to exclude peptide ions from calculations
           shinyjs::hidden(selectizeInput(
@@ -184,15 +194,18 @@ mod_quantitation_ui <- function(id) {
   )
 }
    
+
  
 #' quantitation Server Functions
 #'
 #' @noRd 
-mod_quantitation_server <- function(id,
-                                    peptides,
-                                    peptides_data,
-                                    results_spectra_curation,
-                                    results_normalization) {
+mod_quantitation_server <- function(
+    id,
+    peptides,
+    peptides_data,
+    results_spectra_curation,
+    results_normalization  
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -217,7 +230,9 @@ mod_quantitation_server <- function(id,
     # Read Excel file
     proteins_excel <- reactive({
       req(input$proteins_file, extension(), extension() %in% c("xlsx", "xls"))
-      readxl::read_excel(input$proteins_file$datapath, col_names = TRUE, col_types = "text")
+      readxl::read_excel(
+        input$proteins_file$datapath, col_names = TRUE, col_types = "text"
+      )
     })
     
     # Initiate reactiveValues vector
@@ -250,12 +265,14 @@ mod_quantitation_server <- function(id,
           confirmButtonCol = "tomato"
         )
         r$correct_formatting <- FALSE
-      } 
-      else {
+      } else {
         # Colnames are correct --> check peptides validity
         clusters_specified <- c(proteins_excel()$natural, proteins_excel()$labeled)
+        
         clusters_data <- c(unique(normalized_data()$cluster), peptides())
+        
         missing <- clusters_specified[!clusters_specified %in% clusters_data]
+        
         if (length(missing) > 0) {
           shinyalert::shinyalert(
             text = paste0(
@@ -275,26 +292,40 @@ mod_quantitation_server <- function(id,
     
     # Get intensities of glycopeptides
     glycopeptide_intensities <- reactive({
-      req(proteins_excel(), normalized_data_wide(), r$correct_formatting == TRUE)
+      req(
+        proteins_excel(), 
+        normalized_data_wide(), 
+        r$correct_formatting == TRUE
+      )
       get_glycopeptide_intensities(proteins_excel(), normalized_data_wide())
     })
     
     # Get intensities of non-glycosylated peptides
     peptide_intensities <- reactive({
-      req(proteins_excel(), peptides_data(), r$correct_formatting == TRUE)
-      get_peptide_intensities(proteins_excel(), peptides_data(), input$exclude_peptides)
+      req(
+        proteins_excel(), 
+        peptides_data(), 
+        r$correct_formatting == TRUE
+      )
+      get_peptide_intensities(
+        proteins_excel(), peptides_data(), input$exclude_peptides
+      )
     })
     
     # Combine peptide and glycopeptide intensities (need at least one)
     combined_intensities <- reactive({
-      req(is_truthy(glycopeptide_intensities()) || is_truthy(peptide_intensities()))
-      if (is_truthy(glycopeptide_intensities()) && is_truthy(peptide_intensities())) {
+      req(
+        is_truthy(glycopeptide_intensities()) || 
+        is_truthy(peptide_intensities())
+      )
+      if (
+        is_truthy(glycopeptide_intensities()) && 
+        is_truthy(peptide_intensities())
+      ) {
         dplyr::bind_rows(glycopeptide_intensities(), peptide_intensities())
-      } 
-      else if (is_truthy(glycopeptide_intensities())) {
+      } else if (is_truthy(glycopeptide_intensities())) {
         glycopeptide_intensities()
-      } 
-      else {
+      } else {
         peptide_intensities()
       }
     })
@@ -303,6 +334,7 @@ mod_quantitation_server <- function(id,
     proteins_checked <- reactive({
       req(combined_intensities(), proteins_excel())
       present <- unique(combined_intensities()$cluster)
+      
       proteins_excel() %>% 
         dplyr::filter(natural %in% present & labeled %in% present)
     })
@@ -328,8 +360,10 @@ mod_quantitation_server <- function(id,
             paste0(row$natural, " / ", row$labeled),
             ", because too many ions required for the calculation were excluded."
           )
-          showNotification(message, type = "warning", duration = NULL, 
-                           id = as.character(rownum))
+          showNotification(
+            message, type = "warning", duration = NULL, 
+            id = as.character(rownum)
+          )
           notifications$ids <- c(notifications$ids, as.character(rownum))
         }
       }
@@ -434,21 +468,26 @@ mod_quantitation_server <- function(id,
       })
       r$peptide_tabs_names <- NULL
       r$peptide_tabs_data <- NULL
+      
       # Generate peptide QC tabs
       if (!is.null(peptides_data())) {
         for (current_protein in proteins()) {
           # Check peptide data for current protein
           peptides <- proteins_excel() %>%
             dplyr::filter(protein == current_protein)
+          
           peptides_data_current_protein <- peptides_data() %>%
             dplyr::filter(cluster %in% c(peptides$natural, peptides$labeled))
+          
           if (nrow(peptides_data_current_protein) == 0) {
             peptides_data_current_protein <- NULL
           }
+          
           # If peptide data exists, generate tab
           if (!is.null(peptides_data_current_protein)) {
             r$peptide_tabs_names <- c(r$peptide_tabs_names, current_protein)
             r$peptide_tabs_data[[current_protein]] <- peptides_data_current_protein
+            
             appendTab(
               inputId = "peptide_tabs",
               select = TRUE,
@@ -462,6 +501,7 @@ mod_quantitation_server <- function(id,
           }
         }
       }
+      
       if (!is.null(r$peptide_tabs_names)) {
         r$peptide_tabs_contents <- rlang::set_names(r$peptide_tabs_names) %>%
           purrr::map(., function(current_protein) {
@@ -514,8 +554,10 @@ mod_quantitation_server <- function(id,
       
       data_with_quantities <- normalized_data_wide() %>% 
         dplyr::left_join(quantities_wide) %>% 
-        dplyr::relocate(tidyselect::contains("_quantity"), 
-                        .after = tidyselect::contains("_sum_intensity"))
+        dplyr::relocate(
+          tidyselect::contains("_quantity"), 
+          .after = tidyselect::contains("_sum_intensity")
+        )
       
       return(data_with_quantities)
     })
@@ -524,29 +566,17 @@ mod_quantitation_server <- function(id,
     # Display data with protein quantities
     output$data_table <- DT::renderDT({
       req(data_with_quantities())
-      DT::datatable(data_with_quantities() %>% # Round numbers to 2 decimals
-                      dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
-                    options = list(
-                      scrollX = TRUE,
-                      pageLength = 6,  # Shows 5 rows
-                      columnDefs = list(list(className = "dt-center", targets = "_all"))
-                    ),
-                    filter = "top")
+      DT::datatable(
+        data_with_quantities() %>% # Round numbers to 2 decimals
+          dplyr::mutate_if(is.numeric, ~format(round(., 2), nsmall = 2)),
+        options = list(
+          scrollX = TRUE,
+          pageLength = 6,  # Shows 5 rows
+          columnDefs = list(list(className = "dt-center", targets = "_all"))
+        ),
+        filter = "top"
+      )
     })
-    
-    
-    
-    # Download example Excel file
-    output$download_example <- downloadHandler(
-      filename = "protein_quantitation_example.xlsx",
-      content = function(file) {
-        example_file <- system.file("app",
-                                    "www",
-                                    "protein_quantitation_example.xlsx",
-                                    package = "GlycoDash")
-        file.copy(example_file, file)
-      }
-    )
     
     
     # Download peptide QC data
@@ -561,7 +591,9 @@ mod_quantitation_server <- function(id,
     
     output$download <- downloadHandler(
       filename = function() {
-        current_datetime <- paste0(format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M"))
+        current_datetime <- paste0(
+          format(Sys.Date(), "%Y%m%d"), "_", format(Sys.time(), "%H%M")
+        )
         paste0(current_datetime, "_quantitation_peptides_quality.xlsx")
       },
       content = function(file) {

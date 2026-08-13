@@ -20,30 +20,7 @@ analytes. Each point represents one sum spectrum (one cluster from one
 sample). Colors represent sample types. Uncalibrated spectra are shown as squares, while
 calibrated spectra are shown as dots. If the data contains total and specific
 samples, the plot is faceted by group (total or specific).
-}
-\details{
+
 The ggplot has a text aesthetic that can be used to show as hover
 info if the ggplot object is converted to a ggplotly object (see example).
-}
-\examples{
-data("example_data")
-
-checked_data <- check_analyte_quality_criteria(my_data = example_data,
-                                               min_ppm_deviation = -20,
-                                               max_ppm_deviation = 20,
-                                               max_ipq = 0.2,
-                                               min_sn = 9,
-                                               criteria_to_consider = c("Mass accuracy",
-                                                                        "S/N",
-                                                                        "IPQ"))
-
-summarized_checks <- summarize_spectra_checks(checked_data = checked_data)
-
-plot <- create_cut_off_plot(summarized_checks = summarized_checks)
-
-# The plot can be made interactive with plotly. Use the "text" aesthetic to
-# show hover info:
-plotly::ggplotly(plot,
-                 tooltip = "text")
-
 }
