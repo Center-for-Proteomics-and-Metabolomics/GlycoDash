@@ -383,12 +383,21 @@ mod_derived_traits_ui <- function(id) {
                 ns("dropdown_content"),
                 " .btn {float: none; border-width: 1px; width: 280px; margin: 10px}"
               ))),
-              div(id = ns("dropdown_content"),
-                  downloadButton(ns("download_ex_custom_formulas"),
-                                 "Download an example Excel file")),
+              div(
+                id = ns("dropdown_content"),
+                tags$a(
+                  href = "www/custom_traits_formulas_example.xlsx",
+                  download = "custom_traits_formulas_example.xlsx",
+                  class = "btn btn-default",
+                  icon("download"),
+                  "Download example file"
+                )
+              ),
               icon = icon("paperclip", class = "ml"),
-              tooltip = shinyWidgets::tooltipOptions(placement = "top",
-                                                     title = "Example"),
+              tooltip = shinyWidgets::tooltipOptions(
+                placement = "top",
+                title = "Example"
+              ),
               width = "330px",
               size = "xs"
             )
@@ -396,9 +405,10 @@ mod_derived_traits_ui <- function(id) {
           width = 5,
           solidHeader = TRUE,
           status = "primary",
-          fileInput(ns("custom_traits_file"),
-                    "Upload Excel file with custom glycosylation traits formulas:"
-                    )
+          fileInput(
+            ns("custom_traits_file"),
+            "Upload Excel file with custom glycosylation traits formulas:"
+          )
         ),
         
         shinydashboard::box(
@@ -423,7 +433,6 @@ mod_derived_traits_ui <- function(id) {
   )
 }
     
-
 
 
 #' derived_traits Server Functions
@@ -1199,23 +1208,6 @@ mod_derived_traits_server <- function(
         }
       }
     })
-    
-    
-
-    ########## Download example Excel of custom traits ##########
-    output$download_ex_custom_formulas <- downloadHandler(
-      filename = "custom_traits_formulas_example.xlsx",
-      content = function(file) {
-        example_file <- system.file(
-          "app",
-          "www",
-          "custom_traits_formulas_example.xlsx",
-          package = "GlycoDash"
-        )
-        file.copy(example_file, file)
-      }
-    )
-
     
     
     ############### Formulas of glycosylation traits ###############

@@ -49,9 +49,12 @@ mod_add_sample_types_ui <- function(id) {
           ))),
           div(
             id = ns("dropdown_content"),
-            downloadButton(
-              ns("download_ex_sample_types"),
-              "Download a sample types example file"
+            tags$a(
+              href = "www/sample_types_example.xlsx",
+              download = "sample_types_example.xlsx",
+              class = "btn btn-default",
+              icon("download"),
+              "Download example sample types file"
             )
           ),
           icon = icon("paperclip", class = "ml"),
@@ -397,17 +400,6 @@ mod_add_sample_types_server <- function(
         with_manual_sample_types()
       }
     })
-    
-    output$download_ex_sample_types <- downloadHandler(
-      filename = "sample_types_example.xlsx",
-      content = function(file) {
-        example_file <- system.file(
-          "app", "www", "sample_types_example.xlsx",
-          package = "GlycoDash"
-        )
-        file.copy(example_file, file)
-      }
-    )
     
   
     return(

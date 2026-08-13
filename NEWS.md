@@ -1,3 +1,11 @@
+# v1.12.2
+## Fixed
+- Fixed a bug where example `xlsx` files could not be downloaded when running GlycoDash in a Docker container.
+
+## Changed
+- Minor improvements in the user interface.
+
+
 # v1.12.1
 ## Changed
 - Remove `mz_exact` as a required column in SweetSuite data. The values are 
@@ -7,7 +15,7 @@ versions.
 
 # v1.12.0
 ## Added
-* Data import: option to merge Skyline data with GlyCounter fragmentation data.
+* Data import: experimental option to merge Skyline data with GlyCounter fragmentation data.
 
 ## Changed
 * Show an error message when the dashboard crashes, telling user to reload the page.
