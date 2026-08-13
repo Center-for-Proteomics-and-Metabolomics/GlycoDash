@@ -87,9 +87,12 @@ mod_quantitation_ui <- function(id) {
               ))),
               div(
                 id = ns("dropdown_content"),
-                downloadButton(
-                  ns("download_example"),
-                  "Download an example Excel file"
+                tags$a(
+                  href = "www/protein_quantitation_example.xlsx",
+                  download = "protein_quantitation_example.xlsx",
+                  class = "btn btn-default",
+                  icon("download"),
+                  "Download example file"
                 )
               ),
               icon = icon("paperclip", class = "ml"),
@@ -191,6 +194,7 @@ mod_quantitation_ui <- function(id) {
   )
 }
    
+
  
 #' quantitation Server Functions
 #'
@@ -573,22 +577,6 @@ mod_quantitation_server <- function(
         filter = "top"
       )
     })
-    
-    
-    
-    # Download example Excel file
-    output$download_example <- downloadHandler(
-      filename = "protein_quantitation_example.xlsx",
-      content = function(file) {
-        example_file <- system.file(
-          "app",
-          "www",
-          "protein_quantitation_example.xlsx",
-          package = "GlycoDash"
-        )
-        file.copy(example_file, file)
-      }
-    )
     
     
     # Download peptide QC data

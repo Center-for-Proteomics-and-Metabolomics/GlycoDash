@@ -425,20 +425,6 @@ mod_add_metadata_server <- function(
     })
     
     
-    # Download example metadata file
-    output$download_example_metadata <- downloadHandler(
-      filename = "metadata_example.xlsx",
-      content = function(file) {
-        example_file <- system.file(
-          "app",
-          "www",
-          "metadata_example.xlsx",
-          package = "GlycoDash"
-        )
-        file.copy(example_file, file)
-      }
-    )
-    
     # Only return merged_metadata if sample IDs are unique.
     merged_metadata_to_return <- reactive({
       req(merged_metadata(), unique_sample_ids() == TRUE)
