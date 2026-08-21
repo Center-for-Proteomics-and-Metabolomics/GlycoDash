@@ -1,3 +1,4 @@
+# Data import ------------------------------------------------------------
 testthat::test_that("BEAT LaCyTools summaries are imported correctly", {
   
   path1 <- extdata_path(
@@ -47,6 +48,46 @@ testthat::test_that("BEAT LaCyTools summaries are imported correctly", {
   testthat::expect_true(
     nrow(combined) == 99216
   )
+  
+  # TODO: Check data types of columns
 
+})
+
+testthat::test_that("Spike/Total samples correctly recognized in BEAT data", {
+  # TODO
+})
+
+testthat::test_that("Sample IDs correctly added to BEAT data", {
+  # TODO
+})
+
+testthat::test_that("Sample types correctly added to BEAT data", {
+  # TODO
+})
+
+testthat::test_that("Glycosylation sites correctly recognized in BEAT data", {
+  # TODO
+})
+
+testthat::test_that("Metadata correctly added to BEAT data", {
+  # TODO
+})
+
+
+# Spectra curation -------------------------------------------------------
+testthat::test_that("BEAT spectra curation produces expected results", {
+  # TODO
+})
+
+
+# Analyte curation -------------------------------------------------------
+testthat::test_that("BEAT analyte curation produces expected results", {
+  # TODO
+})
+
+
+# Normalization ----------------------------------------------------------
+testthat::test_that("BEAT normalization produces expected results", {
+  # TODO
 })
 
