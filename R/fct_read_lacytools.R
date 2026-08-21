@@ -328,7 +328,7 @@ lengthen_block <- function(
     tidyr::pivot_longer(
       cols = -tidyselect::any_of(cols_not_to_pivot),
       names_to = "analyte",
-      values_to = tidyselect::all_of(new_output_name)
+      values_to = new_output_name
     ) %>% 
     dplyr::mutate(charge = charge_int) %>% 
     dplyr::relocate(charge, .before = all_of(new_output_name)) %>% 
