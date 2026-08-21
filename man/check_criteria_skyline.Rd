@@ -12,6 +12,18 @@ check_criteria_skyline(
   min_total_area
 )
 }
+\arguments{
+\item{my_data}{A dataframe in long format (one row for each analyte, sample,
+and charge combination).}
+
+\item{min_ppm_deviation}{The lowest allowed mass accuracy, in ppm.}
+
+\item{max_ppm_deviation}{The highest allowed mass accuracy, in ppm.}
+
+\item{min_idp}{The lowest allowed isotope dot product value.}
+
+\item{min_total_area}{The lowest allowed total analyte area per charge state.}
+}
 \value{
 The original dataframe, but with an extra column for each quality
   criterium that is \code{TRUE} or \code{FALSE}.

@@ -9,6 +9,8 @@ create_cut_off_plot(summarized_checks, color_palette)
 \arguments{
 \item{summarized_checks}{The return value of the function
 \code{\link{summarize_spectra_checks}}.}
+
+\item{color_palette}{A character vector of colors used for the sample types.}
 }
 \value{
 A ggplot object.

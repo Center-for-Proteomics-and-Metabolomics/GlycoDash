@@ -13,6 +13,18 @@ check_criteria_lacytools(
   min_sn
 )
 }
+\arguments{
+\item{my_data}{A dataframe in long format (one row for each analyte, sample,
+and charge combination).}
+
+\item{min_ppm_deviation}{The lowest allowed mass accuracy, in ppm.}
+
+\item{max_ppm_deviation}{The highest allowed mass accuracy, in ppm.}
+
+\item{max_ipq}{The highest allowed isotopic pattern quality value.}
+
+\item{min_sn}{The lowest allowed signal-to-noise ratio.}
+}
 \value{
 The original dataframe, but with an extra column for each quality
   criterium that is \code{TRUE} or \code{FALSE}.

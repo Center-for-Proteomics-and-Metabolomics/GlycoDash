@@ -13,7 +13,7 @@ find_choices_for_repeatability_menu(normalized_data)
 A list of character strings where each string contains "sample id: "
   followed by the sample ID and if applicable "group: " followed by the total
   or specific keyword. This list can be given as the \code{choices} argument
-  to the function \code{\link{selectInput}}.
+  to the function \code{\link[shiny]{selectInput}}.
 }
 \description{
 This function finds the sample IDs or if applicable the combinations of

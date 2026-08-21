@@ -61,7 +61,7 @@ check_skyline_data <- function(raw_skyline_data) {
 #' parses that column to extract the peptide sequence, glycan composition,
 #' methionine oxidation count, and glycosylation site abbreviation. The
 #' resulting dataframe uses the same \code{cluster}/\code{glycan} column
-#' structure expected by \code{\link{transform_skyline_data}}.
+#' structure expected by \code{\link{reformat_skyline_data}}.
 #'
 #' @param raw_skyline_data A dataframe of raw Skyline data in wide format,
 #'   as returned by \code{\link{read_skyline_csv}}.
@@ -408,4 +408,3 @@ reshape_skyline_data <- function(data_renamed) {
   
   return(data_wide)
 }
-

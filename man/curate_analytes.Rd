@@ -15,8 +15,9 @@ curate_analytes(
 )
 }
 \arguments{
-\item{checked_analytes}{The result of the
-\code{\link{check_analyte_quality_criteria}} function.}
+\item{checked_analytes}{The result of
+\code{\link{check_analyte_quality_criteria_lacytools}} or
+\code{\link{check_analyte_quality_criteria_skyline}}.}
 
 \item{cut_offs_percentages}{A named list with the minimum percentages of spectra in which an
 analyte needs to fulfill the quality criteria in order for that analyte to pass curation.
@@ -57,7 +58,8 @@ passes the quality criteria, or (2) the average quality control parameters acros
 Optionally, analyte curation can be performed per biological group. Before this function 
 is used, you should filter out samples that you don't want to base the analyte curation 
 on with the function \code{\link{throw_out_samples}} and you should use the function
-\code{\link{check_analyte_quality_criteria}} to check the analyte quality
+\code{\link{check_analyte_quality_criteria_lacytools}} or
+\code{\link{check_analyte_quality_criteria_skyline}} to check the analyte quality
 criteria for each analyte in each sample. The reason we check the analyte
 quality criteria again even though this already happened during spectra
 curation is that during spectra curation one or more criteria could be
