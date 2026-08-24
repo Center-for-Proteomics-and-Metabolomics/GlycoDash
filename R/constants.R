@@ -41,6 +41,23 @@ ISOTOPES <- list(
     Fe56 = list(mass = 55.9349363, abundance = 0.91754),
     Fe57 = list(mass = 56.9353928, abundance = 0.02119),
     Fe58 = list(mass = 57.9332744, abundance = 0.00282)
+  ),
+  phosphorus = list(
+    P31 = list(mass = 30.973761998, abundance = 1)
+  ),
+  fluorine = list(
+    F19 = list(mass = 18.998403163, abundance = 1)
+  ),
+  chlorine = list(
+    Cl35 = list(mass = 34.968852682, abundance = 0.7576),
+    Cl37 = list(mass = 36.965902602, abundance = 0.2424)
+  ),
+  bromine = list(
+    Br79 = list(mass = 78.9183376, abundance = 0.5069),
+    Br81 = list(mass = 80.9162897, abundance = 0.4931)
+  ),
+  iodine = list(
+    I127 = list(mass = 126.9044719, abundance = 1)
   )
 )
 

@@ -16,14 +16,19 @@
 symbol_to_element <- function(symbol) {
 
   symbol_element_map <- list(
-    C = "carbon",
-    H = "hydrogen",
-    O = "oxygen",
-    N = "nitrogen",
-    S = "sulfur",
-    Na = "sodium",
-    K = "potassium",
-    Fe = "iron"
+    "C" = "carbon",
+    "H" = "hydrogen",
+    "O" = "oxygen",
+    "N" = "nitrogen",
+    "S" = "sulfur",
+    "Na" = "sodium",
+    "K" = "potassium",
+    "Fe" = "iron",
+    "P" = "phosphorus",
+    "F" = "fluorine",
+    "Cl" = "chlorine",
+    "Br" = "bromine",
+    "I" = "iodine"
   )
 
   element <- symbol_element_map[[symbol]]
