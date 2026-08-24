@@ -28,7 +28,8 @@ symbol_to_element <- function(symbol) {
     "F" = "fluorine",
     "Cl" = "chlorine",
     "Br" = "bromine",
-    "I" = "iodine"
+    "I" = "iodine",
+    "Se" = "selenium"
   )
 
   element <- symbol_element_map[[symbol]]

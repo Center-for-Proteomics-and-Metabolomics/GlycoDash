@@ -58,6 +58,14 @@ ISOTOPES <- list(
   ),
   iodine = list(
     I127 = list(mass = 126.9044719, abundance = 1)
+  ),
+  selenium = list(
+    Se74 = list(mass = 73.922475934, abundance = 0.0089),
+    Se76 = list(mass = 75.919213704, abundance = 0.0937),
+    Se77 = list(mass = 76.919914154, abundance = 0.0763),
+    Se78 = list(mass = 77.91730928, abundance = 0.2377),
+    Se80 = list(mass = 79.9165218, abundance = 0.4961),
+    Se82 = list(mass = 81.9166995, abundance = 0.0873)
   )
 )
 
