@@ -44,5 +44,5 @@ analyte (rather than separate cluster and glycan columns), this function
 parses that column to extract the peptide sequence, glycan composition,
 methionine oxidation count, and glycosylation site abbreviation. The
 resulting dataframe uses the same \code{cluster}/\code{glycan} column
-structure expected by \code{\link{transform_skyline_data}}.
+structure expected by \code{\link{reformat_skyline_data}}.
 }

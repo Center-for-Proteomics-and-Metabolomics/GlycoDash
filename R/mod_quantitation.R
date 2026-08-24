@@ -61,7 +61,7 @@ mod_quantitation_ui <- function(id) {
                   </li>
                   <li> <i> sample_ul </i> - 
                   The volume used for each sample from which proteins were captured,
-                  in microliters (μL).
+                  in microliters (\u03bcL).
                   </li>
                   </ul>
                   <br> 

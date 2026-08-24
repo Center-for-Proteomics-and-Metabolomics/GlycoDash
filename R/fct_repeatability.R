@@ -10,7 +10,7 @@
 #' @return A list of character strings where each string contains "sample id: "
 #'   followed by the sample ID and if applicable "group: " followed by the total
 #'   or specific keyword. This list can be given as the \code{choices} argument
-#'   to the function \code{\link{selectInput}}.
+#'   to the function \code{\link[shiny]{selectInput}}.
 find_choices_for_repeatability_menu <- function(normalized_data) {
   
   menu_df <- normalized_data %>% 

@@ -1,22 +1,93 @@
-testthat::test_that(
-  desc = "BEAT LaCyTools data completes the standard pipeline", 
-  code = {
-    
-    # TODO: Test actual pipeline
-
-    # Read metadata file
-    metadata_path <- extdata_path(
-      "publication_data",
-      "beat",
-      "beat_metadata.xlsx"
-    )
-    
-    metadata <- readxl::read_excel(
-      metadata_path, na = c("", "NA"), col_types = "text"
-    )
-    
-    # Example test: metadata should be a tibble
-    testthat::expect_s3_class(metadata, "tbl_df")
+# Data import ------------------------------------------------------------
+testthat::test_that("BEAT LaCyTools summaries are imported correctly", {
   
-  }
-)
+  path1 <- extdata_path(
+    "publication_data",
+    "beat",
+    "beat_summary_pl1-3_lacytools.txt"
+  )
+  path2 <- extdata_path(
+    "publication_data",
+    "beat",
+    "beat_summary_pl4-5_lacytools.txt"
+  )
+  path3 <- extdata_path(
+    "publication_data",
+    "beat",
+    "beat_summary_pl6-12_lacytools.txt"
+  )
+  
+  raw1 <- read_non_rectangular(path1)
+  raw2 <- read_non_rectangular(path2)
+  raw3 <- read_non_rectangular(path3)
+  
+  conv1 <- convert_lacytools_summary(raw1)
+  conv2 <- convert_lacytools_summary(raw2)
+  conv3 <- convert_lacytools_summary(raw3)
+  
+  combined <- dplyr::bind_rows(list(conv1, conv2, conv3))
+  
+  testthat::expect_s3_class(combined, "data.frame")
+  
+  testthat::expect_true(
+    all(
+      c(
+        "sample_name",
+        "analyte",
+        "charge",
+        "absolute_intensity_background_subtracted",
+        "mass_accuracy_ppm",
+        "isotopic_pattern_quality",
+        "sn",
+        "fraction",
+        "exact_mass"
+      ) %in% colnames(combined)
+    )
+  )
+  
+  testthat::expect_true(
+    nrow(combined) == 99216
+  )
+  
+  # TODO: Check data types of columns
+
+})
+
+testthat::test_that("Spike/Total samples correctly recognized in BEAT data", {
+  # TODO
+})
+
+testthat::test_that("Sample IDs correctly added to BEAT data", {
+  # TODO
+})
+
+testthat::test_that("Sample types correctly added to BEAT data", {
+  # TODO
+})
+
+testthat::test_that("Glycosylation sites correctly recognized in BEAT data", {
+  # TODO
+})
+
+testthat::test_that("Metadata correctly added to BEAT data", {
+  # TODO
+})
+
+
+# Spectra curation -------------------------------------------------------
+testthat::test_that("BEAT spectra curation produces expected results", {
+  # TODO
+})
+
+
+# Analyte curation -------------------------------------------------------
+testthat::test_that("BEAT analyte curation produces expected results", {
+  # TODO
+})
+
+
+# Normalization ----------------------------------------------------------
+testthat::test_that("BEAT normalization produces expected results", {
+  # TODO
+})
+

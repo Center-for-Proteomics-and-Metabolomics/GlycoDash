@@ -7,7 +7,7 @@
 mod_add_sample_types_ui(id)
 }
 \arguments{
-\item{id, input, output, session}{Internal parameters for {shiny}.}
+\item{id}{The module's namespace identifier.}
 }
 \description{
 A shiny Module to add sample types to your data either 

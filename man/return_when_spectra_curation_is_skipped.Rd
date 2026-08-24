@@ -7,8 +7,9 @@
 return_when_spectra_curation_is_skipped(checked_data, summarized_checks)
 }
 \arguments{
-\item{checked_data}{The return value of the function
-\code{\link{check_analyte_quality_criteria}}.}
+\item{checked_data}{The return value of
+\code{\link{check_analyte_quality_criteria_lacytools}} or
+\code{\link{check_analyte_quality_criteria_skyline}}.}
 
 \item{summarized_checks}{The return value of the function
 \code{\link{summarize_spectra_checks}}.}

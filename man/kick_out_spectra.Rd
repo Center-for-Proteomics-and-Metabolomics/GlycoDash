@@ -7,10 +7,10 @@
 kick_out_spectra(curated_spectra)
 }
 \arguments{
-\item{curated_data}{The return value of \code{\link{curate_spectra}}.}
+\item{curated_spectra}{The return value of \code{\link{curate_spectra}}.}
 }
 \value{
-The filtered dataframe given as \code{curated_data}.
+The filtered dataframe given as \code{curated_spectra}.
 }
 \description{
 This function filters out spectra that failed spectra curation and spectra

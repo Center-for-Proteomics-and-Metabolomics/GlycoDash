@@ -164,7 +164,7 @@ mod_spectra_curation_ui <- function(id) {
                   width = 12,
                   tags$p(paste(
                     "Each glycopeptide spectrum will be curated based on its sum",
-                    "ntensity and its percentage of passing analytes.",
+                    "intensity and its percentage of passing analytes.",
                     "Cut-off values are calculated for both of these parameters.",
                     "The way this calculation is performed depends on the chosen",
                     "spectra curation method."

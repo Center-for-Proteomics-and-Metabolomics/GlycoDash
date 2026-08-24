@@ -16,14 +16,20 @@
 symbol_to_element <- function(symbol) {
 
   symbol_element_map <- list(
-    C = "carbon",
-    H = "hydrogen",
-    O = "oxygen",
-    N = "nitrogen",
-    S = "sulfur",
-    Na = "sodium",
-    K = "potassium",
-    Fe = "iron"
+    "C" = "carbon",
+    "H" = "hydrogen",
+    "O" = "oxygen",
+    "N" = "nitrogen",
+    "S" = "sulfur",
+    "Na" = "sodium",
+    "K" = "potassium",
+    "Fe" = "iron",
+    "P" = "phosphorus",
+    "F" = "fluorine",
+    "Cl" = "chlorine",
+    "Br" = "bromine",
+    "I" = "iodine",
+    "Se" = "selenium"
   )
 
   element <- symbol_element_map[[symbol]]
@@ -267,7 +273,7 @@ multinomial_prob <- function(counts, probs) {
 element_fine_structure <- function(
     symbol,
     atom_count,
-    min_prob = 1e-12
+    min_prob = 1e-10
   ) {
 
   element <- symbol_to_element(symbol)
@@ -324,7 +330,7 @@ element_fine_structure <- function(
 convolve_patterns <- function(
     pattern_a,
     pattern_b,
-    min_prob = 1e-12
+    min_prob = 1e-10
   ) {
   combined_pattern <- list()
   peak_index <- 1
@@ -393,7 +399,7 @@ convolve_patterns <- function(
 calculate_fine_structure <- function(
     formula,
     charge,
-    min_prob = 1e-12
+    min_prob = 1e-10
 ) {
 
   # Determine elemental composition
@@ -587,7 +593,7 @@ calculate_ion_fine_structure <- function(
     formula,
     charge,
     carrier = "H",
-    min_prob = 1e-12
+    min_prob = 1e-10
 ) {
   calculate_fine_structure(
     formula = apply_charge_carrier(

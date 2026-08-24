@@ -7,8 +7,8 @@
 apply_chosen_criteria(my_data, criteria_to_consider)
 }
 \arguments{
-\item{my_data}{The return value of the function
-\code{\link{check_each_criterium}}.}
+\item{my_data}{The return value of \code{\link{check_criteria_lacytools}}
+or \code{\link{check_criteria_skyline}}.}
 
 \item{criteria_to_consider}{Character vector indicating which criteria columns to use.}
 }

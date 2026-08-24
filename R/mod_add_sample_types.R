@@ -4,7 +4,7 @@
 #' automatically based on the sample IDs or by uploading a sample types Excel 
 #' file.
 #'
-#' @param id,input,output,session Internal parameters for {shiny}.
+#' @param id The module's namespace identifier.
 mod_add_sample_types_ui <- function(id) {
   ns <- NS(id)
   tagList(

@@ -134,6 +134,13 @@ check_analyte_quality_criteria_skyline <- function(
 #' \code{\link{check_analyte_quality_criteria_lacytools}} and 
 #' \code{\link{check_analyte_quality_criteria_skyline}}.
 #'
+#' @param my_data A dataframe in long format (one row for each analyte, sample,
+#'   and charge combination).
+#' @param min_ppm_deviation The lowest allowed mass accuracy, in ppm.
+#' @param max_ppm_deviation The highest allowed mass accuracy, in ppm.
+#' @param max_ipq The highest allowed isotopic pattern quality value.
+#' @param min_sn The lowest allowed signal-to-noise ratio.
+#'
 #' @return The original dataframe, but with an extra column for each quality
 #'   criterium that is \code{TRUE} or \code{FALSE}.
 check_criteria_lacytools <- function(
@@ -168,6 +175,13 @@ check_criteria_lacytools <- function(
 #' \code{\link{check_analyte_quality_criteria_lacytools}} and 
 #' \code{\link{check_analyte_quality_criteria_skyline}}.
 #'
+#' @param my_data A dataframe in long format (one row for each analyte, sample,
+#'   and charge combination).
+#' @param min_ppm_deviation The lowest allowed mass accuracy, in ppm.
+#' @param max_ppm_deviation The highest allowed mass accuracy, in ppm.
+#' @param min_idp The lowest allowed isotope dot product value.
+#' @param min_total_area The lowest allowed total analyte area per charge state.
+#'
 #' @return The original dataframe, but with an extra column for each quality
 #'   criterium that is \code{TRUE} or \code{FALSE}.
 check_criteria_skyline <- function(
@@ -199,8 +213,8 @@ check_criteria_skyline <- function(
 #' Determines if the analyte quality criteria in \code{criteria_to_consider} 
 #' were all fulfilled.
 #'
-#' @param my_data The return value of the function
-#'   \code{\link{check_each_criterium}}.
+#' @param my_data The return value of \code{\link{check_criteria_lacytools}}
+#'   or \code{\link{check_criteria_skyline}}.
 #' @param criteria_to_consider Character vector indicating which criteria columns to use.
 #'
 #' @return The original dataframe my_data with an additional column
@@ -493,8 +507,9 @@ mean_plus_SD <- function(x, SD_factor, na.rm) {
 #' All spectra with sum intensities and percentages of passing analytes above
 #' the cut-off values pass spectra curation.
 #'
-#' @param checked_data The return value of the function
-#'   \code{\link{check_analyte_quality_criteria}}.
+#' @param checked_data The return value of
+#'   \code{\link{check_analyte_quality_criteria_lacytools}} or
+#'   \code{\link{check_analyte_quality_criteria_skyline}}.
 #' @param summarized_checks The return value of the function
 #'   \code{\link{summarize_spectra_checks}}.
 #' @param cut_offs The return value of the function
@@ -589,9 +604,9 @@ determine_reason_for_failure <- function(data) {
 #' This function filters out spectra that failed spectra curation and spectra
 #' that are uncalibrated.
 #'
-#' @param curated_data The return value of \code{\link{curate_spectra}}.
+#' @param curated_spectra The return value of \code{\link{curate_spectra}}.
 #'
-#' @return The filtered dataframe given as \code{curated_data}.
+#' @return The filtered dataframe given as \code{curated_spectra}.
 kick_out_spectra <- function(curated_spectra) {
   
   curated_spectra %>% 
@@ -744,6 +759,7 @@ get_sample_type_options <- function(summarized_checks,
 #' info if the ggplot object is converted to a ggplotly object (see example).
 #'
 #' @inheritParams calculate_cut_offs
+#' @param color_palette A character vector of colors used for the sample types.
 #'
 #' @return A ggplot object.
 create_cut_off_plot <- function(
