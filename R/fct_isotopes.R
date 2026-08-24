@@ -585,7 +585,7 @@ collapse_to_nominal_pattern <- function(fine_structure_pattern) {
 #' @param carrier A character string with the element symbol of the charge
 #'   carrier. Default is `"H"` (proton adduct).
 #' @param min_prob A numeric probability threshold. Peaks below this value are
-#'   excluded at each convolution step. Default is `1e-12`.
+#'   excluded at each convolution step. Default is `1e-10`.
 #'
 #' @return A list of fine-structure peaks as returned by
 #'   [calculate_fine_structure()].
