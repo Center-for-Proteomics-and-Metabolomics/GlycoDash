@@ -1,4 +1,4 @@
-# v.12.3
+# v1.12.3
 ## Fixed
 - Data import: bug fixes in merging GlyCounter data with Skyline data.
 
