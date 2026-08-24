@@ -218,7 +218,7 @@ curate_analytes <- function(
       curated_analytes <- grouped_analytes %>% 
         dplyr::summarize(
           avg_mass_accuracy = avg(mass_accuracy_ppm),
-          avg_idp = avg(isotopic_dot_product),
+          avg_idp = avg(isotope_dot_product),
           avg_total_area = avg(total_area)
         ) %>% 
         dplyr::mutate(
