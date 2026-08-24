@@ -9,7 +9,7 @@ testthat::test_that("BEAT test files are installed", {
     "beat_plate_layout.xlsx",
     "beat_sample_types.xlsx",
     "beat_summary_pl1-3_lacytools.txt",
-    "beat_summary_pl1-5_lacytools.txt",
+    "beat_summary_pl4-5_lacytools.txt",
     "beat_summary_pl6-12_lacytools.txt"
   )
   
