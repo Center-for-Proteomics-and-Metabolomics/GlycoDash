@@ -1,3 +1,8 @@
+# v.12.3
+## Fixed
+- Data import: bug fixes in merging GlyCounter data with Skyline data.
+
+
 # v1.12.2
 ## Fixed
 - Fixed a bug where example `xlsx` files could not be downloaded when running GlycoDash in a Docker container.
