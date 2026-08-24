@@ -4,7 +4,7 @@
 \alias{element_fine_structure}
 \title{Calculate the isotopic fine structure for a single element}
 \usage{
-element_fine_structure(symbol, atom_count, min_prob = 1e-12)
+element_fine_structure(symbol, atom_count, min_prob = 1e-10)
 }
 \arguments{
 \item{symbol}{A character string with the element symbol (e.g. `"C"`).}

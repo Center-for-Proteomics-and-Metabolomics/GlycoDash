@@ -4,7 +4,7 @@
 \alias{calculate_ion_fine_structure}
 \title{Calculate the isotopic fine structure for an ion}
 \usage{
-calculate_ion_fine_structure(formula, charge, carrier = "H", min_prob = 1e-12)
+calculate_ion_fine_structure(formula, charge, carrier = "H", min_prob = 1e-10)
 }
 \arguments{
 \item{formula}{A character string with the neutral molecular formula (e.g.

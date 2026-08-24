@@ -4,7 +4,7 @@
 \alias{convolve_patterns}
 \title{Convolve two isotope patterns}
 \usage{
-convolve_patterns(pattern_a, pattern_b, min_prob = 1e-12)
+convolve_patterns(pattern_a, pattern_b, min_prob = 1e-10)
 }
 \arguments{
 \item{pattern_a}{A list of isotope peaks (each a named list with `mass`,

@@ -4,7 +4,7 @@
 \alias{calculate_fine_structure}
 \title{Calculate the isotopic fine structure for a molecular formula}
 \usage{
-calculate_fine_structure(formula, charge, min_prob = 1e-12)
+calculate_fine_structure(formula, charge, min_prob = 1e-10)
 }
 \arguments{
 \item{formula}{A character string with the molecular formula (e.g.
