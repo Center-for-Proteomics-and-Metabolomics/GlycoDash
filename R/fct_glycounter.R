@@ -243,21 +243,63 @@ expand_skyline_isotope_candidates <- function(
 #'   `LikelyGlycoSpectrum`, `DissociationType`, `fragment_sum`, and individual
 #'   fragment ion intensity columns (named as `"<mz>, <annotation>"`).
 load_glycounter_data <- function(files) {
+  # Required column names, accept aliases.
+  column_aliases <- list(
+    ScanNumber = c("ScanNumber"),
+    RetentionTime = c("RetentionTime"),
+    PrecursorMZ = c("PrecursorMZ"),
+    LikelyGlycoSpectrum = c("LikelyGlycoSpectrum"),
+    DissociationType = c("DissociationType", "DissociationMethod")
+  )
+  
+  required_columns <- names(column_aliases)
+  
   # Read and process all OxoSignal files
   purrr::imap_dfr(files, function(file, name) {
-    read.delim(
+    data <- read.delim(
       file = file,
       header = TRUE,
       stringsAsFactors = FALSE,
       check.names = FALSE
-    ) %>%
+    )
+    
+    # Match required columns case-insensitively, including known aliases
+    for (canonical_name in required_columns) {
+      aliases <- column_aliases[[canonical_name]]
+      
+      idx <- which(
+        tolower(names(data)) %in% tolower(aliases)
+      )
+      
+      if (length(idx) == 0) {
+        stop(
+          "Missing required GlyCounter column '",
+          canonical_name,
+          "' in '",
+          name,
+          "'. Accepted names: ",
+          paste(aliases, collapse = ", ")
+        )
+      }
+      
+      if (length(idx) > 1) {
+        stop(
+          "Multiple columns matching required GlyCounter column '",
+          canonical_name,
+          "' found in '",
+          name,
+          "': ",
+          paste(names(data)[idx], collapse = ", ")
+        )
+      }
+      
+      names(data)[idx] <- canonical_name
+    }
+    
+    data %>% 
       dplyr::select(
         # Required output variables
-        ScanNumber,
-        RetentionTime,
-        PrecursorMZ,
-        LikelyGlycoSpectrum,
-        DissociationType,
+        dplyr::all_of(required_columns),
         # Fragment columns are named like "204.0867, HexNAc"
         tidyr::matches("^\\d+\\.\\d+,\\s")
       ) %>%
@@ -294,6 +336,7 @@ extract_fragment_cols <- function(glycounter_data) {
   fragment_cols <- names[stringr::str_detect(names, "^\\d+\\.\\d+,\\s")]
   return(fragment_cols)
 }
+
 
 
 #' Prepare Skyline data for merging with GlyCounter data
