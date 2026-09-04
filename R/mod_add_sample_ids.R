@@ -93,7 +93,12 @@ mod_add_sample_ids_ui <- function(id) {
       selectInput(
         ns("sample_id_method"),
         "Method for adding sample IDs:",
-        choices = c("Upload a plate design", "Upload a sample list")
+        choices = c(
+          "Upload a plate design", 
+          "Upload a sample list",
+          "Match sample names",
+          "Treat all samples as replicates"
+        )
       ) %>% 
         bsplus::bs_embed_popover(
           title = "Method to add sample IDs",
@@ -103,19 +108,23 @@ mod_add_sample_ids_ui <- function(id) {
             <br>
             You can only use this method when your sample names contain 
             information on the plate and well position of the sample, 
-            in the correct format.
+            in the correct format (see <i>User Guide</i>).
             <br> <br>
-            Examples of valid formatting for sample names are:
-            <ul>
-                <li> MS_<b>plate1_A8</b>_01.raw </li>
-                <li> IM1_<b>PL02_B09</b>_01_2020.raw </li>
-            </ul>
-            <br>
             <b> Sample list </b>
             <br>
             Use this method when your samples were not measured on 96-well 
             plates, or when your sample names are not formatted correctly 
             as described above.
+            <br> <br>
+            <b> Match sample names </b>
+            <br>
+            Select this method to make the sample IDs identical to the entries
+            in the <i>sample_name</i> column, as displayed in the table.
+            <br> <br>
+            <b> Identical sample IDs </b>
+            <br>
+            This method can be used if all the samples in your data are replicates.
+            They will all be assigned the sample sample ID 'replicate'.
             "
           ),
           html = "true",
@@ -222,7 +231,8 @@ mod_add_sample_ids_server <- function(
     keyword_total, 
     contains_total_and_specific_samples, 
     summary_filenames, 
-    data) {
+    data
+  ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
@@ -358,7 +368,14 @@ mod_add_sample_ids_server <- function(
       
       shinyFeedback::hideFeedback("sample_id_method")
       
-      if (input$sample_id_method == "Upload a plate design") {
+      
+      if (input$sample_id_method == "Match sample names") {
+        with_sample_ids <- data() %>% 
+          dplyr::mutate(sample_id = sample_name, .after = sample_name)
+      } else if (input$sample_id_method == "Treat all samples as replicates") {
+        with_sample_ids <- data() %>% 
+          dplyr::mutate(sample_id = "replicate", .after = sample_name)
+      } else if (input$sample_id_method == "Upload a plate design") {
         summary_with_plate_well <- tryCatch(
           expr = {
             detect_plate_and_well(data())

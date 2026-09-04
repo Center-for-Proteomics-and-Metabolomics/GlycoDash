@@ -433,7 +433,7 @@ ManualButton <- function(outputId) {
                       font-size: 11pt;
                      ", 
                      # Label next to the book icon
-                     "User guide"
+                     "User Guide"
                    ))
   )
 }
