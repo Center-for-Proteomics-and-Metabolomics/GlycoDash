@@ -17,7 +17,7 @@ negative.}
 carrier. Default is `"H"` (proton adduct).}
 
 \item{min_prob}{A numeric probability threshold. Peaks below this value are
-excluded at each convolution step. Default is `1e-12`.}
+excluded at each convolution step. Default is `1e-10`.}
 }
 \value{
 A list of fine-structure peaks as returned by
