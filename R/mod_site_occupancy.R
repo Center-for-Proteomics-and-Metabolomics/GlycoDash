@@ -106,7 +106,7 @@ mod_site_occupancy_ui <- function(id) {
                   of Skyline data), the same quality criteria that were used
                   for spectral and analyte curation are applied.
                   <br> <br>
-                  Because non-glycosylated peptides are often integrated without
+                  Because non-glycosylated peptides might be quantified without
                   calibration, you may want to be more lenient when it comes to
                   the acceptable mass error. This value can be set below.
                   "),

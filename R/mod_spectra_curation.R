@@ -81,7 +81,7 @@ mod_spectra_curation_ui <- function(id) {
               sliderInput(
                 ns("mass_accuracy"), 
                 "Acceptable mass accuracy range (ppm):",
-                min = -50, max = 50, value = c(-20, 20)
+                min = -20, max = 20, value = c(-20, 20)
               ),
               # IPQ and S/N in case of LaCyTools
               numericInput(
@@ -1022,6 +1022,7 @@ mod_spectra_curation_server <- function(
         peptides
       }
     })
+    
     
     
     return(list(

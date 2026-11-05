@@ -441,7 +441,9 @@ mod_derived_traits_ui <- function(id) {
 mod_derived_traits_server <- function(
     id, 
     results_normalization,
-    results_quantitation  
+    results_quantitation,
+    analyte_curated_data,
+    glycounter_fragment_colnames
   ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -454,6 +456,11 @@ mod_derived_traits_server <- function(
     normalized_data_wide <- reactive({
       req(results_normalization$normalized_data_wide())
       results_normalization$normalized_data_wide()
+    })
+    
+    observe({
+      req(normalized_data_wide())
+      browser()
     })
     
     # Toggle visibility of tabs, depending on input$antibody_types

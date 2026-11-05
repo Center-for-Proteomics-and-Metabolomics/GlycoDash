@@ -79,7 +79,8 @@ mod_read_data_ui <- function(id) {
           choices = c(
             "One column with peptide sequences and modifications",
             "Two columns: one with glycosylation sites and one with glycans"
-          )
+          ),
+          selected = "Two columns: one with glycosylation sites and one with glycans"
         ),
         selectizeInput(
           ns("skyline_protein_column"),
@@ -170,7 +171,7 @@ mod_read_data_ui <- function(id) {
               "Tolerance around theoretical <i>m/z</i> values (ppm)
               in Skyline data:"
             ),
-            value = 10, min = 1, step = 1
+            value = 5, min = 1, step = 1
           ),
           numericInput(
             ns("n_isotopic_peaks"),
@@ -558,7 +559,7 @@ mod_read_data_server <- function(id) {
               duration = NULL
             )
             shinybusy::remove_modal_spinner()
-            return(NULL)
+            NULL
           }
         )
       })
@@ -633,6 +634,7 @@ mod_read_data_server <- function(id) {
         input$data_type == "Skyline data (wide format)", 
         input$skyline_input_wide
       )
+
       read_skyline_csv(input$skyline_input_wide$datapath)
     })
     
@@ -641,13 +643,13 @@ mod_read_data_server <- function(id) {
       req(raw_skyline_data())
       columns <- raw_skyline_data() %>% 
         dplyr::select(
-          -tidyselect::contains("Total.Area.MS1"),
-          -tidyselect::contains("Isotope.Dot.Product"),
-          -tidyselect::contains("Mass.Error.PPM"),
-          -tidyselect::contains("Best.Retention.Time"),
-          -tidyselect::contains("Normalized.Area"),
-          -tidyselect::contains("Replicate.Name"),
-          -tidyselect::contains("Background.MS1")
+          -tidyselect::contains("Total Area MS1"),
+          -tidyselect::contains("Isotope Dot Product"),
+          -tidyselect::contains("Mass Error PPM"),
+          -tidyselect::contains("Best Retention Time"),
+          -tidyselect::contains("Normalized Area"),
+          -tidyselect::contains("Replicate Name"),
+          -tidyselect::contains("Background MS1")
           ) %>% 
         colnames()
       
@@ -660,13 +662,13 @@ mod_read_data_server <- function(id) {
         "skyline_molecular_formula_column",
         "skyline_note_column"
       )) {
-        if (grepl("charge", id) && "Precursor.Charge" %in% columns) {
+        if (grepl("charge", id) && "Precursor Charge" %in% columns) {
           updateSelectizeInput(
-            inputId = id, choices = columns, selected = "Precursor.Charge"
+            inputId = id, choices = columns, selected = "Precursor Charge"
           )
-        } else if (grepl("formula", id) && "Molecule.Formula" %in% columns) {
+        } else if (grepl("formula", id) && "Molecule Formula" %in% columns) {
           updateSelectizeInput(
-            inputId = id, choices = columns, selected = "Molecule.Formula"
+            inputId = id, choices = columns, selected = "Molecule Formula"
           )
         } else {
           updateSelectizeInput(inputId = id, choices = columns)
@@ -861,6 +863,12 @@ mod_read_data_server <- function(id) {
     })
     
     
+    # For storing GlyCounter fragment column names
+    rv <- reactiveValues(
+      glycounter_fragment_colnames = NULL
+    )
+    
+    
     skyline_data_merged <- reactive({
       req(skyline_data_reshaped())
       
@@ -873,7 +881,7 @@ mod_read_data_server <- function(id) {
           expr = {
             # Check for presence of required RT columns.
             required_rt_cols <- c(
-              "Best.Retention.Time", "Min.Start.Time", "Max.End.Time"
+              "Best Retention Time", "Min Start Time", "Max End Time"
             )
             missing_rt_cols <- setdiff(
               required_rt_cols, colnames(skyline_data_reshaped())
@@ -882,7 +890,7 @@ mod_read_data_server <- function(id) {
               showNotification(
                 paste0(
                   "GlyCounter merge requires Skyline retention time columns: ",
-                  "'Best.Retention.Time', 'Min.Start.Time' and 'Max.End.Time'"
+                  "'Best Retention Time', 'Min Start Time' and 'Max End Time'"
                 ),
                 type = "error", 
                 duration = NULL
@@ -902,6 +910,8 @@ mod_read_data_server <- function(id) {
             )
             
             fragment_cols <- extract_fragment_cols(glycounter_data())
+            # Store in reactiveValues vector
+            rv$glycounter_fragment_colnames <- fragment_cols
             
             skyline_prepped <- prepare_skyline_data(
               skyline_data = skyline_data_reshaped(), 
@@ -917,7 +927,7 @@ mod_read_data_server <- function(id) {
               skyline_isotope_candidates = skyline_isotope_candidates,
               glycounter_data = glycounter_data()
             )
-            
+
             glycounter_summary <- summarize_glycounter_data(
               glycounter_candidates, fragment_cols
             )
@@ -940,9 +950,9 @@ mod_read_data_server <- function(id) {
       skyline_data_merged() %>% 
         dplyr::rename(
           sample_name = sample,
-          total_area = `Total.Area.MS1`,
-          isotope_dot_product = `Isotope.Dot.Product`,
-          mass_accuracy_ppm = `Average.Mass.Error.PPM`
+          total_area = `Total Area MS1`,
+          isotope_dot_product = `Isotope Dot Product`,
+          mass_accuracy_ppm = `Average Mass Error PPM`
         ) %>% 
         dplyr::mutate(analyte = paste0(cluster, "1", glycan)) %>% 
         dplyr::select(-cluster, -glycan) %>% 
@@ -1122,6 +1132,20 @@ mod_read_data_server <- function(id) {
     })
     
     
+    
+    # If user merges SKyline data with GlyCounter data, and then re-processes
+    # without merging GlyCounter data, the fragment column names from previous
+    # merge are still stored inside the reactiveValues vector.
+    glycounter_fragment_colnames <- reactive({
+      req(to_return_trimmed())
+      if (is_truthy(glycounter_data())) {
+        rv$glycounter_fragment_colnames
+      } else {
+        NULL
+      }
+    })
+    
+
     return(list(
       data = to_return_trimmed,
       data_type = data_type_to_return,
@@ -1131,7 +1155,8 @@ mod_read_data_server <- function(id) {
         input$contains_total_and_specific_samples
       ),
       summary_filenames = filenames,
-      glycosites_table = glycosites_table
+      glycosites_table = glycosites_table,
+      glycounter_fragment_colnames = glycounter_fragment_colnames 
     ))
     
   })

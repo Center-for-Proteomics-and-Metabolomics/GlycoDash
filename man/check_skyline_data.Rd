@@ -15,7 +15,7 @@ NULL if required columns are missing, otherwise returns the data.
 }
 \description{
 Verifies that a Skyline CSV dataframe contains all required per-sample
-variable columns (\code{Total.Area.MS1}, \code{Isotope.Dot.Product}, and
-\code{Average.Mass.Error.PPM}). Shows an informative error message and
+variable columns (\code{Total Area MS1}, \code{Isotope Dot Product}, and
+\code{Average Mass Error PPM}). Shows an informative error message and
 returns NULL if data is missing. Returns the data otherwise.
 }

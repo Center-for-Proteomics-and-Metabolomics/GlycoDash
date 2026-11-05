@@ -34,9 +34,9 @@ molecular formulas. Pass \code{NULL} if not present.}
 A dataframe with columns \code{protein}, \code{peptide_sequence},
   \code{cluster}, \code{glycan}, \code{methionine_oxidation}, \code{charge},
   and optionally \code{note} and \code{molecular_formula}, followed by the
-  per-sample measurement columns (\code{Total.Area.MS1},
-  \code{Isotope.Dot.Product}, \code{Average.Mass.Error.PPM},
-  \code{Best.Retention.Time}, \code{Min.Start.Time}, \code{Max.End.Time}).
+  per-sample measurement columns (\code{Total Area MS1},
+  \code{Isotope Dot Product}, \code{Average Mass Error PPM},
+  \code{Best Retention Time}, \code{Min Start Time}, \code{Max End Time}).
 }
 \description{
 When Skyline data is exported with a single column for the full glycopeptide

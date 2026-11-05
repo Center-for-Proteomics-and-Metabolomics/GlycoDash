@@ -184,7 +184,7 @@ mod_analyte_curation_ui <- function(id) {
                 sliderInput(
                   ns("avg_mass_accuracy"),
                   "Acceptable mass accuracy range (ppm)",
-                  min = -50, max = 50, value = c(-20, 20)
+                  min = -20, max = 20, value = c(-20, 20)
                 ),
                 numericInput(
                   ns("avg_ipq"),
@@ -247,7 +247,7 @@ mod_analyte_curation_server <- function(
     id,
     results_spectra_curation,
     biogroup_cols,
-    data_type  
+    data_type
   ) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
@@ -866,6 +866,12 @@ mod_analyte_curation_server <- function(
           )
         )
       )
+    })
+    
+    
+    observe({
+      req(analyte_curated_data())
+      browser()
     })
     
 

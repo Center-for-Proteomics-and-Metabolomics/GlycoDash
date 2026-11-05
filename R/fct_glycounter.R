@@ -385,19 +385,19 @@ prepare_skyline_data <- function(
 #'
 #' @return A filtered data frame with one row per unique
 #'   `(skyline_row_id, sample, ScanNumber)` combination, containing both
-#'   Skyline isotope candidate columns and GlyCounter scan-level columns, plus a
-#'   `glycounter_mz_error_ppm` column.
+#'   Skyline isotope candidate columns and GlyCounter scan-level columns, 
+#'   plus a `glycounter_mz_error_ppm` column.
 extract_glycounter_candidates <- function(
     skyline_isotope_candidates,
     glycounter_data
-) {
+  ) {
   skyline_isotope_candidates %>%
     dplyr::select(
       skyline_row_id,
       sample,
-      `Best.Retention.Time`,
-      Min.Start.Time,
-      Max.End.Time,
+      `Best Retention Time`,
+      `Min Start Time`,
+      `Max End Time`,
       isotope_rank,
       isotope_group,
       extra_neutrons,
@@ -414,7 +414,7 @@ extract_glycounter_candidates <- function(
     ) %>%
     dplyr::filter(
       dplyr::between(PrecursorMZ, isotope_mz_min, isotope_mz_max),
-      dplyr::between(RetentionTime, Min.Start.Time, Max.End.Time)
+      dplyr::between(RetentionTime, `Min Start Time`, `Max End Time`)
     ) %>%
     dplyr::mutate(
       glycounter_mz_error_ppm = (

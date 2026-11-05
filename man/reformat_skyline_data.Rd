@@ -33,9 +33,9 @@ molecular formulas. Pass \code{NULL} if not present.}
 \value{
 A dataframe with columns \code{cluster}, \code{glycan}, \code{charge},
   and optionally \code{note} and \code{molecular_formula}, followed by the
-  per-sample measurement columns (\code{Total.Area.MS1},
-  \code{Isotope.Dot.Product}, \code{Average.Mass.Error.PPM},
-  \code{Best.Retention.Time}, \code{Min.Start.Time}, \code{Max.End.Time}).
+  per-sample measurement columns (\code{Total Area MS1},
+  \code{Isotope Dot Product}, \code{Average Mass Error PPM},
+  \code{Best Retention Time}, \code{Min Start Time}, \code{Max End Time}).
 }
 \description{
 Renames the selected Skyline columns to the standardized column names used

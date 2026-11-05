@@ -256,6 +256,7 @@ mod_data_import_server <- function(id) {
       data = to_return,
       data_type = data_input$data_type,
       glycosites_table = data_input$glycosites_table,
+      glycounter_fragment_colnames = data_input$glycounter_fragment_colnames,
       biogroup_cols = biogroup_cols,
       contains_total_and_specific_samples = (
         data_input$contains_total_and_specific_samples

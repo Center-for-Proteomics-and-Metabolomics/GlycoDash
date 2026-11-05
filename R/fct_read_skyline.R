@@ -10,9 +10,19 @@
 read_skyline_csv <- function(path_to_file) {
   L <- readLines(path_to_file, n = 1)
   if (grepl(";", L)) {
-    raw_data <- read.csv(path_to_file, header = TRUE, sep = ";")
+    raw_data <- read.csv(
+      path_to_file, 
+      header = TRUE, 
+      sep = ";", 
+      check.names = FALSE
+    )
   } else {
-    raw_data <- read.csv(path_to_file, header = TRUE, sep = ",")
+    raw_data <- read.csv(
+      path_to_file, 
+      header = TRUE, 
+      sep = ",",
+      check.names = FALSE
+    )
   }
   
   return(raw_data)
@@ -24,8 +34,8 @@ read_skyline_csv <- function(path_to_file) {
 #'
 #' @description 
 #' Verifies that a Skyline CSV dataframe contains all required per-sample
-#' variable columns (\code{Total.Area.MS1}, \code{Isotope.Dot.Product}, and
-#' \code{Average.Mass.Error.PPM}). Shows an informative error message and
+#' variable columns (\code{Total Area MS1}, \code{Isotope Dot Product}, and
+#' \code{Average Mass Error PPM}). Shows an informative error message and
 #' returns NULL if data is missing. Returns the data otherwise.
 #'
 #' @param raw_skyline_data A dataframe of raw Skyline data, as returned by
@@ -34,7 +44,7 @@ read_skyline_csv <- function(path_to_file) {
 #' @return NULL if required columns are missing, otherwise returns the data.
 check_skyline_data <- function(raw_skyline_data) {
   
-  required_vars <- c("Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM") 
+  required_vars <- c("Total Area MS1", "Isotope Dot Product", "Average Mass Error PPM") 
   vars_check <- sapply(required_vars, function(x) any(grepl(x, colnames(raw_skyline_data))))
   missing_vars <- required_vars[!vars_check]
   
@@ -77,9 +87,9 @@ check_skyline_data <- function(raw_skyline_data) {
 #' @return A dataframe with columns \code{protein}, \code{peptide_sequence},
 #'   \code{cluster}, \code{glycan}, \code{methionine_oxidation}, \code{charge},
 #'   and optionally \code{note} and \code{molecular_formula}, followed by the
-#'   per-sample measurement columns (\code{Total.Area.MS1},
-#'   \code{Isotope.Dot.Product}, \code{Average.Mass.Error.PPM},
-#'   \code{Best.Retention.Time}, \code{Min.Start.Time}, \code{Max.End.Time}).
+#'   per-sample measurement columns (\code{Total Area MS1},
+#'   \code{Isotope Dot Product}, \code{Average Mass Error PPM},
+#'   \code{Best Retention Time}, \code{Min Start Time}, \code{Max End Time}).
 reformat_skyline_analyte_column <- function(
       raw_skyline_data, 
       protein_colname,
@@ -114,8 +124,12 @@ reformat_skyline_analyte_column <- function(
       tidyselect::any_of(c("note", "molecular_formula")),
       protein, glycopeptide, charge, 
       tidyselect::contains(c(
-        "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM",
-        "Best.Retention.Time", "Min.Start.Time", "Max.End.Time"
+        "Total Area MS1", 
+        "Isotope Dot Product", 
+        "Average Mass Error PPM",
+        "Best Retention Time", 
+        "Min Start Time", 
+        "Max End Time"
       ))
     )
   
@@ -165,8 +179,12 @@ reformat_skyline_analyte_column <- function(
       tidyselect::any_of(c("note", "molecular_formula")),
       protein, peptide, cluster, glycan, oxidation, charge,
       tidyselect::contains(c(
-        "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM",
-        "Best.Retention.Time", "Min.Start.Time", "Max.End.Time"
+        "Total Area MS1", 
+        "Isotope Dot Product", 
+        "Average Mass Error PPM",
+        "Best Retention Time", 
+        "Min Start Time", 
+        "Max End Time"
       ))
     ) %>% 
     dplyr::mutate(oxidation = as.character(oxidation)) %>% 
@@ -200,9 +218,9 @@ reformat_skyline_analyte_column <- function(
 #'
 #' @return A dataframe with columns \code{cluster}, \code{glycan}, \code{charge},
 #'   and optionally \code{note} and \code{molecular_formula}, followed by the
-#'   per-sample measurement columns (\code{Total.Area.MS1},
-#'   \code{Isotope.Dot.Product}, \code{Average.Mass.Error.PPM},
-#'   \code{Best.Retention.Time}, \code{Min.Start.Time}, \code{Max.End.Time}).
+#'   per-sample measurement columns (\code{Total Area MS1},
+#'   \code{Isotope Dot Product}, \code{Average Mass Error PPM},
+#'   \code{Best Retention Time}, \code{Min Start Time}, \code{Max End Time}).
 reformat_skyline_data <- function(
     raw_skyline_data,  
     cluster_colname,
@@ -236,8 +254,12 @@ reformat_skyline_data <- function(
       tidyselect::any_of(c("note", "molecular_formula")),
       cluster, glycan, charge,
       tidyselect::contains(c(
-        "Total.Area.MS1", "Isotope.Dot.Product", "Average.Mass.Error.PPM",
-        "Best.Retention.Time", "Min.Start.Time", "Max.End.Time"
+        "Total Area MS1", 
+        "Isotope Dot Product", 
+        "Average Mass Error PPM",
+        "Best Retention Time", 
+        "Min Start Time", 
+        "Max End Time"
       ))
     )
   
@@ -339,10 +361,10 @@ rename_skyline_isomers <- function(data_renamed_cols) {
 #' analyte-sample combination and one column per measurement variable.
 #'
 #' Sample-variable columns are assumed to start immediately after
-#' `Precursor.Charge` and follow the naming convention `<SampleID>.<Variable>`,
-#' where `<Variable>` is one of `Best.Retention.Time`, `Total.Area.MS1`,
-#' `Isotope.Dot.Product`, `Average.Mass.Error.PPM`, `Normalized.Area`,
-#' `Min.Start.Time`, or `Max.End.Time`.
+#' `Precursor Charge` and follow the naming convention `<SampleID> <Variable>`,
+#' where `<Variable>` is one of `Best Retention Time`, `Total Area MS1`,
+#' `Isotope Dot Product`, `Average Mass Error PPM`, `Normalized Area`,
+#' `Min Start Time`, or `Max End Time`.
 #'
 #' @param data_renamed A data frame as returned by [rename_skyline_isomers()].
 #'
@@ -354,7 +376,7 @@ reshape_skyline_data <- function(data_renamed) {
   # as "L20252001084c Best Retention Time" or "L20252001084c Min Start Time".
   # These column names will be split into:
   #   sample   = L20252001084c
-  #   variable = Best.Retention.Time / Min.Start.Time / ...
+  #   variable = Best Retention Time / Min Start Time / ...
   start_idx = which(colnames(data_renamed) == "charge") + 1
   variable_cols = colnames(data_renamed)[
     start_idx:length(colnames(data_renamed))
@@ -388,14 +410,14 @@ reshape_skyline_data <- function(data_renamed) {
       col   = sample_variable,
       into  = c("sample", "variable"),
       regex = paste0(
-        "^(.+)\\.(",
-        "Best\\.Retention\\.Time|",
-        "Total\\.Area\\.MS1|",
-        "Isotope\\.Dot\\.Product|",
-        "Average\\.Mass\\.Error\\.PPM|",
-        "Normalized\\.Area|",
-        "Min\\.Start\\.Time|",
-        "Max\\.End\\.Time",
+        "^(.+) (",
+        "Best Retention Time|",
+        "Total Area MS1|",
+        "Isotope Dot Product|",
+        "Average Mass Error PPM|",
+        "Normalized Area|",
+        "Min Start Time|",
+        "Max End Time",
         ")$"
       ),
       remove = TRUE

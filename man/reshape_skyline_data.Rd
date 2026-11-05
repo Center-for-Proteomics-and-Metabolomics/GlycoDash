@@ -19,8 +19,8 @@ group per sample-variable combination) into a tidy format with one row per
 analyte-sample combination and one column per measurement variable.
 
 Sample-variable columns are assumed to start immediately after
-`Precursor.Charge` and follow the naming convention `<SampleID>.<Variable>`,
-where `<Variable>` is one of `Best.Retention.Time`, `Total.Area.MS1`,
-`Isotope.Dot.Product`, `Average.Mass.Error.PPM`, `Normalized.Area`,
-`Min.Start.Time`, or `Max.End.Time`.
+`Precursor Charge` and follow the naming convention `<SampleID> <Variable>`,
+where `<Variable>` is one of `Best Retention Time`, `Total Area MS1`,
+`Isotope Dot Product`, `Average Mass Error PPM`, `Normalized Area`,
+`Min Start Time`, or `Max End Time`.
 }

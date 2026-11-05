@@ -15,8 +15,8 @@ extract_glycounter_candidates(skyline_isotope_candidates, glycounter_data)
 \value{
 A filtered data frame with one row per unique
   `(skyline_row_id, sample, ScanNumber)` combination, containing both
-  Skyline isotope candidate columns and GlyCounter scan-level columns, plus a
-  `glycounter_mz_error_ppm` column.
+  Skyline isotope candidate columns and GlyCounter scan-level columns, 
+  plus a `glycounter_mz_error_ppm` column.
 }
 \description{
 Joins the expanded Skyline isotope candidate table with the GlyCounter
